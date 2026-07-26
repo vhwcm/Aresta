@@ -25,7 +25,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useBookPageTurn, type PageTurnDirection } from '~/composables/reader/useBookPageTurn'
 
 interface ReaderPointer {
@@ -43,7 +43,12 @@ const {
   beginDrag,
   updateDrag,
   endDrag,
+  cancelDrag,
 } = useBookPageTurn(stageRef)
+
+const emit = defineEmits<{
+  'transition-state': [isTransitioning: boolean]
+}>()
 
 let activePointerId: number | null = null
 
@@ -84,13 +89,14 @@ function onPointerUp(event: PointerEvent) {
 function onPointerCancel(event: PointerEvent) {
   if (event.pointerId !== activePointerId) return
   activePointerId = null
-  void endDrag(pointFrom(event))
+  void cancelDrag(pointFrom(event))
 }
+
+watch(isTransitioning, (value) => emit('transition-state', value), { immediate: true })
 
 defineExpose({
   next: () => requestTurn('next'),
   previous: () => requestTurn('previous'),
-  isBusy: () => isTransitioning.value,
 })
 </script>
 

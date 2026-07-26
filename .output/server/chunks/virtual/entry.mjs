@@ -962,7 +962,7 @@ var namedMiddleware = {};
 var virtual_nuxt_node_modules_2F_cache_2Fnuxt_2F_nuxt_2Froutes_default = [{
 	name: "reader",
 	path: "/reader",
-	component: () => import('../build/reader-BVBRQKiR.mjs')
+	component: () => import('../build/reader-D9YRxbig.mjs')
 }, {
 	name: "index",
 	path: "/",

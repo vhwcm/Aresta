@@ -53,7 +53,10 @@
           </button>
 
           <div class="reader-shell__book-stage" id="book-stage">
-            <ReaderEnginePageCurlCanvas ref="pageRenderer" />
+            <ReaderEnginePageCurlCanvas
+              ref="pageRenderer"
+              @transition-state="isTransitioning = $event"
+            />
           </div>
 
           <button
@@ -94,11 +97,10 @@ const { validate } = useFileValidator()
 interface PageRenderer {
   next: () => Promise<void>
   previous: () => Promise<void>
-  isBusy: () => boolean
 }
 
 const pageRenderer = ref<PageRenderer | null>(null)
-const isTransitioning = computed(() => pageRenderer.value?.isBusy() ?? false)
+const isTransitioning = ref(false)
 
 const loadingLabel = computed(() =>
   store.documentType === 'epub' ? 'EPUB' : 'PDF',

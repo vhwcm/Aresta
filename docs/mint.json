@@ -1,0 +1,39 @@
+{
+  "$schema": "https://mintlify.com/schema.json",
+  "name": "Meu Projeto",
+  "logo": {
+    "dark": "/logo_aresta.ico",
+    "light": "/logo_aresta.ico"
+  },
+  "favicon": "/favicon.png",
+  "colors": {
+    "primary": "#0F172A",
+    "light": "#334155",
+    "dark": "#020617"
+  },
+  "topbarLinks": [
+    {
+      "name": "Suporte",
+      "url": "https://seu-site.com/suporte"
+    }
+  ],
+  "navigation": [
+    {
+      "group": "Começando",
+      "pages": [
+        "introducao",
+        "instalacao"
+      ]
+    },
+    {
+      "group": "Componentes",
+      "pages": [
+        "componentes/botao",
+        "componentes/card"
+      ]
+    }
+  ],
+  "footerSocials": {
+    "github": "https://github.com/seu-usuario/seu-repo"
+  }
+}

@@ -37,6 +37,10 @@ function easeOutCubic(value: number): number {
   return 1 - Math.pow(1 - clamp(value), 3)
 }
 
+export function shouldCommitPageTurn(progress: number, velocity: number): boolean {
+  return clamp(progress) >= TURN_THRESHOLD || velocity > 0.002
+}
+
 function createRasterCanvas(page: PageData): HTMLCanvasElement {
   const source = document.createElement('canvas')
   source.width = Math.ceil(page.width)
@@ -66,6 +70,8 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
   let dragStart: Point | null = null
   let dragLast: Point | null = null
   let pendingDragPoint: Point | null = null
+  let dragEndedWhilePreparing = false
+  let dragCancelledWhilePreparing = false
   let isDragging = false
   let turnProgress = 0
   let animationFrame: number | null = null
@@ -507,6 +513,8 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
     dragStart = null
     dragLast = null
     pendingDragPoint = null
+    dragEndedWhilePreparing = false
+    dragCancelledWhilePreparing = false
     isTransitioning.value = false
   }
 
@@ -548,6 +556,8 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
 
     isTransitioning.value = true
     pendingDragPoint = point
+    dragEndedWhilePreparing = false
+    dragCancelledWhilePreparing = false
     const prepared = await prepareTurn(direction)
     if (!prepared) {
       isTransitioning.value = false
@@ -559,6 +569,14 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
     pendingDragPoint = null
     isDragging = true
     setTurnProgress(pointerProgress(dragLast))
+
+    if (dragEndedWhilePreparing) {
+      const wasCancelled = dragCancelledWhilePreparing
+      dragEndedWhilePreparing = false
+      dragCancelledWhilePreparing = false
+      if (wasCancelled) void cancelDrag(dragLast)
+      else void endDrag(dragLast)
+    }
   }
 
   function updateDrag(point: Point) {
@@ -575,6 +593,8 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
     if (!isTransitioning.value) return
     if (!isDragging) {
       pendingDragPoint = point
+      dragEndedWhilePreparing = true
+      dragCancelledWhilePreparing = false
       return
     }
 
@@ -583,7 +603,7 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
     const velocity = previous && dragStart
       ? (pointerProgress(previous) - pointerProgress(dragStart)) / Math.max(previous.time - dragStart.time, 1)
       : 0
-    const shouldCommit = turnProgress >= TURN_THRESHOLD || velocity > 0.002
+    const shouldCommit = shouldCommitPageTurn(turnProgress, velocity)
     isDragging = false
 
     if (reducedMotion.value) {
@@ -594,6 +614,20 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
 
     const completed = await animateTo(shouldCommit ? 1 : 0)
     if (completed) settleTurn(shouldCommit)
+  }
+
+  async function cancelDrag(point: Point): Promise<void> {
+    if (!isTransitioning.value) return
+    if (!isDragging) {
+      pendingDragPoint = point
+      dragEndedWhilePreparing = true
+      dragCancelledWhilePreparing = true
+      return
+    }
+
+    isDragging = false
+    const completed = reducedMotion.value ? true : await animateTo(0)
+    if (completed) settleTurn(false)
   }
 
   function prefetchNeighbors(pageNumber: number) {
@@ -633,6 +667,8 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
     cancelAnimation()
     isTransitioning.value = false
     isDragging = false
+    dragEndedWhilePreparing = false
+    dragCancelledWhilePreparing = false
     turnSource = null
     turnTarget = null
     activeDocument = document
@@ -703,5 +739,6 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
     beginDrag,
     updateDrag,
     endDrag,
+    cancelDrag,
   }
 }
