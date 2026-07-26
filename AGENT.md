@@ -1,0 +1,1 @@
+Este projeto utiliza Mintlify para documentação. Sempre que gerar ou atualizar documentação de componentes Vue.js ou serviços, crie arquivos em formato MDX na pasta docs/. Para o back-end, garanta que todas as novas rotas tenham anotações Swagger/OpenAPI completas

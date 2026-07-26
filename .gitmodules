@@ -1,0 +1,4 @@
+[submodule "lib/foliate-js"]
+	path = lib/foliate-js
+	url = https://github.com/johnfactotum/foliate-js.git
+	branch = main
