@@ -9,9 +9,15 @@ import { RuntimeConfig as UserRuntimeConfig, PublicRuntimeConfig as UserPublicRu
 
       cdnURL: string,
    },
+
+   aiKey: string,
+
+   isProduction: boolean,
   }
   interface SharedPublicRuntimeConfig {
+   aiKey: string,
 
+   isProduction: boolean,
   }
 declare module '@nuxt/schema' {
   interface RuntimeConfig extends UserRuntimeConfig {}

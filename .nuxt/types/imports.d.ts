@@ -37,6 +37,7 @@ declare global {
   const easeInOutCubic: typeof import('../../app/utils/pageCurlMath').easeInOutCubic
   const effect: typeof import('vue').effect
   const effectScope: typeof import('vue').effectScope
+  const formatErrorMessage: typeof import('../../app/utils/logger').formatErrorMessage
   const getAppManifest: typeof import('../../node_modules/nuxt/dist/app/composables/manifest').getAppManifest
   const getCurrentInstance: typeof import('vue').getCurrentInstance
   const getCurrentScope: typeof import('vue').getCurrentScope
@@ -48,6 +49,7 @@ declare global {
   const interpolateCurlState: typeof import('../../app/utils/pageCurlMath').interpolateCurlState
   const isNuxtError: typeof import('../../node_modules/nuxt/dist/app/composables/error').isNuxtError
   const isPrerendered: typeof import('../../node_modules/nuxt/dist/app/composables/payload').isPrerendered
+  const isProductionMode: typeof import('../../app/utils/logger').isProductionMode
   const isProxy: typeof import('vue').isProxy
   const isReactive: typeof import('vue').isReactive
   const isReadonly: typeof import('vue').isReadonly
@@ -57,6 +59,8 @@ declare global {
   const isVue3: typeof import('../../node_modules/nuxt/dist/app/compat/vue-demi').isVue3
   const lerp: typeof import('../../app/utils/pageCurlMath').lerp
   const loadPayload: typeof import('../../node_modules/nuxt/dist/app/composables/payload').loadPayload
+  const logError: typeof import('../../app/utils/logger').logError
+  const logWarn: typeof import('../../app/utils/logger').logWarn
   const markRaw: typeof import('vue').markRaw
   const matchesSignature: typeof import('../../app/utils/fileValidator').matchesSignature
   const navigateTo: typeof import('../../node_modules/nuxt/dist/app/composables/router').navigateTo
@@ -261,6 +265,7 @@ declare module 'vue' {
     readonly easeInOutCubic: UnwrapRef<typeof import('../../app/utils/pageCurlMath')['easeInOutCubic']>
     readonly effect: UnwrapRef<typeof import('vue')['effect']>
     readonly effectScope: UnwrapRef<typeof import('vue')['effectScope']>
+    readonly formatErrorMessage: UnwrapRef<typeof import('../../app/utils/logger')['formatErrorMessage']>
     readonly getAppManifest: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/manifest')['getAppManifest']>
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
     readonly getCurrentScope: UnwrapRef<typeof import('vue')['getCurrentScope']>
@@ -272,6 +277,7 @@ declare module 'vue' {
     readonly interpolateCurlState: UnwrapRef<typeof import('../../app/utils/pageCurlMath')['interpolateCurlState']>
     readonly isNuxtError: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/error')['isNuxtError']>
     readonly isPrerendered: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/payload')['isPrerendered']>
+    readonly isProductionMode: UnwrapRef<typeof import('../../app/utils/logger')['isProductionMode']>
     readonly isProxy: UnwrapRef<typeof import('vue')['isProxy']>
     readonly isReactive: UnwrapRef<typeof import('vue')['isReactive']>
     readonly isReadonly: UnwrapRef<typeof import('vue')['isReadonly']>
@@ -281,6 +287,8 @@ declare module 'vue' {
     readonly isVue3: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/compat/vue-demi')['isVue3']>
     readonly lerp: UnwrapRef<typeof import('../../app/utils/pageCurlMath')['lerp']>
     readonly loadPayload: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/payload')['loadPayload']>
+    readonly logError: UnwrapRef<typeof import('../../app/utils/logger')['logError']>
+    readonly logWarn: UnwrapRef<typeof import('../../app/utils/logger')['logWarn']>
     readonly markRaw: UnwrapRef<typeof import('vue')['markRaw']>
     readonly matchesSignature: UnwrapRef<typeof import('../../app/utils/fileValidator')['matchesSignature']>
     readonly navigateTo: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/router')['navigateTo']>

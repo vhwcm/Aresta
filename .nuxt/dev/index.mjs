@@ -7,6 +7,7 @@ import { parentPort, threadId } from 'node:worker_threads';
 import { escapeHtml } from 'file:///home/exati/projetos/Aresta/node_modules/@vue/shared/dist/shared.cjs.js';
 import viteNodeEntry_mjs from 'file:///home/exati/projetos/Aresta/node_modules/@nuxt/vite-builder/dist/vite-node-entry.mjs';
 import { viteNodeFetch } from 'file:///home/exati/projetos/Aresta/node_modules/@nuxt/vite-builder/dist/vite-node.mjs';
+import { GoogleGenerativeAI } from 'file:///home/exati/projetos/Aresta/node_modules/@google/generative-ai/dist/index.mjs';
 import { parseURL, withoutBase, joinURL, getQuery, withQuery, withTrailingSlash, decodePath, withLeadingSlash, withoutTrailingSlash, encodePath, joinRelativeURL } from 'file:///home/exati/projetos/Aresta/node_modules/ufo/dist/index.mjs';
 import destr, { destr as destr$1 } from 'file:///home/exati/projetos/Aresta/node_modules/destr/dist/index.mjs';
 import { createHooks } from 'file:///home/exati/projetos/Aresta/node_modules/nitropack/node_modules/hookable/dist/index.mjs';
@@ -706,7 +707,12 @@ const _inlineRuntimeConfig = {
       }
     }
   },
-  "public": {}
+  "public": {
+    "aiKey": "AQ.Ab8RN6KCz43cE76MxH4xfu2htCVlOnRpWllh0xiUf_wxyw_c7w",
+    "isProduction": false
+  },
+  "aiKey": "AQ.Ab8RN6KCz43cE76MxH4xfu2htCVlOnRpWllh0xiUf_wxyw_c7w",
+  "isProduction": false
 };
 const envOptions = {
   prefix: "NITRO_",
@@ -2693,10 +2699,12 @@ async function getIslandContext(event) {
 	};
 }
 
+const _lazy_0L1qtn = () => Promise.resolve().then(function () { return ai_post$1; });
 const _lazy_MW0CYk = () => Promise.resolve().then(function () { return renderer; });
 
 const handlers = [
   { route: '', handler: _RMXFss, lazy: false, middleware: true, method: undefined },
+  { route: '/api/ai', handler: _lazy_0L1qtn, lazy: true, middleware: false, method: "post" },
   { route: '/__nuxt_error', handler: _lazy_MW0CYk, lazy: true, middleware: false, method: undefined },
   { route: '/__nuxt_island/**', handler: handler$1, lazy: false, middleware: false, method: undefined },
   { route: '/**', handler: _lazy_MW0CYk, lazy: true, middleware: false, method: undefined }
@@ -3050,6 +3058,107 @@ const styles = {};
 const styles$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   __proto__: null,
   default: styles
+}, Symbol.toStringTag, { value: 'Module' }));
+
+function isProductionMode() {
+  var _a;
+  if (typeof process !== "undefined" && process.env && process.env.IS_PRODUCTION !== void 0) {
+    return process.env.IS_PRODUCTION === "true";
+  }
+  try {
+    const config = useRuntimeConfig();
+    return Boolean(((_a = config.public) == null ? void 0 : _a.isProduction) || config.isProduction);
+  } catch {
+    return false;
+  }
+}
+function logError(...args) {
+  if (!isProductionMode()) {
+    console.error(...args);
+  }
+}
+
+async function getBestModel(apiKey) {
+  const preferredModels = [
+    "gemini-2.0-flash",
+    "gemini-1.5-flash",
+    "gemini-2.0-flash-lite",
+    "gemini-1.5-pro",
+    "gemini-flash-latest"
+  ];
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+    if (res.ok) {
+      const data = await res.json();
+      const models = (data == null ? void 0 : data.models) || [];
+      for (const pref of preferredModels) {
+        const found = models.find((m) => m.name === `models/${pref}` || m.name === pref);
+        if (found) return pref;
+      }
+      const validModel = models.find(
+        (m) => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes("generateContent") && m.name && !m.name.includes("2.5") && !m.name.includes("embedding") && !m.name.includes("imagen") && !m.name.includes("tts") && !m.name.includes("veo")
+      );
+      if (validModel && validModel.name) {
+        return validModel.name.replace(/^models\//, "");
+      }
+    }
+  } catch (err) {
+    logError("[AI API Model Discovery Error]", err);
+  }
+  return "gemini-2.0-flash";
+}
+const ai_post = defineEventHandler(async (event) => {
+  var _a, _b;
+  const body = await readBody(event);
+  const prompt = (body == null ? void 0 : body.prompt) || (body == null ? void 0 : body.message) || "";
+  const config = useRuntimeConfig();
+  const apiKey = config.aiKey || config.public.aiKey || process.env.AI_KEY || "";
+  const isProd = isProductionMode();
+  if (!prompt) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: "Prompt \xE9 obrigat\xF3rio"
+    });
+  }
+  try {
+    const modelName = await getBestModel(apiKey);
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: modelName });
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+    return { text, modelUsed: modelName };
+  } catch (error) {
+    logError("[AI API Error]", error);
+    if (isProd) {
+      return {
+        error: true,
+        message: "Erro de comunica\xE7\xE3o com o servi\xE7o de IA",
+        text: "N\xE3o foi poss\xEDvel obter uma resposta do servi\xE7o de IA."
+      };
+    }
+    const isQuotaError = ((_a = error == null ? void 0 : error.message) == null ? void 0 : _a.includes("quota")) || ((_b = error == null ? void 0 : error.message) == null ? void 0 : _b.includes("RESOURCE_EXHAUSTED")) || (error == null ? void 0 : error.status) === 429;
+    const errorTitle = isQuotaError ? "Limite de Cota Excedido (API Gemini)" : "Erro de Comunica\xE7\xE3o com a IA";
+    return {
+      error: true,
+      message: (error == null ? void 0 : error.message) || "Erro de comunica\xE7\xE3o com o servi\xE7o de IA",
+      text: `### ${errorTitle}
+
+N\xE3o foi poss\xEDvel obter uma resposta do servi\xE7o da IA com a chave fornecida.
+
+**Detalhes da resposta da API:**
+\`\`\`text
+${(error == null ? void 0 : error.message) || "Chave de API inv\xE1lida ou sem permiss\xE3o"}
+\`\`\`
+
+> **Dica:** Se o erro for de cota excedida (\`RESOURCE_EXHAUSTED\`), substitua a chave \`AI_KEY\` no arquivo \`.env\` por uma nova chave gerada no Google AI Studio (https://aistudio.google.com/).`
+    };
+  }
+});
+
+const ai_post$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
+  __proto__: null,
+  default: ai_post
 }, Symbol.toStringTag, { value: 'Module' }));
 
 //#region src/runtime/utils/renderer/payload.ts

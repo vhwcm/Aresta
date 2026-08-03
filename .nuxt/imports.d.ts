@@ -34,6 +34,7 @@ export { setInterval } from '#app/compat/interval';
 export { definePageMeta, PageMeta } from '#app/composables/pages';
 export { defineLazyHydrationComponent } from '#app/composables/lazy-hydration';
 export { validateBookFile, readFileHeader, matchesSignature, detectFileTypeFromBytes, MAX_FILE_SIZE_BYTES } from '../app/utils/fileValidator';
+export { isProductionMode, logError, logWarn, formatErrorMessage } from '../app/utils/logger';
 export { computeCurlGeometry, renderPageCurl, interpolateCurlState, DEFAULT_CONFIG, easeInOutCubic, lerp, clamp, distance } from '../app/utils/pageCurlMath';
 export { useReaderStore } from '../app/stores/readerStore';
 export { defineStore, acceptHMRUpdate, usePinia, storeToRefs } from '../node_modules/@pinia/nuxt/dist/runtime/composables';

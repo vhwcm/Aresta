@@ -1,4 +1,5 @@
 import type { IBookDocument, BookMetadata, PageData } from '~/interfaces/reader/IBookDocument'
+import { logWarn } from '~/utils/logger'
 
 interface FoliateSection {
   id: string
@@ -152,7 +153,7 @@ export class EpubDocumentAdapter implements IBookDocument {
       ctx.fillStyle = '#555'
       ctx.font = '13px Georgia, serif'
       ctx.fillText(`Página ${pageNumber} — erro ao renderizar`, 20, 40)
-      console.warn('[EpubAdapter] render error:', err)
+      logWarn('[EpubAdapter] render error:', err)
     }
 
     return canvas

@@ -6,7 +6,27 @@ export default defineNuxtConfig({
     compatibilityVersion: 4,
   },
 
-  modules: ['@pinia/nuxt'],
+  runtimeConfig: {
+    aiKey: process.env.AI_KEY || 'AQ.Ab8RN6KCz43cE76MxH4xfu2htCVlOnRpWllh0xiUf_wxyw_c7w',
+    isProduction: process.env.IS_PRODUCTION === 'true',
+    public: {
+      aiKey: process.env.AI_KEY || 'AQ.Ab8RN6KCz43cE76MxH4xfu2htCVlOnRpWllh0xiUf_wxyw_c7w',
+      isProduction: process.env.IS_PRODUCTION === 'true',
+    },
+  },
+
+  modules: ['@pinia/nuxt', '@nuxtjs/tailwindcss', '@nuxtjs/google-fonts'],
+  
+  css: ['~/assets/css/main.css'],
+
+  googleFonts: {
+    families: {
+      Inter: [300, 400, 500, 600],
+      Newsreader: [300, 400],
+      'JetBrains+Mono': [400, 600],
+    },
+    display: 'swap',
+  },
 
   ssr: true,
 

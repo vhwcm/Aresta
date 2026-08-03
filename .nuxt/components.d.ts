@@ -14,7 +14,11 @@ type HydrationStrategies = {
 type LazyComponent<T> = DefineComponent<HydrationStrategies, {}, {}, {}, {}, {}, {}, { hydrated: () => void }> & T
 
 
+export const AiMarkdown: typeof import("../app/components/AiMarkdown.vue")['default']
+export const CommandPalette: typeof import("../app/components/CommandPalette.vue")['default']
 export const ReaderShell: typeof import("../app/components/reader/ReaderShell.vue")['default']
+export const ReaderUploader: typeof import("../app/components/reader/Uploader.vue")['default']
+export const ReaderViewer: typeof import("../app/components/reader/Viewer.vue")['default']
 export const ReaderEnginePageCurlCanvas: typeof import("../app/components/reader/engine/PageCurlCanvas.vue")['default']
 export const ReaderUploadDropZone: typeof import("../app/components/reader/upload/DropZone.vue")['default']
 export const NuxtWelcome: typeof import("../node_modules/nuxt/dist/app/components/welcome.vue")['default']
@@ -41,7 +45,11 @@ export const Head: typeof import("../node_modules/nuxt/dist/head/runtime/compone
 export const Html: typeof import("../node_modules/nuxt/dist/head/runtime/components")['Html']
 export const Body: typeof import("../node_modules/nuxt/dist/head/runtime/components")['Body']
 export const NuxtIsland: typeof import("../node_modules/nuxt/dist/app/components/nuxt-island")['default']
+export const LazyAiMarkdown: LazyComponent<typeof import("../app/components/AiMarkdown.vue")['default']>
+export const LazyCommandPalette: LazyComponent<typeof import("../app/components/CommandPalette.vue")['default']>
 export const LazyReaderShell: LazyComponent<typeof import("../app/components/reader/ReaderShell.vue")['default']>
+export const LazyReaderUploader: LazyComponent<typeof import("../app/components/reader/Uploader.vue")['default']>
+export const LazyReaderViewer: LazyComponent<typeof import("../app/components/reader/Viewer.vue")['default']>
 export const LazyReaderEnginePageCurlCanvas: LazyComponent<typeof import("../app/components/reader/engine/PageCurlCanvas.vue")['default']>
 export const LazyReaderUploadDropZone: LazyComponent<typeof import("../app/components/reader/upload/DropZone.vue")['default']>
 export const LazyNuxtWelcome: LazyComponent<typeof import("../node_modules/nuxt/dist/app/components/welcome.vue")['default']>

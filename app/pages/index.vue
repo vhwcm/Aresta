@@ -1,169 +1,107 @@
 <template>
-  <main class="home-page">
-    <section class="hero">
-      <div class="hero__badge">
-        <span class="hero__badge-dot" />
-        Leitor Web Avançado
+  <div class="flex flex-col gap-16 pb-32">
+    <!-- Secção de Destaque / Leitura Atual -->
+    <section class="flex flex-col gap-6">
+      <div class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary flex items-center gap-2">
+        <div class="w-1.5 h-1.5 rounded-full bg-accent animate-pulse"></div>
+        Leitura Ativa
       </div>
-      <h1 class="hero__title">
-        Leia seus livros.<br />
-        <span class="hero__title-accent">Com vida.</span>
-      </h1>
-      <p class="hero__subtitle">
-        Suporte a PDF e EPUB com virada de página realista,
-        diretamente no seu navegador. Sem upload para servidores.
-      </p>
-      <NuxtLink to="/reader" class="hero__cta" id="cta-open-reader">
-        Abrir Leitor
-      </NuxtLink>
+      
+      <div class="flex flex-col gap-4">
+        <h1 class="font-editorial text-5xl font-light text-textPrimary leading-tight">
+          A Estrutura das Revoluções Científicas
+        </h1>
+        <p class="font-interface text-lg text-textSecondary max-w-2xl leading-relaxed">
+          Thomas S. Kuhn argumenta que a ciência não progride de forma linear, mas através de mudanças bruscas de paradigma. Uma leitura essencial para entender como o conhecimento avança.
+        </p>
+      </div>
+
+      <div class="flex items-center gap-6 mt-4">
+        <button class="bg-white text-black font-interface font-medium px-6 py-3 rounded-full hover:bg-gray-200 transition-colors flex items-center gap-2">
+          Continuar Leitura
+          <ArrowRightIcon class="w-4 h-4" />
+        </button>
+        <div class="flex items-center gap-3 text-textSecondary font-technical text-xs">
+          <span>Pág. 124 de 352</span>
+          <span>·</span>
+          <span>35% concluído</span>
+        </div>
+      </div>
     </section>
 
-    <section class="features">
-      <div class="feature-card">
-        <span class="feature-card__icon">📄</span>
-        <h2>PDF & EPUB</h2>
-        <p>Motor separado para cada formato com renderização nativa via Canvas.</p>
+    <div class="h-px bg-divider w-full"></div>
+
+    <!-- Secção de Conhecimento Gerado (IA) -->
+    <section class="flex flex-col gap-8">
+      <div class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary flex items-center gap-2">
+        <BrainIcon class="w-3.5 h-3.5" />
+        Síntese de IA
       </div>
-      <div class="feature-card">
-        <span class="feature-card__icon">✨</span>
-        <h2>Page Curl</h2>
-        <p>Animação cilíndrica com deformação cônica calculada em tempo real.</p>
-      </div>
-      <div class="feature-card">
-        <span class="feature-card__icon">🔒</span>
-        <h2>100% Privado</h2>
-        <p>Seus arquivos nunca saem do seu dispositivo. Zero uploads.</p>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 relative">
+        <div class="p-8 rounded-2xl bg-white/5 border border-divider hover:bg-white/10 transition-colors flex flex-col gap-4 group">
+          <div class="flex items-center justify-between">
+            <span class="font-technical text-[10px] uppercase font-semibold tracking-widest text-accent">Flashcard</span>
+            <SparklesIcon class="w-4 h-4 text-textSecondary group-hover:text-white transition-colors" />
+          </div>
+          <h3 class="font-editorial text-2xl font-light text-textPrimary">O que é um "Paradigma" segundo Kuhn?</h3>
+          <p class="font-interface text-textSecondary text-sm leading-relaxed">
+            Um conjunto de práticas que definem uma disciplina científica durante um período específico. Fornece os problemas e as soluções modelares para uma comunidade de praticantes.
+          </p>
+        </div>
+
+        <div class="p-8 rounded-2xl bg-white/5 border border-divider hover:bg-white/10 transition-colors flex flex-col gap-4 group">
+          <div class="flex items-center justify-between">
+            <span class="font-technical text-[10px] uppercase font-semibold tracking-widest text-accent">Conexão Semântica</span>
+            <NetworkIcon class="w-4 h-4 text-textSecondary group-hover:text-white transition-colors" />
+          </div>
+          <h3 class="font-editorial text-2xl font-light text-textPrimary">Falsificacionismo vs Paradigmas</h3>
+          <p class="font-interface text-textSecondary text-sm leading-relaxed">
+            Uma nota comparando a teoria de Kuhn com a de Karl Popper sobre como as teorias científicas são descartadas.
+          </p>
+        </div>
       </div>
     </section>
-  </main>
+
+    <div class="h-px bg-divider w-full"></div>
+
+    <!-- Obras Recentes -->
+    <section class="flex flex-col gap-8">
+      <div class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary">
+        Biblioteca Recente
+      </div>
+      
+      <div class="flex flex-col gap-6">
+        <div class="flex items-center justify-between group cursor-pointer">
+          <div class="flex items-center gap-6">
+            <div class="w-12 h-16 bg-white/5 border border-divider rounded flex items-center justify-center group-hover:border-accent/50 transition-colors">
+              <BookOpenIcon class="w-5 h-5 text-textSecondary group-hover:text-accent transition-colors" />
+            </div>
+            <div class="flex flex-col gap-1">
+              <span class="font-editorial text-xl font-light text-textPrimary group-hover:text-white transition-colors">Sapiens: Uma Breve História da Humanidade</span>
+              <span class="font-interface text-sm text-textSecondary">Yuval Noah Harari</span>
+            </div>
+          </div>
+          <span class="font-technical text-xs text-textSecondary opacity-0 group-hover:opacity-100 transition-opacity">Abrir ↗</span>
+        </div>
+
+        <div class="flex items-center justify-between group cursor-pointer">
+          <div class="flex items-center gap-6">
+            <div class="w-12 h-16 bg-white/5 border border-divider rounded flex items-center justify-center group-hover:border-accent/50 transition-colors">
+              <BookOpenIcon class="w-5 h-5 text-textSecondary group-hover:text-accent transition-colors" />
+            </div>
+            <div class="flex flex-col gap-1">
+              <span class="font-editorial text-xl font-light text-textPrimary group-hover:text-white transition-colors">Design of Everyday Things</span>
+              <span class="font-interface text-sm text-textSecondary">Don Norman</span>
+            </div>
+          </div>
+          <span class="font-technical text-xs text-textSecondary opacity-0 group-hover:opacity-100 transition-opacity">Abrir ↗</span>
+        </div>
+      </div>
+    </section>
+  </div>
 </template>
 
-<style scoped>
-.home-page {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 100dvh;
-  padding: 2rem;
-  gap: 4rem;
-}
-
-.hero {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 1.5rem;
-  max-width: 680px;
-}
-
-.hero__badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.4rem 1rem;
-  border-radius: 9999px;
-  background: rgba(124, 106, 247, 0.15);
-  border: 1px solid rgba(124, 106, 247, 0.3);
-  font-size: 0.8rem;
-  color: var(--color-accent);
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-.hero__badge-dot {
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--color-accent);
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(0.8); }
-}
-
-.hero__title {
-  font-size: clamp(2.5rem, 6vw, 4.5rem);
-  font-weight: 800;
-  line-height: 1.1;
-  letter-spacing: -0.03em;
-  color: var(--color-text-primary);
-}
-
-.hero__title-accent {
-  background: linear-gradient(135deg, #7c6af7, #c084fc);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.hero__subtitle {
-  font-size: 1.1rem;
-  line-height: 1.6;
-  color: var(--color-text-secondary);
-  max-width: 500px;
-}
-
-.hero__cta {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.9rem 2.2rem;
-  background: var(--color-accent);
-  color: #fff;
-  border-radius: var(--radius-md);
-  font-size: 1rem;
-  font-weight: 600;
-  text-decoration: none;
-  transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
-  box-shadow: 0 0 32px rgba(124, 106, 247, 0.35);
-}
-
-.hero__cta:hover {
-  background: var(--color-accent-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 0 48px rgba(124, 106, 247, 0.5);
-}
-
-.features {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-  width: 100%;
-  max-width: 800px;
-}
-
-.feature-card {
-  padding: 1.5rem;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  transition: border-color 0.2s, transform 0.2s;
-}
-
-.feature-card:hover {
-  border-color: rgba(124, 106, 247, 0.5);
-  transform: translateY(-2px);
-}
-
-.feature-card__icon {
-  font-size: 1.8rem;
-}
-
-.feature-card h2 {
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.feature-card p {
-  font-size: 0.875rem;
-  color: var(--color-text-secondary);
-  line-height: 1.5;
-}
-</style>
+<script setup lang="ts">
+import { ArrowRightIcon, BrainIcon, SparklesIcon, NetworkIcon, BookOpenIcon } from 'lucide-vue-next'
+</script>

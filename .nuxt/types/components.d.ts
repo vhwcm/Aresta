@@ -14,7 +14,11 @@ type HydrationStrategies = {
 type LazyComponent<T> = DefineComponent<HydrationStrategies, {}, {}, {}, {}, {}, {}, { hydrated: () => void }> & T
 
 interface _GlobalComponents {
+  AiMarkdown: typeof import("../../app/components/AiMarkdown.vue")['default']
+  CommandPalette: typeof import("../../app/components/CommandPalette.vue")['default']
   ReaderShell: typeof import("../../app/components/reader/ReaderShell.vue")['default']
+  ReaderUploader: typeof import("../../app/components/reader/Uploader.vue")['default']
+  ReaderViewer: typeof import("../../app/components/reader/Viewer.vue")['default']
   ReaderEnginePageCurlCanvas: typeof import("../../app/components/reader/engine/PageCurlCanvas.vue")['default']
   ReaderUploadDropZone: typeof import("../../app/components/reader/upload/DropZone.vue")['default']
   NuxtWelcome: typeof import("../../node_modules/nuxt/dist/app/components/welcome.vue")['default']
@@ -41,7 +45,11 @@ interface _GlobalComponents {
   Html: typeof import("../../node_modules/nuxt/dist/head/runtime/components")['Html']
   Body: typeof import("../../node_modules/nuxt/dist/head/runtime/components")['Body']
   NuxtIsland: typeof import("../../node_modules/nuxt/dist/app/components/nuxt-island")['default']
+  LazyAiMarkdown: LazyComponent<typeof import("../../app/components/AiMarkdown.vue")['default']>
+  LazyCommandPalette: LazyComponent<typeof import("../../app/components/CommandPalette.vue")['default']>
   LazyReaderShell: LazyComponent<typeof import("../../app/components/reader/ReaderShell.vue")['default']>
+  LazyReaderUploader: LazyComponent<typeof import("../../app/components/reader/Uploader.vue")['default']>
+  LazyReaderViewer: LazyComponent<typeof import("../../app/components/reader/Viewer.vue")['default']>
   LazyReaderEnginePageCurlCanvas: LazyComponent<typeof import("../../app/components/reader/engine/PageCurlCanvas.vue")['default']>
   LazyReaderUploadDropZone: LazyComponent<typeof import("../../app/components/reader/upload/DropZone.vue")['default']>
   LazyNuxtWelcome: LazyComponent<typeof import("../../node_modules/nuxt/dist/app/components/welcome.vue")['default']>
