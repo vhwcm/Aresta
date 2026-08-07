@@ -26,6 +26,7 @@ Dist/
 coverage/
 .tmp/
 *.sql
+!**/src/main/resources/db/migration/*.sql
 *.sqlite
 *.db
 

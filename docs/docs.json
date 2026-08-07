@@ -1,0 +1,27 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "Aresta Documentation",
+  "logo": {
+    "dark": "/logo_aresta.ico",
+    "light": "/logo_aresta.ico"
+  },
+  "favicon": "/favicon.png",
+  "colors": {
+    "primary": "#0F172A",
+    "light": "#334155",
+    "dark": "#020617"
+  },
+  "navigation": [
+    {
+      "group": "Começando",
+      "pages": [
+        "introducao",
+        "instalacao",
+        "banco_e_usuarios",
+        "livros_e_armazenamento",
+        "systems"
+      ]
+    }
+  ]
+}
