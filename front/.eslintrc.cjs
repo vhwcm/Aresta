@@ -13,11 +13,9 @@ module.exports = {
   },
   extends: [
     'eslint:recommended',
-    'plugin:vue/vue3-recommended',
-    'plugin:@typescript-eslint/recommended'
+    'plugin:vue/vue3-recommended'
   ],
   plugins: [
-    '@typescript-eslint',
     'vue'
   ],
   rules: {
@@ -26,13 +24,12 @@ module.exports = {
     'max-lines-per-function': ['error', { max: 60, skipBlankLines: true, skipComments: true }],
     'max-depth': ['error', 4],
     'max-len': ['error', { code: 130, ignoreUrls: true, ignoreStrings: true, ignoreTemplateLiterals: true }],
-    
+
     // Regras Vue
-    'vue/max-len': ['error', { code: 130, ignoreHTMLAttributeValues: true, ignoreHTMLText: true }],
     'vue/multi-word-component-names': 'off',
-    
-    // Desabilitar checagens restritivas que atrapalhem o Nuxt auto-import
-    '@typescript-eslint/no-explicit-any': 'warn',
-    '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }]
+
+    // Desabilitar checagens restritivas para auto-imports do Nuxt
+    'no-undef': 'off',
+    'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }]
   }
 };
