@@ -27,3 +27,11 @@ coverage/
 .tmp/
 *.sql
 *.sqlite
+*.db
+
+# Build & Tooling Outputs
+.nuxt/
+.output/
+playwright-report/
+test-results/
+
