@@ -1,4 +1,5 @@
 default_install_hook_types: [pre-commit, pre-push]
+exclude: '^(\.nuxt/|\.output/|aresta-back/build/|aresta-back/\.gradle/|front/\.nuxt/|front/\.output/|front/playwright-report/|front/test-results/|node_modules/|storage/)'
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -22,7 +23,7 @@ repos:
     hooks:
       # Quality Gate: Frontend Linter & Rules (Tamanho de arquivo/função, identação)
       - id: eslint-frontend
-        name: ESLint Frontend (Quality Gate: Tamanho & Identação)
+        name: "ESLint Frontend (Quality Gate: Tamanho & Identação)"
         entry: bash -c 'cd front && npx eslint . --ext .js,.ts,.vue'
         language: system
         files: ^front/.*\.(js|ts|vue)$
@@ -30,7 +31,7 @@ repos:
 
       # Quality Gate: Backend Checkstyle (Tamanho de classe/método, identação)
       - id: checkstyle-backend
-        name: Checkstyle Backend (Quality Gate: Tamanho & Identação)
+        name: "Checkstyle Backend (Quality Gate: Tamanho & Identação)"
         entry: bash -c 'if [ -z "$JAVA_HOME" ]; then for d in $HOME/Downloads/idea*/jbr /usr/lib/jvm/*; do if [ -x "$d/bin/java" ]; then export JAVA_HOME="$d"; export PATH="$JAVA_HOME/bin:$PATH"; break; fi; done; fi; cd aresta-back && ./gradlew checkstyleMain'
         language: system
         files: ^aresta-back/src/main/java/.*\.java$
@@ -38,7 +39,7 @@ repos:
 
       # Quality Gate Pre-Push: Frontend Typecheck
       - id: frontend-typecheck
-        name: Frontend Typecheck (Pre-push)
+        name: "Frontend Typecheck (Pre-push)"
         entry: bash -c 'cd front && npm run typecheck'
         language: system
         pass_filenames: false
@@ -46,7 +47,7 @@ repos:
 
       # Quality Gate Pre-Push: Frontend Vitest Tests
       - id: frontend-tests
-        name: Frontend Unit Tests (Pre-push)
+        name: "Frontend Unit Tests (Pre-push)"
         entry: bash -c 'cd front && npm run test'
         language: system
         pass_filenames: false
@@ -54,7 +55,7 @@ repos:
 
       # Quality Gate Pre-Push: Backend Gradle Tests
       - id: backend-tests
-        name: Backend Unit Tests (Pre-push)
+        name: "Backend Unit Tests (Pre-push)"
         entry: bash -c 'if [ -z "$JAVA_HOME" ]; then for d in $HOME/Downloads/idea*/jbr /usr/lib/jvm/*; do if [ -x "$d/bin/java" ]; then export JAVA_HOME="$d"; export PATH="$JAVA_HOME/bin:$PATH"; break; fi; done; fi; cd aresta-back && ./gradlew test'
         language: system
         pass_filenames: false
