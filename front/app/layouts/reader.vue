@@ -19,6 +19,7 @@ const store = useReaderStore()
   inset: 0;
   background: #0a0a0e;
   overflow-y: auto;
+  z-index: 50;
 }
 
 .layout-reader--reading {

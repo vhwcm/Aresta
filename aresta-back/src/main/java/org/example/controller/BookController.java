@@ -55,6 +55,28 @@ public class BookController {
         }
     }
 
+    public void getFile(Context ctx) {
+        long id = ctx.pathParamAsClass("id", Long.class).get();
+        Book book = bookRepository.findById(id)
+                .orElseThrow(() -> new NotFoundResponse("Livro não encontrado com ID: " + id));
+
+        if (book.filePath() == null || book.filePath().isBlank()) {
+            throw new NotFoundResponse("Caminho do arquivo não cadastrado para este livro");
+        }
+
+        File file = new File(book.filePath());
+        if (!file.exists()) {
+            throw new NotFoundResponse("Arquivo do livro não encontrado no servidor: " + book.filePath());
+        }
+
+        try {
+            ctx.result(new FileInputStream(file));
+            ctx.contentType("application/pdf");
+        } catch (FileNotFoundException e) {
+            throw new NotFoundResponse("Erro ao ler o arquivo do livro");
+        }
+    }
+
     public void create(Context ctx) {
         Book body = ctx.bodyAsClass(Book.class);
         if (body.title() == null || body.title().isBlank() || body.filePath() == null || body.filePath().isBlank()) {

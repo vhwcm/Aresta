@@ -19,7 +19,6 @@ export default defineConfig({
     alias: {
       '~/': fileURLToPath(new URL('./app/', import.meta.url)),
       '@/': fileURLToPath(new URL('./app/', import.meta.url)),
-      'foliate-js': fileURLToPath(new URL('./lib/foliate-js', import.meta.url)),
     },
   },
 })

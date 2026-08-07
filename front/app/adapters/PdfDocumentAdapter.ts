@@ -19,7 +19,7 @@ export class PdfDocumentAdapter implements IBookDocument {
     return this._isLoaded
   }
 
-  async load(file: File): Promise<void> {
+  async load(source: File | ArrayBuffer, fileName?: string): Promise<void> {
     const pdfjsLib = await import('pdfjs-dist')
 
     if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
@@ -29,7 +29,18 @@ export class PdfDocumentAdapter implements IBookDocument {
       ).href
     }
 
-    const arrayBuffer = await file.arrayBuffer()
+    let arrayBuffer: ArrayBuffer
+    let defaultTitle = fileName || 'document.pdf'
+
+    if (source instanceof File) {
+      arrayBuffer = await source.arrayBuffer()
+      defaultTitle = source.name
+    } else {
+      arrayBuffer = source
+    }
+
+    defaultTitle = defaultTitle.replace(/\.pdf$/i, '')
+
     const typedArray = new Uint8Array(arrayBuffer)
 
     const loadingTask = pdfjsLib.getDocument({ data: typedArray })
@@ -39,9 +50,9 @@ export class PdfDocumentAdapter implements IBookDocument {
     this._totalPages = pdfDoc.numPages
 
     const metadataResult = await pdfDoc.getMetadata()
-    const info = metadataResult.info as Record<string, string>
+    const info = (metadataResult.info || {}) as Record<string, string>
     this._metadata = {
-      title: info['Title'] || file.name.replace(/\.pdf$/i, ''),
+      title: info['Title'] || defaultTitle,
       author: info['Author'] ?? undefined,
     }
 

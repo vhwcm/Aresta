@@ -68,6 +68,12 @@ public class Main {
         org.example.repository.BookRepository bookRepository = new org.example.repository.JdbcBookRepository(dbManager.getDataSource());
         org.example.controller.BookController bookController = new org.example.controller.BookController(bookRepository);
 
+        org.example.repository.UserBookRepository userBookRepository = new org.example.repository.JdbcUserBookRepository(dbManager.getDataSource());
+        org.example.controller.UserBookController userBookController = new org.example.controller.UserBookController(userBookRepository);
+
+        org.example.repository.GraphRepository graphRepository = new org.example.repository.JdbcGraphRepository(dbManager.getDataSource());
+        org.example.controller.GraphController graphController = new org.example.controller.GraphController(graphRepository);
+
         // 4. Iniciar Javalin REST Server com CORS liberado
         Javalin app = Javalin.create(javalinConfig -> {
             javalinConfig.bundledPlugins.enableCors(cors -> {
@@ -92,12 +98,30 @@ public class Main {
             ));
         });
 
-        // Rotas de Livros
+        // Rotas de Livros Gerais
         app.get("/api/books", bookController::getAll);
         app.get("/api/books/{id}", bookController::getById);
         app.get("/api/books/{id}/cover", bookController::getCover);
+        app.get("/api/books/{id}/file", bookController::getFile);
         app.post("/api/books", bookController::create);
         app.delete("/api/books/{id}", bookController::delete);
+
+        // Rotas da Estante Pessoal do Usuário (user_books)
+        app.get("/api/user-books", userBookController::getUserBooks);
+        app.post("/api/user-books", userBookController::addUserBook);
+        app.patch("/api/user-books/{id}", userBookController::updateUserBook);
+        app.delete("/api/user-books/{id}", userBookController::deleteUserBook);
+        app.delete("/api/user-books/book/{bookId}", userBookController::deleteUserBookByBookId);
+
+        // Rotas do Grafo / Mapa Mental (themes & connections)
+        app.get("/api/graph", graphController::getGraph);
+        app.post("/api/graph/nodes", graphController::createNode);
+        app.put("/api/graph/nodes/{id}", graphController::updateNode);
+        app.delete("/api/graph/nodes/{id}", graphController::deleteNode);
+        app.post("/api/graph/connections", graphController::createConnection);
+        app.delete("/api/graph/connections/{sourceId}/{targetId}", graphController::deleteConnection);
+        app.post("/api/graph/nodes/{id}/books", graphController::linkBookToNode);
+        app.delete("/api/graph/nodes/{id}/books/{userBookId}", graphController::unlinkBookFromNode);
 
         // Filter de Proteção de Rotas Administrativas (/api/users/*)
         app.before("/api/users*", ctx -> {

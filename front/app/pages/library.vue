@@ -5,281 +5,356 @@
       <div class="flex flex-col gap-2">
         <div class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary flex items-center gap-2">
           <BookIcon class="w-3.5 h-3.5" />
-          Acervo
+          Acervo da Aresta
         </div>
         <h1 class="font-editorial text-5xl font-light text-textPrimary leading-tight">
-          Sua Biblioteca
+          Biblioteca & Estante
         </h1>
       </div>
 
       <!-- Tab Navigation -->
       <div class="flex items-center bg-white/5 p-1 rounded-full border border-divider w-max">
         <button 
-          @click="activeTab = 'recommendations'"
+          @click="activeTab = 'catalog'"
           class="px-6 py-2 rounded-full font-interface text-sm font-medium transition-all duration-300 flex items-center gap-2"
-          :class="activeTab === 'recommendations' ? 'bg-white text-black shadow-lg' : 'text-textSecondary hover:text-white'"
+          :class="activeTab === 'catalog' ? 'bg-white text-black shadow-lg' : 'text-textSecondary hover:text-white'"
         >
           <CompassIcon class="w-4 h-4" />
-          Descobrir
+          Catálogo Geral
         </button>
         <button 
-          @click="activeTab = 'my-books'"
+          @click="handleSelectMyBooksTab"
           class="px-6 py-2 rounded-full font-interface text-sm font-medium transition-all duration-300 flex items-center gap-2"
           :class="activeTab === 'my-books' ? 'bg-white text-black shadow-lg' : 'text-textSecondary hover:text-white'"
         >
           <LibraryIcon class="w-4 h-4" />
-          Meus Livros
+          Minha Estante
         </button>
       </div>
     </header>
 
     <div class="h-px bg-divider w-full"></div>
 
-    <!-- Recommendations View -->
-    <section v-if="activeTab === 'recommendations'" class="flex flex-col gap-16 animate-in fade-in duration-500">
-      
-      <!-- Destaque / Curadoria -->
-      <div class="flex flex-col gap-6">
-        <div class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary flex items-center gap-2">
-          <StarIcon class="w-3.5 h-3.5 text-accent" />
-          Curadoria da IA
+    <!-- Catálogo Geral View (Todos os Livros do Banco) -->
+    <section v-if="activeTab === 'catalog'" class="flex flex-col gap-10 animate-in fade-in duration-500">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="font-editorial text-2xl text-textPrimary font-light">Todos os Livros do Acervo</h2>
+          <p class="text-xs text-textSecondary font-interface mt-1">
+            Escolha qualquer livro para adicionar à sua estante pessoal e sincronizar com o Mapa Mental.
+          </p>
         </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div class="relative group cursor-pointer overflow-hidden rounded-3xl border border-divider bg-bgPanel aspect-auto md:aspect-[4/3] flex items-end p-8">
-            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent z-10 transition-opacity duration-500"></div>
-            <!-- Mock placeholder para capa de livro, poderia usar um NuxtImg -->
-            <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=1000&auto=format&fit=crop')] bg-cover bg-center opacity-40 group-hover:opacity-60 transition-all duration-700 group-hover:scale-105"></div>
-            
-            <div class="relative z-20 flex flex-col gap-3 translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-              <div class="flex items-center gap-2">
-                <span class="bg-accent text-white font-technical text-[9px] uppercase font-bold tracking-widest px-2 py-1 rounded">Recomendado</span>
-                <span class="text-white/70 font-technical text-[10px]">Filosofia</span>
-              </div>
-              <h3 class="font-editorial text-3xl font-light text-white leading-tight">Meditações</h3>
-              <p class="font-interface text-sm text-white/70 line-clamp-2 max-w-md">
-                Diário pessoal do imperador romano Marco Aurélio, oferecendo insights atemporais sobre resiliência, estoicismo e a condição humana.
-              </p>
-              <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-500 mt-2">
-                <span class="font-technical text-xs text-white uppercase tracking-widest flex items-center gap-2">
-                  Adicionar à biblioteca <ArrowRightIcon class="w-3 h-3" />
-                </span>
-              </div>
-            </div>
-          </div>
-          
-          <div class="flex flex-col gap-4 justify-center px-4">
-            <h4 class="font-editorial text-2xl font-light text-textPrimary">Por que recomendamos para você?</h4>
-            <p class="font-interface text-textSecondary leading-relaxed">
-              Baseado na sua leitura recente de <em>"A Estrutura das Revoluções Científicas"</em>, notamos seu interesse por obras que desafiam a percepção da realidade e do eu. Marco Aurélio oferece uma abordagem prática e introspectiva que complementa a visão sistêmica de Kuhn.
-            </p>
-            <div class="flex gap-2 mt-2">
-              <span class="bg-white/5 border border-divider px-3 py-1.5 rounded-full text-xs font-interface text-textPrimary">Estoicismo</span>
-              <span class="bg-white/5 border border-divider px-3 py-1.5 rounded-full text-xs font-interface text-textPrimary">Clássicos</span>
-              <span class="bg-white/5 border border-divider px-3 py-1.5 rounded-full text-xs font-interface text-textPrimary">Introspecção</span>
-            </div>
-          </div>
-        </div>
+        <span class="text-xs font-technical text-textSecondary bg-white/5 border border-divider px-3 py-1 rounded-full">
+          {{ catalogBooks.length }} Obras Disponíveis
+        </span>
       </div>
 
-      <div class="h-px bg-divider w-full"></div>
+      <!-- Loading State -->
+      <div v-if="catalogLoading" class="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <div v-for="i in 4" :key="i" class="aspect-[2/3] bg-white/5 rounded-2xl animate-pulse border border-divider"></div>
+      </div>
 
-      <!-- Tendências -->
-      <div class="flex flex-col gap-8">
-        <div class="flex items-center justify-between">
-          <div class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary">
-            Em Alta na Aresta
+      <!-- Grid de Livros do Catálogo -->
+      <div v-else class="grid grid-cols-2 md:grid-cols-4 gap-8">
+        <div 
+          v-for="book in catalogBooks" 
+          :key="book.id" 
+          class="flex flex-col gap-4 group relative bg-bgPanel/60 border border-divider rounded-2xl p-4 hover:border-accent/50 transition-all duration-300 shadow-xl"
+        >
+          <!-- Capa do Livro -->
+          <div class="aspect-[2/3] bg-white/5 border border-divider rounded-xl overflow-hidden relative shadow-lg group-hover:scale-[1.02] transition-transform duration-500">
+            <img 
+              v-if="book.coverPath" 
+              :src="getCoverUrl(book.coverPath, book.id)" 
+              :alt="book.title" 
+              class="w-full h-full object-cover"
+            />
+            <div v-else class="w-full h-full bg-gradient-to-br from-neutral-800 to-neutral-900 flex items-center justify-center p-4 text-center">
+              <span class="font-editorial text-lg text-white/60 line-clamp-3">{{ book.title }}</span>
+            </div>
+
+            <!-- Overlay de Ação ao Passar o Mouse -->
+            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4 gap-2">
+              <NuxtLink 
+                :to="`/reader?bookId=${book.id}`" 
+                class="w-full bg-white text-black font-interface text-xs font-semibold py-2 rounded-xl flex items-center justify-center gap-2 hover:bg-white/90 transition-all"
+              >
+                <BookOpenIcon class="w-3.5 h-3.5" /> Ler Agora
+              </NuxtLink>
+            </div>
           </div>
-          <button class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary hover:text-white transition-colors">
-            Ver todos
-          </button>
-        </div>
-        
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-          <div v-for="book in trendingBooks" :key="book.id" class="flex flex-col gap-4 group cursor-pointer">
-            <div class="aspect-[2/3] bg-white/5 border border-divider rounded-xl overflow-hidden relative shadow-lg">
-              <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 flex flex-col justify-end p-4">
-                <button class="bg-white text-black font-interface text-xs font-medium py-2 rounded flex items-center justify-center gap-2 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-                  <PlusIcon class="w-3 h-3" /> Adicionar
+
+          <!-- Informações e Botão de Pegar / Remover -->
+          <div class="flex flex-col gap-2 flex-1 justify-between">
+            <h3 class="font-editorial text-lg font-light text-textPrimary leading-snug group-hover:text-accent transition-colors line-clamp-2">
+              {{ book.title }}
+            </h3>
+
+            <div class="pt-2 border-t border-divider/60">
+              <!-- Se o usuário já pegou este livro -->
+              <div v-if="isBookInShelf(book.id)" class="flex flex-col gap-2">
+                <div class="flex items-center gap-1.5 text-[10px] font-technical uppercase font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 rounded-full w-max">
+                  <CheckCircleIcon class="w-3 h-3" /> Na sua estante
+                </div>
+                <button 
+                  @click="handleRemoveFromShelf(book.id)" 
+                  class="w-full text-[11px] text-rose-400 hover:text-rose-300 font-technical hover:underline flex items-center justify-center gap-1 py-1"
+                >
+                  <TrashIcon class="w-3 h-3" /> Remover da Estante
                 </button>
               </div>
-              <!-- Placeholder de capa com cor/gradiente gerado -->
-              <div class="w-full h-full" :class="book.colorClass">
-                <div class="w-full h-full flex items-center justify-center p-4 text-center opacity-30 font-editorial text-xl font-light text-white mix-blend-overlay">
-                  {{ book.title }}
-                </div>
-              </div>
-            </div>
-            <div class="flex flex-col gap-1">
-              <h5 class="font-editorial text-lg font-light text-textPrimary leading-tight group-hover:text-accent transition-colors line-clamp-1">{{ book.title }}</h5>
-              <span class="font-interface text-xs text-textSecondary">{{ book.author }}</span>
+
+              <!-- Se ainda não pegou -->
+              <button 
+                v-else 
+                @click="handleTakeBook(book.id)" 
+                class="w-full bg-accent/20 hover:bg-accent text-accent hover:text-white border border-accent/40 font-interface text-xs font-semibold py-2 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-md"
+              >
+                <PlusIcon class="w-3.5 h-3.5" /> Pegar Livro
+              </button>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- My Books View -->
-    <section v-else class="flex flex-col gap-12 animate-in fade-in duration-500">
+    <!-- My Books View (Estante Pessoal do Usuário Logado) -->
+    <section v-else class="flex flex-col gap-10 animate-in fade-in duration-500">
       
-      <!-- Status Cards -->
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        <div class="p-6 rounded-2xl bg-white/5 border border-divider flex flex-col gap-2">
+      <!-- Card de Status do Usuário -->
+      <div v-if="auth.isLoggedIn.value" class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div class="p-6 rounded-2xl bg-white/5 border border-divider flex flex-col gap-2 shadow-lg">
           <span class="font-technical text-[10px] uppercase tracking-widest text-textSecondary">Lendo Atualmente</span>
-          <span class="font-editorial text-4xl text-textPrimary">2</span>
+          <span class="font-editorial text-4xl text-textPrimary">{{ countByStatus('LENDO') }}</span>
         </div>
-        <div class="p-6 rounded-2xl bg-white/5 border border-divider flex flex-col gap-2">
-          <span class="font-technical text-[10px] uppercase tracking-widest text-textSecondary">Concluídos este ano</span>
-          <span class="font-editorial text-4xl text-textPrimary">14</span>
+        <div class="p-6 rounded-2xl bg-white/5 border border-divider flex flex-col gap-2 shadow-lg">
+          <span class="font-technical text-[10px] uppercase tracking-widest text-textSecondary">Livros Concluídos</span>
+          <span class="font-editorial text-4xl text-textPrimary">{{ countByStatus('LIDO') }}</span>
         </div>
-        <div class="p-6 rounded-2xl bg-white/5 border border-divider flex flex-col gap-2">
-          <span class="font-technical text-[10px] uppercase tracking-widest text-textSecondary">Conhecimento (Nós)</span>
-          <span class="font-editorial text-4xl text-accent">3,402</span>
+        <div class="p-6 rounded-2xl bg-white/5 border border-divider flex flex-col gap-2 shadow-lg">
+          <span class="font-technical text-[10px] uppercase tracking-widest text-textSecondary">Total na sua Estante</span>
+          <span class="font-editorial text-4xl text-accent">{{ userBooks.length }}</span>
         </div>
       </div>
 
-      <!-- Lista de Leitura -->
-      <div class="flex flex-col gap-8">
-        <div class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary">
-          Sua Estante
-        </div>
+      <!-- Filtros por Status -->
+      <div class="flex items-center gap-3 border-b border-divider pb-4">
+        <span class="text-xs font-technical uppercase font-bold text-textSecondary">Filtrar:</span>
+        <button 
+          v-for="filter in ['TODOS', 'LENDO', 'LIDO', 'QUERO_LER']" 
+          :key="filter"
+          @click="statusFilter = filter"
+          class="px-3 py-1 rounded-xl text-xs font-technical transition-all"
+          :class="statusFilter === filter ? 'bg-accent text-white font-bold shadow' : 'bg-white/5 text-textSecondary hover:text-white'"
+        >
+          {{ getFilterLabel(filter) }}
+        </button>
+      </div>
 
-        <div class="flex flex-col gap-4">
-          <div v-for="item in myBooks" :key="item.id" class="group relative bg-white/[0.02] hover:bg-white/[0.04] border border-divider rounded-2xl p-4 sm:p-6 transition-all duration-300 flex flex-col sm:flex-row sm:items-center gap-6 overflow-hidden">
-            <!-- Capa do Livro em Thumbnail -->
-            <div class="w-16 h-24 shrink-0 rounded-lg shadow-md overflow-hidden relative" :class="item.colorClass">
-               <div class="absolute inset-0 bg-black/20"></div>
-            </div>
+      <!-- Lista da Estante -->
+      <div v-if="filteredUserBooks.length > 0" class="flex flex-col gap-4">
+        <div 
+          v-for="item in filteredUserBooks" 
+          :key="item.userBookId" 
+          class="group relative bg-white/[0.02] hover:bg-white/[0.04] border border-divider rounded-2xl p-6 transition-all duration-300 flex flex-col sm:flex-row sm:items-center gap-6 shadow-lg"
+        >
+          <!-- Capa -->
+          <div class="w-16 h-24 shrink-0 rounded-xl border border-divider overflow-hidden bg-white/5 shadow-md flex items-center justify-center">
+            <img v-if="item.coverPath" :src="getCoverUrl(item.coverPath, item.bookId)" class="w-full h-full object-cover" />
+            <BookOpenIcon v-else class="w-6 h-6 text-textSecondary" />
+          </div>
 
-            <!-- Info do Livro -->
-            <div class="flex-1 flex flex-col gap-2">
-              <div class="flex items-start justify-between gap-4">
-                <div>
-                  <h4 class="font-editorial text-xl sm:text-2xl font-light text-textPrimary group-hover:text-white transition-colors">{{ item.title }}</h4>
-                  <span class="font-interface text-sm text-textSecondary">{{ item.author }}</span>
-                </div>
-                <!-- Status Badge -->
-                <div class="shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-technical uppercase tracking-wider" 
-                     :class="item.status === 'reading' ? 'bg-accent/10 text-accent border border-accent/20' : 'bg-white/5 text-textSecondary border border-divider'">
-                  <div class="w-1.5 h-1.5 rounded-full" :class="item.status === 'reading' ? 'bg-accent animate-pulse' : 'bg-textSecondary'"></div>
-                  {{ item.status === 'reading' ? 'Lendo' : 'Concluído' }}
-                </div>
+          <!-- Conteúdo -->
+          <div class="flex-1 flex flex-col gap-3">
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <h3 class="font-editorial text-2xl font-light text-textPrimary group-hover:text-accent transition-colors">{{ item.title }}</h3>
               </div>
 
-              <!-- Progresso (Apenas se estiver lendo) -->
-              <div v-if="item.status === 'reading'" class="flex flex-col gap-1.5 mt-2">
-                <div class="flex justify-between text-xs font-technical text-textSecondary">
-                  <span>{{ item.progress }}% concluído</span>
-                  <span>Última leitura: {{ item.lastRead }}</span>
-                </div>
-                <div class="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
-                  <div class="h-full bg-accent rounded-full" :style="{ width: `${item.progress}%` }"></div>
-                </div>
-              </div>
+              <!-- Seletor de Status -->
+              <select 
+                :value="item.status" 
+                @change="handleStatusChange(item.userBookId, ($event.target as HTMLSelectElement).value, item.currentPage)"
+                class="bg-bgApp border border-divider rounded-xl px-3 py-1.5 text-xs text-textPrimary font-technical focus:outline-none focus:border-accent"
+              >
+                <option value="LENDO">📖 Lendo</option>
+                <option value="LIDO">✅ Lido</option>
+                <option value="QUERO_LER">📌 Quero Ler</option>
+                <option value="ABANDONADO">⏸️ Abandonado</option>
+              </select>
             </div>
 
-            <!-- Botões de Ação na Hover (Desktop) -->
-            <div class="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-4 group-hover:translate-x-0 hidden sm:flex">
-              <button class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white hover:text-black transition-colors" title="Continuar Leitura">
-                <PlayIcon class="w-4 h-4 ml-0.5" />
-              </button>
-              <button class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-textSecondary hover:text-white hover:bg-white/10 transition-colors" title="Ver Grafo de Conhecimento">
-                <NetworkIcon class="w-4 h-4" />
-              </button>
+            <!-- Progresso de Página -->
+            <div class="flex items-center gap-4 text-xs font-technical text-textSecondary">
+              <span>Página Atual:</span>
+              <input 
+                type="number" 
+                :value="item.currentPage" 
+                min="0"
+                @change="handlePageChange(item.userBookId, item.status, Number(($event.target as HTMLInputElement).value))"
+                class="w-20 bg-bgApp border border-divider rounded-lg px-2 py-1 text-xs text-textPrimary text-center focus:outline-none focus:border-accent"
+              />
             </div>
-            
-            <!-- Ações Mobile -->
-            <div class="flex gap-2 sm:hidden mt-2">
-               <button class="flex-1 bg-white/10 py-2 rounded text-white text-sm font-interface hover:bg-white hover:text-black transition-colors">Continuar</button>
-               <button class="w-10 h-10 bg-white/5 rounded flex items-center justify-center text-textSecondary"><NetworkIcon class="w-4 h-4" /></button>
-            </div>
+          </div>
+
+          <!-- Ações -->
+          <div class="flex items-center gap-3 shrink-0">
+            <NuxtLink 
+              :to="`/reader?bookId=${item.bookId}&page=${item.currentPage}`" 
+              class="px-4 py-2.5 rounded-xl bg-accent text-white font-interface text-xs font-semibold hover:bg-accent/90 transition-all shadow-md flex items-center gap-2"
+              title="Ler Livro"
+            >
+              <BookOpenIcon class="w-4 h-4" />
+              <span>Ler Livro</span>
+            </NuxtLink>
+
+            <NuxtLink 
+              to="/grafo" 
+              class="p-3 rounded-xl bg-white/5 border border-divider text-textSecondary hover:text-white transition-all"
+              title="Ver no Mapa Mental"
+            >
+              <NetworkIcon class="w-4 h-4" />
+            </NuxtLink>
+
+            <button 
+              @click="handleDeleteFromShelf(item.userBookId)" 
+              class="p-3 rounded-xl border border-rose-500/20 text-rose-400 hover:bg-rose-500/10 transition-all"
+              title="Remover da Estante"
+            >
+              <Trash2Icon class="w-4 h-4" />
+            </button>
           </div>
         </div>
       </div>
+
+      <!-- Estado Vazio -->
+      <div v-else class="text-center py-16 border border-dashed border-divider rounded-3xl flex flex-col items-center gap-4">
+        <LibraryIcon class="w-10 h-10 text-textSecondary/40" />
+        <h3 class="font-editorial text-xl text-textPrimary font-light">Sua estante está vazia nesta categoria</h3>
+        <p class="text-xs text-textSecondary font-interface">
+          Acesse a aba <strong>Catálogo Geral</strong> para pegar livros e adicioná-los à sua biblioteca.
+        </p>
+        <button @click="activeTab = 'catalog'" class="px-5 py-2.5 rounded-xl bg-accent text-white font-semibold text-xs hover:bg-accent/90 transition-all">
+          Explorar Catálogo
+        </button>
+      </div>
     </section>
+
+    <!-- Modal de Convite ao Login -->
+    <div v-if="isLoginModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
+      <div class="bg-bgPanel border border-divider rounded-3xl w-full max-w-md p-6 shadow-2xl space-y-6 text-textPrimary text-center">
+        <div class="w-12 h-12 rounded-full bg-accent/20 border border-accent/40 text-accent flex items-center justify-center mx-auto">
+          <LogInIcon class="w-6 h-6" />
+        </div>
+
+        <div class="space-y-2">
+          <h3 class="text-xl font-bold font-editorial">Faça Login para Pegar Livros</h3>
+          <p class="text-xs text-textSecondary font-interface leading-relaxed">
+            Para montar sua estante pessoal, acompanhar seu progresso de leitura e gerar seu Mapa Mental de conhecimento, entre com sua conta.
+          </p>
+        </div>
+
+        <div class="flex items-center justify-center gap-3 pt-2">
+          <button @click="isLoginModalOpen = false" class="px-5 py-2.5 rounded-xl border border-divider text-xs text-textSecondary hover:text-white transition-all">
+            Continuar Explorando
+          </button>
+          <NuxtLink to="/login" class="px-6 py-2.5 rounded-xl bg-accent text-white font-semibold text-xs hover:bg-accent/90 transition-all shadow-lg">
+            Fazer Login
+          </NuxtLink>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { 
   BookIcon, 
   CompassIcon, 
   LibraryIcon, 
-  StarIcon, 
-  ArrowRightIcon, 
   PlusIcon,
   PlayIcon,
-  NetworkIcon
+  NetworkIcon,
+  CheckCircleIcon,
+  TrashIcon,
+  Trash2Icon,
+  BookOpenIcon,
+  LogInIcon
 } from 'lucide-vue-next'
 
-const activeTab = ref<'recommendations' | 'my-books'>('recommendations')
+import { useCatalog } from '~/composables/useCatalog'
+import { useUserBooks } from '~/composables/useUserBooks'
+import { useAuth } from '~/composables/useAuth'
+import { getCoverUrl } from '~/utils/cover'
 
-// Mock Data para Descobrir / Em Alta
-const trendingBooks = [
-  {
-    id: 1,
-    title: 'O Mal-Estar na Civilização',
-    author: 'Sigmund Freud',
-    colorClass: 'bg-gradient-to-br from-neutral-800 to-neutral-900',
-  },
-  {
-    id: 2,
-    title: 'O Mito de Sísifo',
-    author: 'Albert Camus',
-    colorClass: 'bg-gradient-to-br from-stone-700 to-stone-900',
-  },
-  {
-    id: 3,
-    title: 'Thinking, Fast and Slow',
-    author: 'Daniel Kahneman',
-    colorClass: 'bg-gradient-to-br from-slate-800 to-slate-900',
-  },
-  {
-    id: 4,
-    title: 'A Vida Não É Útil',
-    author: 'Ailton Krenak',
-    colorClass: 'bg-gradient-to-br from-emerald-900/80 to-neutral-900',
-  }
-]
+const activeTab = ref<'catalog' | 'my-books'>('catalog')
+const statusFilter = ref('TODOS')
+const isLoginModalOpen = ref(false)
 
-// Mock Data para Meus Livros
-const myBooks = [
-  {
-    id: 1,
-    title: 'A Estrutura das Revoluções Científicas',
-    author: 'Thomas S. Kuhn',
-    status: 'reading',
-    progress: 35,
-    lastRead: 'Hoje',
-    colorClass: 'bg-gradient-to-br from-orange-900/40 to-neutral-900',
-  },
-  {
-    id: 2,
-    title: 'Sapiens: Uma Breve História da Humanidade',
-    author: 'Yuval Noah Harari',
-    status: 'reading',
-    progress: 82,
-    lastRead: 'Ontem',
-    colorClass: 'bg-gradient-to-br from-blue-900/40 to-neutral-900',
-  },
-  {
-    id: 3,
-    title: 'Design of Everyday Things',
-    author: 'Don Norman',
-    status: 'completed',
-    progress: 100,
-    lastRead: '12 de Julho',
-    colorClass: 'bg-gradient-to-br from-zinc-800 to-neutral-900',
-  },
-  {
-    id: 4,
-    title: 'As Veias Abertas da América Latina',
-    author: 'Eduardo Galeano',
-    status: 'completed',
-    progress: 100,
-    lastRead: '20 de Junho',
-    colorClass: 'bg-gradient-to-br from-red-900/40 to-neutral-900',
+const { books: catalogBooks, loading: catalogLoading, fetchCatalog } = useCatalog()
+const { userBooks, fetchUserBooks, addUserBook, updateUserBook, deleteUserBook, deleteUserBookByBookId, isBookInShelf } = useUserBooks()
+const auth = useAuth()
+
+const handleSelectMyBooksTab = () => {
+  if (!auth.isLoggedIn.value) {
+    isLoginModalOpen.value = true
+    return
   }
-]
+  activeTab.value = 'my-books'
+}
+
+const handleTakeBook = async (bookId: number) => {
+  if (!auth.isLoggedIn.value) {
+    isLoginModalOpen.value = true
+    return
+  }
+  await addUserBook(bookId, 'QUERO_LER', 0)
+}
+
+const handleRemoveFromShelf = async (bookId: number) => {
+  if (confirm('Tem certeza que deseja remover este livro da sua estante?')) {
+    await deleteUserBookByBookId(bookId)
+  }
+}
+
+const handleDeleteFromShelf = async (userBookId: number) => {
+  if (confirm('Tem certeza que deseja remover este livro da sua estante?')) {
+    await deleteUserBook(userBookId)
+  }
+}
+
+const handleStatusChange = async (userBookId: number, status: string, page: number) => {
+  await updateUserBook(userBookId, status, page)
+}
+
+const handlePageChange = async (userBookId: number, status: string, page: number) => {
+  await updateUserBook(userBookId, status, page)
+}
+
+const countByStatus = (status: string) => {
+  return userBooks.value.filter(b => b.status === status).length
+}
+
+const filteredUserBooks = computed(() => {
+  if (statusFilter.value === 'TODOS') return userBooks.value
+  return userBooks.value.filter(b => b.status === statusFilter.value)
+})
+
+const getFilterLabel = (filter: string) => {
+  switch (filter) {
+    case 'TODOS': return 'Todos'
+    case 'LENDO': return 'Lendo'
+    case 'LIDO': return 'Lidos'
+    case 'QUERO_LER': return 'Quero Ler'
+    default: return filter
+  }
+}
+
+onMounted(() => {
+  fetchCatalog()
+  if (auth.isLoggedIn.value) {
+    fetchUserBooks()
+  }
+})
 </script>

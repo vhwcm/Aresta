@@ -27,7 +27,7 @@ export interface IBookDocument {
   readonly totalPages: number
   readonly isLoaded: boolean
 
-  load(file: File): Promise<void>
+  load(source: File | ArrayBuffer, fileName?: string): Promise<void>
   getPage(pageNumber: number): Promise<PageData>
   destroy(): void
 }

@@ -29,6 +29,8 @@ coverage/
 !**/src/main/resources/db/migration/*.sql
 *.sqlite
 *.db
+*.db-shm
+*.db-wal
 
 # Build & Tooling Outputs
 .nuxt/

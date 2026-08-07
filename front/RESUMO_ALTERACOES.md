@@ -27,4 +27,22 @@ Adicionar a flag `IS_PRODUCTION` nos arquivos `.env`, `.env.example` e `.env.exe
 - [`app/composables/reader/useBookPageTurn.ts`](file:///home/exati/projetos/Aresta/app/composables/reader/useBookPageTurn.ts): Substituído `console.warn` por `logWarn`.
 
 ### 4. Cobertura de Testes Unitários
-- [`tests/unit/utils/logger.test.ts`](file:///home/exati/projetos/Aresta/tests/unit/utils/logger.test.ts): Criados 8 testes unitários validando a detecção do modo produção, supressão de logs e formatação de mensagens de erro.
+- [`tests/unit/utils/logger.test.ts`](file:///home/morpho/Aresta/front/tests/unit/utils/logger.test.ts): Criados 8 testes unitários validando a detecção do modo produção, supressão de logs e formatação de mensagens de erro.
+- [`tests/unit/composables/useGraph.test.ts`](file:///home/morpho/Aresta/front/tests/unit/composables/useGraph.test.ts): Criados testes unitários validando o composable do Grafo e requisições REST.
+- [`tests/unit/composables/useUserBooks.test.ts`](file:///home/morpho/Aresta/front/tests/unit/composables/useUserBooks.test.ts): Criados testes unitários validando o composable de gerenciamento da estante do usuário.
+
+---
+
+## 🌌 5. Módulo de Grafo & Mapa Mental (Obsidian Style)
+
+- **Novos Composables & Interfaces**:
+  - `app/interfaces/graph.ts`: Definição de interfaces TypeScript (`GraphNode`, `GraphEdge`, `UserBookItem`, `GraphData`).
+  - `app/composables/useGraph.ts`: Manipulação de nós, conexões e vínculo de livros no mapa mental.
+  - `app/composables/useUserBooks.ts`: Gerenciamento da estante pessoal de livros e progresso de leitura.
+- **Novos Componentes**:
+  - `app/components/GraphCanvas.vue`: Renderizador interativo em D3.js (com forças físicas, zoom, arrasto e glow de nós).
+  - `app/components/NodeDrawer.vue`: Painel de inspeção lateral para visualização dos livros conectados, alteração de status e edição do nó.
+  - `app/components/CreateNodeModal.vue` e `app/components/ConnectNodesModal.vue`: Modais interativos.
+- **Página de Navegação**:
+  - `app/pages/grafo.vue`: Tela inteira do Mapa Mental.
+  - `app/layouts/default.vue`: Adicionado atalho para `/grafo` na barra lateral de navegação.

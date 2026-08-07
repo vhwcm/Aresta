@@ -22,32 +22,34 @@
     </header>
 
     <main class="reader-viewer__canvas-area">
-      <button
-        class="reader-viewer__nav-btn reader-viewer__nav-btn--prev"
-        :disabled="store.isFirstPage || isTransitioning"
-        @click="pageRenderer?.previous()"
-        aria-label="Página anterior"
-        id="btn-prev-page"
-      >
-        ‹
-      </button>
+      <div class="reader-viewer__stage-container">
+        <button
+          class="reader-viewer__nav-btn reader-viewer__nav-btn--prev"
+          :disabled="store.isFirstPage || isTransitioning"
+          @click="pageRenderer?.previous()"
+          aria-label="Página anterior"
+          id="btn-prev-page"
+        >
+          ‹
+        </button>
 
-      <div class="reader-viewer__book-stage" id="book-stage">
-        <ReaderEnginePageCurlCanvas
-          ref="pageRenderer"
-          @transition-state="isTransitioning = $event"
-        />
+        <div class="reader-viewer__book-stage" id="book-stage">
+          <ReaderEnginePageCurlCanvas
+            ref="pageRenderer"
+            @transition-state="isTransitioning = $event"
+          />
+        </div>
+
+        <button
+          class="reader-viewer__nav-btn reader-viewer__nav-btn--next"
+          :disabled="store.isLastPage || isTransitioning"
+          @click="pageRenderer?.next()"
+          aria-label="Próxima página"
+          id="btn-next-page"
+        >
+          ›
+        </button>
       </div>
-
-      <button
-        class="reader-viewer__nav-btn reader-viewer__nav-btn--next"
-        :disabled="store.isLastPage || isTransitioning"
-        @click="pageRenderer?.next()"
-        aria-label="Próxima página"
-        id="btn-next-page"
-      >
-        ›
-      </button>
     </main>
   </div>
 </template>
@@ -159,9 +161,22 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
   padding: 1.5rem;
   overflow: hidden;
+  position: relative;
+  width: 100%;
+}
+
+.reader-viewer__stage-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  max-width: min(calc(100vw - 120px), 960px);
+  gap: 1.25rem;
+  margin: 0 auto;
+  position: relative;
 }
 
 .reader-viewer__book-stage {
@@ -170,11 +185,11 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
   display: flex;
   align-items: center;
   justify-content: center;
-  max-width: calc(100% - 120px);
+  min-width: 0;
 }
 
 .reader-viewer__nav-btn {
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.06);
   border: 1px solid var(--color-border);
   color: var(--color-text-secondary);
   font-size: 2rem;
@@ -187,13 +202,16 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.2s;
+  z-index: 20;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .reader-viewer__nav-btn:not(:disabled):hover {
-  background: rgba(124, 106, 247, 0.12);
-  border-color: rgba(124, 106, 247, 0.4);
+  background: rgba(124, 106, 247, 0.2);
+  border-color: rgba(124, 106, 247, 0.5);
   color: var(--color-accent);
+  transform: scale(1.05);
 }
 
 .reader-viewer__nav-btn:disabled {

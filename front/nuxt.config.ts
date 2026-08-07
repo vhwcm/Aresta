@@ -30,9 +30,7 @@ export default defineNuxtConfig({
 
   ssr: true,
 
-  alias: {
-    'foliate-js': fileURLToPath(new URL('./lib/foliate-js', import.meta.url)),
-  },
+
 
   vite: {
     optimizeDeps: {

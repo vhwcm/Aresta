@@ -1,6 +1,13 @@
 plugins {
     id("java")
     id("application")
+    id("checkstyle")
+}
+
+checkstyle {
+    toolVersion = "10.15.0"
+    configFile = file("${rootDir}/config/checkstyle/checkstyle.xml")
+    isIgnoreFailures = false
 }
 
 application {

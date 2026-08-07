@@ -15,6 +15,10 @@
         <BrainIcon class="w-5 h-5" />
       </NuxtLink>
 
+      <NuxtLink to="/grafo" class="p-3 rounded-xl transition-all duration-300" :class="route.path.startsWith('/grafo') ? 'bg-white text-black shadow-lg hover:scale-105' : 'text-textSecondary opacity-40 hover:opacity-100 hover:text-white'" title="Mapa Mental / Grafo">
+        <NetworkIcon class="w-5 h-5 text-accent" />
+      </NuxtLink>
+
       <NuxtLink to="/por-que-ler" class="p-3 rounded-xl transition-all duration-300" :class="route.path.startsWith('/por-que-ler') ? 'bg-white text-black shadow-lg hover:scale-105' : 'text-textSecondary opacity-40 hover:opacity-100 hover:text-white'" title="Por que ler ainda importa">
         <FileTextIcon class="w-5 h-5" />
       </NuxtLink>

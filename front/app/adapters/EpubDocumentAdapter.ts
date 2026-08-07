@@ -69,10 +69,21 @@ export class EpubDocumentAdapter implements IBookDocument {
     return this._isLoaded
   }
 
-  async load(file: File): Promise<void> {
-    const { EPUB } = await import(/* @vite-ignore */ 'foliate-js/epub.js')
+  async load(source: File | ArrayBuffer, fileName?: string): Promise<void> {
+    const { EPUB } = await import('foliate-js/epub.js')
 
-    const arrayBuffer = await file.arrayBuffer()
+    let arrayBuffer: ArrayBuffer
+    let defaultTitle = fileName || 'document.epub'
+
+    if (source instanceof File) {
+      arrayBuffer = await source.arrayBuffer()
+      defaultTitle = source.name
+    } else {
+      arrayBuffer = source
+    }
+
+    defaultTitle = defaultTitle.replace(/\.epub$/i, '')
+
     const loader = await buildEpubLoader(arrayBuffer)
 
     const epub = new EPUB(loader) as FoliateEpub
@@ -81,7 +92,7 @@ export class EpubDocumentAdapter implements IBookDocument {
 
     const meta = epub.metadata ?? {}
     this._metadata = {
-      title: String(meta['title'] ?? file.name.replace(/\.epub$/i, '')),
+      title: String(meta['title'] ?? defaultTitle),
       author: meta['creator'] ? String(meta['creator']) : undefined,
       language: meta['language'] ? String(meta['language']) : undefined,
       description: meta['description'] ? String(meta['description']) : undefined,

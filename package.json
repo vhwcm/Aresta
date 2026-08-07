@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "start": "./start.sh",
-    "dev": "./start.sh"
+    "dev": "./start.sh",
+    "setup:hooks": "bash scripts/setup-hooks.sh"
   }
 }

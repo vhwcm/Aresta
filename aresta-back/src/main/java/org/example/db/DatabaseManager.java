@@ -42,6 +42,12 @@ public class DatabaseManager implements AutoCloseable {
                 .locations("classpath:db/migration")
                 .load();
 
+        try {
+            flyway.repair();
+        } catch (Exception e) {
+            logger.warn("Aviso ao executar Flyway repair: {}", e.getMessage());
+        }
+
         int migrationCount = flyway.migrate().migrationsExecuted;
         logger.info("Flyway concluiu com sucesso. Migrações executadas: {}", migrationCount);
 
