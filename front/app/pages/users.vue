@@ -15,7 +15,7 @@
         </p>
       </div>
 
-      <button 
+      <button
         @click="openCreateModal"
         class="bg-white text-black font-interface text-sm font-medium px-5 py-2.5 rounded-full hover:bg-gray-200 transition-all flex items-center gap-2 shadow-lg self-start md:self-auto cursor-pointer"
       >
@@ -28,7 +28,7 @@
     <section class="flex flex-col sm:flex-row items-center gap-4 bg-white/5 border border-divider p-4 rounded-2xl">
       <div class="relative flex-1 w-full">
         <SearchIcon class="w-4 h-4 text-textSecondary absolute left-4 top-1/2 -translate-y-1/2" />
-        <input 
+        <input
           v-model="searchQuery"
           type="text"
           placeholder="Buscar por nome ou email..."
@@ -37,7 +37,7 @@
       </div>
 
       <div class="flex items-center gap-3 w-full sm:w-auto">
-        <select 
+        <select
           v-model="selectedRole"
           class="bg-black/40 border border-divider rounded-xl px-4 py-2.5 text-xs text-textPrimary focus:outline-none focus:border-accent transition-colors"
         >
@@ -46,7 +46,7 @@
           <option value="USER">USER</option>
         </select>
 
-        <select 
+        <select
           v-model="selectedStatus"
           class="bg-black/40 border border-divider rounded-xl px-4 py-2.5 text-xs text-textPrimary focus:outline-none focus:border-accent transition-colors"
         >
@@ -72,8 +72,8 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-divider/50 font-interface text-sm text-textPrimary">
-            <tr 
-              v-for="userItem in filteredUsers" 
+            <tr
+              v-for="userItem in filteredUsers"
               :key="userItem.id"
               class="hover:bg-white/[0.03] transition-colors group"
             >
@@ -87,7 +87,7 @@
                 </div>
               </td>
               <td class="px-6 py-4">
-                <span 
+                <span
                   class="font-technical text-[10px] uppercase font-semibold px-2.5 py-1 rounded-md border"
                   :class="userItem.role === 'ADMIN' ? 'bg-accent/10 border-accent/30 text-accent' : 'bg-white/5 border-divider text-textSecondary'"
                 >
@@ -95,7 +95,7 @@
                 </span>
               </td>
               <td class="px-6 py-4">
-                <span 
+                <span
                   class="inline-flex items-center gap-1.5 font-technical text-xs"
                   :class="userItem.isActive ? 'text-emerald-400' : 'text-rose-400'"
                 >
@@ -108,14 +108,14 @@
               </td>
               <td class="px-6 py-4 text-right">
                 <div class="flex items-center justify-end gap-2">
-                  <button 
+                  <button
                     @click="openEditModal(userItem)"
                     class="p-2 rounded-lg text-textSecondary hover:text-white hover:bg-white/10 transition-colors"
                     title="Editar Usuário"
                   >
                     <Edit3Icon class="w-4 h-4" />
                   </button>
-                  <button 
+                  <button
                     @click="deleteUser(userItem.id)"
                     class="p-2 rounded-lg text-textSecondary hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
                     title="Excluir Usuário"
@@ -140,7 +140,7 @@
     </div>
 
     <!-- Modal de Cadastro / Edição -->
-    <div 
+    <div
       v-if="showModal"
       class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in"
     >
@@ -157,7 +157,7 @@
         <form @submit.prevent="saveUser" class="flex flex-col gap-4">
           <div class="flex flex-col gap-1.5">
             <label class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary">Nome Completo</label>
-            <input 
+            <input
               v-model="form.name"
               type="text"
               required
@@ -168,7 +168,7 @@
 
           <div class="flex flex-col gap-1.5">
             <label class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary">Email</label>
-            <input 
+            <input
               v-model="form.email"
               type="email"
               required
@@ -181,7 +181,7 @@
             <label class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary">
               {{ isEditing ? 'Nova Senha (deixe em branco para manter)' : 'Senha' }}
             </label>
-            <input 
+            <input
               v-model="form.password"
               type="password"
               :required="!isEditing"
@@ -193,7 +193,7 @@
           <div class="grid grid-cols-2 gap-4">
             <div class="flex flex-col gap-1.5">
               <label class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary">Papel (Role)</label>
-              <select 
+              <select
                 v-model="form.role"
                 class="bg-black/40 border border-divider rounded-xl px-3 py-2.5 text-xs text-textPrimary focus:outline-none focus:border-accent"
               >
@@ -204,7 +204,7 @@
 
             <div class="flex flex-col gap-1.5">
               <label class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary">Status</label>
-              <select 
+              <select
                 v-model="form.isActive"
                 class="bg-black/40 border border-divider rounded-xl px-3 py-2.5 text-xs text-textPrimary focus:outline-none focus:border-accent"
               >
@@ -215,14 +215,14 @@
           </div>
 
           <div class="flex items-center justify-end gap-3 mt-4 pt-4 border-t border-divider">
-            <button 
-              type="button" 
+            <button
+              type="button"
               @click="closeModal"
               class="px-4 py-2 rounded-xl text-xs font-interface text-textSecondary hover:text-white transition-colors"
             >
               Cancelar
             </button>
-            <button 
+            <button
               type="submit"
               class="bg-white text-black font-interface text-xs font-medium px-5 py-2.5 rounded-xl hover:bg-gray-200 transition-colors shadow-md"
             >
@@ -300,10 +300,10 @@ onMounted(() => {
 
 const filteredUsers = computed(() => {
   return users.value.filter(u => {
-    const matchesSearch = u.name.toLowerCase().includes(searchQuery.value.toLowerCase()) || 
+    const matchesSearch = u.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
                           u.email.toLowerCase().includes(searchQuery.value.toLowerCase())
     const matchesRole = !selectedRole.value || u.role === selectedRole.value
-    const matchesStatus = !selectedStatus.value || 
+    const matchesStatus = !selectedStatus.value ||
                           (selectedStatus.value === 'active' && u.isActive) ||
                           (selectedStatus.value === 'inactive' && !u.isActive)
     return matchesSearch && matchesRole && matchesStatus

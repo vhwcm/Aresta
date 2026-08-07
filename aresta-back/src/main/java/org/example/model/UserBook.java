@@ -16,4 +16,3 @@ public record UserBook(
         this(null, userId, bookId, null, null, null, status, currentPage, null, null);
     }
 }
-

@@ -122,7 +122,8 @@ public class JdbcUserRepository implements UserRepository {
 
     @Override
     public Optional<User> findByEmailOrName(String identifier) {
-        String sql = "SELECT id, name, email, password_hash, role, is_active, created_at, updated_at FROM users WHERE LOWER(email) = LOWER(?) OR LOWER(name) = LOWER(?)";
+        String sql = "SELECT id, name, email, password_hash, role, is_active, created_at, updated_at "
+                   + "FROM users WHERE LOWER(email) = LOWER(?) OR LOWER(name) = LOWER(?)";
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 

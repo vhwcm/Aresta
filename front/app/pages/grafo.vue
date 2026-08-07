@@ -13,9 +13,9 @@
       </div>
 
       <div class="flex items-center gap-3">
-        <button 
-          @click="fetchGraph" 
-          class="p-2 rounded-xl bg-white/5 border border-divider text-textSecondary hover:text-white transition-all" 
+        <button
+          @click="fetchGraph"
+          class="p-2 rounded-xl bg-white/5 border border-divider text-textSecondary hover:text-white transition-all"
           title="Recarregar Grafo"
         >
           <RotateCwIcon class="w-4 h-4" :class="{ 'animate-spin': loading }" />
@@ -32,9 +32,9 @@
       </div>
 
       <!-- Canvas D3 Interativo -->
-      <GraphCanvas 
-        :nodes="graphData.nodes || []" 
-        :edges="graphData.edges || []" 
+      <GraphCanvas
+        :nodes="graphData.nodes || []"
+        :edges="graphData.edges || []"
         :selected-node-id="selectedNode?.id"
         @select-node="handleSelectNode"
         @open-create-node="isCreateModalOpen = true"
@@ -42,7 +42,7 @@
       />
 
       <!-- Drawer de Detalhes do Nó -->
-      <NodeDrawer 
+      <NodeDrawer
         :node="selectedNode"
         :all-user-books="userBooks"
         @close="selectedNode = null"
@@ -54,17 +54,17 @@
     </main>
 
     <!-- Modais -->
-    <CreateNodeModal 
-      :is-open="isCreateModalOpen" 
-      @close="isCreateModalOpen = false" 
-      @create="handleCreateNode" 
+    <CreateNodeModal
+      :is-open="isCreateModalOpen"
+      @close="isCreateModalOpen = false"
+      @create="handleCreateNode"
     />
 
-    <ConnectNodesModal 
-      :is-open="isConnectModalOpen" 
-      :nodes="graphData.nodes || []" 
-      @close="isConnectModalOpen = false" 
-      @connect="handleConnectNodes" 
+    <ConnectNodesModal
+      :is-open="isConnectModalOpen"
+      :nodes="graphData.nodes || []"
+      @close="isConnectModalOpen = false"
+      @connect="handleConnectNodes"
     />
   </div>
 </template>

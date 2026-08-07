@@ -14,19 +14,19 @@ async function getBestModel(apiKey: string): Promise<string> {
     if (res.ok) {
       const data = await res.json()
       const models = data?.models || []
-      
+
       for (const pref of preferredModels) {
         const found = models.find((m: any) => m.name === `models/${pref}` || m.name === pref)
         if (found) return pref
       }
 
-      const validModel = models.find((m: any) => 
-        Array.isArray(m.supportedGenerationMethods) && 
+      const validModel = models.find((m: any) =>
+        Array.isArray(m.supportedGenerationMethods) &&
         m.supportedGenerationMethods.includes('generateContent') &&
-        m.name && 
+        m.name &&
         !m.name.includes('2.5') &&
-        !m.name.includes('embedding') && 
-        !m.name.includes('imagen') && 
+        !m.name.includes('embedding') &&
+        !m.name.includes('imagen') &&
         !m.name.includes('tts') &&
         !m.name.includes('veo')
       )

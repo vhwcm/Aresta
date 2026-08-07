@@ -6,7 +6,7 @@
         <div class="w-1.5 h-1.5 rounded-full bg-accent animate-pulse"></div>
         Leitura Ativa
       </div>
-      
+
       <div class="flex flex-col gap-4">
         <h1 class="font-editorial text-5xl font-light text-textPrimary leading-tight">
           A Estrutura das Revoluções Científicas
@@ -37,7 +37,7 @@
         <BrainIcon class="w-3.5 h-3.5" />
         Síntese de IA
       </div>
-      
+
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8 relative">
         <div class="p-8 rounded-2xl bg-white/5 border border-divider hover:bg-white/10 transition-colors flex flex-col gap-4 group">
           <div class="flex items-center justify-between">
@@ -70,7 +70,7 @@
       <div class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary">
         Biblioteca Recente
       </div>
-      
+
       <div class="flex flex-col gap-6">
         <div class="flex items-center justify-between group cursor-pointer">
           <div class="flex items-center gap-6">

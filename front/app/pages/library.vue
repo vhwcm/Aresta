@@ -14,7 +14,7 @@
 
       <!-- Tab Navigation -->
       <div class="flex items-center bg-white/5 p-1 rounded-full border border-divider w-max">
-        <button 
+        <button
           @click="activeTab = 'catalog'"
           class="px-6 py-2 rounded-full font-interface text-sm font-medium transition-all duration-300 flex items-center gap-2"
           :class="activeTab === 'catalog' ? 'bg-white text-black shadow-lg' : 'text-textSecondary hover:text-white'"
@@ -22,7 +22,7 @@
           <CompassIcon class="w-4 h-4" />
           Catálogo Geral
         </button>
-        <button 
+        <button
           @click="handleSelectMyBooksTab"
           class="px-6 py-2 rounded-full font-interface text-sm font-medium transition-all duration-300 flex items-center gap-2"
           :class="activeTab === 'my-books' ? 'bg-white text-black shadow-lg' : 'text-textSecondary hover:text-white'"
@@ -56,17 +56,17 @@
 
       <!-- Grid de Livros do Catálogo -->
       <div v-else class="grid grid-cols-2 md:grid-cols-4 gap-8">
-        <div 
-          v-for="book in catalogBooks" 
-          :key="book.id" 
+        <div
+          v-for="book in catalogBooks"
+          :key="book.id"
           class="flex flex-col gap-4 group relative bg-bgPanel/60 border border-divider rounded-2xl p-4 hover:border-accent/50 transition-all duration-300 shadow-xl"
         >
           <!-- Capa do Livro -->
           <div class="aspect-[2/3] bg-white/5 border border-divider rounded-xl overflow-hidden relative shadow-lg group-hover:scale-[1.02] transition-transform duration-500">
-            <img 
-              v-if="book.coverPath" 
-              :src="getCoverUrl(book.coverPath, book.id)" 
-              :alt="book.title" 
+            <img
+              v-if="book.coverPath"
+              :src="getCoverUrl(book.coverPath, book.id)"
+              :alt="book.title"
               class="w-full h-full object-cover"
             />
             <div v-else class="w-full h-full bg-gradient-to-br from-neutral-800 to-neutral-900 flex items-center justify-center p-4 text-center">
@@ -75,8 +75,8 @@
 
             <!-- Overlay de Ação ao Passar o Mouse -->
             <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4 gap-2">
-              <NuxtLink 
-                :to="`/reader?bookId=${book.id}`" 
+              <NuxtLink
+                :to="`/reader?bookId=${book.id}`"
                 class="w-full bg-white text-black font-interface text-xs font-semibold py-2 rounded-xl flex items-center justify-center gap-2 hover:bg-white/90 transition-all"
               >
                 <BookOpenIcon class="w-3.5 h-3.5" /> Ler Agora
@@ -96,8 +96,8 @@
                 <div class="flex items-center gap-1.5 text-[10px] font-technical uppercase font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 rounded-full w-max">
                   <CheckCircleIcon class="w-3 h-3" /> Na sua estante
                 </div>
-                <button 
-                  @click="handleRemoveFromShelf(book.id)" 
+                <button
+                  @click="handleRemoveFromShelf(book.id)"
                   class="w-full text-[11px] text-rose-400 hover:text-rose-300 font-technical hover:underline flex items-center justify-center gap-1 py-1"
                 >
                   <TrashIcon class="w-3 h-3" /> Remover da Estante
@@ -105,9 +105,9 @@
               </div>
 
               <!-- Se ainda não pegou -->
-              <button 
-                v-else 
-                @click="handleTakeBook(book.id)" 
+              <button
+                v-else
+                @click="handleTakeBook(book.id)"
                 class="w-full bg-accent/20 hover:bg-accent text-accent hover:text-white border border-accent/40 font-interface text-xs font-semibold py-2 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-md"
               >
                 <PlusIcon class="w-3.5 h-3.5" /> Pegar Livro
@@ -120,7 +120,7 @@
 
     <!-- My Books View (Estante Pessoal do Usuário Logado) -->
     <section v-else class="flex flex-col gap-10 animate-in fade-in duration-500">
-      
+
       <!-- Card de Status do Usuário -->
       <div v-if="auth.isLoggedIn.value" class="grid grid-cols-1 sm:grid-cols-3 gap-6">
         <div class="p-6 rounded-2xl bg-white/5 border border-divider flex flex-col gap-2 shadow-lg">
@@ -140,8 +140,8 @@
       <!-- Filtros por Status -->
       <div class="flex items-center gap-3 border-b border-divider pb-4">
         <span class="text-xs font-technical uppercase font-bold text-textSecondary">Filtrar:</span>
-        <button 
-          v-for="filter in ['TODOS', 'LENDO', 'LIDO', 'QUERO_LER']" 
+        <button
+          v-for="filter in ['TODOS', 'LENDO', 'LIDO', 'QUERO_LER']"
           :key="filter"
           @click="statusFilter = filter"
           class="px-3 py-1 rounded-xl text-xs font-technical transition-all"
@@ -153,9 +153,9 @@
 
       <!-- Lista da Estante -->
       <div v-if="filteredUserBooks.length > 0" class="flex flex-col gap-4">
-        <div 
-          v-for="item in filteredUserBooks" 
-          :key="item.userBookId" 
+        <div
+          v-for="item in filteredUserBooks"
+          :key="item.userBookId"
           class="group relative bg-white/[0.02] hover:bg-white/[0.04] border border-divider rounded-2xl p-6 transition-all duration-300 flex flex-col sm:flex-row sm:items-center gap-6 shadow-lg"
         >
           <!-- Capa -->
@@ -172,8 +172,8 @@
               </div>
 
               <!-- Seletor de Status -->
-              <select 
-                :value="item.status" 
+              <select
+                :value="item.status"
                 @change="handleStatusChange(item.userBookId, ($event.target as HTMLSelectElement).value, item.currentPage)"
                 class="bg-bgApp border border-divider rounded-xl px-3 py-1.5 text-xs text-textPrimary font-technical focus:outline-none focus:border-accent"
               >
@@ -187,9 +187,9 @@
             <!-- Progresso de Página -->
             <div class="flex items-center gap-4 text-xs font-technical text-textSecondary">
               <span>Página Atual:</span>
-              <input 
-                type="number" 
-                :value="item.currentPage" 
+              <input
+                type="number"
+                :value="item.currentPage"
                 min="0"
                 @change="handlePageChange(item.userBookId, item.status, Number(($event.target as HTMLInputElement).value))"
                 class="w-20 bg-bgApp border border-divider rounded-lg px-2 py-1 text-xs text-textPrimary text-center focus:outline-none focus:border-accent"
@@ -199,8 +199,8 @@
 
           <!-- Ações -->
           <div class="flex items-center gap-3 shrink-0">
-            <NuxtLink 
-              :to="`/reader?bookId=${item.bookId}&page=${item.currentPage}`" 
+            <NuxtLink
+              :to="`/reader?bookId=${item.bookId}&page=${item.currentPage}`"
               class="px-4 py-2.5 rounded-xl bg-accent text-white font-interface text-xs font-semibold hover:bg-accent/90 transition-all shadow-md flex items-center gap-2"
               title="Ler Livro"
             >
@@ -208,16 +208,16 @@
               <span>Ler Livro</span>
             </NuxtLink>
 
-            <NuxtLink 
-              to="/grafo" 
+            <NuxtLink
+              to="/grafo"
               class="p-3 rounded-xl bg-white/5 border border-divider text-textSecondary hover:text-white transition-all"
               title="Ver no Mapa Mental"
             >
               <NetworkIcon class="w-4 h-4" />
             </NuxtLink>
 
-            <button 
-              @click="handleDeleteFromShelf(item.userBookId)" 
+            <button
+              @click="handleDeleteFromShelf(item.userBookId)"
               class="p-3 rounded-xl border border-rose-500/20 text-rose-400 hover:bg-rose-500/10 transition-all"
               title="Remover da Estante"
             >
@@ -269,10 +269,10 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { 
-  BookIcon, 
-  CompassIcon, 
-  LibraryIcon, 
+import {
+  BookIcon,
+  CompassIcon,
+  LibraryIcon,
   PlusIcon,
   PlayIcon,
   NetworkIcon,

@@ -218,7 +218,8 @@ public class JdbcGraphRepository implements GraphRepository {
 
     @Override
     public boolean deleteConnectionBetweenThemes(Long userId, Long sourceThemeId, Long targetThemeId) {
-        String sql = "DELETE FROM theme_connections WHERE user_id = ? AND ((source_theme_id = ? AND target_theme_id = ?) OR (source_theme_id = ? AND target_theme_id = ?))";
+        String sql = "DELETE FROM theme_connections WHERE user_id = ? AND "
+                   + "((source_theme_id = ? AND target_theme_id = ?) OR (source_theme_id = ? AND target_theme_id = ?))";
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setLong(1, userId);

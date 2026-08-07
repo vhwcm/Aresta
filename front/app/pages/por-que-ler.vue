@@ -187,7 +187,7 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          
+
           <!-- Ref 1 -->
           <div class="p-6 rounded-2xl bg-white/[0.03] border border-divider hover:bg-white/[0.06] transition-all duration-300 flex flex-col gap-3 group">
             <div class="flex items-center justify-between">
@@ -252,14 +252,14 @@
 </template>
 
 <script setup lang="ts">
-import { 
-  ClockIcon, 
-  SparklesIcon, 
-  BrainIcon, 
-  ZapOffIcon, 
-  CompassIcon, 
-  BookOpenIcon, 
-  ExternalLinkIcon, 
-  BookIcon 
+import {
+  ClockIcon,
+  SparklesIcon,
+  BrainIcon,
+  ZapOffIcon,
+  CompassIcon,
+  BookOpenIcon,
+  ExternalLinkIcon,
+  BookIcon
 } from 'lucide-vue-next'
 </script>

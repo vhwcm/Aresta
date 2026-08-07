@@ -9,7 +9,7 @@ describe('AiMarkdown Component', () => {
         content: '**Texto em Negrito** e *Texto em Itálico*',
       },
     })
-    
+
     expect(wrapper.find('strong').exists()).toBe(true)
     expect(wrapper.find('strong').text()).toBe('Texto em Negrito')
     expect(wrapper.find('em').exists()).toBe(true)

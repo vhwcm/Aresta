@@ -47,11 +47,11 @@ describe('AI Assistant Page', () => {
 
   it('renders the AI assistant page correctly', () => {
     const wrapper = mount(AiPage)
-    
+
     expect(wrapper.text()).toContain('Inteligência Artificial')
     expect(wrapper.text()).toContain('Assistente Aresta')
     expect(wrapper.text()).toContain('Como posso ajudar hoje?')
-    
+
     const input = wrapper.find('input[type="text"]')
     expect(input.exists()).toBe(true)
     expect(input.attributes('placeholder')).toContain('Pergunte algo sobre sua biblioteca...')
@@ -64,7 +64,7 @@ describe('AI Assistant Page', () => {
 
     const wrapper = mount(AiPage)
     const input = wrapper.find('input[type="text"]')
-    
+
     await input.setValue('Explique Paradigmas')
     await wrapper.find('form').trigger('submit.prevent')
     await flushPromises()
@@ -81,7 +81,7 @@ describe('AI Assistant Page', () => {
 
     const wrapper = mount(AiPage)
     const input = wrapper.find('input[type="text"]')
-    
+
     await input.setValue('Test Error Response')
     await wrapper.find('form').trigger('submit.prevent')
     await flushPromises()
@@ -97,7 +97,7 @@ describe('AI Assistant Page', () => {
 
     const wrapper = mount(AiPage)
     const input = wrapper.find('input[type="text"]')
-    
+
     await input.setValue('Test Net Error')
     await wrapper.find('form').trigger('submit.prevent')
     await flushPromises()
@@ -113,7 +113,7 @@ describe('AI Assistant Page', () => {
 
     const wrapper = mount(AiPage)
     const input = wrapper.find('input[type="text"]')
-    
+
     await input.setValue('Test Prod Error')
     await wrapper.find('form').trigger('submit.prevent')
     await flushPromises()

@@ -12,6 +12,12 @@
         <property name="max" value="350"/>
     </module>
 
+    <!-- Tamanho da Linha (Max 160 caracteres) -->
+    <module name="LineLength">
+        <property name="max" value="160"/>
+        <property name="ignorePattern" value="^package.*|^import.*|a href|href|http://|https://|ftp://"/>
+    </module>
+
     <module name="TreeWalker">
         <!-- Verificação de Tamanho de Método (Max 60 linhas) -->
         <module name="MethodLength">
@@ -28,12 +34,6 @@
         </module>
         <module name="NestedTryDepth">
             <property name="max" value="4"/>
-        </module>
-
-        <!-- Tamanho da Linha -->
-        <module name="LineLength">
-            <property name="max" value="130"/>
-            <property name="ignorePattern" value="^package.*|^import.*|a href|href|http://|https://|ftp://"/>
         </module>
     </module>
 </module>

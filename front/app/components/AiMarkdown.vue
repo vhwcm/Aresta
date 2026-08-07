@@ -1,5 +1,5 @@
 <template>
-  <div 
+  <div
     ref="containerRef"
     class="ai-markdown-content font-interface text-sm md:text-base leading-relaxed text-textPrimary/90 space-y-3"
     v-html="parsedHtml"
@@ -28,7 +28,7 @@ const parsedHtml = computed(() => {
 
 const enhanceCodeBlocks = () => {
   if (!containerRef.value) return
-  
+
   const pres = containerRef.value.querySelectorAll('pre')
   pres.forEach((pre) => {
     if (pre.dataset.enhanced) return
@@ -44,7 +44,7 @@ const enhanceCodeBlocks = () => {
 
     const header = document.createElement('div')
     header.className = 'flex items-center justify-between px-4 py-2 bg-white/[0.03] border-b border-divider font-technical text-[11px] uppercase tracking-wider text-textSecondary'
-    
+
     const langLabel = document.createElement('span')
     langLabel.textContent = lang
 

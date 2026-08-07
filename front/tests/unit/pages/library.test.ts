@@ -52,13 +52,13 @@ describe('Library Page', () => {
         }
       }
     })
-    
+
     const buttons = wrapper.findAll('button')
     const myBooksButton = buttons.find(b => b.text().includes('Minha Estante'))
-    
+
     expect(myBooksButton).toBeDefined()
     await myBooksButton!.trigger('click')
-    
+
     expect(wrapper.text()).toContain('Total na sua Estante')
   })
 })

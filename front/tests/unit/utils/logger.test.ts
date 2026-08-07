@@ -25,7 +25,7 @@ describe('Logger utility', () => {
   it('logs errors in development mode', () => {
     process.env.IS_PRODUCTION = 'false'
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-    
+
     logError('test error')
     expect(consoleSpy).toHaveBeenCalledWith('test error')
   })
@@ -33,7 +33,7 @@ describe('Logger utility', () => {
   it('suppresses error logging in production mode', () => {
     process.env.IS_PRODUCTION = 'true'
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-    
+
     logError('test error')
     expect(consoleSpy).not.toHaveBeenCalled()
   })
@@ -41,7 +41,7 @@ describe('Logger utility', () => {
   it('logs warnings in development mode', () => {
     process.env.IS_PRODUCTION = 'false'
     const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    
+
     logWarn('test warning')
     expect(consoleSpy).toHaveBeenCalledWith('test warning')
   })
@@ -49,7 +49,7 @@ describe('Logger utility', () => {
   it('suppresses warnings in production mode', () => {
     process.env.IS_PRODUCTION = 'true'
     const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    
+
     logWarn('test warning')
     expect(consoleSpy).not.toHaveBeenCalled()
   })

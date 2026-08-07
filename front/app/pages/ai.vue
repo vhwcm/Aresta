@@ -27,7 +27,7 @@
               <SparklesIcon class="w-5 h-5 text-accent animate-pulse" />
             </div>
           </div>
-          
+
           <div class="flex flex-col gap-2">
             <h2 class="font-editorial text-2xl md:text-3xl font-light text-textPrimary">Como posso ajudar hoje?</h2>
             <p class="font-interface text-sm text-textSecondary max-w-sm mx-auto">
@@ -36,8 +36,8 @@
           </div>
 
           <div class="flex flex-wrap justify-center gap-3 mt-2">
-            <button 
-              v-for="(prompt, index) in suggestedPrompts" 
+            <button
+              v-for="(prompt, index) in suggestedPrompts"
               :key="index"
               @click="sendSuggestedPrompt(prompt)"
               class="px-4 py-2 rounded-full bg-white/5 border border-divider text-xs font-interface text-textSecondary hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
@@ -48,13 +48,13 @@
         </div>
 
         <div v-else class="flex-1 flex flex-col gap-6 p-6 md:p-8 overflow-y-auto relative z-10 max-h-[600px]">
-          <div 
-            v-for="(msg, i) in messages" 
+          <div
+            v-for="(msg, i) in messages"
             :key="i"
             class="flex flex-col gap-2"
             :class="msg.role === 'user' ? 'items-end' : 'items-start'"
           >
-            <div 
+            <div
               class="flex items-center gap-2 font-technical text-[11px] uppercase tracking-wider text-textSecondary"
             >
               <template v-if="msg.role === 'user'">
@@ -67,10 +67,10 @@
               </template>
             </div>
 
-            <div 
+            <div
               class="max-w-[88%] md:max-w-[80%] rounded-2xl p-4 md:p-5 shadow-sm"
-              :class="msg.role === 'user' 
-                ? 'bg-accent/15 border border-accent/30 text-textPrimary rounded-tr-sm' 
+              :class="msg.role === 'user'
+                ? 'bg-accent/15 border border-accent/30 text-textPrimary rounded-tr-sm'
                 : 'bg-white/[0.03] border border-divider text-textPrimary rounded-tl-sm w-full'"
             >
               <div v-if="msg.role === 'user'" class="font-interface text-sm md:text-base whitespace-pre-wrap">
@@ -86,19 +86,19 @@
           </div>
         </div>
       </div>
-      
+
       <form @submit.prevent="sendMessage" class="relative group">
         <div class="absolute inset-y-0 left-6 flex items-center pointer-events-none">
           <MessageSquareIcon class="w-5 h-5 text-textSecondary group-focus-within:text-accent transition-colors" />
         </div>
-        <input 
+        <input
           v-model="inputQuery"
-          type="text" 
-          placeholder="Pergunte algo sobre sua biblioteca..." 
+          type="text"
+          placeholder="Pergunte algo sobre sua biblioteca..."
           :disabled="isLoading"
           class="w-full bg-bgPanel border border-divider rounded-full py-5 pl-16 pr-32 text-textPrimary font-interface placeholder:text-textSecondary/50 focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/50 transition-all shadow-lg disabled:opacity-50"
         >
-        <button 
+        <button
           type="submit"
           :disabled="isLoading || !inputQuery.trim()"
           class="absolute inset-y-2 right-2 px-6 bg-white text-black font-interface font-medium text-sm rounded-full hover:bg-gray-200 transition-colors flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
@@ -144,19 +144,19 @@ const getBestModel = async (apiKey: string): Promise<string> => {
     if (res.ok) {
       const data = await res.json()
       const models = data?.models || []
-      
+
       for (const pref of preferredModels) {
         const found = models.find((m: any) => m.name === `models/${pref}` || m.name === pref)
         if (found) return pref
       }
 
-      const validModel = models.find((m: any) => 
-        Array.isArray(m.supportedGenerationMethods) && 
+      const validModel = models.find((m: any) =>
+        Array.isArray(m.supportedGenerationMethods) &&
         m.supportedGenerationMethods.includes('generateContent') &&
-        m.name && 
+        m.name &&
         !m.name.includes('2.5') &&
-        !m.name.includes('embedding') && 
-        !m.name.includes('imagen') && 
+        !m.name.includes('embedding') &&
+        !m.name.includes('imagen') &&
         !m.name.includes('tts') &&
         !m.name.includes('veo')
       )
@@ -164,7 +164,8 @@ const getBestModel = async (apiKey: string): Promise<string> => {
         return validModel.name.replace(/^models\//, '')
       }
     }
-  } catch (err) {
+  } catch (_err) {
+    // Fallback silencioso em caso de falha ao listar modelos
   }
   return 'gemini-2.0-flash'
 }
@@ -216,10 +217,10 @@ const sendMessage = async () => {
     const isQuotaError = err?.message?.includes('quota') || err?.message?.includes('RESOURCE_EXHAUSTED')
     const errorContent = isProd
       ? 'Não foi possível obter uma resposta do serviço de IA.'
-      : isQuotaError 
+      : isQuotaError
         ? `### Limite de Cota Excedido (API Gemini)\n\nA chave de API atingiu o limite de cota do plano gratuito do Google.\n\n\`\`\`text\n${err?.message || err}\n\`\`\`\n\n> **Instrução:** Gere uma nova chave no [Google AI Studio](https://aistudio.google.com/) e atualize a chave \`AI_KEY\` no arquivo \`.env\`.`
         : `### Erro de Comunicação com a IA\n\nNão foi possível obter uma resposta do serviço da IA.\n\n\`\`\`text\n${err?.message || err}\n\`\`\``
-    
+
     messages.value.push({
       role: 'assistant',
       content: errorContent,

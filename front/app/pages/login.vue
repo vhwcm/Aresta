@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col items-center justify-center min-h-[70vh] py-12">
     <div class="w-full max-w-md bg-white/5 border border-divider rounded-3xl p-8 backdrop-blur-xl shadow-2xl flex flex-col gap-8">
-      
+
       <!-- Header do Login -->
       <div class="flex flex-col items-center text-center gap-2">
         <div class="w-12 h-12 rounded-2xl bg-white/10 border border-divider flex items-center justify-center mb-2 shadow-inner">
@@ -41,7 +41,7 @@
           </label>
           <div class="relative">
             <UserIcon class="w-4 h-4 text-textSecondary absolute left-4 top-1/2 -translate-y-1/2" />
-            <input 
+            <input
               v-model="loginId"
               type="text"
               required
@@ -57,7 +57,7 @@
           </label>
           <div class="relative">
             <LockIcon class="w-4 h-4 text-textSecondary absolute left-4 top-1/2 -translate-y-1/2" />
-            <input 
+            <input
               v-model="password"
               type="password"
               required
@@ -67,7 +67,7 @@
           </div>
         </div>
 
-        <button 
+        <button
           type="submit"
           :disabled="isLoading"
           class="w-full bg-white text-black font-interface font-medium text-sm py-3.5 rounded-xl hover:bg-gray-200 transition-all flex items-center justify-center gap-2 shadow-lg disabled:opacity-50 cursor-pointer mt-2"

@@ -18,10 +18,10 @@
       <!-- Campo de Busca -->
       <div class="relative flex items-center">
         <SearchIcon class="w-4 h-4 text-textSecondary absolute left-3 pointer-events-none" />
-        <input 
-          v-model="searchQuery" 
-          type="text" 
-          placeholder="Buscar tema ou livro..." 
+        <input
+          v-model="searchQuery"
+          type="text"
+          placeholder="Buscar tema ou livro..."
           class="bg-bgApp/60 border border-divider/60 rounded-xl pl-9 pr-3 py-1.5 text-xs text-textPrimary placeholder:text-textSecondary/50 focus:outline-none focus:border-accent w-48 transition-all"
         />
       </div>
@@ -29,8 +29,8 @@
       <div class="h-4 w-px bg-divider"></div>
 
       <!-- Botão Novo Tema -->
-      <button 
-        @click="$emit('openCreateNode')" 
+      <button
+        @click="$emit('openCreateNode')"
         class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-accent text-white text-xs font-semibold hover:bg-accent/90 transition-all shadow-md active:scale-95"
       >
         <PlusIcon class="w-4 h-4" />
@@ -38,8 +38,8 @@
       </button>
 
       <!-- Botão Conectar Nós -->
-      <button 
-        @click="$emit('openConnectModal')" 
+      <button
+        @click="$emit('openConnectModal')"
         class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-divider text-textPrimary text-xs hover:bg-white/10 transition-all active:scale-95"
         title="Criar conexão entre temas"
       >

@@ -1,6 +1,6 @@
 <template>
-  <div 
-    v-if="node" 
+  <div
+    v-if="node"
     class="fixed inset-y-0 right-0 w-96 bg-bgPanel/95 backdrop-blur-xl border-l border-divider shadow-2xl z-50 flex flex-col transition-transform duration-300 transform translate-x-0 text-textPrimary"
   >
     <!-- Header da Gaveta -->
@@ -16,7 +16,7 @@
 
     <!-- Conteúdo Scrollável -->
     <div class="flex-1 overflow-y-auto p-6 space-y-6">
-      
+
       <!-- Seção: Detalhes do Tema / Edição -->
       <div class="space-y-4 bg-white/5 border border-divider p-4 rounded-2xl">
         <div class="flex items-center justify-between">
@@ -35,9 +35,9 @@
         <form v-else @submit.prevent="saveNodeDetails" class="space-y-3">
           <div>
             <label class="block text-xs font-technical text-textSecondary mb-1">Nome do Tema</label>
-            <input 
-              v-model="editForm.name" 
-              type="text" 
+            <input
+              v-model="editForm.name"
+              type="text"
               required
               class="w-full bg-bgApp border border-divider rounded-xl px-3 py-2 text-sm text-textPrimary focus:outline-none focus:border-accent"
             />
@@ -53,8 +53,8 @@
 
           <div>
             <label class="block text-xs font-technical text-textSecondary mb-1">Descrição</label>
-            <textarea 
-              v-model="editForm.description" 
+            <textarea
+              v-model="editForm.description"
               rows="3"
               class="w-full bg-bgApp border border-divider rounded-xl px-3 py-2 text-sm text-textPrimary focus:outline-none focus:border-accent"
             ></textarea>
@@ -91,8 +91,8 @@
               {{ b.title }} ({{ getStatusLabel(b.status) }})
             </option>
           </select>
-          <button 
-            @click="handleLinkBook" 
+          <button
+            @click="handleLinkBook"
             :disabled="!selectedUserBookId"
             class="w-full bg-accent text-white font-semibold py-1.5 rounded-xl text-xs hover:bg-accent/90 disabled:opacity-50 transition-all"
           >
@@ -102,9 +102,9 @@
 
         <!-- Lista de Livros -->
         <div v-if="node.books && node.books.length > 0" class="space-y-2">
-          <div 
-            v-for="book in node.books" 
-            :key="book.userBookId" 
+          <div
+            v-for="book in node.books"
+            :key="book.userBookId"
             class="flex items-center justify-between bg-bgApp/70 border border-divider/60 p-3 rounded-xl hover:border-accent/40 transition-all"
           >
             <div class="flex items-center gap-3">
@@ -116,7 +116,7 @@
               <div>
                 <h4 class="text-xs font-semibold text-textPrimary line-clamp-1">{{ book.title }}</h4>
                 <div class="flex items-center gap-2 mt-1">
-                  <span 
+                  <span
                     class="text-[10px] font-technical uppercase font-bold px-2 py-0.5 rounded-md"
                     :class="getStatusBadgeClass(book.status)"
                   >
@@ -146,9 +146,9 @@
       <div v-if="node.isRoot" class="text-center text-xs font-technical text-amber-400 bg-amber-500/10 border border-amber-500/30 p-2.5 rounded-xl font-semibold">
         🧠 Nó Central Agregador (Origem do Mapa Mental)
       </div>
-      <button 
+      <button
         v-else
-        @click="handleDeleteNode" 
+        @click="handleDeleteNode"
         class="w-full border border-rose-500/30 text-rose-400 hover:bg-rose-500/10 font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition-all"
       >
         <Trash2Icon class="w-4 h-4" />

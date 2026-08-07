@@ -47,7 +47,7 @@ class UserControllerTest {
         dbManager.initDatabase();
 
         UserRepository userRepository = new JdbcUserRepository(dbManager.getDataSource());
-        User admin = userRepository.findByEmailOrName("viktor").orElseGet(() -> 
+        User admin = userRepository.findByEmailOrName("viktor").orElseGet(() ->
             userRepository.save(new User("viktor_test", "viktor_test@aresta.org", "hash", "ADMIN", true))
         );
         adminToken = JwtUtil.generateToken(admin);

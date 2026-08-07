@@ -1,8 +1,26 @@
 ---
 title: 'Instalação'
-description: 'Como instalar o projeto'
+description: 'Como instalar e configurar o projeto'
 ---
 
 ## Instalação
 
-Instruções de instalação irão aqui.
+Siga os passos abaixo para instalar e rodar os serviços locais.
+
+### Pré-requisitos
+- **Node.js**: v20 ou superior
+- **Java**: JDK 21 (ou superior)
+- **Python**: 3.10+ (para os Git Hooks)
+
+### Passos
+1. Clone o repositório.
+2. Instale as dependências e registre os hooks do Git executando:
+   ```bash
+   npm run setup:hooks
+   ```
+3. Inicie ambos os serviços (Frontend e Backend) com o comando:
+   ```bash
+   npm run dev
+   ```
+
+Acesse o Frontend em `http://localhost:3000` e o Backend em `http://localhost:7070`.

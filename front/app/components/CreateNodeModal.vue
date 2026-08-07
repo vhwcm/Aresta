@@ -11,10 +11,10 @@
       <form @submit.prevent="handleSubmit" class="space-y-4">
         <div>
           <label class="block text-xs font-technical text-textSecondary mb-1">Nome do Tema *</label>
-          <input 
-            v-model="name" 
-            type="text" 
-            required 
+          <input
+            v-model="name"
+            type="text"
+            required
             placeholder="Ex: Filosofia Stoica, Algoritmos, IA"
             class="w-full bg-bgApp border border-divider rounded-xl px-3 py-2.5 text-sm text-textPrimary placeholder:text-textSecondary/40 focus:outline-none focus:border-accent"
           />
@@ -25,9 +25,9 @@
           <div class="flex items-center gap-3">
             <input v-model="color" type="color" class="w-10 h-10 rounded-xl bg-transparent border-0 cursor-pointer" />
             <div class="flex items-center gap-1.5">
-              <button 
-                v-for="c in presetColors" 
-                :key="c" 
+              <button
+                v-for="c in presetColors"
+                :key="c"
                 type="button"
                 @click="color = c"
                 class="w-6 h-6 rounded-full border border-white/20 transition-transform hover:scale-110"
@@ -39,9 +39,9 @@
 
         <div>
           <label class="block text-xs font-technical text-textSecondary mb-1">Descrição Opcional</label>
-          <textarea 
-            v-model="description" 
-            rows="3" 
+          <textarea
+            v-model="description"
+            rows="3"
             placeholder="Anotações ou resumos sobre o conceito..."
             class="w-full bg-bgApp border border-divider rounded-xl px-3 py-2 text-sm text-textPrimary placeholder:text-textSecondary/40 focus:outline-none focus:border-accent"
           ></textarea>

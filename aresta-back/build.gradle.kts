@@ -6,7 +6,7 @@ plugins {
 
 checkstyle {
     toolVersion = "10.15.0"
-    configFile = file("${rootDir}/config/checkstyle/checkstyle.xml")
+    configFile = file("${projectDir}/config/checkstyle/checkstyle.xml")
     isIgnoreFailures = false
 }
 

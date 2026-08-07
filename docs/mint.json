@@ -26,7 +26,8 @@
         "instalacao",
         "banco_e_usuarios",
         "livros_e_armazenamento",
-        "systems"
+        "systems",
+        "quality_gates"
       ]
     },
     {

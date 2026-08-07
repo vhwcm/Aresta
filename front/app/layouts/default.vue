@@ -1,6 +1,6 @@
 <template>
   <div class="flex h-screen w-full overflow-hidden bg-bgApp relative text-textPrimary">
-    
+
     <!-- Nav Rail (A Navegação Minimalista) -->
     <nav class="w-16 bg-bgPanel border-r border-divider flex flex-col items-center py-8 gap-8 shrink-0 z-10">
       <NuxtLink to="/" class="p-3 rounded-xl transition-all duration-300" :class="route.path === '/' ? 'bg-white text-black shadow-lg hover:scale-105' : 'text-textSecondary opacity-40 hover:opacity-100 hover:text-white'" title="Início">
@@ -24,11 +24,11 @@
       </NuxtLink>
 
       <!-- Link para Gestão de Usuários (Apenas para ADMIN) -->
-      <NuxtLink 
+      <NuxtLink
         v-if="auth.isAdmin.value"
-        to="/users" 
-        class="p-3 rounded-xl transition-all duration-300" 
-        :class="route.path.startsWith('/users') ? 'bg-white text-black shadow-lg hover:scale-105' : 'text-textSecondary opacity-40 hover:opacity-100 hover:text-white'" 
+        to="/users"
+        class="p-3 rounded-xl transition-all duration-300"
+        :class="route.path.startsWith('/users') ? 'bg-white text-black shadow-lg hover:scale-105' : 'text-textSecondary opacity-40 hover:opacity-100 hover:text-white'"
         title="Gestão de Usuários (Admin)"
       >
         <UsersIcon class="w-5 h-5 text-accent" />
@@ -37,14 +37,14 @@
       <!-- Área de Login / Perfil na Base do Nav Rail -->
       <div class="mt-auto flex flex-col items-center gap-4">
         <div v-if="auth.isLoggedIn.value" class="flex flex-col items-center gap-2">
-          <div 
+          <div
             class="w-9 h-9 rounded-full bg-accent/20 border border-accent/40 text-accent font-technical text-xs flex items-center justify-center font-bold"
             :title="`Logado como ${auth.user.value?.name} (${auth.user.value?.role})`"
           >
             {{ auth.user.value?.name?.charAt(0).toUpperCase() || 'V' }}
           </div>
 
-          <button 
+          <button
             @click="auth.logout()"
             class="p-2 rounded-xl transition-all duration-300 text-textSecondary opacity-40 hover:opacity-100 hover:text-rose-400"
             title="Sair da Conta"
@@ -53,7 +53,7 @@
           </button>
         </div>
 
-        <NuxtLink 
+        <NuxtLink
           v-else
           to="/login"
           class="p-3 rounded-xl transition-all duration-300"
@@ -87,10 +87,10 @@
     <aside class="w-96 border-l border-divider relative shrink-0 hidden lg:block z-0">
       <!-- Grid Background -->
       <div class="absolute inset-0 bg-grid-pattern bg-grid-size opacity-20"></div>
-      
+
       <!-- Fundo desvanecendo para a base -->
       <div class="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-bgApp to-transparent z-10 pointer-events-none"></div>
-      
+
       <!-- Placeholder de Conteúdo do Grafo -->
       <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
         <div class="w-32 h-32 rounded-full border border-accent/20 flex items-center justify-center relative shadow-[0_0_50px_rgba(229,123,85,0.05)]">
@@ -100,7 +100,7 @@
           </div>
         </div>
       </div>
-      
+
       <!-- Legenda inferior do Grafo -->
       <div class="absolute bottom-8 left-8 right-8 z-20 pointer-events-auto">
         <div class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary mb-2">Knowledge Graph</div>
