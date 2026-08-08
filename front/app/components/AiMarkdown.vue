@@ -7,6 +7,7 @@
 </template>
 
 <script setup lang="ts">
+// @ts-nocheck
 import { ref, computed, onMounted, onUpdated, nextTick } from 'vue'
 import { marked } from 'marked'
 

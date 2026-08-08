@@ -12,7 +12,7 @@ function createFakeFile(
   name: string,
   type: string,
 ): File {
-  const blob = new Blob([content], { type })
+  const blob = new Blob([content as BlobPart], { type })
   return new File([blob], name, { type })
 }
 

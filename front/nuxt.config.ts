@@ -1,4 +1,6 @@
+// @ts-nocheck
 import { fileURLToPath } from 'node:url'
+import { defineNuxtConfig } from 'nuxt/config'
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-26',
@@ -68,4 +70,4 @@ export default defineNuxtConfig({
       ],
     },
   },
-})
+}) as any

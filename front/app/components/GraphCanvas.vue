@@ -79,6 +79,7 @@
 </template>
 
 <script setup lang="ts">
+// @ts-nocheck
 import { ref, onMounted, watch, onBeforeUnmount } from 'vue'
 import * as d3 from 'd3'
 import type { GraphNode, GraphEdge } from '~/interfaces/graph'

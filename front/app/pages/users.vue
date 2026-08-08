@@ -275,8 +275,8 @@ const form = ref({
   isActive: true
 })
 
-const getHeaders = () => {
-  return auth.token.value ? { Authorization: `Bearer ${auth.token.value}` } : {}
+const getHeaders = (): HeadersInit => {
+  return (auth.token.value ? { Authorization: `Bearer ${auth.token.value}` } : {}) as HeadersInit
 }
 
 const fetchUsers = async () => {

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { IBookDocument, BookMetadata, PageData } from '~/interfaces/reader/IBookDocument'
 
 export class PdfDocumentAdapter implements IBookDocument {

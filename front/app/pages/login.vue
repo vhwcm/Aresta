@@ -105,7 +105,7 @@ const handleLogin = async () => {
   isLoading.value = false
 
   if (result.success) {
-    const redirectUrl = (route.query.redirect as string) || '/users'
+    const redirectUrl = ((route.query as any).redirect as string) || '/users'
     navigateTo(redirectUrl)
   } else {
     errorMessage.value = result.error || 'Falha ao autenticar. Verifique o usuário e a senha.'

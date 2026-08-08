@@ -7,9 +7,9 @@ export default defineNuxtPlugin((nuxtApp) => {
     }
   }
 
-  nuxtApp.hook('vue:error', (err, instance, info) => {
+  nuxtApp.hook('vue:error', (_err, _instance, _info) => {
     if (isProductionMode()) {
-      return false
+      // Ignorar erros em produção
     }
   })
 })

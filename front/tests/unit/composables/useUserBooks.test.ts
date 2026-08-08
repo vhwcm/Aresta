@@ -19,9 +19,9 @@ describe('useUserBooks Composable', () => {
     await fetchUserBooks()
 
     expect(mockFetch).toHaveBeenCalledWith('http://localhost:7070/api/user-books', expect.any(Object))
-    expect(userBooks.value.length).toBe(1)
-    expect(userBooks.value[0].title).toBe('Contos Fluminenses')
-    expect(userBooks.value[0].status).toBe('LIDO')
+    expect(userBooks.value?.length).toBe(1)
+    expect(userBooks.value?.[0]?.title).toBe('Contos Fluminenses')
+    expect(userBooks.value?.[0]?.status).toBe('LIDO')
   })
 
   it('addUserBook adiciona novo livro à estante', async () => {

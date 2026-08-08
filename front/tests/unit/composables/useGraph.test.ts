@@ -23,8 +23,8 @@ describe('useGraph Composable', () => {
     await fetchGraph()
 
     expect(mockFetch).toHaveBeenCalledWith('http://localhost:7070/api/graph', expect.any(Object))
-    expect(graphData.value.nodes.length).toBe(1)
-    expect(graphData.value.nodes[0].name).toBe('Literatura Brasileira')
+    expect(graphData.value?.nodes?.length).toBe(1)
+    expect(graphData.value?.nodes?.[0]?.name).toBe('Literatura Brasileira')
     expect(loading.value).toBe(false)
   })
 

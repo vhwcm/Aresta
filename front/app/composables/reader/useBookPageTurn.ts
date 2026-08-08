@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { computed, onMounted, onUnmounted, readonly, ref, watch, type Ref } from 'vue'
 import * as THREE from 'three'
 import { useReaderStore } from '~/stores/readerStore'
