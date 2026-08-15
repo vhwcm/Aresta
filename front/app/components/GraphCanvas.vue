@@ -14,66 +14,76 @@
     </svg>
 
     <!-- Toolbar Flutuante de Controles Superiores -->
-    <div class="absolute top-6 left-6 z-10 flex items-center gap-3 bg-bgPanel/80 backdrop-blur-md border border-divider p-2 rounded-2xl shadow-2xl">
+    <div
+      class="absolute z-10 flex items-center gap-2 bg-bgPanel/80 backdrop-blur-md border border-divider p-2 rounded-2xl shadow-2xl max-w-[calc(100%-1.5rem)] flex-wrap"
+      :class="isCompact ? 'top-3 left-3 right-3 justify-between' : 'top-6 left-6'"
+    >
       <!-- Campo de Busca -->
-      <div class="relative flex items-center">
-        <SearchIcon class="w-4 h-4 text-textSecondary absolute left-3 pointer-events-none" />
+      <div class="relative flex items-center flex-1 min-w-[100px]">
+        <SearchIcon class="w-3.5 h-3.5 text-textSecondary absolute left-2.5 pointer-events-none" />
         <input
           v-model="searchQuery"
           type="text"
           placeholder="Buscar tema ou livro..."
-          class="bg-bgApp/60 border border-divider/60 rounded-xl pl-9 pr-3 py-1.5 text-xs text-textPrimary placeholder:text-textSecondary/50 focus:outline-none focus:border-accent w-48 transition-all"
+          class="bg-bgApp/60 border border-divider/60 rounded-xl pl-8 pr-2 py-1 text-xs text-textPrimary placeholder:text-textSecondary/50 focus:outline-none focus:border-accent w-full transition-all"
         />
       </div>
 
-      <div class="h-4 w-px bg-divider"></div>
+      <div v-if="!isCompact" class="h-4 w-px bg-divider"></div>
 
       <!-- Botão Novo Tema -->
       <button
         @click="$emit('openCreateNode')"
-        class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-accent text-white text-xs font-semibold hover:bg-accent/90 transition-all shadow-md active:scale-95"
+        class="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-accent text-white text-xs font-semibold hover:bg-accent/90 transition-all shadow-md active:scale-95 shrink-0"
+        title="Criar Novo Tema"
       >
-        <PlusIcon class="w-4 h-4" />
-        <span>Novo Tema</span>
+        <PlusIcon class="w-3.5 h-3.5" />
+        <span :class="{ 'hidden sm:inline': isCompact }">Novo Tema</span>
       </button>
 
       <!-- Botão Conectar Nós -->
       <button
         @click="$emit('openConnectModal')"
-        class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-divider text-textPrimary text-xs hover:bg-white/10 transition-all active:scale-95"
+        class="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/5 border border-divider text-textPrimary text-xs hover:bg-white/10 transition-all active:scale-95 shrink-0"
         title="Criar conexão entre temas"
       >
-        <LinkIcon class="w-4 h-4 text-accent" />
-        <span>Conectar</span>
+        <LinkIcon class="w-3.5 h-3.5 text-accent" />
+        <span :class="{ 'hidden sm:inline': isCompact }">Conectar</span>
       </button>
     </div>
 
     <!-- Toolbar Flutuante de Zoom & Física no Canto Inferior -->
-    <div class="absolute bottom-6 left-6 z-10 flex items-center gap-2 bg-bgPanel/80 backdrop-blur-md border border-divider p-2 rounded-2xl shadow-xl">
-      <button @click="zoomIn" class="p-2 rounded-xl text-textSecondary hover:text-white hover:bg-white/10 transition-all" title="Aumentar Zoom">
-        <ZoomInIcon class="w-4 h-4" />
+    <div
+      class="absolute z-10 flex items-center gap-1.5 bg-bgPanel/80 backdrop-blur-md border border-divider rounded-2xl shadow-xl"
+      :class="isCompact ? 'bottom-3 left-3 p-1.5 scale-90 origin-bottom-left' : 'bottom-6 left-6 p-2'"
+    >
+      <button @click="zoomIn" class="p-1.5 rounded-xl text-textSecondary hover:text-white hover:bg-white/10 transition-all" title="Aumentar Zoom">
+        <ZoomInIcon class="w-3.5 h-3.5" />
       </button>
-      <button @click="zoomOut" class="p-2 rounded-xl text-textSecondary hover:text-white hover:bg-white/10 transition-all" title="Diminuir Zoom">
-        <ZoomOutIcon class="w-4 h-4" />
+      <button @click="zoomOut" class="p-1.5 rounded-xl text-textSecondary hover:text-white hover:bg-white/10 transition-all" title="Diminuir Zoom">
+        <ZoomOutIcon class="w-3.5 h-3.5" />
       </button>
-      <button @click="resetZoom" class="p-2 rounded-xl text-textSecondary hover:text-white hover:bg-white/10 transition-all" title="Centralizar Grafo">
-        <MaximizeIcon class="w-4 h-4" />
+      <button @click="resetZoom" class="p-1.5 rounded-xl text-textSecondary hover:text-white hover:bg-white/10 transition-all" title="Centralizar Grafo">
+        <MaximizeIcon class="w-3.5 h-3.5" />
       </button>
-      <div class="h-4 w-px bg-divider mx-1"></div>
-      <button @click="togglePhysics" class="p-2 rounded-xl transition-all" :class="isPhysicsPaused ? 'text-rose-400 bg-rose-500/10' : 'text-emerald-400 hover:bg-white/10'" :title="isPhysicsPaused ? 'Reativar Física' : 'Pausar Física'">
-        <PlayIcon v-if="isPhysicsPaused" class="w-4 h-4" />
-        <PauseIcon v-else class="w-4 h-4" />
+      <div class="h-3 w-px bg-divider mx-0.5"></div>
+      <button @click="togglePhysics" class="p-1.5 rounded-xl transition-all" :class="isPhysicsPaused ? 'text-rose-400 bg-rose-500/10' : 'text-emerald-400 hover:bg-white/10'" :title="isPhysicsPaused ? 'Reativar Física' : 'Pausar Física'">
+        <PlayIcon v-if="isPhysicsPaused" class="w-3.5 h-3.5" />
+        <PauseIcon v-else class="w-3.5 h-3.5" />
       </button>
     </div>
 
     <!-- Indicador de Estatísticas de Nós -->
-    <div class="absolute bottom-6 right-6 z-10 flex items-center gap-4 bg-bgPanel/80 backdrop-blur-md border border-divider px-4 py-2 rounded-2xl text-xs font-technical text-textSecondary shadow-xl">
+    <div
+      class="absolute z-10 flex items-center gap-2 bg-bgPanel/80 backdrop-blur-md border border-divider rounded-2xl font-technical text-textSecondary shadow-xl"
+      :class="isCompact ? 'bottom-3 right-3 px-2.5 py-1 text-[10px]' : 'bottom-6 right-6 px-4 py-2 text-xs'"
+    >
       <div class="flex items-center gap-1.5">
         <span class="w-2 h-2 rounded-full bg-accent animate-pulse"></span>
-        <span>{{ nodes.length }} Nós de Temas</span>
+        <span>{{ nodes.length }} Nós</span>
       </div>
       <div class="h-3 w-px bg-divider"></div>
-      <div>{{ edges.length }} Conexões</div>
+      <div>{{ edges.length }} Arestas</div>
     </div>
   </div>
 </template>
@@ -89,6 +99,7 @@ const props = defineProps<{
   nodes: GraphNode[]
   edges: GraphEdge[]
   selectedNodeId?: number | null
+  isCompact?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -313,15 +324,29 @@ const togglePhysics = () => {
   }
 }
 
+let resizeObserver: ResizeObserver | null = null
+
 watch(() => [props.nodes, props.edges], () => {
   initGraph()
 }, { deep: true })
 
 onMounted(() => {
   initGraph()
+  if (containerRef.value) {
+    resizeObserver = new ResizeObserver(() => {
+      if (simulation && containerRef.value) {
+        const width = containerRef.value.clientWidth
+        const height = containerRef.value.clientHeight
+        simulation.force('center', d3.forceCenter(width / 2, height / 2))
+        simulation.alpha(0.2).restart()
+      }
+    })
+    resizeObserver.observe(containerRef.value)
+  }
 })
 
 onBeforeUnmount(() => {
   if (simulation) simulation.stop()
+  if (resizeObserver) resizeObserver.disconnect()
 })
 </script>

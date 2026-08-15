@@ -88,9 +88,11 @@
 import { ref } from 'vue'
 import { ShieldCheckIcon, KeyIcon, UserIcon, LockIcon, ArrowRightIcon, AlertCircleIcon } from 'lucide-vue-next'
 import { useAuth } from '~/composables/useAuth'
+import { useSettings } from '~/composables/useSettings'
 
 const route = typeof useRoute === 'function' ? useRoute() : { query: {} }
 const auth = useAuth()
+const { loadFromServer } = useSettings()
 
 const loginId = ref('viktor')
 const password = ref('orlaweb123123#')
@@ -105,6 +107,7 @@ const handleLogin = async () => {
   isLoading.value = false
 
   if (result.success) {
+    await loadFromServer()
     const redirectUrl = ((route.query as any).redirect as string) || '/users'
     navigateTo(redirectUrl)
   } else {

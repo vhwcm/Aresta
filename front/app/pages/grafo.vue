@@ -1,5 +1,5 @@
 <template>
-  <div class="h-[calc(100vh-6rem)] w-full flex flex-col relative overflow-hidden bg-bgApp text-textPrimary">
+  <div class="h-full w-full flex flex-col relative overflow-hidden bg-bgApp text-textPrimary">
     <!-- Cabeçalho do Módulo de Grafo -->
     <header class="shrink-0 px-8 py-4 border-b border-divider/60 bg-bgPanel/40 backdrop-blur-sm flex items-center justify-between z-10">
       <div>

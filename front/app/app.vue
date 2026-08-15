@@ -3,5 +3,22 @@
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>
+    <SettingsModal />
   </div>
 </template>
+
+<script setup lang="ts">
+import { onMounted } from 'vue'
+import SettingsModal from '~/components/SettingsModal.vue'
+import { useAuth } from '~/composables/useAuth'
+import { useSettings } from '~/composables/useSettings'
+
+const auth = useAuth()
+const { loadFromServer } = useSettings()
+
+onMounted(() => {
+  if (auth.isLoggedIn.value) {
+    void loadFromServer()
+  }
+})
+</script>

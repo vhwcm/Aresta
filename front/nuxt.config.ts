@@ -59,7 +59,8 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      title: 'Aresta — Leitor de PDF e EPUB',
+      title: 'Aresta',
+      titleTemplate: 'Aresta',
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
@@ -67,6 +68,10 @@ export default defineNuxtConfig({
           name: 'description',
           content: 'Leitor online de PDF e EPUB com efeito de virada de página realista.',
         },
+      ],
+      link: [
+        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
+        { rel: 'shortcut icon', type: 'image/x-icon', href: '/favicon.ico' },
       ],
     },
   },

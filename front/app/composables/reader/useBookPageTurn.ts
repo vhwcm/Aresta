@@ -2,6 +2,7 @@
 import { computed, onMounted, onUnmounted, readonly, ref, watch, type Ref } from 'vue'
 import * as THREE from 'three'
 import { useReaderStore } from '~/stores/readerStore'
+import { useSettings } from '~/composables/useSettings'
 import type { IBookDocument, PageData } from '~/interfaces/reader/IBookDocument'
 import { logWarn } from '~/utils/logger'
 
@@ -56,10 +57,12 @@ function createRasterCanvas(page: PageData): HTMLCanvasElement {
 
 export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
     const store = useReaderStore()
+    const { pageAnimationEnabled } = useSettings()
     const isTransitioning = ref(false)
     const isPreparing = ref(false)
     const errorMessage = ref<string | null>(null)
     const reducedMotion = ref(false)
+    const isAnimationDisabled = computed(() => !pageAnimationEnabled.value || reducedMotion.value)
     const webglAvailable = ref(true)
 
     const rasterCache = new Map<number, PageRaster>()
@@ -680,7 +683,7 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
             return
         }
 
-        if (reducedMotion.value) {
+        if (isAnimationDisabled.value) {
             setTurnProgress(1)
             settleTurn(true)
             return
@@ -760,7 +763,7 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
         const shouldCommit = shouldCommitPageTurn(turnProgress, velocity)
         isDragging = false
 
-        if (reducedMotion.value) {
+        if (isAnimationDisabled.value) {
             setTurnProgress(shouldCommit ? 1 : 0)
             settleTurn(shouldCommit)
             return
@@ -780,7 +783,7 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
         }
 
         isDragging = false
-        if (!reducedMotion.value) await animateTo(0)
+        if (!isAnimationDisabled.value) await animateTo(0)
         settleTurn(false)
     }
 

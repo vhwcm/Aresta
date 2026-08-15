@@ -12,24 +12,35 @@
         </h1>
       </div>
 
-      <!-- Tab Navigation -->
-      <div class="flex items-center bg-white/5 p-1 rounded-full border border-divider w-max">
-        <button
-          @click="activeTab = 'catalog'"
-          class="px-6 py-2 rounded-full font-interface text-sm font-medium transition-all duration-300 flex items-center gap-2"
-          :class="activeTab === 'catalog' ? 'bg-white text-black shadow-lg' : 'text-textSecondary hover:text-white'"
+      <!-- Tab Navigation & Action -->
+      <div class="flex items-center gap-3">
+        <div class="flex items-center bg-white/5 p-1 rounded-full border border-divider w-max">
+          <button
+            @click="activeTab = 'catalog'"
+            class="px-6 py-2 rounded-full font-interface text-sm font-medium transition-all duration-300 flex items-center gap-2"
+            :class="activeTab === 'catalog' ? 'bg-white text-black shadow-lg' : 'text-textSecondary hover:text-white'"
+          >
+            <CompassIcon class="w-4 h-4" />
+            Catálogo Geral
+          </button>
+          <button
+            @click="handleSelectMyBooksTab"
+            class="px-6 py-2 rounded-full font-interface text-sm font-medium transition-all duration-300 flex items-center gap-2"
+            :class="activeTab === 'my-books' ? 'bg-white text-black shadow-lg' : 'text-textSecondary hover:text-white'"
+          >
+            <LibraryIcon class="w-4 h-4" />
+            Minha Estante
+          </button>
+        </div>
+
+        <NuxtLink
+          to="/upload"
+          class="px-5 py-2.5 rounded-full bg-accent/20 hover:bg-accent text-accent hover:text-white border border-accent/40 text-xs font-interface font-semibold transition-all flex items-center gap-2"
+          title="Fazer Upload de Livro"
         >
-          <CompassIcon class="w-4 h-4" />
-          Catálogo Geral
-        </button>
-        <button
-          @click="handleSelectMyBooksTab"
-          class="px-6 py-2 rounded-full font-interface text-sm font-medium transition-all duration-300 flex items-center gap-2"
-          :class="activeTab === 'my-books' ? 'bg-white text-black shadow-lg' : 'text-textSecondary hover:text-white'"
-        >
-          <LibraryIcon class="w-4 h-4" />
-          Minha Estante
-        </button>
+          <UploadIcon class="w-4 h-4" />
+          <span>Enviar Arquivo</span>
+        </NuxtLink>
       </div>
     </header>
 
@@ -280,7 +291,8 @@ import {
   TrashIcon,
   Trash2Icon,
   BookOpenIcon,
-  LogInIcon
+  LogInIcon,
+  UploadIcon
 } from 'lucide-vue-next'
 
 import { useCatalog } from '~/composables/useCatalog'

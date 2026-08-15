@@ -10,6 +10,7 @@ import org.example.controller.BookController;
 import org.example.controller.GraphController;
 import org.example.controller.UserBookController;
 import org.example.controller.UserController;
+import org.example.controller.UserSettingsController;
 import org.example.db.DatabaseManager;
 import org.example.model.User;
 import org.example.repository.AppConfigRepository;
@@ -20,8 +21,10 @@ import org.example.repository.JdbcBookRepository;
 import org.example.repository.JdbcGraphRepository;
 import org.example.repository.JdbcUserBookRepository;
 import org.example.repository.JdbcUserRepository;
+import org.example.repository.JdbcUserSettingsRepository;
 import org.example.repository.UserBookRepository;
 import org.example.repository.UserRepository;
+import org.example.repository.UserSettingsRepository;
 import org.example.security.JwtUtil;
 import org.mindrot.jbcrypt.BCrypt;
 import org.slf4j.Logger;
@@ -109,6 +112,9 @@ public class Main {
         GraphRepository graphRepo = new JdbcGraphRepository(dbManager.getDataSource());
         GraphController graphController = new GraphController(graphRepo);
 
+        UserSettingsRepository userSettingsRepo = new JdbcUserSettingsRepository(dbManager.getDataSource());
+        UserSettingsController userSettingsController = new UserSettingsController(userSettingsRepo);
+
         app.post("/api/auth/login", authController::login);
         app.get("/api/auth/me", authController::me);
         app.get("/api/health", ctx -> {
@@ -128,6 +134,9 @@ public class Main {
         app.patch("/api/user-books/{id}", userBookController::updateUserBook);
         app.delete("/api/user-books/{id}", userBookController::deleteUserBook);
         app.delete("/api/user-books/book/{bookId}", userBookController::deleteUserBookByBookId);
+
+        app.get("/api/user-settings", userSettingsController::getSettings);
+        app.put("/api/user-settings", userSettingsController::updateSettings);
 
         app.get("/api/graph", graphController::getGraph);
         app.post("/api/graph/nodes", graphController::createNode);

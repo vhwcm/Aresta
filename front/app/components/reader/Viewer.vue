@@ -4,11 +4,12 @@
       <div class="reader-viewer__header-left">
         <button
           class="reader-viewer__icon-btn"
-          @click="store.reset()"
-          aria-label="Fechar livro"
+          @click="handleClose"
+          aria-label="Sair da leitura e voltar"
           id="btn-close-book"
+          title="Sair da leitura"
         >
-          ✕
+          ← Sair
         </button>
       </div>
       <div class="reader-viewer__header-center">
@@ -56,9 +57,20 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useReaderStore } from '~/stores/readerStore'
 
 const store = useReaderStore()
+const router = useRouter()
+
+function handleClose() {
+  store.reset()
+  if (typeof window !== 'undefined' && window.history.length > 1) {
+    router.back()
+  } else {
+    router.push('/library')
+  }
+}
 
 interface PageRenderer {
   next: () => Promise<void>
