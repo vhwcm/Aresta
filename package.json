@@ -5,5 +5,8 @@
     "start": "./start.sh",
     "dev": "./start.sh",
     "setup:hooks": "bash scripts/setup-hooks.sh"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0"
   }
 }

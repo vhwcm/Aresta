@@ -42,10 +42,16 @@ cleanup() {
 # Registrar o trap para escutar sinais de interrupção
 trap cleanup SIGINT SIGTERM EXIT
 
-# 1. Iniciar Backend (Gradle / Javalin)
-echo -e "${GREEN}[Backend]${NC} Iniciando servidor em aresta-back..."
-(cd "$ROOT_DIR/aresta-back" && ./gradlew run) &
-BACK_PID=$!
+# 1. Iniciar Backend (Express.js / Node ou Gradle / Javalin)
+if [ -d "$ROOT_DIR/aresta-back-node" ]; then
+    echo -e "${GREEN}[Backend]${NC} Iniciando servidor Express em aresta-back-node..."
+    (cd "$ROOT_DIR/aresta-back-node" && npm run dev) &
+    BACK_PID=$!
+else
+    echo -e "${GREEN}[Backend]${NC} Iniciando servidor em aresta-back..."
+    (cd "$ROOT_DIR/aresta-back" && ./gradlew run) &
+    BACK_PID=$!
+fi
 
 # 2. Iniciar Frontend (Nuxt 4 / Vue)
 echo -e "${GREEN}[Frontend]${NC} Iniciando Nuxt dev server em front..."

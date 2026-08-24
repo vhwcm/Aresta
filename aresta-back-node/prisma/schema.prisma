@@ -1,0 +1,111 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               Int               @id @default(autoincrement())
+  name             String
+  email            String            @unique
+  password_hash    String?
+  role             String            @default("USER")
+  is_active        Boolean           @default(true)
+  created_at       DateTime          @default(now())
+  updated_at       DateTime?         @updatedAt
+  userBooks        UserBook[]
+  themes           Theme[]
+  themeConnections ThemeConnection[]
+  userSettings     UserSettings?
+
+  @@map("users")
+}
+
+model Book {
+  id         Int        @id @default(autoincrement())
+  title      String
+  file_path  String
+  cover_path String?
+  created_at DateTime   @default(now())
+  userBooks  UserBook[]
+
+  @@map("books")
+}
+
+model UserBook {
+  id           Int         @id @default(autoincrement())
+  user_id      Int
+  book_id      Int
+  status       String      @default("QUERO_LER")
+  current_page Int         @default(0)
+  created_at   DateTime    @default(now())
+  updated_at   DateTime    @default(now()) @updatedAt
+  user         User        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  book         Book        @relation(fields: [book_id], references: [id], onDelete: Cascade)
+  bookThemes   BookTheme[]
+
+  @@unique([user_id, book_id])
+  @@map("user_books")
+}
+
+model Theme {
+  id                Int               @id @default(autoincrement())
+  user_id           Int
+  name              String
+  color             String?           @default("#E57B55")
+  description       String?
+  created_at        DateTime          @default(now())
+  user              User              @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  sourceConnections ThemeConnection[] @relation("SourceTheme")
+  targetConnections ThemeConnection[] @relation("TargetTheme")
+  bookThemes        BookTheme[]
+
+  @@map("themes")
+}
+
+model ThemeConnection {
+  id              Int      @id @default(autoincrement())
+  user_id         Int
+  source_theme_id Int
+  target_theme_id Int
+  created_at      DateTime @default(now())
+  user            User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  sourceTheme     Theme    @relation("SourceTheme", fields: [source_theme_id], references: [id], onDelete: Cascade)
+  targetTheme     Theme    @relation("TargetTheme", fields: [target_theme_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, source_theme_id, target_theme_id])
+  @@map("theme_connections")
+}
+
+model BookTheme {
+  id           Int      @id @default(autoincrement())
+  user_book_id Int
+  theme_id     Int
+  created_at   DateTime @default(now())
+  userBook     UserBook @relation(fields: [user_book_id], references: [id], onDelete: Cascade)
+  theme        Theme    @relation(fields: [theme_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_book_id, theme_id])
+  @@map("book_themes")
+}
+
+model UserSettings {
+  user_id                Int      @id
+  page_animation_enabled Boolean  @default(true)
+  language               String   @default("pt-BR")
+  updated_at             DateTime @default(now()) @updatedAt
+  user                   User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("user_settings")
+}
+
+model AppConfig {
+  key   String  @id
+  value String?
+
+  @@map("app_config")
+}
+
