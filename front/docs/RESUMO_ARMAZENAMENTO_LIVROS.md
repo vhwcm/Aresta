@@ -15,4 +15,4 @@
 - **Servidor Estático**: Mapeamento da rota estática `/covers` em `Main.java`.
 
 ## 4. Documentação MDX
-- Documento [`livros_e_armazenamento.mdx`](file:///home/morpho/Aresta/front/docs/livros_e_armazenamento.mdx) integrado à navegação da documentação em `mint.json` e `docs.json`.
+- Documento [`livros_e_armazenamento.md`](livros_e_armazenamento.md) integrado à navegação da documentação em `mint.json` e `docs.json`.
