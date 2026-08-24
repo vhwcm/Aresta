@@ -11,7 +11,6 @@ describe('Index Page (Landing Page & Home)', () => {
     EbbinghausChart: { template: '<div data-testid="ebbinghaus-chart">Gráfico Ebbinghaus D3</div>' },
     ArrowRightIcon: true,
     BrainIcon: true,
-    SparklesIcon: true,
     BookOpenIcon: true,
     NetworkIcon: true,
     FileCode2Icon: true,

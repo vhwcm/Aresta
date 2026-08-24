@@ -14,7 +14,7 @@
           </span>
           <span>·</span>
           <span class="flex items-center gap-1">
-            <SparklesIcon class="w-3.5 h-3.5 text-accent" />
+            <BrainIcon class="w-3.5 h-3.5 text-accent" />
             Resistência Cognitiva
           </span>
         </div>
@@ -220,7 +220,7 @@
           <div class="p-6 rounded-2xl bg-white/[0.03] border border-divider hover:bg-white/[0.06] transition-all duration-300 flex flex-col gap-3 group">
             <div class="flex items-center justify-between">
               <span class="font-technical text-[10px] uppercase font-bold tracking-widest text-accent">Psicologia Cognitiva</span>
-              <SparklesIcon class="w-4 h-4 text-textSecondary group-hover:text-white transition-colors" />
+              <BrainIcon class="w-4 h-4 text-textSecondary group-hover:text-white transition-colors" />
             </div>
             <h4 class="font-editorial text-xl font-light text-textPrimary group-hover:text-accent transition-colors">
               Estudos sobre Teoria da Mente na Ficção
@@ -254,7 +254,6 @@
 <script setup lang="ts">
 import {
   ClockIcon,
-  SparklesIcon,
   BrainIcon,
   ZapOffIcon,
   CompassIcon,

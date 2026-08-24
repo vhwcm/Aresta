@@ -81,7 +81,7 @@
         <!-- Recursos do Leitor -->
         <div class="p-6 rounded-3xl bg-white/[0.02] border border-divider flex flex-col gap-4">
           <div class="flex items-center gap-3 text-textPrimary">
-            <SparklesIcon class="w-5 h-5 text-amber-400" />
+            <BookOpenIcon class="w-5 h-5 text-amber-400" />
             <h3 class="font-editorial text-lg font-light">Recursos Aresta</h3>
           </div>
           <ul class="space-y-3 text-xs text-textSecondary font-interface leading-relaxed">
@@ -105,7 +105,7 @@
 </template>
 
 <script setup lang="ts">
-import { UploadIcon, BookOpenIcon, AlertTriangleIcon, FileCheckIcon, SparklesIcon } from 'lucide-vue-next'
+import { UploadIcon, BookOpenIcon, AlertTriangleIcon, FileCheckIcon } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import { useReaderStore } from '~/stores/readerStore'
 import { createBookDocument } from '~/adapters/BookDocumentFactory'

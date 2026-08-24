@@ -125,7 +125,7 @@
           :class="{ 'nav-item-active': route.path.startsWith('/revisao') }"
           title="Revisão (Flashcards & Resumos)"
         >
-          <SparklesIcon class="w-4 h-4 text-accent group-hover:scale-110 transition-transform" />
+          <LayersIcon class="w-4 h-4 text-accent group-hover:scale-110 transition-transform" />
           <span class="hidden md:inline font-interface text-xs font-medium tracking-tight">Revisão</span>
         </NuxtLink>
 
@@ -162,7 +162,7 @@ import {
   BookIcon,
   NetworkIcon,
   ShoppingBagIcon,
-  SparklesIcon,
+  LayersIcon,
   UserIcon,
   ChevronUpIcon,
   Minimize2Icon

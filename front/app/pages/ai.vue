@@ -24,7 +24,7 @@
             <div class="absolute inset-0 border border-dashed border-accent/30 rounded-full animate-[spin_15s_linear_infinite]"></div>
             <div class="absolute inset-2 border border-accent/20 rounded-full animate-[spin_20s_linear_infinite_reverse]"></div>
             <div class="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center border border-accent/30 shadow-[0_0_30px_rgba(229,123,85,0.15)]">
-              <SparklesIcon class="w-5 h-5 text-accent animate-pulse" />
+              <BrainIcon class="w-5 h-5 text-accent animate-pulse" />
             </div>
           </div>
 
@@ -62,7 +62,7 @@
                 <UserIcon class="w-3.5 h-3.5 text-textSecondary" />
               </template>
               <template v-else>
-                <SparklesIcon class="w-3.5 h-3.5 text-accent" />
+                <BrainIcon class="w-3.5 h-3.5 text-accent" />
                 <span class="text-accent font-semibold">Assistente Aresta</span>
               </template>
             </div>
@@ -81,7 +81,7 @@
           </div>
 
           <div v-if="isLoading" class="flex items-center gap-3 p-4 rounded-2xl bg-white/[0.02] border border-divider w-max">
-            <SparklesIcon class="w-4 h-4 text-accent animate-spin" />
+            <BrainIcon class="w-4 h-4 text-accent animate-pulse" />
             <span class="font-interface text-xs text-textSecondary animate-pulse">Assistente Aresta está gerando a resposta...</span>
           </div>
         </div>
@@ -113,7 +113,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { BrainIcon, SparklesIcon, MessageSquareIcon, SendIcon, UserIcon } from 'lucide-vue-next'
+import { BrainIcon, MessageSquareIcon, SendIcon, UserIcon } from 'lucide-vue-next'
 import AiMarkdown from '~/components/AiMarkdown.vue'
 import { isProductionMode, logError } from '~/utils/logger'
 

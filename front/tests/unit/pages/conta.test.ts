@@ -11,7 +11,7 @@ describe('Conta Page (/conta)', () => {
     ClockIcon: true,
     NetworkIcon: true,
     CheckCircle2Icon: true,
-    SparklesIcon: true,
+    BrainIcon: true,
     FileCode2Icon: true,
     ShieldCheckIcon: true,
     ShieldAlertIcon: true,

@@ -34,7 +34,6 @@
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div class="flex flex-col">
           <span class="font-technical text-[10px] uppercase tracking-widest text-accent font-semibold flex items-center gap-1.5">
-            <SparklesIcon class="w-3.5 h-3.5" />
             Demonstração Prática & Simulação D3
           </span>
           <h2 class="font-editorial text-2xl font-light text-textPrimary">
@@ -162,7 +161,6 @@
             to="/revisao"
             class="px-6 py-3 rounded-2xl bg-accent hover:bg-accent/90 text-white font-interface text-xs sm:text-sm font-medium transition-all shadow-lg shadow-accent/20 flex items-center gap-2 shrink-0"
           >
-            <SparklesIcon class="w-4 h-4" />
             Ir para Central de Revisão
           </NuxtLink>
         </div>
@@ -175,7 +173,6 @@
 import {
   ArrowLeftIcon,
   BrainIcon,
-  SparklesIcon,
   CheckCircle2Icon
 } from 'lucide-vue-next'
 import EbbinghausChart from '~/components/EbbinghausChart.vue'

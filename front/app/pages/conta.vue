@@ -147,7 +147,7 @@
       <!-- Tabela de Benefícios -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6 border-t border-divider text-xs">
         <div class="flex items-start gap-3 p-3 rounded-xl bg-white/[0.02]">
-          <SparklesIcon class="w-4 h-4 text-accent shrink-0 mt-0.5" />
+          <BrainIcon class="w-4 h-4 text-accent shrink-0 mt-0.5" />
           <div class="flex flex-col gap-0.5">
             <span class="text-textPrimary font-medium">IA Gemini Ilimitada</span>
             <span class="text-textSecondary text-[11px]">Resumos de livros completos e geração de mapas conceituais automáticos.</span>
@@ -271,7 +271,6 @@
             @click="confirmUpgrade"
             class="px-5 py-2.5 rounded-xl bg-accent hover:bg-accent/90 text-white text-xs font-medium shadow-lg shadow-accent/20 flex items-center gap-2"
           >
-            <SparklesIcon class="w-4 h-4" />
             Confirmar Assinatura
           </button>
         </div>
@@ -379,7 +378,7 @@ import {
   ClockIcon,
   NetworkIcon,
   CheckCircle2Icon,
-  SparklesIcon,
+  BrainIcon,
   FileCode2Icon,
   ShieldCheckIcon,
   ShieldAlertIcon,

@@ -116,7 +116,6 @@
             @click="startConversion"
             class="px-6 py-2.5 rounded-xl bg-accent hover:bg-accent/90 text-white text-xs font-medium font-interface transition-all shadow-lg shadow-accent/20 flex items-center gap-2"
           >
-            <SparklesIcon class="w-4 h-4" />
             Iniciar Conversão para EPUB
           </button>
         </div>
@@ -217,7 +216,6 @@ import {
   UploadCloudIcon,
   FileTextIcon,
   SlidersIcon,
-  SparklesIcon,
   RefreshCwIcon,
   CheckCircle2Icon,
   DownloadIcon,

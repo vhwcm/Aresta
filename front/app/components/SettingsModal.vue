@@ -169,7 +169,7 @@
                 <div class="p-4 flex items-center justify-between gap-4">
                   <div class="flex items-center gap-3 min-w-0">
                     <div class="p-2 rounded-lg bg-accent/10 text-accent">
-                      <SparklesIcon class="w-4 h-4" />
+                      <BookOpenIcon class="w-4 h-4" />
                     </div>
                     <div class="min-w-0">
                       <div class="font-interface text-sm text-textPrimary font-medium">
@@ -229,7 +229,7 @@ import {
   LogOutIcon,
   UserXIcon,
   GlobeIcon,
-  SparklesIcon,
+  BookOpenIcon,
   LogInIcon,
 } from 'lucide-vue-next'
 import { useSettingsModal } from '~/composables/useSettingsModal'

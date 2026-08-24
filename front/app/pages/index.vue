@@ -134,7 +134,6 @@
             to="/revisao"
             class="bg-accent hover:bg-accent/90 text-white font-interface text-xs sm:text-sm font-medium px-4 py-2.5 rounded-full transition-all flex items-center gap-2 shadow-md shrink-0"
           >
-            <SparklesIcon class="w-3.5 h-3.5" />
             <span>Fazer Flashcard</span>
           </NuxtLink>
         </div>
@@ -146,7 +145,6 @@
       <!-- Seção Hero da Landing Page -->
       <section class="flex flex-col items-center text-center gap-5 max-w-3xl mx-auto">
         <div class="flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/10 border border-accent/30 font-technical text-[10px] uppercase tracking-widest text-accent font-semibold">
-          <SparklesIcon class="w-3.5 h-3.5" />
           Leitor de Ebooks & Grafo de Conhecimento
         </div>
 
@@ -408,7 +406,6 @@ import { ref, computed, onMounted } from 'vue'
 import {
   ArrowRightIcon,
   BrainIcon,
-  SparklesIcon,
   BookOpenIcon,
   NetworkIcon,
   FileCode2Icon,

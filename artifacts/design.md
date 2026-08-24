@@ -46,7 +46,7 @@ Este documento estabelece o design técnico da interface do usuário da platafor
      - Grafo de Conhecimento (`/grafo`)
      - Loja / Catálogo (`/loja`)
   3. **Logo Central (Home)**: Componente `ArestaLogoGraph.vue`
-  4. **Revisão**: Ícone `Layers` ou `Sparkles` + label "Revisão"
+  4. **Revisão**: Ícone `Layers` + label "Revisão"
   5. **Conta**: Ícone `User` + label "Conta"
 
 ### 2.2 `ArestaLogoGraph.vue` (Letra "A" em Grafo Vivo)

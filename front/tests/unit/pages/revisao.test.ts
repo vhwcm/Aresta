@@ -8,7 +8,6 @@ describe('Revisao Page (/revisao)', () => {
       global: {
         stubs: {
           NuxtLink: { template: '<a><slot /></a>' },
-          SparklesIcon: true,
           LayersIcon: true,
           FileTextIcon: true,
           RotateCwIcon: true,

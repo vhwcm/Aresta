@@ -11,7 +11,6 @@ describe('Curva do Esquecimento Page', () => {
           EbbinghausChart: { template: '<div data-testid="ebbinghaus-chart-mock">Gráfico D3</div>' },
           ArrowLeftIcon: true,
           BrainIcon: true,
-          SparklesIcon: true,
           CheckCircle2Icon: true
         }
       }

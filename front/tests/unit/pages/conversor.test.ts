@@ -12,7 +12,6 @@ describe('Conversor Page (/conversor)', () => {
           UploadCloudIcon: true,
           FileTextIcon: true,
           SlidersIcon: true,
-          SparklesIcon: true,
           RefreshCwIcon: true,
           CheckCircle2Icon: true,
           DownloadIcon: true,

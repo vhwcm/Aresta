@@ -4,7 +4,6 @@
     <header class="flex flex-col md:flex-row md:items-end justify-between gap-6">
       <div class="flex flex-col gap-3">
         <div class="flex items-center gap-2 font-technical text-[10px] uppercase font-semibold tracking-widest text-accent">
-          <SparklesIcon class="w-3.5 h-3.5" />
           Retenção & Síntese
         </div>
         <h1 class="font-editorial text-4xl md:text-5xl font-light text-textPrimary leading-tight">
@@ -203,7 +202,6 @@
           <!-- Resumo estruturado pela IA -->
           <div class="flex flex-col gap-1.5 bg-white/[0.02] p-4 rounded-xl border border-divider/50">
             <span class="font-technical text-[10px] uppercase font-semibold text-accent tracking-wider flex items-center gap-1.5">
-              <SparklesIcon class="w-3 h-3" />
               Síntese Aresta IA
             </span>
             <p class="font-interface text-xs text-textSecondary leading-relaxed">
@@ -234,7 +232,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import {
-  SparklesIcon,
   LayersIcon,
   FileTextIcon,
   RotateCwIcon,
