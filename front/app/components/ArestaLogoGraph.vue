@@ -1,0 +1,180 @@
+<template>
+  <NuxtLink
+    to="/"
+    class="relative group inline-flex items-center justify-center p-1.5 rounded-xl transition-all duration-300 hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-accent/40"
+    :title="title"
+    :aria-label="title"
+  >
+    <!-- Glow de fundo sutil no hover -->
+    <div
+      class="absolute inset-0 rounded-xl bg-accent/10 opacity-0 group-hover:opacity-100 blur-md transition-opacity duration-500 pointer-events-none"
+    ></div>
+
+    <!-- SVG do Grafo Vivo formando a letra A -->
+    <svg
+      :width="size"
+      :height="size"
+      viewBox="0 0 40 40"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      class="aresta-graph-svg transition-transform duration-300 group-hover:scale-105"
+    >
+      <defs>
+        <!-- Gradiente linear para arestas principais -->
+        <linearGradient id="edgeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#E57B55" stop-opacity="0.9" />
+          <stop offset="100%" stop-color="#FF9E79" stop-opacity="0.6" />
+        </linearGradient>
+
+        <!-- Filtro de brilho sutil para os nós -->
+        <filter id="nodeGlow" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="1.2" result="blur" />
+          <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        </filter>
+      </defs>
+
+      <!-- Arestas (Linhas que formam o A) com movimento orgânico -->
+      <g class="edges-layer stroke-accent/70" stroke-width="1.8" stroke-linecap="round">
+        <!-- Aresta Topo -> Barra Esquerda -->
+        <line x1="20" y1="7" x2="12" y2="23" class="edge edge-t-l" />
+        <!-- Aresta Barra Esquerda -> Base Esquerda -->
+        <line x1="12" y1="23" x2="7" y2="33" class="edge edge-l-b" />
+        <!-- Aresta Topo -> Barra Direita -->
+        <line x1="20" y1="7" x2="28" y2="23" class="edge edge-t-r" />
+        <!-- Aresta Barra Direita -> Base Direita -->
+        <line x1="28" y1="23" x2="33" y2="33" class="edge edge-r-b" />
+        <!-- Travessão Horizontal da Letra A -->
+        <line x1="12" y1="23" x2="28" y2="23" class="edge edge-bar" />
+        <!-- Aresta sutil interna para dar sensação de grafo completo -->
+        <line x1="20" y1="7" x2="20" y2="23" class="edge-subtle stroke-accent/25" stroke-dasharray="2 2" stroke-width="1" />
+      </g>
+
+      <!-- Nós (Vértices do Grafo Vivo com oscilação orgânica lenta) -->
+      <g class="nodes-layer" filter="url(#nodeGlow)">
+        <!-- Nó 1: Topo / Vértice Superior -->
+        <g class="node-wrap node-top">
+          <circle cx="20" cy="7" r="3.2" class="fill-[#0A0A0B] stroke-accent stroke-[1.6]" />
+          <circle cx="20" cy="7" r="1.2" class="fill-accent animate-pulse" />
+        </g>
+
+        <!-- Nó 2: Barra Esquerda -->
+        <g class="node-wrap node-mid-left">
+          <circle cx="12" cy="23" r="2.8" class="fill-[#0A0A0B] stroke-accent stroke-[1.4]" />
+          <circle cx="12" cy="23" r="1" class="fill-[#FF9E79]" />
+        </g>
+
+        <!-- Nó 3: Barra Direita -->
+        <g class="node-wrap node-mid-right">
+          <circle cx="28" cy="23" r="2.8" class="fill-[#0A0A0B] stroke-accent stroke-[1.4]" />
+          <circle cx="28" cy="23" r="1" class="fill-[#FF9E79]" />
+        </g>
+
+        <!-- Nó 4: Base Esquerda -->
+        <g class="node-wrap node-bot-left">
+          <circle cx="7" cy="33" r="2.5" class="fill-[#0A0A0B] stroke-accent/80 stroke-[1.4]" />
+          <circle cx="7" cy="33" r="0.9" class="fill-accent" />
+        </g>
+
+        <!-- Nó 5: Base Direita -->
+        <g class="node-wrap node-bot-right">
+          <circle cx="33" cy="33" r="2.5" class="fill-[#0A0A0B] stroke-accent/80 stroke-[1.4]" />
+          <circle cx="33" cy="33" r="0.9" class="fill-accent" />
+        </g>
+
+        <!-- Nó Central sutil na travessa -->
+        <g class="node-wrap node-center">
+          <circle cx="20" cy="23" r="1.8" class="fill-accent/90" />
+        </g>
+      </g>
+    </svg>
+  </NuxtLink>
+</template>
+
+<script setup lang="ts">
+withDefaults(
+  defineProps<{
+    size?: number
+    title?: string
+  }>(),
+  {
+    size: 36,
+    title: 'Aresta - Ir para o Início'
+  }
+)
+</script>
+
+<style scoped>
+/* Animação orgânica de grafo vivo: nós e arestas flutuando suavemente */
+.node-top {
+  animation: floatTop 6s ease-in-out infinite alternate;
+  transform-origin: 20px 7px;
+}
+
+.node-mid-left {
+  animation: floatMidLeft 7s ease-in-out infinite alternate;
+  transform-origin: 12px 23px;
+}
+
+.node-mid-right {
+  animation: floatMidRight 6.5s ease-in-out infinite alternate;
+  transform-origin: 28px 23px;
+}
+
+.node-bot-left {
+  animation: floatBotLeft 8s ease-in-out infinite alternate;
+  transform-origin: 7px 33px;
+}
+
+.node-bot-right {
+  animation: floatBotRight 7.5s ease-in-out infinite alternate;
+  transform-origin: 33px 33px;
+}
+
+.node-center {
+  animation: floatCenter 5.5s ease-in-out infinite alternate;
+  transform-origin: 20px 23px;
+}
+
+@keyframes floatTop {
+  0% { transform: translate(0px, 0px); }
+  50% { transform: translate(0.8px, -1px); }
+  100% { transform: translate(-0.8px, 0.5px); }
+}
+
+@keyframes floatMidLeft {
+  0% { transform: translate(0px, 0px); }
+  50% { transform: translate(-1px, 0.8px); }
+  100% { transform: translate(0.6px, -0.6px); }
+}
+
+@keyframes floatMidRight {
+  0% { transform: translate(0px, 0px); }
+  50% { transform: translate(1px, -0.5px); }
+  100% { transform: translate(-0.7px, 0.9px); }
+}
+
+@keyframes floatBotLeft {
+  0% { transform: translate(0px, 0px); }
+  50% { transform: translate(-0.7px, -0.7px); }
+  100% { transform: translate(0.8px, 0.4px); }
+}
+
+@keyframes floatBotRight {
+  0% { transform: translate(0px, 0px); }
+  50% { transform: translate(0.7px, 0.6px); }
+  100% { transform: translate(-0.6px, -0.7px); }
+}
+
+@keyframes floatCenter {
+  0% { transform: scale(0.9); opacity: 0.7; }
+  50% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.8; }
+}
+
+/* Transição de arestas quando em hover no container */
+.group:hover .edge {
+  stroke: #FF9E79;
+  stroke-width: 2.1;
+  transition: all 0.3s ease;
+}
+</style>

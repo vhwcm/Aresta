@@ -1,125 +1,101 @@
 <template>
-  <div class="flex h-screen w-full overflow-hidden bg-bgApp relative text-textPrimary">
+  <div class="flex flex-col min-h-screen w-full bg-bgApp relative text-textPrimary selection:bg-accent/30 selection:text-white">
+    <!-- Top Header Bar (Busca Cmd+K, Ofensiva Streak, Usuário & Configurações) -->
+    <header class="w-full h-16 border-b border-divider/60 bg-[#0A0A0B]/80 backdrop-blur-md sticky top-0 z-30 px-4 md:px-8 flex items-center justify-between gap-4">
+      <!-- Lado Esquerdo: Identificador / Logo Compacto -->
+      <div class="flex items-center gap-3">
+        <ArestaLogoGraph :size="28" />
+        <span class="font-editorial text-lg tracking-wide font-light hidden sm:inline text-textPrimary">ARESTA</span>
+      </div>
 
-    <!-- Nav Rail (A Navegação Minimalista) -->
-    <nav class="w-16 bg-bgPanel border-r border-divider flex flex-col items-center py-6 gap-6 shrink-0 z-10">
-      <!-- System Logo Header -->
-      <button
-        @click="settingsModal.open()"
-        class="mb-2 p-1.5 rounded-xl hover:scale-110 transition-transform duration-300 focus:outline-none focus:ring-2 focus:ring-accent/50"
-        title="Painel de Configurações"
+      <!-- Centro: Input de Busca Flutuante (Cmd+K) -->
+      <div
+        class="flex-1 max-w-xl mx-auto flex items-center gap-3 px-4 py-2 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-divider hover:border-white/20 transition-all cursor-pointer group text-textSecondary"
+        @click="openCommandPalette"
+        role="button"
+        tabindex="0"
+        aria-label="Abrir paleta de comandos"
       >
-        <img src="/favicon.ico" alt="Aresta Logo" class="w-7 h-7 rounded-lg" />
-      </button>
-
-      <NuxtLink to="/" class="p-3 rounded-xl transition-all duration-300" :class="route.path === '/' ? 'bg-white text-black shadow-lg hover:scale-105' : 'text-textSecondary opacity-40 hover:opacity-100 hover:text-white'" title="Início">
-        <HomeIcon class="w-5 h-5" />
-      </NuxtLink>
-
-      <NuxtLink to="/library" class="p-3 rounded-xl transition-all duration-300" :class="route.path.startsWith('/library') ? 'bg-white text-black shadow-lg hover:scale-105' : 'text-textSecondary opacity-40 hover:opacity-100 hover:text-white'" title="Biblioteca">
-        <BookIcon class="w-5 h-5" />
-      </NuxtLink>
-
-      <NuxtLink to="/upload" class="p-3 rounded-xl transition-all duration-300" :class="route.path.startsWith('/upload') ? 'bg-white text-black shadow-lg hover:scale-105' : 'text-textSecondary opacity-40 hover:opacity-100 hover:text-white'" title="Upload de Livro">
-        <UploadIcon class="w-5 h-5" />
-      </NuxtLink>
-
-      <NuxtLink to="/ai" class="p-3 rounded-xl transition-all duration-300" :class="route.path.startsWith('/ai') ? 'bg-white text-black shadow-lg hover:scale-105' : 'text-textSecondary opacity-40 hover:opacity-100 hover:text-white'" title="Assistente IA">
-        <BrainIcon class="w-5 h-5" />
-      </NuxtLink>
-
-      <NuxtLink to="/grafo" class="p-3 rounded-xl transition-all duration-300" :class="route.path.startsWith('/grafo') ? 'bg-white text-black shadow-lg hover:scale-105' : 'text-textSecondary opacity-40 hover:opacity-100 hover:text-white'" title="Mapa Mental / Grafo">
-        <NetworkIcon class="w-5 h-5 text-accent" />
-      </NuxtLink>
-
-      <NuxtLink to="/por-que-ler" class="p-3 rounded-xl transition-all duration-300" :class="route.path.startsWith('/por-que-ler') ? 'bg-white text-black shadow-lg hover:scale-105' : 'text-textSecondary opacity-40 hover:opacity-100 hover:text-white'" title="Por que ler ainda importa">
-        <FileTextIcon class="w-5 h-5" />
-      </NuxtLink>
-
-      <!-- Link para Gestão de Usuários (Apenas para ADMIN) -->
-      <NuxtLink
-        v-if="auth.isAdmin.value"
-        to="/users"
-        class="p-3 rounded-xl transition-all duration-300"
-        :class="route.path.startsWith('/users') ? 'bg-white text-black shadow-lg hover:scale-105' : 'text-textSecondary opacity-40 hover:opacity-100 hover:text-white'"
-        title="Gestão de Usuários (Admin)"
-      >
-        <UsersIcon class="w-5 h-5 text-accent" />
-      </NuxtLink>
-
-      <!-- Área de Login / Perfil na Base do Nav Rail -->
-      <div class="mt-auto flex flex-col items-center gap-4">
-        <div v-if="auth.isLoggedIn.value" class="flex flex-col items-center gap-2">
-          <div
-            class="w-9 h-9 rounded-full bg-accent/20 border border-accent/40 text-accent font-technical text-xs flex items-center justify-center font-bold"
-            :title="`Logado como ${auth.user.value?.name} (${auth.user.value?.role})`"
-          >
-            {{ auth.user.value?.name?.charAt(0).toUpperCase() || 'V' }}
-          </div>
-
-          <button
-            @click="auth.logout()"
-            class="p-2 rounded-xl transition-all duration-300 text-textSecondary opacity-40 hover:opacity-100 hover:text-rose-400"
-            title="Sair da Conta"
-          >
-            <LogOutIcon class="w-4 h-4" />
-          </button>
+        <SearchIcon class="w-4 h-4 group-hover:text-textPrimary transition-colors" />
+        <span class="text-xs md:text-sm font-interface font-normal truncate group-hover:text-textPrimary transition-colors">
+          Explorar livros, conceitos ou comandos...
+        </span>
+        <div class="ml-auto hidden sm:flex items-center gap-1 font-technical text-[10px] uppercase font-semibold tracking-widest bg-white/5 px-2 py-0.5 rounded border border-white/5">
+          <span>Cmd</span>
+          <span>K</span>
         </div>
+      </div>
 
+      <!-- Lado Direito: Ofensiva Streak, Perfil e Configurações -->
+      <div class="flex items-center gap-2 md:gap-3">
+        <!-- Componente de Ofensiva (Streak) no Canto Superior Direito -->
+        <ReadingStreak />
+
+        <!-- Botão de Configurações -->
+        <button
+          @click="settingsModal.open()"
+          class="p-2 rounded-xl text-textSecondary hover:text-textPrimary hover:bg-white/5 border border-transparent hover:border-divider transition-all focus:outline-none focus:ring-2 focus:ring-accent/40"
+          title="Configurações do Sistema"
+          aria-label="Configurações do Sistema"
+        >
+          <SettingsIcon class="w-4 h-4" />
+        </button>
+
+        <!-- Avatar / Login -->
+        <div v-if="auth.isLoggedIn.value" class="flex items-center gap-2">
+          <NuxtLink
+            to="/conta"
+            class="w-8 h-8 rounded-full bg-accent/20 border border-accent/40 text-accent font-technical text-xs flex items-center justify-center font-bold hover:scale-105 transition-transform"
+            :title="`Logado como ${auth.user.value?.name}`"
+          >
+            {{ auth.user.value?.name?.charAt(0).toUpperCase() || 'U' }}
+          </NuxtLink>
+        </div>
         <NuxtLink
           v-else
           to="/login"
-          class="p-3 rounded-xl transition-all duration-300"
-          :class="route.path === '/login' ? 'bg-white text-black shadow-lg hover:scale-105' : 'text-textSecondary opacity-40 hover:opacity-100 hover:text-white'"
-          title="Fazer Login"
+          class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-accent text-white font-interface text-xs font-medium hover:bg-accent/90 transition-all shadow-sm shadow-accent/20"
         >
-          <LogInIcon class="w-5 h-5" />
+          <LogInIcon class="w-3.5 h-3.5" />
+          <span>Entrar</span>
         </NuxtLink>
       </div>
-    </nav>
+    </header>
 
-    <!-- Stream Central (O Feed) -->
-    <main class="flex-1 relative" :class="route.path.startsWith('/grafo') ? 'overflow-hidden' : 'overflow-y-auto'">
-      <div v-if="!route.path.startsWith('/grafo')" class="max-w-4xl mx-auto px-12 py-24 min-h-full flex flex-col gap-24">
-        <!-- Input Placeholder Superior -->
-        <header class="flex items-center gap-4 text-textSecondary opacity-50 hover:opacity-100 transition-opacity cursor-pointer group" @click="openCommandPalette">
-          <SearchIcon class="w-5 h-5 group-hover:text-white transition-colors" />
-          <span class="text-lg font-interface font-light group-hover:text-white transition-colors">O que você quer explorar hoje?</span>
-          <div class="ml-auto flex items-center gap-1 font-technical text-[10px] uppercase font-semibold tracking-widest bg-white/5 px-2 py-1 rounded">
-            <span>Cmd</span>
-            <span>K</span>
-          </div>
-        </header>
+    <!-- Área Principal de Conteúdo -->
+    <div class="flex-1 flex w-full relative">
+      <main class="flex-1 min-h-[calc(100vh-4rem)] pb-28" :class="route.path.startsWith('/grafo') ? 'overflow-hidden p-0' : 'overflow-y-auto'">
+        <div v-if="!route.path.startsWith('/grafo')" class="max-w-5xl mx-auto px-4 sm:px-8 md:px-12 py-10">
+          <slot />
+        </div>
+        <div v-else class="w-full h-full">
+          <slot />
+        </div>
+      </main>
+    </div>
 
-        <!-- Slot de Conteúdo Específico da Página -->
-        <slot />
-      </div>
-      <div v-else class="w-full h-full">
-        <slot />
-      </div>
-    </main>
+    <!-- Barra de Navegação Inferior Colapsável Flutuante -->
+    <BottomNavbar />
 
-    <!-- Grafo Interativo (O Painel Vidrado na Barra Lateral Direita) -->
-    <aside v-if="!route.path.startsWith('/grafo')" class="w-96 border-l border-divider relative shrink-0 hidden lg:block z-0">
-      <SidebarGraph />
-    </aside>
-
+    <!-- Modais Globais -->
     <CommandPalette ref="commandPaletteRef" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { HomeIcon, BookIcon, UploadIcon, BrainIcon, FileTextIcon, UsersIcon, SearchIcon, NetworkIcon, LogInIcon, LogOutIcon } from 'lucide-vue-next'
+import { SearchIcon, SettingsIcon, LogInIcon } from 'lucide-vue-next'
+import ArestaLogoGraph from '~/components/ArestaLogoGraph.vue'
+import ReadingStreak from '~/components/ReadingStreak.vue'
+import BottomNavbar from '~/components/BottomNavbar.vue'
 import CommandPalette from '~/components/CommandPalette.vue'
-import SidebarGraph from '~/components/SidebarGraph.vue'
 import { useAuth } from '~/composables/useAuth'
 import { useSettingsModal } from '~/composables/useSettingsModal'
 
-const commandPaletteRef = ref()
 const route = useRoute()
 const auth = useAuth()
 const settingsModal = useSettingsModal()
+const commandPaletteRef = ref()
 
 const openCommandPalette = () => {
   if (commandPaletteRef.value) {
