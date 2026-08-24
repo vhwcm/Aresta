@@ -168,4 +168,47 @@ describe('useReaderStore', () => {
       expect(store.isLoading).toBe(false)
     })
   })
+
+  describe('bookmarks e grafo', () => {
+    it('marca e desmarca página com toggleBookmark', () => {
+      const store = useReaderStore()
+      store.setDocument(createMockDocument({ totalPages: 10 }), 'livro.pdf', 1)
+      expect(store.isCurrentPageBookmarked).toBe(false)
+
+      store.toggleBookmark()
+      expect(store.isCurrentPageBookmarked).toBe(true)
+      expect(store.savedPages).toContain(1)
+
+      store.toggleBookmark()
+      expect(store.isCurrentPageBookmarked).toBe(false)
+      expect(store.savedPages).not.toContain(1)
+    })
+
+    it('adiciona e remove bookmark específico', () => {
+      const store = useReaderStore()
+      store.setDocument(createMockDocument({ totalPages: 10 }), 'livro.pdf', 1)
+      store.addBookmark(5)
+      store.addBookmark(3)
+      expect(store.savedPages).toEqual([3, 5])
+
+      store.removeBookmark(5)
+      expect(store.savedPages).toEqual([3])
+    })
+
+    it('alterna visualização do grafo', () => {
+      const store = useReaderStore()
+      expect(store.isGraphOpen).toBe(true)
+      store.toggleGraph()
+      expect(store.isGraphOpen).toBe(false)
+      store.toggleGraph()
+      expect(store.isGraphOpen).toBe(true)
+    })
+
+    it('alterna grafo mobile', () => {
+      const store = useReaderStore()
+      expect(store.isMobileGraphOpen).toBe(false)
+      store.toggleMobileGraph()
+      expect(store.isMobileGraphOpen).toBe(true)
+    })
+  })
 })
