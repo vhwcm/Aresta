@@ -1,6 +1,6 @@
 <template>
-  <div class="flex flex-col gap-12 pb-24 animate-in fade-in duration-500">
-    <!-- Top Bar Integrada da Home (Ofensiva no Canto Superior Direito e Busca Desktop) -->
+  <div class="flex flex-col gap-10 pb-20 animate-in fade-in duration-500">
+    <!-- Top Bar Integrada da Home (Busca Desktop e Ofensiva no Canto Superior Direito) -->
     <div class="flex items-center justify-between gap-4">
       <div class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary flex items-center gap-2">
         <div class="w-2 h-2 rounded-full bg-accent animate-pulse"></div>
@@ -31,197 +31,144 @@
       </div>
     </div>
 
-    <!-- BLOCO 1: CONTINUE SUA ÚLTIMA LEITURA (Com Capa em Destaque) -->
-    <section class="flex flex-col gap-6 p-6 sm:p-8 rounded-3xl bg-white/[0.02] border border-divider hover:border-white/20 transition-all shadow-xl">
-      <div class="flex items-center justify-between">
-        <span class="font-technical text-[10px] uppercase font-semibold tracking-widest text-accent flex items-center gap-1.5">
-          <BookOpenIcon class="w-3.5 h-3.5" />
-          Continue sua última leitura
-        </span>
-        <NuxtLink to="/library" class="font-technical text-xs text-textSecondary hover:text-white flex items-center gap-1 transition-colors">
-          Ver todos os livros →
-        </NuxtLink>
-      </div>
+    <!-- BLOCO 1: ÚLTIMA LEITURA ATIVA (Clean, sem caixa, capa clicável e conversor em ícone) -->
+    <section class="flex flex-row items-center sm:items-start gap-5 sm:gap-8">
+      <!-- Capa do Livro (Clicável diretamente no mobile e desktop) -->
+      <NuxtLink
+        :to="activeBookReaderLink"
+        class="relative shrink-0 group/cover cursor-pointer select-none"
+        title="Continuar leitura de O Alienista"
+      >
+        <div class="w-24 sm:w-32 md:w-36 aspect-[2/3] rounded-xl sm:rounded-2xl overflow-hidden shadow-xl border border-divider hover:border-accent/50 bg-neutral-900 flex items-center justify-center relative transition-all duration-300 group-hover/cover:scale-[1.02]">
+          <img
+            v-if="activeBookCoverUrl && !coverError"
+            :src="activeBookCoverUrl"
+            :alt="activeBookTitle"
+            @error="coverError = true"
+            class="w-full h-full object-cover"
+          />
+          <!-- Fallback se imagem falhar -->
+          <div v-else class="w-full h-full p-3 flex flex-col justify-between bg-gradient-to-br from-neutral-800 to-neutral-950 text-left border-l-2 border-accent">
+            <span class="font-technical text-[8px] uppercase tracking-wider text-accent font-semibold">Aresta</span>
+            <span class="font-editorial text-xs sm:text-sm font-light text-white leading-tight line-clamp-3">{{ activeBookTitle }}</span>
+            <span class="font-interface text-[9px] text-textSecondary">Machado de Assis</span>
+          </div>
 
-      <div class="flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-8">
-        <!-- Capa do Livro em Destaque -->
-        <div class="relative shrink-0 group/cover">
-          <div class="w-32 sm:w-40 aspect-[2/3] rounded-2xl overflow-hidden shadow-2xl border border-divider/80 bg-neutral-900 flex items-center justify-center relative transition-transform duration-500 group-hover/cover:scale-[1.03]">
-            <img
-              v-if="activeBookCoverUrl && !coverError"
-              :src="activeBookCoverUrl"
-              :alt="activeBookTitle"
-              @error="coverError = true"
-              class="w-full h-full object-cover"
-            />
-            <!-- Fallback se imagem falhar ou indisponível -->
-            <div v-else class="w-full h-full p-4 flex flex-col justify-between bg-gradient-to-br from-neutral-800 to-neutral-950 text-left border-l-4 border-accent">
-              <span class="font-technical text-[9px] uppercase tracking-wider text-accent font-semibold">Aresta Acervo</span>
-              <span class="font-editorial text-sm font-light text-white leading-tight line-clamp-3">{{ activeBookTitle }}</span>
-              <span class="font-interface text-[10px] text-textSecondary">{{ activeBookAuthor }}</span>
-            </div>
+          <!-- Efeito de Lombada de Livro -->
+          <div class="absolute inset-y-0 left-0 w-2 bg-gradient-to-r from-black/60 via-white/10 to-transparent pointer-events-none"></div>
+        </div>
+      </NuxtLink>
 
-            <!-- Efeito de Lombada de Livro -->
-            <div class="absolute inset-y-0 left-0 w-2.5 bg-gradient-to-r from-black/60 via-white/10 to-transparent pointer-events-none"></div>
+      <!-- Informações Compactas do Livro -->
+      <div class="flex flex-col justify-between gap-3 flex-1 min-w-0">
+        <div class="flex flex-col gap-1">
+          <NuxtLink :to="activeBookReaderLink" class="hover:text-accent transition-colors">
+            <h1 class="font-editorial text-2xl sm:text-4xl md:text-5xl font-light text-textPrimary leading-tight truncate sm:whitespace-normal">
+              {{ activeBookTitle }}
+            </h1>
+          </NuxtLink>
+
+          <!-- Progresso Resumido (Tanto de Tanto) -->
+          <div class="text-xs sm:text-sm font-technical text-textSecondary flex items-center gap-2">
+            <span>Pág. {{ activeBookCurrentPage }} / {{ activeBookTotalPages }}</span>
+            <span>·</span>
+            <span class="text-accent font-medium">{{ activeBookProgress }}%</span>
           </div>
         </div>
 
-        <!-- Informações e Ações do Livro -->
-        <div class="flex flex-col justify-between gap-4 flex-1 w-full text-left">
-          <div class="flex flex-col gap-2">
-            <div class="flex items-center gap-2 font-technical text-xs text-textSecondary">
-              <span>{{ activeBookAuthor }}</span>
-              <span>·</span>
-              <span class="text-accent font-medium">Leitura Ativa</span>
-            </div>
-            <h1 class="font-editorial text-3xl sm:text-4xl md:text-5xl font-light text-textPrimary leading-tight">
-              {{ activeBookTitle }}
-            </h1>
-            <p class="font-interface text-sm sm:text-base text-textSecondary max-w-2xl leading-relaxed mt-1">
-              {{ activeBookDescription }}
-            </p>
-          </div>
+        <!-- Botões de Ação Compactos (Seta para leitura e Ícone para Conversor) -->
+        <div class="flex items-center gap-3 pt-1">
+          <NuxtLink
+            :to="activeBookReaderLink"
+            class="bg-white text-black font-interface text-xs sm:text-sm font-medium px-4 sm:px-5 py-2 sm:py-2.5 rounded-full hover:bg-gray-200 transition-all flex items-center gap-1.5 shadow-md"
+            title="Continuar Leitura"
+          >
+            <span class="hidden sm:inline">Continuar</span>
+            <ArrowRightIcon class="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          </NuxtLink>
 
-          <!-- Barra de Progresso e Estatísticas -->
-          <div class="flex flex-col gap-2 bg-white/5 p-4 rounded-2xl border border-divider/60 max-w-xl">
-            <div class="flex items-center justify-between text-xs font-interface">
-              <span class="text-textSecondary">Progresso da Leitura:</span>
-              <span class="font-technical text-textPrimary font-semibold">Pág. {{ activeBookCurrentPage }} de {{ activeBookTotalPages }} ({{ activeBookProgress }}%)</span>
-            </div>
-            <div class="w-full h-2 bg-white/10 rounded-full overflow-hidden">
-              <div
-                class="h-full bg-accent rounded-full transition-all duration-500"
-                :style="{ width: `${activeBookProgress}%` }"
-              ></div>
-            </div>
-          </div>
-
-          <!-- Botões de Ação -->
-          <div class="flex flex-wrap items-center gap-4 mt-2">
-            <NuxtLink
-              :to="activeBookReaderLink"
-              class="bg-white text-black font-interface text-xs sm:text-sm font-medium px-6 py-3 rounded-full hover:bg-gray-200 transition-all flex items-center gap-2 shadow-lg shadow-white/10"
-            >
-              Continuar Leitura
-              <ArrowRightIcon class="w-4 h-4" />
-            </NuxtLink>
-
-            <NuxtLink
-              to="/conversor"
-              class="px-5 py-3 rounded-full border border-divider bg-white/5 hover:bg-white/10 text-textPrimary font-interface text-xs sm:text-sm transition-colors flex items-center gap-2"
-            >
-              <FileCode2Icon class="w-4 h-4 text-accent" />
-              Converter PDF para EPUB
-            </NuxtLink>
-          </div>
+          <!-- Conversor: Sempre em formato de Ícone -->
+          <NuxtLink
+            to="/conversor"
+            class="p-2 sm:p-2.5 rounded-full border border-divider bg-white/5 hover:bg-white/10 hover:border-accent/40 text-accent hover:text-white transition-all flex items-center justify-center"
+            title="Converter PDF para EPUB"
+            aria-label="Converter PDF para EPUB"
+          >
+            <FileCode2Icon class="w-4 h-4" />
+          </NuxtLink>
         </div>
       </div>
     </section>
 
-    <div class="h-px bg-divider w-full"></div>
+    <div class="h-px bg-divider/60 w-full"></div>
 
-    <!-- BLOCO 2: ANOTAÇÕES DO ÚLTIMO LIVRO (Mockadas com dados da leitura atual) -->
-    <section class="flex flex-col gap-6">
+    <!-- BLOCO 2: ANOTAÇÕES DO ÚLTIMO LIVRO (Clean e sem caixas) -->
+    <section class="flex flex-col gap-4">
       <div class="flex items-center justify-between">
         <div class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary flex items-center gap-2">
           <FileTextIcon class="w-3.5 h-3.5 text-accent" />
           Anotações & Destaques de {{ activeBookShortTitle }}
         </div>
         <NuxtLink to="/revisao" class="font-technical text-xs text-accent hover:underline flex items-center gap-1">
-          Ver todas as anotações →
+          Ver todas →
         </NuxtLink>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div
           v-for="note in activeBookNotes"
           :key="note.id"
-          class="p-6 md:p-8 rounded-3xl bg-white/[0.02] border border-divider hover:border-white/20 transition-all flex flex-col justify-between gap-4 group"
+          class="flex flex-col gap-2 py-2"
         >
-          <div class="flex flex-col gap-3">
-            <div class="flex items-center justify-between">
-              <span class="font-technical text-[10px] uppercase font-semibold tracking-widest text-accent">
-                {{ note.chapter }} · Pág. {{ note.page }}
-              </span>
-              <span class="font-technical text-[10px] text-textSecondary">{{ note.date }}</span>
-            </div>
-
-            <blockquote class="p-4 rounded-xl bg-white/5 border-l-2 border-accent text-xs font-interface italic text-textPrimary/90 leading-relaxed">
-              "{{ note.quote }}"
-            </blockquote>
-
-            <div class="flex flex-col gap-1 bg-white/[0.02] p-3 rounded-xl border border-divider/40">
-              <span class="font-technical text-[9px] uppercase font-semibold text-accent tracking-wider flex items-center gap-1">
-                <SparklesIcon class="w-3 h-3" />
-                Síntese / Insight
-              </span>
-              <p class="font-interface text-xs text-textSecondary leading-relaxed">
-                {{ note.insight }}
-              </p>
-            </div>
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-technical text-[10px] uppercase font-semibold tracking-widest text-accent">
+              {{ note.chapter }} · Pág. {{ note.page }}
+            </span>
+            <span class="font-technical text-[10px] text-textSecondary">{{ note.date }}</span>
           </div>
 
-          <div class="flex items-center justify-between pt-2 border-t border-divider/40 text-xs">
-            <div class="flex items-center gap-1.5">
-              <span v-for="tag in note.tags" :key="tag" class="font-technical text-[10px] text-textSecondary bg-white/5 px-2 py-0.5 rounded">
-                #{{ tag }}
-              </span>
-            </div>
-            <NuxtLink
-              :to="`/revisao`"
-              class="font-interface text-xs text-accent hover:underline flex items-center gap-1"
-            >
-              Revisar ↗
-            </NuxtLink>
-          </div>
+          <blockquote class="border-l-2 border-accent pl-3 text-xs font-interface italic text-textPrimary/90 leading-relaxed">
+            "{{ note.quote }}"
+          </blockquote>
+
+          <p class="font-interface text-xs text-textSecondary leading-relaxed pl-3">
+            {{ note.insight }}
+          </p>
         </div>
       </div>
     </section>
 
-    <div class="h-px bg-divider w-full"></div>
+    <div class="h-px bg-divider/60 w-full"></div>
 
-    <!-- BLOCO 3: FLASHCARDS DO DIA (Primeiro Flashcard do Dia + Ação Direta para Revisão) -->
-    <section class="flex flex-col gap-6">
+    <!-- BLOCO 3: FLASHCARDS DO DIA (Clean, sem caixa, com botão direto) -->
+    <section class="flex flex-col gap-4">
       <div class="flex items-center justify-between">
         <div class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary flex items-center gap-2">
           <BrainIcon class="w-3.5 h-3.5 text-accent" />
           Flashcards do Dia
         </div>
         <NuxtLink to="/revisao" class="font-technical text-xs text-accent hover:underline flex items-center gap-1">
-          Ir para Central de Revisão →
+          Central de Revisão →
         </NuxtLink>
       </div>
 
-      <!-- Card do Primeiro Flashcard do Dia -->
-      <div class="p-8 rounded-3xl bg-gradient-to-br from-white/[0.04] to-white/[0.01] border border-divider hover:border-accent/40 transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-8 group">
-        <div class="flex flex-col gap-4 flex-1">
-          <div class="flex items-center gap-3">
-            <span class="px-2.5 py-0.5 rounded-full bg-accent/15 border border-accent/30 font-technical text-[10px] text-accent uppercase font-semibold tracking-wider">
-              1º Flashcard de Hoje
-            </span>
-            <span class="font-technical text-xs text-textSecondary">
-              {{ dailyFlashcard.bookTitle }} · {{ dailyFlashcard.chapter }}
-            </span>
-          </div>
-
-          <h3 class="font-editorial text-2xl md:text-3xl font-light text-textPrimary leading-snug group-hover:text-white transition-colors">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-2">
+        <div class="flex flex-col gap-1.5 flex-1">
+          <span class="font-technical text-[10px] text-accent uppercase font-semibold tracking-wider">
+            1º Flashcard de Hoje · {{ dailyFlashcard.chapter }}
+          </span>
+          <h3 class="font-editorial text-xl sm:text-2xl font-light text-textPrimary leading-snug">
             {{ dailyFlashcard.question }}
           </h3>
-
-          <p class="font-interface text-textSecondary text-xs md:text-sm leading-relaxed max-w-2xl">
-            Pratique repetição espaçada para reter os conceitos fundamentais da sua última leitura antes que a curva do esquecimento atue.
-          </p>
         </div>
 
-        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
-          <NuxtLink
-            to="/revisao"
-            class="bg-accent hover:bg-accent/90 text-white font-interface text-xs md:text-sm font-medium px-6 py-3.5 rounded-2xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-accent/20"
-          >
-            <SparklesIcon class="w-4 h-4" />
-            Fazer Flashcard Agora
-          </NuxtLink>
-        </div>
+        <NuxtLink
+          to="/revisao"
+          class="bg-accent hover:bg-accent/90 text-white font-interface text-xs sm:text-sm font-medium px-4 py-2.5 rounded-full transition-all flex items-center gap-2 shadow-md shrink-0"
+        >
+          <SparklesIcon class="w-3.5 h-3.5" />
+          <span>Fazer Flashcard</span>
+        </NuxtLink>
       </div>
     </section>
   </div>
@@ -233,7 +180,6 @@ import {
   ArrowRightIcon,
   BrainIcon,
   SparklesIcon,
-  BookOpenIcon,
   FileCode2Icon,
   SearchIcon,
   FileTextIcon
@@ -264,13 +210,9 @@ const activeBookTitle = computed(() => {
   return latestUserBook.value?.title || 'O Alienista'
 })
 
-const activeBookAuthor = computed(() => {
-  return 'Machado de Assis'
-})
-
 const activeBookShortTitle = computed(() => {
   const title = activeBookTitle.value
-  return title.length > 30 ? title.substring(0, 30) + '...' : title
+  return title.length > 25 ? title.substring(0, 25) + '...' : title
 })
 
 const activeBookCoverUrl = computed(() => {
@@ -279,13 +221,6 @@ const activeBookCoverUrl = computed(() => {
   }
   // Mock com imagem de capa disponível no backend
   return getCoverUrl('storage/covers/O-Alienista.png')
-})
-
-const activeBookDescription = computed(() => {
-  if (latestUserBook.value) {
-    return `Você está no progresso da leitura de "${latestUserBook.value.title}". Continue de onde parou para manter sua ofensiva ativa.`
-  }
-  return 'Uma das obras mais célebres da literatura brasileira, satirizando a psiquiatria e os limites da razão através da trajetória do Dr. Simão Bacamarte na Casa Verde.'
 })
 
 const activeBookCurrentPage = computed(() => {
@@ -312,21 +247,19 @@ const activeBookNotes = computed(() => {
   return [
     {
       id: 'n1',
-      chapter: 'Capítulo III: A Casa Verde',
+      chapter: 'Capítulo III',
       page: 42,
-      date: 'Hoje, 10:45',
+      date: 'Hoje',
       quote: 'A razão é a perfeita saúde da alma; a loucura é a alteração dessa saúde.',
-      insight: 'Simão Bacamarte estabelece uma fronteira arbitrária entre sanidade e desvio mental, ilustrando o perigo do cientificismo cego.',
-      tags: ['Psicologia', 'Sátira', 'Machado']
+      insight: 'Simão Bacamarte estabelece uma fronteira arbitrária entre sanidade e desvio mental, ilustrando o perigo do cientificismo cego.'
     },
     {
       id: 'n2',
-      chapter: 'Capítulo I: De como Itaguaí ganhou uma Casa de Orates',
+      chapter: 'Capítulo I',
       page: 18,
-      date: 'Ontem, 18:20',
+      date: 'Ontem',
       quote: 'A ciência é o meu único norte; não busco a glória dos homens, mas a verdade das coisas.',
-      insight: 'O rigor metodológico de Bacamarte se transforma em uma obsessão dogmática ao longo da narrativa.',
-      tags: ['Cientificismo', 'Crítica Social']
+      insight: 'O rigor metodológico de Bacamarte se transforma em uma obsessão dogmática ao longo da narrativa.'
     }
   ]
 })
@@ -342,5 +275,6 @@ const dailyFlashcard = computed(() => {
   }
 })
 </script>
+
 
 
