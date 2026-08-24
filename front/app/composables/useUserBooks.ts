@@ -25,15 +25,18 @@ export const useUserBooks = () => {
       const data = await $fetch<any[]>(`${API_BASE}/user-books`, {
         headers: getHeaders()
       })
-      userBooks.value = data.map(item => ({
-        userBookId: item.id,
-        bookId: item.bookId,
-        title: item.title,
-        coverPath: item.coverPath,
-        filePath: item.filePath,
-        status: item.status,
-        currentPage: item.currentPage
-      }))
+      userBooks.value = Array.isArray(data)
+        ? data.map(item => ({
+            userBookId: item.id,
+            bookId: item.bookId,
+            title: item.title,
+            coverPath: item.coverPath,
+            filePath: item.filePath,
+            status: item.status,
+            currentPage: item.currentPage,
+            lastAccessedAt: item.lastAccessedAt
+          }))
+        : []
     } catch (e: any) {
       console.error('Erro ao buscar estante do usuário:', e)
       error.value = 'Falha ao carregar seus livros.'
@@ -98,6 +101,20 @@ export const useUserBooks = () => {
     }
   }
 
+  const recordBookAccess = async (userBookId: number) => {
+    try {
+      const res = await $fetch<any>(`${API_BASE}/user-books/${userBookId}/access`, {
+        method: 'PATCH',
+        headers: getHeaders()
+      })
+      await fetchUserBooks()
+      return res
+    } catch (e: any) {
+      console.error('Erro ao registrar acesso ao livro:', e)
+      throw e
+    }
+  }
+
   const isBookInShelf = (bookId: number) => {
     return userBooks.value.some(b => b.bookId === bookId)
   }
@@ -113,6 +130,7 @@ export const useUserBooks = () => {
     fetchUserBooks,
     addUserBook,
     updateUserBook,
+    recordBookAccess,
     deleteUserBook,
     deleteUserBookByBookId,
     isBookInShelf,

@@ -28,3 +28,4 @@ describe('useCommandPalette Composable', () => {
     expect(palette.isOpen.value).toBe(false)
   })
 })
+

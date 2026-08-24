@@ -6,6 +6,7 @@ export interface UserBookItem {
   filePath?: string
   status: 'QUERO_LER' | 'LENDO' | 'LIDO' | 'ABANDONADO' | string
   currentPage: number
+  lastAccessedAt?: string
 }
 
 export interface GraphNode {

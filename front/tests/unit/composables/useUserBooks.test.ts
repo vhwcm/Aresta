@@ -49,4 +49,16 @@ describe('useUserBooks Composable', () => {
       body: { status: 'LIDO', currentPage: 200 }
     }))
   })
+
+  it('recordBookAccess registra último acesso do livro', async () => {
+    mockFetch.mockResolvedValueOnce({ id: 10, lastAccessedAt: new Date().toISOString() }) // PATCH
+    mockFetch.mockResolvedValueOnce([]) // GET recarregado
+
+    const { recordBookAccess } = useUserBooks()
+    await recordBookAccess(10)
+
+    expect(mockFetch).toHaveBeenCalledWith('http://localhost:7070/api/user-books/10/access', expect.objectContaining({
+      method: 'PATCH'
+    }))
+  })
 })
