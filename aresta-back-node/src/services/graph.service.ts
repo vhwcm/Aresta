@@ -18,6 +18,15 @@ export class GraphService {
             },
           },
         },
+        annotationThemes: {
+          include: {
+            annotation: {
+              include: {
+                book: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -33,6 +42,17 @@ export class GraphService {
         coverPath: bt.userBook.book.cover_path,
         status: bt.userBook.status,
         currentPage: bt.userBook.current_page,
+      })),
+      annotations: t.annotationThemes.map((at) => ({
+        id: at.annotation.id,
+        bookId: at.annotation.book_id,
+        bookTitle: at.annotation.book.title,
+        cfi: at.annotation.cfi,
+        selectedText: at.annotation.selected_text,
+        note: at.annotation.note,
+        chapterTitle: at.annotation.chapter_title,
+        progress: at.annotation.progress,
+        createdAt: at.annotation.created_at,
       })),
     }));
 
@@ -227,6 +247,56 @@ export class GraphService {
 
     await prisma.bookTheme.delete({
       where: { id: bookTheme.id },
+    });
+
+    return true;
+  }
+
+  async linkAnnotationToTheme(annotationId: number, themeId: number) {
+    const annotation = await prisma.annotation.findUnique({
+      where: { id: annotationId },
+    });
+    const theme = await prisma.theme.findUnique({
+      where: { id: themeId },
+    });
+
+    if (!annotation || !theme) {
+      throw new AppError('Anotação ou Tema não encontrado.', 404);
+    }
+
+    await prisma.annotationTheme.upsert({
+      where: {
+        annotation_id_theme_id: {
+          annotation_id: annotationId,
+          theme_id: themeId,
+        },
+      },
+      update: {},
+      create: {
+        annotation_id: annotationId,
+        theme_id: themeId,
+      },
+    });
+
+    return { success: true };
+  }
+
+  async unlinkAnnotationFromTheme(annotationId: number, themeId: number) {
+    const link = await prisma.annotationTheme.findUnique({
+      where: {
+        annotation_id_theme_id: {
+          annotation_id: annotationId,
+          theme_id: themeId,
+        },
+      },
+    });
+
+    if (!link) {
+      throw new AppError('Vínculo entre anotação e tema não encontrado.', 404);
+    }
+
+    await prisma.annotationTheme.delete({
+      where: { id: link.id },
     });
 
     return true;

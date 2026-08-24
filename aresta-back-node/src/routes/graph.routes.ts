@@ -10,6 +10,7 @@ import {
   connectionParamSchema,
   linkBookSchema,
   unlinkBookParamSchema,
+  unlinkAnnotationParamSchema,
 } from '../schemas/graph.schema.js';
 
 const router = Router();
@@ -27,6 +28,9 @@ router.delete('/connections/:sourceId/:targetId', validateRequest({ params: conn
 
 router.post('/nodes/:id/books', validateRequest({ params: nodeIdParamSchema, body: linkBookSchema }), graphController.linkBookToNode);
 router.delete('/nodes/:id/books/:userBookId', validateRequest({ params: unlinkBookParamSchema }), graphController.unlinkBookFromNode);
+
+router.post('/nodes/:id/annotations/:annotationId', validateRequest({ params: unlinkAnnotationParamSchema }), graphController.linkAnnotationToNode);
+router.delete('/nodes/:id/annotations/:annotationId', validateRequest({ params: unlinkAnnotationParamSchema }), graphController.unlinkAnnotationFromNode);
 
 export default router;
 

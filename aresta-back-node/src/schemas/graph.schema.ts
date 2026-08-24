@@ -35,6 +35,11 @@ export const unlinkBookParamSchema = z.object({
   userBookId: z.string().regex(/^\d+$/),
 });
 
+export const unlinkAnnotationParamSchema = z.object({
+  id: z.string().regex(/^\d+$/),
+  annotationId: z.string().regex(/^\d+$/),
+});
+
 export type CreateNodeInput = z.infer<typeof createNodeSchema>;
 export type UpdateNodeInput = z.infer<typeof updateNodeSchema>;
 export type CreateConnectionInput = z.infer<typeof createConnectionSchema>;

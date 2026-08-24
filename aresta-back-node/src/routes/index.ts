@@ -8,6 +8,7 @@ import bookRoutes from './book.routes.js';
 import userBookRoutes from './userBook.routes.js';
 import userSettingsRoutes from './userSettings.routes.js';
 import graphRoutes from './graph.routes.js';
+import annotationRoutes from './annotation.routes.js';
 import healthRoutes from './health.routes.js';
 
 const router = Router();
@@ -26,6 +27,7 @@ router.use('/api/books', bookRoutes);
 router.use('/api/user-books', userBookRoutes);
 router.use('/api/user-settings', userSettingsRoutes);
 router.use('/api/graph', graphRoutes);
+router.use('/api/annotations', annotationRoutes);
 router.use('/api/health', healthRoutes);
 
 export default router;

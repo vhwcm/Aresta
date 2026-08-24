@@ -267,5 +267,73 @@ export class GraphController {
       return next(error);
     }
   };
+
+  /**
+   * @openapi
+   * /api/graph/nodes/{id}/annotations/{annotationId}:
+   *   post:
+   *     summary: Vincular anotação a um tema (nó do grafo)
+   *     tags: [Graph]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: integer
+   *       - in: path
+   *         name: annotationId
+   *         required: true
+   *         schema:
+   *           type: integer
+   *     responses:
+   *       200:
+   *         description: Anotação vinculada ao tema com sucesso
+   */
+  linkAnnotationToNode = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      const annotationId = parseInt(req.params.annotationId, 10);
+      const result = await this.graphService.linkAnnotationToTheme(annotationId, id);
+      return res.status(200).json(result);
+    } catch (error) {
+      return next(error);
+    }
+  };
+
+  /**
+   * @openapi
+   * /api/graph/nodes/{id}/annotations/{annotationId}:
+   *   delete:
+   *     summary: Desvincular anotação de um tema (nó do grafo)
+   *     tags: [Graph]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: integer
+   *       - in: path
+   *         name: annotationId
+   *         required: true
+   *         schema:
+   *           type: integer
+   *     responses:
+   *       204:
+   *         description: Anotação desvinculada do tema
+   */
+  unlinkAnnotationFromNode = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      const annotationId = parseInt(req.params.annotationId, 10);
+      await this.graphService.unlinkAnnotationFromTheme(annotationId, id);
+      return res.status(204).send();
+    } catch (error) {
+      return next(error);
+    }
+  };
 }
 
