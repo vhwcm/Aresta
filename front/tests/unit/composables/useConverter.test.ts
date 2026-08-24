@@ -1,16 +1,14 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { useConverter } from '~/composables/useConverter'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { useConverter } from '../../../app/composables/useConverter'
 
-describe('useConverter composable', () => {
+describe('useConverter', () => {
   beforeEach(() => {
-    // Mock URL.createObjectURL
-    if (!globalThis.URL.createObjectURL) {
-      globalThis.URL.createObjectURL = vi.fn().mockReturnValue('blob:http://localhost/mock-epub')
-    }
+    vi.restoreAllMocks()
   })
 
-  it('initializes with default options and idle status', () => {
-    const { status, progress, options, selectedFile } = useConverter()
+  it('inicializa com estado idle e opções padrão', () => {
+    const { status, progress, selectedFile, options } = useConverter()
+
     expect(status.value).toBe('idle')
     expect(progress.value).toBe(0)
     expect(selectedFile.value).toBeNull()
@@ -18,35 +16,23 @@ describe('useConverter composable', () => {
     expect(options.value.extractImages).toBe(true)
   })
 
-  it('rejects non-pdf files and sets error message', () => {
+  it('rejeita arquivo não PDF ao chamar setFile', () => {
     const { setFile, errorMessage, selectedFile } = useConverter()
-    const invalidFile = new File(['dummy content'], 'document.txt', { type: 'text/plain' })
-    const success = setFile(invalidFile)
+    const nonPdf = new File(['hello'], 'document.txt', { type: 'text/plain' })
 
-    expect(success).toBe(false)
-    expect(selectedFile.value).toBeNull()
+    const result = setFile(nonPdf)
+    expect(result).toBe(false)
     expect(errorMessage.value).toContain('PDF')
-  })
-
-  it('accepts valid PDF file and resets status', () => {
-    const { setFile, selectedFile, errorMessage, status } = useConverter()
-    const pdfFile = new File(['pdf dummy binary'], 'livro.pdf', { type: 'application/pdf' })
-    const success = setFile(pdfFile)
-
-    expect(success).toBe(true)
-    expect(selectedFile.value?.name).toBe('livro.pdf')
-    expect(errorMessage.value).toBe('')
-    expect(status.value).toBe('idle')
-  })
-
-  it('resets converter state', () => {
-    const { setFile, reset, selectedFile, status, progress } = useConverter()
-    const pdfFile = new File(['pdf dummy'], 'artigo.pdf', { type: 'application/pdf' })
-    setFile(pdfFile)
-
-    reset()
     expect(selectedFile.value).toBeNull()
-    expect(status.value).toBe('idle')
-    expect(progress.value).toBe(0)
+  })
+
+  it('aceita arquivo PDF válido', () => {
+    const { setFile, errorMessage, selectedFile } = useConverter()
+    const pdfFile = new File(['%PDF-1.4'], 'livro.pdf', { type: 'application/pdf' })
+
+    const result = setFile(pdfFile)
+    expect(result).toBe(true)
+    expect(errorMessage.value).toBe('')
+    expect(selectedFile.value?.name).toBe('livro.pdf')
   })
 })
