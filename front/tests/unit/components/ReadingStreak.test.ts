@@ -6,7 +6,6 @@ describe('ReadingStreak Component', () => {
   it('renders streak days count correctly and opens popover on click', async () => {
     const wrapper = mount(ReadingStreak)
 
-    expect(wrapper.text()).toContain('dias')
     expect(wrapper.find('button').exists()).toBe(true)
 
     // Clicar para abrir popover

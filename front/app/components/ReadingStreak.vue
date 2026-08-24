@@ -16,10 +16,9 @@
         />
       </div>
 
-      <!-- Contador de Dias -->
+      <!-- Contador da Ofensiva (Número Puro) -->
       <span class="font-technical text-xs font-semibold text-textPrimary tracking-wider">
         {{ currentStreak }}
-        <span class="text-[10px] text-textSecondary font-normal lowercase ml-0.5">dias</span>
       </span>
     </button>
 
