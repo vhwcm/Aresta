@@ -1,7 +1,13 @@
+import re
 from typing import List
 from PIL import Image
 from pdf2epub.domain.models import Region, BBox, Word, TextSpan
 from pdf2epub.domain.types import RegionType
+
+CHAPTER_START_RE = re.compile(
+    r'^(cap[íi]tulo\s+([ivxlcdm0-9]+|\w+)|chapter\s+[0-9ivxlcdm]+|sinopse|sum[áa]rio|pref[áa]cio|introdu[çc][ãa]o|ep[íi]logo|conclus[ãa]o|posf[áa]cio)\b',
+    re.IGNORECASE
+)
 
 class HeuristicLayoutDetector:
     """
@@ -23,23 +29,32 @@ class HeuristicLayoutDetector:
         regions: List[Region] = []
         body_spans: List[TextSpan] = []
 
-        header_threshold = page_height * 0.08
-        footer_threshold = page_height * 0.92
+        header_threshold = page_height * 0.10
+        footer_threshold = page_height * 0.90
 
         for s in spans:
+            clean_s = s.text.strip()
+            is_page_num = clean_s.isdigit() or re.match(r'^[ivxlcdm]+$', clean_s, re.IGNORECASE)
+
             if s.bbox.y1 <= header_threshold:
                 regions.append(Region(
-                    type=RegionType.HEADER,
+                    type=RegionType.PAGE_NUMBER if is_page_num else RegionType.HEADER,
                     bbox=s.bbox,
                     confidence=0.9,
                     spans=[s],
                     text=s.text
                 ))
             elif s.bbox.y0 >= footer_threshold:
-                # Se for só um número, é PAGE_NUMBER, senão FOOTER
-                is_num = s.text.strip().isdigit()
                 regions.append(Region(
-                    type=RegionType.PAGE_NUMBER if is_num else RegionType.FOOTER,
+                    type=RegionType.PAGE_NUMBER if is_page_num else RegionType.FOOTER,
+                    bbox=s.bbox,
+                    confidence=0.9,
+                    spans=[s],
+                    text=s.text
+                ))
+            elif is_page_num and (s.bbox.y1 <= page_height * 0.15 or s.bbox.y0 >= page_height * 0.85):
+                regions.append(Region(
+                    type=RegionType.PAGE_NUMBER,
                     bbox=s.bbox,
                     confidence=0.9,
                     spans=[s],
@@ -52,7 +67,6 @@ class HeuristicLayoutDetector:
             return regions
 
         # 2. Agrupamento em blocos com base em distância vertical e font_size
-        # Calcula tamanho médio de fonte do corpo do texto
         font_sizes = [s.font_size for s in body_spans]
         avg_font_size = sum(font_sizes) / len(font_sizes) if font_sizes else 12.0
 
@@ -69,14 +83,18 @@ class HeuristicLayoutDetector:
             y1 = max(s.bbox.y1 for s in span_list)
             full_text = " ".join(s.text for s in span_list)
 
-            # Classifica tipo pela tipografia
+            # Classifica tipo pela tipografia e por padrões de texto
             max_size = max(s.font_size for s in span_list)
             is_bold = any(s.is_bold for s in span_list)
+            is_chapter_title = bool(CHAPTER_START_RE.match(full_text.strip()))
 
-            if max_size >= avg_font_size * 1.4:
+            if is_chapter_title:
+                reg_type = RegionType.TITLE
+                level = 1
+            elif max_size >= avg_font_size * 1.4:
                 reg_type = RegionType.TITLE if max_size >= avg_font_size * 1.8 else RegionType.HEADING
                 level = 1 if max_size >= avg_font_size * 1.8 else (2 if max_size >= avg_font_size * 1.5 else 3)
-            elif is_bold and len(full_text) < 100 and max_size >= avg_font_size * 1.1:
+            elif is_bold and len(full_text) < 120 and max_size >= avg_font_size * 1.05:
                 reg_type = RegionType.HEADING
                 level = 3
             else:
@@ -98,11 +116,16 @@ class HeuristicLayoutDetector:
                 last_span = s
                 continue
 
-            # Distância vertical para o span anterior
+            # Se o novo span for o início de um capítulo, fecha o bloco anterior imediatamente
+            if CHAPTER_START_RE.match(s.text.strip()):
+                regions.append(create_region_from_spans(current_block))
+                current_block = [s]
+                last_span = s
+                continue
+
             v_gap = s.bbox.y0 - last_span.bbox.y1
             line_height = max(s.font_size, last_span.font_size)
 
-            # Se a quebra for muito grande ou mudança brusca de fonte (título), fecha bloco
             font_diff = abs(s.font_size - last_span.font_size) > 2.0
             if v_gap > (line_height * 1.8) or (font_diff and (s.font_size > avg_font_size * 1.2 or last_span.font_size > avg_font_size * 1.2)):
                 regions.append(create_region_from_spans(current_block))

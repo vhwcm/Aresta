@@ -1,11 +1,22 @@
+import re
 from typing import List
 from pdf2epub.domain.models import Document, Chapter, Region, Page
 from pdf2epub.domain.types import RegionType
 
+CHAPTER_PATTERN = re.compile(
+    r'^(cap[íi]tulo\s+([ivxlcdm0-9]+|\w+)|chapter\s+[0-9ivxlcdm]+|sinopse|sum[áa]rio|pref[áa]cio|introdu[çc][ãa]o|ep[íi]logo|conclus[ãa]o|posf[áa]cio)\b',
+    re.IGNORECASE
+)
+
+CHAPTER_HEADING_CLEAN = re.compile(
+    r'^(cap[íi]tulo\s+[ivxlcdm0-9]+(?:\s*[-–—:]\s*[^.\n]+)?|chapter\s+[0-9ivxlcdm]+(?:\s*[-–—:]\s*[^.\n]+)?|sinopse|sum[áa]rio|pref[áa]cio|introdu[çc][ãa]o|ep[íi]logo|conclus[ãa]o|posf[áa]cio)',
+    re.IGNORECASE
+)
+
 class ChapterResolver:
     """
     Agrupa páginas e regiões em capítulos estruturados
-    com base em títulos (TITLE), cabeçalhos principais (HEADING) e quebras.
+    com base em títulos (TITLE), cabeçalhos principais (HEADING) e padrões textuais (CAPÍTULO...).
     """
     def resolve_chapters(self, pages: List[Page], doc_title: str) -> List[Chapter]:
         chapters: List[Chapter] = []
@@ -13,27 +24,41 @@ class ChapterResolver:
 
         for page in pages:
             for region in page.regions:
-                # Ignora cabeçalhos e rodapés de página repetidos na estrutura do livro
                 if region.type in (RegionType.HEADER, RegionType.FOOTER, RegionType.PAGE_NUMBER):
+                    continue
+
+                raw_text = region.text.strip()
+                if not raw_text:
                     continue
 
                 # Detecta início de um novo capítulo
                 is_chapter_title = (
                     region.type == RegionType.TITLE or
                     (region.type == RegionType.HEADING and region.level == 1) or
-                    (region.type == RegionType.HEADING and any(
-                        word in region.text.lower() for word in ["capítulo", "capitulo", "chapter", "seção", "secao"]
-                    ))
+                    bool(CHAPTER_PATTERN.match(raw_text))
                 )
 
-                if is_chapter_title and len(region.text.strip()) > 2:
+                if is_chapter_title and len(raw_text) > 2:
+                    region.type = RegionType.TITLE
+                    region.level = 1
+
                     if current_chapter and current_chapter.regions:
                         current_chapter.page_end = page.number
                         chapters.append(current_chapter)
 
-                    title_text = region.text.strip()
+                    # Limpa título para o sumário/TOC
+                    first_line = raw_text.split('\n')[0].strip()
+                    m = CHAPTER_HEADING_CLEAN.match(first_line)
+                    if m:
+                        title_clean = m.group(1).strip()
+                    else:
+                        title_clean = first_line[:60].strip()
+
+                    # Remove pontuações de sumário (ex: ..... 5)
+                    title_clean = re.sub(r'[\.\s_]{3,}\s*\d*$', '', title_clean).strip()
+
                     current_chapter = Chapter(
-                        title=title_text,
+                        title=title_clean,
                         level=1,
                         page_start=page.number,
                         page_end=page.number,
@@ -41,7 +66,6 @@ class ChapterResolver:
                     )
                 else:
                     if current_chapter is None:
-                        # Primeiro capítulo padrão (Introdução / Início)
                         current_chapter = Chapter(
                             title=doc_title or "Início",
                             level=1,
@@ -55,7 +79,6 @@ class ChapterResolver:
         if current_chapter and current_chapter.regions:
             chapters.append(current_chapter)
 
-        # Se nenhum capítulo foi detectado, cria um capítulo único com todo o conteúdo
         if not chapters:
             all_regions = []
             for p in pages:

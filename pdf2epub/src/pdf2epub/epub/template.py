@@ -1,7 +1,7 @@
 import html
+import re
 
-DEFAULT_CSS = """
-@charset "utf-8";
+DEFAULT_CSS = """@charset "utf-8";
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Georgia, serif;
@@ -103,4 +103,8 @@ aside.footnote, div.footnote {
 """
 
 def escape_text(text: str) -> str:
-    return html.escape(text.strip())
+    if not text:
+        return ""
+    # Sanitize invalid XML 1.0 control characters
+    cleaned = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', text)
+    return html.escape(cleaned.strip())
