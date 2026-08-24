@@ -37,12 +37,12 @@
     </div>
 
     <!-- Indicador Enxuto dos Eixos: Linha horizontal = Tempo, Linha vertical = Absorção -->
-    <div class="flex items-center justify-between text-[9px] sm:text-[10px] font-technical text-textSecondary px-1">
-      <span class="flex items-center gap-1 text-textSecondary">
-        <span>&uarr;</span> <strong>Absorção</strong> (retenção %)
+    <div class="flex items-center justify-between gap-2 text-[10px] font-technical text-textSecondary px-1">
+      <span class="whitespace-nowrap flex items-center gap-1">
+        <span>&uarr;</span> <strong>Absorção</strong>
       </span>
-      <span class="flex items-center gap-1 text-textSecondary">
-        <strong>Tempo</strong> (dias decorridos) <span>&rarr;</span>
+      <span class="whitespace-nowrap flex items-center gap-1">
+        <strong>Tempo</strong> <span>&rarr;</span>
       </span>
     </div>
   </div>
@@ -78,23 +78,28 @@ const generateData = (revisions: number) => {
   const reviewLines: { points: [number, number][]; step: number }[] = []
 
   let currentPoints: [number, number][] = []
-  for (let i = 0; i <= Math.min(revisions, intervals.length - 1); i++) {
+  const maxIdx = Math.min(revisions, intervals.length - 1)
+  for (let i = 0; i <= maxIdx; i++) {
     const inter = intervals[i]
-    for (let t = inter.start; t <= inter.end; t += 0.2) {
-      const dt = t - inter.start
-      const r = Math.max(20, inter.base * Math.exp(-dt / inter.s))
-      currentPoints.push([t, r])
+    if (inter) {
+      for (let t = inter.start; t <= inter.end; t += 0.2) {
+        const dt = t - inter.start
+        const r = Math.max(20, inter.base * Math.exp(-dt / inter.s))
+        currentPoints.push([t, r])
+      }
     }
   }
 
   // Se não cobriu até 30 dias, projetar decaimento a partir da última revisão ativa
   if (revisions < intervals.length) {
     const lastInter = intervals[revisions]
-    const lastStart = lastInter.start
-    for (let t = lastStart; t <= 30; t += 0.5) {
-      const dt = t - lastStart
-      const r = Math.max(10, 100 * Math.exp(-dt / lastInter.s))
-      currentPoints.push([t, r])
+    if (lastInter) {
+      const lastStart = lastInter.start
+      for (let t = lastStart; t <= 30; t += 0.5) {
+        const dt = t - lastStart
+        const r = Math.max(10, 100 * Math.exp(-dt / lastInter.s))
+        currentPoints.push([t, r])
+      }
     }
   }
 

@@ -18,7 +18,11 @@ describe('EbbinghausChart Component', () => {
     const buttons = wrapper.findAll('button')
     expect(buttons.length).toBeGreaterThanOrEqual(4)
 
-    await buttons[0].trigger('click')
+    const firstButton = buttons[0]
+    expect(firstButton).toBeDefined()
+    if (firstButton) {
+      await firstButton.trigger('click')
+    }
     expect(wrapper.html()).toContain('1ª Rev')
   })
 })
