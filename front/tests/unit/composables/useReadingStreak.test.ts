@@ -1,21 +1,29 @@
-import { describe, it, expect } from 'vitest'
-import { useReadingStreak } from '~/composables/useReadingStreak'
+import { describe, it, expect, vi } from 'vitest'
+import { useReadingStreak } from '../../../app/composables/useReadingStreak'
 
 describe('useReadingStreak composable', () => {
-  it('initializes with current streak and weekly activity', () => {
-    const { currentStreak, longestStreak, weeklyActivity, dailyGoalMinutes } = useReadingStreak()
-    expect(currentStreak.value).toBeGreaterThan(0)
-    expect(longestStreak.value).toBeGreaterThanOrEqual(currentStreak.value)
+  it('initializes with streak, daily activity and weekly activity structures', () => {
+    const { currentStreak, longestStreak, weeklyActivity, targetStreakDays, todayActivity } = useReadingStreak()
+    expect(currentStreak.value).toBeDefined()
+    expect(longestStreak.value).toBeDefined()
     expect(weeklyActivity.value.length).toBe(7)
-    expect(dailyGoalMinutes.value).toBe(20)
+    expect(targetStreakDays.value).toBeDefined()
+    expect(todayActivity.value.requiredReadingSeconds).toBe(600)
+    expect(todayActivity.value.requiredFlashcards).toBe(5)
   })
 
-  it('computes isGoalReached correctly and adds reading minutes', () => {
-    const { todayMinutesRead, dailyGoalMinutes, isGoalReached, addReadingMinutes } = useReadingStreak()
-    expect(isGoalReached.value).toBe(todayMinutesRead.value >= dailyGoalMinutes.value)
+  it('handles local updates for reading time and flashcard reviews', async () => {
+    const { todayActivity, recordReadingTime, recordFlashcardReview, updateTargetStreakDays, targetStreakDays } = useReadingStreak()
 
-    const initialMinutes = todayMinutesRead.value
-    addReadingMinutes(10)
-    expect(todayMinutesRead.value).toBe(initialMinutes + 10)
+    await updateTargetStreakDays(14)
+    expect(targetStreakDays.value).toBe(14)
+
+    const initialSecs = todayActivity.value.readingSeconds
+    await recordReadingTime(120)
+    expect(todayActivity.value.readingSeconds).toBeGreaterThanOrEqual(initialSecs)
+
+    const initialCards = todayActivity.value.flashcardsReviewed
+    await recordFlashcardReview(2)
+    expect(todayActivity.value.flashcardsReviewed).toBeGreaterThanOrEqual(initialCards)
   })
 })

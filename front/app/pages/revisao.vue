@@ -239,6 +239,7 @@ import {
   ChevronRightIcon,
   PlusIcon
 } from 'lucide-vue-next'
+import { useReadingStreak } from '~/composables/useReadingStreak'
 
 interface Flashcard {
   id: string
@@ -297,6 +298,14 @@ const cards = ref<Flashcard[]>([
     chapter: 'Cap. 1: As Coisas Psicológicas Cotidianas',
     question: 'O que é uma "Affordance" no design de interfaces?',
     answer: 'É a relação entre as propriedades físicas de um objeto e as capacidades do agente que determinam como o objeto pode ser utilizado (ex: uma maçaneta plana convida a empurrar).'
+  },
+  {
+    id: '5',
+    bookId: 'sapiens',
+    bookTitle: 'Sapiens',
+    chapter: 'Cap. 5: O Maior Golpe da História',
+    question: 'Por que Harari chama a Revolução Agrícola de "o maior golpe da história"?',
+    answer: 'Porque embora tenha aumentado o total de alimentos disponíveis para a espécie, gerou dietas piores, mais horas de trabalho extenuante e maior vulnerabilidade a pragas e secas para a média dos indivíduos.'
   }
 ])
 
@@ -323,6 +332,8 @@ const summaries = ref<AnnotationSummary[]>([
   }
 ])
 
+const streak = useReadingStreak()
+
 const filteredCards = computed(() => {
   if (selectedBookFilter.value === 'all') return cards.value
   return cards.value.filter((c) => c.bookId === selectedBookFilter.value)
@@ -344,7 +355,9 @@ const prevCard = () => {
   }
 }
 
-const rateCard = (_rating: 'hard' | 'good' | 'easy') => {
+const rateCard = async (_rating: 'hard' | 'good' | 'easy') => {
+  void streak.recordFlashcardReview(1)
+
   if (currentCardIndex.value < filteredCards.value.length - 1) {
     nextCard()
   } else {

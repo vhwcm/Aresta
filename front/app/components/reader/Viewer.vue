@@ -138,10 +138,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { NetworkIcon } from 'lucide-vue-next'
 import { useReaderStore } from '~/stores/readerStore'
+import { useReadingTimer } from '~/composables/reader/useReadingTimer'
 
 import ReaderEnginePageCurlCanvas from '~/components/reader/engine/PageCurlCanvas.vue'
 import ReaderBottomBar from '~/components/reader/ReaderBottomBar.vue'
@@ -151,6 +152,13 @@ import ReaderGraphPanel from '~/components/reader/ReaderGraphPanel.vue'
 
 const store = useReaderStore()
 const router = useRouter()
+const readingTimer = useReadingTimer()
+
+watch(() => store.currentPage, (newPage) => {
+  if (newPage) {
+    readingTimer.onPageChange(newPage)
+  }
+})
 
 const isSavedPagesOpen = ref(false)
 const isAnnotationModalOpen = ref(false)
