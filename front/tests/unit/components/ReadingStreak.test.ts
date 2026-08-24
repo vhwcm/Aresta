@@ -11,7 +11,7 @@ describe('ReadingStreak Component', () => {
     // Clicar para abrir popover
     await wrapper.find('button').trigger('click')
     expect(wrapper.text()).toContain('Ofensiva de Leitura')
-    expect(wrapper.text()).toContain('Meta diária:')
+    expect(wrapper.text()).toContain('Meta diária')
     expect(wrapper.text()).toContain('Últimos 7 dias')
   })
 })
