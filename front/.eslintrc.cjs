@@ -41,9 +41,10 @@ module.exports = {
       }
     },
     {
-      // Componentes gráficos complexos (ex: Grafos D3.js)
-      files: ['app/components/**/*.vue'],
+      // Componentes gráficos complexos e páginas ricas em templates/modais
+      files: ['app/components/**/*.vue', 'app/pages/**/*.vue'],
       rules: {
+        'max-lines': ['warn', { max: 600, skipBlankLines: true, skipComments: true }],
         'max-lines-per-function': ['warn', { max: 200, skipBlankLines: true, skipComments: true }]
       }
     },
