@@ -1,6 +1,24 @@
 # 📐 Aresta — Monorepositório (Leitor de Ebooks, Biblioteca & Mapa Mental)
 
-O **Aresta** é uma aplicação web completa para leitura interativa de ebooks (EPUB e PDF), gerenciamento de biblioteca pessoal e visualização de conexões conceituais através de um **Grafo de Conhecimento / Mapa Mental**.
+O **Aresta** é uma aplicação web moderna para leitura interativa de ebooks (EPUB e PDF), gerenciamento de biblioteca pessoal, retenção de conhecimento com flashcards e visualização de conexões conceituais através de um **Grafo de Conhecimento / Mapa Mental**.
+
+---
+
+<p align="center">
+  <img src="./aresta-back-node/storage/capturas_de_tela/Captura_de_tela_Home_Aresta.png" alt="Aresta — Dashboard Home, Flashcards e Anotações" width="900" style="border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.2);">
+</p>
+
+---
+
+## ✨ Principais Funcionalidades
+
+- 📖 **Leitor de Ebooks Multi-formato**: Suporte fluido a arquivos **EPUB** (via `foliate-js`) e **PDF** (via `pdfjs-dist`) com alternância de temas, controle de progresso e persistência.
+- 🧠 **Grafo de Conhecimento & Mapa Mental**: Visualização interativa e física de nós (D3.js) conectando obras, conceitos, autores e ideias transversais.
+- 🎯 **Dashboard Home & Streaks**: Acompanhamento de metas de leitura contínua, histórico recente e atalhos de continuidade imediata.
+- 🗂️ **Central de Revisão & Flashcards**: Sistema de repetição espaçada e metodologia baseada na **Curva do Esquecimento** para fixação de conceitos-chave.
+- 📝 **Anotações & Citações**: Extração e catalogação de trechos, pensamentos e marcações organizadas por livro, capítulo e página.
+- 🔄 **Conversor de Documentos & Ferramentas**: Utilitários para conversão e processamento de livros digitais.
+- 📚 **Biblioteca Pessoal & Catálogo**: Gestão de livros do usuário, upload de arquivos, capas e catálogo compartilhado.
 
 ---
 
@@ -13,10 +31,10 @@ Aresta/
 ├── front/                    # Frontend em Nuxt 4 (Vue 3 + TypeScript)
 │   ├── app/
 │   │   ├── adapters/         # Padrão Adapter (PDF.js e Foliate-js)
-│   │   ├── components/       # Componentes Vue (Leitor, Grafo, Modais)
-│   │   ├── composables/      # Lógica reativa (useGraph, useUserBooks, useCatalog)
+│   │   ├── components/       # Componentes Vue (Leitor, Grafo, Modais, Dock)
+│   │   ├── composables/      # Lógica reativa (useGraph, useUserBooks, useCatalog, etc.)
 │   │   ├── interfaces/       # Definições de tipos TypeScript
-│   │   └── pages/            # Rotas do Nuxt (Biblioteca, Leitor, Grafo)
+│   │   └── pages/            # Rotas do Nuxt (Home, Leitor, Grafo, Revisão, Biblioteca)
 │   ├── tests/                # Testes Unitários (Vitest) e E2E (Playwright)
 │   └── package.json
 │
@@ -28,7 +46,8 @@ Aresta/
 │   │   ├── middlewares/      # Autenticação JWT, Zod validation, error handler
 │   │   ├── schemas/          # Schemas de validação Zod
 │   │   └── config/           # Prisma client, envs e OpenAPI spec
-│   ├── prisma/               # Schema Prisma, migrations e seeds
+│   ├── prisma/               # Schema Prisma, migrations e seeds (SQLite)
+│   ├── storage/              # Armazenamento de livros, capas e capturas
 │   ├── tests/                # Testes de integração (Vitest + Supertest)
 │   └── package.json
 │
@@ -56,8 +75,9 @@ Aresta/
 - **Documentação Swagger UI**: `http://localhost:7070/api-docs`.
 - **Domínio das APIs**:
   - `/api/auth`: Autenticação e perfil de usuário (`POST /login`, `GET /me`).
-  - `/api/books`: Catálogo global, download de PDF e capas.
-  - `/api/user-books`: Estante pessoal do usuário e progresso.
+  - `/api/books`: Catálogo global, download de PDF/EPUB e capas.
+  - `/api/user-books`: Estante pessoal do usuário e progresso de leitura.
+  - `/api/annotations`: Anotações, notas e citações em livros.
   - `/api/graph`: Nós de temas, conexões e vínculos conceituais.
   - `/api/users`: Gestão de usuários e permissões (ADMIN).
   - `/api/user-settings`: Configurações de leitura e idioma.
