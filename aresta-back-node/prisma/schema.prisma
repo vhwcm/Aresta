@@ -16,11 +16,17 @@ model User {
   is_active        Boolean           @default(true)
   created_at       DateTime          @default(now())
   updated_at       DateTime?         @updatedAt
+  current_streak   Int               @default(0)
+  longest_streak   Int               @default(0)
+  streak_freeze_count Int            @default(0)
+  target_streak_days Int             @default(7)
+  last_active_date String?
   userBooks        UserBook[]
   themes           Theme[]
   themeConnections ThemeConnection[]
   userSettings     UserSettings?
   annotations      Annotation[]
+  dailyActivities  DailyActivity[]
 
   @@map("users")
 }
@@ -142,5 +148,21 @@ model AppConfig {
   value String?
 
   @@map("app_config")
+}
+
+model DailyActivity {
+  id                  Int      @id @default(autoincrement())
+  user_id             Int
+  date                String   // Format YYYY-MM-DD (UTC)
+  reading_seconds     Int      @default(0)
+  flashcards_reviewed Int      @default(0)
+  is_completed        Boolean  @default(false)
+  is_frozen           Boolean  @default(false)
+  created_at          DateTime @default(now())
+  updated_at          DateTime @default(now()) @updatedAt
+  user                User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, date])
+  @@map("daily_activities")
 }
 
