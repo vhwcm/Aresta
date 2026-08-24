@@ -16,12 +16,12 @@ O sistema gerencia livros digitais (formatos como PDF e EPUB) e suas respectivas
 
 ## 2. Estrutura de Pastas no Servidor
 
-No diretório `aresta-back/`:
+No diretório `aresta-back-node/`:
 
 ```text
-aresta-back/
+aresta-back-node/
 ├── storage/
-│   ├── books/              # Arquivos PDF dos livros (Privado/Protegido)
+│   ├── books/              # Arquivos PDF e EPUB dos livros (Privado/Protegido)
 │   │   ├── a-cartomante.pdf
 │   │   ├── Como-tocar-piano.pdf
 │   │   └── ...
@@ -33,20 +33,21 @@ aresta-back/
 
 ---
 
-## 3. Estrutura no Banco de Dados (SQLite)
+## 3. Estrutura no Banco de Dados (SQLite + Prisma ORM)
 
-### Tabela `books`
+### Model `Book` (`prisma/schema.prisma`):
 
-Tabela criada via Flyway migration [`V4__create_books_table.sql`](file:///home/morpho/Aresta/aresta-back/src/main/resources/db/migration/V4__create_books_table.sql) e expandida na migration [`V6__add_cover_path_to_books.sql`](file:///home/morpho/Aresta/aresta-back/src/main/resources/db/migration/V6__add_cover_path_to_books.sql):
+```prisma
+model Book {
+  id         Int        @id @default(autoincrement())
+  title      String
+  file_path  String
+  cover_path String?
+  created_at DateTime   @default(now())
+  userBooks  UserBook[]
 
-```sql
-CREATE TABLE books (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT NOT NULL,
-    file_path TEXT NOT NULL,
-    cover_path TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
+  @@map("books")
+}
 ```
 
 ### Campos:
@@ -58,18 +59,19 @@ CREATE TABLE books (
 
 ---
 
-## 4. Endpoints da API RESTful (Javalin)
+## 4. Endpoints da API RESTful (Express.js)
 
-O servidor Javalin expõe os seguintes endpoints HTTP para manipulação de livros e consumo de capas:
+O servidor Express expõe os seguintes endpoints HTTP para manipulação de livros e consumo de capas:
 
 | Método | Rota | Descrição |
 | :--- | :--- | :--- |
 | `GET` | `/api/books` | Retorna a lista em JSON de todos os livros cadastrados |
-| `GET` | `/api/books/{id}` | Retorna o JSON com os detalhes de um livro específico por ID |
-| `GET` | `/api/books/{id}/cover` | Transmite o arquivo de imagem PNG da capa do livro |
-| `GET` | `/covers/{filename}.png` | Servidor estático Javalin para acesso direto e em cache às capas |
+| `GET` | `/api/books/:id` | Retorna o JSON com os detalhes de um livro específico por ID |
+| `GET` | `/api/books/:id/cover` | Transmite o arquivo de imagem PNG da capa do livro |
+| `GET` | `/api/books/:id/file` | Transmite o arquivo de mídia (PDF/EPUB) do livro |
+| `GET` | `/covers/:filename` | Rota de arquivos estáticos Express para capas |
 | `POST` | `/api/books` | Registra um novo livro e atribui título, `filePath` e `coverPath` |
-| `DELETE` | `/api/books/{id}` | Remove o registro de um livro pelo ID |
+| `DELETE` | `/api/books/:id` | Remove o registro de um livro pelo ID |
 
 ### Exemplo de Resposta JSON (`GET /api/books`):
 

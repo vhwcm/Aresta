@@ -20,7 +20,7 @@ Aresta/
 │   ├── tests/                # Testes Unitários (Vitest) e E2E (Playwright)
 │   └── package.json
 │
-├── aresta-back-node/         # Backend em Node.js + Express + TypeScript (MVC + Swagger)
+├── aresta-back-node/         # Backend em Node.js + Express + TypeScript (MVC + Swagger + Prisma)
 │   ├── src/
 │   │   ├── controllers/      # Controladores HTTP com anotações OpenAPI/Swagger
 │   │   ├── services/         # Regras de negócio e persistência
@@ -32,7 +32,6 @@ Aresta/
 │   ├── tests/                # Testes de integração (Vitest + Supertest)
 │   └── package.json
 │
-├── aresta-back/              # Backend de referência em Java 21 (Legado)
 ├── docs/                     # Documentação de arquitetura e APIs (Mintlify)
 ├── scripts/                  # Scripts de suporte e git hooks
 ├── .github/workflows/        # CI/CD Quality Gates (GitHub Actions)
@@ -69,7 +68,6 @@ Aresta/
 
 ### Pré-requisitos
 - **Node.js**: v18 ou superior (`npm` v9+)
-- **Java JDK**: 21 ou superior
 - **Git**
 
 ---
@@ -79,8 +77,9 @@ Aresta/
 Você pode iniciar o **Frontend e o Backend simultaneamente** executando um único comando na raiz do projeto:
 
 ```bash
-# 1. Instalar as dependências do Frontend
-cd front && npm install && cd ..
+# 1. Instalar as dependências
+npm install
+cd front && npm install && cd ../aresta-back-node && npm install && cd ..
 
 # 2. Iniciar ambos os serviços (Backend na 7070 e Frontend na 3000)
 npm start
@@ -93,6 +92,7 @@ npm start
 Acesse no seu navegador:
 - **Frontend**: [http://localhost:3000](http://localhost:3000)
 - **Backend Health Check**: [http://localhost:7070/api/health](http://localhost:7070/api/health)
+- **Swagger UI**: [http://localhost:7070/api-docs](http://localhost:7070/api-docs)
 
 ---
 
@@ -107,8 +107,9 @@ npm run dev
 
 #### Executando apenas o Backend:
 ```bash
-cd aresta-back
-./gradlew run
+cd aresta-back-node
+npm install
+npm run dev
 ```
 
 ---
@@ -140,17 +141,9 @@ npm test
 
 # Executar testes em modo watch
 npm run test:watch
-```
 
-### Backend Java Legado (`aresta-back/`)
-```bash
-cd aresta-back
-
-# Executar testes unitários e de integração (JUnit 5)
-./gradlew test
-
-# Executar validação de estilo de código (Checkstyle)
-./gradlew checkstyle
+# Checagem de tipos e compilação
+npm run build
 ```
 
 ### Configurar Git Hooks (Opcional):

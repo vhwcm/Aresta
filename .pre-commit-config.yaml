@@ -1,5 +1,5 @@
 default_install_hook_types: [pre-commit, pre-push]
-exclude: '^(\.nuxt/|\.output/|aresta-back/build/|aresta-back/\.gradle/|front/\.nuxt/|front/\.output/|front/playwright-report/|front/test-results/|node_modules/|storage/)'
+exclude: '^(\.nuxt/|\.output/|front/\.nuxt/|front/\.output/|front/playwright-report/|front/test-results/|node_modules/|storage/)'
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -29,14 +29,6 @@ repos:
         files: ^front/.*\.(js|ts|vue)$
         stages: [pre-commit]
 
-      # Quality Gate: Backend Checkstyle (Tamanho de classe/método, identação)
-      - id: checkstyle-backend
-        name: "Checkstyle Backend (Quality Gate: Tamanho & Identação)"
-        entry: bash -c 'if [ -z "$JAVA_HOME" ]; then for d in $HOME/Downloads/idea*/jbr /usr/lib/jvm/*; do if [ -x "$d/bin/java" ]; then export JAVA_HOME="$d"; export PATH="$JAVA_HOME/bin:$PATH"; break; fi; done; fi; cd aresta-back && ./gradlew checkstyleMain'
-        language: system
-        files: ^aresta-back/src/main/java/.*\.java$
-        stages: [pre-commit]
-
       # Quality Gate Pre-Push: Frontend Typecheck
       - id: frontend-typecheck
         name: "Frontend Typecheck (Pre-push)"
@@ -53,10 +45,10 @@ repos:
         pass_filenames: false
         stages: [pre-push]
 
-      # Quality Gate Pre-Push: Backend Gradle Tests
+      # Quality Gate Pre-Push: Backend Node.js Tests
       - id: backend-tests
         name: "Backend Unit Tests (Pre-push)"
-        entry: bash -c 'if [ -z "$JAVA_HOME" ]; then for d in $HOME/Downloads/idea*/jbr /usr/lib/jvm/*; do if [ -x "$d/bin/java" ]; then export JAVA_HOME="$d"; export PATH="$JAVA_HOME/bin:$PATH"; break; fi; done; fi; cd aresta-back && ./gradlew test'
+        entry: bash -c 'cd aresta-back-node && npm run test'
         language: system
         pass_filenames: false
         stages: [pre-push]
