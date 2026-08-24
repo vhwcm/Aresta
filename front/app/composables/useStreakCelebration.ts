@@ -1,30 +1,14 @@
 import { ref } from 'vue'
 
-export interface CelebrationPayload {
-  currentStreak: number
-  previousStreak: number
-  targetStreakDays: number
-  reachedMilestone: boolean
-}
-
-// Module-level shared state across all components
 const isCelebrationOpen = ref(false)
+const celebrationStreakDays = ref(0)
+const celebrationTargetDays = ref(7)
 const isShareModalOpen = ref(false)
-const celebrationData = ref<CelebrationPayload>({
-  currentStreak: 1,
-  previousStreak: 0,
-  targetStreakDays: 7,
-  reachedMilestone: false
-})
 
 export const useStreakCelebration = () => {
-  const triggerCelebration = (currentStreak: number, targetStreakDays: number) => {
-    celebrationData.value = {
-      currentStreak,
-      previousStreak: Math.max(0, currentStreak - 1),
-      targetStreakDays,
-      reachedMilestone: currentStreak >= targetStreakDays
-    }
+  const triggerCelebration = (streakDays: number, targetDays = 7) => {
+    celebrationStreakDays.value = streakDays
+    celebrationTargetDays.value = targetDays
     isCelebrationOpen.value = true
   }
 
@@ -32,22 +16,22 @@ export const useStreakCelebration = () => {
     isCelebrationOpen.value = false
   }
 
-  const openShare = () => {
-    isCelebrationOpen.value = false
+  const openShareModal = () => {
     isShareModalOpen.value = true
   }
 
-  const closeShare = () => {
+  const closeShareModal = () => {
     isShareModalOpen.value = false
   }
 
   return {
     isCelebrationOpen,
+    celebrationStreakDays,
+    celebrationTargetDays,
     isShareModalOpen,
-    celebrationData,
     triggerCelebration,
     closeCelebration,
-    openShare,
-    closeShare
+    openShareModal,
+    closeShareModal
   }
 }
