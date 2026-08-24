@@ -13,12 +13,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Servir arquivos estáticos de capas (/covers)
-let coversPath = path.resolve(process.cwd(), 'storage/covers');
+const coversPath = path.resolve(process.cwd(), 'storage/covers');
 if (!fs.existsSync(coversPath)) {
-  const fallbackCovers = path.resolve(process.cwd(), '../aresta-back/storage/covers');
-  if (fs.existsSync(fallbackCovers)) {
-    coversPath = fallbackCovers;
-  }
+  fs.mkdirSync(coversPath, { recursive: true });
 }
 app.use('/covers', express.static(coversPath));
 
