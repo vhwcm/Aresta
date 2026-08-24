@@ -278,3 +278,4 @@ export class AnnotationService {
     return true;
   }
 }
+

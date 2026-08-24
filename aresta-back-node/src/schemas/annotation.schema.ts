@@ -36,3 +36,4 @@ export const linkAnnotationParamSchema = z.object({
 export type CreateAnnotationInput = z.infer<typeof createAnnotationSchema>;
 export type UpdateAnnotationInput = z.infer<typeof updateAnnotationSchema>;
 export type GetAnnotationsQuery = z.infer<typeof getAnnotationsQuerySchema>;
+

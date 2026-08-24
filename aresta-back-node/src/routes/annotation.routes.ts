@@ -21,3 +21,4 @@ router.put('/:id', validateRequest({ params: annotationIdParamSchema, body: upda
 router.delete('/:id', validateRequest({ params: annotationIdParamSchema }), annotationController.deleteAnnotation);
 
 export default router;
+
