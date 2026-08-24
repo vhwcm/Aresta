@@ -99,12 +99,12 @@ describe('validateBookFile', () => {
   })
 
   it('rejeita arquivo maior que o limite', async () => {
-    const oversizedContent = new Uint8Array(MAX_FILE_SIZE_BYTES + 1)
-    oversizedContent[0] = 0x25
-    oversizedContent[1] = 0x50
-    oversizedContent[2] = 0x44
-    oversizedContent[3] = 0x46
-    const file = createFakeFile(oversizedContent, 'grande.pdf', 'application/pdf')
+    const file = {
+      name: 'grande.pdf',
+      size: MAX_FILE_SIZE_BYTES + 1,
+      type: 'application/pdf',
+      slice: () => new Blob([])
+    } as unknown as File
     const result = await validateBookFile(file)
     expect(result.valid).toBe(false)
     if (!result.valid) {

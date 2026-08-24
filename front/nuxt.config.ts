@@ -19,6 +19,11 @@ export default defineNuxtConfig({
 
   modules: ['@pinia/nuxt', '@nuxtjs/tailwindcss', '@nuxtjs/google-fonts'],
 
+  tailwindcss: {
+    configPath: 'tailwind.config.cjs',
+    viewer: false,
+  },
+
   css: ['~/assets/css/main.css'],
 
   googleFonts: {
