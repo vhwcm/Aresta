@@ -6,36 +6,22 @@
   >
     <!-- Container Principal da Navbar com transição suave de expansão lateral -->
     <nav
-      class="relative flex items-center h-14 md:h-16 px-2.5 md:px-4 rounded-2xl bg-[#16171a]/90 backdrop-blur-xl border border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.65)] transition-all duration-300 ease-in-out"
+      class="relative flex items-center h-14 md:h-16 rounded-2xl bg-[#16171a]/90 backdrop-blur-xl border border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.65)] transition-all duration-300 ease-in-out"
       :class="[
         isCollapsed
-          ? 'w-[180px] md:w-[220px] justify-around'
-          : 'w-[94vw] max-w-[620px] md:max-w-[700px] justify-between'
+          ? 'w-14 md:w-16 px-0 justify-center'
+          : 'w-[94vw] max-w-[620px] md:max-w-[700px] px-2.5 md:px-4 justify-between'
       ]"
     >
-      <!-- ESTADO COLAPSADO (Modo Mínimo / Retraído) -->
+      <!-- ESTADO COLAPSADO (Modo Mínimo / Retraído - Ícone Unificado do Aresta) -->
       <template v-if="isCollapsed">
-        <!-- Logo Central no estado recolhido -->
-        <ArestaLogoGraph :size="30" />
-
-        <!-- Atalho Rápido para Leitura / Início -->
-        <NuxtLink
-          to="/"
-          class="p-2 rounded-xl text-textSecondary hover:text-white transition-colors"
-          :class="{ 'text-accent': route.path === '/' }"
-          title="Início"
-        >
-          <HomeIcon class="w-4 h-4 text-accent" />
-        </NuxtLink>
-
-        <!-- Botão para Expandir -->
         <button
           @click="toggleCollapse"
-          class="p-2 rounded-xl text-textSecondary hover:text-white hover:bg-white/5 transition-all flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-accent/40"
-          title="Expandir Menu"
-          aria-label="Expandir Menu"
+          class="flex items-center justify-center w-full h-full p-2 rounded-2xl hover:bg-white/5 transition-all focus:outline-none focus:ring-2 focus:ring-accent/40 group"
+          title="Aresta - Início / Expandir Menu"
+          aria-label="Aresta - Início / Expandir Menu"
         >
-          <Maximize2Icon class="w-4 h-4 text-accent" />
+          <ArestaLogoGraph :size="32" :to="null" />
         </button>
       </template>
 
@@ -171,7 +157,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import {
-  HomeIcon,
   FileCode2Icon,
   BookOpenIcon,
   BookIcon,
@@ -180,8 +165,7 @@ import {
   SparklesIcon,
   UserIcon,
   ChevronUpIcon,
-  Minimize2Icon,
-  Maximize2Icon
+  Minimize2Icon
 } from 'lucide-vue-next'
 import ArestaLogoGraph from '~/components/ArestaLogoGraph.vue'
 

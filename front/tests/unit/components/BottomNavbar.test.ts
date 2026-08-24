@@ -47,4 +47,35 @@ describe('BottomNavbar Component', () => {
     expect(wrapper.text()).toContain('Grafo de Conhecimento')
     expect(wrapper.text()).toContain('Loja & Catálogo')
   })
+
+  it('renders only unified Aresta icon in collapsed mode and expands when clicked', async () => {
+    const wrapper = mount(BottomNavbar, {
+      global: {
+        stubs: {
+          NuxtLink: {
+            template: '<a><slot /></a>'
+          },
+          ArestaLogoGraph: {
+            template: '<div class="aresta-logo-mock" />'
+          }
+        }
+      }
+    })
+
+    // Clicar no botão de minimizar para entrar no modo colapsado
+    const minimizeBtn = wrapper.find('button[aria-label="Minimizar barra de navegação"]')
+    expect(minimizeBtn.exists()).toBe(true)
+    await minimizeBtn.trigger('click')
+
+    // No modo colapsado, apenas o botão com o ícone do Aresta existe
+    const expandBtn = wrapper.find('button[aria-label="Aresta - Início / Expandir Menu"]')
+    expect(expandBtn.exists()).toBe(true)
+    expect(expandBtn.find('.aresta-logo-mock').exists()).toBe(true)
+    expect(wrapper.text()).not.toContain('Conversor')
+
+    // Clicar para expandir novamente
+    await expandBtn.trigger('click')
+    expect(wrapper.text()).toContain('Conversor')
+    expect(wrapper.text()).toContain('Livros')
+  })
 })

@@ -1,12 +1,38 @@
 <template>
-  <div class="flex flex-col gap-14 pb-24 animate-in fade-in duration-500">
-    <!-- Secção de Destaque / Leitura Atual -->
-    <section class="flex flex-col gap-6">
+  <div class="flex flex-col gap-12 pb-24 animate-in fade-in duration-500">
+    <!-- Top Bar Integrada da Home (Ofensiva e Cmd+K para Desktop) -->
+    <div class="flex items-center justify-between gap-4">
       <div class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary flex items-center gap-2">
         <div class="w-2 h-2 rounded-full bg-accent animate-pulse"></div>
         Leitura Ativa
       </div>
 
+      <!-- Barra de Busca Cmd+K Integrada (Visível APENAS para Desktop) -->
+      <div
+        class="hidden md:flex flex-1 max-w-md mx-4 items-center gap-3 px-4 py-2 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-divider hover:border-white/20 transition-all cursor-pointer group text-textSecondary"
+        @click="commandPalette.open()"
+        role="button"
+        tabindex="0"
+        aria-label="Abrir paleta de comandos"
+      >
+        <SearchIcon class="w-4 h-4 group-hover:text-textPrimary transition-colors" />
+        <span class="text-xs font-interface font-normal truncate group-hover:text-textPrimary transition-colors">
+          Explorar livros, conceitos ou comandos...
+        </span>
+        <div class="ml-auto flex items-center gap-1 font-technical text-[10px] uppercase font-semibold tracking-widest bg-white/5 px-2 py-0.5 rounded border border-white/5">
+          <span>Cmd</span>
+          <span>K</span>
+        </div>
+      </div>
+
+      <!-- Ofensiva Streak Integrada (Exclusiva da Home) -->
+      <div class="flex items-center gap-2">
+        <ReadingStreak />
+      </div>
+    </div>
+
+    <!-- Secção de Destaque / Leitura Atual -->
+    <section class="flex flex-col gap-6">
       <div class="flex flex-col gap-4">
         <h1 class="font-editorial text-4xl md:text-5xl font-light text-textPrimary leading-tight">
           A Estrutura das Revoluções Científicas
@@ -161,6 +187,11 @@ import {
   SparklesIcon,
   NetworkIcon,
   BookOpenIcon,
-  FileCode2Icon
+  FileCode2Icon,
+  SearchIcon
 } from 'lucide-vue-next'
+import ReadingStreak from '~/components/ReadingStreak.vue'
+import { useCommandPalette } from '~/composables/useCommandPalette'
+
+const commandPalette = useCommandPalette()
 </script>

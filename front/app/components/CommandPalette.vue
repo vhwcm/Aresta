@@ -61,33 +61,31 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { SearchIcon } from 'lucide-vue-next'
+import { useCommandPalette } from '~/composables/useCommandPalette'
 
-const isOpen = ref(false)
+const { isOpen, open, close } = useCommandPalette()
 const query = ref('')
 const searchInput = ref<HTMLInputElement | null>(null)
 
-const open = () => {
-  isOpen.value = true
-  query.value = ''
-  nextTick(() => {
-    searchInput.value?.focus()
-  })
-}
-
-const close = () => {
-  isOpen.value = false
-}
+watch(isOpen, (newVal) => {
+  if (newVal) {
+    query.value = ''
+    nextTick(() => {
+      searchInput.value?.focus()
+    })
+  }
+})
 
 const handleEnter = () => {
   console.log('Pesquisar por:', query.value)
-  // Lógica de pesquisa iria aqui
+  // Lógica de pesquisa
   close()
 }
 
 const handleKeyDown = (e: KeyboardEvent) => {
-  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
     e.preventDefault()
     if (isOpen.value) {
       close()

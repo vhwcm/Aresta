@@ -1,6 +1,7 @@
 <template>
   <NuxtLink
-    to="/"
+    v-if="to"
+    :to="to"
     class="relative group inline-flex items-center justify-center p-1.5 rounded-xl transition-all duration-300 hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-accent/40"
     :title="title"
     :aria-label="title"
@@ -88,6 +89,79 @@
       </g>
     </svg>
   </NuxtLink>
+
+  <div
+    v-else
+    class="relative group inline-flex items-center justify-center p-1.5 rounded-xl transition-all duration-300 pointer-events-none"
+    :title="title"
+    :aria-label="title"
+  >
+    <!-- Glow de fundo sutil no hover -->
+    <div
+      class="absolute inset-0 rounded-xl bg-accent/10 opacity-0 group-hover:opacity-100 blur-md transition-opacity duration-500 pointer-events-none"
+    ></div>
+
+    <!-- SVG do Grafo Vivo formando a letra A -->
+    <svg
+      :width="size"
+      :height="size"
+      viewBox="0 0 40 40"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      class="aresta-graph-svg transition-transform duration-300 group-hover:scale-105"
+    >
+      <defs>
+        <!-- Gradiente linear para arestas principais -->
+        <linearGradient id="edgeGradDiv" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#E57B55" stop-opacity="0.9" />
+          <stop offset="100%" stop-color="#FF9E79" stop-opacity="0.6" />
+        </linearGradient>
+
+        <!-- Filtro de brilho sutil para os nós -->
+        <filter id="nodeGlowDiv" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="1.2" result="blur" />
+          <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        </filter>
+      </defs>
+
+      <!-- Arestas (Linhas que formam o A) com movimento orgânico -->
+      <g class="edges-layer stroke-accent/70" stroke-width="1.8" stroke-linecap="round">
+        <line x1="20" y1="7" x2="12" y2="23" class="edge edge-t-l" />
+        <line x1="12" y1="23" x2="7" y2="33" class="edge edge-l-b" />
+        <line x1="20" y1="7" x2="28" y2="23" class="edge edge-t-r" />
+        <line x1="28" y1="23" x2="33" y2="33" class="edge edge-r-b" />
+        <line x1="12" y1="23" x2="28" y2="23" class="edge edge-bar" />
+        <line x1="20" y1="7" x2="20" y2="23" class="edge-subtle stroke-accent/25" stroke-dasharray="2 2" stroke-width="1" />
+      </g>
+
+      <!-- Nós (Vértices do Grafo Vivo com oscilação orgânica lenta) -->
+      <g class="nodes-layer" filter="url(#nodeGlowDiv)">
+        <g class="node-wrap node-top">
+          <circle cx="20" cy="7" r="3.2" class="fill-[#0A0A0B] stroke-accent stroke-[1.6]" />
+          <circle cx="20" cy="7" r="1.2" class="fill-accent animate-pulse" />
+        </g>
+        <g class="node-wrap node-mid-left">
+          <circle cx="12" cy="23" r="2.8" class="fill-[#0A0A0B] stroke-accent stroke-[1.4]" />
+          <circle cx="12" cy="23" r="1" class="fill-[#FF9E79]" />
+        </g>
+        <g class="node-wrap node-mid-right">
+          <circle cx="28" cy="23" r="2.8" class="fill-[#0A0A0B] stroke-accent stroke-[1.4]" />
+          <circle cx="28" cy="23" r="1" class="fill-[#FF9E79]" />
+        </g>
+        <g class="node-wrap node-bot-left">
+          <circle cx="7" cy="33" r="2.5" class="fill-[#0A0A0B] stroke-accent/80 stroke-[1.4]" />
+          <circle cx="7" cy="33" r="0.9" class="fill-accent" />
+        </g>
+        <g class="node-wrap node-bot-right">
+          <circle cx="33" cy="33" r="2.5" class="fill-[#0A0A0B] stroke-accent/80 stroke-[1.4]" />
+          <circle cx="33" cy="33" r="0.9" class="fill-accent" />
+        </g>
+        <g class="node-wrap node-center">
+          <circle cx="20" cy="23" r="1.8" class="fill-accent/90" />
+        </g>
+      </g>
+    </svg>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -95,10 +169,12 @@ withDefaults(
   defineProps<{
     size?: number
     title?: string
+    to?: string | null
   }>(),
   {
     size: 36,
-    title: 'Aresta - Ir para o Início'
+    title: 'Aresta - Ir para o Início',
+    to: '/'
   }
 )
 </script>
