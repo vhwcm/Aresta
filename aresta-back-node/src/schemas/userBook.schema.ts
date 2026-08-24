@@ -4,11 +4,13 @@ export const createUserBookSchema = z.object({
   bookId: z.number().int().positive('ID do livro inválido'),
   status: z.enum(['QUERO_LER', 'LENDO', 'LIDO', 'ABANDONADO']).default('QUERO_LER').optional(),
   currentPage: z.number().int().min(0).default(0).optional(),
+  lastAccessedAt: z.coerce.date().optional(),
 });
 
 export const updateUserBookSchema = z.object({
   status: z.enum(['QUERO_LER', 'LENDO', 'LIDO', 'ABANDONADO']).optional(),
   currentPage: z.number().int().min(0).optional(),
+  lastAccessedAt: z.coerce.date().optional(),
 });
 
 export const userBookIdParamSchema = z.object({

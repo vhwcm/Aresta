@@ -16,6 +16,7 @@ router.use(optionalAuthenticate);
 
 router.get('/', userBookController.getUserBooks);
 router.post('/', validateRequest({ body: createUserBookSchema }), userBookController.addUserBook);
+router.patch('/:id/access', validateRequest({ params: userBookIdParamSchema }), userBookController.recordAccess);
 router.patch('/:id', validateRequest({ params: userBookIdParamSchema, body: updateUserBookSchema }), userBookController.updateUserBook);
 router.delete('/:id', validateRequest({ params: userBookIdParamSchema }), userBookController.deleteUserBook);
 router.delete('/book/:bookId', validateRequest({ params: bookIdParamOnlySchema }), userBookController.deleteUserBookByBookId);

@@ -108,6 +108,35 @@ export class UserBookController {
 
   /**
    * @openapi
+   * /api/user-books/{id}/access:
+   *   patch:
+   *     summary: Registrar acesso/leitura recente ao livro da estante
+   *     tags: [UserBooks]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: integer
+   *     responses:
+   *       200:
+   *         description: Acesso registrado com sucesso
+   */
+  recordAccess = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const userId = this.getUserId(req);
+      const id = parseInt(req.params.id, 10);
+      const updated = await this.userBookService.recordAccess(id, userId);
+      return res.status(200).json(updated);
+    } catch (error) {
+      return next(error);
+    }
+  };
+
+  /**
+   * @openapi
    * /api/user-books/{id}:
    *   delete:
    *     summary: Remover livro da estante por ID do item
