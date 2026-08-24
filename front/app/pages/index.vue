@@ -1,10 +1,10 @@
 <template>
   <div class="flex flex-col gap-10 pb-20 animate-in fade-in duration-500">
-    <!-- Top Bar Integrada da Home (Busca Desktop e Ofensiva no Canto Superior Direito) -->
-    <div class="flex items-center justify-between gap-4">
+    <!-- Top Bar Integrada da Home (Visível apenas no Desktop com Busca Cmd+K e Ofensiva) -->
+    <div class="hidden md:flex items-center justify-between gap-4">
       <!-- Barra de Busca Cmd+K Integrada (Visível APENAS para Desktop) -->
       <div
-        class="hidden md:flex flex-1 max-w-md items-center gap-3 px-4 py-2 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-divider hover:border-white/20 transition-all cursor-pointer group text-textSecondary"
+        class="flex-1 max-w-md items-center gap-3 px-4 py-2 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-divider hover:border-white/20 transition-all cursor-pointer group text-textSecondary flex"
         @click="commandPalette.open()"
         role="button"
         tabindex="0"
@@ -20,7 +20,7 @@
         </div>
       </div>
 
-      <!-- Canto Superior Direito: Ofensiva em Dias (Ícone + Número em Dias) -->
+      <!-- Canto Superior Direito: Ofensiva em Dias no Desktop -->
       <div class="flex items-center gap-2 ml-auto">
         <ReadingStreak />
       </div>
@@ -57,11 +57,18 @@
       <!-- Informações Compactas do Livro -->
       <div class="flex flex-col justify-between gap-3 flex-1 min-w-0">
         <div class="flex flex-col gap-1">
-          <NuxtLink :to="activeBookReaderLink" class="hover:text-accent transition-colors">
-            <h1 class="font-editorial text-2xl sm:text-4xl md:text-5xl font-light text-textPrimary leading-tight truncate sm:whitespace-normal">
-              {{ activeBookTitle }}
-            </h1>
-          </NuxtLink>
+          <div class="flex items-start justify-between gap-2">
+            <NuxtLink :to="activeBookReaderLink" class="hover:text-accent transition-colors flex-1 min-w-0">
+              <h1 class="font-editorial text-2xl sm:text-4xl md:text-5xl font-light text-textPrimary leading-tight truncate sm:whitespace-normal">
+                {{ activeBookTitle }}
+              </h1>
+            </NuxtLink>
+
+            <!-- Ofensiva no Mobile (Ao lado do livro para enxugar espaço) -->
+            <div class="md:hidden shrink-0">
+              <ReadingStreak />
+            </div>
+          </div>
 
           <!-- Progresso Resumido (Tanto de Tanto) -->
           <div class="text-xs sm:text-sm font-technical text-textSecondary flex items-center gap-2">
