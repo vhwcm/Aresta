@@ -37,3 +37,5 @@ coverage/
 .output/
 playwright-report/
 test-results/
+.nfs*
+
