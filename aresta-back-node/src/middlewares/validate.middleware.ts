@@ -1,11 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
-import { AnyZodObject, ZodError } from 'zod';
+import { ZodTypeAny, ZodError } from 'zod';
 import { AppError } from './error.middleware.js';
 
 export const validateRequest = (schema: {
-  body?: AnyZodObject;
-  query?: AnyZodObject;
-  params?: AnyZodObject;
+  body?: ZodTypeAny;
+  query?: ZodTypeAny;
+  params?: ZodTypeAny;
 }) => {
   return async (req: Request, _res: Response, next: NextFunction) => {
     try {
@@ -28,4 +28,3 @@ export const validateRequest = (schema: {
     }
   };
 };
-
