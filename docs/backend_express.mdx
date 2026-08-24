@@ -1,0 +1,177 @@
+---
+title: 'Backend Express & Swagger'
+description: 'Arquitetura do Backend em Express.js, TypeScript, Prisma ORM, Swagger OpenAPI e padrão MVC'
+---
+
+# Backend Express.js & Swagger OpenAPI
+
+O backend do **Aresta** foi refatorado para o ecossistema **Node.js** utilizando **Express.js**, **TypeScript**, **Prisma ORM** e documentação interativa com **Swagger (OpenAPI 3.0)**, seguindo rigorosamente o padrão arquitetural **Layered MVC**.
+
+---
+
+## 🏛️ Arquitetura e Estrutura de Camadas (MVC)
+
+O projeto está organizado no diretório `aresta-back-node/` com a seguinte divisão em camadas:
+
+```
+aresta-back-node/
+├── prisma/
+│   ├── schema.prisma          # Modelagem declarativa do banco SQLite
+│   ├── seed.ts                # Povoamento inicial (admin, livros, temas, grafo)
+│   └── dev.db                 # Banco de dados SQLite local
+│
+├── src/
+│   ├── config/                # Configurações do servidor e banco
+│   │   ├── env.ts             # Carregamento seguro das variáveis de ambiente
+│   │   ├── env.example.ts     # Interface e tipos documentados das variáveis
+│   │   ├── prisma.ts          # Singleton da conexão Prisma Client
+│   │   └── swagger.ts         # Definição e opções do OpenAPI 3.0
+│   │
+│   ├── controllers/           # Camada de Apresentação / Controladores HTTP
+│   │   ├── auth.controller.ts
+│   │   ├── book.controller.ts
+│   │   ├── graph.controller.ts
+│   │   ├── health.controller.ts
+│   │   ├── user.controller.ts
+│   │   ├── userBook.controller.ts
+│   │   └── userSettings.controller.ts
+│   │
+│   ├── services/              # Camada de Regras de Negócio
+│   │   ├── auth.service.ts
+│   │   ├── book.service.ts
+│   │   ├── graph.service.ts
+│   │   ├── user.service.ts
+│   │   ├── userBook.service.ts
+│   │   └── userSettings.service.ts
+│   │
+│   ├── routes/                # Definição de Rotas Express
+│   │   ├── auth.routes.ts
+│   │   ├── book.routes.ts
+│   │   ├── graph.routes.ts
+│   │   ├── health.routes.ts
+│   │   ├── user.routes.ts
+│   │   ├── userBook.routes.ts
+│   │   ├── userSettings.routes.ts
+│   │   └── index.ts           # Centralizador e Swagger UI
+│   │
+│   ├── middlewares/           # Interceptadores de Requisições
+│   │   ├── auth.middleware.ts     # Validação de JWT e RBAC (ADMIN)
+│   │   ├── error.middleware.ts    # Tratamento global de exceções HTTP
+│   │   └── validate.middleware.ts # Validação de DTOs via Zod
+│   │
+│   ├── schemas/               # Schemas de validação e DTOs (Zod)
+│   │   ├── auth.schema.ts
+│   │   ├── book.schema.ts
+│   │   ├── graph.schema.ts
+│   │   ├── user.schema.ts
+│   │   ├── userBook.schema.ts
+│   │   └── userSettings.schema.ts
+│   │
+│   ├── types/                 # Definições de tipos TypeScript
+│   ├── app.ts                 # Configuração dos middlewares do Express
+│   └── server.ts              # Entrypoint do servidor HTTP
+│
+├── storage/                   # Arquivos estáticos de capas e PDFs
+│   ├── books/
+│   └── covers/
+│
+├── tests/                     # Testes automatizados (Vitest + Supertest)
+│   ├── auth.test.ts
+│   ├── books.test.ts
+│   ├── graph.test.ts
+│   ├── health.test.ts
+│   └── users.test.ts
+│
+├── .env.example               # Exemplo de configuração de ambiente
+├── .gitignore                 # Arquivos ignorados pelo Git (.env, *.sqlite, etc)
+├── package.json
+├── tsconfig.json
+└── vitest.config.ts
+```
+
+---
+
+## 📖 Documentação Swagger (OpenAPI 3.0)
+
+A documentação interativa da API está disponível via **Swagger UI** servida diretamente pelo Express:
+
+- **Swagger UI**: [http://localhost:7070/api-docs](http://localhost:7070/api-docs)
+- **JSON da Especificação**: [http://localhost:7070/api-docs.json](http://localhost:7070/api-docs.json)
+
+As anotações OpenAPI 3.0 estão integradas diretamente nos *controllers* através do `swagger-jsdoc`, permitindo testar requisições autenticadas usando o botão **Authorize** e informando `Bearer {token}`.
+
+---
+
+## 🔒 Variáveis de Ambiente & Segurança
+
+O arquivo `.env` deve ser criado com base no `.env.example`:
+
+```bash
+# Porta do servidor backend Express
+PORT=7070
+
+# URL de conexão com o banco SQLite (Prisma)
+DATABASE_URL="file:./dev.db"
+
+# Segredo para assinatura de tokens JWT
+JWT_SECRET="aresta_super_secret_jwt_key_change_in_production"
+
+# Modo de desenvolvimento / debug
+DEBUG=true
+
+# Diretório de armazenamento de capas e livros
+STORAGE_PATH="./storage"
+```
+
+O arquivo `src/config/env.example.ts` exporta tipos TypeScript para validação em tempo de desenvolvimento. Arquivos de banco de dados (`*.sqlite`, `*.db`) e variáveis com segredos (`.env`) são ignorados pelo `.gitignore`.
+
+---
+
+## 🚀 Como Executar o Backend
+
+### 1. Instalar dependências
+```bash
+cd aresta-back-node
+npm install
+```
+
+### 2. Sincronizar o Banco e Executar Seed
+```bash
+npx prisma generate
+npx prisma db push
+npx prisma db seed
+```
+
+### 3. Iniciar em Modo Desenvolvimento
+```bash
+npm run dev
+```
+
+O servidor estará ouvindo na porta `7070`:
+- **Health Check**: `http://localhost:7070/api/health`
+- **Swagger Docs**: `http://localhost:7070/api-docs`
+
+---
+
+## 🧪 Testes Automatizados (Vitest + Supertest)
+
+O backend conta com uma suíte de testes de integração cobrindo fluxos de autenticação, saúde, catálogo de livros, gerenciamento de usuários e nós/arestas do grafo.
+
+### Executar os testes:
+```bash
+cd aresta-back-node
+npm test
+```
+
+### Executar em modo observação contínua (*watch*):
+```bash
+npm run test:watch
+```
+
+---
+
+## 🔑 Credenciais Padrão do Administrador
+
+- **E-mail / Usuário**: `viktor` ou `viktor@aresta.org`
+- **Senha**: `orlaweb123123#`
+- **Perfil**: `ADMIN`

@@ -55,3 +55,4 @@ Instruções e diretrizes para versionamento e commits de alterações no reposi
 
 5. **Para tarefas grandes, repetir o processo para cada grupo de alterações**:
    - Isole os arquivos de cada parte da tarefa, faça `git add` seletivo e commite individualmente antes de prosseguir para a próxima parte.
+

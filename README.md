@@ -20,12 +20,19 @@ Aresta/
 │   ├── tests/                # Testes Unitários (Vitest) e E2E (Playwright)
 │   └── package.json
 │
-├── aresta-back/              # Backend em Java 21 + Javalin
-│   ├── src/main/java/        # Código-fonte Java (Controllers, Repositories, Models, DTOs)
-│   ├── src/main/resources/   # Migrações do banco de dados (Flyway SQL)
-│   ├── config/checkstyle/    # Regras de qualidade Checkstyle
-│   └── build.gradle.kts      # Configuração do Gradle
+├── aresta-back-node/         # Backend em Node.js + Express + TypeScript (MVC + Swagger)
+│   ├── src/
+│   │   ├── controllers/      # Controladores HTTP com anotações OpenAPI/Swagger
+│   │   ├── services/         # Regras de negócio e persistência
+│   │   ├── routes/           # Rotas da API e Swagger UI (/api-docs)
+│   │   ├── middlewares/      # Autenticação JWT, Zod validation, error handler
+│   │   ├── schemas/          # Schemas de validação Zod
+│   │   └── config/           # Prisma client, envs e OpenAPI spec
+│   ├── prisma/               # Schema Prisma, migrations e seeds
+│   ├── tests/                # Testes de integração (Vitest + Supertest)
+│   └── package.json
 │
+├── aresta-back/              # Backend de referência em Java 21 (Legado)
 ├── docs/                     # Documentação de arquitetura e APIs (Mintlify)
 ├── scripts/                  # Scripts de suporte e git hooks
 ├── .github/workflows/        # CI/CD Quality Gates (GitHub Actions)
@@ -44,15 +51,17 @@ Aresta/
 
 ---
 
-### ⚡ Backend (`aresta-back/`)
-- **Tecnologias**: Java 21, [Javalin 6](https://javalin.io/), SQLite, HikariCP, Flyway, JWT, BCrypt.
+### ⚡ Backend Express.js (`aresta-back-node/`)
+- **Tecnologias**: Node.js, Express.js, TypeScript, [Prisma ORM](https://www.prisma.io/), SQLite, Swagger (OpenAPI 3.0), JWT, BCrypt, Zod.
 - **Porta padrão**: `7070` (`http://localhost:7070/api`).
-- **Banco de Dados**: SQLite embarcado com controle de versão automático via Flyway SQL migrations.
+- **Documentação Swagger UI**: `http://localhost:7070/api-docs`.
 - **Domínio das APIs**:
-  - `/api/auth`: Autenticação e perfil de usuário.
-  - `/api/books`: Catálogo global e upload de livros.
-  - `/api/user-books`: Biblioteca pessoal do usuário.
-  - `/api/graph`: Grafo de temas e conexões conceituais.
+  - `/api/auth`: Autenticação e perfil de usuário (`POST /login`, `GET /me`).
+  - `/api/books`: Catálogo global, download de PDF e capas.
+  - `/api/user-books`: Estante pessoal do usuário e progresso.
+  - `/api/graph`: Nós de temas, conexões e vínculos conceituais.
+  - `/api/users`: Gestão de usuários e permissões (ADMIN).
+  - `/api/user-settings`: Configurações de leitura e idioma.
 
 ---
 
@@ -122,7 +131,18 @@ npm run lint
 npm run typecheck
 ```
 
-### Backend (`aresta-back/`)
+### Backend Express.js (`aresta-back-node/`)
+```bash
+cd aresta-back-node
+
+# Executar testes unitários e de integração (Vitest + Supertest)
+npm test
+
+# Executar testes em modo watch
+npm run test:watch
+```
+
+### Backend Java Legado (`aresta-back/`)
 ```bash
 cd aresta-back
 
