@@ -240,11 +240,9 @@ import { ref, computed, onMounted } from 'vue'
 import { UsersIcon, UserPlusIcon, SearchIcon, Edit3Icon, Trash2Icon, UserXIcon, XIcon } from 'lucide-vue-next'
 import { useAuth } from '~/composables/useAuth'
 
-if (typeof definePageMeta === 'function') {
-  definePageMeta({
-    middleware: 'admin'
-  })
-}
+definePageMeta({
+  middleware: 'admin'
+})
 
 interface UserItem {
   id: number
@@ -299,7 +297,7 @@ onMounted(() => {
 })
 
 const filteredUsers = computed(() => {
-  return users.value.filter(u => {
+  return (users.value || []).filter(u => {
     const matchesSearch = u.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
                           u.email.toLowerCase().includes(searchQuery.value.toLowerCase())
     const matchesRole = !selectedRole.value || u.role === selectedRole.value
