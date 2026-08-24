@@ -1,5 +1,6 @@
 <template>
   <div class="reader-viewer">
+    <!-- Header Superior -->
     <header class="reader-viewer__header" id="reader-header">
       <div class="reader-viewer__header-left">
         <button
@@ -12,56 +13,160 @@
           ← Sair
         </button>
       </div>
+
       <div class="reader-viewer__header-center">
         <span class="reader-viewer__book-title">{{ store.title }}</span>
       </div>
-      <div class="reader-viewer__header-right">
+
+      <div class="reader-viewer__header-right flex items-center gap-3">
+        <!-- Botão para recolher/expandir Grafo no Desktop -->
+        <button
+          @click="store.toggleGraph()"
+          class="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border border-divider hover:bg-white/5 transition-all text-textSecondary hover:text-textPrimary"
+          :title="store.isGraphOpen ? 'Recolher Grafo para focar 100% no livro' : 'Exibir Grafo de Conhecimento (50% da tela)'"
+        >
+          <NetworkIcon class="w-3.5 h-3.5 text-accent" />
+          <span>{{ store.isGraphOpen ? 'Foco Leitura (100%)' : 'Abrir Grafo (50%)' }}</span>
+        </button>
+
         <span class="reader-viewer__page-info">
           {{ store.currentPage }} / {{ store.totalPages }}
         </span>
       </div>
     </header>
 
-    <main class="reader-viewer__canvas-area">
-      <div class="reader-viewer__stage-container">
-        <button
-          class="reader-viewer__nav-btn reader-viewer__nav-btn--prev"
-          :disabled="store.isFirstPage || isTransitioning"
-          @click="pageRenderer?.previous()"
-          aria-label="Página anterior"
-          id="btn-prev-page"
+    <!-- Corpo Principal com Divisão Leitor / Grafo -->
+    <div class="reader-viewer__body">
+      <!-- Seção do Leitor (Mobile: 80% verticalidade / Desktop: 50% ou 100%) -->
+      <section
+        class="reader-viewer__reader-pane"
+        :class="store.isGraphOpen ? 'reader-viewer__reader-pane--half' : 'reader-viewer__reader-pane--full'"
+      >
+        <!-- Área do Livro / Stage -->
+        <main
+          class="reader-viewer__canvas-area"
+          ref="canvasAreaRef"
+          @mouseup="handleTextSelectionCheck"
+          @touchend="handleTouchEnd"
+          @touchstart="handleTouchStart"
         >
-          ‹
-        </button>
+          <div class="reader-viewer__stage-container">
+            <button
+              class="reader-viewer__nav-btn reader-viewer__nav-btn--prev"
+              :disabled="store.isFirstPage || isTransitioning"
+              @click="pageRenderer?.previous()"
+              aria-label="Página anterior"
+              id="btn-prev-page"
+            >
+              ‹
+            </button>
 
-        <div class="reader-viewer__book-stage" id="book-stage">
-          <ReaderEnginePageCurlCanvas
-            ref="pageRenderer"
-            @transition-state="isTransitioning = $event"
-          />
-        </div>
+            <div class="reader-viewer__book-stage" id="book-stage">
+              <ReaderEnginePageCurlCanvas
+                ref="pageRenderer"
+                @transition-state="isTransitioning = $event"
+              />
+            </div>
 
-        <button
-          class="reader-viewer__nav-btn reader-viewer__nav-btn--next"
-          :disabled="store.isLastPage || isTransitioning"
-          @click="pageRenderer?.next()"
-          aria-label="Próxima página"
-          id="btn-next-page"
-        >
-          ›
-        </button>
-      </div>
-    </main>
+            <button
+              class="reader-viewer__nav-btn reader-viewer__nav-btn--next"
+              :disabled="store.isLastPage || isTransitioning"
+              @click="pageRenderer?.next()"
+              aria-label="Próxima página"
+              id="btn-next-page"
+            >
+              ›
+            </button>
+          </div>
+        </main>
+
+        <!-- Barra Inferior de Controles -->
+        <ReaderBottomBar
+          :is-graph-active="isDesktop ? store.isGraphOpen : store.isMobileGraphOpen"
+          @open-saved-pages="isSavedPagesOpen = true"
+          @open-annotation="handleOpenAnnotation"
+          @toggle-graph="handleToggleGraph"
+        />
+      </section>
+
+      <!-- Seção do Grafo de Conhecimento no Desktop (50% da tela) -->
+      <aside
+        v-if="store.isGraphOpen"
+        class="hidden lg:flex lg:w-1/2 h-full flex-col shrink-0 transition-all duration-300"
+      >
+        <ReaderGraphPanel
+          ref="graphPanelRef"
+          :is-mobile="false"
+          @close="store.setGraphOpen(false)"
+          @open-annotation-modal="handleOpenAnnotation"
+        />
+      </aside>
+    </div>
+
+    <!-- Grafo de Conhecimento em Tela Cheia no Mobile -->
+    <div
+      v-if="store.isMobileGraphOpen"
+      class="fixed inset-0 z-50 flex flex-col bg-bgApp lg:hidden animate-fadeIn"
+      role="dialog"
+      aria-modal="true"
+    >
+      <ReaderGraphPanel
+        ref="mobileGraphPanelRef"
+        :is-mobile="true"
+        @close="store.setMobileGraphOpen(false)"
+        @open-annotation-modal="handleOpenAnnotation"
+      />
+    </div>
+
+    <!-- Modal de Páginas Salvas (Bookmarks) -->
+    <ReaderSavedPagesModal
+      :is-open="isSavedPagesOpen"
+      @close="isSavedPagesOpen = false"
+      @select-page="handleSelectSavedPage"
+    />
+
+    <!-- Modal de Criação de Anotação com Seleção de Tema e Nota -->
+    <ReaderAnnotationModal
+      :is-open="isAnnotationModalOpen"
+      :initial-text="capturedSelectionText"
+      :current-page="store.currentPage"
+      :book-id="store.bookId"
+      @close="isAnnotationModalOpen = false"
+      @created="handleAnnotationCreated"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { NetworkIcon } from 'lucide-vue-next'
 import { useReaderStore } from '~/stores/readerStore'
+
+import ReaderEnginePageCurlCanvas from '~/components/reader/engine/PageCurlCanvas.vue'
+import ReaderBottomBar from '~/components/reader/ReaderBottomBar.vue'
+import ReaderSavedPagesModal from '~/components/reader/ReaderSavedPagesModal.vue'
+import ReaderAnnotationModal from '~/components/reader/ReaderAnnotationModal.vue'
+import ReaderGraphPanel from '~/components/reader/ReaderGraphPanel.vue'
 
 const store = useReaderStore()
 const router = useRouter()
+
+const isSavedPagesOpen = ref(false)
+const isAnnotationModalOpen = ref(false)
+const capturedSelectionText = ref('')
+const isDesktop = ref(true)
+
+const graphPanelRef = ref<any>(null)
+const mobileGraphPanelRef = ref<any>(null)
+
+interface PageRenderer {
+  next: () => Promise<void>
+  previous: () => Promise<void>
+}
+
+const pageRenderer = ref<PageRenderer | null>(null)
+const isTransitioning = ref(false)
 
 function handleClose() {
   store.reset()
@@ -72,13 +177,67 @@ function handleClose() {
   }
 }
 
-interface PageRenderer {
-  next: () => Promise<void>
-  previous: () => Promise<void>
+function handleToggleGraph() {
+  if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+    store.toggleMobileGraph()
+  } else {
+    store.toggleGraph()
+  }
 }
 
-const pageRenderer = ref<PageRenderer | null>(null)
-const isTransitioning = ref(false)
+function handleSelectSavedPage(page: number) {
+  store.goToPage(page)
+}
+
+async function handleOpenAnnotation() {
+  const selection = typeof window !== 'undefined' ? window.getSelection()?.toString() : ''
+  if (selection && selection.trim().length > 0) {
+    capturedSelectionText.value = selection.trim()
+  } else if (store.document && typeof store.document.getTextContent === 'function') {
+    try {
+      const pageText = await store.document.getTextContent(store.currentPage)
+      capturedSelectionText.value = pageText ? pageText.slice(0, 300) : ''
+    } catch {
+      capturedSelectionText.value = ''
+    }
+  } else {
+    capturedSelectionText.value = ''
+  }
+  isAnnotationModalOpen.value = true
+}
+
+function handleTextSelectionCheck() {
+  const selection = typeof window !== 'undefined' ? window.getSelection()?.toString() : ''
+  if (selection && selection.trim().length > 2) {
+    capturedSelectionText.value = selection.trim()
+  }
+}
+
+let touchTimer: any = null
+function handleTouchStart() {
+  touchTimer = setTimeout(async () => {
+    await handleOpenAnnotation()
+  }, 750)
+}
+
+function handleTouchEnd() {
+  if (touchTimer) {
+    clearTimeout(touchTimer)
+    touchTimer = null
+  }
+  handleTextSelectionCheck()
+}
+
+function handleAnnotationCreated() {
+  graphPanelRef.value?.refresh?.()
+  mobileGraphPanelRef.value?.refresh?.()
+}
+
+function updateDeviceType() {
+  if (typeof window !== 'undefined') {
+    isDesktop.value = window.innerWidth >= 1024
+  }
+}
 
 function isTextInput(target: EventTarget | null): boolean {
   return target instanceof HTMLInputElement
@@ -99,8 +258,16 @@ function onKeyDown(event: KeyboardEvent) {
   }
 }
 
-onMounted(() => window.addEventListener('keydown', onKeyDown))
-onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
+onMounted(() => {
+  updateDeviceType()
+  window.addEventListener('resize', updateDeviceType)
+  window.addEventListener('keydown', onKeyDown)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', updateDeviceType)
+  window.removeEventListener('keydown', onKeyDown)
+})
 </script>
 
 <style scoped>
@@ -159,7 +326,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 300px;
+  max-width: 260px;
 }
 
 .reader-viewer__page-info {
@@ -168,15 +335,57 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
   font-variant-numeric: tabular-nums;
 }
 
+.reader-viewer__body {
+  flex: 1;
+  display: flex;
+  width: 100%;
+  height: calc(100dvh - 57px);
+  overflow: hidden;
+  position: relative;
+}
+
+.reader-viewer__reader-pane {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0;
+  position: relative;
+  transition: width 0.3s ease;
+}
+
+.reader-viewer__reader-pane--half {
+  width: 100%;
+}
+
+@media (min-width: 1024px) {
+  .reader-viewer__reader-pane--half {
+    width: 50%;
+  }
+}
+
+.reader-viewer__reader-pane--full {
+  width: 100%;
+}
+
+/* Mobile: Leitor ocupa 80% da verticalidade */
+@media (max-width: 1023px) {
+  .reader-viewer__canvas-area {
+    height: 80dvh;
+    max-height: 80dvh;
+    flex: none;
+  }
+}
+
 .reader-viewer__canvas-area {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem;
+  padding: 1rem;
   overflow: hidden;
   position: relative;
   width: 100%;
+  min-height: 0;
 }
 
 .reader-viewer__stage-container {
@@ -185,8 +394,8 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
   justify-content: center;
   height: 100%;
   width: 100%;
-  max-width: min(calc(100vw - 120px), 960px);
-  gap: 1.25rem;
+  max-width: min(calc(100vw - 40px), 960px);
+  gap: 1rem;
   margin: 0 auto;
   position: relative;
 }
@@ -206,8 +415,8 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
   color: var(--color-text-secondary);
   font-size: 2rem;
   line-height: 1;
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   cursor: pointer;
   display: flex;

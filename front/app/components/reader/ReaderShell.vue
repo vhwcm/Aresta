@@ -98,7 +98,8 @@ const loadBookFromQuery = async () => {
 
     const doc = createBookDocument(type)
     await doc.load(arrayBuffer, title)
-    store.setDocument(doc, title)
+    const numericBookId = bookId ? parseInt(bookId, 10) : null
+    store.setDocument(doc, title, !isNaN(Number(numericBookId)) ? numericBookId : null)
 
     if (pageParam) {
       const pageNum = parseInt(pageParam, 10)
