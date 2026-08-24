@@ -59,22 +59,45 @@ describe('Reader Components', () => {
       expect(store.savedPages).toContain(4)
     })
 
-    it('emite eventos corretos ao clicar nos botões de anotação e grafo', async () => {
+    it('emite eventos corretos ao clicar nos botões de sair, anotação, páginas salvas e grafo', async () => {
+      const store = useReaderStore()
+      store.setDocument({
+        type: 'pdf',
+        metadata: { title: 'Livro de Teste' },
+        totalPages: 20,
+        isLoaded: true,
+        load: vi.fn(),
+        getPage: vi.fn(),
+        destroy: vi.fn(),
+      } as any, 'livro.pdf')
+      store.currentPage = 5
+
       const wrapper = mount(ReaderBottomBar, {
         props: { isGraphActive: true },
       })
 
-      const buttons = wrapper.findAll('button')
-      // Botão Páginas Salvas
-      await buttons[1]?.trigger('click')
-      expect(wrapper.emitted('openSavedPages')).toBeTruthy()
+      // Verifica exibição da porcentagem (5 / 20 = 25%)
+      expect(wrapper.text()).toContain('25%')
+
+      // Botão Sair
+      const closeBtn = wrapper.find('#btn-close-book')
+      expect(closeBtn.exists()).toBe(true)
+      await closeBtn.trigger('click')
+      expect(wrapper.emitted('close')).toBeTruthy()
 
       // Botão Anotar
-      await buttons[2]?.trigger('click')
+      const annotateBtn = wrapper.find('button[aria-label="Criar anotação"]')
+      await annotateBtn.trigger('click')
       expect(wrapper.emitted('openAnnotation')).toBeTruthy()
 
+      // Botão Páginas Salvas
+      const savedPagesBtn = wrapper.find('button[aria-label="Abrir lista de páginas salvas"]')
+      await savedPagesBtn.trigger('click')
+      expect(wrapper.emitted('openSavedPages')).toBeTruthy()
+
       // Botão Grafo
-      await buttons[3]?.trigger('click')
+      const graphBtn = wrapper.find('button[aria-label="Abrir ou fechar Grafo de Conhecimento"]')
+      await graphBtn.trigger('click')
       expect(wrapper.emitted('toggleGraph')).toBeTruthy()
     })
   })

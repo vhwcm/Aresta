@@ -40,6 +40,10 @@ export const useReaderStore = defineStore('reader', {
     canGoPrev: (state): boolean => state.currentPage > 1,
     isCurrentPageBookmarked: (state): boolean => state.bookmarks.includes(state.currentPage),
     savedPages: (state): number[] => [...state.bookmarks].sort((a, b) => a - b),
+    progressPercentage: (state): number => {
+      if (!state.document || state.document.totalPages <= 0) return 0
+      return Math.round((state.currentPage / state.document.totalPages) * 100)
+    },
   },
 
   actions: {

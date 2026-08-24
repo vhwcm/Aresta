@@ -144,6 +144,18 @@ describe('useReaderStore', () => {
       store.setDocument(createMockDocument({ type: 'epub' }), 'l.epub')
       expect(store.documentType).toBe('epub')
     })
+
+    it('progressPercentage calcula a porcentagem arredondada', () => {
+      const store = useReaderStore()
+      expect(store.progressPercentage).toBe(0)
+
+      store.setDocument(createMockDocument({ totalPages: 10 }), 'l.pdf')
+      store.goToPage(3)
+      expect(store.progressPercentage).toBe(30)
+
+      store.goToPage(7)
+      expect(store.progressPercentage).toBe(70)
+    })
   })
 
   describe('reset', () => {

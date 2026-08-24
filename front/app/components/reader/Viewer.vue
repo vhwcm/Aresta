@@ -1,43 +1,8 @@
 <template>
   <div class="reader-viewer">
-    <!-- Header Superior -->
-    <header class="reader-viewer__header" id="reader-header">
-      <div class="reader-viewer__header-left">
-        <button
-          class="reader-viewer__icon-btn"
-          @click="handleClose"
-          aria-label="Sair da leitura e voltar"
-          id="btn-close-book"
-          title="Sair da leitura"
-        >
-          ← Sair
-        </button>
-      </div>
-
-      <div class="reader-viewer__header-center">
-        <span class="reader-viewer__book-title">{{ store.title }}</span>
-      </div>
-
-      <div class="reader-viewer__header-right flex items-center gap-3">
-        <!-- Botão para recolher/expandir Grafo no Desktop -->
-        <button
-          @click="store.toggleGraph()"
-          class="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border border-divider hover:bg-white/5 transition-all text-textSecondary hover:text-textPrimary"
-          :title="store.isGraphOpen ? 'Recolher Grafo para focar 100% no livro' : 'Exibir Grafo de Conhecimento (50% da tela)'"
-        >
-          <NetworkIcon class="w-3.5 h-3.5 text-accent" />
-          <span>{{ store.isGraphOpen ? 'Foco Leitura (100%)' : 'Abrir Grafo (50%)' }}</span>
-        </button>
-
-        <span class="reader-viewer__page-info">
-          {{ store.currentPage }} / {{ store.totalPages }}
-        </span>
-      </div>
-    </header>
-
     <!-- Corpo Principal com Divisão Leitor / Grafo -->
     <div class="reader-viewer__body">
-      <!-- Seção do Leitor (Mobile: 80% verticalidade / Desktop: 50% ou 100%) -->
+      <!-- Seção do Leitor (Mobile: 100% / Desktop: 50% ou 100%) -->
       <section
         class="reader-viewer__reader-pane"
         :class="store.isGraphOpen ? 'reader-viewer__reader-pane--half' : 'reader-viewer__reader-pane--full'"
@@ -83,6 +48,7 @@
         <!-- Barra Inferior de Controles -->
         <ReaderBottomBar
           :is-graph-active="isDesktop ? store.isGraphOpen : store.isMobileGraphOpen"
+          @close="handleClose"
           @open-saved-pages="isSavedPagesOpen = true"
           @open-annotation="handleOpenAnnotation"
           @toggle-graph="handleToggleGraph"
@@ -138,11 +104,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { NetworkIcon } from 'lucide-vue-next'
 import { useReaderStore } from '~/stores/readerStore'
-import { useReadingTimer } from '~/composables/reader/useReadingTimer'
 
 import ReaderEnginePageCurlCanvas from '~/components/reader/engine/PageCurlCanvas.vue'
 import ReaderBottomBar from '~/components/reader/ReaderBottomBar.vue'
@@ -152,13 +116,6 @@ import ReaderGraphPanel from '~/components/reader/ReaderGraphPanel.vue'
 
 const store = useReaderStore()
 const router = useRouter()
-const readingTimer = useReadingTimer()
-
-watch(() => store.currentPage, (newPage) => {
-  if (newPage) {
-    readingTimer.onPageChange(newPage)
-  }
-})
 
 const isSavedPagesOpen = ref(false)
 const isAnnotationModalOpen = ref(false)
@@ -288,66 +245,11 @@ onUnmounted(() => {
   background: var(--color-bg);
 }
 
-.reader-viewer__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem 1.5rem;
-  background: rgba(10, 10, 14, 0.95);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--color-border);
-  flex-shrink: 0;
-  z-index: 10;
-}
-
-.reader-viewer__header-left,
-.reader-viewer__header-right {
-  min-width: 80px;
-  display: flex;
-  align-items: center;
-}
-
-.reader-viewer__header-right {
-  justify-content: flex-end;
-}
-
-.reader-viewer__icon-btn {
-  background: none;
-  border: none;
-  color: var(--color-text-secondary);
-  font-size: 1rem;
-  cursor: pointer;
-  padding: 0.4rem 0.6rem;
-  border-radius: var(--radius-sm);
-  transition: background 0.2s, color 0.2s;
-}
-
-.reader-viewer__icon-btn:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--color-text-primary);
-}
-
-.reader-viewer__book-title {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--color-text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 260px;
-}
-
-.reader-viewer__page-info {
-  font-size: 0.8rem;
-  color: var(--color-text-secondary);
-  font-variant-numeric: tabular-nums;
-}
-
 .reader-viewer__body {
   flex: 1;
   display: flex;
   width: 100%;
-  height: calc(100dvh - 57px);
+  height: 100%;
   overflow: hidden;
   position: relative;
 }
@@ -375,21 +277,12 @@ onUnmounted(() => {
   width: 100%;
 }
 
-/* Mobile: Leitor ocupa 80% da verticalidade */
-@media (max-width: 1023px) {
-  .reader-viewer__canvas-area {
-    height: 80dvh;
-    max-height: 80dvh;
-    flex: none;
-  }
-}
-
 .reader-viewer__canvas-area {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem;
+  padding: 0;
   overflow: hidden;
   position: relative;
   width: 100%;
@@ -402,23 +295,28 @@ onUnmounted(() => {
   justify-content: center;
   height: 100%;
   width: 100%;
-  max-width: min(calc(100vw - 40px), 960px);
-  gap: 1rem;
+  max-width: 100%;
   margin: 0 auto;
   position: relative;
 }
 
 .reader-viewer__book-stage {
   flex: 1;
+  width: 100%;
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   min-width: 0;
+  min-height: 0;
 }
 
 .reader-viewer__nav-btn {
-  background: rgba(255, 255, 255, 0.06);
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(15, 15, 22, 0.75);
+  backdrop-filter: blur(8px);
   border: 1px solid var(--color-border);
   color: var(--color-text-secondary);
   font-size: 2rem;
@@ -431,20 +329,28 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.2s;
+  transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.2s, opacity 0.2s;
   z-index: 20;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.reader-viewer__nav-btn--prev {
+  left: 0.75rem;
+}
+
+.reader-viewer__nav-btn--next {
+  right: 0.75rem;
 }
 
 .reader-viewer__nav-btn:not(:disabled):hover {
-  background: rgba(124, 106, 247, 0.2);
+  background: rgba(124, 106, 247, 0.25);
   border-color: rgba(124, 106, 247, 0.5);
   color: var(--color-accent);
-  transform: scale(1.05);
+  transform: translateY(-50%) scale(1.08);
 }
 
 .reader-viewer__nav-btn:disabled {
-  opacity: 0.2;
+  opacity: 0.15;
   cursor: not-allowed;
 }
 </style>

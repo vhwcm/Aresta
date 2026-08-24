@@ -258,7 +258,7 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
         if (!camera) return
         const viewportAspect = width / height
         const pageWidth = aspectRatio * 2
-        const visibleHeight = Math.max(2.4, (pageWidth * 1.15) / viewportAspect)
+        const visibleHeight = Math.max(2.0, pageWidth / viewportAspect)
         const visibleWidth = visibleHeight * viewportAspect
         camera.left = -visibleWidth / 2
         camera.right = visibleWidth / 2
@@ -378,7 +378,7 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
         const width = fallbackCanvas.width
         const height = fallbackCanvas.height
         const targetRatio = turnTarget.aspectRatio
-        const targetHeight = Math.min(height * 0.94, width / targetRatio)
+        const targetHeight = Math.min(height, width / targetRatio)
         const targetWidth = targetHeight * targetRatio
         const x = (width - targetWidth) / 2
         const y = (height - targetHeight) / 2

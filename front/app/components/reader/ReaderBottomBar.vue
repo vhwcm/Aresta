@@ -1,46 +1,35 @@
 <template>
-  <footer class="reader-bottom-bar bg-bgPanel/95 backdrop-blur-md border-t border-divider px-3 py-2 sm:px-6 sm:py-3 flex items-center justify-between z-20 shrink-0 text-textPrimary">
-    <!-- Lado Esquerdo: Marcação de Página & Páginas Salvas -->
-    <div class="flex items-center gap-1.5 sm:gap-2">
-      <!-- Botão Marcar Página -->
+  <footer class="reader-bottom-bar bg-bgPanel/95 backdrop-blur-md border-t border-divider px-3 py-2 sm:px-5 sm:py-2.5 flex items-center justify-between z-20 shrink-0 text-textPrimary gap-2">
+    <!-- Lado Esquerdo: Sair da Leitura & Porcentagem Lida -->
+    <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+      <!-- Botão Sair -->
       <button
-        @click="store.toggleBookmark()"
-        class="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl border transition-all text-xs font-semibold"
-        :class="store.isCurrentPageBookmarked
-          ? 'bg-amber-500/20 border-amber-500/50 text-amber-300 shadow-sm'
-          : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary hover:bg-white/10'"
-        :title="store.isCurrentPageBookmarked ? 'Página marcada (clique para desmarcar)' : 'Marcar esta página'"
-        aria-label="Marcar ou desmarcar página atual"
+        @click="$emit('close')"
+        class="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl bg-white/5 border border-divider text-xs font-semibold text-textSecondary hover:text-textPrimary hover:bg-white/10 transition-all active:scale-95"
+        aria-label="Sair da leitura"
+        id="btn-close-book"
+        title="Sair da leitura"
       >
-        <BookmarkIcon
-          class="w-4 h-4 transition-transform active:scale-125"
-          :class="{ 'fill-current text-amber-300': store.isCurrentPageBookmarked }"
-        />
-        <span class="hidden sm:inline">
-          {{ store.isCurrentPageBookmarked ? 'Marcada' : 'Marcar Página' }}
-        </span>
+        <ArrowLeftIcon class="w-4 h-4" />
+        <span class="hidden xs:inline">Sair</span>
       </button>
 
-      <!-- Botão Ver Páginas Salvas -->
-      <button
-        @click="$emit('openSavedPages')"
-        class="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl bg-white/5 border border-divider text-xs font-semibold text-textSecondary hover:text-textPrimary hover:bg-white/10 transition-all relative"
-        title="Ver páginas salvas"
-        aria-label="Abrir lista de páginas salvas"
+      <!-- Indicador de Porcentagem e Página -->
+      <div
+        class="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl bg-white/5 border border-divider text-xs font-semibold text-textSecondary"
+        title="Progresso da leitura"
+        aria-label="Progresso da leitura"
       >
-        <BookmarkCheckIcon class="w-4 h-4 text-accent" />
-        <span class="hidden md:inline">Páginas Salvas</span>
-        <span
-          v-if="store.savedPages.length > 0"
-          class="px-1.5 py-0.2 text-[10px] rounded-full bg-accent text-white font-bold font-technical"
-        >
-          {{ store.savedPages.length }}
+        <span class="text-accent font-bold font-technical">{{ store.progressPercentage }}%</span>
+        <span class="text-textSecondary/60 hidden sm:inline text-[11px] font-technical">
+          ({{ store.currentPage }}/{{ store.totalPages }})
         </span>
-      </button>
+      </div>
     </div>
 
     <!-- Centro: Ação de Anotação & Seleção -->
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-1.5 sm:gap-2">
+      <!-- Botão Anotar -->
       <button
         @click="$emit('openAnnotation')"
         class="flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-accent text-white text-xs font-semibold hover:bg-accent/90 transition-all shadow-md active:scale-95"
@@ -52,12 +41,48 @@
       </button>
     </div>
 
-    <!-- Lado Direito: Alternância do Grafo & Navegação -->
-    <div class="flex items-center gap-1.5 sm:gap-2">
+    <!-- Lado Direito: Marcação de Página, Páginas Salvas & Grafo -->
+    <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+      <!-- Botão Marcar Página -->
+      <button
+        @click="store.toggleBookmark()"
+        class="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl border transition-all text-xs font-semibold active:scale-95"
+        :class="store.isCurrentPageBookmarked
+          ? 'bg-amber-500/20 border-amber-500/50 text-amber-300 shadow-sm'
+          : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary hover:bg-white/10'"
+        :title="store.isCurrentPageBookmarked ? 'Página marcada (clique para desmarcar)' : 'Marcar esta página'"
+        aria-label="Marcar ou desmarcar página atual"
+      >
+        <BookmarkIcon
+          class="w-4 h-4 transition-transform active:scale-125"
+          :class="{ 'fill-current text-amber-300': store.isCurrentPageBookmarked }"
+        />
+        <span class="hidden md:inline">
+          {{ store.isCurrentPageBookmarked ? 'Marcada' : 'Marcar' }}
+        </span>
+      </button>
+
+      <!-- Botão Ver Páginas Salvas -->
+      <button
+        @click="$emit('openSavedPages')"
+        class="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl bg-white/5 border border-divider text-xs font-semibold text-textSecondary hover:text-textPrimary hover:bg-white/10 transition-all relative active:scale-95"
+        title="Ver páginas salvas"
+        aria-label="Abrir lista de páginas salvas"
+      >
+        <BookmarkCheckIcon class="w-4 h-4 text-accent" />
+        <span class="hidden lg:inline">Salvas</span>
+        <span
+          v-if="store.savedPages.length > 0"
+          class="px-1.5 py-0.2 text-[10px] rounded-full bg-accent text-white font-bold font-technical"
+        >
+          {{ store.savedPages.length }}
+        </span>
+      </button>
+
       <!-- Botão Grafo de Conhecimento -->
       <button
         @click="$emit('toggleGraph')"
-        class="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl border transition-all text-xs font-semibold"
+        class="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl border transition-all text-xs font-semibold active:scale-95"
         :class="isGraphActive
           ? 'bg-accent/20 border-accent text-white shadow-sm'
           : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary hover:bg-white/10'"
@@ -73,6 +98,7 @@
 
 <script setup lang="ts">
 import {
+  ArrowLeftIcon,
   BookmarkIcon,
   BookmarkCheckIcon,
   HighlighterIcon,
@@ -85,6 +111,7 @@ defineProps<{
 }>()
 
 defineEmits<{
+  (e: 'close'): void
   (e: 'openSavedPages'): void
   (e: 'openAnnotation'): void
   (e: 'toggleGraph'): void
