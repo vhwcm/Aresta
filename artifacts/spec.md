@@ -1,25 +1,17 @@
 # Objetivo
 
-- Refatorar o front end, algumas coisas vão ser mockadas porque o back end ainda não foi feito. adicionar uma lista para essas coisas para ser tratado no futuro. 
+- Refatorar Página Home
 
 
+## Layout
 
-## Navbar.
+* Canto superior direito ter ofenciva em dias. simplesmente icone + numero (em dias)
 
-A navbar vai ficar na parte de baixo da páxina. Ela vai ser icone que quando clicada vai colapsar. no desktop ela já começa colapsada e no mobile ela começa retraida.
-* Colapsar e descolapsar ter que fazer uma transição de expandir suave para os lados. a altura ficara a mesma. Será algo semitransparente o fundo. mas será cinza, um pouco mais claro que o fundo da página. Os icones pode ser do mesmo laranja da página. utilizar icones clean e low dopamine. 
+* Primeira coisa que vai aparecer é continue sua última leitura. para isso o banco de dados vai ter que suportar saber a data de ultimo acesso aos livros. - já criar backend para isso.
 
-O que vai ter na navbar é só os icones no mobile e junto com descrição no desktop. As abas seriam
+* Depois anotações. que vai pegar as anotações do ultimo livro que eu estou lendo. isso não existe ainda e não precisa ser criado; pode ser mockado.
 
-* Conversor - que vai converter pdf para epub. 
-* Livros - aqui vai ter meus livros, grafo de conhecimento e loja. um debaixo do outro.
-* Logo/home - ainda não temos uma logo, mas se conseguir fazer eu gostaria de uma letra A formada por nós e arestas. e que isso se movesse lentamente para parecer que é um grafo vivo. Mas não pode ser muito grande. vai levar a gente para a home do app. Aqui vai ter uma ofenciva também no canto superior direito. 
-* Revisão - aqui vai ter flashcards e resumo de anotações feitas no livro.
-* Conta - status da conta. dar upgrade para premio. quantidade de livros. etc. 
+* Fazer flashcards do dia. mostrar o primeiro flashcard do dia e botão para ir para a página de revisao e já ir para fazer o flashcard
 
-Já começa a desenhar o layout das páginas. por mais que sem dados. 
 
-## Importante
-
-Garantir compatibilidade com layout mobile, tablet e desktop.
 
