@@ -7,6 +7,13 @@ import { prisma } from '../src/config/prisma.js';
 describe('Auth Endpoints', () => {
   beforeAll(async () => {
     await prisma.$connect();
+    await prisma.user.deleteMany({
+      where: {
+        email: {
+          in: ['novo_leitor@aresta.app', 'deletavel@aresta.app'],
+        },
+      },
+    });
     const hash = await bcrypt.hash('orlaweb123123#', 10);
     await prisma.user.upsert({
       where: { email: 'viktor@aresta.org' },
@@ -16,6 +23,13 @@ describe('Auth Endpoints', () => {
   });
 
   afterAll(async () => {
+    await prisma.user.deleteMany({
+      where: {
+        email: {
+          in: ['novo_leitor@aresta.app', 'deletavel@aresta.app'],
+        },
+      },
+    });
     await prisma.$disconnect();
   });
 
