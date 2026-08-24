@@ -2,7 +2,7 @@ import tempfile
 import os
 import shutil
 from pathlib import Path
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from typing import Optional
@@ -23,6 +23,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"]
 )
 
 @app.get("/health", response_model=HealthResponse)
@@ -62,7 +63,7 @@ async def convert_upload(
     title: Optional[str] = Form(None),
     author: Optional[str] = Form(None),
     dpi: int = Form(150),
-    download: bool = Form(False)
+    download: bool = Form(True)
 ):
     if not file.filename or not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Apenas arquivos PDF são permitidos.")
@@ -80,14 +81,26 @@ async def convert_upload(
             pdf_path=pdf_temp_path,
             output_path=epub_temp_path,
             title=title,
-            author=author
+            author=author,
+            validate=True
         )
+
+        headers = {
+            "X-Status": res["status"],
+            "X-Pages-Count": str(res["pages_count"]),
+            "X-Chapters-Count": str(res["chapters_count"]),
+            "X-Assets-Count": str(res["assets_count"]),
+            "X-Processing-Time": str(res["processing_time_seconds"]),
+            "X-Classification": str(res["classification"]),
+            "X-Is-Valid": str(res.get("validation", {}).get("is_valid", True))
+        }
 
         if download:
             return FileResponse(
                 epub_temp_path,
                 media_type="application/epub+zip",
-                filename=Path(epub_temp_path).name
+                filename=Path(epub_temp_path).name,
+                headers=headers
             )
 
         return ConvertResponse(**res)
