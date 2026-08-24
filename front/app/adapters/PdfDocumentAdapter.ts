@@ -86,6 +86,18 @@ export class PdfDocumentAdapter implements IBookDocument {
     return pageData
   }
 
+  async getTextContent(pageNumber: number): Promise<string> {
+    if (!this._pdfDocument) throw new Error('PDF não carregado')
+    const pdfDoc = this._pdfDocument as import('pdfjs-dist').PDFDocumentProxy
+    const pdfPage = await pdfDoc.getPage(pageNumber)
+    const textContent = await pdfPage.getTextContent()
+    return textContent.items
+      .map((item: any) => item.str || '')
+      .join(' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+  }
+
   destroy(): void {
     if (this._pdfDocument) {
       const pdfDoc = this._pdfDocument as import('pdfjs-dist').PDFDocumentProxy

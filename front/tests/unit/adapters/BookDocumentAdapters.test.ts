@@ -12,7 +12,8 @@ vi.mock('pdfjs-dist', () => ({
       getMetadata: () => Promise.resolve({ info: { Title: 'PDF de Teste', Author: 'Autor Teste' } }),
       getPage: (pageNo: number) => Promise.resolve({
         getViewport: () => ({ width: 600, height: 800 }),
-        render: () => ({ promise: Promise.resolve() })
+        render: () => ({ promise: Promise.resolve() }),
+        getTextContent: () => Promise.resolve({ items: [{ str: 'Texto do PDF de teste' }] })
       }),
       destroy: vi.fn()
     })
@@ -78,6 +79,9 @@ describe('Book Document Adapters and Factory', () => {
       expect(pageData.height).toBe(800)
       expect(pageData.aspectRatio).toBe(600 / 800)
 
+      const text = await adapter.getTextContent(1)
+      expect(text).toBe('Texto do PDF de teste')
+
       adapter.destroy()
       expect(adapter.isLoaded).toBe(false)
     })
@@ -104,6 +108,9 @@ describe('Book Document Adapters and Factory', () => {
       expect(adapter.totalPages).toBe(1)
       expect(adapter.metadata.title).toBe('EPUB de Teste')
       expect(adapter.metadata.author).toBe('Autor EPUB')
+
+      const text = await adapter.getTextContent(1)
+      expect(typeof text).toBe('string')
 
       adapter.destroy()
       expect(adapter.isLoaded).toBe(false)

@@ -29,5 +29,6 @@ export interface IBookDocument {
 
   load(source: File | ArrayBuffer, fileName?: string): Promise<void>
   getPage(pageNumber: number): Promise<PageData>
+  getTextContent?(pageNumber: number): Promise<string>
   destroy(): void
 }

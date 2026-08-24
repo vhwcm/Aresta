@@ -117,6 +117,20 @@ export class EpubDocumentAdapter implements IBookDocument {
     return this._canvasToPageData(canvas)
   }
 
+  async getTextContent(pageNumber: number): Promise<string> {
+    if (!this._epub) throw new Error('EPUB não carregado')
+    const section = this._sections[pageNumber - 1]
+    if (!section) return ''
+
+    try {
+      const doc = await section.createDocument()
+      const body = doc.body ?? doc
+      return (body.innerText || body.textContent || '').replace(/\s+/g, ' ').trim()
+    } catch {
+      return ''
+    }
+  }
+
   private async _renderSectionToCanvas(pageNumber: number): Promise<HTMLCanvasElement> {
     const width = 600
     const height = 900
