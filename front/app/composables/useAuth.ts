@@ -14,17 +14,35 @@ export interface LoginResponse {
 }
 
 const API_BASE = 'http://localhost:7070/api'
+const COOKIE_OPTS = {
+  path: '/',
+  maxAge: 60 * 60 * 24 * 7, // 7 dias
+  sameSite: 'lax' as const
+}
 
-const getCookieRef = <T>(name: string, opts?: any) => {
+const getCookieRef = <T>(name: string) => {
   if (typeof useCookie === 'function') {
-    return useCookie<T>(name, opts)
+    return useCookie<T>(name, COOKIE_OPTS)
   }
   return ref<T | null>(null)
 }
 
+const clearAllAuthCookies = () => {
+  if (typeof document !== 'undefined') {
+    const cookieNames = ['aresta_token', 'aresta_user']
+    const paths = ['/', '/conta', '/login', '']
+    cookieNames.forEach((name) => {
+      paths.forEach((p) => {
+        const pathPart = p ? `; path=${p}` : ''
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0${pathPart}`
+      })
+    })
+  }
+}
+
 export const useAuth = () => {
-  const tokenCookie = getCookieRef<string | null>('aresta_token', { maxAge: 86400 })
-  const userCookie = getCookieRef<AuthUser | null>('aresta_user', { maxAge: 86400 })
+  const tokenCookie = getCookieRef<string | null>('aresta_token')
+  const userCookie = getCookieRef<AuthUser | null>('aresta_user')
 
   const isLoggedIn = computed(() => !!tokenCookie.value)
   const user = computed(() => userCookie.value)
@@ -71,11 +89,12 @@ export const useAuth = () => {
     }
   }
 
-  const logout = () => {
+  const logout = async () => {
     tokenCookie.value = null
     userCookie.value = null
+    clearAllAuthCookies()
     if (typeof navigateTo === 'function') {
-      navigateTo('/')
+      await navigateTo('/', { replace: true })
     }
   }
 
@@ -88,8 +107,9 @@ export const useAuth = () => {
       })
       tokenCookie.value = null
       userCookie.value = null
+      clearAllAuthCookies()
       if (typeof navigateTo === 'function') {
-        navigateTo('/')
+        await navigateTo('/', { replace: true })
       }
       return { success: true }
     } catch (e: any) {
@@ -110,6 +130,7 @@ export const useAuth = () => {
     } catch (e) {
       tokenCookie.value = null
       userCookie.value = null
+      clearAllAuthCookies()
       return null
     }
   }

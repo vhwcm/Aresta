@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col gap-8 pb-20 animate-in fade-in duration-500">
-    <!-- BLOCO 1: ÚLTIMA LEITURA ATIVA (Clean, sem caixa, capa clicável, ofensiva ao lado do título, progresso só em %) -->
-    <section class="flex flex-row items-center sm:items-start gap-4 sm:gap-8">
+    <!-- BLOCO 1: ÚLTIMA LEITURA ATIVA (Clean, sem caixa, capa clicável, ofensiva elevada no topo direito, progresso só em %) -->
+    <section class="relative flex flex-row items-start gap-4 sm:gap-8 pt-1 sm:pt-2">
       <!-- Capa do Livro (Clicável diretamente no mobile e desktop) -->
       <NuxtLink
         :to="activeBookReaderLink"
@@ -31,19 +31,11 @@
       <!-- Informações Compactas do Livro -->
       <div class="flex flex-col justify-between gap-2.5 sm:gap-3 flex-1 min-w-0">
         <div class="flex flex-col gap-1">
-          <!-- Título do Livro + Ofensiva ao Lado (Tanto no Desktop quanto Mobile) -->
-          <div class="flex items-start justify-between gap-3">
-            <NuxtLink :to="activeBookReaderLink" class="hover:text-accent transition-colors flex-1 min-w-0">
-              <h1 class="font-editorial text-xl sm:text-4xl md:text-5xl font-light text-textPrimary leading-tight truncate sm:whitespace-normal">
-                {{ activeBookTitle }}
-              </h1>
-            </NuxtLink>
-
-            <!-- Ofensiva ao lado do livro (Desktop & Mobile, sem a palavra dias) -->
-            <div class="shrink-0 mt-0.5">
-              <ReadingStreak />
-            </div>
-          </div>
+          <NuxtLink :to="activeBookReaderLink" class="hover:text-accent transition-colors">
+            <h1 class="font-editorial text-xl sm:text-4xl md:text-5xl font-light text-textPrimary leading-tight truncate sm:whitespace-normal">
+              {{ activeBookTitle }}
+            </h1>
+          </NuxtLink>
 
           <!-- Progresso Resumido: Apenas Porcentagem -->
           <div class="text-xs sm:text-sm font-technical text-accent font-medium">
@@ -62,6 +54,11 @@
             <ArrowRightIcon class="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </NuxtLink>
         </div>
+      </div>
+
+      <!-- Ofensiva no Topo Direito (Elevada, independente do alinhamento do título) -->
+      <div class="shrink-0 self-start -mt-2 sm:-mt-2.5">
+        <ReadingStreak />
       </div>
     </section>
 
