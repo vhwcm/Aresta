@@ -31,8 +31,8 @@
       </div>
     </div>
 
-    <!-- BLOCO 1: CONTINUE SUA ÚLTIMA LEITURA (Baseado em last_accessed_at no backend) -->
-    <section class="flex flex-col gap-6">
+    <!-- BLOCO 1: CONTINUE SUA ÚLTIMA LEITURA (Com Capa em Destaque) -->
+    <section class="flex flex-col gap-6 p-6 sm:p-8 rounded-3xl bg-white/[0.02] border border-divider hover:border-white/20 transition-all shadow-xl">
       <div class="flex items-center justify-between">
         <span class="font-technical text-[10px] uppercase font-semibold tracking-widest text-accent flex items-center gap-1.5">
           <BookOpenIcon class="w-3.5 h-3.5" />
@@ -43,36 +43,77 @@
         </NuxtLink>
       </div>
 
-      <div class="flex flex-col gap-4">
-        <h1 class="font-editorial text-4xl md:text-5xl font-light text-textPrimary leading-tight">
-          {{ activeBookTitle }}
-        </h1>
-        <p class="font-interface text-base md:text-lg text-textSecondary max-w-2xl leading-relaxed">
-          {{ activeBookDescription }}
-        </p>
-      </div>
+      <div class="flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-8">
+        <!-- Capa do Livro em Destaque -->
+        <div class="relative shrink-0 group/cover">
+          <div class="w-32 sm:w-40 aspect-[2/3] rounded-2xl overflow-hidden shadow-2xl border border-divider/80 bg-neutral-900 flex items-center justify-center relative transition-transform duration-500 group-hover/cover:scale-[1.03]">
+            <img
+              v-if="activeBookCoverUrl && !coverError"
+              :src="activeBookCoverUrl"
+              :alt="activeBookTitle"
+              @error="coverError = true"
+              class="w-full h-full object-cover"
+            />
+            <!-- Fallback se imagem falhar ou indisponível -->
+            <div v-else class="w-full h-full p-4 flex flex-col justify-between bg-gradient-to-br from-neutral-800 to-neutral-950 text-left border-l-4 border-accent">
+              <span class="font-technical text-[9px] uppercase tracking-wider text-accent font-semibold">Aresta Acervo</span>
+              <span class="font-editorial text-sm font-light text-white leading-tight line-clamp-3">{{ activeBookTitle }}</span>
+              <span class="font-interface text-[10px] text-textSecondary">{{ activeBookAuthor }}</span>
+            </div>
 
-      <div class="flex flex-wrap items-center gap-4 md:gap-6 mt-2">
-        <NuxtLink
-          :to="activeBookReaderLink"
-          class="bg-white text-black font-interface text-xs md:text-sm font-medium px-6 py-3 rounded-full hover:bg-gray-200 transition-all flex items-center gap-2 shadow-lg shadow-white/10"
-        >
-          Continuar Leitura
-          <ArrowRightIcon class="w-4 h-4" />
-        </NuxtLink>
+            <!-- Efeito de Lombada de Livro -->
+            <div class="absolute inset-y-0 left-0 w-2.5 bg-gradient-to-r from-black/60 via-white/10 to-transparent pointer-events-none"></div>
+          </div>
+        </div>
 
-        <NuxtLink
-          to="/conversor"
-          class="px-5 py-3 rounded-full border border-divider bg-white/5 hover:bg-white/10 text-textPrimary font-interface text-xs md:text-sm transition-colors flex items-center gap-2"
-        >
-          <FileCode2Icon class="w-4 h-4 text-accent" />
-          Converter PDF para EPUB
-        </NuxtLink>
+        <!-- Informações e Ações do Livro -->
+        <div class="flex flex-col justify-between gap-4 flex-1 w-full text-left">
+          <div class="flex flex-col gap-2">
+            <div class="flex items-center gap-2 font-technical text-xs text-textSecondary">
+              <span>{{ activeBookAuthor }}</span>
+              <span>·</span>
+              <span class="text-accent font-medium">Leitura Ativa</span>
+            </div>
+            <h1 class="font-editorial text-3xl sm:text-4xl md:text-5xl font-light text-textPrimary leading-tight">
+              {{ activeBookTitle }}
+            </h1>
+            <p class="font-interface text-sm sm:text-base text-textSecondary max-w-2xl leading-relaxed mt-1">
+              {{ activeBookDescription }}
+            </p>
+          </div>
 
-        <div class="flex items-center gap-3 text-textSecondary font-technical text-xs ml-auto">
-          <span>Pág. {{ activeBookCurrentPage }} de {{ activeBookTotalPages }}</span>
-          <span>·</span>
-          <span class="text-accent font-semibold">{{ activeBookProgress }}% concluído</span>
+          <!-- Barra de Progresso e Estatísticas -->
+          <div class="flex flex-col gap-2 bg-white/5 p-4 rounded-2xl border border-divider/60 max-w-xl">
+            <div class="flex items-center justify-between text-xs font-interface">
+              <span class="text-textSecondary">Progresso da Leitura:</span>
+              <span class="font-technical text-textPrimary font-semibold">Pág. {{ activeBookCurrentPage }} de {{ activeBookTotalPages }} ({{ activeBookProgress }}%)</span>
+            </div>
+            <div class="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+              <div
+                class="h-full bg-accent rounded-full transition-all duration-500"
+                :style="{ width: `${activeBookProgress}%` }"
+              ></div>
+            </div>
+          </div>
+
+          <!-- Botões de Ação -->
+          <div class="flex flex-wrap items-center gap-4 mt-2">
+            <NuxtLink
+              :to="activeBookReaderLink"
+              class="bg-white text-black font-interface text-xs sm:text-sm font-medium px-6 py-3 rounded-full hover:bg-gray-200 transition-all flex items-center gap-2 shadow-lg shadow-white/10"
+            >
+              Continuar Leitura
+              <ArrowRightIcon class="w-4 h-4" />
+            </NuxtLink>
+
+            <NuxtLink
+              to="/conversor"
+              class="px-5 py-3 rounded-full border border-divider bg-white/5 hover:bg-white/10 text-textPrimary font-interface text-xs sm:text-sm transition-colors flex items-center gap-2"
+            >
+              <FileCode2Icon class="w-4 h-4 text-accent" />
+              Converter PDF para EPUB
+            </NuxtLink>
+          </div>
         </div>
       </div>
     </section>
@@ -187,7 +228,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import {
   ArrowRightIcon,
   BrainIcon,
@@ -200,9 +241,11 @@ import {
 import ReadingStreak from '~/components/ReadingStreak.vue'
 import { useCommandPalette } from '~/composables/useCommandPalette'
 import { useUserBooks } from '~/composables/useUserBooks'
+import { getCoverUrl } from '~/utils/cover'
 
 const commandPalette = useCommandPalette()
 const { userBooks, fetchUserBooks } = useUserBooks()
+const coverError = ref(false)
 
 onMounted(async () => {
   try {
@@ -218,7 +261,11 @@ const latestUserBook = computed(() => {
 })
 
 const activeBookTitle = computed(() => {
-  return latestUserBook.value?.title || 'A Estrutura das Revoluções Científicas'
+  return latestUserBook.value?.title || 'O Alienista'
+})
+
+const activeBookAuthor = computed(() => {
+  return 'Machado de Assis'
 })
 
 const activeBookShortTitle = computed(() => {
@@ -226,19 +273,27 @@ const activeBookShortTitle = computed(() => {
   return title.length > 30 ? title.substring(0, 30) + '...' : title
 })
 
+const activeBookCoverUrl = computed(() => {
+  if (latestUserBook.value?.coverPath) {
+    return getCoverUrl(latestUserBook.value.coverPath, latestUserBook.value.bookId)
+  }
+  // Mock com imagem de capa disponível no backend
+  return getCoverUrl('storage/covers/O-Alienista.png')
+})
+
 const activeBookDescription = computed(() => {
   if (latestUserBook.value) {
     return `Você está no progresso da leitura de "${latestUserBook.value.title}". Continue de onde parou para manter sua ofensiva ativa.`
   }
-  return 'Thomas S. Kuhn argumenta que a ciência não progride de forma linear cumulativa, mas através de rupturas de paradigma. Uma leitura basilar para entender como o conhecimento se transforma.'
+  return 'Uma das obras mais célebres da literatura brasileira, satirizando a psiquiatria e os limites da razão através da trajetória do Dr. Simão Bacamarte na Casa Verde.'
 })
 
 const activeBookCurrentPage = computed(() => {
-  return latestUserBook.value?.currentPage || 124
+  return latestUserBook.value?.currentPage || 42
 })
 
 const activeBookTotalPages = computed(() => {
-  return 352
+  return 128
 })
 
 const activeBookProgress = computed(() => {
@@ -257,21 +312,21 @@ const activeBookNotes = computed(() => {
   return [
     {
       id: 'n1',
-      chapter: 'Capítulo IV',
-      page: 124,
+      chapter: 'Capítulo III: A Casa Verde',
+      page: 42,
       date: 'Hoje, 10:45',
-      quote: 'A descoberta começa com a percepção da anomalia, ou seja, com o reconhecimento de que a natureza violou de algum modo as expectativas induzidas pelo paradigma.',
-      insight: 'As anomalias não destroem um paradigma imediatamente; elas se acumulam até provocarem um período de crise que culmina na transição revolucionária.',
-      tags: ['Epistemologia', 'Anomalias']
+      quote: 'A razão é a perfeita saúde da alma; a loucura é a alteração dessa saúde.',
+      insight: 'Simão Bacamarte estabelece uma fronteira arbitrária entre sanidade e desvio mental, ilustrando o perigo do cientificismo cego.',
+      tags: ['Psicologia', 'Sátira', 'Machado']
     },
     {
       id: 'n2',
-      chapter: 'Capítulo II',
-      page: 86,
+      chapter: 'Capítulo I: De como Itaguaí ganhou uma Casa de Orates',
+      page: 18,
       date: 'Ontem, 18:20',
-      quote: 'A ciência normal não tem como objetivo descobrir novidades factuais ou teóricas e, quando é bem-sucedida, não encontra nenhuma.',
-      insight: 'A prática científica padrão é focada na resolução de quebra-cabeças dentro de fronteiras pré-estabelecidas pelo consenso.',
-      tags: ['Ciência Normal', 'Paradigmas']
+      quote: 'A ciência é o meu único norte; não busco a glória dos homens, mas a verdade das coisas.',
+      insight: 'O rigor metodológico de Bacamarte se transforma em uma obsessão dogmática ao longo da narrativa.',
+      tags: ['Cientificismo', 'Crítica Social']
     }
   ]
 })
@@ -281,10 +336,11 @@ const dailyFlashcard = computed(() => {
   return {
     id: 'f1',
     bookTitle: activeBookShortTitle.value,
-    chapter: 'Cap. II: O Caminho para a Ciência Normal',
-    question: 'O que caracteriza a "Ciência Normal" segundo Thomas Kuhn?',
-    answer: 'É a pesquisa firmemente baseada em uma ou mais realizações científicas passadas reconhecidas por uma comunidade como base para a resolução de problemas.'
+    chapter: 'Cap. III: A Casa Verde',
+    question: 'Qual é o critério inicial usado por Simão Bacamarte para internar pacientes na Casa Verde?',
+    answer: 'Qualquer desvio do equilíbrio moral ou manifestação excessiva de paixão, soberba ou virtude fora do comum.'
   }
 })
 </script>
+
 

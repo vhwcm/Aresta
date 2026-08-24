@@ -22,10 +22,13 @@ describe('Index Page (Home)', () => {
 
     expect(wrapper.text()).toContain('Continue sua última leitura')
     expect(wrapper.text()).toContain('Continuar Leitura')
+    expect(wrapper.text()).toContain('O Alienista')
+    expect(wrapper.text()).toContain('Machado de Assis')
     expect(wrapper.text()).toContain('Anotações & Destaques')
     expect(wrapper.text()).toContain('Flashcards do Dia')
     expect(wrapper.text()).toContain('1º Flashcard de Hoje')
     expect(wrapper.text()).toContain('Fazer Flashcard Agora')
     expect(wrapper.find('[data-testid="reading-streak"]').exists()).toBe(true)
+    expect(wrapper.find('img').exists() || wrapper.text().toContain('Aresta Acervo')).toBe(true)
   })
 })
