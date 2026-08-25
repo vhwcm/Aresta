@@ -8,6 +8,21 @@ import { logWarn } from '~/utils/logger'
 
 export type PageTurnDirection = 'next' | 'previous'
 
+export interface PageRect {
+    left: number
+    top: number
+    width: number
+    height: number
+    pageNumber: number
+}
+
+export interface PageLayoutInfo {
+    isTwoPage: boolean
+    leftPage: PageRect | null
+    rightPage: PageRect | null
+    singlePage: PageRect | null
+}
+
 interface PageRaster {
     pageNumber: number
     canvas: HTMLCanvasElement
@@ -316,6 +331,72 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
         resizeScene(aspectRatio)
     }
 
+    const pageLayout = ref<PageLayoutInfo>({
+        isTwoPage: false,
+        leftPage: null,
+        rightPage: null,
+        singlePage: null,
+    })
+
+    function updatePageLayout(aspectRatio = turnTarget?.aspectRatio ?? turnSource?.aspectRatio ?? 0.72) {
+        const host = hostRef.value
+        if (!host) return
+
+        const width = Math.max(host.clientWidth, 1)
+        const height = Math.max(host.clientHeight, 1)
+        const viewportAspect = width / height
+        const isTwoPage = store.isTwoPageMode
+        const totalBookWidth = isTwoPage ? (aspectRatio * 4) : (aspectRatio * 2)
+        const visibleHeight = Math.max(2.05, (totalBookWidth * 1.05) / viewportAspect)
+        const visibleWidth = visibleHeight * viewportAspect
+
+        const scale = height / visibleHeight
+        const pagePixelHeight = 2 * scale
+        const pagePixelWidth = (2 * aspectRatio) * scale
+        const top = (height - pagePixelHeight) / 2
+
+        if (isTwoPage) {
+            const leftPageX = (width / 2) - pagePixelWidth
+            const rightPageX = width / 2
+            const currentPage = store.currentPage
+            const leftNum = currentPage % 2 === 0 ? currentPage : Math.max(1, currentPage - 1)
+            const rightNum = leftNum + 1
+
+            pageLayout.value = {
+                isTwoPage: true,
+                leftPage: {
+                    left: Math.max(0, leftPageX),
+                    top,
+                    width: pagePixelWidth,
+                    height: pagePixelHeight,
+                    pageNumber: leftNum > 0 ? leftNum : 0,
+                },
+                rightPage: {
+                    left: rightPageX,
+                    top,
+                    width: pagePixelWidth,
+                    height: pagePixelHeight,
+                    pageNumber: rightNum <= store.totalPages ? rightNum : 0,
+                },
+                singlePage: null,
+            }
+        } else {
+            const pageX = (width - pagePixelWidth) / 2
+            pageLayout.value = {
+                isTwoPage: false,
+                leftPage: null,
+                rightPage: null,
+                singlePage: {
+                    left: pageX,
+                    top,
+                    width: pagePixelWidth,
+                    height: pagePixelHeight,
+                    pageNumber: store.currentPage,
+                },
+            }
+        }
+    }
+
     function resizeScene(aspectRatio = turnTarget?.aspectRatio ?? turnSource?.aspectRatio ?? 0.72) {
         const host = hostRef.value
         if (!host) return
@@ -340,6 +421,7 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
         camera.bottom = -visibleHeight / 2
         camera.updateProjectionMatrix()
         renderScene()
+        updatePageLayout(aspectRatio)
     }
 
     function createScene() {
@@ -539,6 +621,7 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
             turningFront.visible = false
             turningBack.visible = false
             renderScene()
+            updatePageLayout(leftRaster.aspectRatio)
         } else {
             turnLeftStatic = leftRaster
             turnRightStatic = rightRaster ?? null
@@ -546,6 +629,7 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
             turnSource = null
             turnProgress = 1
             renderFallback()
+            updatePageLayout(leftRaster.aspectRatio)
         }
     }
 
@@ -1210,6 +1294,7 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
         isPreparing: readonly(isPreparing),
         errorMessage: readonly(errorMessage),
         webglAvailable: readonly(webglAvailable),
+        pageLayout: readonly(pageLayout),
         canTurnNext,
         canTurnPrevious,
         requestTurn,

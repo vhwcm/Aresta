@@ -6,6 +6,20 @@ import { EpubDocumentAdapter } from '../../../app/adapters/EpubDocumentAdapter'
 // Mock pdfjs-dist
 vi.mock('pdfjs-dist', () => ({
   GlobalWorkerOptions: { workerSrc: '' },
+  TextLayer: class MockTextLayer {
+    options: any
+    constructor(options: any) {
+      this.options = options
+    }
+    render() {
+      if (this.options?.container) {
+        const span = document.createElement('span')
+        span.textContent = 'Texto do PDF renderizado no TextLayer'
+        this.options.container.appendChild(span)
+      }
+      return Promise.resolve()
+    }
+  },
   getDocument: vi.fn(() => ({
     promise: Promise.resolve({
       numPages: 10,
@@ -86,6 +100,18 @@ describe('Book Document Adapters and Factory', () => {
       expect(adapter.isLoaded).toBe(false)
     })
 
+    it('renders text layer to a DOM container', async () => {
+      const adapter = new PdfDocumentAdapter()
+      const buffer = new ArrayBuffer(8)
+      await adapter.load(buffer, 'meu_livro.pdf')
+
+      const container = document.createElement('div')
+      await adapter.renderTextLayer(1, container, 600, 800)
+
+      expect(container.children.length).toBeGreaterThan(0)
+      expect(container.textContent).toContain('Texto do PDF')
+    })
+
     it('loads document from File correctly', async () => {
       const adapter = new PdfDocumentAdapter()
       const file = new File(['fake content'], 'exemplo.pdf', { type: 'application/pdf' })
@@ -111,6 +137,10 @@ describe('Book Document Adapters and Factory', () => {
 
       const text = await adapter.getTextContent(1)
       expect(typeof text).toBe('string')
+
+      const container = document.createElement('div')
+      await adapter.renderTextLayer(1, container, 600, 900)
+      expect(container.children.length).toBeGreaterThan(0)
 
       adapter.destroy()
       expect(adapter.isLoaded).toBe(false)

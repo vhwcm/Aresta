@@ -3,13 +3,59 @@
     ref="stageRef"
     class="page-curl-wrapper"
     :class="{ 'page-curl-wrapper--dragging': isTransitioning }"
-    role="img"
-    aria-label="Página do livro. Arraste a borda direita para avançar ou a borda esquerda para voltar."
+    role="region"
+    aria-label="Página do livro. Arraste as bordas para folhear ou selecione o texto com o mouse."
     @pointerdown="onPointerDown"
     @pointermove="onPointerMove"
     @pointerup="onPointerUp"
     @pointercancel="onPointerCancel"
   >
+    <!-- Camada de Texto Invisível (TextLayer Overlay) -->
+    <div
+      v-if="!isTransitioning && store.document"
+      class="page-text-overlay-container"
+      aria-hidden="false"
+    >
+      <!-- Modo 2 Páginas: Página Esquerda -->
+      <div
+        v-if="pageLayout.isTwoPage && pageLayout.leftPage && pageLayout.leftPage.pageNumber > 0"
+        ref="leftTextLayerRef"
+        class="page-text-layer page-text-layer--left"
+        :style="{
+          left: `${pageLayout.leftPage.left}px`,
+          top: `${pageLayout.leftPage.top}px`,
+          width: `${pageLayout.leftPage.width}px`,
+          height: `${pageLayout.leftPage.height}px`,
+        }"
+      />
+
+      <!-- Modo 2 Páginas: Página Direita -->
+      <div
+        v-if="pageLayout.isTwoPage && pageLayout.rightPage && pageLayout.rightPage.pageNumber > 0"
+        ref="rightTextLayerRef"
+        class="page-text-layer page-text-layer--right"
+        :style="{
+          left: `${pageLayout.rightPage.left}px`,
+          top: `${pageLayout.rightPage.top}px`,
+          width: `${pageLayout.rightPage.width}px`,
+          height: `${pageLayout.rightPage.height}px`,
+        }"
+      />
+
+      <!-- Modo 1 Página: Página Única Central -->
+      <div
+        v-if="!pageLayout.isTwoPage && pageLayout.singlePage && pageLayout.singlePage.pageNumber > 0"
+        ref="singleTextLayerRef"
+        class="page-text-layer page-text-layer--single"
+        :style="{
+          left: `${pageLayout.singlePage.left}px`,
+          top: `${pageLayout.singlePage.top}px`,
+          width: `${pageLayout.singlePage.width}px`,
+          height: `${pageLayout.singlePage.height}px`,
+        }"
+      />
+    </div>
+
     <div
       v-if="isPreparing"
       class="page-curl-loading"
@@ -25,7 +71,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, nextTick } from 'vue'
+import { useReaderStore } from '~/stores/readerStore'
 import { useBookPageTurn, type PageTurnDirection } from '~/composables/reader/useBookPageTurn'
 
 interface ReaderPointer {
@@ -34,11 +81,17 @@ interface ReaderPointer {
   time: number
 }
 
+const store = useReaderStore()
 const stageRef = ref<HTMLElement | null>(null)
+const leftTextLayerRef = ref<HTMLElement | null>(null)
+const rightTextLayerRef = ref<HTMLElement | null>(null)
+const singleTextLayerRef = ref<HTMLElement | null>(null)
+
 const {
   isTransitioning,
   isPreparing,
   errorMessage,
+  pageLayout,
   requestTurn,
   beginDrag,
   updateDrag,
@@ -51,6 +104,7 @@ const emit = defineEmits<{
 }>()
 
 let activePointerId: number | null = null
+let renderVersion = 0
 
 function pointFrom(event: PointerEvent): ReaderPointer {
   const bounds = stageRef.value?.getBoundingClientRect()
@@ -61,12 +115,57 @@ function pointFrom(event: PointerEvent): ReaderPointer {
   }
 }
 
+/**
+ * Detecta se o pointerdown ocorreu na zona de foliação (bordas/cantos externos),
+ * similar ao comportamento do Google Play Livros.
+ */
+function getTurnZone(event: PointerEvent): PageTurnDirection | null {
+  if (!stageRef.value) return null
+  const bounds = stageRef.value.getBoundingClientRect()
+  const x = event.clientX - bounds.left
+  const layout = pageLayout.value
+
+  const EDGE_MAX_PX = 56
+  const EDGE_RATIO = 0.16
+
+  if (layout.isTwoPage) {
+    if (layout.leftPage) {
+      const edgeWidth = Math.min(EDGE_MAX_PX, layout.leftPage.width * EDGE_RATIO)
+      if (x <= layout.leftPage.left + edgeWidth) {
+        return 'previous'
+      }
+    }
+    if (layout.rightPage) {
+      const edgeWidth = Math.min(EDGE_MAX_PX, layout.rightPage.width * EDGE_RATIO)
+      if (x >= layout.rightPage.left + layout.rightPage.width - edgeWidth) {
+        return 'next'
+      }
+    }
+  } else if (layout.singlePage) {
+    const edgeWidth = Math.min(EDGE_MAX_PX, layout.singlePage.width * EDGE_RATIO)
+    if (x <= layout.singlePage.left + edgeWidth) {
+      return 'previous'
+    }
+    if (x >= layout.singlePage.left + layout.singlePage.width - edgeWidth) {
+      return 'next'
+    }
+  } else {
+    const edgeWidth = Math.min(EDGE_MAX_PX, bounds.width * EDGE_RATIO)
+    if (x <= edgeWidth) return 'previous'
+    if (x >= bounds.width - edgeWidth) return 'next'
+  }
+
+  return null
+}
+
 function onPointerDown(event: PointerEvent) {
   if (event.button !== 0 || !stageRef.value || isTransitioning.value) return
-  const bounds = stageRef.value.getBoundingClientRect()
-  const direction: PageTurnDirection = event.clientX - bounds.left > bounds.width / 2
-    ? 'next'
-    : 'previous'
+
+  const direction = getTurnZone(event)
+  if (!direction) {
+    // Clique/arrasto na área central de leitura -> permite seleção de texto livremente
+    return
+  }
 
   activePointerId = event.pointerId
   stageRef.value.setPointerCapture(event.pointerId)
@@ -92,7 +191,56 @@ function onPointerCancel(event: PointerEvent) {
   void cancelDrag(pointFrom(event))
 }
 
+async function renderTextLayers() {
+  const currentRenderVersion = ++renderVersion
+  if (isTransitioning.value || !store.document) return
+
+  await nextTick()
+  if (currentRenderVersion !== renderVersion) return
+
+  const doc = store.document
+  if (!doc.renderTextLayer) return
+
+  const layout = pageLayout.value
+
+  if (layout.isTwoPage) {
+    if (leftTextLayerRef.value && layout.leftPage && layout.leftPage.pageNumber > 0) {
+      void doc.renderTextLayer(
+        layout.leftPage.pageNumber,
+        leftTextLayerRef.value,
+        layout.leftPage.width,
+        layout.leftPage.height,
+      )
+    }
+    if (rightTextLayerRef.value && layout.rightPage && layout.rightPage.pageNumber > 0) {
+      void doc.renderTextLayer(
+        layout.rightPage.pageNumber,
+        rightTextLayerRef.value,
+        layout.rightPage.width,
+        layout.rightPage.height,
+      )
+    }
+  } else {
+    if (singleTextLayerRef.value && layout.singlePage && layout.singlePage.pageNumber > 0) {
+      void doc.renderTextLayer(
+        layout.singlePage.pageNumber,
+        singleTextLayerRef.value,
+        layout.singlePage.width,
+        layout.singlePage.height,
+      )
+    }
+  }
+}
+
 watch(isTransitioning, (value) => emit('transition-state', value), { immediate: true })
+
+watch(
+  [() => store.currentPage, () => store.document, () => pageLayout.value, isTransitioning],
+  () => {
+    void renderTextLayers()
+  },
+  { deep: true, flush: 'post' },
+)
 
 defineExpose({
   next: () => requestTurn('next'),
@@ -110,14 +258,15 @@ defineExpose({
   display: flex;
   align-items: center;
   justify-content: center;
-  touch-action: none;
-  user-select: none;
-  -webkit-user-select: none;
-  cursor: grab;
+  touch-action: pan-y;
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 .page-curl-wrapper--dragging {
-  cursor: grabbing;
+  cursor: grabbing !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
 }
 
 .page-curl-wrapper :deep(.page-curl-canvas) {
@@ -125,6 +274,68 @@ defineExpose({
   width: 100%;
   height: 100%;
   outline: none;
+}
+
+.page-text-overlay-container {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.page-text-layer {
+  position: absolute;
+  pointer-events: auto;
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
+  overflow: hidden;
+  line-height: 1;
+}
+
+/* PDF.js TextLayer styles */
+.page-text-layer :deep(.textLayer) {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  line-height: 1;
+  text-size-adjust: none;
+  forced-color-adjust: none;
+  transform-origin: 0 0;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.page-text-layer :deep(span),
+.page-text-layer :deep(span[role="presentation"]) {
+  color: transparent !important;
+  position: absolute;
+  white-space: pre;
+  cursor: text;
+  transform-origin: 0% 0%;
+}
+
+.page-text-layer :deep(::selection) {
+  background: rgba(124, 106, 247, 0.4) !important;
+  color: transparent !important;
+}
+
+/* EPUB TextLayer styles */
+.page-text-layer :deep(.epub-text-layer-content) {
+  color: transparent !important;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+
+.page-text-layer :deep(.epub-text-layer-content *) {
+  color: transparent !important;
+  background: transparent !important;
+  border-color: transparent !important;
+}
+
+.page-text-layer :deep(.epub-text-layer-content *::selection) {
+  background: rgba(124, 106, 247, 0.4) !important;
+  color: transparent !important;
 }
 
 .page-curl-loading {

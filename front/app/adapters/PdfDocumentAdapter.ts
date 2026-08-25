@@ -98,6 +98,40 @@ export class PdfDocumentAdapter implements IBookDocument {
       .trim()
   }
 
+  async renderTextLayer(pageNumber: number, container: HTMLElement, targetWidth?: number, targetHeight?: number): Promise<void> {
+    if (!this._pdfDocument) throw new Error('PDF não carregado')
+    const pdfjsLib = await import('pdfjs-dist')
+    const pdfDoc = this._pdfDocument as import('pdfjs-dist').PDFDocumentProxy
+    const pdfPage = await pdfDoc.getPage(pageNumber)
+
+    const baseViewport = pdfPage.getViewport({ scale: 1 })
+    const scale = targetWidth && targetWidth > 0
+      ? targetWidth / baseViewport.width
+      : (targetHeight && targetHeight > 0 ? targetHeight / baseViewport.height : 1.5)
+    const viewport = pdfPage.getViewport({ scale })
+
+    container.innerHTML = ''
+    container.style.width = `${viewport.width}px`
+    container.style.height = `${viewport.height}px`
+
+    const textContent = await pdfPage.getTextContent()
+
+    if (pdfjsLib.TextLayer) {
+      const textLayer = new pdfjsLib.TextLayer({
+        textContentSource: textContent,
+        container,
+        viewport,
+      })
+      await textLayer.render()
+    } else if (typeof (pdfjsLib as any).renderTextLayer === 'function') {
+      await (pdfjsLib as any).renderTextLayer({
+        textContentSource: textContent,
+        container,
+        viewport,
+      }).promise
+    }
+  }
+
   destroy(): void {
     if (this._pdfDocument) {
       const pdfDoc = this._pdfDocument as import('pdfjs-dist').PDFDocumentProxy

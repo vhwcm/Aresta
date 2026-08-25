@@ -131,6 +131,45 @@ export class EpubDocumentAdapter implements IBookDocument {
     }
   }
 
+  async renderTextLayer(pageNumber: number, container: HTMLElement, targetWidth?: number, targetHeight?: number): Promise<void> {
+    if (!this._epub) throw new Error('EPUB não carregado')
+    const section = this._sections[pageNumber - 1]
+    if (!section) return
+
+    try {
+      const doc = await section.createDocument()
+      const baseWidth = 600
+      const baseHeight = 900
+      const scaleX = targetWidth && targetWidth > 0 ? targetWidth / baseWidth : 1
+      const scaleY = targetHeight && targetHeight > 0 ? targetHeight / baseHeight : 1
+
+      container.innerHTML = ''
+      const wrapper = document.createElement('div')
+      wrapper.className = 'epub-text-layer-content'
+      wrapper.style.position = 'absolute'
+      wrapper.style.top = '0'
+      wrapper.style.left = '0'
+      wrapper.style.width = `${baseWidth}px`
+      wrapper.style.height = `${baseHeight}px`
+      wrapper.style.transform = `scale(${scaleX}, ${scaleY})`
+      wrapper.style.transformOrigin = 'top left'
+      wrapper.style.fontFamily = 'Georgia, serif'
+      wrapper.style.fontSize = '14px'
+      wrapper.style.padding = '32px'
+      wrapper.style.lineHeight = '1.7'
+      wrapper.style.wordWrap = 'break-word'
+      wrapper.style.color = 'transparent'
+      wrapper.style.userSelect = 'text'
+      wrapper.style.webkitUserSelect = 'text'
+      wrapper.style.pointerEvents = 'auto'
+      wrapper.innerHTML = doc.body ? doc.body.innerHTML : ''
+
+      container.appendChild(wrapper)
+    } catch (err) {
+      logWarn('[EpubAdapter] textLayer render error:', err)
+    }
+  }
+
   private async _renderSectionToCanvas(pageNumber: number): Promise<HTMLCanvasElement> {
     const width = 600
     const height = 900

@@ -30,5 +30,6 @@ export interface IBookDocument {
   load(source: File | ArrayBuffer, fileName?: string): Promise<void>
   getPage(pageNumber: number): Promise<PageData>
   getTextContent?(pageNumber: number): Promise<string>
+  renderTextLayer?(pageNumber: number, container: HTMLElement, targetWidth?: number, targetHeight?: number): Promise<void>
   destroy(): void
 }

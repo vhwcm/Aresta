@@ -228,7 +228,7 @@ const {
   updateTargetStreakDays
 } = useReadingStreak()
 
-const { openShare } = useStreakCelebration()
+const { openShareModal } = useStreakCelebration()
 
 const isOpen = ref(false)
 const isEditingTarget = ref(false)
@@ -241,7 +241,7 @@ const setTargetDays = async (days: number) => {
 
 const handleShare = () => {
   isOpen.value = false
-  openShare()
+  openShareModal()
 }
 
 const handleClickOutside = (e: MouseEvent) => {

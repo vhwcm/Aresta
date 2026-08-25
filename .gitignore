@@ -22,6 +22,7 @@ out/
 .gradle/
 node_modules/
 public/
+!front/public/
 Dist/
 coverage/
 .tmp/

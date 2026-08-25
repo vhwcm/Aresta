@@ -12,6 +12,7 @@ interface ReaderState {
   bookmarks: number[]
   isGraphOpen: boolean
   isMobileGraphOpen: boolean
+  isTwoPageMode: boolean
 }
 
 export const useReaderStore = defineStore('reader', {
@@ -25,6 +26,7 @@ export const useReaderStore = defineStore('reader', {
     bookmarks: [],
     isGraphOpen: true,
     isMobileGraphOpen: false,
+    isTwoPageMode: false,
   }),
 
   getters: {
@@ -138,6 +140,10 @@ export const useReaderStore = defineStore('reader', {
 
     setMobileGraphOpen(open: boolean) {
       this.isMobileGraphOpen = open
+    },
+
+    setTwoPageMode(isTwoPage: boolean) {
+      this.isTwoPageMode = isTwoPage
     },
 
     setLoading(loading: boolean) {

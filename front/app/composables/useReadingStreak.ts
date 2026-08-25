@@ -35,7 +35,7 @@ const targetStreakDays = ref(7)
 const isGoalReachedToday = ref(false)
 
 const todayActivity = ref<TodayActivity>({
-  date: new Date().toISOString().split('T')[0],
+  date: new Date().toISOString().split('T')[0] ?? '',
   readingSeconds: 0,
   readingMinutes: 0,
   requiredReadingSeconds: 600,
