@@ -1,0 +1,33 @@
+================================================================================
+FLUXO DE DADOS DO GRAFO DE CONHECIMENTO (GRAPH & MENTAL MAP DATA FLOW)
+================================================================================
+
+    ┌─────────────────┐       ┌─────────────────┐       ┌─────────────────┐
+    │   User Books    │       │     Themes      │       │   Annotations   │
+    │  (Obras Lidas)  │       │ (Conceitos/Tags)│       │(Citações/Notas) │
+    └────────┬────────┘       └────────┬────────┘       └────────┬────────┘
+             │                         │                         │
+             │ BookTheme (N:N)         │                         │ AnnotationTheme
+             └───────────────► ┌───────┴───────┐ ◄───────────────┘
+                               │     THEME     │
+                               │  (Nó Central) │
+                               └───────┬───────┘
+                                       │
+                                       │ Source & Target Connections (N:N)
+                                       ▼
+                               ┌───────────────┐
+                               │     THEME     │
+                               │  CONNECTION   │
+                               └───────┬───────┘
+                                       │
+                                       │ GET /api/graph (retorna nodes e links)
+                                       ▼
+    ┌────────────────────────────────────────────────────────────────────────┐
+    │ FRONTEND: D3.js Force Simulation Engine (`useGraph` composable)        │
+    │                                                                        │
+    │  1. Nodes: Obras (azuis), Temas (laranjas/custom), Notas (amarelas)    │
+    │  2. Links: Arestas ponderadas por co-ocorrência e conexões explícitas  │
+    │  3. Física de Força: D3 ForceManyBody, ForceCenter, ForceLink          │
+    │  4. Interatividade: Drag & Drop, Zoom/Pan, Filtros de nós e links      │
+    └────────────────────────────────────────────────────────────────────────┘
+================================================================================

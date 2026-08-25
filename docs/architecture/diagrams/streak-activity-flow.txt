@@ -1,0 +1,36 @@
+================================================================================
+FLUXO DE CÁLCULO DE STREAKS E ATIVIDADE DIÁRIA (STREAK & ACTIVITY FLOW)
+================================================================================
+
+    ┌──────────────────────────────────────┐
+    │  Ação do Usuário: Leitura/Flashcard  │
+    └──────────────────┬───────────────────┘
+                       │
+                       │ POST /api/streak/track-reading ou track-flashcards
+                       ▼
+    ┌────────────────────────────────────────────────────────────────────────┐
+    │ Backend: Streak Service (`streak.service.ts`)                          │
+    │                                                                        │
+    │  1. Obtém data atual em UTC (formato `YYYY-MM-DD`)                     │
+    │  2. Busca ou cria `DailyActivity` para (user_id, date)                 │
+    │  3. Incrementa `reading_seconds` e/ou `flashcards_reviewed`            │
+    │  4. Verifica se meta diária foi atingida -> seta `is_completed = true` │
+    │  5. Se completou pela 1ª vez no dia:                                   │
+    │     - Compara com `last_active_date`:                                  │
+    │       * Se dia anterior consecutivo: `current_streak += 1`             │
+    │       * Se pulou 1 dia e tem `streak_freeze_count > 0`:                │
+    │         Consome 1 freeze, preserva streak e marca `is_frozen = true`   │
+    │       * Se pulou sem freeze: reinicia `current_streak = 1`             │
+    │     - Atualiza `longest_streak = max(longest_streak, current_streak)`  │
+    │     - Atualiza `last_active_date = data_atual`                         │
+    │  6. Persiste via transação Prisma no SQLite                            │
+    └──────────────────────────────────┬─────────────────────────────────────┘
+                                       │
+                                       │ Retorna status da ofensiva
+                                       ▼
+    ┌────────────────────────────────────────────────────────────────────────┐
+    │ Frontend: Dashboard Home (`front/app/pages/index.vue` / `useStreak`)   │
+    │  - Atualiza contador de dias de ofensiva com animação de fogo          │
+    │  - Mostra dias restantes de congelamento e progresso da meta           │
+    └────────────────────────────────────────────────────────────────────────┘
+================================================================================

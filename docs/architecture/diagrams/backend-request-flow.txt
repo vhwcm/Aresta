@@ -1,0 +1,41 @@
+================================================================================
+FLUXO DE REQUISIÇÃO DO BACKEND (BACKEND REQUEST LIFECYCLE)
+================================================================================
+
+    Cliente HTTP (Front / Postman / Swagger)
+           │
+           │ 1. HTTP Request (ex: POST /api/user-books/:id/progress)
+           ▼
+    ┌────────────────────────────────────────────────────────────────────────┐
+    │ Express App (`src/app.ts`)                                             │
+    │                                                                        │
+    │  [Middleware: cors, express.json]                                     │
+    │      │                                                                 │
+    │      ▼                                                                 │
+    │  [Router: `src/routes/index.ts` -> `userBook.routes.ts`]               │
+    │      │                                                                 │
+    │      ▼                                                                 │
+    │  [Auth Middleware: `auth.middleware.ts`]                               │
+    │      │ Valida Bearer JWT Token -> Injeta `req.user` (ou retorna 401)   │
+    │      ▼                                                                 │
+    │  [Validate Middleware: `validate.middleware.ts(schema)`]               │
+    │      │ Valida body/params/query com Zod (ou retorna 400 com erros)     │
+    │      ▼                                                                 │
+    │  [Controller: `userBook.controller.ts`]                                │
+    │      │ Extrai `req.params`, `req.body`, `req.user.id`                  │
+    │      │ Chama `userBookService.updateProgress(...)`                     │
+    │      ▼                                                                 │
+    │  [Service: `userBook.service.ts`]                                      │
+    │      │ Executa regras de negócio, valida limites de página             │
+    │      │ Executa query/transação via `prisma.userBook.update(...)`       │
+    │      ▼                                                                 │
+    │  [Prisma Client -> SQLite `dev.db`]                                    │
+    │      │ Persiste dados em disco                                         │
+    │      ▼                                                                 │
+    │  Retorno do Service -> Controller formata JSON 200 OK                  │
+    └──────────────────────────────────┬─────────────────────────────────────┘
+                                       │
+                                       │ 2. JSON Response 200 OK
+                                       ▼
+                             Cliente HTTP Atualizado
+================================================================================

@@ -1,0 +1,41 @@
+================================================================================
+FLUXO DE ADAPTAÇÃO E RENDERIZAÇÃO DO LEITOR (READER ADAPTER FLOW)
+================================================================================
+
+                    ┌──────────────────────────────────────┐
+                    │       Página do Leitor (Vue 3)       │
+                    │      `front/app/pages/reader/[id]`   │
+                    └──────────────────┬───────────────────┘
+                                       │
+                                       │ 1. BookDocumentFactory.loadDocument(url, format)
+                                       ▼
+                    ┌──────────────────────────────────────┐
+                    │         BookDocumentFactory          │
+                    └──────────────────┬───────────────────┘
+                                       │
+                ┌──────────────────────┴──────────────────────┐
+                │ format === 'epub'                           │ format === 'pdf'
+                ▼                                             ▼
+     ┌──────────────────────┐                      ┌──────────────────────┐
+     │ EpubDocumentAdapter  │                      │  PdfDocumentAdapter  │
+     │     (foliate-js)     │                      │     (pdfjs-dist)     │
+     └──────────┬───────────┘                      └──────────┬───────────┘
+                │                                             │
+                └──────────────────────┬──────────────────────┘
+                                       │ 2. Retorna instância unificada
+                                       ▼
+                    ┌──────────────────────────────────────┐
+                    │      Interface `IBookDocument`       │
+                    │   - totalPages, title, getPage()     │
+                    │   - getTextContent(), renderText()   │
+                    └──────────────────┬───────────────────┘
+                                       │
+                                       │ 3. getPage(pageNumber)
+                                       ▼
+                    ┌──────────────────────────────────────┐
+                    │     Canvas Engine & Text Layer       │
+                    │  - Desenha imagem no <canvas>        │
+                    │  - Sobrepõe texto DOM selecionável   │
+                    │  - Cache local de páginas em memória │
+                    └──────────────────────────────────────┘
+================================================================================

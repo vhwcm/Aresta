@@ -1,0 +1,31 @@
+================================================================================
+FLUXO DE AUTENTICAÇÃO E AUTORIZAÇÃO JWT (AUTHENTICATION FLOW)
+================================================================================
+
+    ┌──────────────┐                                         ┌─────────────────┐
+    │   Frontend   │                                         │ Backend Express │
+    └──────┬───────┘                                         └────────┬────────┘
+           │                                                          │
+           │ 1. POST /api/auth/login { email, password }              │
+           ├─────────────────────────────────────────────────────────►│
+           │                                                          │
+           │                                                          │ 2. Busca User por email
+           │                                                          │    no SQLite via Prisma
+           │                                                          │ 3. Compara hash bcrypt
+           │                                                          │ 4. Gera JWT assinado
+           │                                                          │
+           │ 5. Response 200 OK { token, user: { id, name, role } }   │
+           │◄─────────────────────────────────────────────────────────┤
+           │                                                          │
+           │ (Armazena token em Cookie / LocalStorage)                │
+           │                                                          │
+           │ 6. Requisição Protegida (Header: Authorization: Bearer ) │
+           ├─────────────────────────────────────────────────────────►│
+           │                                                          │
+           │                                                          │ 7. auth.middleware.ts
+           │                                                          │    Verifica assinatura
+           │                                                          │    Injeta req.user
+           │                                                          │
+           │ 8. Response 200 OK com dados solicitados                 │
+           │◄─────────────────────────────────────────────────────────┤
+================================================================================
