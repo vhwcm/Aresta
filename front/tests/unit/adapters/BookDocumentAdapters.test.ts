@@ -193,5 +193,72 @@ describe('Book Document Adapters and Factory', () => {
       adapter.destroy()
       expect(adapter.isLoaded).toBe(false)
     })
+
+    it('dynamically adjusts font size, repaginates and preserves position', async () => {
+      const adapter = new EpubDocumentAdapter()
+      const longText = 'Texto longo para validação de mudança dinâmica de fonte. '.repeat(80)
+      const mockEpubInstance = {
+        metadata: { title: 'Livro Fonte', creator: 'Autor' },
+        sections: [
+          {
+            id: 'sec1',
+            linear: true,
+            createDocument: () => Promise.resolve({
+              body: { innerHTML: `<p>${longText}</p>`, textContent: longText }
+            })
+          },
+          {
+            id: 'sec2',
+            linear: true,
+            createDocument: () => Promise.resolve({
+              body: { innerHTML: `<p>${longText}</p>`, textContent: longText }
+            })
+          }
+        ],
+        init: () => Promise.resolve()
+      }
+
+      const foliateMod: any = await import('foliate-js/epub.js')
+      const EPUB = foliateMod.EPUB || foliateMod.default || foliateMod.Book
+      const origEPUB = (EPUB as any)
+      vi.spyOn(origEPUB.prototype, 'init').mockImplementation(function (this: any) {
+        this.metadata = mockEpubInstance.metadata
+        this.sections = mockEpubInstance.sections
+        return Promise.resolve()
+      })
+
+      const buffer = new ArrayBuffer(16)
+      await adapter.load(buffer, 'fonte.epub')
+
+      expect(adapter.fontSize).toBe(18)
+      const initialPages = adapter.totalPages
+      expect(initialPages).toBeGreaterThanOrEqual(2)
+
+      // Aumentar tamanho da fonte para 28px
+      const newPage = adapter.setFontSize(28, 2)
+      expect(adapter.fontSize).toBe(28)
+      // Maior fonte resulta em igual ou mais páginas
+      expect(adapter.totalPages).toBeGreaterThanOrEqual(initialPages)
+      expect(newPage).toBeGreaterThanOrEqual(1)
+
+      // Diminuir tamanho da fonte para 14px
+      const smallFontPage = adapter.setFontSize(14, newPage)
+      expect(adapter.fontSize).toBe(14)
+      expect(smallFontPage).toBeGreaterThanOrEqual(1)
+
+      // Testar troca dinâmica de família de fontes
+      expect(adapter.fontFamily).toContain('Newsreader')
+      const fontPage = adapter.setFontFamily("'Literata', Georgia, serif", smallFontPage)
+      expect(adapter.fontFamily).toBe("'Literata', Georgia, serif")
+      expect(fontPage).toBeGreaterThanOrEqual(1)
+      expect(adapter.totalPages).toBeGreaterThanOrEqual(1)
+
+      const container = document.createElement('div')
+      await adapter.renderTextLayer(1, container, 800, 1200)
+      const content = container.querySelector('.epub-text-layer-content') as HTMLElement
+      expect(content.style.fontFamily).toContain('Literata')
+
+      adapter.destroy()
+    })
   })
 })

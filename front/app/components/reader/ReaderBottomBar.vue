@@ -27,7 +27,7 @@
       </div>
     </div>
 
-    <!-- Centro: Ação de Anotação & Alternância 1/2 Páginas -->
+    <!-- Centro: Ação de Anotação, Tamanho de Fonte & Alternância 1/2 Páginas -->
     <div class="flex items-center gap-1.5 sm:gap-2">
       <!-- Botão Anotar -->
       <button
@@ -39,6 +39,84 @@
         <HighlighterIcon class="w-4 h-4" />
         <span class="text-xs">Anotar</span>
       </button>
+
+      <!-- Botão Tamanho do Texto (Apenas para EPUB) -->
+      <div v-if="store.documentType === 'epub'" class="relative" ref="fontSizeWrapperRef">
+        <button
+          @click="isFontSizePopoverOpen = !isFontSizePopoverOpen"
+          class="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl border transition-all text-xs font-semibold active:scale-95"
+          :class="isFontSizePopoverOpen
+            ? 'bg-accent/20 border-accent text-accent shadow-sm'
+            : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary hover:bg-white/10'"
+          title="Ajustar tamanho do texto (EPUB)"
+          aria-label="Ajustar tamanho do texto"
+          id="btn-font-size-toggle"
+        >
+          <TypeIcon class="w-4 h-4" />
+          <span class="text-xs font-technical font-bold">{{ store.fontSize }}px</span>
+        </button>
+
+        <!-- Popover Flutuante de Tipografia -->
+        <div
+          v-if="isFontSizePopoverOpen"
+          class="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 bg-bgPanel/95 backdrop-blur-xl border border-divider rounded-2xl p-4 shadow-2xl z-50 flex flex-col gap-3 min-w-[220px] sm:min-w-[260px] animate-fadeIn"
+          role="dialog"
+          aria-label="Controle de tamanho do texto"
+        >
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-technical uppercase tracking-wider text-textSecondary font-semibold">
+              Tamanho do Texto
+            </span>
+            <button
+              @click="store.resetFontSize()"
+              class="text-[10px] text-accent hover:underline font-technical"
+              title="Redefinir para o padrão (18px)"
+            >
+              Padrão
+            </button>
+          </div>
+
+          <!-- Controles A- e A+ com indicador numérico -->
+          <div class="flex items-center justify-between gap-2 bg-white/5 rounded-xl p-1.5 border border-divider">
+            <button
+              @click="store.decreaseFontSize(2)"
+              :disabled="store.fontSize <= 12"
+              class="flex items-center justify-center w-8 h-8 rounded-lg bg-white/5 hover:bg-white/15 disabled:opacity-30 disabled:hover:bg-transparent text-sm font-semibold transition-all active:scale-95 text-textPrimary"
+              title="Diminuir tamanho da fonte"
+              aria-label="Diminuir tamanho da fonte"
+            >
+              A-
+            </button>
+            <span class="font-technical font-bold text-sm text-textPrimary px-2">
+              {{ store.fontSize }} px
+            </span>
+            <button
+              @click="store.increaseFontSize(2)"
+              :disabled="store.fontSize >= 36"
+              class="flex items-center justify-center w-8 h-8 rounded-lg bg-white/5 hover:bg-white/15 disabled:opacity-30 disabled:hover:bg-transparent text-base font-semibold transition-all active:scale-95 text-textPrimary"
+              title="Aumentar tamanho da fonte"
+              aria-label="Aumentar tamanho da fonte"
+            >
+              A+
+            </button>
+          </div>
+
+          <!-- Presets Rápidos -->
+          <div class="grid grid-cols-4 gap-1.5 pt-1 border-t border-divider">
+            <button
+              v-for="preset in [14, 18, 22, 26]"
+              :key="preset"
+              @click="store.setFontSize(preset)"
+              class="py-1 px-1.5 rounded-lg text-center text-xs font-technical transition-all"
+              :class="store.fontSize === preset
+                ? 'bg-accent text-white font-bold shadow-sm'
+                : 'bg-white/5 hover:bg-white/10 text-textSecondary hover:text-textPrimary'"
+            >
+              {{ preset }}
+            </button>
+          </div>
+        </div>
+      </div>
 
       <!-- Botão Alternar 1 Página / 2 Páginas (Apenas Desktop quando Grafo Fechado) -->
       <button
@@ -110,7 +188,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import {
   ArrowLeftIcon,
   BookmarkIcon,
@@ -119,6 +197,7 @@ import {
   FileTextIcon,
   HighlighterIcon,
   NetworkIcon,
+  TypeIcon,
 } from 'lucide-vue-next'
 import { useReaderStore } from '~/stores/readerStore'
 
@@ -134,6 +213,8 @@ defineEmits<{
 }>()
 
 const store = useReaderStore()
+const isFontSizePopoverOpen = ref(false)
+const fontSizeWrapperRef = ref<HTMLElement | null>(null)
 
 const pageDisplay = computed(() => {
   if (store.isTwoPageMode && store.totalPages > 1) {
@@ -141,6 +222,36 @@ const pageDisplay = computed(() => {
     return `${store.currentPage}-${second}/${store.totalPages}`
   }
   return `${store.currentPage}/${store.totalPages}`
+})
+
+function handleClickOutside(event: MouseEvent) {
+  if (
+    isFontSizePopoverOpen.value &&
+    fontSizeWrapperRef.value &&
+    !fontSizeWrapperRef.value.contains(event.target as Node)
+  ) {
+    isFontSizePopoverOpen.value = false
+  }
+}
+
+function handleKeydown(event: KeyboardEvent) {
+  if (event.key === 'Escape' && isFontSizePopoverOpen.value) {
+    isFontSizePopoverOpen.value = false
+  }
+}
+
+onMounted(() => {
+  if (typeof window !== 'undefined') {
+    document.addEventListener('click', handleClickOutside)
+    window.addEventListener('keydown', handleKeydown)
+  }
+})
+
+onUnmounted(() => {
+  if (typeof window !== 'undefined') {
+    document.removeEventListener('click', handleClickOutside)
+    window.removeEventListener('keydown', handleKeydown)
+  }
 })
 </script>
 

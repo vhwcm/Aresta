@@ -26,7 +26,11 @@ export interface IBookDocument {
   readonly metadata: BookMetadata
   readonly totalPages: number
   readonly isLoaded: boolean
+  readonly fontSize?: number
+  readonly fontFamily?: string
 
+  setFontSize?(fontSize: number, currentPage?: number): number
+  setFontFamily?(fontFamily: string, currentPage?: number): number
   load(source: File | ArrayBuffer, fileName?: string): Promise<void>
   getPage(pageNumber: number, targetWidth?: number, targetHeight?: number): Promise<PageData>
   getTextContent?(pageNumber: number): Promise<string>

@@ -60,11 +60,16 @@ async function buildEpubLoader(arrayBuffer: ArrayBuffer) {
   return { loadText, loadBlob, getSize, sha1: undefined }
 }
 
-function calculateSectionPages(doc: Document | null): number {
+function calculateSectionPages(
+  doc: Document | null,
+  fontSize: number = 18,
+  fontFamily: string = "'Newsreader', Georgia, 'Times New Roman', serif",
+): number {
   if (!doc || !doc.body) return 1
+  const textLen = (doc.body.textContent || '').trim().length
   if (typeof document === 'undefined' || !document.createElement) {
-    const textLen = (doc.body.textContent || '').trim().length
-    return Math.max(1, Math.ceil(textLen / 1200))
+    const baseCharsPerPage = Math.max(300, Math.round(1200 * (18 / Math.max(12, fontSize))))
+    return Math.max(1, Math.ceil(textLen / baseCharsPerPage))
   }
 
   try {
@@ -81,8 +86,8 @@ function calculateSectionPages(doc: Document | null): number {
     container.style.columnGap = '96px'
     container.style.columnFill = 'auto'
     container.style.overflow = 'hidden'
-    container.style.fontFamily = 'Georgia, serif'
-    container.style.fontSize = '18px'
+    container.style.fontFamily = fontFamily
+    container.style.fontSize = `${fontSize}px`
     container.style.lineHeight = '1.7'
     container.style.wordWrap = 'break-word'
     container.innerHTML = doc.body.innerHTML
@@ -94,11 +99,11 @@ function calculateSectionPages(doc: Document | null): number {
     if (scrollW > 800) {
       return Math.max(1, Math.ceil(scrollW / 800))
     }
-    const textLen = (doc.body.textContent || '').trim().length
-    return Math.max(1, Math.ceil(textLen / 1200))
+    const baseCharsPerPage = Math.max(300, Math.round(1200 * (18 / Math.max(12, fontSize))))
+    return Math.max(1, Math.ceil(textLen / baseCharsPerPage))
   } catch {
-    const textLen = (doc.body?.textContent || '').trim().length
-    return Math.max(1, Math.ceil(textLen / 1200))
+    const baseCharsPerPage = Math.max(300, Math.round(1200 * (18 / Math.max(12, fontSize))))
+    return Math.max(1, Math.ceil(textLen / baseCharsPerPage))
   }
 }
 
@@ -108,6 +113,8 @@ export class EpubDocumentAdapter implements IBookDocument {
   private _metadata: BookMetadata = { title: '' }
   private _totalPages = 0
   private _isLoaded = false
+  private _fontSize = 18
+  private _fontFamily = "'Newsreader', Georgia, 'Times New Roman', serif"
   private _pageCanvases: Map<number, HTMLCanvasElement> = new Map()
   private _sections: FoliateSection[] = []
   private _sectionDocs: Map<number, Document> = new Map()
@@ -125,7 +132,123 @@ export class EpubDocumentAdapter implements IBookDocument {
     return this._isLoaded
   }
 
-  async load(source: File | ArrayBuffer, fileName?: string): Promise<void> {
+  get fontSize(): number {
+    return this._fontSize
+  }
+
+  get fontFamily(): string {
+    return this._fontFamily
+  }
+
+  setFontFamily(newFontFamily: string, currentPage = 1): number {
+    if (!newFontFamily || (this._fontFamily === newFontFamily && this._isLoaded)) {
+      return currentPage
+    }
+
+    const oldMapping = this._pageMap[currentPage - 1]
+    const targetSectionIndex = oldMapping ? oldMapping.sectionIndex : 0
+    const targetFraction = oldMapping && oldMapping.totalPagesInSection > 0
+      ? oldMapping.pageIndexInSection / oldMapping.totalPagesInSection
+      : 0
+
+    this._fontFamily = newFontFamily
+    this._pageCanvases.clear()
+
+    if (!this._isLoaded || this._sections.length === 0) {
+      return currentPage
+    }
+
+    this._pageMap = []
+    let globalPageCounter = 1
+
+    for (let sIdx = 0; sIdx < this._sections.length; sIdx++) {
+      const doc = this._sectionDocs.get(sIdx) || null
+      const pagesInSection = calculateSectionPages(doc, this._fontSize, this._fontFamily)
+      for (let pIdx = 0; pIdx < pagesInSection; pIdx++) {
+        this._pageMap.push({
+          globalPage: globalPageCounter++,
+          sectionIndex: sIdx,
+          pageIndexInSection: pIdx,
+          totalPagesInSection: pagesInSection,
+        })
+      }
+    }
+
+    this._totalPages = Math.max(1, this._pageMap.length)
+
+    const matchingPages = this._pageMap.filter((m) => m.sectionIndex === targetSectionIndex)
+    if (matchingPages.length > 0) {
+      const newIndex = Math.min(
+        matchingPages.length - 1,
+        Math.max(0, Math.floor(targetFraction * matchingPages.length)),
+      )
+      return matchingPages[newIndex].globalPage
+    }
+
+    return Math.max(1, Math.min(currentPage, this._totalPages))
+  }
+
+  setFontSize(newFontSize: number, currentPage = 1): number {
+    const clampedSize = Math.max(12, Math.min(36, Math.round(newFontSize)))
+    if (this._fontSize === clampedSize && this._isLoaded) {
+      return currentPage
+    }
+
+    const oldMapping = this._pageMap[currentPage - 1]
+    const targetSectionIndex = oldMapping ? oldMapping.sectionIndex : 0
+    const targetFraction = oldMapping && oldMapping.totalPagesInSection > 0
+      ? oldMapping.pageIndexInSection / oldMapping.totalPagesInSection
+      : 0
+
+    this._fontSize = clampedSize
+    this._pageCanvases.clear()
+
+    if (!this._isLoaded || this._sections.length === 0) {
+      return currentPage
+    }
+
+    this._pageMap = []
+    let globalPageCounter = 1
+
+    for (let sIdx = 0; sIdx < this._sections.length; sIdx++) {
+      const doc = this._sectionDocs.get(sIdx) || null
+      const pagesInSection = calculateSectionPages(doc, this._fontSize, this._fontFamily)
+      for (let pIdx = 0; pIdx < pagesInSection; pIdx++) {
+        this._pageMap.push({
+          globalPage: globalPageCounter++,
+          sectionIndex: sIdx,
+          pageIndexInSection: pIdx,
+          totalPagesInSection: pagesInSection,
+        })
+      }
+    }
+
+    this._totalPages = Math.max(1, this._pageMap.length)
+
+    const matchingPages = this._pageMap.filter((m) => m.sectionIndex === targetSectionIndex)
+    if (matchingPages.length > 0) {
+      const newIndex = Math.min(
+        matchingPages.length - 1,
+        Math.max(0, Math.floor(targetFraction * matchingPages.length)),
+      )
+      return matchingPages[newIndex].globalPage
+    }
+
+    return Math.max(1, Math.min(currentPage, this._totalPages))
+  }
+
+  async load(
+    source: File | ArrayBuffer,
+    fileName?: string,
+    initialFontSize?: number,
+    initialFontFamily?: string,
+  ): Promise<void> {
+    if (typeof initialFontSize === 'number' && !isNaN(initialFontSize)) {
+      this._fontSize = Math.max(12, Math.min(36, Math.round(initialFontSize)))
+    }
+    if (initialFontFamily) {
+      this._fontFamily = initialFontFamily
+    }
     const foliateModule: any = await readerProfiler.measureAsync('4.3. Importação foliate-js/epub.js', async () => {
       return await import('foliate-js/epub.js')
     }, 'parse')
@@ -180,7 +303,7 @@ export class EpubDocumentAdapter implements IBookDocument {
         }
       }
 
-      const pagesInSection = calculateSectionPages(doc)
+      const pagesInSection = calculateSectionPages(doc, this._fontSize, this._fontFamily)
       for (let pIdx = 0; pIdx < pagesInSection; pIdx++) {
         this._pageMap.push({
           globalPage: globalPageCounter++,
@@ -277,8 +400,8 @@ export class EpubDocumentAdapter implements IBookDocument {
       contentWrapper.style.columnWidth = '704px'
       contentWrapper.style.columnGap = '96px'
       contentWrapper.style.columnFill = 'auto'
-      contentWrapper.style.fontFamily = "'Newsreader', Georgia, 'Times New Roman', serif"
-      contentWrapper.style.fontSize = '18px'
+      contentWrapper.style.fontFamily = this._fontFamily
+      contentWrapper.style.fontSize = `${this._fontSize}px`
       contentWrapper.style.lineHeight = '1.7'
       contentWrapper.style.wordWrap = 'break-word'
       contentWrapper.style.marginLeft = `-${colOffset}px`
@@ -333,7 +456,7 @@ export class EpubDocumentAdapter implements IBookDocument {
         this._sectionDocs.set(mapping.sectionIndex, doc)
       }
       const bodyContent = doc.body ? doc.body.innerHTML : ''
-      const fontSize = Math.round(18 * renderScale)
+      const fontSize = Math.round(this._fontSize * renderScale)
       const padding = Math.round(48 * renderScale)
       const columnWidth = Math.round(704 * renderScale)
       const columnGap = Math.round(96 * renderScale)
@@ -344,7 +467,7 @@ export class EpubDocumentAdapter implements IBookDocument {
           <foreignObject width="100%" height="100%">
             <div xmlns="http://www.w3.org/1999/xhtml"
               style="width:${width}px;height:${height}px;overflow:hidden;background:#faf9f7;margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;">
-              <div style="width:${width}px;height:${height}px;padding:${padding}px;box-sizing:border-box;column-width:${columnWidth}px;column-gap:${columnGap}px;column-fill:auto;font-family:Georgia,'Times New Roman',serif;font-size:${fontSize}px;color:#1a1a1a;line-height:1.7;word-wrap:break-word;margin-left:-${colOffset}px;">
+              <div style="width:${width}px;height:${height}px;padding:${padding}px;box-sizing:border-box;column-width:${columnWidth}px;column-gap:${columnGap}px;column-fill:auto;font-family:${this._fontFamily};font-size:${fontSize}px;color:#1a1a1a;line-height:1.7;word-wrap:break-word;margin-left:-${colOffset}px;">
                 ${bodyContent}
               </div>
             </div>

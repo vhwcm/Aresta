@@ -13,6 +13,8 @@ interface ReaderState {
   isGraphOpen: boolean
   isMobileGraphOpen: boolean
   isTwoPageMode: boolean
+  fontSize: number
+  fontFamily: string
 }
 
 export const useReaderStore = defineStore('reader', {
@@ -27,6 +29,8 @@ export const useReaderStore = defineStore('reader', {
     isGraphOpen: true,
     isMobileGraphOpen: false,
     isTwoPageMode: false,
+    fontSize: 18,
+    fontFamily: "'Newsreader', Georgia, serif",
   }),
 
   getters: {
@@ -66,7 +70,47 @@ export const useReaderStore = defineStore('reader', {
       this.currentPage = 1
       this.isLoading = false
       this.error = null
+      if (doc.type === 'epub') {
+        if (typeof doc.setFontSize === 'function') {
+          const preferredSize = this.fontSize || 18
+          doc.setFontSize(preferredSize, 1)
+        }
+        if (typeof doc.setFontFamily === 'function') {
+          const preferredFont = this.fontFamily || "'Newsreader', Georgia, serif"
+          doc.setFontFamily(preferredFont, 1)
+        }
+      }
       this.loadBookmarks()
+    },
+
+    setFontFamily(family: string) {
+      if (!family) return
+      this.fontFamily = family
+      if (this.document && typeof this.document.setFontFamily === 'function') {
+        const newPage = this.document.setFontFamily(family, this.currentPage)
+        this.currentPage = Math.max(1, Math.min(newPage, this.document.totalPages))
+      }
+    },
+
+    setFontSize(size: number) {
+      const clamped = Math.max(12, Math.min(36, Math.round(size)))
+      this.fontSize = clamped
+      if (this.document && typeof this.document.setFontSize === 'function') {
+        const newPage = this.document.setFontSize(clamped, this.currentPage)
+        this.currentPage = Math.max(1, Math.min(newPage, this.document.totalPages))
+      }
+    },
+
+    increaseFontSize(step = 2) {
+      this.setFontSize(this.fontSize + step)
+    },
+
+    decreaseFontSize(step = 2) {
+      this.setFontSize(this.fontSize - step)
+    },
+
+    resetFontSize() {
+      this.setFontSize(18)
     },
 
     loadBookmarks() {

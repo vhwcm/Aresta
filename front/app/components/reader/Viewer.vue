@@ -52,6 +52,7 @@
           @open-saved-pages="isSavedPagesOpen = true"
           @open-annotation="handleOpenAnnotation"
           @toggle-graph="handleToggleGraph"
+          @open-typography="isTypographyOpen = true"
         />
       </section>
 
@@ -101,6 +102,12 @@
       @created="handleAnnotationCreated"
     />
 
+    <!-- Modal de Tipografia (EPUB) -->
+    <ReaderTypographyPopover
+      :is-open="isTypographyOpen"
+      @close="isTypographyOpen = false"
+    />
+
     <!-- Tooltip de Sugestão na Seleção de Texto (Kindle / Google Play Livros) -->
     <ReaderSelectionTooltip
       :visible="isSelectionTooltipVisible"
@@ -119,6 +126,7 @@
 import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useReaderStore } from '~/stores/readerStore'
+import { useReaderTypography } from '~/composables/useReaderTypography'
 
 import ReaderEnginePageCurlCanvas from '~/components/reader/engine/PageCurlCanvas.vue'
 import ReaderBottomBar from '~/components/reader/ReaderBottomBar.vue'
@@ -126,9 +134,13 @@ import ReaderSavedPagesModal from '~/components/reader/ReaderSavedPagesModal.vue
 import ReaderAnnotationModal from '~/components/reader/ReaderAnnotationModal.vue'
 import ReaderGraphPanel from '~/components/reader/ReaderGraphPanel.vue'
 import ReaderSelectionTooltip from '~/components/reader/ReaderSelectionTooltip.vue'
+import ReaderTypographyPopover from '~/components/reader/ReaderTypographyPopover.vue'
 
 const store = useReaderStore()
 const router = useRouter()
+const typography = useReaderTypography()
+
+const isTypographyOpen = ref(false)
 
 const isSavedPagesOpen = ref(false)
 const isAnnotationModalOpen = ref(false)
@@ -363,6 +375,9 @@ function onKeyDown(event: KeyboardEvent) {
 }
 
 onMounted(() => {
+  if (typography.currentFont.value) {
+    store.setFontFamily(typography.currentFont.value.fontFamily)
+  }
   updateDeviceType()
   window.addEventListener('resize', updateDeviceType)
   window.addEventListener('keydown', onKeyDown)

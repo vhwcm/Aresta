@@ -683,6 +683,22 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
     { flush: 'post' },
   )
 
+  function invalidateCacheAndRerender() {
+    rasterCache.clear()
+    pendingRasters.clear()
+    void renderCurrentView()
+  }
+
+  watch(
+    [() => store.fontSize, () => store.fontFamily],
+    () => {
+      rasterCache.clear()
+      pendingRasters.clear()
+      void renderCurrentView()
+    },
+    { flush: 'post' },
+  )
+
   return {
     isTransitioning: readonly(isTransitioning),
     isPreparing: readonly(isPreparing),
@@ -693,5 +709,6 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
     updateDrag,
     endDrag,
     cancelDrag,
+    invalidateCacheAndRerender,
   }
 }
