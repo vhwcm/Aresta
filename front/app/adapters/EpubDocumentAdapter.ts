@@ -146,8 +146,8 @@ export class EpubDocumentAdapter implements IBookDocument {
 
     try {
       const doc = await section.createDocument()
-      const baseWidth = 600
-      const baseHeight = 900
+      const baseWidth = 800
+      const baseHeight = 1200
       const scaleX = targetWidth && targetWidth > 0 ? targetWidth / baseWidth : 1
       const scaleY = targetHeight && targetHeight > 0 ? targetHeight / baseHeight : 1
 
@@ -162,8 +162,8 @@ export class EpubDocumentAdapter implements IBookDocument {
       wrapper.style.transform = `scale(${scaleX}, ${scaleY})`
       wrapper.style.transformOrigin = 'top left'
       wrapper.style.fontFamily = 'Georgia, serif'
-      wrapper.style.fontSize = '14px'
-      wrapper.style.padding = '32px'
+      wrapper.style.fontSize = '18px'
+      wrapper.style.padding = '48px'
       wrapper.style.lineHeight = '1.7'
       wrapper.style.wordWrap = 'break-word'
       wrapper.style.boxSizing = 'border-box'
@@ -181,8 +181,11 @@ export class EpubDocumentAdapter implements IBookDocument {
   }
 
   private async _renderSectionToCanvas(pageNumber: number): Promise<HTMLCanvasElement> {
-    const width = 600
-    const height = 900
+    const baseWidth = 800
+    const baseHeight = 1200
+    const renderScale = 2.5
+    const width = Math.round(baseWidth * renderScale)
+    const height = Math.round(baseHeight * renderScale)
     const canvas = document.createElement('canvas')
     canvas.width = width
     canvas.height = height
@@ -200,10 +203,10 @@ export class EpubDocumentAdapter implements IBookDocument {
       const bodyContent = doc.body ? doc.body.innerHTML : ''
 
       const svgContent = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
-          <foreignObject width="100%" height="100%">
+        <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${baseWidth} ${baseHeight}">
+          <foreignObject width="${baseWidth}" height="${baseHeight}">
             <div xmlns="http://www.w3.org/1999/xhtml"
-              style="font-family:Georgia,serif;font-size:14px;padding:32px;margin:0;box-sizing:border-box;color:#1a1a1a;line-height:1.7;word-wrap:break-word;width:100%;height:100%;">
+              style="font-family:Georgia,serif;font-size:18px;padding:48px;margin:0;box-sizing:border-box;color:#1a1a1a;line-height:1.7;word-wrap:break-word;width:100%;height:100%;">
               ${bodyContent}
             </div>
           </foreignObject>
@@ -226,8 +229,8 @@ export class EpubDocumentAdapter implements IBookDocument {
       })
     } catch (err) {
       ctx.fillStyle = '#555'
-      ctx.font = '13px Georgia, serif'
-      ctx.fillText(`Página ${pageNumber} — erro ao renderizar`, 20, 40)
+      ctx.font = '24px Georgia, serif'
+      ctx.fillText(`Página ${pageNumber} — erro ao renderizar`, 40, 80)
       logWarn('[EpubAdapter] render error:', err)
     }
 

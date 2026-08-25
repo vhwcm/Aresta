@@ -39,7 +39,7 @@ interface Point {
 }
 
 const MAX_CACHED_PAGES = 8
-const MAX_TEXTURE_EDGE = 3072
+const MAX_TEXTURE_EDGE = 2048
 const TURN_DURATION_MS = 220
 const TURN_THRESHOLD = 0.32
 
@@ -129,12 +129,9 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
 
     function configureTexture(texture: THREE.CanvasTexture) {
         texture.colorSpace = THREE.SRGBColorSpace
-        texture.minFilter = THREE.LinearMipmapLinearFilter
+        texture.minFilter = THREE.LinearFilter
         texture.magFilter = THREE.LinearFilter
-        texture.generateMipmaps = true
-        if (renderer) {
-            texture.anisotropy = Math.min(renderer.capabilities.getMaxAnisotropy(), 8)
-        }
+        texture.generateMipmaps = false
         texture.needsUpdate = true
     }
 
@@ -146,8 +143,8 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
             disposeRaster(blankRaster)
         }
         const canvas = document.createElement('canvas')
-        canvas.width = 1200
-        canvas.height = Math.max(1, Math.round(1200 / Math.max(0.1, aspectRatio)))
+        canvas.width = 600
+        canvas.height = Math.max(1, Math.round(600 / Math.max(0.1, aspectRatio)))
         const context = canvas.getContext('2d')
         if (context) {
             context.fillStyle = '#ffffff'
@@ -424,7 +421,7 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
         const height = Math.max(host.clientHeight, 1)
 
         if (renderer) {
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 3))
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
             renderer.setSize(width, height, false)
         }
 
@@ -555,7 +552,7 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
         if (!fallbackCanvas) return
         const host = hostRef.value
         if (!host) return
-        const pixelRatio = Math.min(window.devicePixelRatio || 1, 3)
+        const pixelRatio = Math.min(window.devicePixelRatio || 1, 2)
         fallbackCanvas.width = Math.max(1, Math.round(host.clientWidth * pixelRatio))
         fallbackCanvas.height = Math.max(1, Math.round(host.clientHeight * pixelRatio))
         const context = fallbackCanvas.getContext('2d')

@@ -71,7 +71,13 @@ export class PdfDocumentAdapter implements IBookDocument {
 
     const pdfDoc = this._pdfDocument as import('pdfjs-dist').PDFDocumentProxy
     const pdfPage = await pdfDoc.getPage(pageNumber)
-    const viewport = pdfPage.getViewport({ scale: 1.5 })
+
+    // Renderiza em alta resolução (~2400-3000px na maior dimensão) para texto nítido em telas High-DPI/Retina
+    const baseViewport = pdfPage.getViewport({ scale: 1.0 })
+    const baseMaxDim = Math.max(baseViewport.width, baseViewport.height)
+    const desiredDim = Math.min(3200, Math.max(2400, baseMaxDim * 2.75))
+    const scale = Math.max(2.0, desiredDim / baseMaxDim)
+    const viewport = pdfPage.getViewport({ scale })
 
     const pageData: PageData = {
       width: viewport.width,
