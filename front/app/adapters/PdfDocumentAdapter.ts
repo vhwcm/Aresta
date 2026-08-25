@@ -91,6 +91,7 @@ export class PdfDocumentAdapter implements IBookDocument {
         await pdfPage.render({
           canvasContext: ctx as unknown as CanvasRenderingContext2D,
           viewport,
+          canvas,
         }).promise
       },
     }
@@ -148,8 +149,8 @@ export class PdfDocumentAdapter implements IBookDocument {
 
   destroy(): void {
     if (this._pdfDocument) {
-      const pdfDoc = this._pdfDocument as import('pdfjs-dist').PDFDocumentProxy
-      pdfDoc.destroy()
+      const pdfDoc = this._pdfDocument as any
+      pdfDoc.destroy?.()
       this._pdfDocument = null
     }
     this._isLoaded = false

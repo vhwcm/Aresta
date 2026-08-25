@@ -126,9 +126,10 @@ export class EpubDocumentAdapter implements IBookDocument {
   }
 
   async load(source: File | ArrayBuffer, fileName?: string): Promise<void> {
-    const { EPUB } = await readerProfiler.measureAsync('4.3. Importação foliate-js/epub.js', async () => {
+    const foliateModule: any = await readerProfiler.measureAsync('4.3. Importação foliate-js/epub.js', async () => {
       return await import('foliate-js/epub.js')
     }, 'parse')
+    const EPUB = foliateModule.EPUB || foliateModule.default || foliateModule.Book
 
     let arrayBuffer: ArrayBuffer
     let defaultTitle = fileName || 'document.epub'
@@ -170,11 +171,13 @@ export class EpubDocumentAdapter implements IBookDocument {
     for (let sIdx = 0; sIdx < this._sections.length; sIdx++) {
       const section = this._sections[sIdx]
       let doc: Document | null = null
-      try {
-        doc = await section.createDocument()
-        this._sectionDocs.set(sIdx, doc)
-      } catch (err) {
-        logWarn(`[EpubAdapter] Erro ao carregar documento da seção ${sIdx}:`, err)
+      if (section) {
+        try {
+          doc = await section.createDocument()
+          this._sectionDocs.set(sIdx, doc)
+        } catch (err) {
+          logWarn(`[EpubAdapter] Erro ao carregar documento da seção ${sIdx}:`, err)
+        }
       }
 
       const pagesInSection = calculateSectionPages(doc)

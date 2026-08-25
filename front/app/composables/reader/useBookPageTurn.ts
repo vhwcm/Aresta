@@ -3,7 +3,6 @@ import { useReaderStore } from '~/stores/readerStore'
 import { useSettings } from '~/composables/useSettings'
 import type { IBookDocument, PageData } from '~/interfaces/reader/IBookDocument'
 import { logWarn } from '~/utils/logger'
-import { readerProfiler } from '~/utils/readerProfiler'
 
 export type PageTurnDirection = 'next' | 'previous'
 
@@ -176,7 +175,7 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
 
   function prefetchSurroundingPages(currentPage: number) {
     if (typeof window === 'undefined') return
-    const schedule = (window.requestIdleCallback as unknown as ((cb: () => void) => number)) || ((cb: () => void) => setTimeout(cb, 100))
+    const schedule = (window.requestIdleCallback as unknown as ((_cb: () => void) => number)) || ((_cb: () => void) => setTimeout(_cb, 100))
 
     schedule(() => {
       const candidates = [
@@ -586,7 +585,7 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
     currentDragOffsetX = 0
   }
 
-  function cancelDrag(point: Point) {
+  function cancelDrag(_point?: Point) {
     if (!isDragging) return
     isDragging = false
     dragStart = null

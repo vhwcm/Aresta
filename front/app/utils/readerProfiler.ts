@@ -78,10 +78,11 @@ class ReaderProfiler {
     this._activeSession.openSteps.set(stepName, now)
 
     const existingIndex = this._activeSession.steps.findIndex((s) => s.name === stepName)
-    if (existingIndex >= 0) {
-      this._activeSession.steps[existingIndex].startTime = now
-      this._activeSession.steps[existingIndex].endTime = null
-      this._activeSession.steps[existingIndex].durationMs = null
+    const existingStep = existingIndex >= 0 ? this._activeSession.steps[existingIndex] : null
+    if (existingStep) {
+      existingStep.startTime = now
+      existingStep.endTime = null
+      existingStep.durationMs = null
     } else {
       this._activeSession.steps.push({
         name: stepName,
