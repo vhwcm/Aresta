@@ -59,6 +59,18 @@ const loadingLabel = computed(() =>
   store.documentType === 'epub' ? 'EPUB' : 'PDF',
 )
 
+function resolveBookFileUrl(bookId?: string, bookPath?: string): string {
+  if (bookId) return `http://localhost:7070/api/books/${bookId}/file`
+  if (!bookPath) return ''
+  if (bookPath.startsWith('http://') || bookPath.startsWith('https://')) return bookPath
+  const cleanPath = bookPath.replace(/^\//, '')
+  if (cleanPath.startsWith('epubs/') || cleanPath.startsWith('pdfs/') || cleanPath.startsWith('storage/')) {
+    return `http://localhost:7070/${cleanPath}`
+  }
+  const folder = cleanPath.toLowerCase().endsWith('.epub') ? 'epubs' : 'pdfs'
+  return `http://localhost:7070/${folder}/${cleanPath}`
+}
+
 const loadBookFromQuery = async () => {
   const bookId = route.query.bookId as string | undefined
   const bookPath = route.query.book as string | undefined
@@ -90,22 +102,7 @@ const loadBookFromQuery = async () => {
       }
     } else {
       // 2. Se não estiver no cache, preparar URLs e paralelizar requisições
-      let fileUrl = ''
-      if (bookId) {
-        fileUrl = `http://localhost:7070/api/books/${bookId}/file`
-      } else if (bookPath) {
-        if (bookPath.startsWith('http://') || bookPath.startsWith('https://')) {
-          fileUrl = bookPath
-        } else {
-          const cleanPath = bookPath.replace(/^\//, '')
-          if (cleanPath.startsWith('epubs/') || cleanPath.startsWith('pdfs/') || cleanPath.startsWith('storage/')) {
-            fileUrl = `http://localhost:7070/${cleanPath}`
-          } else {
-            const folder = cleanPath.toLowerCase().endsWith('.epub') ? 'epubs' : 'pdfs'
-            fileUrl = `http://localhost:7070/${folder}/${cleanPath}`
-          }
-        }
-      }
+      const fileUrl = resolveBookFileUrl(bookId, bookPath)
 
       // Paralelização de Metadados + Download do Binário
       const [fetchedMeta, response] = await readerProfiler.measureAsync(

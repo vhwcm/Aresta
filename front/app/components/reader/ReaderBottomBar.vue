@@ -27,7 +27,7 @@
       </div>
     </div>
 
-    <!-- Centro: Ação de Anotação & Seleção -->
+    <!-- Centro: Ação de Anotação & Alternância 1/2 Páginas -->
     <div class="flex items-center gap-1.5 sm:gap-2">
       <!-- Botão Anotar -->
       <button
@@ -38,6 +38,19 @@
       >
         <HighlighterIcon class="w-4 h-4" />
         <span class="text-xs">Anotar</span>
+      </button>
+
+      <!-- Botão Alternar 1 Página / 2 Páginas (Apenas Desktop quando Grafo Fechado) -->
+      <button
+        v-if="!isGraphActive && store.totalPages > 1"
+        @click="store.setTwoPageMode(!store.isTwoPageMode)"
+        class="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl bg-white/5 border border-divider text-xs font-semibold text-textSecondary hover:text-textPrimary hover:bg-white/10 transition-all active:scale-95"
+        :title="store.isTwoPageMode ? 'Alternar para 1 página' : 'Alternar para 2 páginas lado a lado'"
+        aria-label="Alternar modo de páginas"
+      >
+        <BookOpenIcon v-if="store.isTwoPageMode" class="w-4 h-4 text-accent" />
+        <FileTextIcon v-else class="w-4 h-4 text-textSecondary" />
+        <span class="text-[11px] font-medium">{{ store.isTwoPageMode ? '2 Páginas' : '1 Página' }}</span>
       </button>
     </div>
 
@@ -102,6 +115,8 @@ import {
   ArrowLeftIcon,
   BookmarkIcon,
   BookmarkCheckIcon,
+  BookOpenIcon,
+  FileTextIcon,
   HighlighterIcon,
   NetworkIcon,
 } from 'lucide-vue-next'

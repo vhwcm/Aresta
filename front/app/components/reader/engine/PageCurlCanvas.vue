@@ -116,8 +116,8 @@ function pointFrom(event: PointerEvent): ReaderPointer {
 }
 
 /**
- * Detecta se o pointerdown ocorreu na zona de foliação (bordas/cantos externos),
- * similar ao comportamento do Google Play Livros.
+ * Detecta se o pointerdown ocorreu na zona de foliação (bordas externas),
+ * similar ao comportamento do Google Play Livros / Kindle.
  */
 function getTurnZone(event: PointerEvent): PageTurnDirection | null {
   if (!stageRef.value) return null
@@ -269,6 +269,7 @@ defineExpose({
   -webkit-user-select: none !important;
 }
 
+.page-curl-wrapper :deep(.page-2d-canvas),
 .page-curl-wrapper :deep(.page-curl-canvas) {
   display: block;
   width: 100%;
@@ -286,7 +287,6 @@ defineExpose({
 .page-text-layer,
 .page-text-layer :deep(.textLayer) {
   position: absolute;
-  inset: 0;
   overflow: hidden;
   line-height: 1;
   text-size-adjust: none;

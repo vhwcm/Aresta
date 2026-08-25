@@ -1,6 +1,4 @@
-// @ts-nocheck
 import { computed, onMounted, onUnmounted, readonly, ref, watch, type Ref } from 'vue'
-import * as THREE from 'three'
 import { useReaderStore } from '~/stores/readerStore'
 import { useSettings } from '~/composables/useSettings'
 import type { IBookDocument, PageData } from '~/interfaces/reader/IBookDocument'
@@ -10,1322 +8,651 @@ import { readerProfiler } from '~/utils/readerProfiler'
 export type PageTurnDirection = 'next' | 'previous'
 
 export interface PageRect {
-    left: number
-    top: number
-    width: number
-    height: number
-    pageNumber: number
+  left: number
+  top: number
+  width: number
+  height: number
+  pageNumber: number
 }
 
 export interface PageLayoutInfo {
-    isTwoPage: boolean
-    leftPage: PageRect | null
-    rightPage: PageRect | null
-    singlePage: PageRect | null
+  isTwoPage: boolean
+  leftPage: PageRect | null
+  rightPage: PageRect | null
+  singlePage: PageRect | null
 }
 
 interface PageRaster {
-    pageNumber: number
-    canvas: HTMLCanvasElement
-    texture: THREE.CanvasTexture
-    backTexture: THREE.CanvasTexture
-    aspectRatio: number
+  pageNumber: number
+  canvas: HTMLCanvasElement
+  aspectRatio: number
 }
 
 interface Point {
-    x: number
-    y: number
-    time: number
+  x: number
+  y: number
+  time: number
 }
 
 const MAX_CACHED_PAGES = 8
-const MAX_TEXTURE_EDGE = 4096
-const TURN_DURATION_MS = 220
+const TURN_DURATION_MS = 200
 const TURN_THRESHOLD = 0.32
 
 function clamp(value: number, min = 0, max = 1): number {
-    return Math.max(min, Math.min(max, value))
-}
-
-function smoothstep(value: number): number {
-    const t = clamp(value)
-    return t * t * (3 - 2 * t)
+  return Math.max(min, Math.min(max, value))
 }
 
 function easeOutCubic(value: number): number {
-    return 1 - Math.pow(1 - clamp(value), 3)
+  return 1 - Math.pow(1 - clamp(value), 3)
 }
 
 export function shouldCommitPageTurn(progress: number, velocity: number): boolean {
-    return clamp(progress) >= TURN_THRESHOLD || velocity > 0.002
-}
-
-function createRasterCanvas(page: PageData): HTMLCanvasElement {
-    const source = document.createElement('canvas')
-    source.width = Math.ceil(page.width)
-    source.height = Math.ceil(page.height)
-
-    const context = source.getContext('2d')
-    if (!context) throw new Error('Não foi possível criar o contexto para a página.')
-
-    return source
+  return clamp(progress) >= TURN_THRESHOLD || velocity > 0.002
 }
 
 export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
-    const store = useReaderStore()
-    const { pageAnimationEnabled } = useSettings()
-    const isTransitioning = ref(false)
-    const isPreparing = ref(false)
-    const errorMessage = ref<string | null>(null)
-    const reducedMotion = ref(false)
-    const isAnimationDisabled = computed(() => !pageAnimationEnabled.value || reducedMotion.value)
-    const webglAvailable = ref(true)
+  const store = useReaderStore()
+  const { pageAnimationEnabled } = useSettings()
 
-    const rasterCache = new Map<number, PageRaster>()
-    const pendingRasters = new Map<number, Promise<PageRaster>>()
-    let blankRaster: PageRaster | null = null
-    let renderedPage = 0
-    let activeDocument: IBookDocument | null = null
-    let turnDirection: PageTurnDirection = 'next'
-    let turnSource: PageRaster | null = null
-    let turnTarget: PageRaster | null = null
-    let turnBack: PageRaster | null = null
-    let turnLeftStatic: PageRaster | null = null
-    let turnRightStatic: PageRaster | null = null
-    let dragStart: Point | null = null
-    let dragLast: Point | null = null
-    let pendingDragPoint: Point | null = null
-    let dragEndedWhilePreparing = false
-    let dragCancelledWhilePreparing = false
-    let isDragging = false
-    let turnProgress = 0
-    let animationFrame: number | null = null
-    let pendingDragFrame: number | null = null
-    let resolveAnimation: ((completed: boolean) => void) | null = null
-    let resizeObserver: ResizeObserver | null = null
-    let motionQuery: MediaQueryList | null = null
-    let lastGeometryAspectRatio = -1
-    let lastGeometryTwoPageMode = false
+  const isTransitioning = ref(false)
+  const isPreparing = ref(false)
+  const errorMessage = ref<string | null>(null)
+  const reducedMotion = ref(false)
+  const isAnimationDisabled = computed(() => !pageAnimationEnabled.value || reducedMotion.value)
 
-    let renderer: THREE.WebGLRenderer | null = null
-    let scene: THREE.Scene | null = null
-    let camera: THREE.OrthographicCamera | null = null
-    let pageGeometry: THREE.PlaneGeometry | null = null
-    let staticGeometry: THREE.PlaneGeometry | null = null
-    let leftStaticPage: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial> | null = null
-    let rightStaticPage: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial> | null = null
-    let spineShadow: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial> | null = null
-    let turningFront: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshStandardMaterial> | null = null
-    let turningBack: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshStandardMaterial> | null = null
-    let shadowPage: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial> | null = null
-    let fallbackCanvas: HTMLCanvasElement | null = null
+  const pageLayout = ref<PageLayoutInfo>({
+    isTwoPage: false,
+    leftPage: null,
+    rightPage: null,
+    singlePage: null,
+  })
 
-    const canTurnNext = computed(() => store.canGoNext && !isTransitioning.value)
-    const canTurnPrevious = computed(() => store.canGoPrev && !isTransitioning.value)
+  const rasterCache = new Map<number, PageRaster>()
+  const pendingRasters = new Map<number, Promise<PageRaster>>()
+  let blankRaster: PageRaster | null = null
 
-    function updateMotionPreference() {
-        reducedMotion.value = motionQuery?.matches ?? false
+  let stageCanvas: HTMLCanvasElement | null = null
+  let stageCtx: CanvasRenderingContext2D | null = null
+  let resizeObserver: ResizeObserver | null = null
+  let motionQuery: MediaQueryList | null = null
+
+  let animationFrame: number | null = null
+  let isDragging = false
+  let dragStart: Point | null = null
+  let dragLast: Point | null = null
+  let currentDragOffsetX = 0
+  let dragDirection: PageTurnDirection = 'next'
+  let dragTargetPage = 0
+
+  function updateMotionPreference() {
+    reducedMotion.value = motionQuery?.matches ?? false
+  }
+
+  function getBlankRaster(aspectRatio = 0.72): PageRaster {
+    if (blankRaster && Math.abs(blankRaster.aspectRatio - aspectRatio) < 0.01) {
+      return blankRaster
+    }
+    const canvas = document.createElement('canvas')
+    canvas.width = 1200
+    canvas.height = Math.max(1, Math.round(1200 / Math.max(0.1, aspectRatio)))
+    const context = canvas.getContext('2d')
+    if (context) {
+      context.fillStyle = '#ffffff'
+      context.fillRect(0, 0, canvas.width, canvas.height)
+    }
+    blankRaster = {
+      pageNumber: 0,
+      canvas,
+      aspectRatio,
+    }
+    return blankRaster
+  }
+
+  async function createRasterForPage(pageNumber: number, doc: IBookDocument): Promise<PageRaster> {
+    if (pageNumber <= 0 || pageNumber > store.totalPages) {
+      return getBlankRaster()
     }
 
-    function configureTexture(texture: THREE.CanvasTexture) {
-        texture.colorSpace = THREE.SRGBColorSpace
-        texture.minFilter = THREE.LinearFilter
-        texture.magFilter = THREE.LinearFilter
-        texture.generateMipmaps = false
-        texture.needsUpdate = true
+    try {
+      const pageData: PageData = await doc.getPage(pageNumber)
+      const canvas = document.createElement('canvas')
+      canvas.width = Math.ceil(pageData.width)
+      canvas.height = Math.ceil(pageData.height)
+
+      const ctx = canvas.getContext('2d', { alpha: false })
+      if (!ctx) throw new Error('Não foi possível obter contexto 2D para rasterizar página.')
+
+      ctx.fillStyle = '#ffffff'
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+      await pageData.render(ctx)
+
+      const raster: PageRaster = {
+        pageNumber,
+        canvas,
+        aspectRatio: pageData.aspectRatio || (pageData.width / Math.max(1, pageData.height)),
+      }
+
+      rasterCache.set(pageNumber, raster)
+      trimRasterCache(pageNumber)
+      return raster
+    } catch (err) {
+      logWarn(`[useBookPageTurn] Falha ao renderizar página ${pageNumber}:`, err)
+      return getBlankRaster()
+    }
+  }
+
+  function getPageRaster(pageNumber: number): Promise<PageRaster> {
+    if (pageNumber <= 0 || pageNumber > store.totalPages) {
+      return Promise.resolve(getBlankRaster())
     }
 
-    function getBlankRaster(aspectRatio = 0.72): PageRaster {
-        if (blankRaster && Math.abs(blankRaster.aspectRatio - aspectRatio) < 0.01) {
-            return blankRaster
-        }
-        if (blankRaster) {
-            disposeRaster(blankRaster)
-        }
-        const canvas = document.createElement('canvas')
-        canvas.width = 1200
-        canvas.height = Math.max(1, Math.round(1200 / Math.max(0.1, aspectRatio)))
-        const context = canvas.getContext('2d')
-        if (context) {
-            context.fillStyle = '#ffffff'
-            context.fillRect(0, 0, canvas.width, canvas.height)
-        }
-        const texture = new THREE.CanvasTexture(canvas)
-        configureTexture(texture)
-        const backTexture = texture.clone()
-        backTexture.repeat.x = -1
-        backTexture.offset.x = 1
-        configureTexture(backTexture)
+    const cached = rasterCache.get(pageNumber)
+    if (cached) return Promise.resolve(cached)
 
-        blankRaster = {
-            pageNumber: 0,
-            canvas,
-            texture,
-            backTexture,
-            aspectRatio,
-        }
-        return blankRaster
+    const pending = pendingRasters.get(pageNumber)
+    if (pending) return pending
+
+    if (!store.document) {
+      return Promise.resolve(getBlankRaster())
     }
 
-    async function createRaster(pageNumber: number, bookDocument: IBookDocument): Promise<PageRaster> {
-        const page = await readerProfiler.measureAsync(`6.1. Obter Dados da Página ${pageNumber}`, async () => {
-            return await bookDocument.getPage(pageNumber)
-        }, 'render')
+    const promise = createRasterForPage(pageNumber, store.document).finally(() => {
+      pendingRasters.delete(pageNumber)
+    })
 
-        const source = createRasterCanvas(page)
-        const sourceContext = source.getContext('2d')
-        if (!sourceContext) throw new Error('Não foi possível renderizar a página.')
+    pendingRasters.set(pageNumber, promise)
+    return promise
+  }
 
-        await readerProfiler.measureAsync(`6.2. Renderizar Canvas 2D da Página ${pageNumber}`, async () => {
-            await page.render(sourceContext)
-        }, 'render')
+  function trimRasterCache(current: number) {
+    if (rasterCache.size <= MAX_CACHED_PAGES) return
 
-        const scale = Math.min(1, MAX_TEXTURE_EDGE / Math.max(source.width, source.height))
-        let canvas: HTMLCanvasElement
-        if (scale < 1) {
-            canvas = document.createElement('canvas')
-            canvas.width = Math.max(1, Math.round(source.width * scale))
-            canvas.height = Math.max(1, Math.round(source.height * scale))
-            const context = canvas.getContext('2d')
-            if (!context) throw new Error('Não foi possível preparar a textura da página.')
-            context.imageSmoothingEnabled = true
-            context.imageSmoothingQuality = 'high'
-            context.drawImage(source, 0, 0, canvas.width, canvas.height)
-        } else {
-            canvas = source
+    for (const [pageNum] of rasterCache.entries()) {
+      if (Math.abs(pageNum - current) > 4) {
+        rasterCache.delete(pageNum)
+      }
+    }
+  }
+
+  function prefetchSurroundingPages(currentPage: number) {
+    if (typeof window === 'undefined') return
+    const schedule = (window.requestIdleCallback as unknown as ((cb: () => void) => number)) || ((cb: () => void) => setTimeout(cb, 100))
+
+    schedule(() => {
+      const candidates = [
+        currentPage + 1,
+        currentPage + 2,
+        currentPage - 1,
+        currentPage - 2,
+      ]
+
+      for (const page of candidates) {
+        if (page >= 1 && page <= store.totalPages && !rasterCache.has(page) && !pendingRasters.has(page)) {
+          void getPageRaster(page)
         }
+      }
+    })
+  }
 
-        const { texture, backTexture } = readerProfiler.measureSync(`6.3. Criar Texturas Three.js da Página ${pageNumber}`, () => {
-            const tex = new THREE.CanvasTexture(canvas)
-            configureTexture(tex)
-            const backTex = tex.clone()
-            backTex.repeat.x = -1
-            backTex.offset.x = 1
-            configureTexture(backTex)
-            return { texture: tex, backTexture: backTex }
-        }, 'webgl')
-
-        return {
-            pageNumber,
-            canvas,
-            texture,
-            backTexture,
-            aspectRatio: canvas.width / canvas.height,
-        }
+  function computeLayout(): PageLayoutInfo {
+    const host = hostRef.value
+    if (!host) {
+      return { isTwoPage: false, leftPage: null, rightPage: null, singlePage: null }
     }
 
-    function disposeRaster(raster: PageRaster) {
-        raster.texture.dispose()
-        raster.backTexture.dispose()
-        raster.canvas.width = 1
-        raster.canvas.height = 1
-    }
+    const hostWidth = host.clientWidth || 800
+    const hostHeight = host.clientHeight || 600
+    const isTwoPage = store.isTwoPageMode && hostWidth >= 1024 && !store.isGraphOpen
 
-    function retainRasters() {
-        const retainedPages = new Set([
-            renderedPage,
-            renderedPage + 1,
-            turnSource?.pageNumber,
-            turnTarget?.pageNumber,
-            turnBack?.pageNumber,
-            store.currentPage - 2,
-            store.currentPage - 1,
-            store.currentPage,
-            store.currentPage + 1,
-            store.currentPage + 2,
-            store.currentPage + 3,
-        ])
+    const currentPage = store.currentPage
+    const currentRaster = rasterCache.get(currentPage)
+    const aspectRatio = currentRaster?.aspectRatio || 0.72
 
-        for (const [pageNumber, raster] of rasterCache) {
-            if (rasterCache.size <= MAX_CACHED_PAGES || retainedPages.has(pageNumber)) continue
-            rasterCache.delete(pageNumber)
-            disposeRaster(raster)
-        }
+    const PADDING_X = 24
+    const PADDING_Y = 24
 
-        while (rasterCache.size > MAX_CACHED_PAGES) {
-            const oldest = rasterCache.entries().next().value as [number, PageRaster] | undefined
-            if (!oldest) break
-            rasterCache.delete(oldest[0])
-            disposeRaster(oldest[1])
-        }
-    }
+    if (isTwoPage) {
+      const leftNum = currentPage % 2 === 0 ? Math.max(1, currentPage - 1) : currentPage
+      const rightNum = leftNum + 1 <= store.totalPages ? leftNum + 1 : 0
 
-    async function getRaster(pageNumber: number, document = activeDocument): Promise<PageRaster> {
-        if (!document) throw new Error('Nenhum documento está aberto.')
-        if (pageNumber < 1 || pageNumber > store.totalPages) {
-            return getBlankRaster()
-        }
+      const availableWidth = Math.max(100, (hostWidth - PADDING_X * 2) / 2)
+      const availableHeight = Math.max(100, hostHeight - PADDING_Y * 2)
 
-        const cached = rasterCache.get(pageNumber)
-        if (cached) {
-            rasterCache.delete(pageNumber)
-            rasterCache.set(pageNumber, cached)
-            return cached
-        }
+      let targetWidth = availableWidth
+      let targetHeight = targetWidth / aspectRatio
 
-        const pending = pendingRasters.get(pageNumber)
-        if (pending) return pending
+      if (targetHeight > availableHeight) {
+        targetHeight = availableHeight
+        targetWidth = targetHeight * aspectRatio
+      }
 
-        const request = createRaster(pageNumber, document)
-            .then((raster) => {
-                if (document !== activeDocument) {
-                    disposeRaster(raster)
-                    throw new Error('O documento foi alterado durante o carregamento da página.')
-                }
-                rasterCache.set(pageNumber, raster)
-                retainRasters()
-                return raster
-            })
-            .finally(() => pendingRasters.delete(pageNumber))
+      const totalBookWidth = targetWidth * 2
+      const startX = Math.max(0, (hostWidth - totalBookWidth) / 2)
+      const startY = Math.max(0, (hostHeight - targetHeight) / 2)
 
-        pendingRasters.set(pageNumber, request)
-        return request
-    }
+      const leftPage: PageRect = {
+        left: Math.round(startX),
+        top: Math.round(startY),
+        width: Math.round(targetWidth),
+        height: Math.round(targetHeight),
+        pageNumber: leftNum,
+      }
 
-    function disposePageGeometry() {
-        pageGeometry?.dispose()
-        staticGeometry?.dispose()
-        pageGeometry = null
-        staticGeometry = null
-    }
+      const rightPage: PageRect | null = rightNum > 0 ? {
+        left: Math.round(startX + targetWidth),
+        top: Math.round(startY),
+        width: Math.round(targetWidth),
+        height: Math.round(targetHeight),
+        pageNumber: rightNum,
+      } : null
 
-    function ensurePageGeometry(aspectRatio: number) {
-        if (!scene || !leftStaticPage || !rightStaticPage || !turningFront || !turningBack || !shadowPage || !spineShadow) return
-        const isTwoPage = store.isTwoPageMode
-        if (
-            Math.abs(aspectRatio - lastGeometryAspectRatio) < 0.001
-            && isTwoPage === lastGeometryTwoPageMode
-        ) {
-            return
-        }
+      return {
+        isTwoPage: true,
+        leftPage,
+        rightPage,
+        singlePage: null,
+      }
+    } else {
+      const availableWidth = Math.max(100, hostWidth - PADDING_X * 2)
+      const availableHeight = Math.max(100, hostHeight - PADDING_Y * 2)
 
-        lastGeometryAspectRatio = aspectRatio
-        lastGeometryTwoPageMode = isTwoPage
-        disposePageGeometry()
+      let targetWidth = availableWidth
+      let targetHeight = targetWidth / aspectRatio
 
-        const pageHeight = 2
-        const pageWidth = pageHeight * aspectRatio
-        const halfWidth = pageWidth / 2
-        const halfHeight = pageHeight / 2
-        const boundX = isTwoPage ? pageWidth : halfWidth
+      if (targetHeight > availableHeight) {
+        targetHeight = availableHeight
+        targetWidth = targetHeight * aspectRatio
+      }
 
-        const clipPlanes = scene.userData.clipPlanes as THREE.Plane[] | undefined
-        if (clipPlanes) {
-            clipPlanes[0].constant = boundX
-            clipPlanes[1].constant = boundX
-            clipPlanes[2].constant = halfHeight
-            clipPlanes[3].constant = halfHeight
-        }
+      const startX = Math.max(0, (hostWidth - targetWidth) / 2)
+      const startY = Math.max(0, (hostHeight - targetHeight) / 2)
 
-        staticGeometry = new THREE.PlaneGeometry(pageWidth, pageHeight)
-        pageGeometry = new THREE.PlaneGeometry(pageWidth, pageHeight, 20, 10)
-        pageGeometry.userData.basePositions = Float32Array.from(pageGeometry.attributes.position.array)
+      const singlePage: PageRect = {
+        left: Math.round(startX),
+        top: Math.round(startY),
+        width: Math.round(targetWidth),
+        height: Math.round(targetHeight),
+        pageNumber: currentPage,
+      }
 
-        leftStaticPage.geometry = staticGeometry
-        rightStaticPage.geometry = staticGeometry
-        turningFront.geometry = pageGeometry
-        turningBack.geometry = pageGeometry
-
-        shadowPage.geometry.dispose()
-        shadowPage.geometry = new THREE.PlaneGeometry(pageWidth * 1.02, pageHeight * 1.02)
-
-        spineShadow.geometry.dispose()
-        spineShadow.geometry = new THREE.PlaneGeometry(Math.max(0.02, pageWidth * 0.04), pageHeight)
-
-        if (isTwoPage) {
-            leftStaticPage.position.set(-halfWidth, 0, -0.03)
-            rightStaticPage.position.set(halfWidth, 0, -0.03)
-            rightStaticPage.visible = true
-            spineShadow.position.set(0, 0, -0.01)
-            spineShadow.visible = true
-        } else {
-            leftStaticPage.position.set(0, 0, -0.03)
-            rightStaticPage.visible = false
-            spineShadow.visible = false
-        }
-
-        resizeScene(aspectRatio)
-    }
-
-    const pageLayout = ref<PageLayoutInfo>({
+      return {
         isTwoPage: false,
         leftPage: null,
         rightPage: null,
-        singlePage: null,
-    })
+        singlePage,
+      }
+    }
+  }
 
-    function updatePageLayout(aspectRatio = turnTarget?.aspectRatio ?? turnSource?.aspectRatio ?? 0.72) {
-        const host = hostRef.value
-        if (!host) return
+  function resizeCanvasToHost() {
+    const host = hostRef.value
+    if (!host || !stageCanvas || !stageCtx) return
 
-        const width = Math.max(host.clientWidth, 1)
-        const height = Math.max(host.clientHeight, 1)
-        const viewportAspect = width / height
-        const isTwoPage = store.isTwoPageMode
-        const totalBookWidth = isTwoPage ? (aspectRatio * 4) : (aspectRatio * 2)
-        const visibleHeight = Math.max(2.05, (totalBookWidth * 1.05) / viewportAspect)
-        const visibleWidth = visibleHeight * viewportAspect
+    const dpr = typeof window !== 'undefined' ? (window.devicePixelRatio || 1) : 1
+    const width = host.clientWidth
+    const height = host.clientHeight
 
-        const scale = height / visibleHeight
-        const pagePixelHeight = 2 * scale
-        const pagePixelWidth = (2 * aspectRatio) * scale
-        const top = (height - pagePixelHeight) / 2
+    if (width === 0 || height === 0) return
 
-        if (isTwoPage) {
-            const leftPageX = (width / 2) - pagePixelWidth
-            const rightPageX = width / 2
-            const currentPage = store.currentPage
-            const leftNum = currentPage % 2 === 0 ? currentPage : Math.max(1, currentPage - 1)
-            const rightNum = leftNum + 1
+    stageCanvas.width = Math.round(width * dpr)
+    stageCanvas.height = Math.round(height * dpr)
+    stageCanvas.style.width = `${width}px`
+    stageCanvas.style.height = `${height}px`
 
-            pageLayout.value = {
-                isTwoPage: true,
-                leftPage: {
-                    left: Math.max(0, leftPageX),
-                    top,
-                    width: pagePixelWidth,
-                    height: pagePixelHeight,
-                    pageNumber: leftNum > 0 ? leftNum : 0,
-                },
-                rightPage: {
-                    left: rightPageX,
-                    top,
-                    width: pagePixelWidth,
-                    height: pagePixelHeight,
-                    pageNumber: rightNum <= store.totalPages ? rightNum : 0,
-                },
-                singlePage: null,
-            }
-        } else {
-            const pageX = (width - pagePixelWidth) / 2
-            pageLayout.value = {
-                isTwoPage: false,
-                leftPage: null,
-                rightPage: null,
-                singlePage: {
-                    left: pageX,
-                    top,
-                    width: pagePixelWidth,
-                    height: pagePixelHeight,
-                    pageNumber: store.currentPage,
-                },
-            }
+    stageCtx.setTransform(1, 0, 0, 1, 0, 0)
+    stageCtx.scale(dpr, dpr)
+
+    pageLayout.value = computeLayout()
+    drawScene(0)
+  }
+
+  function drawPageShadow(ctx: CanvasRenderingContext2D, rect: PageRect, isLeftSpread = false, isRightSpread = false) {
+    ctx.save()
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.22)'
+    ctx.shadowBlur = 16
+    ctx.shadowOffsetX = isLeftSpread ? -3 : (isRightSpread ? 3 : 0)
+    ctx.shadowOffsetY = 6
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(rect.left, rect.top, rect.width, rect.height)
+    ctx.restore()
+  }
+
+  function drawPageRaster(ctx: CanvasRenderingContext2D, raster: PageRaster | null, rect: PageRect, offsetX = 0) {
+    const targetRect: PageRect = {
+      ...rect,
+      left: rect.left + offsetX,
+    }
+
+    drawPageShadow(ctx, targetRect)
+
+    if (raster && raster.canvas) {
+      ctx.drawImage(
+        raster.canvas,
+        0, 0, raster.canvas.width, raster.canvas.height,
+        targetRect.left, targetRect.top, targetRect.width, targetRect.height,
+      )
+    } else {
+      ctx.fillStyle = '#ffffff'
+      ctx.fillRect(targetRect.left, targetRect.top, targetRect.width, targetRect.height)
+    }
+  }
+
+  function drawBookSpineShadow(ctx: CanvasRenderingContext2D, leftPage: PageRect, rightPage: PageRect, offsetX = 0) {
+    const centerX = leftPage.left + leftPage.width + offsetX
+    const top = leftPage.top
+    const height = leftPage.height
+    const spineWidth = 24
+
+    ctx.save()
+    const gradLeft = ctx.createLinearGradient(centerX - spineWidth, top, centerX, top)
+    gradLeft.addColorStop(0, 'rgba(0, 0, 0, 0)')
+    gradLeft.addColorStop(1, 'rgba(0, 0, 0, 0.12)')
+    ctx.fillStyle = gradLeft
+    ctx.fillRect(centerX - spineWidth, top, spineWidth, height)
+
+    const gradRight = ctx.createLinearGradient(centerX, top, centerX + spineWidth, top)
+    gradRight.addColorStop(0, 'rgba(0, 0, 0, 0.12)')
+    gradRight.addColorStop(1, 'rgba(0, 0, 0, 0)')
+    ctx.fillStyle = gradRight
+    ctx.fillRect(centerX, top, spineWidth, height)
+    ctx.restore()
+  }
+
+  function drawScene(offsetX = 0, incomingRasters?: { left?: PageRaster | null; right?: PageRaster | null; single?: PageRaster | null }) {
+    if (!stageCtx || !hostRef.value) return
+
+    const width = hostRef.value.clientWidth
+    const height = hostRef.value.clientHeight
+    const layout = pageLayout.value
+
+    stageCtx.clearRect(0, 0, width, height)
+
+    if (layout.isTwoPage && layout.leftPage) {
+      const leftRaster = rasterCache.get(layout.leftPage.pageNumber) || null
+      const rightRaster = layout.rightPage ? (rasterCache.get(layout.rightPage.pageNumber) || null) : null
+
+      drawPageRaster(stageCtx, leftRaster, layout.leftPage, offsetX)
+      if (layout.rightPage) {
+        drawPageRaster(stageCtx, rightRaster, layout.rightPage, offsetX)
+        drawBookSpineShadow(stageCtx, layout.leftPage, layout.rightPage, offsetX)
+      }
+
+      if (incomingRasters && offsetX !== 0) {
+        const incomingOffset = offsetX > 0 ? offsetX - width : offsetX + width
+        if (incomingRasters.left && layout.leftPage) {
+          drawPageRaster(stageCtx, incomingRasters.left, layout.leftPage, incomingOffset)
         }
-    }
-
-    function resizeScene(aspectRatio = turnTarget?.aspectRatio ?? turnSource?.aspectRatio ?? 0.72) {
-        const host = hostRef.value
-        if (!host) return
-
-        const width = Math.max(host.clientWidth, 1)
-        const height = Math.max(host.clientHeight, 1)
-
-        if (renderer) {
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 3))
-            renderer.setSize(width, height, false)
+        if (incomingRasters.right && layout.rightPage) {
+          drawPageRaster(stageCtx, incomingRasters.right, layout.rightPage, incomingOffset)
+          drawBookSpineShadow(stageCtx, layout.leftPage, layout.rightPage, incomingOffset)
         }
+      }
+    } else if (layout.singlePage) {
+      const singleRaster = rasterCache.get(layout.singlePage.pageNumber) || null
+      drawPageRaster(stageCtx, singleRaster, layout.singlePage, offsetX)
 
-        if (!camera) return
-        const viewportAspect = width / height
-        const isTwoPage = store.isTwoPageMode
-        const totalBookWidth = isTwoPage ? (aspectRatio * 4) : (aspectRatio * 2)
-        const visibleHeight = Math.max(2.05, (totalBookWidth * 1.05) / viewportAspect)
-        const visibleWidth = visibleHeight * viewportAspect
-        camera.left = -visibleWidth / 2
-        camera.right = visibleWidth / 2
-        camera.top = visibleHeight / 2
-        camera.bottom = -visibleHeight / 2
-        camera.updateProjectionMatrix()
-        renderScene()
-        updatePageLayout(aspectRatio)
+      if (incomingRasters && incomingRasters.single && offsetX !== 0) {
+        const incomingOffset = offsetX > 0 ? offsetX - width : offsetX + width
+        drawPageRaster(stageCtx, incomingRasters.single, layout.singlePage, incomingOffset)
+      }
+    }
+  }
+
+  async function renderCurrentView() {
+    if (!store.document) return
+
+    isPreparing.value = true
+    errorMessage.value = null
+
+    try {
+      const layout = computeLayout()
+      pageLayout.value = layout
+
+      if (layout.isTwoPage) {
+        const promises: Promise<PageRaster>[] = []
+        if (layout.leftPage) promises.push(getPageRaster(layout.leftPage.pageNumber))
+        if (layout.rightPage) promises.push(getPageRaster(layout.rightPage.pageNumber))
+        await Promise.all(promises)
+      } else if (layout.singlePage) {
+        await getPageRaster(layout.singlePage.pageNumber)
+      }
+
+      drawScene(0)
+      prefetchSurroundingPages(store.currentPage)
+    } catch (err) {
+      errorMessage.value = `Erro ao renderizar leitor: ${String(err)}`
+    } finally {
+      isPreparing.value = false
+    }
+  }
+
+  async function requestTurn(direction: PageTurnDirection) {
+    if (isTransitioning.value || !store.document) return
+
+    const layout = pageLayout.value
+    const step = layout.isTwoPage ? 2 : 1
+    const targetPage = direction === 'next'
+      ? Math.min(store.currentPage + step, store.totalPages)
+      : Math.max(1, store.currentPage - step)
+
+    if (targetPage === store.currentPage) return
+
+    if (isAnimationDisabled.value || !hostRef.value) {
+      store.goToPage(targetPage)
+      return
     }
 
-    function createScene() {
-        const host = hostRef.value
-        if (!host || renderer || fallbackCanvas) return
+    isTransitioning.value = true
 
-        try {
-            renderer = new THREE.WebGLRenderer({
-                antialias: true,
-                alpha: true,
-                powerPreference: 'high-performance',
-                stencil: true,
-            })
-            renderer.setClearColor(0x000000, 0)
-            renderer.localClippingEnabled = true
+    try {
+      let incomingRasters: { left?: PageRaster | null; right?: PageRaster | null; single?: PageRaster | null } = {}
 
-            renderer.domElement.className = 'page-curl-canvas'
-            renderer.domElement.setAttribute('aria-hidden', 'true')
-            host.appendChild(renderer.domElement)
+      if (layout.isTwoPage) {
+        const incomingLeftNum = targetPage % 2 === 0 ? Math.max(1, targetPage - 1) : targetPage
+        const incomingRightNum = incomingLeftNum + 1 <= store.totalPages ? incomingLeftNum + 1 : 0
 
-            scene = new THREE.Scene()
-            camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 20)
-            camera.position.set(0, 0, 4)
+        const [leftR, rightR] = await Promise.all([
+          getPageRaster(incomingLeftNum),
+          incomingRightNum > 0 ? getPageRaster(incomingRightNum) : Promise.resolve(null),
+        ])
+        incomingRasters = { left: leftR, right: rightR }
+      } else {
+        const singleR = await getPageRaster(targetPage)
+        incomingRasters = { single: singleR }
+      }
 
-            const ambient = new THREE.HemisphereLight(0xffffff, 0xffffff, 1.5)
-            scene.add(ambient)
+      const hostWidth = hostRef.value?.clientWidth || 800
+      const startTime = performance.now()
 
-            const light = new THREE.DirectionalLight(0xffffff, 1.2)
-            light.position.set(-1.5, 2, 4)
-            scene.add(light)
+      await new Promise<void>((resolve) => {
+        const animate = (time: number) => {
+          const elapsed = time - startTime
+          const progress = clamp(elapsed / TURN_DURATION_MS, 0, 1)
+          const eased = easeOutCubic(progress)
+          const currentOffset = direction === 'next' ? -eased * hostWidth : eased * hostWidth
 
-            const backLight = new THREE.DirectionalLight(0xffffff, 0.8)
-            backLight.position.set(1.5, -2, -4)
-            scene.add(backLight)
+          drawScene(currentOffset, incomingRasters)
 
-            const clipPlanes = [
-                new THREE.Plane(new THREE.Vector3(1, 0, 0), 1),
-                new THREE.Plane(new THREE.Vector3(-1, 0, 0), 1),
-                new THREE.Plane(new THREE.Vector3(0, -1, 0), 1),
-                new THREE.Plane(new THREE.Vector3(0, 1, 0), 1),
-            ]
-            scene.userData.clipPlanes = clipPlanes
-
-            const staticLeftMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, clippingPlanes: clipPlanes })
-            const staticRightMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, clippingPlanes: clipPlanes })
-            const spineMaterial = new THREE.MeshBasicMaterial({
-                color: 0x000000,
-                transparent: true,
-                opacity: 0.12,
-                depthWrite: false,
-                clippingPlanes: clipPlanes,
-            })
-
-            const frontMaterial = new THREE.MeshStandardMaterial({
-                color: 0xffffff, roughness: 0.5, metalness: 0.1, side: THREE.FrontSide, clippingPlanes: clipPlanes,
-            })
-            const backMaterial = new THREE.MeshStandardMaterial({
-                color: 0xf3eee8, roughness: 0.6, metalness: 0.1, side: THREE.BackSide, clippingPlanes: clipPlanes,
-            })
-            const shadowMaterial = new THREE.MeshBasicMaterial({
-                color: 0x000000, transparent: true, opacity: 0, depthWrite: false, clippingPlanes: clipPlanes,
-            })
-
-            staticGeometry = new THREE.PlaneGeometry(1, 1)
-            pageGeometry = new THREE.PlaneGeometry(1, 1, 20, 10)
-            pageGeometry.userData.basePositions = Float32Array.from(pageGeometry.attributes.position.array)
-
-            leftStaticPage = new THREE.Mesh(staticGeometry, staticLeftMaterial)
-            rightStaticPage = new THREE.Mesh(staticGeometry, staticRightMaterial)
-            spineShadow = new THREE.Mesh(new THREE.PlaneGeometry(0.04, 2), spineMaterial)
-            turningFront = new THREE.Mesh(pageGeometry, frontMaterial)
-            turningBack = new THREE.Mesh(pageGeometry, backMaterial)
-            shadowPage = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), shadowMaterial)
-
-            turningFront.renderOrder = 1
-            turningBack.renderOrder = 1
-            leftStaticPage.renderOrder = 2
-            rightStaticPage.renderOrder = 2
-            shadowPage.renderOrder = 3
-            spineShadow.renderOrder = 4
-
-            leftStaticPage.position.z = -0.03
-            rightStaticPage.position.z = -0.03
-            spineShadow.position.z = -0.01
-            shadowPage.position.z = -0.015
-            turningFront.visible = false
-            turningBack.visible = false
-            rightStaticPage.visible = false
-            spineShadow.visible = false
-
-            scene.add(leftStaticPage, rightStaticPage, spineShadow, shadowPage, turningFront, turningBack)
-            resizeScene()
-        } catch (error) {
-            logWarn('[Reader] WebGL indisponível; usando renderer 2D.', error)
-            webglAvailable.value = false
-            renderer?.dispose()
-            renderer = null
-            scene = null
-            camera = null
-            fallbackCanvas = document.createElement('canvas')
-            fallbackCanvas.className = 'page-curl-canvas'
-            fallbackCanvas.setAttribute('aria-hidden', 'true')
-            host.appendChild(fallbackCanvas)
+          if (progress < 1) {
+            animationFrame = requestAnimationFrame(animate)
+          } else {
+            resolve()
+          }
         }
+        animationFrame = requestAnimationFrame(animate)
+      })
+
+      store.goToPage(targetPage)
+    } finally {
+      isTransitioning.value = false
+      if (animationFrame) cancelAnimationFrame(animationFrame)
+      drawScene(0)
+    }
+  }
+
+  async function beginDrag(direction: PageTurnDirection, point: Point) {
+    if (isTransitioning.value || !store.document) return
+
+    isDragging = true
+    dragStart = point
+    dragLast = point
+    dragDirection = direction
+    currentDragOffsetX = 0
+
+    const layout = pageLayout.value
+    const step = layout.isTwoPage ? 2 : 1
+    dragTargetPage = direction === 'next'
+      ? Math.min(store.currentPage + step, store.totalPages)
+      : Math.max(1, store.currentPage - step)
+
+    if (dragTargetPage !== store.currentPage) {
+      if (layout.isTwoPage) {
+        const incomingLeftNum = dragTargetPage % 2 === 0 ? Math.max(1, dragTargetPage - 1) : dragTargetPage
+        const incomingRightNum = incomingLeftNum + 1 <= store.totalPages ? incomingLeftNum + 1 : 0
+        void getPageRaster(incomingLeftNum)
+        if (incomingRightNum > 0) void getPageRaster(incomingRightNum)
+      } else {
+        void getPageRaster(dragTargetPage)
+      }
+    }
+  }
+
+  function updateDrag(point: Point) {
+    if (!isDragging || !dragStart || !hostRef.value) return
+
+    const deltaX = point.x - dragStart.x
+    dragLast = point
+    currentDragOffsetX = deltaX
+
+    const layout = pageLayout.value
+    let incomingRasters: { left?: PageRaster | null; right?: PageRaster | null; single?: PageRaster | null } = {}
+
+    if (layout.isTwoPage) {
+      const incomingLeftNum = dragTargetPage % 2 === 0 ? Math.max(1, dragTargetPage - 1) : dragTargetPage
+      const incomingRightNum = incomingLeftNum + 1 <= store.totalPages ? incomingLeftNum + 1 : 0
+      incomingRasters = {
+        left: rasterCache.get(incomingLeftNum) || null,
+        right: incomingRightNum > 0 ? (rasterCache.get(incomingRightNum) || null) : null,
+      }
+    } else {
+      incomingRasters = {
+        single: rasterCache.get(dragTargetPage) || null,
+      }
     }
 
-    function renderScene() {
-        if (renderer && scene && camera) renderer.render(scene, camera)
-    }
+    drawScene(currentDragOffsetX, incomingRasters)
+  }
 
-    function renderFallback() {
-        if (!fallbackCanvas) return
-        const host = hostRef.value
-        if (!host) return
-        const pixelRatio = Math.min(window.devicePixelRatio || 1, 3)
-        fallbackCanvas.width = Math.max(1, Math.round(host.clientWidth * pixelRatio))
-        fallbackCanvas.height = Math.max(1, Math.round(host.clientHeight * pixelRatio))
-        const context = fallbackCanvas.getContext('2d')
-        if (!context) return
-        const width = fallbackCanvas.width
-        const height = fallbackCanvas.height
-        context.clearRect(0, 0, width, height)
+  async function endDrag(point: Point) {
+    if (!isDragging || !dragStart || !hostRef.value) return
+    isDragging = false
 
-        const isTwoPage = store.isTwoPageMode
-        const targetRatio = turnTarget?.aspectRatio ?? turnSource?.aspectRatio ?? 0.72
+    const width = hostRef.value.clientWidth || 800
+    const deltaX = point.x - dragStart.x
+    const timeDelta = Math.max(1, point.time - (dragLast?.time ?? dragStart.time))
+    const velocity = Math.abs(deltaX) / timeDelta
+    const progress = Math.abs(deltaX) / width
 
-        if (isTwoPage) {
-            const targetHeight = Math.min(height, width / (2 * targetRatio))
-            const targetWidth = targetHeight * targetRatio
-            const startX = (width - 2 * targetWidth) / 2
-            const y = (height - targetHeight) / 2
+    const isCorrectDirection = (dragDirection === 'next' && deltaX < 0) || (dragDirection === 'previous' && deltaX > 0)
+    const shouldCommit = isCorrectDirection && dragTargetPage !== store.currentPage && shouldCommitPageTurn(progress, velocity)
 
-            if (turnLeftStatic) {
-                context.drawImage(turnLeftStatic.canvas, startX, y, targetWidth, targetHeight)
-            }
-            if (turnRightStatic) {
-                context.drawImage(turnRightStatic.canvas, startX + targetWidth, y, targetWidth, targetHeight)
-            }
+    if (shouldCommit) {
+      await requestTurn(dragDirection)
+    } else {
+      const startOffset = currentDragOffsetX
+      const startTime = performance.now()
+      const snapDuration = 120
 
-            // Spine shadow
-            context.fillStyle = 'rgba(0,0,0,0.1)'
-            context.fillRect(startX + targetWidth - 1, y, 2, targetHeight)
-        } else {
-            if (!turnTarget && !turnSource) return
-            const target = turnTarget ?? turnSource
-            const targetHeight = Math.min(height, width / targetRatio)
-            const targetWidth = targetHeight * targetRatio
-            const x = (width - targetWidth) / 2
-            const y = (height - targetHeight) / 2
-
-            context.drawImage(target.canvas, x, y, targetWidth, targetHeight)
-            if (turnSource && turnProgress < 1 && turnTarget) {
-                context.save()
-                context.globalAlpha = 1 - turnProgress
-                const inset = targetWidth * turnProgress * 0.06
-                context.drawImage(turnSource.canvas, x + inset, y, targetWidth - inset, targetHeight)
-                context.restore()
-            }
+      await new Promise<void>((resolve) => {
+        const snapAnim = (now: number) => {
+          const elapsed = now - startTime
+          const p = clamp(elapsed / snapDuration, 0, 1)
+          const cur = startOffset * (1 - easeOutCubic(p))
+          drawScene(cur)
+          if (p < 1) {
+            animationFrame = requestAnimationFrame(snapAnim)
+          } else {
+            resolve()
+          }
         }
+        animationFrame = requestAnimationFrame(snapAnim)
+      })
+
+      drawScene(0)
     }
 
-    function setStaticSpread(leftRaster: PageRaster, rightRaster?: PageRaster | null) {
-        if (leftStaticPage && rightStaticPage && spineShadow && turningFront && turningBack && shadowPage) {
-            const isTwoPage = store.isTwoPageMode
-            ensurePageGeometry(leftRaster.aspectRatio)
+    dragStart = null
+    dragLast = null
+    currentDragOffsetX = 0
+  }
 
-            const halfWidth = (2 * leftRaster.aspectRatio) / 2
+  function cancelDrag(point: Point) {
+    if (!isDragging) return
+    isDragging = false
+    dragStart = null
+    dragLast = null
+    currentDragOffsetX = 0
+    drawScene(0)
+  }
 
-            if (isTwoPage) {
-                leftStaticPage.material.map = leftRaster.texture
-                leftStaticPage.material.needsUpdate = true
-                leftStaticPage.material.stencilWrite = false
-                leftStaticPage.position.set(-halfWidth, 0, -0.03)
-                leftStaticPage.visible = true
-
-                const right = rightRaster ?? getBlankRaster(leftRaster.aspectRatio)
-                rightStaticPage.material.map = right.texture
-                rightStaticPage.material.needsUpdate = true
-                rightStaticPage.material.stencilWrite = false
-                rightStaticPage.position.set(halfWidth, 0, -0.03)
-                rightStaticPage.visible = true
-
-                spineShadow.position.set(0, 0, -0.01)
-                spineShadow.visible = true
-            } else {
-                leftStaticPage.material.map = leftRaster.texture
-                leftStaticPage.material.needsUpdate = true
-                leftStaticPage.material.stencilWrite = false
-                leftStaticPage.position.set(0, 0, -0.03)
-                leftStaticPage.visible = true
-
-                rightStaticPage.visible = false
-                spineShadow.visible = false
-            }
-
-            shadowPage.visible = false
-            turningFront.visible = false
-            turningBack.visible = false
-            renderScene()
-            updatePageLayout(leftRaster.aspectRatio)
-        } else {
-            turnLeftStatic = leftRaster
-            turnRightStatic = rightRaster ?? null
-            turnTarget = leftRaster
-            turnSource = null
-            turnProgress = 1
-            renderFallback()
-            updatePageLayout(leftRaster.aspectRatio)
-        }
+  onMounted(() => {
+    if (typeof window !== 'undefined') {
+      motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
+      motionQuery.addEventListener('change', updateMotionPreference)
+      updateMotionPreference()
     }
 
-    function applyTurnTextures() {
-        if (!turnSource || !turnTarget) return
-        if (!leftStaticPage || !rightStaticPage || !turningFront || !turningBack || !shadowPage || !spineShadow) {
-            renderFallback()
-            return
-        }
+    const host = hostRef.value
+    if (host) {
+      stageCanvas = document.createElement('canvas')
+      stageCanvas.className = 'page-2d-canvas'
+      stageCanvas.style.display = 'block'
+      stageCanvas.style.width = '100%'
+      stageCanvas.style.height = '100%'
+      stageCanvas.style.userSelect = 'none'
 
-        const isTwoPage = store.isTwoPageMode
-        const stencilRef = 1
+      stageCtx = stageCanvas.getContext('2d', { alpha: false })
+      host.insertBefore(stageCanvas, host.firstChild)
 
-        turningFront.material.colorWrite = true
-        turningFront.material.depthWrite = true
-        turningFront.material.stencilWrite = true
-        turningFront.material.stencilFunc = THREE.AlwaysStencilFunc
-        turningFront.material.stencilFail = THREE.KeepStencilOp
-        turningFront.material.stencilZFail = THREE.KeepStencilOp
-        turningFront.material.stencilZPass = THREE.ReplaceStencilOp
-        turningFront.material.stencilRef = stencilRef
+      resizeObserver = new ResizeObserver(() => {
+        resizeCanvasToHost()
+      })
+      resizeObserver.observe(host)
 
-        turningBack.material.colorWrite = true
-        turningBack.material.depthWrite = true
-        turningBack.material.stencilWrite = true
-        turningBack.material.stencilFunc = THREE.AlwaysStencilFunc
-        turningBack.material.stencilFail = THREE.KeepStencilOp
-        turningBack.material.stencilZFail = THREE.KeepStencilOp
-        turningBack.material.stencilZPass = THREE.ReplaceStencilOp
-        turningBack.material.stencilRef = stencilRef
-
-        shadowPage.material.stencilWrite = true
-        shadowPage.material.stencilFunc = THREE.NotEqualStencilFunc
-        shadowPage.material.stencilFail = THREE.KeepStencilOp
-        shadowPage.material.stencilZFail = THREE.KeepStencilOp
-        shadowPage.material.stencilZPass = THREE.KeepStencilOp
-        shadowPage.material.stencilRef = stencilRef
-
-        ensurePageGeometry(turnSource.aspectRatio)
-
-        if (!isTwoPage) {
-            leftStaticPage.material.map = turnTarget.texture
-            leftStaticPage.material.needsUpdate = true
-            leftStaticPage.material.stencilWrite = true
-            leftStaticPage.material.stencilFunc = THREE.NotEqualStencilFunc
-            leftStaticPage.material.stencilFail = THREE.KeepStencilOp
-            leftStaticPage.material.stencilZFail = THREE.KeepStencilOp
-            leftStaticPage.material.stencilZPass = THREE.KeepStencilOp
-            leftStaticPage.material.stencilRef = stencilRef
-            leftStaticPage.position.set(0, 0, -0.03)
-            leftStaticPage.visible = true
-
-            rightStaticPage.visible = false
-            spineShadow.visible = false
-
-            turningFront.material.map = turnSource.texture
-            turningFront.material.needsUpdate = true
-            turningBack.material.map = turnSource.backTexture
-            turningBack.material.needsUpdate = true
-        } else {
-            const halfWidth = (2 * turnSource.aspectRatio) / 2
-            spineShadow.visible = true
-
-            if (turnDirection === 'next') {
-                if (turnLeftStatic) {
-                    leftStaticPage.material.map = turnLeftStatic.texture
-                    leftStaticPage.material.needsUpdate = true
-                }
-                leftStaticPage.material.stencilWrite = false
-                leftStaticPage.position.set(-halfWidth, 0, -0.04)
-                leftStaticPage.visible = true
-
-                rightStaticPage.material.map = turnTarget.texture
-                rightStaticPage.material.needsUpdate = true
-                rightStaticPage.material.stencilWrite = true
-                rightStaticPage.material.stencilFunc = THREE.NotEqualStencilFunc
-                rightStaticPage.material.stencilFail = THREE.KeepStencilOp
-                rightStaticPage.material.stencilZFail = THREE.KeepStencilOp
-                rightStaticPage.material.stencilZPass = THREE.KeepStencilOp
-                rightStaticPage.material.stencilRef = stencilRef
-                rightStaticPage.position.set(halfWidth, 0, -0.03)
-                rightStaticPage.visible = true
-
-                turningFront.material.map = turnSource.texture
-                turningFront.material.needsUpdate = true
-                turningBack.material.map = (turnBack ?? turnTarget).backTexture
-                turningBack.material.needsUpdate = true
-            } else {
-                if (turnRightStatic) {
-                    rightStaticPage.material.map = turnRightStatic.texture
-                    rightStaticPage.material.needsUpdate = true
-                }
-                rightStaticPage.material.stencilWrite = false
-                rightStaticPage.position.set(halfWidth, 0, -0.04)
-                rightStaticPage.visible = true
-
-                leftStaticPage.material.map = turnTarget.texture
-                leftStaticPage.material.needsUpdate = true
-                leftStaticPage.material.stencilWrite = true
-                leftStaticPage.material.stencilFunc = THREE.NotEqualStencilFunc
-                leftStaticPage.material.stencilFail = THREE.KeepStencilOp
-                leftStaticPage.material.stencilZFail = THREE.KeepStencilOp
-                leftStaticPage.material.stencilZPass = THREE.KeepStencilOp
-                leftStaticPage.material.stencilRef = stencilRef
-                leftStaticPage.position.set(-halfWidth, 0, -0.03)
-                leftStaticPage.visible = true
-
-                turningFront.material.map = turnSource.texture
-                turningFront.material.needsUpdate = true
-                turningBack.material.map = (turnBack ?? turnTarget).backTexture
-                turningBack.material.needsUpdate = true
-            }
-        }
-
-        turningFront.visible = true
-        turningBack.visible = true
-        shadowPage.visible = true
+      resizeCanvasToHost()
+      void renderCurrentView()
     }
+  })
 
-    function updateCurlGeometry() {
-        if (!pageGeometry || !turningFront || !turningBack || !shadowPage) return
-        const position = pageGeometry.attributes.position
-        const basePositions = pageGeometry.userData.basePositions as Float32Array
-        const width = pageGeometry.parameters.width
-        const halfWidth = width / 2
-        const progress = turnProgress
-        const forward = turnDirection === 'next'
-        const isTwoPage = store.isTwoPageMode
+  onUnmounted(() => {
+    if (animationFrame) cancelAnimationFrame(animationFrame)
+    if (resizeObserver) resizeObserver.disconnect()
+    if (motionQuery) motionQuery.removeEventListener('change', updateMotionPreference)
 
-        const radius = width * (0.12 - (progress * 0.04))
-        const circumference = Math.PI * radius
-        const angleOffset = 0.15
-
-        if (!isTwoPage) {
-            const foldX = forward
-                ? halfWidth - (width + circumference * 2) * progress
-                : -halfWidth + (width + circumference * 2) * progress
-
-            for (let index = 0; index < position.count; index += 1) {
-                const originalX = basePositions[index * 3]
-                const originalY = basePositions[index * 3 + 1]
-                const distanceToFold = forward
-                    ? (originalX - (foldX + originalY * angleOffset))
-                    : ((foldX + originalY * angleOffset) - originalX)
-
-                let finalX = originalX
-                let finalZ = 0
-
-                if (distanceToFold > 0) {
-                    if (distanceToFold < circumference) {
-                        const theta = distanceToFold / radius
-                        const curlX = radius * Math.sin(theta)
-                        finalZ = radius * (1 - Math.cos(theta))
-                        finalX = forward
-                            ? (foldX + originalY * angleOffset) + curlX
-                            : (foldX + originalY * angleOffset) - curlX
-                    } else {
-                        const remainingPaper = distanceToFold - circumference
-                        finalX = forward
-                            ? (foldX + originalY * angleOffset) - remainingPaper
-                            : (foldX + originalY * angleOffset) + remainingPaper
-                        finalZ = radius * 2
-                    }
-                }
-
-                const settle = smoothstep(progress < 0.5 ? progress / 0.2 : (1 - progress) / 0.2)
-                position.setXYZ(
-                    index,
-                    finalX,
-                    originalY,
-                    THREE.MathUtils.lerp(0, finalZ, settle),
-                )
-            }
-        } else {
-            const foldX = forward
-                ? width - (2 * width + circumference * 2) * progress
-                : -width + (2 * width + circumference * 2) * progress
-
-            for (let index = 0; index < position.count; index += 1) {
-                const localX = basePositions[index * 3]
-                const originalY = basePositions[index * 3 + 1]
-                const bookX = forward ? (localX + halfWidth) : (localX - halfWidth)
-
-                const distanceToFold = forward
-                    ? (bookX - (foldX + originalY * angleOffset))
-                    : ((foldX + originalY * angleOffset) - bookX)
-
-                let finalX = bookX
-                let finalZ = 0
-
-                if (distanceToFold > 0) {
-                    if (distanceToFold < circumference) {
-                        const theta = distanceToFold / radius
-                        const curlX = radius * Math.sin(theta)
-                        finalZ = radius * (1 - Math.cos(theta))
-                        finalX = forward
-                            ? (foldX + originalY * angleOffset) + curlX
-                            : (foldX + originalY * angleOffset) - curlX
-                    } else {
-                        const remainingPaper = distanceToFold - circumference
-                        finalX = forward
-                            ? (foldX + originalY * angleOffset) - remainingPaper
-                            : (foldX + originalY * angleOffset) + remainingPaper
-                        finalZ = radius * 2
-                    }
-                }
-
-                const settle = smoothstep(progress < 0.5 ? progress / 0.2 : (1 - progress) / 0.2)
-                position.setXYZ(
-                    index,
-                    finalX,
-                    originalY,
-                    THREE.MathUtils.lerp(0, finalZ, settle),
-                )
-            }
-        }
-
-        position.needsUpdate = true
-        pageGeometry.computeVertexNormals()
-
-        const shadowIntensity = Math.sin(progress * Math.PI)
-        shadowPage.material.opacity = 0.25 * shadowIntensity
-        shadowPage.scale.set(1 + progress * 0.05, 1 + progress * 0.05, 1)
+    if (stageCanvas && stageCanvas.parentNode) {
+      stageCanvas.parentNode.removeChild(stageCanvas)
     }
+    rasterCache.clear()
+    pendingRasters.clear()
+  })
 
-    function drawTurn() {
-        if (renderer) {
-            updateCurlGeometry()
-            renderScene()
-            return
-        }
-        renderFallback()
-    }
+  watch(
+    [() => store.currentPage, () => store.document, () => store.isTwoPageMode, () => store.isGraphOpen],
+    () => {
+      void renderCurrentView()
+    },
+    { flush: 'post' },
+  )
 
-    function setTurnProgress(progress: number) {
-        turnProgress = clamp(progress)
-        drawTurn()
-    }
-
-    function cancelAnimation() {
-        if (pendingDragFrame !== null) {
-            cancelAnimationFrame(pendingDragFrame)
-            pendingDragFrame = null
-        }
-        if (animationFrame !== null) {
-            cancelAnimationFrame(animationFrame)
-            animationFrame = null
-        }
-        resolveAnimation?.(false)
-        resolveAnimation = null
-    }
-
-    function animateTo(target: number): Promise<boolean> {
-        cancelAnimation()
-        const start = turnProgress
-        const distance = Math.abs(target - start)
-        const duration = Math.max(80, TURN_DURATION_MS * Math.min(distance, 1))
-
-        return new Promise((resolve) => {
-            resolveAnimation = resolve
-            let startedAt: number | null = null
-            const tick = (timestamp: number) => {
-                if (startedAt === null) startedAt = timestamp
-                const elapsed = (timestamp - startedAt) / duration
-                const amount = easeOutCubic(elapsed)
-                setTurnProgress(start + (target - start) * amount)
-                if (elapsed < 1) {
-                    animationFrame = requestAnimationFrame(tick)
-                    return
-                }
-                animationFrame = null
-                resolveAnimation = null
-                resolve(true)
-            }
-            animationFrame = requestAnimationFrame(tick)
-        })
-    }
-
-    function targetFor(direction: PageTurnDirection): number | null {
-        if (store.isTwoPageMode) {
-            if (direction === 'next') {
-                const target = store.currentPage + 2
-                if (target > store.totalPages && store.currentPage + 1 >= store.totalPages) return null
-                return target <= store.totalPages ? target : store.totalPages
-            } else {
-                const target = store.currentPage - 2
-                if (target < 1 && store.currentPage <= 1) return null
-                return Math.max(1, target)
-            }
-        } else {
-            const target = direction === 'next' ? store.currentPage + 1 : store.currentPage - 1
-            if (target < 1 || target > store.totalPages) return null
-            return target
-        }
-    }
-
-    async function prepareTurn(direction: PageTurnDirection): Promise<boolean> {
-        const targetPage = targetFor(direction)
-        if (!targetPage || !activeDocument) return false
-
-        isPreparing.value = true
-        errorMessage.value = null
-        try {
-            if (!store.isTwoPageMode) {
-                const [source, target] = await Promise.all([
-                    getRaster(store.currentPage),
-                    getRaster(targetPage),
-                ])
-                if (activeDocument !== store.document) return false
-                turnDirection = direction
-                turnSource = source
-                turnTarget = target
-                turnBack = null
-                turnLeftStatic = null
-                turnRightStatic = null
-            } else {
-                const currentLeft = store.currentPage
-                const currentRight = currentLeft + 1
-                if (direction === 'next') {
-                    const nextLeft = targetPage
-                    const nextRight = nextLeft + 1
-                    const [cLeft, cRight, nLeft, nRight] = await Promise.all([
-                        getRaster(currentLeft),
-                        getRaster(currentRight),
-                        getRaster(nextLeft),
-                        getRaster(nextRight),
-                    ])
-                    if (activeDocument !== store.document) return false
-                    turnDirection = 'next'
-                    turnSource = cRight
-                    turnBack = nLeft
-                    turnTarget = nRight
-                    turnLeftStatic = cLeft
-                    turnRightStatic = nRight
-                } else {
-                    const prevLeft = targetPage
-                    const prevRight = prevLeft + 1
-                    const [pLeft, pRight, cLeft, cRight] = await Promise.all([
-                        getRaster(prevLeft),
-                        getRaster(prevRight),
-                        getRaster(currentLeft),
-                        getRaster(currentRight),
-                    ])
-                    if (activeDocument !== store.document) return false
-                    turnDirection = 'previous'
-                    turnSource = cLeft
-                    turnBack = pRight
-                    turnTarget = pLeft
-                    turnLeftStatic = pLeft
-                    turnRightStatic = cRight
-                }
-            }
-
-            turnProgress = 0
-            applyTurnTextures()
-            drawTurn()
-            return true
-        } catch (error) {
-            const message = error instanceof Error ? error.message : String(error)
-            errorMessage.value = `Não foi possível preparar a virada: ${message}`
-            store.setError(errorMessage.value)
-            return false
-        } finally {
-            isPreparing.value = false
-        }
-    }
-
-    function settleTurn(committed: boolean) {
-        if (!store.isTwoPageMode) {
-            if (committed && turnTarget) {
-                renderedPage = turnTarget.pageNumber
-                store.goToPage(renderedPage)
-                setStaticSpread(turnTarget)
-                prefetchNeighbors(renderedPage)
-            } else if (turnSource) {
-                setStaticSpread(turnSource)
-            }
-        } else {
-            if (committed) {
-                const newLeft = turnDirection === 'next'
-                    ? (turnBack?.pageNumber ?? store.currentPage + 2)
-                    : (turnTarget?.pageNumber ?? Math.max(1, store.currentPage - 2))
-                renderedPage = newLeft
-                store.goToPage(renderedPage)
-                const rightRaster = turnDirection === 'next' ? turnTarget : turnBack
-                setStaticSpread(turnDirection === 'next' ? turnBack! : turnTarget!, rightRaster)
-                prefetchNeighbors(renderedPage)
-            } else {
-                setStaticSpread(turnLeftStatic ?? getBlankRaster(), turnRightStatic)
-            }
-        }
-
-        turnSource = null
-        turnTarget = null
-        turnBack = null
-        turnLeftStatic = null
-        turnRightStatic = null
-        turnProgress = 0
-        isDragging = false
-        dragStart = null
-        dragLast = null
-        pendingDragPoint = null
-        dragEndedWhilePreparing = false
-        dragCancelledWhilePreparing = false
-        isTransitioning.value = false
-    }
-
-    async function requestTurn(direction: PageTurnDirection): Promise<void> {
-        if (isTransitioning.value) return
-        const target = targetFor(direction)
-        if (!target) return
-
-        isTransitioning.value = true
-        const prepared = await prepareTurn(direction)
-        if (!prepared) {
-            isTransitioning.value = false
-            return
-        }
-
-        if (isAnimationDisabled.value) {
-            setTurnProgress(1)
-            settleTurn(true)
-            return
-        }
-
-        const completed = await animateTo(1)
-        settleTurn(completed)
-    }
-
-    function pointerProgress(point: Point): number {
-        if (!dragStart || !hostRef.value) return 0
-        const width = Math.max(hostRef.value.clientWidth, 1)
-        const distance = turnDirection === 'next'
-            ? dragStart.x - point.x
-            : point.x - dragStart.x
-        return clamp(distance / (width * 0.48))
-    }
-
-    async function beginDrag(direction: PageTurnDirection, point: Point): Promise<void> {
-        if (isTransitioning.value) return
-        const target = targetFor(direction)
-        if (!target) return
-
-        isTransitioning.value = true
-        pendingDragPoint = point
-        dragEndedWhilePreparing = false
-        dragCancelledWhilePreparing = false
-        const prepared = await prepareTurn(direction)
-        if (!prepared) {
-            isTransitioning.value = false
-            return
-        }
-
-        dragStart = point
-        dragLast = pendingDragPoint ?? point
-        pendingDragPoint = null
-        isDragging = true
-        setTurnProgress(pointerProgress(dragLast))
-
-        if (dragEndedWhilePreparing) {
-            const wasCancelled = dragCancelledWhilePreparing
-            dragEndedWhilePreparing = false
-            dragCancelledWhilePreparing = false
-            if (wasCancelled) void cancelDrag(dragLast)
-            else void endDrag(dragLast)
-        }
-    }
-
-    function updateDrag(point: Point) {
-        if (!isTransitioning.value) return
-        if (!isDragging) {
-            pendingDragPoint = point
-            return
-        }
-        dragLast = point
-        if (pendingDragFrame !== null) return
-        pendingDragFrame = requestAnimationFrame(() => {
-            pendingDragFrame = null
-            if (isDragging && dragLast) setTurnProgress(pointerProgress(dragLast))
-        })
-    }
-
-    async function endDrag(point: Point): Promise<void> {
-        if (!isTransitioning.value) return
-        if (!isDragging) {
-            pendingDragPoint = point
-            dragEndedWhilePreparing = true
-            dragCancelledWhilePreparing = false
-            return
-        }
-
-        updateDrag(point)
-        const previous = dragLast
-        const velocity = previous && dragStart
-            ? (pointerProgress(previous) - pointerProgress(dragStart)) / Math.max(previous.time - dragStart.time, 1)
-            : 0
-        const shouldCommit = shouldCommitPageTurn(turnProgress, velocity)
-        isDragging = false
-
-        if (isAnimationDisabled.value) {
-            setTurnProgress(shouldCommit ? 1 : 0)
-            settleTurn(shouldCommit)
-            return
-        }
-
-        const completed = await animateTo(shouldCommit ? 1 : 0)
-        settleTurn(completed ? shouldCommit : false)
-    }
-
-    async function cancelDrag(point: Point): Promise<void> {
-        if (!isTransitioning.value) return
-        if (!isDragging) {
-            pendingDragPoint = point
-            dragEndedWhilePreparing = true
-            dragCancelledWhilePreparing = true
-            return
-        }
-
-        isDragging = false
-        if (!isAnimationDisabled.value) await animateTo(0)
-        settleTurn(false)
-    }
-
-    function prefetchNeighbors(pageNumber: number) {
-        const schedule = typeof window !== 'undefined' && 'requestIdleCallback' in window
-            ? (cb: () => void) => (window as any).requestIdleCallback(cb, { timeout: 1200 })
-            : (cb: () => void) => setTimeout(cb, 300)
-
-        schedule(() => {
-            if (!activeDocument) return
-            const candidates = store.isTwoPageMode
-                ? [pageNumber - 2, pageNumber - 1, pageNumber + 2, pageNumber + 3]
-                : [pageNumber - 1, pageNumber + 1]
-
-            for (const candidate of candidates) {
-                if (candidate >= 1 && candidate <= store.totalPages) {
-                    void getRaster(candidate).catch(() => undefined)
-                }
-            }
-        })
-    }
-
-    async function displayPage(pageNumber: number) {
-        if (!activeDocument || isTransitioning.value) return
-        isPreparing.value = true
-        try {
-            if (store.isTwoPageMode) {
-                const leftPageNum = pageNumber > 1 && pageNumber % 2 === 0 ? pageNumber - 1 : pageNumber
-                const rightPageNum = leftPageNum + 1
-                const [leftRaster, rightRaster] = await Promise.all([
-                    getRaster(leftPageNum),
-                    rightPageNum <= store.totalPages ? getRaster(rightPageNum) : Promise.resolve(getBlankRaster()),
-                ])
-                if (activeDocument !== store.document) return
-                renderedPage = leftPageNum
-                setStaticSpread(leftRaster, rightRaster)
-                prefetchNeighbors(leftPageNum)
-                readerProfiler.endSession()
-            } else {
-                const raster = await getRaster(pageNumber)
-                if (activeDocument !== store.document) return
-                renderedPage = pageNumber
-                setStaticSpread(raster)
-                prefetchNeighbors(pageNumber)
-                readerProfiler.endSession()
-            }
-        } catch (error) {
-            const message = error instanceof Error ? error.message : String(error)
-            errorMessage.value = `Não foi possível renderizar a página: ${message}`
-            store.setError(errorMessage.value)
-            readerProfiler.endSession()
-        } finally {
-            isPreparing.value = false
-        }
-    }
-
-    function clearRasters() {
-        pendingRasters.clear()
-        for (const raster of rasterCache.values()) disposeRaster(raster)
-        rasterCache.clear()
-        if (blankRaster) {
-            disposeRaster(blankRaster)
-            blankRaster = null
-        }
-    }
-
-    async function syncDocument(document: IBookDocument | null) {
-        cancelAnimation()
-        isTransitioning.value = false
-        isDragging = false
-        dragEndedWhilePreparing = false
-        dragCancelledWhilePreparing = false
-        turnSource = null
-        turnTarget = null
-        turnBack = null
-        turnLeftStatic = null
-        turnRightStatic = null
-        activeDocument = document
-        renderedPage = 0
-        clearRasters()
-        if (!document) return
-        await displayPage(store.currentPage)
-    }
-
-    function destroyScene() {
-        disposePageGeometry()
-        leftStaticPage?.material.dispose()
-        rightStaticPage?.material.dispose()
-        spineShadow?.material.dispose()
-        turningFront?.material.dispose()
-        turningBack?.material.dispose()
-        shadowPage?.geometry.dispose()
-        shadowPage?.material.dispose()
-        renderer?.dispose()
-        renderer?.domElement.remove()
-        fallbackCanvas?.remove()
-        renderer = null
-        scene = null
-        camera = null
-        leftStaticPage = null
-        rightStaticPage = null
-        spineShadow = null
-        turningFront = null
-        turningBack = null
-        shadowPage = null
-        fallbackCanvas = null
-    }
-
-    watch(
-        () => store.document,
-        (document) => { void syncDocument(document) },
-    )
-
-    watch(
-        () => store.currentPage,
-        (pageNumber) => {
-            if (!isTransitioning.value && pageNumber !== renderedPage) void displayPage(pageNumber)
-        },
-    )
-
-    watch(
-        () => store.isTwoPageMode,
-        () => {
-            if (!isTransitioning.value && store.document) {
-                lastGeometryAspectRatio = -1
-                void displayPage(store.currentPage)
-            }
-        },
-    )
-
-    onMounted(() => {
-        motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
-        updateMotionPreference()
-        motionQuery.addEventListener('change', updateMotionPreference)
-        createScene()
-        resizeObserver = new ResizeObserver(() => resizeScene())
-        if (hostRef.value) resizeObserver.observe(hostRef.value)
-        void syncDocument(store.document)
-    })
-
-    onUnmounted(() => {
-        cancelAnimation()
-        resizeObserver?.disconnect()
-        motionQuery?.removeEventListener('change', updateMotionPreference)
-        clearRasters()
-        destroyScene()
-    })
-
-    return {
-        isTransitioning: readonly(isTransitioning),
-        isPreparing: readonly(isPreparing),
-        errorMessage: readonly(errorMessage),
-        webglAvailable: readonly(webglAvailable),
-        pageLayout: readonly(pageLayout),
-        canTurnNext,
-        canTurnPrevious,
-        requestTurn,
-        beginDrag,
-        updateDrag,
-        endDrag,
-        cancelDrag,
-    }
+  return {
+    isTransitioning: readonly(isTransitioning),
+    isPreparing: readonly(isPreparing),
+    errorMessage: readonly(errorMessage),
+    pageLayout: readonly(pageLayout),
+    requestTurn,
+    beginDrag,
+    updateDrag,
+    endDrag,
+    cancelDrag,
+  }
 }

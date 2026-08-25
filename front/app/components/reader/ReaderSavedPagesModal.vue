@@ -30,40 +30,41 @@
 
       <!-- Content -->
       <div class="flex-1 overflow-y-auto py-4 space-y-2">
-        <div
-          v-if="store.savedPages.length > 0"
-          v-for="page in store.savedPages"
-          :key="page"
-          class="flex items-center justify-between p-3 rounded-xl bg-bgApp/80 border border-divider/60 hover:border-accent/40 transition-all group"
-        >
-          <button
-            @click="handleSelectPage(page)"
-            class="flex items-center gap-3 text-left flex-1 min-w-0"
+        <template v-if="store.savedPages.length > 0">
+          <div
+            v-for="page in store.savedPages"
+            :key="page"
+            class="flex items-center justify-between p-3 rounded-xl bg-bgApp/80 border border-divider/60 hover:border-accent/40 transition-all group"
           >
-            <div
-              class="w-9 h-9 rounded-lg font-technical font-bold text-xs flex items-center justify-center transition-colors"
-              :class="store.currentPage === page ? 'bg-accent text-white' : 'bg-white/5 text-textSecondary group-hover:text-textPrimary group-hover:bg-white/10'"
+            <button
+              @click="handleSelectPage(page)"
+              class="flex items-center gap-3 text-left flex-1 min-w-0"
             >
-              {{ page }}
-            </div>
-            <div>
-              <p class="text-sm font-semibold text-textPrimary group-hover:text-accent transition-colors">
-                Página {{ page }}
-              </p>
-              <p v-if="store.currentPage === page" class="text-[11px] text-accent font-medium">
-                Página atual
-              </p>
-            </div>
-          </button>
+              <div
+                class="w-9 h-9 rounded-lg font-technical font-bold text-xs flex items-center justify-center transition-colors"
+                :class="store.currentPage === page ? 'bg-accent text-white' : 'bg-white/5 text-textSecondary group-hover:text-textPrimary group-hover:bg-white/10'"
+              >
+                {{ page }}
+              </div>
+              <div>
+                <p class="text-sm font-semibold text-textPrimary group-hover:text-accent transition-colors">
+                  Página {{ page }}
+                </p>
+                <p v-if="store.currentPage === page" class="text-[11px] text-accent font-medium">
+                  Página atual
+                </p>
+              </div>
+            </button>
 
-          <button
-            @click="store.removeBookmark(page)"
-            class="p-2 text-textSecondary hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors ml-2"
-            title="Remover marcação"
-          >
-            <Trash2Icon class="w-4 h-4" />
-          </button>
-        </div>
+            <button
+              @click="store.removeBookmark(page)"
+              class="p-2 text-textSecondary hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors ml-2"
+              title="Remover marcação"
+            >
+              <Trash2Icon class="w-4 h-4" />
+            </button>
+          </div>
+        </template>
 
         <div v-else class="text-center py-10 text-textSecondary">
           <BookmarkIcon class="w-10 h-10 mx-auto opacity-30 mb-2" />

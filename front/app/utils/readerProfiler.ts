@@ -213,7 +213,7 @@ class ReaderProfiler {
     this._activeSession = null
 
     if (typeof window !== 'undefined') {
-      ;(window as any).__ARESTA_READER_PROFILE__ = report
+      (window as any).__ARESTA_READER_PROFILE__ = report
       try {
         window.dispatchEvent(new CustomEvent('aresta:reader-profile', { detail: report }))
       } catch {
