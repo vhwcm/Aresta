@@ -27,7 +27,7 @@
       <div class="p-5 border-b border-divider flex flex-col gap-4 bg-bgApp/40">
         <button
           @click="goBackToGraph"
-          class="inline-flex items-center gap-2 text-xs font-semibold text-accent hover:text-accent/80 transition-colors w-fit group cursor-pointer"
+          class="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-accent hover:text-accent/80 transition-colors w-fit group cursor-pointer"
           title="Voltar para o Grafo"
         >
           <ArrowLeftIcon class="w-4 h-4 transition-transform group-hover:-translate-x-1" />
@@ -40,16 +40,16 @@
             :style="{ backgroundColor: selectedNode.color || '#E57B55' }"
           ></div>
           <div>
-            <h2 class="text-base font-bold font-interface text-textPrimary leading-tight truncate max-w-[240px]">
+            <h2 class="text-base sm:text-lg font-bold font-interface text-textPrimary leading-tight truncate max-w-[280px]">
               {{ selectedNode.name }}
             </h2>
-            <p class="text-[11px] text-textSecondary font-technical mt-0.5">
+            <p class="text-xs text-textSecondary font-technical mt-0.5">
               {{ displayedBooks.length }} {{ displayedBooks.length === 1 ? 'livro conectado' : 'livros conectados' }}
             </p>
           </div>
         </div>
 
-        <p v-if="selectedNode.description" class="text-xs text-textSecondary font-light leading-relaxed line-clamp-2">
+        <p v-if="selectedNode.description" class="text-xs sm:text-sm text-textSecondary font-light leading-relaxed line-clamp-2">
           {{ selectedNode.description }}
         </p>
       </div>
@@ -60,11 +60,11 @@
           <div
             v-for="book in displayedBooks"
             :key="book.userBookId"
-            class="flex items-center justify-between bg-bgApp/80 border border-divider/70 hover:border-accent/40 p-3 rounded-2xl transition-all group"
+            class="flex items-center justify-between bg-bgApp/80 border border-divider/70 hover:border-accent/40 p-3.5 rounded-2xl transition-all group"
           >
-            <div class="flex items-center gap-3 min-w-0 flex-1">
+            <div class="flex items-center gap-3.5 min-w-0 flex-1">
               <!-- Capa do Livro -->
-              <div class="w-10 h-14 rounded-lg bg-white/5 border border-divider shrink-0 overflow-hidden flex items-center justify-center shadow-md">
+              <div class="w-11 h-16 rounded-lg bg-white/5 border border-divider shrink-0 overflow-hidden flex items-center justify-center shadow-md">
                 <img
                   v-if="book.coverPath"
                   :src="getCoverUrl(book.coverPath, book.bookId)"
@@ -76,18 +76,18 @@
 
               <!-- Detalhes do Livro -->
               <div class="min-w-0 flex-1">
-                <h4 class="text-xs font-semibold text-textPrimary truncate group-hover:text-accent transition-colors">
+                <h4 class="text-xs sm:text-sm font-semibold text-textPrimary truncate group-hover:text-accent transition-colors">
                   {{ book.title }}
                 </h4>
 
                 <div class="flex items-center gap-2 mt-1.5 flex-wrap">
                   <span
-                    class="text-[9px] font-technical uppercase font-bold px-2 py-0.5 rounded-md"
+                    class="text-[10px] sm:text-xs font-technical uppercase font-bold px-2 py-0.5 rounded-md"
                     :class="getStatusBadgeClass(book.status)"
                   >
                     {{ getStatusLabel(book.status) }}
                   </span>
-                  <span v-if="book.status === 'LENDO' && book.currentPage" class="text-[10px] text-textSecondary font-technical">
+                  <span v-if="book.status === 'LENDO' && book.currentPage" class="text-xs text-textSecondary font-technical">
                     Pág. {{ book.currentPage }}
                   </span>
                 </div>
@@ -97,7 +97,7 @@
             <!-- Botão de Leitura / Ação -->
             <NuxtLink
               :to="`/reader/${book.userBookId}`"
-              class="p-2 rounded-xl bg-accent/10 border border-accent/30 text-accent hover:bg-accent hover:text-white transition-all shrink-0 ml-2"
+              class="p-2.5 rounded-xl bg-accent/10 border border-accent/30 text-accent hover:bg-accent hover:text-white transition-all shrink-0 ml-2"
               title="Ler este livro"
             >
               <BookOpenIcon class="w-4 h-4" />
@@ -111,15 +111,15 @@
             <BookOpenIcon class="w-6 h-6 text-textSecondary opacity-50" />
           </div>
           <div>
-            <p class="text-xs font-semibold text-textPrimary">Nenhum livro neste tema</p>
-            <p class="text-[11px] text-textSecondary mt-1">Este mapa mental ainda não possui livros vinculados.</p>
+            <p class="text-sm font-semibold text-textPrimary">Nenhum livro neste tema</p>
+            <p class="text-xs text-textSecondary mt-1">Este mapa mental ainda não possui livros vinculados.</p>
           </div>
           <NuxtLink
             to="/grafo"
-            class="text-xs text-accent font-semibold hover:underline inline-flex items-center gap-1"
+            class="text-xs sm:text-sm text-accent font-semibold hover:underline inline-flex items-center gap-1"
           >
             <span>Gerenciar Conexões em Mapa Mental</span>
-            <ExternalLinkIcon class="w-3 h-3" />
+            <ExternalLinkIcon class="w-3.5 h-3.5" />
           </NuxtLink>
         </div>
       </div>
@@ -128,7 +128,7 @@
       <div class="p-4 border-t border-divider bg-bgApp/60 shrink-0">
         <button
           @click="goBackToGraph"
-          class="w-full bg-white/5 border border-divider text-textPrimary hover:bg-white/10 font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition-all cursor-pointer"
+          class="w-full bg-white/5 border border-divider text-textPrimary hover:bg-white/10 font-semibold py-3 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer"
         >
           <ArrowLeftIcon class="w-4 h-4" />
           <span>Voltar para o Grafo</span>

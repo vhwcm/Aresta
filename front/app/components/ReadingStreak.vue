@@ -3,7 +3,7 @@
     <!-- Botão Trigger da Ofensiva -->
     <button
       @click="isOpen = !isOpen"
-      class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-divider hover:border-accent/40 transition-all duration-300 group focus:outline-none focus:ring-2 focus:ring-accent/40"
+      class="flex items-center gap-2 px-3.5 py-2 rounded-full bg-white/5 hover:bg-white/10 border border-divider hover:border-accent/40 transition-all duration-300 group focus:outline-none focus:ring-2 focus:ring-accent/40"
       :class="{ 'border-accent/50 bg-accent/10': isOpen }"
       title="Ofensiva de Leitura"
       aria-label="Ofensiva de Leitura"
@@ -11,13 +11,13 @@
       <!-- Ícone Chama com preenchimento/brilho -->
       <div class="relative flex items-center justify-center">
         <FlameIcon
-          class="w-4 h-4 transition-transform duration-300 group-hover:scale-110"
+          class="w-4 h-4 sm:w-4.5 sm:h-4.5 transition-transform duration-300 group-hover:scale-110"
           :class="isGoalReachedToday ? 'text-accent fill-accent animate-pulse' : 'text-textSecondary'"
         />
       </div>
 
       <!-- Contador da Ofensiva -->
-      <span class="font-technical text-xs font-semibold text-textPrimary tracking-wider">
+      <span class="font-technical text-xs sm:text-sm font-semibold text-textPrimary tracking-wider">
         {{ currentStreak }}
       </span>
     </button>

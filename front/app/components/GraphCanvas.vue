@@ -15,39 +15,39 @@
 
     <!-- Toolbar Flutuante de Controles Superiores -->
     <div
-      class="absolute z-10 flex items-center gap-2 bg-bgPanel/80 backdrop-blur-md border border-divider p-2 rounded-2xl shadow-2xl max-w-[calc(100%-1.5rem)] flex-wrap"
+      class="absolute z-10 flex items-center gap-2 bg-bgPanel/80 backdrop-blur-md border border-divider p-2.5 rounded-2xl shadow-2xl max-w-[calc(100%-1.5rem)] flex-wrap"
       :class="isCompact ? 'top-3 left-3 right-3 justify-between' : 'top-6 left-6'"
     >
       <!-- Campo de Busca -->
-      <div class="relative flex items-center flex-1 min-w-[100px]">
-        <SearchIcon class="w-3.5 h-3.5 text-textSecondary absolute left-2.5 pointer-events-none" />
+      <div class="relative flex items-center flex-1 min-w-[110px]">
+        <SearchIcon class="w-4 h-4 text-textSecondary absolute left-3 pointer-events-none" />
         <input
           v-model="searchQuery"
           type="text"
           placeholder="Buscar tema ou livro..."
-          class="bg-bgApp/60 border border-divider/60 rounded-xl pl-8 pr-2 py-1 text-xs text-textPrimary placeholder:text-textSecondary/50 focus:outline-none focus:border-accent w-full transition-all"
+          class="bg-bgApp/60 border border-divider/60 rounded-xl pl-9 pr-3 py-1.5 sm:py-2 text-xs sm:text-sm text-textPrimary placeholder:text-textSecondary/50 focus:outline-none focus:border-accent w-full transition-all"
         />
       </div>
 
-      <div v-if="!isCompact" class="h-4 w-px bg-divider"></div>
+      <div v-if="!isCompact" class="h-5 w-px bg-divider"></div>
 
       <!-- Botão Novo Tema -->
       <button
         @click="$emit('openCreateNode')"
-        class="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-accent text-white text-xs font-semibold hover:bg-accent/90 transition-all shadow-md active:scale-95 shrink-0"
+        class="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-accent text-white text-xs sm:text-sm font-semibold hover:bg-accent/90 transition-all shadow-md active:scale-95 shrink-0"
         title="Criar Novo Tema"
       >
-        <PlusIcon class="w-3.5 h-3.5" />
+        <PlusIcon class="w-4 h-4" />
         <span :class="{ 'hidden sm:inline': isCompact }">Novo Tema</span>
       </button>
 
       <!-- Botão Conectar Nós -->
       <button
         @click="$emit('openConnectModal')"
-        class="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/5 border border-divider text-textPrimary text-xs hover:bg-white/10 transition-all active:scale-95 shrink-0"
+        class="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-white/5 border border-divider text-textPrimary text-xs sm:text-sm hover:bg-white/10 transition-all active:scale-95 shrink-0"
         title="Criar conexão entre temas"
       >
-        <LinkIcon class="w-3.5 h-3.5 text-accent" />
+        <LinkIcon class="w-4 h-4 text-accent" />
         <span :class="{ 'hidden sm:inline': isCompact }">Conectar</span>
       </button>
     </div>
@@ -96,9 +96,9 @@ const getPastelStroke = (colorHex?: string, isRoot = false) => {
 }
 
 const getNodeRadius = (node: GraphNode) => {
-  if (node.isRoot || node.id === -999) return 32
+  if (node.isRoot || node.id === -999) return 36
   const count = node.books?.length || 0
-  return Math.min(18 + count * 4, 36)
+  return Math.min(22 + count * 4, 40)
 }
 
 const initGraph = () => {
@@ -164,10 +164,10 @@ const initGraph = () => {
 
   // Criar Simulação de Forças D3 (Estilo Obsidian)
   simulation = d3.forceSimulation(simulationNodes)
-    .force('link', d3.forceLink(simulationLinks).id((d: any) => d.id).distance((d: any) => d.isRootEdge ? 170 : 120))
-    .force('charge', d3.forceManyBody().strength(-420))
+    .force('link', d3.forceLink(simulationLinks).id((d: any) => d.id).distance((d: any) => d.isRootEdge ? 180 : 130))
+    .force('charge', d3.forceManyBody().strength(-460))
     .force('center', d3.forceCenter(width / 2, height / 2))
-    .force('collide', d3.forceCollide().radius((d: any) => getNodeRadius(d) + 20))
+    .force('collide', d3.forceCollide().radius((d: any) => getNodeRadius(d) + 24))
 
   // Renderizar Links (Arestas) Contínuas (Solid lines)
   const linkGroup = g.select('.links-group')
@@ -207,7 +207,7 @@ const initGraph = () => {
 
   // Círculo com efeito sutil de ambient ring (low-dopamine)
   nodesSelection.append('circle')
-    .attr('r', (d: any) => getNodeRadius(d) + 4)
+    .attr('r', (d: any) => getNodeRadius(d) + 5)
     .attr('fill', (d: any) => getPastelFill(d.color, d.isRoot))
     .attr('opacity', 0.16)
     .attr('class', 'transition-all duration-300')
@@ -217,13 +217,13 @@ const initGraph = () => {
     .attr('r', (d: any) => getNodeRadius(d))
     .attr('fill', (d: any) => getPastelFill(d.color, d.isRoot))
     .attr('stroke', (d: any) => getPastelStroke(d.color, d.isRoot))
-    .attr('stroke-width', (d: any) => d.isRoot ? 1.8 : 1.2)
+    .attr('stroke-width', (d: any) => d.isRoot ? 2 : 1.4)
     .attr('class', 'transition-all duration-300 shadow-lg')
 
   // Ícone 2D Vetorial Clean para o Nó Raiz (Cérebro / Conhecimento)
   const rootNodesSelection = nodesSelection.filter((d: any) => d.isRoot)
   const rootIconGroup = rootNodesSelection.append('g')
-    .attr('transform', 'translate(-9.5, -9.5)')
+    .attr('transform', 'translate(-10.5, -10.5)')
     .attr('pointer-events', 'none')
 
   rootIconGroup.append('path')
@@ -233,7 +233,7 @@ const initGraph = () => {
     .attr('stroke-width', '1.6')
     .attr('stroke-linecap', 'round')
     .attr('stroke-linejoin', 'round')
-    .attr('transform', 'scale(0.8)')
+    .attr('transform', 'scale(0.9)')
 
   // Ícone 2D e Contagem para Nós de Temas
   const themeNodesSelection = nodesSelection.filter((d: any) => !d.isRoot)
@@ -254,12 +254,12 @@ const initGraph = () => {
         .attr('stroke-width', '1.5')
         .attr('stroke-linecap', 'round')
         .attr('stroke-linejoin', 'round')
-        .attr('transform', 'translate(-12, -6.5) scale(0.55)')
+        .attr('transform', 'translate(-13, -7.5) scale(0.62)')
 
       iconG.append('text')
-        .attr('x', 3)
-        .attr('y', 3.5)
-        .attr('font-size', '10.5px')
+        .attr('x', 4)
+        .attr('y', 4)
+        .attr('font-size', '11.5px')
         .attr('font-weight', '600')
         .attr('font-family', 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace')
         .attr('fill', 'rgba(255, 255, 255, 0.92)')
@@ -273,16 +273,16 @@ const initGraph = () => {
         .attr('stroke-width', '1.5')
         .attr('stroke-linecap', 'round')
         .attr('stroke-linejoin', 'round')
-        .attr('transform', 'translate(-6, -6.5) scale(0.55)')
+        .attr('transform', 'translate(-7, -7.5) scale(0.62)')
     }
   })
 
   // Rótulo/Nome do nó
   nodesSelection.append('text')
     .attr('text-anchor', 'middle')
-    .attr('dy', (d: any) => getNodeRadius(d) + 16)
+    .attr('dy', (d: any) => getNodeRadius(d) + 18)
     .attr('fill', (d: any) => d.isRoot ? '#F59E0B' : '#E2E8F0')
-    .attr('font-size', (d: any) => d.isRoot ? '12px' : '11px')
+    .attr('font-size', (d: any) => d.isRoot ? '14px' : '12.5px')
     .attr('font-weight', (d: any) => d.isRoot ? '700' : '500')
     .attr('font-family', 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif')
     .attr('pointer-events', 'none')

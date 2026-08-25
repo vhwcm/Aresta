@@ -6,7 +6,7 @@
         route.path.startsWith('/grafo') ? 'overflow-hidden p-0' : 'overflow-y-auto',
         auth.isLoggedIn.value ? 'pb-28' : 'pb-12'
       ]">
-        <div v-if="!route.path.startsWith('/grafo')" class="max-w-5xl xl:max-w-7xl 2xl:max-w-[1520px] mx-auto px-4 sm:px-8 md:px-12 py-8 md:py-12 transition-all duration-300">
+        <div v-if="!route.path.startsWith('/grafo')" class="w-full px-4 sm:px-8 md:px-10 lg:px-12 xl:px-14 2xl:px-16 py-6 md:py-8 transition-all duration-300">
           <slot />
         </div>
         <div v-else class="w-full h-full">
