@@ -9,6 +9,7 @@ describe('Index Page (Landing Page & Home)', () => {
     NuxtLink: { template: '<a><slot /></a>' },
     ReadingStreak: { template: '<div data-testid="reading-streak">5</div>' },
     EbbinghausChart: { template: '<div data-testid="ebbinghaus-chart">Gráfico Ebbinghaus D3</div>' },
+    SidebarGraph: { template: '<div data-testid="sidebar-graph">Grafo de Conhecimento</div>' },
     ArrowRightIcon: true,
     BrainIcon: true,
     BookOpenIcon: true,
@@ -106,5 +107,6 @@ describe('Index Page (Landing Page & Home)', () => {
     expect(flashcardsIndex).toBeLessThan(notesIndex)
 
     expect(wrapper.find('[data-testid="reading-streak"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="sidebar-graph"]').exists()).toBe(true)
   })
 })

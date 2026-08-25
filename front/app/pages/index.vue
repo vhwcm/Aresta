@@ -1,146 +1,167 @@
 <template>
   <div>
-    <!-- ESTADO 1: USUÁRIO AUTENTICADO (Home do Leitor / Leitura Ativa) -->
-    <div v-if="auth.isLoggedIn.value" data-testid="auth-home" class="flex flex-col gap-8 pb-20 animate-in fade-in duration-500">
-      <!-- BLOCO 1: ÚLTIMA LEITURA ATIVA (Clean, sem caixa, capa clicável, ofensiva elevada no topo direito, progresso só em %) -->
-      <section class="relative flex flex-row items-start gap-4 sm:gap-8 pt-1 sm:pt-2">
-        <!-- Capa do Livro (Clicável diretamente no mobile e desktop) -->
-        <NuxtLink
-          :to="activeBookReaderLink"
-          class="relative shrink-0 group/cover cursor-pointer select-none"
-          :title="`Continuar leitura de ${activeBookTitle}`"
-        >
-          <div class="w-24 sm:w-32 md:w-36 aspect-[2/3] rounded-xl sm:rounded-2xl overflow-hidden shadow-xl border border-divider hover:border-accent/50 bg-neutral-900 flex items-center justify-center relative transition-all duration-300 group-hover/cover:scale-[1.02]">
-            <img
-              v-if="activeBookCoverUrl && !coverError"
-              :src="activeBookCoverUrl"
-              :alt="activeBookTitle"
-              @error="coverError = true"
-              class="w-full h-full object-cover"
-            />
-            <!-- Fallback se imagem falhar -->
-            <div v-else class="w-full h-full p-3 flex flex-col justify-between bg-gradient-to-br from-neutral-800 to-neutral-950 text-left border-l-2 border-accent">
-              <span class="font-technical text-[8px] uppercase tracking-wider text-accent font-semibold">Aresta</span>
-              <span class="font-editorial text-xs sm:text-sm font-light text-white leading-tight line-clamp-3">{{ activeBookTitle }}</span>
-              <span class="font-interface text-[9px] text-textSecondary">Machado de Assis</span>
+    <!-- ESTADO 1: USUÁRIO AUTENTICADO (Home do Leitor / Leitura Ativa + Grafo em Telas Grandes) -->
+    <div v-if="auth.isLoggedIn.value" data-testid="auth-home" class="grid grid-cols-1 xl:grid-cols-12 gap-8 pb-20 animate-in fade-in duration-500 items-start">
+      <!-- COLUNA PRINCIPAL: FEED DE LEITURA (Leitura Ativa, Flashcards e Anotações) -->
+      <div class="xl:col-span-7 2xl:col-span-7 flex flex-col gap-8">
+        <!-- BLOCO 1: ÚLTIMA LEITURA ATIVA (Clean, sem caixa, capa clicável, ofensiva elevada no topo direito, progresso só em %) -->
+        <section class="relative flex flex-row items-start gap-4 sm:gap-8 pt-1 sm:pt-2">
+          <!-- Capa do Livro (Clicável diretamente no mobile e desktop) -->
+          <NuxtLink
+            :to="activeBookReaderLink"
+            class="relative shrink-0 group/cover cursor-pointer select-none"
+            :title="`Continuar leitura de ${activeBookTitle}`"
+          >
+            <div class="w-24 sm:w-32 md:w-36 aspect-[2/3] rounded-xl sm:rounded-2xl overflow-hidden shadow-xl border border-divider hover:border-accent/50 bg-neutral-900 flex items-center justify-center relative transition-all duration-300 group-hover/cover:scale-[1.02]">
+              <img
+                v-if="activeBookCoverUrl && !coverError"
+                :src="activeBookCoverUrl"
+                :alt="activeBookTitle"
+                @error="coverError = true"
+                class="w-full h-full object-cover"
+              />
+              <!-- Fallback se imagem falhar -->
+              <div v-else class="w-full h-full p-3 flex flex-col justify-between bg-gradient-to-br from-neutral-800 to-neutral-950 text-left border-l-2 border-accent">
+                <span class="font-technical text-[8px] uppercase tracking-wider text-accent font-semibold">Aresta</span>
+                <span class="font-editorial text-xs sm:text-sm font-light text-white leading-tight line-clamp-3">{{ activeBookTitle }}</span>
+                <span class="font-interface text-[9px] text-textSecondary">Machado de Assis</span>
+              </div>
+
+              <!-- Efeito de Lombada de Livro -->
+              <div class="absolute inset-y-0 left-0 w-2 bg-gradient-to-r from-black/60 via-white/10 to-transparent pointer-events-none"></div>
+            </div>
+          </NuxtLink>
+
+          <!-- Informações Compactas do Livro -->
+          <div class="flex flex-col justify-between gap-2.5 sm:gap-3 flex-1 min-w-0">
+            <div class="flex flex-col gap-1">
+              <NuxtLink :to="activeBookReaderLink" class="hover:text-accent transition-colors">
+                <h1 class="font-editorial text-xl sm:text-4xl md:text-5xl font-light text-textPrimary leading-tight truncate sm:whitespace-normal">
+                  {{ activeBookTitle }}
+                </h1>
+              </NuxtLink>
+
+              <!-- Progresso Resumido: Apenas Porcentagem -->
+              <div class="text-xs sm:text-sm font-technical text-accent font-medium">
+                {{ activeBookProgress }}%
+              </div>
             </div>
 
-            <!-- Efeito de Lombada de Livro -->
-            <div class="absolute inset-y-0 left-0 w-2 bg-gradient-to-r from-black/60 via-white/10 to-transparent pointer-events-none"></div>
-          </div>
-        </NuxtLink>
-
-        <!-- Informações Compactas do Livro -->
-        <div class="flex flex-col justify-between gap-2.5 sm:gap-3 flex-1 min-w-0">
-          <div class="flex flex-col gap-1">
-            <NuxtLink :to="activeBookReaderLink" class="hover:text-accent transition-colors">
-              <h1 class="font-editorial text-xl sm:text-4xl md:text-5xl font-light text-textPrimary leading-tight truncate sm:whitespace-normal">
-                {{ activeBookTitle }}
-              </h1>
-            </NuxtLink>
-
-            <!-- Progresso Resumido: Apenas Porcentagem -->
-            <div class="text-xs sm:text-sm font-technical text-accent font-medium">
-              {{ activeBookProgress }}%
+            <!-- Botão de Ação: Continuar Leitura -->
+            <div class="flex items-center gap-3 pt-1">
+              <NuxtLink
+                :to="activeBookReaderLink"
+                class="bg-white text-black font-interface text-xs sm:text-sm font-medium px-4 sm:px-5 py-2 sm:py-2.5 rounded-full hover:bg-gray-200 transition-all flex items-center gap-1.5 shadow-md"
+                title="Continuar Leitura"
+              >
+                <span>Continuar</span>
+                <ArrowRightIcon class="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              </NuxtLink>
             </div>
           </div>
 
-          <!-- Botão de Ação: Continuar Leitura -->
-          <div class="flex items-center gap-3 pt-1">
+          <!-- Ofensiva no Topo Direito (Elevada, independente do alinhamento do título) -->
+          <div class="shrink-0 self-start -mt-2 sm:-mt-2.5">
+            <ReadingStreak />
+          </div>
+        </section>
+
+        <div class="h-px bg-divider/60 w-full"></div>
+
+        <!-- BLOCO 2: FLASHCARDS DO DIA (Clean, sem caixa, com botão direto) -->
+        <section class="flex flex-col gap-4">
+          <div class="flex items-center justify-between">
+            <div class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary flex items-center gap-2">
+              <BrainIcon class="w-3.5 h-3.5 text-accent" />
+              Flashcards do Dia
+            </div>
+
+            <!-- Link com Ícone de Informação para Curva do Esquecimento -->
             <NuxtLink
-              :to="activeBookReaderLink"
-              class="bg-white text-black font-interface text-xs sm:text-sm font-medium px-4 sm:px-5 py-2 sm:py-2.5 rounded-full hover:bg-gray-200 transition-all flex items-center gap-1.5 shadow-md"
-              title="Continuar Leitura"
+              to="/curva-do-esquecimento"
+              class="font-interface text-xs text-accent hover:underline flex items-center gap-1.5 transition-colors"
+              title="Entenda a Curva do Esquecimento de Hermann Ebbinghaus"
             >
-              <span>Continuar</span>
-              <ArrowRightIcon class="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <InfoIcon class="w-3.5 h-3.5 text-accent" />
+              <span>Por que revisar? (Curva de Ebbinghaus)</span>
             </NuxtLink>
           </div>
-        </div>
 
-        <!-- Ofensiva no Topo Direito (Elevada, independente do alinhamento do título) -->
-        <div class="shrink-0 self-start -mt-2 sm:-mt-2.5">
-          <ReadingStreak />
-        </div>
-      </section>
-
-      <div class="h-px bg-divider/60 w-full"></div>
-
-      <!-- BLOCO 2: FLASHCARDS DO DIA (Clean, sem caixa, com botão direto) -->
-      <section class="flex flex-col gap-4">
-        <div class="flex items-center justify-between">
-          <div class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary flex items-center gap-2">
-            <BrainIcon class="w-3.5 h-3.5 text-accent" />
-            Flashcards do Dia
-          </div>
-
-          <!-- Link com Ícone de Informação para Curva do Esquecimento -->
-          <NuxtLink
-            to="/curva-do-esquecimento"
-            class="font-interface text-xs text-accent hover:underline flex items-center gap-1.5 transition-colors"
-            title="Entenda a Curva do Esquecimento de Hermann Ebbinghaus"
-          >
-            <InfoIcon class="w-3.5 h-3.5 text-accent" />
-            <span>Por que revisar? (Curva de Ebbinghaus)</span>
-          </NuxtLink>
-        </div>
-
-        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-2">
-          <div class="flex flex-col gap-1.5 flex-1">
-            <span class="font-technical text-[10px] text-accent uppercase font-semibold tracking-wider">
-              1º Flashcard de Hoje · {{ dailyFlashcard.chapter }}
-            </span>
-            <h3 class="font-editorial text-xl sm:text-2xl font-light text-textPrimary leading-snug">
-              {{ dailyFlashcard.question }}
-            </h3>
-          </div>
-
-          <NuxtLink
-            to="/revisao"
-            class="bg-accent hover:bg-accent/90 text-white font-interface text-xs sm:text-sm font-medium px-4 py-2.5 rounded-full transition-all flex items-center gap-2 shadow-md shrink-0"
-          >
-            <span>Fazer Flashcard</span>
-          </NuxtLink>
-        </div>
-      </section>
-
-      <div class="h-px bg-divider/60 w-full"></div>
-
-      <!-- BLOCO 3: ANOTAÇÕES DO ÚLTIMO LIVRO (Clean, sem caixa, 3 anotações) -->
-      <section class="flex flex-col gap-4">
-        <div class="flex items-center justify-between">
-          <div class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary flex items-center gap-2">
-            <FileTextIcon class="w-3.5 h-3.5 text-accent" />
-            Anotações & Destaques
-          </div>
-          <NuxtLink to="/revisao" class="font-technical text-xs text-accent hover:underline flex items-center gap-1">
-            Ver todas →
-          </NuxtLink>
-        </div>
-
-        <div class="flex flex-col divide-y divide-divider/40">
-          <div
-            v-for="note in activeBookNotes"
-            :key="note.id"
-            class="flex flex-col gap-2 py-3 first:pt-0 last:pb-0"
-          >
-            <div class="flex items-center justify-between text-xs">
-              <span class="font-technical text-[10px] uppercase font-semibold tracking-widest text-accent">
-                {{ note.chapter }} · Pág. {{ note.page }}
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-2">
+            <div class="flex flex-col gap-1.5 flex-1">
+              <span class="font-technical text-[10px] text-accent uppercase font-semibold tracking-wider">
+                1º Flashcard de Hoje · {{ dailyFlashcard.chapter }}
               </span>
-              <span class="font-technical text-[10px] text-textSecondary">{{ note.date }}</span>
+              <h3 class="font-editorial text-xl sm:text-2xl font-light text-textPrimary leading-snug">
+                {{ dailyFlashcard.question }}
+              </h3>
             </div>
 
-            <blockquote class="border-l-2 border-accent pl-3 text-xs sm:text-sm font-interface italic text-textPrimary/90 leading-relaxed">
-              "{{ note.quote }}"
-            </blockquote>
-
-            <p class="font-interface text-xs text-textSecondary leading-relaxed pl-3">
-              {{ note.insight }}
-            </p>
+            <NuxtLink
+              to="/revisao"
+              class="bg-accent hover:bg-accent/90 text-white font-interface text-xs sm:text-sm font-medium px-4 py-2.5 rounded-full transition-all flex items-center gap-2 shadow-md shrink-0"
+            >
+              <span>Fazer Flashcard</span>
+            </NuxtLink>
           </div>
+        </section>
+
+        <div class="h-px bg-divider/60 w-full"></div>
+
+        <!-- BLOCO 3: ANOTAÇÕES DO ÚLTIMO LIVRO (Clean, sem caixa, 3 anotações) -->
+        <section class="flex flex-col gap-4">
+          <div class="flex items-center justify-between">
+            <div class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary flex items-center gap-2">
+              <FileTextIcon class="w-3.5 h-3.5 text-accent" />
+              Anotações & Destaques
+            </div>
+            <NuxtLink to="/revisao" class="font-technical text-xs text-accent hover:underline flex items-center gap-1">
+              Ver todas →
+            </NuxtLink>
+          </div>
+
+          <div class="flex flex-col divide-y divide-divider/40">
+            <div
+              v-for="note in activeBookNotes"
+              :key="note.id"
+              class="flex flex-col gap-2 py-3 first:pt-0 last:pb-0"
+            >
+              <div class="flex items-center justify-between text-xs">
+                <span class="font-technical text-[10px] uppercase font-semibold tracking-widest text-accent">
+                  {{ note.chapter }} · Pág. {{ note.page }}
+                </span>
+                <span class="font-technical text-[10px] text-textSecondary">{{ note.date }}</span>
+              </div>
+
+              <blockquote class="border-l-2 border-accent pl-3 text-xs sm:text-sm font-interface italic text-textPrimary/90 leading-relaxed">
+                "{{ note.quote }}"
+              </blockquote>
+
+              <p class="font-interface text-xs text-textSecondary leading-relaxed pl-3">
+                {{ note.insight }}
+              </p>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- COLUNA LATERAL: GRAFO DE CONHECIMENTO (Visível em Telas Desktop Grandes: xl e 2xl) -->
+      <div class="hidden xl:flex xl:col-span-5 2xl:col-span-5 sticky top-8 flex-col gap-3 h-[720px] max-h-[calc(100vh-6rem)]">
+        <div class="flex items-center justify-between px-1">
+          <div class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary flex items-center gap-2">
+            <NetworkIcon class="w-3.5 h-3.5 text-accent" />
+            Grafo de Conhecimento
+          </div>
+          <NuxtLink to="/grafo" class="font-technical text-xs text-accent hover:underline flex items-center gap-1" title="Ver grafo em tela cheia">
+            Expandir →
+          </NuxtLink>
         </div>
-      </section>
+
+        <!-- Card Container do Grafo -->
+        <div class="flex-1 rounded-3xl border border-divider/80 bg-bgPanel/60 backdrop-blur-xl overflow-hidden shadow-2xl relative">
+          <SidebarGraph />
+        </div>
+      </div>
     </div>
 
     <!-- ESTADO 2: VISITANTE NÃO AUTENTICADO (Página Inicial Pública / Landing Page do Aresta) -->
@@ -422,6 +443,7 @@ import {
 } from 'lucide-vue-next'
 import ReadingStreak from '~/components/ReadingStreak.vue'
 import EbbinghausChart from '~/components/EbbinghausChart.vue'
+import SidebarGraph from '~/components/SidebarGraph.vue'
 import { useAuth } from '~/composables/useAuth'
 import { useSettings } from '~/composables/useSettings'
 import { useUserBooks } from '~/composables/useUserBooks'
