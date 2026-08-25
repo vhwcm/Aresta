@@ -98,7 +98,7 @@
               title="Entenda a Curva do Esquecimento de Hermann Ebbinghaus"
             >
               <InfoIcon class="w-3.5 h-3.5 text-accent" />
-              <span>Por que revisar? (Curva de Ebbinghaus)</span>
+              <span>Por que revisar?</span>
             </NuxtLink>
           </div>
 

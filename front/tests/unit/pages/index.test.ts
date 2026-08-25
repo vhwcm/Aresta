@@ -92,7 +92,7 @@ describe('Index Page (Landing Page & Home)', () => {
     expect(wrapper.text()).toContain('O Alienista')
     expect(wrapper.text()).toContain('33%')
     expect(wrapper.text()).toContain('Flashcards do Dia')
-    expect(wrapper.text()).toContain('Por que revisar? (Curva de Ebbinghaus)')
+    expect(wrapper.text()).toContain('Por que revisar?')
     expect(wrapper.text()).toContain('1º Flashcard de Hoje')
     expect(wrapper.text()).toContain('Fazer Flashcard')
     expect(wrapper.text()).toContain('Anotações & Destaques')
