@@ -5,7 +5,7 @@
       ref="tooltipRef"
       class="reader-selection-tooltip"
       :class="isAbove ? 'reader-selection-tooltip--above' : 'reader-selection-tooltip--below'"
-      :style="{ left: `${x}px`, top: `${y}px` }"
+      :style="{ left: `${Math.round(x)}px`, top: `${Math.round(y)}px` }"
       @mousedown.stop
       @touchstart.stop
       role="toolbar"
@@ -127,15 +127,19 @@ onUnmounted(() => {
   pointer-events: auto;
   user-select: none;
   -webkit-user-select: none;
-  filter: drop-shadow(0 10px 25px rgba(0, 0, 0, 0.5));
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  backface-visibility: hidden;
+  transform: translate3d(-50%, 0, 0);
 }
 
 .reader-selection-tooltip--above {
-  transform: translate(-50%, -100%);
+  transform: translate3d(-50%, -100%, 0);
 }
 
 .reader-selection-tooltip--below {
-  transform: translate(-50%, 0);
+  transform: translate3d(-50%, 0, 0);
 }
 
 .reader-selection-tooltip__inner {
@@ -143,12 +147,12 @@ onUnmounted(() => {
   align-items: center;
   gap: 2px;
   padding: 4px 6px;
-  background: rgba(18, 19, 21, 0.95);
+  background: rgba(18, 19, 21, 0.96);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 9999px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(229, 123, 85, 0.15);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(229, 123, 85, 0.2);
 }
 
 .reader-selection-tooltip__btn {
@@ -197,10 +201,10 @@ onUnmounted(() => {
   left: 50%;
   width: 10px;
   height: 10px;
-  background: rgba(18, 19, 21, 0.95);
-  border-left: 1px solid rgba(255, 255, 255, 0.12);
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-  transform: translateX(-50%) rotate(45deg);
+  background: rgba(18, 19, 21, 0.96);
+  border-left: 1px solid rgba(255, 255, 255, 0.14);
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  transform: translate3d(-50%, 0, 0) rotate(45deg);
   pointer-events: none;
 }
 
@@ -208,8 +212,8 @@ onUnmounted(() => {
   bottom: -5px;
   border-left: none;
   border-top: none;
-  border-right: 1px solid rgba(255, 255, 255, 0.12);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  border-right: 1px solid rgba(255, 255, 255, 0.14);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
 }
 
 .reader-selection-tooltip__arrow--top {
@@ -225,13 +229,13 @@ onUnmounted(() => {
 .tooltip-fade-enter-from.reader-selection-tooltip--above,
 .tooltip-fade-leave-to.reader-selection-tooltip--above {
   opacity: 0;
-  transform: translate(-50%, calc(-100% + 6px)) scale(0.92);
+  transform: translate3d(-50%, calc(-100% + 6px), 0) scale(0.92);
 }
 
 .tooltip-fade-enter-from.reader-selection-tooltip--below,
 .tooltip-fade-leave-to.reader-selection-tooltip--below {
   opacity: 0;
-  transform: translate(-50%, -6px) scale(0.92);
+  transform: translate3d(-50%, -6px, 0) scale(0.92);
 }
 </style>
 

@@ -262,15 +262,15 @@ function handleTextSelectionCheck() {
   selectionTooltipPage.value = pageNum
   annotationPage.value = pageNum
 
-  // Centraliza o tooltip sobre a seleção e delimita às margens da janela
-  const centerX = rect.left + rect.width / 2
+  // Centraliza o tooltip sobre a seleção e delimita às margens da janela (com coordenadas inteiras)
+  const centerX = Math.round(rect.left + rect.width / 2)
   const clampedX = Math.max(110, Math.min(window.innerWidth - 110, centerX))
 
   if (rect.top > 60) {
-    selectionTooltipY.value = rect.top - 12
+    selectionTooltipY.value = Math.round(rect.top - 12)
     isSelectionTooltipAbove.value = true
   } else {
-    selectionTooltipY.value = rect.bottom + 12
+    selectionTooltipY.value = Math.round(rect.bottom + 12)
     isSelectionTooltipAbove.value = false
   }
 

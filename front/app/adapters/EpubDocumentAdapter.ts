@@ -201,12 +201,14 @@ export class EpubDocumentAdapter implements IBookDocument {
     try {
       const doc = await section.createDocument()
       const bodyContent = doc.body ? doc.body.innerHTML : ''
+      const fontSize = Math.round(18 * renderScale)
+      const padding = Math.round(48 * renderScale)
 
       const svgContent = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${baseWidth} ${baseHeight}">
-          <foreignObject width="${baseWidth}" height="${baseHeight}">
+        <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
+          <foreignObject width="100%" height="100%">
             <div xmlns="http://www.w3.org/1999/xhtml"
-              style="font-family:Georgia,serif;font-size:18px;padding:48px;margin:0;box-sizing:border-box;color:#1a1a1a;line-height:1.7;word-wrap:break-word;width:100%;height:100%;">
+              style="font-family:Georgia,serif;font-size:${fontSize}px;padding:${padding}px;margin:0;box-sizing:border-box;color:#1a1a1a;line-height:1.7;word-wrap:break-word;width:100%;height:100%;">
               ${bodyContent}
             </div>
           </foreignObject>
