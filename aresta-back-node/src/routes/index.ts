@@ -9,6 +9,7 @@ import userBookRoutes from './userBook.routes.js';
 import userSettingsRoutes from './userSettings.routes.js';
 import graphRoutes from './graph.routes.js';
 import annotationRoutes from './annotation.routes.js';
+import streakRoutes from './streak.routes.js';
 import healthRoutes from './health.routes.js';
 import conversionRoutes from './conversion.routes.js';
 
@@ -25,6 +26,7 @@ router.get(ROUTES.DOCS_JSON, (_req, res) => {
 
 // Rotas da API
 router.use(ROUTES.AUTH, authRoutes);
+router.use(ROUTES.USERS_ME, streakRoutes);
 router.use(ROUTES.USERS, userRoutes);
 router.use(ROUTES.BOOKS, bookRoutes);
 router.use(ROUTES.USER_BOOKS, userBookRoutes);

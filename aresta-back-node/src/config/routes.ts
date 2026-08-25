@@ -7,6 +7,7 @@ export const API_PREFIX = '/api';
 export const ROUTES = {
   // Rotas da API REST
   AUTH: '/api/auth',
+  USERS_ME: '/api/users/me',
   USERS: '/api/users',
   BOOKS: '/api/books',
   USER_BOOKS: '/api/user-books',
