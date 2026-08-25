@@ -5,6 +5,7 @@ import { EpubDocumentAdapter } from '../../../app/adapters/EpubDocumentAdapter'
 
 // Mock pdfjs-dist
 vi.mock('pdfjs-dist', () => ({
+  version: '6.1.200',
   GlobalWorkerOptions: { workerSrc: '' },
   TextLayer: class MockTextLayer {
     options: any

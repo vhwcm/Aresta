@@ -296,6 +296,9 @@ defineExpose({
   user-select: text;
   -webkit-user-select: text;
   cursor: text;
+  --min-font-size: 1;
+  --text-scale-factor: calc(var(--total-scale-factor, var(--scale-factor, 1)) * var(--min-font-size));
+  --min-font-size-inv: calc(1 / var(--min-font-size));
 }
 
 .page-text-layer {
@@ -310,6 +313,15 @@ defineExpose({
   white-space: pre;
   cursor: text;
   transform-origin: 0% 0%;
+}
+
+.page-text-layer :deep(> :not(.markedContent)),
+.page-text-layer :deep(.markedContent span:not(.markedContent)) {
+  --font-height: 0;
+  font-size: calc(var(--text-scale-factor) * var(--font-height));
+  --scale-x: 1;
+  --rotate: 0deg;
+  transform: rotate(var(--rotate)) scaleX(var(--scale-x)) scale(var(--min-font-size-inv));
 }
 
 .page-text-layer :deep(.markedContent) {

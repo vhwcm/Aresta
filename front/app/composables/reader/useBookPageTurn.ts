@@ -121,6 +121,8 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
       const ctx = canvas.getContext('2d', { alpha: false })
       if (!ctx) throw new Error('Não foi possível obter contexto 2D para rasterizar página.')
 
+      ctx.imageSmoothingEnabled = true
+      ctx.imageSmoothingQuality = 'high'
       ctx.fillStyle = '#ffffff'
       ctx.fillRect(0, 0, canvas.width, canvas.height)
       await pageData.render(ctx)
@@ -300,6 +302,8 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
 
     stageCtx.setTransform(1, 0, 0, 1, 0, 0)
     stageCtx.scale(dpr, dpr)
+    stageCtx.imageSmoothingEnabled = true
+    stageCtx.imageSmoothingQuality = 'high'
 
     pageLayout.value = computeLayout()
     drawScene(0)
@@ -325,11 +329,15 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
     drawPageShadow(ctx, targetRect)
 
     if (raster && raster.canvas) {
+      ctx.save()
+      ctx.imageSmoothingEnabled = true
+      ctx.imageSmoothingQuality = 'high'
       ctx.drawImage(
         raster.canvas,
         0, 0, raster.canvas.width, raster.canvas.height,
         targetRect.left, targetRect.top, targetRect.width, targetRect.height,
       )
+      ctx.restore()
     } else {
       ctx.fillStyle = '#ffffff'
       ctx.fillRect(targetRect.left, targetRect.top, targetRect.width, targetRect.height)
@@ -364,6 +372,8 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
     const height = hostRef.value.clientHeight
     const layout = pageLayout.value
 
+    stageCtx.imageSmoothingEnabled = true
+    stageCtx.imageSmoothingQuality = 'high'
     stageCtx.clearRect(0, 0, width, height)
 
     if (layout.isTwoPage && layout.leftPage) {

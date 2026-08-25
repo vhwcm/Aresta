@@ -47,7 +47,14 @@ export class PdfDocumentAdapter implements IBookDocument {
     const typedArray = new Uint8Array(arrayBuffer)
 
     await readerProfiler.measureAsync('4.2. PDF.js getDocument & Parse Estrutura', async () => {
-      const loadingTask = pdfjsLib.getDocument({ data: typedArray })
+      const pdfjsVersion = pdfjsLib.version || '6.1.200'
+      const loadingTask = pdfjsLib.getDocument({
+        data: typedArray,
+        cMapUrl: `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsVersion}/cmaps/`,
+        cMapPacked: true,
+        standardFontDataUrl: `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsVersion}/standard_fonts/`,
+        enableXfa: false,
+      })
       this._pdfDocument = await loadingTask.promise
     }, 'parse', { sizeBytes: typedArray.byteLength })
 
@@ -72,11 +79,14 @@ export class PdfDocumentAdapter implements IBookDocument {
     const pdfDoc = this._pdfDocument as import('pdfjs-dist').PDFDocumentProxy
     const pdfPage = await pdfDoc.getPage(pageNumber)
 
-    // Renderiza em alta resolução (~2400-3000px na maior dimensão) para texto nítido em telas High-DPI/Retina
+    // Renderiza em altíssima resolução para texto perfeitamente nítido em qualquer densidade de tela (High-DPI / Retina / 4K)
     const baseViewport = pdfPage.getViewport({ scale: 1.0 })
     const baseMaxDim = Math.max(baseViewport.width, baseViewport.height)
-    const desiredDim = Math.min(3200, Math.max(2400, baseMaxDim * 2.75))
-    const scale = Math.max(2.0, desiredDim / baseMaxDim)
+    const dpr = typeof window !== 'undefined' ? Math.max(1, window.devicePixelRatio || 1) : 1
+    
+    // Escala adaptativa: garante no mínimo 3.0x de densidade de pixels para máxima clareza tipográfica
+    const targetDim = Math.max(2800, Math.min(4096, baseMaxDim * Math.max(3.0, dpr * 1.75)))
+    const scale = Math.max(3.0, targetDim / baseMaxDim)
     const viewport = pdfPage.getViewport({ scale })
 
     const pageData: PageData = {
@@ -87,11 +97,13 @@ export class PdfDocumentAdapter implements IBookDocument {
         const canvas = ctx.canvas
         ctx.fillStyle = '#ffffff'
         ctx.fillRect(0, 0, canvas.width, canvas.height)
+        ctx.imageSmoothingEnabled = true
+        ctx.imageSmoothingQuality = 'high'
 
         await pdfPage.render({
           canvasContext: ctx as unknown as CanvasRenderingContext2D,
           viewport,
-          canvas,
+          intent: 'display',
         }).promise
       },
     }
@@ -126,6 +138,7 @@ export class PdfDocumentAdapter implements IBookDocument {
     container.innerHTML = ''
     container.classList.add('textLayer')
     container.style.setProperty('--scale-factor', `${scale}`)
+    container.style.setProperty('--total-scale-factor', `${scale}`)
     container.style.width = `${viewport.width}px`
     container.style.height = `${viewport.height}px`
 

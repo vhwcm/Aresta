@@ -306,6 +306,8 @@ export class EpubDocumentAdapter implements IBookDocument {
     const ctx = canvas.getContext('2d')
     if (!ctx) return canvas
 
+    ctx.imageSmoothingEnabled = true
+    ctx.imageSmoothingQuality = 'high'
     ctx.fillStyle = '#faf9f7'
     ctx.fillRect(0, 0, width, height)
 
