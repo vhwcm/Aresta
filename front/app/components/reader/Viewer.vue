@@ -95,10 +95,22 @@
     <ReaderAnnotationModal
       :is-open="isAnnotationModalOpen"
       :initial-text="capturedSelectionText"
-      :current-page="store.currentPage"
+      :current-page="annotationPage"
       :book-id="store.bookId"
       @close="isAnnotationModalOpen = false"
       @created="handleAnnotationCreated"
+    />
+
+    <!-- Tooltip de Sugestão na Seleção de Texto (Kindle / Google Play Livros) -->
+    <ReaderSelectionTooltip
+      :visible="isSelectionTooltipVisible"
+      :x="selectionTooltipX"
+      :y="selectionTooltipY"
+      :selected-text="selectionTooltipText"
+      :page-number="selectionTooltipPage"
+      :is-above="isSelectionTooltipAbove"
+      @annotate="handleAnnotateFromTooltip"
+      @close="isSelectionTooltipVisible = false"
     />
   </div>
 </template>
@@ -113,6 +125,7 @@ import ReaderBottomBar from '~/components/reader/ReaderBottomBar.vue'
 import ReaderSavedPagesModal from '~/components/reader/ReaderSavedPagesModal.vue'
 import ReaderAnnotationModal from '~/components/reader/ReaderAnnotationModal.vue'
 import ReaderGraphPanel from '~/components/reader/ReaderGraphPanel.vue'
+import ReaderSelectionTooltip from '~/components/reader/ReaderSelectionTooltip.vue'
 
 const store = useReaderStore()
 const router = useRouter()
@@ -120,9 +133,18 @@ const router = useRouter()
 const isSavedPagesOpen = ref(false)
 const isAnnotationModalOpen = ref(false)
 const capturedSelectionText = ref('')
+const annotationPage = ref(1)
 const isDesktop = ref(true)
 const canvasAreaRef = ref<HTMLElement | null>(null)
 let resizeObserver: ResizeObserver | null = null
+
+// Estado do Tooltip de Seleção Flutuante
+const isSelectionTooltipVisible = ref(false)
+const selectionTooltipX = ref(0)
+const selectionTooltipY = ref(0)
+const selectionTooltipText = ref('')
+const selectionTooltipPage = ref(1)
+const isSelectionTooltipAbove = ref(true)
 
 const graphPanelRef = ref<any>(null)
 const mobileGraphPanelRef = ref<any>(null)
@@ -156,11 +178,35 @@ function handleSelectSavedPage(page: number) {
   store.goToPage(page)
 }
 
+function getTargetPageFromSelection(selection: Selection): number {
+  if (!selection.anchorNode) return store.currentPage
+  const element = selection.anchorNode instanceof HTMLElement
+    ? selection.anchorNode
+    : selection.anchorNode.parentElement
+  const pageLayer = element?.closest('.page-text-layer')
+  if (pageLayer && pageLayer.classList.contains('page-text-layer--right')) {
+    const leftNum = store.currentPage % 2 === 0 ? store.currentPage : Math.max(1, store.currentPage - 1)
+    const rightNum = leftNum + 1
+    return rightNum <= store.totalPages ? rightNum : store.currentPage
+  } else if (pageLayer && pageLayer.classList.contains('page-text-layer--left')) {
+    const leftNum = store.currentPage % 2 === 0 ? store.currentPage : Math.max(1, store.currentPage - 1)
+    return leftNum
+  }
+  return store.currentPage
+}
+
 async function handleOpenAnnotation() {
-  const selection = typeof window !== 'undefined' ? window.getSelection()?.toString() : ''
-  if (selection && selection.trim().length > 0) {
-    capturedSelectionText.value = selection.trim()
+  isSelectionTooltipVisible.value = false
+  const selection = typeof window !== 'undefined' ? window.getSelection() : null
+  const selectedStr = selection?.toString()?.trim() || ''
+
+  if (selectedStr.length > 0) {
+    capturedSelectionText.value = selectedStr
+    if (selection) {
+      annotationPage.value = getTargetPageFromSelection(selection)
+    }
   } else if (store.document && typeof store.document.getTextContent === 'function') {
+    annotationPage.value = store.currentPage
     try {
       const pageText = await store.document.getTextContent(store.currentPage)
       capturedSelectionText.value = pageText ? pageText.slice(0, 300) : ''
@@ -168,15 +214,82 @@ async function handleOpenAnnotation() {
       capturedSelectionText.value = ''
     }
   } else {
+    annotationPage.value = store.currentPage
     capturedSelectionText.value = ''
   }
   isAnnotationModalOpen.value = true
 }
 
 function handleTextSelectionCheck() {
-  const selection = typeof window !== 'undefined' ? window.getSelection()?.toString() : ''
-  if (selection && selection.trim().length > 2) {
-    capturedSelectionText.value = selection.trim()
+  if (typeof window === 'undefined') return
+  const selection = window.getSelection()
+  if (!selection || selection.isCollapsed) {
+    isSelectionTooltipVisible.value = false
+    return
+  }
+
+  const selectedText = selection.toString().trim()
+  if (!selectedText || selectedText.length < 2) {
+    isSelectionTooltipVisible.value = false
+    return
+  }
+
+  // Verifica se a seleção ocorreu dentro da área de leitura/livro
+  if (canvasAreaRef.value) {
+    const anchor = selection.anchorNode
+    const focus = selection.focusNode
+    const isAnchorInside = anchor && canvasAreaRef.value.contains(anchor)
+    const isFocusInside = focus && canvasAreaRef.value.contains(focus)
+    if (!isAnchorInside && !isFocusInside) {
+      isSelectionTooltipVisible.value = false
+      return
+    }
+  }
+
+  if (selection.rangeCount === 0) return
+  const range = selection.getRangeAt(0)
+  const rect = range.getBoundingClientRect()
+
+  if (rect.width === 0 && rect.height === 0) {
+    isSelectionTooltipVisible.value = false
+    return
+  }
+
+  capturedSelectionText.value = selectedText
+  selectionTooltipText.value = selectedText
+
+  const pageNum = getTargetPageFromSelection(selection)
+  selectionTooltipPage.value = pageNum
+  annotationPage.value = pageNum
+
+  // Centraliza o tooltip sobre a seleção e delimita às margens da janela
+  const centerX = rect.left + rect.width / 2
+  const clampedX = Math.max(110, Math.min(window.innerWidth - 110, centerX))
+
+  if (rect.top > 60) {
+    selectionTooltipY.value = rect.top - 12
+    isSelectionTooltipAbove.value = true
+  } else {
+    selectionTooltipY.value = rect.bottom + 12
+    isSelectionTooltipAbove.value = false
+  }
+
+  selectionTooltipX.value = clampedX
+  isSelectionTooltipVisible.value = true
+}
+
+function handleAnnotateFromTooltip(payload: { text: string; pageNumber?: number }) {
+  capturedSelectionText.value = payload.text || ''
+  annotationPage.value = payload.pageNumber || store.currentPage
+  isSelectionTooltipVisible.value = false
+  isAnnotationModalOpen.value = true
+}
+
+function onDocumentSelectionChange() {
+  if (typeof window === 'undefined') return
+  const selection = window.getSelection()
+  if (!selection || selection.isCollapsed || !selection.toString().trim()) {
+    isSelectionTooltipVisible.value = false
   }
 }
 
@@ -223,6 +336,13 @@ watch(
   },
 )
 
+watch(
+  () => store.currentPage,
+  () => {
+    isSelectionTooltipVisible.value = false
+  },
+)
+
 function isTextInput(target: EventTarget | null): boolean {
   return target instanceof HTMLInputElement
     || target instanceof HTMLTextAreaElement
@@ -246,6 +366,7 @@ onMounted(() => {
   updateDeviceType()
   window.addEventListener('resize', updateDeviceType)
   window.addEventListener('keydown', onKeyDown)
+  document.addEventListener('selectionchange', onDocumentSelectionChange)
   if (canvasAreaRef.value && typeof ResizeObserver !== 'undefined') {
     resizeObserver = new ResizeObserver(() => {
       updateDeviceType()
@@ -258,6 +379,7 @@ onUnmounted(() => {
   resizeObserver?.disconnect()
   window.removeEventListener('resize', updateDeviceType)
   window.removeEventListener('keydown', onKeyDown)
+  document.removeEventListener('selectionchange', onDocumentSelectionChange)
 })
 </script>
 
@@ -369,9 +491,9 @@ onUnmounted(() => {
 }
 
 .reader-viewer__nav-btn:not(:disabled):hover {
-  background: rgba(124, 106, 247, 0.25);
-  border-color: rgba(124, 106, 247, 0.5);
-  color: var(--color-accent);
+  background: rgba(229, 123, 85, 0.18);
+  border-color: rgba(229, 123, 85, 0.45);
+  color: var(--color-accent, #E57B55);
   transform: translateY(-50%) scale(1.08);
 }
 

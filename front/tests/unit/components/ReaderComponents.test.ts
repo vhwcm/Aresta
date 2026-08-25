@@ -4,6 +4,7 @@ import { setActivePinia, createPinia } from 'pinia'
 import ReaderBottomBar from '../../../app/components/reader/ReaderBottomBar.vue'
 import ReaderSavedPagesModal from '../../../app/components/reader/ReaderSavedPagesModal.vue'
 import ReaderAnnotationModal from '../../../app/components/reader/ReaderAnnotationModal.vue'
+import ReaderSelectionTooltip from '../../../app/components/reader/ReaderSelectionTooltip.vue'
 import { useReaderStore } from '../../../app/stores/readerStore'
 
 vi.mock('~/composables/useGraph', () => ({
@@ -203,6 +204,87 @@ describe('Reader Components', () => {
 
       expect(wrapper.emitted('created')).toBeTruthy()
       expect(wrapper.emitted('close')).toBeTruthy()
+    })
+  })
+
+  describe('ReaderSelectionTooltip', () => {
+    it('renderiza botões de anotação e cópia quando visible é true', () => {
+      const wrapper = mount(ReaderSelectionTooltip, {
+        props: {
+          visible: true,
+          x: 250,
+          y: 300,
+          selectedText: 'Texto selecionado para anotação',
+          pageNumber: 4,
+          isAbove: true,
+        },
+      })
+
+      expect(wrapper.text()).toContain('Anotar')
+      expect(wrapper.text()).toContain('Copiar')
+      expect(wrapper.find('.reader-selection-tooltip').exists()).toBe(true)
+    })
+
+    it('não renderiza conteúdo quando visible é false', () => {
+      const wrapper = mount(ReaderSelectionTooltip, {
+        props: {
+          visible: false,
+          x: 250,
+          y: 300,
+          selectedText: '',
+        },
+      })
+
+      expect(wrapper.find('.reader-selection-tooltip').exists()).toBe(false)
+    })
+
+    it('emite evento annotate com o texto e página corretos ao clicar em Anotar', async () => {
+      const wrapper = mount(ReaderSelectionTooltip, {
+        props: {
+          visible: true,
+          x: 250,
+          y: 300,
+          selectedText: 'Trecho importante de teste',
+          pageNumber: 7,
+          isAbove: true,
+        },
+      })
+
+      const annotateBtn = wrapper.findAll('button').find((b) => b.text().includes('Anotar'))
+      expect(annotateBtn?.exists()).toBe(true)
+      await annotateBtn?.trigger('click')
+
+      expect(wrapper.emitted('annotate')?.[0]).toEqual([
+        { text: 'Trecho importante de teste', pageNumber: 7 },
+      ])
+    })
+
+    it('copia o texto selecionado e altera o estado do botão para Copiado!', async () => {
+      const writeTextMock = vi.fn().mockResolvedValue(undefined)
+      Object.defineProperty(navigator, 'clipboard', {
+        value: {
+          writeText: writeTextMock,
+        },
+        configurable: true,
+        writable: true,
+      })
+
+      const wrapper = mount(ReaderSelectionTooltip, {
+        props: {
+          visible: true,
+          x: 250,
+          y: 300,
+          selectedText: 'Texto a ser copiado',
+          pageNumber: 2,
+        },
+      })
+
+      const copyBtn = wrapper.findAll('button').find((b) => b.text().includes('Copiar'))
+      expect(copyBtn?.exists()).toBe(true)
+      await copyBtn?.trigger('click')
+
+      expect(writeTextMock).toHaveBeenCalledWith('Texto a ser copiado')
+      expect(wrapper.text()).toContain('Copiado!')
     })
   })
 })
