@@ -27,6 +27,7 @@
         "backend_node_express",
         "banco_e_usuarios",
         "livros_e_armazenamento",
+        "leitor_e_gerenciamento_memoria",
         "systems",
         "quality_gates"
       ]
