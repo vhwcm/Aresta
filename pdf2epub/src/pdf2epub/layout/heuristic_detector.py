@@ -9,6 +9,11 @@ CHAPTER_START_RE = re.compile(
     re.IGNORECASE
 )
 
+TOC_LINE_RE = re.compile(
+    r'(\.{2,}|[\.\s_–-]{3,}|\s{2,})\d+$|\b(?:p[áa]g\.?|p\.)\s*\d+$',
+    re.IGNORECASE
+)
+
 class HeuristicLayoutDetector:
     """
     Detector determinístico de layout baseado na distribuição geométrica
@@ -81,11 +86,11 @@ class HeuristicLayoutDetector:
                 return []
 
             full_text = " ".join(s.text for s in span_list).strip()
-            is_chapter_title = bool(CHAPTER_START_RE.match(full_text))
+            is_toc = bool(TOC_LINE_RE.search(full_text))
+            is_chapter_title = bool(CHAPTER_START_RE.match(full_text)) and not is_toc
 
             # Se o bloco começou com capítulo mas possui múltiplos spans ou texto longo (parágrafos misturados):
             if is_chapter_title and (len(span_list) > 1 or len(full_text) > 100 or '\n' in full_text):
-                # Isola o primeiro span ou linha como título e o resto como parágrafo
                 m = re.match(r'^(cap[íi]tulo\s+(?:[ivxlcdm0-9]+|\w+)(?:\s*[-–—:]\s*[^.\n!]+(?:[!?.])?)?|chapter\s+[0-9ivxlcdm]+(?:\s*[-–—:]\s*[^.\n!]+(?:[!?.])?)?|sinopse|sum[áa]rio|pref[áa]cio|introdu[çc][ãa]o|ep[íi]logo|conclus[ãa]o|posf[áa]cio)', full_text, re.IGNORECASE)
                 if m:
                     title_str = m.group(1).strip()
@@ -132,10 +137,10 @@ class HeuristicLayoutDetector:
             if is_chapter_title and len(full_text) < 120:
                 reg_type = RegionType.TITLE
                 level = 1
-            elif max_size >= avg_font_size * 1.4:
+            elif not is_toc and max_size >= avg_font_size * 1.4:
                 reg_type = RegionType.TITLE if max_size >= avg_font_size * 1.8 else RegionType.HEADING
                 level = 1 if max_size >= avg_font_size * 1.8 else (2 if max_size >= avg_font_size * 1.5 else 3)
-            elif is_bold and len(full_text) < 100 and max_size >= avg_font_size * 1.05 and not full_text.endswith('.'):
+            elif not is_toc and is_bold and len(full_text) < 100 and max_size >= avg_font_size * 1.05 and not full_text.endswith('.'):
                 reg_type = RegionType.HEADING
                 level = 3
             else:
@@ -152,22 +157,25 @@ class HeuristicLayoutDetector:
             )]
 
         for s in sorted_spans:
+            clean_text = s.text.strip()
+            is_toc = bool(TOC_LINE_RE.search(clean_text))
+            is_chap_start = bool(CHAPTER_START_RE.match(clean_text)) and not is_toc
+
             if not current_block:
                 current_block.append(s)
                 last_span = s
                 continue
 
             # Se o novo span for o início de um capítulo, fecha o bloco anterior imediatamente
-            if CHAPTER_START_RE.match(s.text.strip()):
+            if is_chap_start:
                 regions.extend(create_regions_from_spans(current_block))
                 current_block = [s]
                 last_span = s
                 continue
 
             # Se o bloco atual começou com um título de capítulo, verifica se este novo span ainda pode ser parte do título
-            if CHAPTER_START_RE.match(current_block[0].text.strip()):
+            if CHAPTER_START_RE.match(current_block[0].text.strip()) and not TOC_LINE_RE.search(current_block[0].text.strip()):
                 curr_text = " ".join(x.text for x in current_block).strip()
-                # Se já temos um título com número e nome, ou se o novo span for texto longo/narrativo, fecha o título
                 is_subheading = (
                     len(curr_text) < 50 and
                     len(s.text.strip()) < 50 and

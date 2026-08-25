@@ -13,17 +13,35 @@ CHAPTER_HEADING_CLEAN = re.compile(
     re.IGNORECASE
 )
 
+TOC_LINE_RE = re.compile(
+    r'(\.{2,}|[\.\s_–-]{3,}|\s{2,})\d+$|\b(?:p[áa]g\.?|p\.)\s*\d+$',
+    re.IGNORECASE
+)
+
 class ChapterResolver:
     """
     Agrupa páginas e regiões em capítulos estruturados
     com base em títulos (TITLE), cabeçalhos principais (HEADING) e padrões textuais (CAPÍTULO...).
-    Garante que parágrafos narrativos não sejam mesclados ou classificados como títulos.
+    Identifica sumários/índices e evita criar capítulos para cada linha de índice.
     """
     def resolve_chapters(self, pages: List[Page], doc_title: str) -> List[Chapter]:
         chapters: List[Chapter] = []
         current_chapter: Chapter | None = None
+        in_toc_section = False
 
         for page in pages:
+            # Detecta se a página inteira é uma página de sumário (múltiplas entradas de capítulos na mesma página)
+            chapter_matches_on_page = 0
+            has_explicit_toc_header = False
+            for reg in page.regions:
+                t = reg.text.strip()
+                if re.match(r'^(sum[áa]rio|índice|table of contents|contents)\b', t, re.IGNORECASE):
+                    has_explicit_toc_header = True
+                if CHAPTER_PATTERN.match(t) or TOC_LINE_RE.search(t):
+                    chapter_matches_on_page += 1
+
+            is_toc_page = has_explicit_toc_header or (chapter_matches_on_page >= 2)
+
             for region in page.regions:
                 if region.type in (RegionType.HEADER, RegionType.FOOTER, RegionType.PAGE_NUMBER):
                     continue
@@ -32,11 +50,17 @@ class ChapterResolver:
                 if not raw_text:
                     continue
 
-                # Detecta início de um novo capítulo
+                is_toc_entry = bool(TOC_LINE_RE.search(raw_text))
+
+                # Detecta início de um novo capítulo (apenas se não for entrada de índice/sumário)
                 is_chapter_title = (
-                    region.type == RegionType.TITLE or
-                    (region.type == RegionType.HEADING and region.level == 1) or
-                    bool(CHAPTER_PATTERN.match(raw_text))
+                    not is_toc_entry and
+                    not (is_toc_page and in_toc_section and not has_explicit_toc_header) and
+                    (
+                        region.type == RegionType.TITLE or
+                        (region.type == RegionType.HEADING and region.level == 1) or
+                        bool(CHAPTER_PATTERN.match(raw_text))
+                    )
                 )
 
                 if is_chapter_title and len(raw_text) > 2:
@@ -49,7 +73,6 @@ class ChapterResolver:
                     if m:
                         title_clean = m.group(1).strip()
                         remaining_text = raw_text[m.end():].strip()
-                        # Remove eventuais pontuações iniciais do texto restante (ex: ": ", ". ")
                         remaining_text = re.sub(r'^[.:\s-]+', '', remaining_text).strip()
                     elif '\n' in raw_text:
                         lines = [l.strip() for l in raw_text.split('\n') if l.strip()]
@@ -65,6 +88,8 @@ class ChapterResolver:
 
                     # Remove pontuações de sumário (ex: ..... 5)
                     title_clean = re.sub(r'[\.\s_]{3,}\s*\d*$', '', title_clean).strip()
+
+                    in_toc_section = bool(re.match(r'^(sum[áa]rio|índice|table of contents|contents)\b', title_clean, re.IGNORECASE)) or is_toc_page
 
                     title_region = Region(
                         type=RegionType.TITLE,
@@ -93,8 +118,7 @@ class ChapterResolver:
                         regions=chapter_regions
                     )
                 else:
-                    # Se for uma região normal que foi erroneamente marcada como TITLE mas é parágrafo longo
-                    if region.type == RegionType.TITLE and len(raw_text) > 100:
+                    if region.type == RegionType.TITLE and (is_toc_entry or len(raw_text) > 100):
                         region.type = RegionType.PARAGRAPH
                         region.level = 1
 

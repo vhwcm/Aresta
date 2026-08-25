@@ -12,7 +12,6 @@ interface ReaderState {
   bookmarks: number[]
   isGraphOpen: boolean
   isMobileGraphOpen: boolean
-  isTwoPageMode: boolean
 }
 
 export const useReaderStore = defineStore('reader', {
@@ -26,48 +25,24 @@ export const useReaderStore = defineStore('reader', {
     bookmarks: [],
     isGraphOpen: true,
     isMobileGraphOpen: false,
-    isTwoPageMode: false,
   }),
 
   getters: {
     totalPages: (state): number => state.document?.totalPages ?? 0,
     hasDocument: (state): boolean => state.document !== null,
     isFirstPage: (state): boolean => state.currentPage <= 1,
-    isLastPage: (state): boolean => {
-      if (!state.document) return false
-      return state.isTwoPageMode
-        ? state.currentPage + 1 >= state.document.totalPages
-        : state.currentPage >= state.document.totalPages
-    },
+    isLastPage: (state): boolean =>
+      state.document !== null && state.currentPage >= state.document.totalPages,
     documentType: (state) => state.document?.type ?? null,
     title: (state) => state.document?.metadata.title ?? state.fileName ?? '',
-    canGoNext: (state): boolean => {
-      if (!state.document) return false
-      return state.isTwoPageMode
-        ? state.currentPage + 1 < state.document.totalPages
-        : state.currentPage < state.document.totalPages
-    },
+    canGoNext: (state): boolean =>
+      state.document !== null && state.currentPage < state.document.totalPages,
     canGoPrev: (state): boolean => state.currentPage > 1,
-    secondPage: (state): number | null => {
-      if (!state.isTwoPageMode || !state.document) return null
-      const second = state.currentPage + 1
-      return second <= state.document.totalPages ? second : null
-    },
-    isCurrentPageBookmarked: (state): boolean => {
-      if (state.isTwoPageMode) {
-        const second = state.currentPage + 1
-        const total = state.document?.totalPages ?? 0
-        return state.bookmarks.includes(state.currentPage) || (second <= total && state.bookmarks.includes(second))
-      }
-      return state.bookmarks.includes(state.currentPage)
-    },
+    isCurrentPageBookmarked: (state): boolean => state.bookmarks.includes(state.currentPage),
     savedPages: (state): number[] => [...state.bookmarks].sort((a, b) => a - b),
     progressPercentage: (state): number => {
       if (!state.document || state.document.totalPages <= 0) return 0
-      const pageForProgress = state.isTwoPageMode
-        ? Math.min(state.currentPage + 1, state.document.totalPages)
-        : state.currentPage
-      return Math.round((pageForProgress / state.document.totalPages) * 100)
+      return Math.round((state.currentPage / state.document.totalPages) * 100)
     },
   },
 
@@ -129,23 +104,10 @@ export const useReaderStore = defineStore('reader', {
 
     toggleBookmark(pageNumber?: number) {
       const page = pageNumber ?? this.currentPage
-      if (this.isTwoPageMode && pageNumber === undefined) {
-        const second = this.currentPage + 1
-        const total = this.document?.totalPages ?? 0
-        const isCurrentMarked = this.bookmarks.includes(this.currentPage)
-        const isSecondMarked = second <= total && this.bookmarks.includes(second)
-
-        if (isCurrentMarked || isSecondMarked) {
-          this.bookmarks = this.bookmarks.filter((p) => p !== this.currentPage && p !== second)
-        } else {
-          this.bookmarks = [...this.bookmarks, this.currentPage].sort((a, b) => a - b)
-        }
+      if (this.bookmarks.includes(page)) {
+        this.bookmarks = this.bookmarks.filter((p) => p !== page)
       } else {
-        if (this.bookmarks.includes(page)) {
-          this.bookmarks = this.bookmarks.filter((p) => p !== page)
-        } else {
-          this.bookmarks = [...this.bookmarks, page].sort((a, b) => a - b)
-        }
+        this.bookmarks = [...this.bookmarks, page].sort((a, b) => a - b)
       }
       this.saveBookmarks()
     },
@@ -160,13 +122,6 @@ export const useReaderStore = defineStore('reader', {
     removeBookmark(pageNumber: number) {
       this.bookmarks = this.bookmarks.filter((p) => p !== pageNumber)
       this.saveBookmarks()
-    },
-
-    setTwoPageMode(enabled: boolean) {
-      this.isTwoPageMode = enabled
-      if (enabled && this.currentPage > 1 && this.currentPage % 2 === 0) {
-        this.currentPage = this.currentPage - 1
-      }
     },
 
     toggleGraph() {
@@ -196,25 +151,16 @@ export const useReaderStore = defineStore('reader', {
 
     goToPage(page: number) {
       if (!this.document) return
-      let clamped = Math.max(1, Math.min(page, this.document.totalPages))
-      if (this.isTwoPageMode && clamped > 1 && clamped % 2 === 0) {
-        clamped = clamped - 1
-      }
+      const clamped = Math.max(1, Math.min(page, this.document.totalPages))
       this.currentPage = clamped
     },
 
     nextPage() {
-      if (this.canGoNext) {
-        const step = this.isTwoPageMode ? 2 : 1
-        this.goToPage(this.currentPage + step)
-      }
+      this.goToPage(this.currentPage + 1)
     },
 
     prevPage() {
-      if (this.canGoPrev) {
-        const step = this.isTwoPageMode ? 2 : 1
-        this.goToPage(Math.max(1, this.currentPage - step))
-      }
+      this.goToPage(this.currentPage - 1)
     },
 
     reset() {
@@ -229,7 +175,6 @@ export const useReaderStore = defineStore('reader', {
       this.fileName = null
       this.bookmarks = []
       this.isMobileGraphOpen = false
-      this.isTwoPageMode = false
     },
   },
 })

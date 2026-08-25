@@ -224,91 +224,33 @@ describe('useReaderStore', () => {
     })
   })
 
-  describe('modo duas páginas (isTwoPageMode)', () => {
-    it('ativa e desativa modo duas páginas ajustando página par para ímpar', () => {
+  describe('progresso e marcadores', () => {
+    it('calcula porcentagem de progresso corretamente', () => {
       const store = useReaderStore()
       store.setDocument(createMockDocument({ totalPages: 10 }), 'livro.pdf')
-      store.goToPage(4)
-      expect(store.currentPage).toBe(4)
 
-      store.setTwoPageMode(true)
-      expect(store.isTwoPageMode).toBe(true)
-      // Ajusta para início do spread (página 3)
-      expect(store.currentPage).toBe(3)
-      expect(store.secondPage).toBe(4)
+      expect(store.progressPercentage).toBe(10)
 
-      store.setTwoPageMode(false)
-      expect(store.isTwoPageMode).toBe(false)
-      expect(store.secondPage).toBeNull()
+      store.goToPage(5)
+      expect(store.progressPercentage).toBe(50)
+
+      store.goToPage(10)
+      expect(store.progressPercentage).toBe(100)
     })
 
-    it('navega de 2 em 2 páginas no modo duas páginas', () => {
-      const store = useReaderStore()
-      store.setDocument(createMockDocument({ totalPages: 10 }), 'livro.pdf')
-      store.setTwoPageMode(true)
-
-      expect(store.currentPage).toBe(1)
-      expect(store.canGoNext).toBe(true)
-      expect(store.canGoPrev).toBe(false)
-
-      store.nextPage()
-      expect(store.currentPage).toBe(3)
-      expect(store.canGoPrev).toBe(true)
-
-      store.nextPage()
-      expect(store.currentPage).toBe(5)
-
-      store.prevPage()
-      expect(store.currentPage).toBe(3)
-    })
-
-    it('identifica corretamente última página e limites de navegação no spread', () => {
-      const store = useReaderStore()
-      store.setDocument(createMockDocument({ totalPages: 4 }), 'livro.pdf')
-      store.setTwoPageMode(true)
-
-      expect(store.canGoNext).toBe(true)
-      expect(store.isLastPage).toBe(false)
-
-      store.nextPage() // Vai para 3 (spread 3-4)
-      expect(store.currentPage).toBe(3)
-      expect(store.canGoNext).toBe(false)
-      expect(store.isLastPage).toBe(true)
-    })
-
-    it('calcula porcentagem de progresso considerando a segunda página no spread', () => {
-      const store = useReaderStore()
-      store.setDocument(createMockDocument({ totalPages: 10 }), 'livro.pdf')
-      store.setTwoPageMode(true)
-
-      // Página 1 (spread 1-2): progresso deve ser 2/10 = 20%
-      expect(store.progressPercentage).toBe(20)
-
-      store.nextPage() // Página 3 (spread 3-4): progresso deve ser 4/10 = 40%
-      expect(store.progressPercentage).toBe(40)
-    })
-
-    it('marca e desmarca bookmark considerando ambas as páginas do spread', () => {
+    it('marca e desmarca bookmark na página atual', () => {
       const store = useReaderStore()
       store.setDocument(createMockDocument({ totalPages: 10 }), 'livro.pdf', 1)
-      store.setTwoPageMode(true)
 
       expect(store.isCurrentPageBookmarked).toBe(false)
 
-      // Marca o spread atual (página 1)
       store.toggleBookmark()
       expect(store.isCurrentPageBookmarked).toBe(true)
       expect(store.savedPages).toContain(1)
 
-      // Adiciona bookmark na página 2 (segunda página do spread)
-      store.addBookmark(2)
-      expect(store.isCurrentPageBookmarked).toBe(true)
-
-      // Desmarca o spread (deve remover 1 e 2)
       store.toggleBookmark()
       expect(store.isCurrentPageBookmarked).toBe(false)
       expect(store.savedPages).not.toContain(1)
-      expect(store.savedPages).not.toContain(2)
     })
   })
 })
