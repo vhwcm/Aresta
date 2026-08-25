@@ -80,7 +80,7 @@ export class ConversionService {
         throw new AppError(`Falha no microsserviço de conversão (${response.status}): ${errorText}`, 502);
       }
 
-      const data = await response.json();
+      const data = (await response.json()) as any;
       return {
         status: data.status,
         epubPath: data.epub_path,
@@ -105,7 +105,7 @@ export class ConversionService {
     try {
       const res = await fetch(`${this.serviceUrl}/health`);
       if (res.ok) {
-        const data = await res.json();
+        const data = (await res.json()) as any;
         return { status: data.status || 'ok', serviceUrl: this.serviceUrl };
       }
       return { status: 'unhealthy', serviceUrl: this.serviceUrl };
