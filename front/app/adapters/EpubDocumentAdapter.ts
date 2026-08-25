@@ -206,7 +206,7 @@ export class EpubDocumentAdapter implements IBookDocument {
 
       const svgContent = `
         <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
-          <foreignObject width="100%" height="100%">
+          <foreignObject width="${width}" height="${height}">
             <div xmlns="http://www.w3.org/1999/xhtml"
               style="font-family:Georgia,serif;font-size:${fontSize}px;padding:${padding}px;margin:0;box-sizing:border-box;color:#1a1a1a;line-height:1.7;word-wrap:break-word;width:100%;height:100%;">
               ${bodyContent}
