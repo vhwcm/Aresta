@@ -1,16 +1,17 @@
-# Gestão de Livros & Armazenamento de Capas
+# Gestão de Livros & Armazenamento de Arquivos e Capas
 
-Documentação do módulo de armazenamento de livros, extração e gestão de capas, migrações de banco de dados e endpoints REST no servidor Aresta.
+Documentação do módulo de armazenamento de livros digitais (PDF e EPUB 3), extração e gestão de capas, banco de dados e endpoints REST no servidor Aresta.
 
 ---
 
 ## 1. Visão Geral da Arquitetura
 
-O sistema gerencia livros digitais (formatos como PDF e EPUB) e suas respectivas capas dividindo o armazenamento e a entrega em camadas de segurança e desempenho:
+O sistema gerencia livros digitais dividindo o armazenamento e a entrega em diretórios dedicados e variáveis configuráveis:
 
-1. **Biblioteca de Livros (`storage/books/`)**: Diretório reservado e não público no servidor para os arquivos completos dos livros (PDFs).
-2. **Repositório de Capas (`storage/covers/`)**: Diretório exposto estaticamente pelo servidor para carregamento rápido de thumbnails/capas em PNG no front-end.
-3. **Banco de Dados (SQLite 3 + Flyway)**: Tabela `books` para relacionar `id`, `title`, `file_path` (caminho do arquivo do livro) e `cover_path` (caminho do arquivo da capa).
+1. **Repositório de EPUBs (`storage/epubs/`)**: Diretório dos livros digitais reflowable no padrão EPUB 3.
+2. **Repositório de PDFs (`storage/pdfs/`)**: Diretório dos arquivos PDF originais para arquivamento e conversão.
+3. **Repositório de Capas (`storage/covers/`)**: Diretório de imagens PNG/JPEG de capas dos livros para exibição no front-end.
+4. **Banco de Dados (SQLite + Prisma ORM)**: Tabela `books` para relacionar `id`, `title`, `file_path` (`storage/epubs/...`) e `cover_path` (`storage/covers/...`).
 
 ---
 
@@ -21,54 +22,46 @@ No diretório `aresta-back-node/`:
 ```text
 aresta-back-node/
 ├── storage/
-│   ├── books/              # Arquivos PDF e EPUB dos livros (Privado/Protegido)
-│   │   ├── a-cartomante.pdf
-│   │   ├── Como-tocar-piano.pdf
+│   ├── epubs/              # Arquivos EPUB 3 dos livros
+│   │   ├── a-cartomante.epub
+│   │   ├── O-Alienista.epub
 │   │   └── ...
-│   └── covers/             # Capas em formato PNG (Acesso Rápido)
+│   ├── pdfs/               # Arquivos PDF originais
+│   │   ├── a-cartomante.pdf
+│   │   ├── O-Alienista.pdf
+│   │   └── ...
+│   └── covers/             # Capas em formato PNG
 │       ├── a-cartomante.png
-│       ├── Como-tocar-piano.png
+│       ├── O-Alienista.png
 │       └── ...
 ```
 
 ---
 
-## 3. Estrutura no Banco de Dados (SQLite + Prisma ORM)
+## 3. Configurações e Rotas Centralizadas
 
-### Model `Book` (`prisma/schema.prisma`):
+As rotas e diretórios são configurados centralizadamente em `src/config/routes.ts` e `src/config/env.ts`:
 
-```prisma
-model Book {
-  id         Int        @id @default(autoincrement())
-  title      String
-  file_path  String
-  cover_path String?
-  created_at DateTime   @default(now())
-  userBooks  UserBook[]
-
-  @@map("books")
-}
-```
-
-### Campos:
-- **`id`**: Identificador único numérico (Chave Primária autoincrementada).
-- **`title`**: Título amigável do livro.
-- **`file_path`**: Endereço relativo/absoluto do arquivo do livro no servidor (`storage/books/...`).
-- **`cover_path`**: Endereço do arquivo de imagem da capa no servidor (`storage/covers/...`).
-- **`created_at`**: Data e hora do registro no banco de dados.
+- `ROUTES.BOOKS`: `/api/books`
+- `ROUTES.CONVERT`: `/api/convert`
+- `ROUTES.EPUBS`: `/epubs`
+- `ROUTES.PDFS`: `/pdfs`
+- `ROUTES.COVERS`: `/covers`
 
 ---
 
 ## 4. Endpoints da API RESTful (Express.js)
 
-O servidor Express expõe os seguintes endpoints HTTP para manipulação de livros e consumo de capas:
+O servidor Express expõe os seguintes endpoints HTTP:
 
 | Método | Rota | Descrição |
 | :--- | :--- | :--- |
 | `GET` | `/api/books` | Retorna a lista em JSON de todos os livros cadastrados |
 | `GET` | `/api/books/:id` | Retorna o JSON com os detalhes de um livro específico por ID |
 | `GET` | `/api/books/:id/cover` | Transmite o arquivo de imagem PNG da capa do livro |
-| `GET` | `/api/books/:id/file` | Transmite o arquivo de mídia (PDF/EPUB) do livro |
+| `GET` | `/api/books/:id/file` | Transmite o arquivo de mídia (EPUB/PDF) com Content-Type adequado |
+| `GET` | `/epubs/:filename` | Rota de arquivos estáticos Express para publicações EPUB 3 |
+| `GET` | `/pdfs/:filename` | Rota de arquivos estáticos Express para documentos PDF |
 | `GET` | `/covers/:filename` | Rota de arquivos estáticos Express para capas |
 | `POST` | `/api/books` | Registra um novo livro e atribui título, `filePath` e `coverPath` |
 | `DELETE` | `/api/books/:id` | Remove o registro de um livro pelo ID |
@@ -80,28 +73,16 @@ O servidor Express expõe os seguintes endpoints HTTP para manipulação de livr
   {
     "id": 1,
     "title": "Contos Fluminenses",
-    "filePath": "storage/books/5ca0e9_0c9dc557fbc54bf6baabb862a6457dbd.pdf",
+    "filePath": "storage/epubs/5ca0e9_0c9dc557fbc54bf6baabb862a6457dbd.epub",
     "coverPath": "storage/covers/5ca0e9_0c9dc557fbc54bf6baabb862a6457dbd.png",
-    "createdAt": "2026-08-07 15:22:31"
+    "createdAt": "2026-08-25 08:15:00"
   },
   {
     "id": 3,
     "title": "A Cartomante",
-    "filePath": "storage/books/a-cartomante.pdf",
+    "filePath": "storage/epubs/a-cartomante.epub",
     "coverPath": "storage/covers/a-cartomante.png",
-    "createdAt": "2026-08-07 15:22:31"
+    "createdAt": "2026-08-25 08:15:00"
   }
 ]
 ```
-
----
-
-## 5. Gerador e Extração de Capas
-
-As capas podem ser enviadas manualmente ou geradas automaticamente a partir da 1ª página do arquivo PDF com a ferramenta CLI `pdftoppm`:
-
-```bash
-pdftoppm -png -f 1 -l 1 -r 150 storage/books/a-cartomante.pdf storage/covers/a-cartomante
-```
-
-Isso garante que cada livro armazenado possua uma capa em alta resolução associada e pronta para ser exibida nos cards e vitrines do front-end.

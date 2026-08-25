@@ -16,7 +16,7 @@ describe('Annotations Endpoints & Graph Integration', () => {
     const book = await prisma.book.create({
       data: {
         title: 'Livro de Teste Anotações',
-        file_path: 'storage/books/test.epub',
+        file_path: 'storage/epubs/test.epub',
       },
     });
     testBookId = book.id;

@@ -22,8 +22,8 @@ describe('Books Endpoints', () => {
       .post('/api/books')
       .send({
         title: 'Livro Teste Express',
-        filePath: 'storage/books/test.pdf',
-        coverPath: 'storage/covers/test.png',
+        filePath: 'storage/epubs/5ca0e9_0c9dc557fbc54bf6baabb862a6457dbd.epub',
+        coverPath: 'storage/covers/5ca0e9_0c9dc557fbc54bf6baabb862a6457dbd.png',
       });
 
     expect(res.status).toBe(201);
@@ -43,6 +43,23 @@ describe('Books Endpoints', () => {
     const res = await request(app).get(`/api/books/${createdBookId}`);
     expect(res.status).toBe(200);
     expect(res.body.title).toBe('Livro Teste Express');
+  });
+
+  it('GET /api/books/:id/file deve retornar arquivo com content-type epub', async () => {
+    const res = await request(app).get(`/api/books/${createdBookId}/file`);
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toContain('application/epub+zip');
+  });
+
+  it('GET rotas estáticas /epubs, /pdfs e /covers devem servir arquivos', async () => {
+    const epubRes = await request(app).get('/epubs/O-Alienista.epub');
+    expect(epubRes.status).toBe(200);
+
+    const pdfRes = await request(app).get('/pdfs/O-Alienista.pdf');
+    expect(pdfRes.status).toBe(200);
+
+    const coverRes = await request(app).get('/covers/O-Alienista.png');
+    expect(coverRes.status).toBe(200);
   });
 
   it('DELETE /api/books/:id deve remover o livro', async () => {

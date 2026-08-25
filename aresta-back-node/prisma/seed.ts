@@ -58,18 +58,18 @@ async function main() {
     create: { user_id: adminUser.id, page_animation_enabled: true, language: 'pt-BR' },
   });
 
-  // 4. Livros Padrão
+  // 4. Livros Padrão (formato EPUB 3 em storage/epubs/)
   const booksData = [
-    { id: 1, title: 'Contos Fluminenses', file_path: 'storage/books/5ca0e9_0c9dc557fbc54bf6baabb862a6457dbd.pdf', cover_path: 'storage/covers/5ca0e9_0c9dc557fbc54bf6baabb862a6457dbd.png' },
-    { id: 2, title: 'Curso de Pré-Cálculo', file_path: 'storage/books/5ca0e9_accda79d9c314d2bbbfdbc75ac9df45e.pdf', cover_path: 'storage/covers/5ca0e9_accda79d9c314d2bbbfdbc75ac9df45e.png' },
-    { id: 3, title: 'A Cartomante', file_path: 'storage/books/a-cartomante.pdf', cover_path: 'storage/covers/a-cartomante.png' },
-    { id: 4, title: 'Como Tocar Piano', file_path: 'storage/books/Como-tocar-piano.pdf', cover_path: 'storage/covers/Como-tocar-piano.png' },
-    { id: 5, title: 'Curso de Desenho - Carlos Damasceno', file_path: 'storage/books/curso-de-desenho-carlos-damasceno.pdf', cover_path: 'storage/covers/curso-de-desenho-carlos-damasceno.png' },
-    { id: 6, title: 'Aprenda a Desenhar do Zero', file_path: 'storage/books/ebook_aprendaadesenhardozero.pdf', cover_path: 'storage/covers/ebook_aprendaadesenhardozero.png' },
-    { id: 7, title: 'Inglês Aplicado a Eventos', file_path: 'storage/books/ingles-aplicado-a-eventos.pdf', cover_path: 'storage/covers/ingles-aplicado-a-eventos.png' },
-    { id: 8, title: 'Informática Avançada', file_path: 'storage/books/livro_informatica_avancada_compressed.pdf', cover_path: 'storage/covers/livro_informatica_avancada_compressed.png' },
-    { id: 9, title: 'Microeconomia', file_path: 'storage/books/microeconomia-compress.pdf', cover_path: 'storage/covers/microeconomia-compress.png' },
-    { id: 10, title: 'O Alienista', file_path: 'storage/books/O-Alienista.pdf', cover_path: 'storage/covers/O-Alienista.png' },
+    { id: 1, title: 'Contos Fluminenses', file_path: 'storage/epubs/5ca0e9_0c9dc557fbc54bf6baabb862a6457dbd.epub', cover_path: 'storage/covers/5ca0e9_0c9dc557fbc54bf6baabb862a6457dbd.png' },
+    { id: 2, title: 'Curso de Pré-Cálculo', file_path: 'storage/epubs/5ca0e9_accda79d9c314d2bbbfdbc75ac9df45e.epub', cover_path: 'storage/covers/5ca0e9_accda79d9c314d2bbbfdbc75ac9df45e.png' },
+    { id: 3, title: 'A Cartomante', file_path: 'storage/epubs/a-cartomante.epub', cover_path: 'storage/covers/a-cartomante.png' },
+    { id: 4, title: 'Como Tocar Piano', file_path: 'storage/epubs/Como-tocar-piano.epub', cover_path: 'storage/covers/Como-tocar-piano.png' },
+    { id: 5, title: 'Curso de Desenho - Carlos Damasceno', file_path: 'storage/epubs/curso-de-desenho-carlos-damasceno.epub', cover_path: 'storage/covers/curso-de-desenho-carlos-damasceno.png' },
+    { id: 6, title: 'Aprenda a Desenhar do Zero', file_path: 'storage/epubs/ebook_aprendaadesenhardozero.epub', cover_path: 'storage/covers/ebook_aprendaadesenhardozero.png' },
+    { id: 7, title: 'Inglês Aplicado a Eventos', file_path: 'storage/epubs/ingles-aplicado-a-eventos.epub', cover_path: 'storage/covers/ingles-aplicado-a-eventos.png' },
+    { id: 8, title: 'Informática Avançada', file_path: 'storage/epubs/livro_informatica_avancada_compressed.epub', cover_path: 'storage/covers/livro_informatica_avancada_compressed.png' },
+    { id: 9, title: 'Microeconomia', file_path: 'storage/epubs/microeconomia-compress.epub', cover_path: 'storage/covers/microeconomia-compress.png' },
+    { id: 10, title: 'O Alienista', file_path: 'storage/epubs/O-Alienista.epub', cover_path: 'storage/covers/O-Alienista.png' },
   ];
 
   for (const b of booksData) {
