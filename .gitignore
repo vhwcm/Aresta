@@ -23,6 +23,7 @@ out/
 node_modules/
 public/
 !front/public/
+!front/app/public/
 Dist/
 coverage/
 .tmp/

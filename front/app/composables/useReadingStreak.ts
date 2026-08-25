@@ -135,7 +135,7 @@ export const useReadingStreak = () => {
     } catch (e) {
       console.error('Erro ao registrar tempo de leitura:', e)
       // Otimista local
-      todayActivity.value.readingSeconds += seconds
+      todayActivity.value.readingSeconds = (todayActivity.value.readingSeconds ?? 0) + seconds
       todayActivity.value.readingMinutes = Math.floor(todayActivity.value.readingSeconds / 60)
       todayActivity.value.isReadingCompleted = todayActivity.value.readingSeconds >= 600
       if (todayActivity.value.isReadingCompleted && todayActivity.value.isFlashcardsCompleted && !isGoalReachedToday.value) {
@@ -147,12 +147,13 @@ export const useReadingStreak = () => {
     }
   }
 
-  const recordFlashcardReview = async (count = 1) => {
+  const recordFlashcardReview = async (count: number = 1) => {
+    if (count <= 0) return
     try {
-      const res = await $fetch<{ status: any; justCompleted: boolean }>(`${API_BASE}/users/me/activity/flashcard-review`, {
+      const res = await $fetch<{ status: any; justCompleted: boolean }>(`${API_BASE}/users/me/activity/flashcards`, {
         method: 'POST',
         headers: getHeaders(),
-        body: { count }
+        body: { flashcards_count: count }
       })
 
       if (res?.status) {
@@ -163,9 +164,8 @@ export const useReadingStreak = () => {
         triggerCelebration(currentStreak.value, targetStreakDays.value)
       }
     } catch (e) {
-      console.error('Erro ao registrar revisão de flashcard:', e)
-      // Otimista local
-      todayActivity.value.flashcardsReviewed += count
+      console.error('Erro ao registrar flashcard:', e)
+      todayActivity.value.flashcardsReviewed = (todayActivity.value.flashcardsReviewed ?? 0) + count
       todayActivity.value.isFlashcardsCompleted = todayActivity.value.flashcardsReviewed >= 5
       if (todayActivity.value.isReadingCompleted && todayActivity.value.isFlashcardsCompleted && !isGoalReachedToday.value) {
         isGoalReachedToday.value = true
