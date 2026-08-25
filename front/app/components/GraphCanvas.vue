@@ -53,18 +53,6 @@
     </div>
 
 
-    <!-- Indicador de Estatísticas de Nós -->
-    <div
-      class="absolute z-10 flex items-center gap-2 bg-bgPanel/80 backdrop-blur-md border border-divider rounded-2xl font-technical text-textSecondary shadow-xl"
-      :class="isCompact ? 'bottom-3 right-3 px-2.5 py-1 text-[10px]' : 'bottom-6 right-6 px-4 py-2 text-xs'"
-    >
-      <div class="flex items-center gap-1.5">
-        <span class="w-2 h-2 rounded-full bg-accent animate-pulse"></span>
-        <span>{{ nodes.length }} Nós</span>
-      </div>
-      <div class="h-3 w-px bg-divider"></div>
-      <div>{{ edges.length }} Arestas</div>
-    </div>
   </div>
 </template>
 
