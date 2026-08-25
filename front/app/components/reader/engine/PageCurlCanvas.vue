@@ -283,31 +283,28 @@ defineExpose({
   z-index: 10;
 }
 
-.page-text-layer {
-  position: absolute;
-  pointer-events: auto;
-  user-select: text;
-  -webkit-user-select: text;
-  cursor: text;
-  overflow: hidden;
-  line-height: 1;
-}
-
-/* PDF.js TextLayer styles */
+.page-text-layer,
 .page-text-layer :deep(.textLayer) {
   position: absolute;
   inset: 0;
   overflow: hidden;
   line-height: 1;
   text-size-adjust: none;
+  -webkit-text-size-adjust: none;
   forced-color-adjust: none;
   transform-origin: 0 0;
   user-select: text;
   -webkit-user-select: text;
+  cursor: text;
+}
+
+.page-text-layer {
+  pointer-events: auto;
 }
 
 .page-text-layer :deep(span),
-.page-text-layer :deep(span[role="presentation"]) {
+.page-text-layer :deep(span[role="presentation"]),
+.page-text-layer :deep(br) {
   color: transparent !important;
   position: absolute;
   white-space: pre;
@@ -315,9 +312,21 @@ defineExpose({
   transform-origin: 0% 0%;
 }
 
-.page-text-layer :deep(::selection) {
-  background: rgba(124, 106, 247, 0.4) !important;
+.page-text-layer :deep(.markedContent) {
+  display: contents;
+}
+
+/* Cor Laranja Semitransparente do Aresta na seleção de texto */
+.page-text-layer :deep(::selection),
+.page-text-layer ::selection,
+.page-text-layer :deep(.textLayer ::selection),
+.page-text-layer :deep(.epub-text-layer-content *::selection) {
+  background: rgba(229, 123, 85, 0.38) !important;
   color: transparent !important;
+}
+
+.page-text-layer :deep(br::selection) {
+  background: transparent !important;
 }
 
 /* EPUB TextLayer styles */
@@ -333,11 +342,6 @@ defineExpose({
   border-color: transparent !important;
 }
 
-.page-text-layer :deep(.epub-text-layer-content *::selection) {
-  background: rgba(124, 106, 247, 0.4) !important;
-  color: transparent !important;
-}
-
 .page-curl-loading {
   position: absolute;
   inset: 0;
@@ -350,8 +354,8 @@ defineExpose({
 .page-curl-loading__spinner {
   width: 36px;
   height: 36px;
-  border: 3px solid rgba(124, 106, 247, 0.2);
-  border-top-color: var(--color-accent);
+  border: 3px solid rgba(229, 123, 85, 0.2);
+  border-top-color: var(--color-accent, #E57B55);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }

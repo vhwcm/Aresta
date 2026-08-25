@@ -117,6 +117,8 @@ export class PdfDocumentAdapter implements IBookDocument {
     const viewport = pdfPage.getViewport({ scale })
 
     container.innerHTML = ''
+    container.classList.add('textLayer')
+    container.style.setProperty('--scale-factor', `${scale}`)
     container.style.width = `${viewport.width}px`
     container.style.height = `${viewport.height}px`
 
