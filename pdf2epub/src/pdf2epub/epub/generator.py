@@ -66,12 +66,17 @@ class EpubGenerator:
                     if r.image.id not in document.assets:
                         document.assets[r.image.id] = r.image
 
+        seen_filenames = set()
         image_items: Dict[str, epub.EpubItem] = {}
         for asset_id, asset in document.assets.items():
             if asset.data:
+                target_filename = f"images/{asset.name}"
+                if target_filename in seen_filenames:
+                    continue
+                seen_filenames.add(target_filename)
                 img_item = epub.EpubItem(
                     uid=asset.id,
-                    file_name=f"images/{asset.name}",
+                    file_name=target_filename,
                     media_type=asset.mime_type,
                     content=asset.data
                 )
