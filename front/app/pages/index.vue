@@ -199,32 +199,256 @@
     </div>
 
     <!-- ESTADO 2: VISITANTE NÃO AUTENTICADO (Página Inicial Pública / Landing Page do Aresta) -->
-    <div v-else data-testid="guest-landing" class="flex flex-col gap-14 py-6 md:py-10 animate-in fade-in duration-500">
-      <!-- Seção Hero da Landing Page -->
-      <section class="flex flex-col items-center text-center gap-5 max-w-3xl mx-auto">
-        <div class="flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/10 border border-accent/30 font-technical text-[10px] uppercase tracking-widest text-accent font-semibold">
-          Leitor de Ebooks & Grafo de Conhecimento
+    <div v-else data-testid="guest-landing" class="flex flex-col gap-16 md:gap-24 py-6 md:py-12 animate-in fade-in duration-500 max-w-6xl mx-auto w-full">
+      <!-- 1. SEÇÃO HERO DA LANDING PAGE -->
+      <header class="flex flex-col items-center text-center gap-6 max-w-4xl mx-auto pt-4 md:pt-8">
+        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/10 border border-accent/30 font-technical text-[11px] uppercase tracking-widest text-accent font-semibold shadow-sm">
+          <SparklesIcon class="w-3.5 h-3.5" />
+          <span>Segundo Cérebro & Leitura Profunda · Minimalista & Anti-Dopaminérgico</span>
         </div>
 
-        <h1 class="font-editorial text-3xl sm:text-5xl md:text-6xl font-light text-textPrimary leading-[1.15]">
-          Transforme sua leitura em uma <span class="text-accent italic">rede viva</span> de conhecimento.
+        <h1 class="font-editorial text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-light text-textPrimary leading-[1.12]">
+          Transforme sua leitura em uma <span class="text-accent italic font-normal">rede viva</span> de conhecimento e competência.
         </h1>
 
-        <p class="font-interface text-sm sm:text-base text-textSecondary max-w-2xl leading-relaxed">
-          O <strong>Aresta</strong> é um ecossistema inteligente para leitura de arquivos EPUB e PDF, organização de acervo pessoal e mapeamento visual de conceitos conectados entre livros.
+        <p class="font-interface text-base sm:text-lg text-textSecondary max-w-2xl leading-relaxed">
+          O <strong>Aresta</strong> é um ecossistema minimalista e calmo para leitura imersiva de EPUB e PDF, anotações ativas e mapeamento visual de conexões. Desenvolvido para quem estuda, quer se tornar especialista em sua área ou dominar novos interesses — com foco contínuo, sem feeds viciantes e com retenção definitiva.
         </p>
+
+        <!-- Botões de Ação Hero (CTAs de Alto Impacto) -->
+        <div class="flex flex-col sm:flex-row items-center gap-4 pt-3 w-full sm:w-auto">
+          <a
+            href="#comece-agora"
+            class="w-full sm:w-auto bg-white text-black font-interface text-sm sm:text-base font-semibold px-8 py-3.5 rounded-full hover:bg-gray-200 transition-all flex items-center justify-center gap-2.5 shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+          >
+            <span>Experimentar o Aresta Gratuitamente</span>
+            <ArrowRightIcon class="w-4 h-4 text-black" />
+          </a>
+
+          <NuxtLink
+            to="/por-que-ler"
+            class="w-full sm:w-auto px-6 py-3.5 rounded-full bg-white/5 hover:bg-white/10 border border-divider hover:border-accent/40 text-textPrimary font-interface text-sm transition-all flex items-center justify-center gap-2 shadow-sm"
+          >
+            <BrainIcon class="w-4 h-4 text-accent" />
+            <span>Por que Leitura Profunda?</span>
+          </NuxtLink>
+        </div>
+
+        <!-- Micro-benefícios / Selos de Valor -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-6 w-full text-left sm:text-center">
+          <div class="flex items-center sm:justify-center gap-2 text-xs font-technical text-textSecondary bg-white/[0.02] border border-divider/60 rounded-xl px-3 py-2">
+            <ZapOffIcon class="w-3.5 h-3.5 text-accent shrink-0" />
+            <span>100% Anti-dopaminérgico</span>
+          </div>
+          <div class="flex items-center sm:justify-center gap-2 text-xs font-technical text-textSecondary bg-white/[0.02] border border-divider/60 rounded-xl px-3 py-2">
+            <NetworkIcon class="w-3.5 h-3.5 text-accent shrink-0" />
+            <span>Segundo Cérebro</span>
+          </div>
+          <div class="flex items-center sm:justify-center gap-2 text-xs font-technical text-textSecondary bg-white/[0.02] border border-divider/60 rounded-xl px-3 py-2">
+            <BookOpenIcon class="w-3.5 h-3.5 text-accent shrink-0" />
+            <span>Leitor EPUB & PDF</span>
+          </div>
+          <div class="flex items-center sm:justify-center gap-2 text-xs font-technical text-textSecondary bg-white/[0.02] border border-divider/60 rounded-xl px-3 py-2">
+            <TargetIcon class="w-3.5 h-3.5 text-accent shrink-0" />
+            <span>Retenção & Maestria</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- 2. SEÇÃO DE INDAGAÇÕES E TRANSFORMAÇÃO PRÁTICA (COPYWRITING PERSUASIVO) -->
+      <section class="flex flex-col gap-10">
+        <div class="flex flex-col items-center text-center gap-3 max-w-2xl mx-auto">
+          <div class="font-technical text-[10px] uppercase font-semibold tracking-widest text-accent flex items-center gap-2">
+            <CompassIcon class="w-3.5 h-3.5" />
+            Evolução Pessoal & Intelectual
+          </div>
+          <h2 class="font-editorial text-3xl sm:text-4xl font-light text-textPrimary leading-tight">
+            Para quem busca clareza e domínio em um mundo de atenção fragmentada
+          </h2>
+          <p class="font-interface text-sm text-textSecondary leading-relaxed">
+            A maioria das pessoas lê dezenas de artigos e livros, mas esquece quase tudo em semanas. Como seria sua rotina se cada página lida se transformasse em competência permanente?
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <!-- Pergunta 1: Sentir-se mais competente -->
+          <div class="p-7 rounded-3xl bg-white/[0.02] border border-divider hover:border-accent/40 transition-all duration-300 flex flex-col gap-3.5 relative overflow-hidden group">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-2xl bg-accent/15 border border-accent/30 text-accent flex items-center justify-center group-hover:scale-105 transition-transform">
+                <TargetIcon class="w-5 h-5" />
+              </div>
+              <h3 class="font-editorial text-xl sm:text-2xl font-light text-textPrimary group-hover:text-accent transition-colors">
+                Gostaria de se sentir mais competente?
+              </h3>
+            </div>
+            <p class="font-interface text-sm text-textSecondary leading-relaxed">
+              A verdadeira confiança técnica nasce do domínio profundo de fundamentos. Ao estruturar anotações reflexivas e conectá-las em um grafo vivo, você desenvolve autoridade autêntica, articula ideias complexas com facilidade e toma decisões embasadas no trabalho e na vida acadêmica.
+            </p>
+          </div>
+
+          <!-- Pergunta 2: Ser especialista em algo -->
+          <div class="p-7 rounded-3xl bg-white/[0.02] border border-divider hover:border-accent/40 transition-all duration-300 flex flex-col gap-3.5 relative overflow-hidden group">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-2xl bg-accent/15 border border-accent/30 text-accent flex items-center justify-center group-hover:scale-105 transition-transform">
+                <GraduationCapIcon class="w-5 h-5" />
+              </div>
+              <h3 class="font-editorial text-xl sm:text-2xl font-light text-textPrimary group-hover:text-accent transition-colors">
+                Quer se tornar especialista em algo?
+              </h3>
+            </div>
+            <p class="font-interface text-sm text-textSecondary leading-relaxed">
+              Nenhum especialista constrói maestria consumindo resumos superficiais em redes sociais. O Aresta oferece o espaço de leitura calma, sem ruído, onde você disseca obras densas, compara autores e cruza conceitos entre capítulos até atingir o estado de fluência no assunto.
+            </p>
+          </div>
+
+          <!-- Pergunta 3: Ter um hobby / dominar paixões -->
+          <div class="p-7 rounded-3xl bg-white/[0.02] border border-divider hover:border-accent/40 transition-all duration-300 flex flex-col gap-3.5 relative overflow-hidden group">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-2xl bg-accent/15 border border-accent/30 text-accent flex items-center justify-center group-hover:scale-105 transition-transform">
+                <SparklesIcon class="w-5 h-5" />
+              </div>
+              <h3 class="font-editorial text-xl sm:text-2xl font-light text-textPrimary group-hover:text-accent transition-colors">
+                Quer dominar um novo hobby ou paixão?
+              </h3>
+            </div>
+            <p class="font-interface text-sm text-textSecondary leading-relaxed">
+              Seja filosofia, história da arte, programação ou música: aprender um novo interesse requer relacionar teorias com a prática. Centralize seus livros técnicos e guias em um único acervo, faça marcações rápidas e construa conexões que aceleram sua curva de aprendizado.
+            </p>
+          </div>
+
+          <!-- Pergunta 4: Melhorar a vida e organizar estudos -->
+          <div class="p-7 rounded-3xl bg-white/[0.02] border border-divider hover:border-accent/40 transition-all duration-300 flex flex-col gap-3.5 relative overflow-hidden group">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-2xl bg-accent/15 border border-accent/30 text-accent flex items-center justify-center group-hover:scale-105 transition-transform">
+                <BrainIcon class="w-5 h-5" />
+              </div>
+              <h3 class="font-editorial text-xl sm:text-2xl font-light text-textPrimary group-hover:text-accent transition-colors">
+                Quer transformar seus estudos e melhorar sua vida?
+              </h3>
+            </div>
+            <p class="font-interface text-sm text-textSecondary leading-relaxed">
+              Substitua a ansiedade de páginas acumuladas pela satisfação de um segundo cérebro organizado. O Aresta organiza seu fluxo de estudo de ponta a ponta: da leitura fluida ao flashcard de revisão diária, sem sobrecarga cognitiva.
+            </p>
+          </div>
+        </div>
       </section>
 
-      <!-- DESTAQUE PRINCIPAL DA LANDING PAGE: A REVISÃO DE CONHECIMENTO & CURVA DE EBBINGHAUS -->
+      <!-- 3. SEÇÃO DE FILOSOFIA: MINIMALISMO & TECNOLOGIA CALMA (ANTI-DOPAMINA) -->
+      <section class="p-8 sm:p-10 rounded-3xl bg-gradient-to-br from-white/[0.04] via-white/[0.02] to-transparent border border-divider flex flex-col gap-8">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div class="flex flex-col gap-2 max-w-2xl">
+            <div class="font-technical text-[10px] uppercase font-semibold tracking-widest text-accent flex items-center gap-2">
+              <ZapOffIcon class="w-4 h-4" />
+              A Filosofia do Aresta
+            </div>
+            <h2 class="font-editorial text-2xl sm:text-3xl md:text-4xl font-light text-textPrimary leading-tight">
+              Por que o Aresta é intencionalmente minimalista e anti-dopaminérgico?
+            </h2>
+          </div>
+          <NuxtLink
+            to="/por-que-ler"
+            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/5 hover:bg-white/10 border border-divider hover:border-accent/40 text-textPrimary font-interface text-xs transition-all shrink-0 self-start md:self-auto"
+          >
+            <span>Ler Ensaio Cognitivo Completo</span>
+            <ArrowRightIcon class="w-3.5 h-3.5 text-accent" />
+          </NuxtLink>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+          <div class="p-5 rounded-2xl bg-black/40 border border-divider/70 flex flex-col gap-2.5">
+            <h4 class="font-editorial text-lg text-textPrimary">Silêncio Cognitivo</h4>
+            <p class="font-interface text-xs text-textSecondary leading-relaxed">
+              Sem banners, sem pop-ups estridentes e sem notificações viciantes. Uma interface limpa que desaparece para que apenas você e a linha de raciocínio existam.
+            </p>
+          </div>
+
+          <div class="p-5 rounded-2xl bg-black/40 border border-divider/70 flex flex-col gap-2.5">
+            <h4 class="font-editorial text-lg text-textPrimary">Foco Sustentado</h4>
+            <p class="font-interface text-xs text-textSecondary leading-relaxed">
+              Substituímos o vício em micro-recompensas rápidas pelo prazer autêntico da leitura contínua. Treine sua musculatura de concentração página por página.
+            </p>
+          </div>
+
+          <div class="p-5 rounded-2xl bg-black/40 border border-divider/70 flex flex-col gap-2.5">
+            <h4 class="font-editorial text-lg text-textPrimary">Processamento Ativo</h4>
+            <p class="font-interface text-xs text-textSecondary leading-relaxed">
+              Ler sem refletir é passividade. O Aresta transforma você em um leitor ativo que destaca teses, gera perguntas de flashcard e tece conexões conceituais.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. FUNCIONALIDADES DO ECOSSISTEMA ARESTA (PILARES) -->
+      <section id="pilares" class="flex flex-col gap-8 scroll-mt-10">
+        <div class="flex flex-col items-center text-center gap-2 max-w-2xl mx-auto">
+          <div class="font-technical text-[10px] uppercase font-semibold tracking-widest text-accent">
+            Recursos Integrados
+          </div>
+          <h2 class="font-editorial text-3xl sm:text-4xl font-light text-textPrimary">
+            O Ecossistema Completo do Leitor
+          </h2>
+          <p class="font-interface text-xs sm:text-sm text-textSecondary">
+            Tudo o que você precisa para ler, registrar, conectar e consolidar suas leituras em um único lugar.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Pilar 1: Leitura Fluida -->
+          <div class="p-6 rounded-3xl bg-white/[0.02] border border-divider flex flex-col gap-3 hover:border-accent/40 transition-colors">
+            <div class="w-10 h-10 rounded-2xl bg-accent/15 border border-accent/30 text-accent flex items-center justify-center">
+              <BookOpenIcon class="w-5 h-5" />
+            </div>
+            <h3 class="font-editorial text-lg font-light text-textPrimary">Leitura Imersiva</h3>
+            <p class="font-interface text-xs text-textSecondary leading-relaxed">
+              Suporte integrado a EPUB e PDF com tipografia customizável, modo sépia/noturno e virada realista de páginas com física de folha.
+            </p>
+          </div>
+
+          <!-- Pilar 2: Grafo de Conhecimento -->
+          <div class="p-6 rounded-3xl bg-white/[0.02] border border-divider flex flex-col gap-3 hover:border-accent/40 transition-colors">
+            <div class="w-10 h-10 rounded-2xl bg-accent/15 border border-accent/30 text-accent flex items-center justify-center">
+              <NetworkIcon class="w-5 h-5" />
+            </div>
+            <h3 class="font-editorial text-lg font-light text-textPrimary">Grafo Conceitual</h3>
+            <p class="font-interface text-xs text-textSecondary leading-relaxed">
+              Conecte nós de temas e ideias entre diferentes obras em um mapa mental vivo e navegável que se expande junto com seu conhecimento.
+            </p>
+          </div>
+
+          <!-- Pilar 3: Flashcards & Retenção Ativa -->
+          <div class="p-6 rounded-3xl bg-white/[0.02] border border-divider flex flex-col gap-3 hover:border-accent/40 transition-colors">
+            <div class="w-10 h-10 rounded-2xl bg-accent/15 border border-accent/30 text-accent flex items-center justify-center">
+              <BrainIcon class="w-5 h-5" />
+            </div>
+            <h3 class="font-editorial text-lg font-light text-textPrimary">Retenção Ativa</h3>
+            <p class="font-interface text-xs text-textSecondary leading-relaxed">
+              Flashcards com repetição espaçada e sínteses geradas a partir de suas citações e anotações para fixar cada ideia para sempre.
+            </p>
+          </div>
+
+          <!-- Pilar 4: Conversor Inteligente -->
+          <div class="p-6 rounded-3xl bg-white/[0.02] border border-divider flex flex-col gap-3 hover:border-accent/40 transition-colors">
+            <div class="w-10 h-10 rounded-2xl bg-accent/15 border border-accent/30 text-accent flex items-center justify-center">
+              <FileCode2Icon class="w-5 h-5" />
+            </div>
+            <h3 class="font-editorial text-lg font-light text-textPrimary">Conversor PDF &rarr; EPUB</h3>
+            <p class="font-interface text-xs text-textSecondary leading-relaxed">
+              Converta documentos técnicos e livros para formato responsivo adaptado para qualquer tela com total fluidez.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. A CIÊNCIA DA RETENÇÃO & CURVA DO ESQUECIMENTO (COLOCADA APÓS A DESCRIÇÃO DO PRODUTO) -->
       <section class="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-[#16171a] via-[#121315] to-[#0A0A0B] border border-accent/30 shadow-2xl flex flex-col gap-6">
         <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div class="flex flex-col gap-1.5 max-w-2xl">
             <div class="flex items-center gap-2 font-technical text-[10px] uppercase font-semibold tracking-widest text-accent">
               <BrainIcon class="w-4 h-4 text-accent" />
-              O Pilar Mais Importante do Aprendizado
+              A Ciência da Memória & Retenção Definitiva
             </div>
             <h2 class="font-editorial text-2xl sm:text-3xl font-light text-textPrimary leading-tight">
-              A Revisão de Conhecimento
+              A Revisão de Conhecimento & Curva de Ebbinghaus
             </h2>
             <p class="font-interface text-xs sm:text-sm text-textSecondary leading-relaxed">
               Ler sem revisar é esquecer 70% em 48 horas. O Aresta integra flashcards e repetição espaçada automática direto das suas marcações para reter cada ideia para sempre.
@@ -249,211 +473,200 @@
         </div>
       </section>
 
-      <!-- Grade dos 4 Pilares do Aresta -->
-      <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <!-- Pilar 1: Leitura Fluida -->
-        <div class="p-6 rounded-3xl bg-white/[0.02] border border-divider flex flex-col gap-3 hover:border-white/20 transition-colors">
-          <div class="w-10 h-10 rounded-2xl bg-accent/15 border border-accent/30 text-accent flex items-center justify-center">
-            <BookOpenIcon class="w-5 h-5" />
+      <!-- 6. SEÇÃO DE CONVERSÃO / EXPERIMENTE O ARESTA (AUTENTICAÇÃO COM COPYWRITING) -->
+      <section id="comece-agora" class="flex flex-col lg:flex-row items-center gap-10 p-8 sm:p-12 rounded-3xl bg-gradient-to-br from-white/[0.04] via-black/60 to-black border border-divider/90 shadow-2xl scroll-mt-8">
+        <div class="flex flex-col gap-5 flex-1 text-left">
+          <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-accent/15 border border-accent/30 text-accent font-technical text-[10px] uppercase tracking-widest font-semibold w-fit">
+            Acesso Imediato
           </div>
-          <h2 class="font-editorial text-lg font-light text-textPrimary">Leitura Imersiva</h2>
-          <p class="font-interface text-xs text-textSecondary leading-relaxed">
-            Suporte integrado a EPUB e PDF com tipografia customizável e virada realista de páginas com física de folha.
+
+          <h2 class="font-editorial text-3xl sm:text-4xl md:text-5xl font-light text-textPrimary leading-tight">
+            Pronto para transformar sua leitura em <span class="text-accent italic">sabedoria duradoura</span>?
+          </h2>
+
+          <p class="font-interface text-sm sm:text-base text-textSecondary leading-relaxed">
+            Junte-se a leitores, estudantes e pesquisadores que construíram seu segundo cérebro no Aresta. Crie sua conta gratuita em menos de 1 minuto ou acesse instantaneamente a demonstração.
           </p>
-        </div>
 
-        <!-- Pilar 2: Grafo de Conhecimento -->
-        <div class="p-6 rounded-3xl bg-white/[0.02] border border-divider flex flex-col gap-3 hover:border-white/20 transition-colors">
-          <div class="w-10 h-10 rounded-2xl bg-accent/15 border border-accent/30 text-accent flex items-center justify-center">
-            <NetworkIcon class="w-5 h-5" />
-          </div>
-          <h2 class="font-editorial text-lg font-light text-textPrimary">Grafo Conceitual</h2>
-          <p class="font-interface text-xs text-textSecondary leading-relaxed">
-            Conecte nós de temas e ideias entre diferentes obras em um mapa mental vivo e navegável.
-          </p>
-        </div>
-
-        <!-- Pilar 3: Flashcards & Síntese -->
-        <div class="p-6 rounded-3xl bg-white/[0.02] border border-divider flex flex-col gap-3 hover:border-white/20 transition-colors">
-          <div class="w-10 h-10 rounded-2xl bg-accent/15 border border-accent/30 text-accent flex items-center justify-center">
-            <BrainIcon class="w-5 h-5" />
-          </div>
-          <h2 class="font-editorial text-lg font-light text-textPrimary">Retenção Ativa</h2>
-          <p class="font-interface text-xs text-textSecondary leading-relaxed">
-            Flashcards com repetição espaçada e sínteses geradas a partir de suas citações e anotações.
-          </p>
-        </div>
-
-        <!-- Pilar 4: Conversor Inteligente -->
-        <div class="p-6 rounded-3xl bg-white/[0.02] border border-divider flex flex-col gap-3 hover:border-white/20 transition-colors">
-          <div class="w-10 h-10 rounded-2xl bg-accent/15 border border-accent/30 text-accent flex items-center justify-center">
-            <FileCode2Icon class="w-5 h-5" />
-          </div>
-          <h2 class="font-editorial text-lg font-light text-textPrimary">Conversor PDF &rarr; EPUB</h2>
-          <p class="font-interface text-xs text-textSecondary leading-relaxed">
-            Converta documentos técnicos e livros para formato responsivo adaptado para qualquer tela.
-          </p>
-        </div>
-      </section>
-
-      <!-- Card Central de Acesso Rápido / Autenticação Simplificada -->
-      <section class="max-w-md w-full mx-auto p-8 rounded-3xl bg-white/[0.03] border border-divider/80 backdrop-blur-xl shadow-2xl flex flex-col gap-6">
-        <!-- Alternador de Abas: Login / Cadastro -->
-        <div class="flex items-center p-1 rounded-2xl bg-white/5 border border-divider">
-          <button
-            @click="authMode = 'login'"
-            data-testid="tab-login"
-            class="flex-1 py-2 rounded-xl font-interface text-xs font-medium transition-all text-center cursor-pointer"
-            :class="authMode === 'login' ? 'bg-accent text-white shadow-md' : 'text-textSecondary hover:text-white'"
-          >
-            Acessar Conta
-          </button>
-          <button
-            @click="authMode = 'register'"
-            data-testid="tab-register"
-            class="flex-1 py-2 rounded-xl font-interface text-xs font-medium transition-all text-center cursor-pointer"
-            :class="authMode === 'register' ? 'bg-accent text-white shadow-md' : 'text-textSecondary hover:text-white'"
-          >
-            Criar Conta
-          </button>
-        </div>
-
-        <!-- Alerta de Dica de Demonstração (Exibido na aba Login) -->
-        <div v-if="authMode === 'login'" class="bg-accent/10 border border-accent/25 rounded-2xl p-3.5 flex items-start gap-2.5 text-xs text-textPrimary">
-          <KeyIcon class="w-4 h-4 text-accent shrink-0 mt-0.5" />
-          <div class="flex flex-col gap-0.5">
-            <span class="font-semibold text-accent uppercase tracking-wider text-[9px]">Acesso Rápido Demo</span>
-            <span class="font-technical text-textSecondary text-[11px]">
-              Login: <strong>viktor</strong> · Senha: <strong>orlaweb123123#</strong>
-            </span>
+          <div class="flex flex-col gap-2.5 pt-2 text-xs sm:text-sm text-textSecondary font-interface">
+            <div class="flex items-center gap-2.5">
+              <CheckCircle2Icon class="w-4 h-4 text-accent shrink-0" />
+              <span>Leitor universal para seus arquivos EPUB e PDF</span>
+            </div>
+            <div class="flex items-center gap-2.5">
+              <CheckCircle2Icon class="w-4 h-4 text-accent shrink-0" />
+              <span>Grafo de conexões conceituais navegável</span>
+            </div>
+            <div class="flex items-center gap-2.5">
+              <CheckCircle2Icon class="w-4 h-4 text-accent shrink-0" />
+              <span>Flashcards inteligentes e repetição espaçada</span>
+            </div>
+            <div class="flex items-center gap-2.5">
+              <CheckCircle2Icon class="w-4 h-4 text-accent shrink-0" />
+              <span>100% livre de distrações, anúncios e algoritmos viciantes</span>
+            </div>
           </div>
         </div>
 
-        <!-- Alerta de Erro de Autenticação -->
-        <div v-if="authError" class="bg-rose-500/10 border border-rose-500/30 rounded-xl p-3 text-xs text-rose-400 flex items-center gap-2">
-          <AlertCircleIcon class="w-4 h-4 shrink-0" />
-          <span>{{ authError }}</span>
-        </div>
+        <!-- Card Central de Acesso Rápido / Autenticação Simplificada -->
+        <div class="w-full max-w-md bg-white/[0.03] border border-divider/80 backdrop-blur-xl rounded-3xl p-6 sm:p-8 shadow-2xl flex flex-col gap-6 shrink-0">
+          <!-- Alternador de Abas: Login / Cadastro -->
+          <div class="flex items-center p-1 rounded-2xl bg-white/5 border border-divider">
+            <button
+              @click="authMode = 'login'"
+              data-testid="tab-login"
+              class="flex-1 py-2 rounded-xl font-interface text-xs font-medium transition-all text-center cursor-pointer"
+              :class="authMode === 'login' ? 'bg-accent text-white shadow-md' : 'text-textSecondary hover:text-white'"
+            >
+              Acessar Conta
+            </button>
+            <button
+              @click="authMode = 'register'"
+              data-testid="tab-register"
+              class="flex-1 py-2 rounded-xl font-interface text-xs font-medium transition-all text-center cursor-pointer"
+              :class="authMode === 'register' ? 'bg-accent text-white shadow-md' : 'text-textSecondary hover:text-white'"
+            >
+              Criar Conta
+            </button>
+          </div>
 
-        <!-- Formulário de Login -->
-        <form v-if="authMode === 'login'" @submit.prevent="handleQuickLogin" class="flex flex-col gap-4">
-          <div class="flex flex-col gap-1">
-            <label class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary">
-              Usuário ou E-mail
-            </label>
-            <div class="relative">
-              <UserIcon class="w-4 h-4 text-textSecondary absolute left-3.5 top-1/2 -translate-y-1/2" />
-              <input
-                v-model="loginIdentifier"
-                type="text"
-                required
-                data-testid="login-input"
-                placeholder="viktor"
-                class="w-full bg-black/40 border border-divider rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-textPrimary placeholder:text-textSecondary/40 focus:outline-none focus:border-accent transition-colors"
-              />
+          <!-- Alerta de Dica de Demonstração (Exibido na aba Login) -->
+          <div v-if="authMode === 'login'" class="bg-accent/10 border border-accent/25 rounded-2xl p-3.5 flex items-start gap-2.5 text-xs text-textPrimary">
+            <KeyIcon class="w-4 h-4 text-accent shrink-0 mt-0.5" />
+            <div class="flex flex-col gap-0.5">
+              <span class="font-semibold text-accent uppercase tracking-wider text-[9px]">Acesso Rápido Demo</span>
+              <span class="font-technical text-textSecondary text-[11px]">
+                Login: <strong>viktor</strong> · Senha: <strong>orlaweb123123#</strong>
+              </span>
             </div>
           </div>
 
-          <div class="flex flex-col gap-1">
-            <label class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary">
-              Senha
-            </label>
-            <div class="relative">
-              <LockIcon class="w-4 h-4 text-textSecondary absolute left-3.5 top-1/2 -translate-y-1/2" />
-              <input
-                v-model="loginPassword"
-                type="password"
-                required
-                data-testid="password-input"
-                placeholder="••••••••••••"
-                class="w-full bg-black/40 border border-divider rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-textPrimary placeholder:text-textSecondary/40 focus:outline-none focus:border-accent transition-colors"
-              />
-            </div>
+          <!-- Alerta de Erro de Autenticação -->
+          <div v-if="authError" class="bg-rose-500/10 border border-rose-500/30 rounded-xl p-3 text-xs text-rose-400 flex items-center gap-2">
+            <AlertCircleIcon class="w-4 h-4 shrink-0" />
+            <span>{{ authError }}</span>
           </div>
 
-          <button
-            type="submit"
-            :disabled="isAuthLoading"
-            data-testid="submit-login-btn"
-            class="w-full mt-2 bg-white text-black font-interface font-medium text-xs sm:text-sm py-3 rounded-xl hover:bg-gray-200 transition-all flex items-center justify-center gap-2 shadow-lg disabled:opacity-50 cursor-pointer"
-          >
-            <span v-if="!isAuthLoading">Entrar no Aresta</span>
-            <span v-else class="flex items-center gap-2">
-              <span class="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></span>
-              Acessando...
-            </span>
-            <ArrowRightIcon v-if="!isAuthLoading" class="w-4 h-4" />
-          </button>
-        </form>
-
-        <!-- Formulário de Registro / Criar Conta -->
-        <form v-else @submit.prevent="handleQuickRegister" class="flex flex-col gap-4">
-          <div class="flex flex-col gap-1">
-            <label class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary">
-              Nome Completo
-            </label>
-            <div class="relative">
-              <UserIcon class="w-4 h-4 text-textSecondary absolute left-3.5 top-1/2 -translate-y-1/2" />
-              <input
-                v-model="registerName"
-                type="text"
-                required
-                data-testid="register-name-input"
-                placeholder="Seu Nome"
-                class="w-full bg-black/40 border border-divider rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-textPrimary placeholder:text-textSecondary/40 focus:outline-none focus:border-accent transition-colors"
-              />
+          <!-- Formulário de Login -->
+          <form v-if="authMode === 'login'" @submit.prevent="handleQuickLogin" class="flex flex-col gap-4">
+            <div class="flex flex-col gap-1">
+              <label class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary">
+                Usuário ou E-mail
+              </label>
+              <div class="relative">
+                <UserIcon class="w-4 h-4 text-textSecondary absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  v-model="loginIdentifier"
+                  type="text"
+                  required
+                  data-testid="login-input"
+                  placeholder="viktor"
+                  class="w-full bg-black/40 border border-divider rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-textPrimary placeholder:text-textSecondary/40 focus:outline-none focus:border-accent transition-colors"
+                />
+              </div>
             </div>
-          </div>
 
-          <div class="flex flex-col gap-1">
-            <label class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary">
-              E-mail
-            </label>
-            <div class="relative">
-              <MailIcon class="w-4 h-4 text-textSecondary absolute left-3.5 top-1/2 -translate-y-1/2" />
-              <input
-                v-model="registerEmail"
-                type="email"
-                required
-                data-testid="register-email-input"
-                placeholder="seu.email@exemplo.com"
-                class="w-full bg-black/40 border border-divider rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-textPrimary placeholder:text-textSecondary/40 focus:outline-none focus:border-accent transition-colors"
-              />
+            <div class="flex flex-col gap-1">
+              <label class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary">
+                Senha
+              </label>
+              <div class="relative">
+                <LockIcon class="w-4 h-4 text-textSecondary absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  v-model="loginPassword"
+                  type="password"
+                  required
+                  data-testid="password-input"
+                  placeholder="••••••••••••"
+                  class="w-full bg-black/40 border border-divider rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-textPrimary placeholder:text-textSecondary/40 focus:outline-none focus:border-accent transition-colors"
+                />
+              </div>
             </div>
-          </div>
 
-          <div class="flex flex-col gap-1">
-            <label class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary">
-              Senha (mínimo 6 caracteres)
-            </label>
-            <div class="relative">
-              <LockIcon class="w-4 h-4 text-textSecondary absolute left-3.5 top-1/2 -translate-y-1/2" />
-              <input
-                v-model="registerPassword"
-                type="password"
-                required
-                minlength="6"
-                data-testid="register-password-input"
-                placeholder="••••••••••••"
-                class="w-full bg-black/40 border border-divider rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-textPrimary placeholder:text-textSecondary/40 focus:outline-none focus:border-accent transition-colors"
-              />
+            <button
+              type="submit"
+              :disabled="isAuthLoading"
+              data-testid="submit-login-btn"
+              class="w-full mt-2 bg-white text-black font-interface font-medium text-xs sm:text-sm py-3 rounded-xl hover:bg-gray-200 transition-all flex items-center justify-center gap-2 shadow-lg disabled:opacity-50 cursor-pointer"
+            >
+              <span v-if="!isAuthLoading">Entrar no Aresta</span>
+              <span v-else class="flex items-center gap-2">
+                <span class="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></span>
+                Acessando...
+              </span>
+              <ArrowRightIcon v-if="!isAuthLoading" class="w-4 h-4" />
+            </button>
+          </form>
+
+          <!-- Formulário de Registro / Criar Conta -->
+          <form v-else @submit.prevent="handleQuickRegister" class="flex flex-col gap-4">
+            <div class="flex flex-col gap-1">
+              <label class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary">
+                Nome Completo
+              </label>
+              <div class="relative">
+                <UserIcon class="w-4 h-4 text-textSecondary absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  v-model="registerName"
+                  type="text"
+                  required
+                  data-testid="register-name-input"
+                  placeholder="Seu Nome"
+                  class="w-full bg-black/40 border border-divider rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-textPrimary placeholder:text-textSecondary/40 focus:outline-none focus:border-accent transition-colors"
+                />
+              </div>
             </div>
-          </div>
 
-          <button
-            type="submit"
-            :disabled="isAuthLoading"
-            data-testid="submit-register-btn"
-            class="w-full mt-2 bg-accent text-white font-interface font-medium text-xs sm:text-sm py-3 rounded-xl hover:bg-accent/90 transition-all flex items-center justify-center gap-2 shadow-lg shadow-accent/20 disabled:opacity-50 cursor-pointer"
-          >
-            <span v-if="!isAuthLoading">Criar Conta e Começar</span>
-            <span v-else class="flex items-center gap-2">
-              <span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-              Criando conta...
-            </span>
-            <ArrowRightIcon v-if="!isAuthLoading" class="w-4 h-4" />
-          </button>
-        </form>
+            <div class="flex flex-col gap-1">
+              <label class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary">
+                E-mail
+              </label>
+              <div class="relative">
+                <MailIcon class="w-4 h-4 text-textSecondary absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  v-model="registerEmail"
+                  type="email"
+                  required
+                  data-testid="register-email-input"
+                  placeholder="seu.email@exemplo.com"
+                  class="w-full bg-black/40 border border-divider rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-textPrimary placeholder:text-textSecondary/40 focus:outline-none focus:border-accent transition-colors"
+                />
+              </div>
+            </div>
+
+            <div class="flex flex-col gap-1">
+              <label class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary">
+                Senha (mínimo 6 caracteres)
+              </label>
+              <div class="relative">
+                <LockIcon class="w-4 h-4 text-textSecondary absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  v-model="registerPassword"
+                  type="password"
+                  required
+                  minlength="6"
+                  data-testid="register-password-input"
+                  placeholder="••••••••••••"
+                  class="w-full bg-black/40 border border-divider rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-textPrimary placeholder:text-textSecondary/40 focus:outline-none focus:border-accent transition-colors"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              :disabled="isAuthLoading"
+              data-testid="submit-register-btn"
+              class="w-full mt-2 bg-accent text-white font-interface font-medium text-xs sm:text-sm py-3 rounded-xl hover:bg-accent/90 transition-all flex items-center justify-center gap-2 shadow-lg shadow-accent/20 disabled:opacity-50 cursor-pointer"
+            >
+              <span v-if="!isAuthLoading">Criar Conta e Começar</span>
+              <span v-else class="flex items-center gap-2">
+                <span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                Criando conta...
+              </span>
+              <ArrowRightIcon v-if="!isAuthLoading" class="w-4 h-4" />
+            </button>
+          </form>
+        </div>
       </section>
     </div>
   </div>
@@ -475,7 +688,13 @@ import {
   AlertCircleIcon,
   InfoIcon,
   PanelRightCloseIcon,
-  PanelRightOpenIcon
+  PanelRightOpenIcon,
+  SparklesIcon,
+  ZapOffIcon,
+  TargetIcon,
+  GraduationCapIcon,
+  CompassIcon,
+  CheckCircle2Icon
 } from 'lucide-vue-next'
 import ReadingStreak from '~/components/ReadingStreak.vue'
 import EbbinghausChart from '~/components/EbbinghausChart.vue'
@@ -484,6 +703,53 @@ import { useAuth } from '~/composables/useAuth'
 import { useSettings } from '~/composables/useSettings'
 import { useUserBooks } from '~/composables/useUserBooks'
 import { getCoverUrl } from '~/utils/cover'
+
+// Otimização Completa de SEO para a Landing Page e Home do Aresta
+if (typeof useHead === 'function') {
+  useHead({
+    title: 'Aresta — Leitura Profunda, Segundo Cérebro & Gestão de Conhecimento',
+    meta: [
+      {
+        name: 'description',
+        content: 'Ecossistema minimalista e anti-dopaminérgico para leitura de EPUB e PDF. Construa seu segundo cérebro, retenha o que aprende com repetição espaçada e torne-se especialista.'
+      },
+      {
+        name: 'keywords',
+        content: 'leitura profunda, segundo cérebro, gestão de conhecimento, pkm, retenção de conhecimento, epub reader, leitor pdf, curva de esquecimento, flashcards, repetição espaçada, minimalismo digital, foco, estudos, aprendizado'
+      },
+      { property: 'og:title', content: 'Aresta — Leitura Profunda, Segundo Cérebro & Gestão de Conhecimento' },
+      {
+        property: 'og:description',
+        content: 'Ecossistema minimalista e anti-dopaminérgico para leitura de EPUB e PDF. Construa seu segundo cérebro e retenha conhecimento com repetição espaçada.'
+      },
+      { property: 'og:type', content: 'website' },
+      { name: 'twitter:card', content: 'summary_large_image' },
+      { name: 'twitter:title', content: 'Aresta — Leitura Profunda, Segundo Cérebro & Gestão de Conhecimento' },
+      {
+        name: 'twitter:description',
+        content: 'Ecossistema minimalista e anti-dopaminérgico para leitura de EPUB e PDF. Construa seu segundo cérebro.'
+      }
+    ],
+    script: [
+      {
+        type: 'application/ld+json',
+        innerHTML: JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'SoftwareApplication',
+          name: 'Aresta',
+          applicationCategory: 'EducationalApplication',
+          operatingSystem: 'Web, Mobile, Desktop',
+          description: 'Leitor de EPUB e PDF minimalista e anti-dopaminérgico com grafo de conhecimento, flashcards e repetição espaçada.',
+          offers: {
+            '@type': 'Offer',
+            price: '0',
+            priceCurrency: 'BRL'
+          }
+        })
+      }
+    ]
+  })
+}
 
 const auth = useAuth()
 const { loadFromServer } = useSettings()

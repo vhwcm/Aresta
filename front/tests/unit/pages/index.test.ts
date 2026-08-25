@@ -23,10 +23,16 @@ describe('Index Page (Landing Page & Home)', () => {
     AlertCircleIcon: true,
     InfoIcon: true,
     PanelRightCloseIcon: true,
-    PanelRightOpenIcon: true
+    PanelRightOpenIcon: true,
+    SparklesIcon: true,
+    ZapOffIcon: true,
+    TargetIcon: true,
+    GraduationCapIcon: true,
+    CompassIcon: true,
+    CheckCircle2Icon: true
   }
 
-  it('renders guest landing page with Ebbinghaus forgetting curve highlight and login/register tabs when not logged in', async () => {
+  it('renders guest landing page with PKM, deep reading, copywriting questions, de-emphasized forgetting curve, and CTA', async () => {
     vi.spyOn(authComposable, 'useAuth').mockReturnValue({
       token: ref(null),
       user: ref(null),
@@ -47,16 +53,32 @@ describe('Index Page (Landing Page & Home)', () => {
 
     expect(wrapper.find('[data-testid="guest-landing"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="auth-home"]').exists()).toBe(false)
-    expect(wrapper.text()).toContain('Transforme sua leitura em uma rede viva de conhecimento')
-    expect(wrapper.text()).toContain('A Revisão de Conhecimento')
-    expect(wrapper.find('[data-testid="ebbinghaus-info-link"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="ebbinghaus-chart"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Transforme sua leitura em uma rede viva de conhecimento e competência')
+    expect(wrapper.text()).toContain('Experimentar o Aresta Gratuitamente')
+    expect(wrapper.text()).toContain('Anti-Dopaminérgico')
+    expect(wrapper.text()).toContain('Gostaria de se sentir mais competente?')
+    expect(wrapper.text()).toContain('Quer se tornar especialista em algo?')
+    expect(wrapper.text()).toContain('Quer dominar um novo hobby ou paixão?')
+    expect(wrapper.text()).toContain('Quer transformar seus estudos e melhorar sua vida?')
+    expect(wrapper.text()).toContain('Silêncio Cognitivo')
     expect(wrapper.text()).toContain('Leitura Imersiva')
     expect(wrapper.text()).toContain('Grafo Conceitual')
     expect(wrapper.text()).toContain('Retenção Ativa')
     expect(wrapper.text()).toContain('Conversor PDF')
+    expect(wrapper.text()).toContain('A Revisão de Conhecimento & Curva de Ebbinghaus')
+    expect(wrapper.find('[data-testid="ebbinghaus-info-link"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="ebbinghaus-chart"]').exists()).toBe(true)
     expect(wrapper.text()).toContain('Acessar Conta')
     expect(wrapper.text()).toContain('Criar Conta')
+
+    // Verifica que a apresentação das perguntas e pilares vem antes da Curva de Esquecimento
+    const fullText = wrapper.text()
+    const competentIndex = fullText.indexOf('Gostaria de se sentir mais competente?')
+    const pilaresIndex = fullText.indexOf('O Ecossistema Completo do Leitor')
+    const ebbinghausIndex = fullText.indexOf('A Revisão de Conhecimento & Curva de Ebbinghaus')
+
+    expect(competentIndex).toBeLessThan(pilaresIndex)
+    expect(pilaresIndex).toBeLessThan(ebbinghausIndex)
 
     // Alternar para aba de Registro
     const registerTab = wrapper.find('[data-testid="tab-register"]')
