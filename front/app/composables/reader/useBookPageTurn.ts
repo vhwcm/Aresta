@@ -39,7 +39,7 @@ interface Point {
 }
 
 const MAX_CACHED_PAGES = 8
-const MAX_TEXTURE_EDGE = 3072
+const MAX_TEXTURE_EDGE = 4096
 const TURN_DURATION_MS = 220
 const TURN_THRESHOLD = 0.32
 
@@ -129,12 +129,9 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
 
     function configureTexture(texture: THREE.CanvasTexture) {
         texture.colorSpace = THREE.SRGBColorSpace
-        texture.minFilter = THREE.LinearMipmapLinearFilter
+        texture.minFilter = THREE.LinearFilter
         texture.magFilter = THREE.LinearFilter
-        texture.generateMipmaps = true
-        if (renderer) {
-            texture.anisotropy = Math.min(renderer.capabilities.getMaxAnisotropy(), 16)
-        }
+        texture.generateMipmaps = false
         texture.needsUpdate = true
     }
 
@@ -609,14 +606,6 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
 
             const halfWidth = (2 * leftRaster.aspectRatio) / 2
 
-            if (renderer) {
-                const maxAniso = Math.min(renderer.capabilities.getMaxAnisotropy(), 16)
-                if (leftRaster.texture.anisotropy !== maxAniso) {
-                    leftRaster.texture.anisotropy = maxAniso
-                    leftRaster.texture.needsUpdate = true
-                }
-            }
-
             if (isTwoPage) {
                 leftStaticPage.material.map = leftRaster.texture
                 leftStaticPage.material.needsUpdate = true
@@ -625,13 +614,6 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
                 leftStaticPage.visible = true
 
                 const right = rightRaster ?? getBlankRaster(leftRaster.aspectRatio)
-                if (renderer) {
-                    const maxAniso = Math.min(renderer.capabilities.getMaxAnisotropy(), 16)
-                    if (right.texture.anisotropy !== maxAniso) {
-                        right.texture.anisotropy = maxAniso
-                        right.texture.needsUpdate = true
-                    }
-                }
                 rightStaticPage.material.map = right.texture
                 rightStaticPage.material.needsUpdate = true
                 rightStaticPage.material.stencilWrite = false
