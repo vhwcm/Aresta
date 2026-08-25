@@ -4,7 +4,8 @@
       v-if="visible"
       ref="tooltipRef"
       class="reader-selection-tooltip"
-      :style="tooltipStyle"
+      :class="isAbove ? 'reader-selection-tooltip--above' : 'reader-selection-tooltip--below'"
+      :style="{ left: `${x}px`, top: `${y}px` }"
       @mousedown.stop
       @touchstart.stop
       role="toolbar"
@@ -51,7 +52,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onUnmounted } from 'vue'
+import { ref, onUnmounted } from 'vue'
 import { HighlighterIcon, CopyIcon, CheckIcon } from 'lucide-vue-next'
 
 const props = withDefaults(
@@ -81,14 +82,6 @@ const emit = defineEmits<{
 const tooltipRef = ref<HTMLElement | null>(null)
 const copied = ref(false)
 let copyTimer: ReturnType<typeof setTimeout> | null = null
-
-const tooltipStyle = computed(() => {
-  return {
-    left: `${props.x}px`,
-    top: `${props.y}px`,
-    transform: 'translate(-50%, 0)',
-  }
-})
 
 function handleAnnotate() {
   emit('annotate', {
@@ -135,6 +128,14 @@ onUnmounted(() => {
   user-select: none;
   -webkit-user-select: none;
   filter: drop-shadow(0 10px 25px rgba(0, 0, 0, 0.5));
+}
+
+.reader-selection-tooltip--above {
+  transform: translate(-50%, -100%);
+}
+
+.reader-selection-tooltip--below {
+  transform: translate(-50%, 0);
 }
 
 .reader-selection-tooltip__inner {
@@ -221,9 +222,16 @@ onUnmounted(() => {
   transition: opacity 0.18s ease, transform 0.18s ease;
 }
 
-.tooltip-fade-enter-from,
-.tooltip-fade-leave-to {
+.tooltip-fade-enter-from.reader-selection-tooltip--above,
+.tooltip-fade-leave-to.reader-selection-tooltip--above {
   opacity: 0;
-  transform: translate(-50%, 6px) scale(0.92);
+  transform: translate(-50%, calc(-100% + 6px)) scale(0.92);
+}
+
+.tooltip-fade-enter-from.reader-selection-tooltip--below,
+.tooltip-fade-leave-to.reader-selection-tooltip--below {
+  opacity: 0;
+  transform: translate(-50%, -6px) scale(0.92);
 }
 </style>
+
