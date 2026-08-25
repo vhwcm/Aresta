@@ -50,6 +50,8 @@ import { createBookDocument } from '~/adapters/BookDocumentFactory'
 
 import { readerProfiler } from '~/utils/readerProfiler'
 
+import { getCachedBook, saveCachedBook } from '~/utils/bookCache'
+
 const store = useReaderStore()
 const route = useRoute()
 
@@ -64,58 +66,81 @@ const loadBookFromQuery = async () => {
 
   if (!bookId && !bookPath) return
 
+  const cacheKey = bookId || bookPath || ''
   const sessionName = `Abrir Livro (${bookId ? `ID: ${bookId}` : bookPath})`
   readerProfiler.startSession(sessionName, { bookId, bookPath, pageParam })
 
   store.setLoading(true)
   try {
-    let fileUrl = ''
     let title = (route.query.title as string) || 'Livro'
+    let arrayBuffer: ArrayBuffer | null = null
+    let type: 'pdf' | 'epub' = 'pdf'
 
-    if (bookId) {
-      fileUrl = `http://localhost:7070/api/books/${bookId}/file`
-      await readerProfiler.measureAsync('1. Buscar Metadados da API', async () => {
-        try {
-          const info = await $fetch<{ title?: string }>(`http://localhost:7070/api/books/${bookId}`)
-          if (info && info.title) {
-            title = info.title
-          }
-        } catch {
-          /* fallback caso falhe metadados */
-        }
-      }, 'network')
-    } else if (bookPath) {
-      if (bookPath.startsWith('http://') || bookPath.startsWith('https://')) {
-        fileUrl = bookPath
-      } else {
-        const cleanPath = bookPath.replace(/^\//, '')
-        if (cleanPath.startsWith('epubs/') || cleanPath.startsWith('pdfs/') || cleanPath.startsWith('storage/')) {
-          fileUrl = `http://localhost:7070/${cleanPath}`
+    // 1. Tentar carregar instantaneamente do cache local (IndexedDB)
+    const cached = await readerProfiler.measureAsync('1. Buscar no Cache Local (IndexedDB)', async () => {
+      return await getCachedBook(cacheKey)
+    }, 'io')
+
+    if (cached && cached.arrayBuffer && cached.arrayBuffer.byteLength > 0) {
+      arrayBuffer = cached.arrayBuffer
+      title = cached.title || title
+      type = cached.type
+    } else {
+      // 2. Se não estiver no cache, preparar URLs e paralelizar requisições
+      let fileUrl = ''
+      if (bookId) {
+        fileUrl = `http://localhost:7070/api/books/${bookId}/file`
+      } else if (bookPath) {
+        if (bookPath.startsWith('http://') || bookPath.startsWith('https://')) {
+          fileUrl = bookPath
         } else {
-          const folder = cleanPath.toLowerCase().endsWith('.epub') ? 'epubs' : 'pdfs'
-          fileUrl = `http://localhost:7070/${folder}/${cleanPath}`
+          const cleanPath = bookPath.replace(/^\//, '')
+          if (cleanPath.startsWith('epubs/') || cleanPath.startsWith('pdfs/') || cleanPath.startsWith('storage/')) {
+            fileUrl = `http://localhost:7070/${cleanPath}`
+          } else {
+            const folder = cleanPath.toLowerCase().endsWith('.epub') ? 'epubs' : 'pdfs'
+            fileUrl = `http://localhost:7070/${folder}/${cleanPath}`
+          }
         }
       }
-    }
 
-    const type = fileUrl.toLowerCase().endsWith('.epub') ? 'epub' : 'pdf'
+      type = fileUrl.toLowerCase().endsWith('.epub') ? 'epub' : 'pdf'
 
-    const res = await readerProfiler.measureAsync('2. Download do Arquivo (HTTP Fetch)', async () => {
-      const response = await fetch(fileUrl)
-      if (!response.ok) {
-        throw new Error(`Status HTTP ${response.status} ao carregar arquivo`)
+      // Paralelização de Metadados + Download do Binário
+      const [fetchedMeta, response] = await readerProfiler.measureAsync(
+        '2. Download do Arquivo & Metadados em Paralelo (HTTP Fetch)',
+        async () => {
+          const metaPromise = bookId
+            ? $fetch<{ title?: string }>(`http://localhost:7070/api/books/${bookId}`).catch(() => null)
+            : Promise.resolve(null)
+
+          const filePromise = fetch(fileUrl).then((res) => {
+            if (!res.ok) throw new Error(`Status HTTP ${res.status} ao carregar arquivo`)
+            return res
+          })
+
+          return await Promise.all([metaPromise, filePromise])
+        },
+        'network',
+        { url: fileUrl, type },
+      )
+
+      if (fetchedMeta && fetchedMeta.title) {
+        title = fetchedMeta.title
       }
-      return response
-    }, 'network', { url: fileUrl, type })
 
-    const arrayBuffer = await readerProfiler.measureAsync('3. Conversão para ArrayBuffer em Memória', async () => {
-      return await res.arrayBuffer()
-    }, 'io', { byteLength: res.headers.get('content-length') })
+      arrayBuffer = await readerProfiler.measureAsync('3. Conversão para ArrayBuffer em Memória', async () => {
+        return await response.arrayBuffer()
+      }, 'io', { byteLength: response.headers.get('content-length') })
+
+      // Salvar em background no IndexedDB para as próximas aberturas serem instantâneas
+      void saveCachedBook(cacheKey, arrayBuffer, title, type)
+    }
 
     const doc = createBookDocument(type)
     await readerProfiler.measureAsync('4. Parsing e Inicialização do Documento', async () => {
-      await doc.load(arrayBuffer, title)
-    }, 'parse', { type, sizeMB: (arrayBuffer.byteLength / (1024 * 1024)).toFixed(2) })
+      await doc.load(arrayBuffer!, title)
+    }, 'parse', { type, sizeMB: (arrayBuffer!.byteLength / (1024 * 1024)).toFixed(2) })
 
     readerProfiler.measureSync('5. Atualizar ReaderStore', () => {
       const numericBookId = bookId ? parseInt(bookId, 10) : null

@@ -40,7 +40,7 @@ interface Point {
 
 const MAX_CACHED_PAGES = 8
 const MAX_TEXTURE_EDGE = 2048
-const TURN_DURATION_MS = 520
+const TURN_DURATION_MS = 220
 const TURN_THRESHOLD = 0.32
 
 function clamp(value: number, min = 0, max = 1): number {
@@ -311,7 +311,7 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
         }
 
         staticGeometry = new THREE.PlaneGeometry(pageWidth, pageHeight)
-        pageGeometry = new THREE.PlaneGeometry(pageWidth, pageHeight, 60, 24)
+        pageGeometry = new THREE.PlaneGeometry(pageWidth, pageHeight, 20, 10)
         pageGeometry.userData.basePositions = Float32Array.from(pageGeometry.attributes.position.array)
 
         leftStaticPage.geometry = staticGeometry
@@ -495,7 +495,7 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
             })
 
             staticGeometry = new THREE.PlaneGeometry(1, 1)
-            pageGeometry = new THREE.PlaneGeometry(1, 1, 40, 18)
+            pageGeometry = new THREE.PlaneGeometry(1, 1, 20, 10)
             pageGeometry.userData.basePositions = Float32Array.from(pageGeometry.attributes.position.array)
 
             leftStaticPage = new THREE.Mesh(staticGeometry, staticLeftMaterial)
@@ -1163,16 +1163,22 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
     }
 
     function prefetchNeighbors(pageNumber: number) {
-        if (!activeDocument) return
-        const candidates = store.isTwoPageMode
-            ? [pageNumber - 2, pageNumber - 1, pageNumber + 2, pageNumber + 3]
-            : [pageNumber - 1, pageNumber + 1]
+        const schedule = typeof window !== 'undefined' && 'requestIdleCallback' in window
+            ? (cb: () => void) => (window as any).requestIdleCallback(cb, { timeout: 1200 })
+            : (cb: () => void) => setTimeout(cb, 300)
 
-        for (const candidate of candidates) {
-            if (candidate >= 1 && candidate <= store.totalPages) {
-                void getRaster(candidate).catch(() => undefined)
+        schedule(() => {
+            if (!activeDocument) return
+            const candidates = store.isTwoPageMode
+                ? [pageNumber - 2, pageNumber - 1, pageNumber + 2, pageNumber + 3]
+                : [pageNumber - 1, pageNumber + 1]
+
+            for (const candidate of candidates) {
+                if (candidate >= 1 && candidate <= store.totalPages) {
+                    void getRaster(candidate).catch(() => undefined)
+                }
             }
-        }
+        })
     }
 
     async function displayPage(pageNumber: number) {

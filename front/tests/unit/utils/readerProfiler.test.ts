@@ -60,3 +60,4 @@ describe('readerProfiler', () => {
     expect(readerProfiler.isEnabled()).toBe(true)
   })
 })
+
