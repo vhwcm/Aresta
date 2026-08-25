@@ -114,8 +114,8 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
     const hostHeight = host?.clientHeight || 600
     const isTwoPage = store.isTwoPageMode && hostWidth >= 1024 && !store.isGraphOpen
 
-    const pageCssWidth = isTwoPage ? (hostWidth - 48) / 2 : (hostWidth - 48)
-    const pageCssHeight = hostHeight - 48
+    const pageCssWidth = isTwoPage ? hostWidth / 2 : hostWidth
+    const pageCssHeight = hostHeight
 
     return {
       width: Math.round(Math.max(300, pageCssWidth) * dpr),
@@ -226,22 +226,19 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
     const currentRaster = rasterCache.get(currentPage)
     const aspectRatio = currentRaster?.aspectRatio || 0.72
 
-    const PADDING_X = 24
-    const PADDING_Y = 24
-
     if (isTwoPage) {
       const leftNum = currentPage % 2 === 0 ? Math.max(1, currentPage - 1) : currentPage
       const rightNum = leftNum + 1 <= store.totalPages ? leftNum + 1 : 0
 
-      const availableWidth = Math.max(100, (hostWidth - PADDING_X * 2) / 2)
-      const availableHeight = Math.max(100, hostHeight - PADDING_Y * 2)
+      // Maximizar para preencher do topo à barra inferior
+      const availableHeight = hostHeight
+      let targetHeight = availableHeight
+      let targetWidth = targetHeight * aspectRatio
 
-      let targetWidth = availableWidth
-      let targetHeight = targetWidth / aspectRatio
-
-      if (targetHeight > availableHeight) {
-        targetHeight = availableHeight
-        targetWidth = targetHeight * aspectRatio
+      const maxHalfWidth = hostWidth / 2
+      if (targetWidth > maxHalfWidth) {
+        targetWidth = maxHalfWidth
+        targetHeight = targetWidth / aspectRatio
       }
 
       const totalBookWidth = targetWidth * 2
@@ -271,15 +268,13 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
         singlePage: null,
       }
     } else {
-      const availableWidth = Math.max(100, hostWidth - PADDING_X * 2)
-      const availableHeight = Math.max(100, hostHeight - PADDING_Y * 2)
+      const availableHeight = hostHeight
+      let targetHeight = availableHeight
+      let targetWidth = targetHeight * aspectRatio
 
-      let targetWidth = availableWidth
-      let targetHeight = targetWidth / aspectRatio
-
-      if (targetHeight > availableHeight) {
-        targetHeight = availableHeight
-        targetWidth = targetHeight * aspectRatio
+      if (targetWidth > hostWidth) {
+        targetWidth = hostWidth
+        targetHeight = targetWidth / aspectRatio
       }
 
       const startX = Math.max(0, (hostWidth - targetWidth) / 2)
@@ -341,22 +336,22 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
 
   function drawPageShadow(ctx: CanvasRenderingContext2D, rect: PageRect, isLeftSpread = false, isRightSpread = false) {
     ctx.save()
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.22)'
-    ctx.shadowBlur = 16
-    ctx.shadowOffsetX = isLeftSpread ? -3 : (isRightSpread ? 3 : 0)
-    ctx.shadowOffsetY = 6
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.4)'
+    ctx.shadowBlur = 20
+    ctx.shadowOffsetX = isLeftSpread ? -6 : (isRightSpread ? 6 : 0)
+    ctx.shadowOffsetY = 0
     ctx.fillStyle = '#ffffff'
     ctx.fillRect(rect.left, rect.top, rect.width, rect.height)
     ctx.restore()
   }
 
-  function drawPageRaster(ctx: CanvasRenderingContext2D, raster: PageRaster | null, rect: PageRect, offsetX = 0) {
+  function drawPageRaster(ctx: CanvasRenderingContext2D, raster: PageRaster | null, rect: PageRect, offsetX = 0, isLeftSpread = false, isRightSpread = false) {
     const targetRect: PageRect = {
       ...rect,
       left: rect.left + offsetX,
     }
 
-    drawPageShadow(ctx, targetRect)
+    drawPageShadow(ctx, targetRect, isLeftSpread, isRightSpread)
 
     if (raster && raster.canvas) {
       ctx.save()
@@ -378,20 +373,28 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
     const centerX = leftPage.left + leftPage.width + offsetX
     const top = leftPage.top
     const height = leftPage.height
-    const spineWidth = 24
+    const spineWidth = 28
 
     ctx.save()
     const gradLeft = ctx.createLinearGradient(centerX - spineWidth, top, centerX, top)
     gradLeft.addColorStop(0, 'rgba(0, 0, 0, 0)')
-    gradLeft.addColorStop(1, 'rgba(0, 0, 0, 0.12)')
+    gradLeft.addColorStop(1, 'rgba(0, 0, 0, 0.18)')
     ctx.fillStyle = gradLeft
     ctx.fillRect(centerX - spineWidth, top, spineWidth, height)
 
     const gradRight = ctx.createLinearGradient(centerX, top, centerX + spineWidth, top)
-    gradRight.addColorStop(0, 'rgba(0, 0, 0, 0.12)')
+    gradRight.addColorStop(0, 'rgba(0, 0, 0, 0.18)')
     gradRight.addColorStop(1, 'rgba(0, 0, 0, 0)')
     ctx.fillStyle = gradRight
     ctx.fillRect(centerX, top, spineWidth, height)
+
+    // Linha de vinco central
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.16)'
+    ctx.lineWidth = 1
+    ctx.beginPath()
+    ctx.moveTo(centerX, top)
+    ctx.lineTo(centerX, top + height)
+    ctx.stroke()
     ctx.restore()
   }
 
@@ -410,29 +413,29 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
       const leftRaster = rasterCache.get(layout.leftPage.pageNumber) || null
       const rightRaster = layout.rightPage ? (rasterCache.get(layout.rightPage.pageNumber) || null) : null
 
-      drawPageRaster(stageCtx, leftRaster, layout.leftPage, offsetX)
+      drawPageRaster(stageCtx, leftRaster, layout.leftPage, offsetX, true, false)
       if (layout.rightPage) {
-        drawPageRaster(stageCtx, rightRaster, layout.rightPage, offsetX)
+        drawPageRaster(stageCtx, rightRaster, layout.rightPage, offsetX, false, true)
         drawBookSpineShadow(stageCtx, layout.leftPage, layout.rightPage, offsetX)
       }
 
       if (incomingRasters && offsetX !== 0) {
         const incomingOffset = offsetX > 0 ? offsetX - width : offsetX + width
         if (incomingRasters.left && layout.leftPage) {
-          drawPageRaster(stageCtx, incomingRasters.left, layout.leftPage, incomingOffset)
+          drawPageRaster(stageCtx, incomingRasters.left, layout.leftPage, incomingOffset, true, false)
         }
         if (incomingRasters.right && layout.rightPage) {
-          drawPageRaster(stageCtx, incomingRasters.right, layout.rightPage, incomingOffset)
+          drawPageRaster(stageCtx, incomingRasters.right, layout.rightPage, incomingOffset, false, true)
           drawBookSpineShadow(stageCtx, layout.leftPage, layout.rightPage, incomingOffset)
         }
       }
     } else if (layout.singlePage) {
       const singleRaster = rasterCache.get(layout.singlePage.pageNumber) || null
-      drawPageRaster(stageCtx, singleRaster, layout.singlePage, offsetX)
+      drawPageRaster(stageCtx, singleRaster, layout.singlePage, offsetX, false, false)
 
       if (incomingRasters && incomingRasters.single && offsetX !== 0) {
         const incomingOffset = offsetX > 0 ? offsetX - width : offsetX + width
-        drawPageRaster(stageCtx, incomingRasters.single, layout.singlePage, incomingOffset)
+        drawPageRaster(stageCtx, incomingRasters.single, layout.singlePage, incomingOffset, false, false)
       }
     }
   }

@@ -42,6 +42,19 @@
         }"
       />
 
+      <!-- Modo 2 Páginas: Divisor Vertical de Lombada / Vinco Central -->
+      <div
+        v-if="pageLayout.isTwoPage && pageLayout.leftPage && pageLayout.rightPage && pageLayout.leftPage.pageNumber > 0 && pageLayout.rightPage.pageNumber > 0"
+        class="book-spine-divider"
+        :style="{
+          left: `${pageLayout.leftPage.left + pageLayout.leftPage.width - 16}px`,
+          top: `${pageLayout.leftPage.top}px`,
+          width: '32px',
+          height: `${pageLayout.leftPage.height}px`,
+        }"
+        aria-hidden="true"
+      />
+
       <!-- Modo 1 Página: Página Única Central -->
       <div
         v-if="!pageLayout.isTwoPage && pageLayout.singlePage && pageLayout.singlePage.pageNumber > 0"
@@ -292,6 +305,38 @@ defineExpose({
   -webkit-user-select: text;
 }
 
+.page-text-layer--left {
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.45);
+  border-left: 1px solid rgba(255, 255, 255, 0.04);
+  border-right: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.page-text-layer--right {
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.45);
+  border-left: 1px solid rgba(0, 0, 0, 0.12);
+  border-right: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.page-text-layer--single {
+  box-shadow: 0 0 24px rgba(0, 0, 0, 0.5);
+  border-left: 1px solid rgba(255, 255, 255, 0.04);
+  border-right: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.book-spine-divider {
+  position: absolute;
+  pointer-events: none;
+  z-index: 15;
+  background: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0.06) 35%,
+    rgba(0, 0, 0, 0.22) 50%,
+    rgba(0, 0, 0, 0.06) 65%,
+    rgba(0, 0, 0, 0) 100%
+  );
+}
+
 /* PDF.js Text Layer (Camada invisível sobre o Canvas PDF) */
 .page-text-layer :deep(.textLayer) {
   position: absolute;
@@ -352,8 +397,7 @@ defineExpose({
 /* EPUB Native Typography Layer (Texto HTML 100% Vetorial e Nítido) */
 .page-text-layer :deep(.epub-text-layer-viewport) {
   background: #faf9f7;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-  border-radius: 2px;
+  border-radius: 1px;
 }
 
 .page-text-layer :deep(.epub-text-layer-content) {
