@@ -76,39 +76,80 @@ class HeuristicLayoutDetector:
         current_block: List[TextSpan] = []
         last_span: TextSpan | None = None
 
-        def create_region_from_spans(span_list: List[TextSpan]) -> Region:
+        def create_regions_from_spans(span_list: List[TextSpan]) -> List[Region]:
+            if not span_list:
+                return []
+
+            full_text = " ".join(s.text for s in span_list).strip()
+            is_chapter_title = bool(CHAPTER_START_RE.match(full_text))
+
+            # Se o bloco começou com capítulo mas possui múltiplos spans ou texto longo (parágrafos misturados):
+            if is_chapter_title and (len(span_list) > 1 or len(full_text) > 100 or '\n' in full_text):
+                # Isola o primeiro span ou linha como título e o resto como parágrafo
+                m = re.match(r'^(cap[íi]tulo\s+(?:[ivxlcdm0-9]+|\w+)(?:\s*[-–—:]\s*[^.\n!]+(?:[!?.])?)?|chapter\s+[0-9ivxlcdm]+(?:\s*[-–—:]\s*[^.\n!]+(?:[!?.])?)?|sinopse|sum[áa]rio|pref[áa]cio|introdu[çc][ãa]o|ep[íi]logo|conclus[ãa]o|posf[áa]cio)', full_text, re.IGNORECASE)
+                if m:
+                    title_str = m.group(1).strip()
+                    body_str = full_text[m.end():].strip()
+                    body_str = re.sub(r'^[.:\s-]+', '', body_str).strip()
+
+                    x0 = min(s.bbox.x0 for s in span_list)
+                    y0 = min(s.bbox.y0 for s in span_list)
+                    x1 = max(s.bbox.x1 for s in span_list)
+                    y1 = max(s.bbox.y1 for s in span_list)
+
+                    res = [
+                        Region(
+                            type=RegionType.TITLE,
+                            bbox=BBox(x0, y0, x1, y1),
+                            confidence=0.9,
+                            spans=[span_list[0]],
+                            text=title_str,
+                            level=1
+                        )
+                    ]
+                    if body_str:
+                        res.append(
+                            Region(
+                                type=RegionType.PARAGRAPH,
+                                bbox=BBox(x0, y0, x1, y1),
+                                confidence=0.85,
+                                spans=span_list[1:] if len(span_list) > 1 else span_list,
+                                text=body_str,
+                                level=1
+                            )
+                        )
+                    return res
+
             x0 = min(s.bbox.x0 for s in span_list)
             y0 = min(s.bbox.y0 for s in span_list)
             x1 = max(s.bbox.x1 for s in span_list)
             y1 = max(s.bbox.y1 for s in span_list)
-            full_text = " ".join(s.text for s in span_list)
 
             # Classifica tipo pela tipografia e por padrões de texto
             max_size = max(s.font_size for s in span_list)
             is_bold = any(s.is_bold for s in span_list)
-            is_chapter_title = bool(CHAPTER_START_RE.match(full_text.strip()))
 
-            if is_chapter_title:
+            if is_chapter_title and len(full_text) < 120:
                 reg_type = RegionType.TITLE
                 level = 1
             elif max_size >= avg_font_size * 1.4:
                 reg_type = RegionType.TITLE if max_size >= avg_font_size * 1.8 else RegionType.HEADING
                 level = 1 if max_size >= avg_font_size * 1.8 else (2 if max_size >= avg_font_size * 1.5 else 3)
-            elif is_bold and len(full_text) < 120 and max_size >= avg_font_size * 1.05:
+            elif is_bold and len(full_text) < 100 and max_size >= avg_font_size * 1.05 and not full_text.endswith('.'):
                 reg_type = RegionType.HEADING
                 level = 3
             else:
                 reg_type = RegionType.PARAGRAPH
                 level = 1
 
-            return Region(
+            return [Region(
                 type=reg_type,
                 bbox=BBox(x0, y0, x1, y1),
                 confidence=0.85,
                 spans=span_list,
                 text=full_text,
                 level=level
-            )
+            )]
 
         for s in sorted_spans:
             if not current_block:
@@ -118,24 +159,40 @@ class HeuristicLayoutDetector:
 
             # Se o novo span for o início de um capítulo, fecha o bloco anterior imediatamente
             if CHAPTER_START_RE.match(s.text.strip()):
-                regions.append(create_region_from_spans(current_block))
+                regions.extend(create_regions_from_spans(current_block))
                 current_block = [s]
                 last_span = s
                 continue
+
+            # Se o bloco atual começou com um título de capítulo, verifica se este novo span ainda pode ser parte do título
+            if CHAPTER_START_RE.match(current_block[0].text.strip()):
+                curr_text = " ".join(x.text for x in current_block).strip()
+                # Se já temos um título com número e nome, ou se o novo span for texto longo/narrativo, fecha o título
+                is_subheading = (
+                    len(curr_text) < 50 and
+                    len(s.text.strip()) < 50 and
+                    (s.is_bold or s.text.isupper() or abs(s.font_size - current_block[0].font_size) <= 1.5) and
+                    not s.text.strip().endswith('.')
+                )
+                if not is_subheading:
+                    regions.extend(create_regions_from_spans(current_block))
+                    current_block = [s]
+                    last_span = s
+                    continue
 
             v_gap = s.bbox.y0 - last_span.bbox.y1
             line_height = max(s.font_size, last_span.font_size)
 
             font_diff = abs(s.font_size - last_span.font_size) > 2.0
             if v_gap > (line_height * 1.8) or (font_diff and (s.font_size > avg_font_size * 1.2 or last_span.font_size > avg_font_size * 1.2)):
-                regions.append(create_region_from_spans(current_block))
+                regions.extend(create_regions_from_spans(current_block))
                 current_block = [s]
             else:
                 current_block.append(s)
             last_span = s
 
         if current_block:
-            regions.append(create_region_from_spans(current_block))
+            regions.extend(create_regions_from_spans(current_block))
 
         return regions
 

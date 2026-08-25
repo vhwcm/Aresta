@@ -103,12 +103,36 @@ class EpubGenerator:
                 continue
 
             if r.type == RegionType.TITLE:
-                html_parts.append(f'<h1>{clean_text}</h1>')
-                is_first_p_after_heading = True
+                lines = [line.strip() for line in clean_text.split('\n') if line.strip()]
+                if len(lines) > 1 or len(clean_text) > 120:
+                    title_part = lines[0] if lines else clean_text[:80]
+                    body_parts = lines[1:] if len(lines) > 1 else [clean_text[len(title_part):].strip()]
+                    html_parts.append(f'<h1>{title_part}</h1>')
+                    is_first_p_after_heading = True
+                    for bp in body_parts:
+                        if bp:
+                            cls_attr = ' class="first-after-heading"' if is_first_p_after_heading else ''
+                            html_parts.append(f'<p{cls_attr}>{bp}</p>')
+                            is_first_p_after_heading = False
+                else:
+                    html_parts.append(f'<h1>{clean_text}</h1>')
+                    is_first_p_after_heading = True
             elif r.type == RegionType.HEADING:
                 level = min(max(r.level, 2), 6)
-                html_parts.append(f'<h{level}>{clean_text}</h{level}>')
-                is_first_p_after_heading = True
+                lines = [line.strip() for line in clean_text.split('\n') if line.strip()]
+                if len(lines) > 1 or len(clean_text) > 120:
+                    heading_part = lines[0] if lines else clean_text[:80]
+                    body_parts = lines[1:] if len(lines) > 1 else [clean_text[len(heading_part):].strip()]
+                    html_parts.append(f'<h{level}>{heading_part}</h{level}>')
+                    is_first_p_after_heading = True
+                    for bp in body_parts:
+                        if bp:
+                            cls_attr = ' class="first-after-heading"' if is_first_p_after_heading else ''
+                            html_parts.append(f'<p{cls_attr}>{bp}</p>')
+                            is_first_p_after_heading = False
+                else:
+                    html_parts.append(f'<h{level}>{clean_text}</h{level}>')
+                    is_first_p_after_heading = True
             elif r.type == RegionType.PARAGRAPH:
                 cls_attr = ' class="first-after-heading"' if is_first_p_after_heading else ''
                 html_parts.append(f'<p{cls_attr}>{clean_text}</p>')
