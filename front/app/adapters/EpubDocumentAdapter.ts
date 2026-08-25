@@ -277,12 +277,12 @@ export class EpubDocumentAdapter implements IBookDocument {
       contentWrapper.style.columnWidth = '704px'
       contentWrapper.style.columnGap = '96px'
       contentWrapper.style.columnFill = 'auto'
-      contentWrapper.style.fontFamily = 'Georgia, serif'
+      contentWrapper.style.fontFamily = "'Newsreader', Georgia, 'Times New Roman', serif"
       contentWrapper.style.fontSize = '18px'
       contentWrapper.style.lineHeight = '1.7'
       contentWrapper.style.wordWrap = 'break-word'
       contentWrapper.style.marginLeft = `-${colOffset}px`
-      contentWrapper.style.color = 'transparent'
+      contentWrapper.style.color = '#1a1a1a'
       contentWrapper.style.userSelect = 'text'
       contentWrapper.style.webkitUserSelect = 'text'
       contentWrapper.innerHTML = doc.body ? doc.body.innerHTML : ''

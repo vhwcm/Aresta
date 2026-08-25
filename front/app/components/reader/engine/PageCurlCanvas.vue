@@ -284,7 +284,15 @@ defineExpose({
   z-index: 10;
 }
 
-.page-text-layer,
+.page-text-layer {
+  position: absolute;
+  overflow: hidden;
+  pointer-events: auto;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* PDF.js Text Layer (Camada invisível sobre o Canvas PDF) */
 .page-text-layer :deep(.textLayer) {
   position: absolute;
   overflow: hidden;
@@ -301,13 +309,9 @@ defineExpose({
   --min-font-size-inv: calc(1 / var(--min-font-size));
 }
 
-.page-text-layer {
-  pointer-events: auto;
-}
-
-.page-text-layer :deep(span),
-.page-text-layer :deep(span[role="presentation"]),
-.page-text-layer :deep(br) {
+.page-text-layer :deep(.textLayer span),
+.page-text-layer :deep(.textLayer span[role="presentation"]),
+.page-text-layer :deep(.textLayer br) {
   color: transparent !important;
   position: absolute;
   white-space: pre;
@@ -315,8 +319,8 @@ defineExpose({
   transform-origin: 0% 0%;
 }
 
-.page-text-layer :deep(> :not(.markedContent)),
-.page-text-layer :deep(.markedContent span:not(.markedContent)) {
+.page-text-layer :deep(.textLayer > :not(.markedContent)),
+.page-text-layer :deep(.textLayer .markedContent span:not(.markedContent)) {
   --font-height: 0;
   font-size: calc(var(--text-scale-factor) * var(--font-height));
   --scale-x: 1;
@@ -324,36 +328,74 @@ defineExpose({
   transform: rotate(var(--rotate)) scaleX(var(--scale-x)) scale(var(--min-font-size-inv));
 }
 
-.page-text-layer :deep(.markedContent) {
+.page-text-layer :deep(.textLayer .markedContent) {
   display: contents;
 }
 
-/* Cor Laranja Semitransparente do Aresta na seleção de texto */
+/* Seleção de Texto nos Documentos */
 .page-text-layer :deep(::selection),
 .page-text-layer ::selection,
-.page-text-layer :deep(.textLayer ::selection),
-.page-text-layer :deep(.epub-text-layer-content *::selection) {
+.page-text-layer :deep(.textLayer ::selection) {
   background: rgba(229, 123, 85, 0.38) !important;
   color: transparent !important;
+}
+
+.page-text-layer :deep(.epub-text-layer-content *::selection) {
+  background: rgba(229, 123, 85, 0.38) !important;
+  color: #1a1a1a !important;
 }
 
 .page-text-layer :deep(br::selection) {
   background: transparent !important;
 }
 
-/* EPUB TextLayer styles */
+/* EPUB Native Typography Layer (Texto HTML 100% Vetorial e Nítido) */
+.page-text-layer :deep(.epub-text-layer-viewport) {
+  background: #faf9f7;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  border-radius: 2px;
+}
+
 .page-text-layer :deep(.epub-text-layer-content) {
-  color: transparent !important;
+  color: #1a1a1a !important;
   user-select: text !important;
   -webkit-user-select: text !important;
-  line-height: 1.7 !important;
+  line-height: 1.75 !important;
+  font-family: 'Newsreader', Georgia, 'Times New Roman', serif !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+  text-rendering: optimizeLegibility !important;
 }
 
 .page-text-layer :deep(.epub-text-layer-content *) {
-  color: transparent !important;
-  background: transparent !important;
-  border-color: transparent !important;
-  line-height: 1.7 !important;
+  color: #1a1a1a !important;
+  line-height: 1.75 !important;
+}
+
+.page-text-layer :deep(.epub-text-layer-content h1),
+.page-text-layer :deep(.epub-text-layer-content h2),
+.page-text-layer :deep(.epub-text-layer-content h3),
+.page-text-layer :deep(.epub-text-layer-content h4) {
+  font-weight: 700 !important;
+  margin-top: 0.2em !important;
+  margin-bottom: 0.6em !important;
+  line-height: 1.25 !important;
+  color: #111111 !important;
+}
+
+.page-text-layer :deep(.epub-text-layer-content h1) {
+  font-size: 2.2rem !important;
+}
+
+.page-text-layer :deep(.epub-text-layer-content h2) {
+  font-size: 1.6rem !important;
+}
+
+.page-text-layer :deep(.epub-text-layer-content p) {
+  margin-bottom: 1em !important;
+  text-align: justify;
+  text-justify: inter-word;
+  hyphens: auto;
 }
 
 .page-curl-loading {
