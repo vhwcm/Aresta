@@ -13,6 +13,10 @@ export class UserSettingsService {
         pageAnimationEnabled: true,
         language: 'pt-BR',
         epubFontSize: 18,
+        epubFontFamily: 'newsreader',
+        themeMode: 'dark',
+        desktopHomeGraphOpen: true,
+        desktopReaderGraphOpen: true,
       };
     }
 
@@ -21,6 +25,10 @@ export class UserSettingsService {
       pageAnimationEnabled: settings.page_animation_enabled,
       language: settings.language,
       epubFontSize: (settings as any).epub_font_size ?? 18,
+      epubFontFamily: (settings as any).epub_font_family ?? 'newsreader',
+      themeMode: (settings as any).theme_mode ?? 'dark',
+      desktopHomeGraphOpen: (settings as any).desktop_home_graph_open ?? true,
+      desktopReaderGraphOpen: (settings as any).desktop_reader_graph_open ?? true,
     };
   }
 
@@ -28,6 +36,10 @@ export class UserSettingsService {
     const pageAnimationEnabled = input.pageAnimationEnabled ?? true;
     const language = input.language ?? 'pt-BR';
     const epubFontSize = input.epubFontSize ?? 18;
+    const epubFontFamily = input.epubFontFamily ?? 'newsreader';
+    const themeMode = input.themeMode ?? 'dark';
+    const desktopHomeGraphOpen = input.desktopHomeGraphOpen ?? true;
+    const desktopReaderGraphOpen = input.desktopReaderGraphOpen ?? true;
 
     const updated = await prisma.userSettings.upsert({
       where: { user_id: userId },
@@ -35,12 +47,20 @@ export class UserSettingsService {
         page_animation_enabled: pageAnimationEnabled,
         language,
         epub_font_size: epubFontSize,
+        epub_font_family: epubFontFamily,
+        theme_mode: themeMode,
+        desktop_home_graph_open: desktopHomeGraphOpen,
+        desktop_reader_graph_open: desktopReaderGraphOpen,
       },
       create: {
         user_id: userId,
         page_animation_enabled: pageAnimationEnabled,
         language,
         epub_font_size: epubFontSize,
+        epub_font_family: epubFontFamily,
+        theme_mode: themeMode,
+        desktop_home_graph_open: desktopHomeGraphOpen,
+        desktop_reader_graph_open: desktopReaderGraphOpen,
       },
     });
 
@@ -49,6 +69,10 @@ export class UserSettingsService {
       pageAnimationEnabled: updated.page_animation_enabled,
       language: updated.language,
       epubFontSize: (updated as any).epub_font_size ?? 18,
+      epubFontFamily: (updated as any).epub_font_family ?? 'newsreader',
+      themeMode: (updated as any).theme_mode ?? 'dark',
+      desktopHomeGraphOpen: (updated as any).desktop_home_graph_open ?? true,
+      desktopReaderGraphOpen: (updated as any).desktop_reader_graph_open ?? true,
     };
   }
 }
