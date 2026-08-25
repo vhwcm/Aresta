@@ -39,7 +39,7 @@ interface Point {
 }
 
 const MAX_CACHED_PAGES = 8
-const MAX_TEXTURE_EDGE = 2048
+const MAX_TEXTURE_EDGE = 3072
 const TURN_DURATION_MS = 220
 const TURN_THRESHOLD = 0.32
 
@@ -129,9 +129,12 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
 
     function configureTexture(texture: THREE.CanvasTexture) {
         texture.colorSpace = THREE.SRGBColorSpace
-        texture.minFilter = THREE.LinearFilter
+        texture.minFilter = THREE.LinearMipmapLinearFilter
         texture.magFilter = THREE.LinearFilter
-        texture.generateMipmaps = false
+        texture.generateMipmaps = true
+        if (renderer) {
+            texture.anisotropy = Math.min(renderer.capabilities.getMaxAnisotropy(), 8)
+        }
         texture.needsUpdate = true
     }
 
@@ -143,8 +146,8 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
             disposeRaster(blankRaster)
         }
         const canvas = document.createElement('canvas')
-        canvas.width = 600
-        canvas.height = Math.max(1, Math.round(600 / Math.max(0.1, aspectRatio)))
+        canvas.width = 1200
+        canvas.height = Math.max(1, Math.round(1200 / Math.max(0.1, aspectRatio)))
         const context = canvas.getContext('2d')
         if (context) {
             context.fillStyle = '#ffffff'
@@ -181,12 +184,19 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
         }, 'render')
 
         const scale = Math.min(1, MAX_TEXTURE_EDGE / Math.max(source.width, source.height))
-        const canvas = document.createElement('canvas')
-        canvas.width = Math.max(1, Math.round(source.width * scale))
-        canvas.height = Math.max(1, Math.round(source.height * scale))
-        const context = canvas.getContext('2d')
-        if (!context) throw new Error('Não foi possível preparar a textura da página.')
-        context.drawImage(source, 0, 0, canvas.width, canvas.height)
+        let canvas: HTMLCanvasElement
+        if (scale < 1) {
+            canvas = document.createElement('canvas')
+            canvas.width = Math.max(1, Math.round(source.width * scale))
+            canvas.height = Math.max(1, Math.round(source.height * scale))
+            const context = canvas.getContext('2d')
+            if (!context) throw new Error('Não foi possível preparar a textura da página.')
+            context.imageSmoothingEnabled = true
+            context.imageSmoothingQuality = 'high'
+            context.drawImage(source, 0, 0, canvas.width, canvas.height)
+        } else {
+            canvas = source
+        }
 
         const { texture, backTexture } = readerProfiler.measureSync(`6.3. Criar Texturas Three.js da Página ${pageNumber}`, () => {
             const tex = new THREE.CanvasTexture(canvas)
@@ -414,7 +424,7 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
         const height = Math.max(host.clientHeight, 1)
 
         if (renderer) {
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 3))
             renderer.setSize(width, height, false)
         }
 
@@ -545,7 +555,7 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
         if (!fallbackCanvas) return
         const host = hostRef.value
         if (!host) return
-        const pixelRatio = Math.min(window.devicePixelRatio || 1, 2)
+        const pixelRatio = Math.min(window.devicePixelRatio || 1, 3)
         fallbackCanvas.width = Math.max(1, Math.round(host.clientWidth * pixelRatio))
         fallbackCanvas.height = Math.max(1, Math.round(host.clientHeight * pixelRatio))
         const context = fallbackCanvas.getContext('2d')
