@@ -8,19 +8,62 @@
   },
   "favicon": "/favicon.png",
   "colors": {
-    "primary": "#0F172A",
-    "light": "#334155",
-    "dark": "#020617"
+    "primary": "#E57B55",
+    "light": "#F59E0B",
+    "dark": "#0F172A"
   },
   "navigation": [
     {
-      "group": "Começando",
+      "group": "Visão Geral",
       "pages": [
-        "introducao",
-        "instalacao",
-        "banco_e_usuarios",
-        "livros_e_armazenamento",
-        "systems"
+        "architecture/overview",
+        "guides/installation",
+        "guides/dev-workflow"
+      ]
+    },
+    {
+      "group": "Arquitetura & Engenharia",
+      "pages": [
+        "architecture/backend",
+        "architecture/frontend",
+        "architecture/database",
+        "architecture/infrastructure"
+      ]
+    },
+    {
+      "group": "Domínio & Negócio",
+      "pages": [
+        "domain/books",
+        "domain/users",
+        "domain/reading",
+        "domain/graph",
+        "domain/annotations",
+        "domain/streak",
+        "domain/flashcards"
+      ]
+    },
+    {
+      "group": "Decisões de Arquitetura (ADRs)",
+      "pages": [
+        "decisions/ADR-001-node-express-backend",
+        "decisions/ADR-002-sqlite-prisma-orm",
+        "decisions/ADR-003-reader-adapter-pattern",
+        "decisions/ADR-004-ascii-diagram-standard",
+        "decisions/ADR-005-spec-driven-development"
+      ]
+    },
+    {
+      "group": "Sistemas & Observabilidade",
+      "pages": [
+        "systems/overview",
+        "systems/observability"
+      ]
+    },
+    {
+      "group": "Guias & Qualidade",
+      "pages": [
+        "guides/testing",
+        "guides/troubleshooting"
       ]
     }
   ]
