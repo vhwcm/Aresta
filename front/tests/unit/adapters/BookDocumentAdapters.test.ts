@@ -164,7 +164,8 @@ describe('Book Document Adapters and Factory', () => {
       }
 
       // Mock temporário para esta seção longa
-      const { EPUB } = await import('foliate-js/epub.js')
+      const foliateMod: any = await import('foliate-js/epub.js')
+      const EPUB = foliateMod.EPUB || foliateMod.default || foliateMod.Book
       const origEPUB = (EPUB as any)
       vi.spyOn(origEPUB.prototype, 'init').mockImplementation(function (this: any) {
         this.metadata = mockEpubInstance.metadata

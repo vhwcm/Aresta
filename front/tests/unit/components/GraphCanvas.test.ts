@@ -8,7 +8,7 @@ describe('GraphCanvas Component', () => {
       props: {
         nodes: [
           { id: 1, name: 'Filosofia', color: '#3B82F6', books: [] },
-          { id: 2, name: 'Ficção Científica', color: '#10B981', books: [{ userBookId: 10, bookId: 1, title: 'Duna', status: 'LENDO' }] }
+          { id: 2, name: 'Ficção Científica', color: '#10B981', books: [{ userBookId: 10, bookId: 1, title: 'Duna', status: 'LENDO', currentPage: 42 }] }
         ],
         edges: [
           { id: 1, source: 1, target: 2 }

@@ -101,6 +101,33 @@ describe('Reader Components', () => {
       await graphBtn.trigger('click')
       expect(wrapper.emitted('toggleGraph')).toBeTruthy()
     })
+
+    it('alterna modo de 1 página e 2 páginas ao clicar no botão de layout', async () => {
+      const store = useReaderStore()
+      store.setDocument({
+        type: 'pdf',
+        metadata: { title: 'Livro' },
+        totalPages: 10,
+        isLoaded: true,
+        load: vi.fn(),
+        getPage: vi.fn(),
+        destroy: vi.fn(),
+      } as any, 'livro.pdf')
+      store.isTwoPageMode = false
+
+      const wrapper = mount(ReaderBottomBar, {
+        props: { isGraphActive: false },
+      })
+
+      const togglePageBtn = wrapper.find('button[aria-label="Alternar modo de páginas"]')
+      expect(togglePageBtn.exists()).toBe(true)
+
+      await togglePageBtn.trigger('click')
+      expect(store.isTwoPageMode).toBe(true)
+
+      await togglePageBtn.trigger('click')
+      expect(store.isTwoPageMode).toBe(false)
+    })
   })
 
   describe('ReaderSavedPagesModal', () => {

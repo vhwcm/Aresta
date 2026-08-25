@@ -26,9 +26,9 @@ describe('readerProfiler', () => {
     expect(report?.sessionName).toBe('Test Book Loading')
     expect(report?.metadata.bookId).toBe(42)
     expect(report?.steps.length).toBe(2)
-    expect(report?.steps[0].name).toBe('Network Fetch')
-    expect(report?.steps[0].category).toBe('network')
-    expect(report?.steps[0].durationMs).toBeGreaterThan(0)
+    expect(report?.steps[0]?.name).toBe('Network Fetch')
+    expect(report?.steps[0]?.category).toBe('network')
+    expect(report?.steps[0]?.durationMs).toBeGreaterThan(0)
     expect(report?.totalDurationMs).toBeGreaterThan(0)
   })
 
@@ -43,7 +43,7 @@ describe('readerProfiler', () => {
 
     expect(report).not.toBeNull()
     expect(report?.bottlenecks.length).toBeGreaterThan(0)
-    expect(report?.bottlenecks[0].name).toBe('Heavy Unzip')
+    expect(report?.bottlenecks[0]?.name).toBe('Heavy Unzip')
   })
 
   it('allows enabling and disabling through setEnabled', () => {
