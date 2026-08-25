@@ -1,0 +1,51 @@
++-------------------------------------------------------------------------------+
+|                       FLUXO DE RENDERIZACAO E NAVEGACAO 2D                    |
++-------------------------------------------------------------------------------+
+
+  1. Documento Carregado (PDF / EPUB via ReaderStore)
+                       |
+                       v
+  2. useBookPageTurn / useReader2D: Calculo do Layout da Pagina
+     +----------------------------------------------------------------+
+     | - Detecta largura e altura do container (ResizeObserver)       |
+     | - Determina modo: Pagina Unica (1x) ou Pagina Dupla (2x)       |
+     | - Calcula dpr = window.devicePixelRatio (High-DPI)             |
+     | - Determina dimensoes fisicas (CSS px) e buffer (Real px)      |
+     +----------------------------------------------------------------+
+                       |
+                       +-------------------------------+
+                       |                               |
+                       v                               v
+             [ Modo 1 Pagina ]                [ Modo 2 Paginas ]
+         ┌───────────────────────┐        ┌──────────────┬──────────────┐
+         │                       │        │              │              │
+         │      Pagina N         │        │   Pagina N   │ Pagina N+1   │
+         │     (Centralizada)    │        │  (Esquerda)  │  (Direita)   │
+         │                       │        │              │              │
+         └───────────────────────┘        └──────────────┴──────────────┘
+                       |                               |
+                       +---------------+---------------+
+                                       |
+                                       v
+  3. Renderizacao Direta Canvas 2D + TextLayer DOM
+     ┌─────────────────────────────────────────────────────────────────┐
+     │ Canvas 2D: ctx.scale(dpr, dpr) -> Desenho Vetorial Direto       │
+     │ TextLayer: spans transparentes posicionados para selecao        │
+     └─────────────────────────────────────────────────────────────────┘
+                                       |
+                                       v
+  4. Interacoes & Transicao 2D
+     +-------------------+--------------------+--------------------+
+     | Teclado (<- / ->) | Botoes Nav (< / >) | Arraste nas Bordas |
+     +-------------------+--------------------+--------------------+
+                                       |
+                                       v
+                     [ pageAnimationEnabled ? ]
+                            /               \
+                         (Sim)             (Nao)
+                          /                   \
+                         v                     v
+         [ Slide Horizontal 2D ]      [ Troca Instantanea ]
+         - Deslocamento suave         - Atualiza currentPage
+         - Sombra de pagina           - Sem delay
+         - Duracao ~180-200ms

@@ -52,9 +52,11 @@ const [fetchedMeta, response] = await Promise.all([
 ])
 ```
 
-### 3.3. Transição de Páginas Leve e Rápida (220ms)
-* Redução da complexidade de malhas poligonais e tempo de transição de **520ms para 220ms**, proporcionando resposta imediata ao folhear por clique, toque ou teclado.
-* Desacoplamento do *Prefetch*: A renderização das páginas seguintes é enviada para o `requestIdleCallback`, garantindo que 100% da CPU esteja livre para o primeiro frame da leitura.
+### 3.3. Motor de Renderização 2D Nativo e Transição de Páginas (200ms)
+* **Renderização 2D Direta em Alta Resolução (High-DPI)**: Eliminação completa de Three.js/WebGL do leitor, desenhando as páginas diretamente em Canvas 2D escalado com `window.devicePixelRatio`. Isso garante nitidez cristalina (100% pixel-perfect) do texto em qualquer densidade de tela.
+* **Transição 2D Suave (Slide Horizontal)**: Deslizamento lateral em ~200ms com curva de aceleração cúbica (`easeOutCubic`), suporte a gestos de arrasto e transição instantânea quando animações estão desativadas.
+* **Modo Adaptativo de Páginas**: Suporte a 1 página (mobile e com grafo aberto) e 2 páginas lado a lado (desktop) com alternância dinâmica pela barra inferior.
+* **Desacoplamento do *Prefetch***: A rasterização das páginas seguintes é processada em segundo plano via `requestIdleCallback`, garantindo resposta imediata ao folhear.
 
 ---
 

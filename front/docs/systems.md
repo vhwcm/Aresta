@@ -21,11 +21,12 @@ Neste projeto utilizamos os seguintes sistemas e ferramentas para desenvolviment
 
 ## Front-End & Ferramentas
 - **Node.js / npm** – Ambiente de execução JavaScript e gerenciamento de dependências.
-- **Nuxt 3** – Framework Vue para o front-end.
-- **Playwright** – Ferramenta de testes end-to-end.
+- **Nuxt / Vue 3** – Framework full-stack / Vue 3 para o front-end.
+- **HTML5 Canvas 2D** – Motor de renderização direta 2D em alta resolução (High-DPI) para páginas de livros.
+- **PDF.js** – Renderizador de arquivos PDF no navegador.
+- **foliate-js / fflate** – Parser e renderizador de arquivos EPUB.
+- **D3.js** – Biblioteca para visualização e simulação do Grafo de Conhecimento interativo.
 - **Vitest** – Test runner para testes unitários e de integração no front-end.
-- **PDFBox** – Biblioteca Java para renderizar PDFs.
-- **EPUB.js** – Biblioteca JavaScript para renderizar arquivos ePub.
-- **Three.js** – Biblioteca JavaScript para animações e grafos 3D.
+- **Playwright** – Ferramenta de testes end-to-end.
 
 > Esta documentação deve ser mantida atualizada sempre que novos sistemas forem incorporados ao projeto.
