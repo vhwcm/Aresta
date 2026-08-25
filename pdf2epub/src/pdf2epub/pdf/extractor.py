@@ -96,4 +96,21 @@ class DeterministicExtractor:
             except Exception:
                 continue
 
+        # Fallback para capa na página 1 se não houver imagens nativas extraídas
+        if not images and page.number == 0 and len(page.get_text("text").strip()) < 80:
+            try:
+                pix = page.get_pixmap(dpi=150)
+                img_bytes = pix.tobytes("jpeg")
+                images.append(ImageAsset(
+                    id="cover-img",
+                    name="cover.jpeg",
+                    mime_type="image/jpeg",
+                    data=img_bytes,
+                    width=pix.width,
+                    height=pix.height,
+                    bbox=BBox(0.0, 0.0, float(page.rect.width), float(page.rect.height))
+                ))
+            except Exception:
+                pass
+
         return images

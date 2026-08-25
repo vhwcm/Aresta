@@ -47,10 +47,25 @@ class ChapterResolver:
                     continue
 
                 raw_text = region.text.strip()
-                if not raw_text:
+                if not raw_text and region.type != RegionType.IMAGE:
                     continue
 
-                is_toc_entry = bool(TOC_LINE_RE.search(raw_text))
+                is_toc_entry = bool(TOC_LINE_RE.search(raw_text)) if raw_text else False
+
+                # Se for uma imagem
+                if region.type == RegionType.IMAGE:
+                    if current_chapter is None:
+                        current_chapter = Chapter(
+                            title="Capa" if page.number == 1 else (doc_title or "Início"),
+                            level=1,
+                            page_start=page.number,
+                            page_end=page.number,
+                            regions=[region]
+                        )
+                    else:
+                        current_chapter.regions.append(region)
+                        current_chapter.page_end = page.number
+                    continue
 
                 # Detecta início de um novo capítulo (apenas se não for entrada de índice/sumário)
                 is_chapter_title = (

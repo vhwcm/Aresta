@@ -37,7 +37,35 @@ class EpubGenerator:
         )
         book.add_item(style)
 
-        # 2. Adiciona imagens/assets
+        # 2. Identifica imagem de capa e adiciona imagens/assets
+        cover_asset: Optional[ImageAsset] = None
+        if document.metadata.cover_image_id and document.metadata.cover_image_id in document.assets:
+            cover_asset = document.assets[document.metadata.cover_image_id]
+        else:
+            # Procura imagem na primeira página ou capítulos iniciais
+            for chap in document.chapters:
+                for r in chap.regions:
+                    if r.type == RegionType.IMAGE and r.image and r.image.data:
+                        cover_asset = r.image
+                        break
+                if cover_asset:
+                    break
+            if not cover_asset and document.assets:
+                first_asset = next(iter(document.assets.values()))
+                if first_asset.data:
+                    cover_asset = first_asset
+
+        if cover_asset and cover_asset.data:
+            book.set_cover(f"images/{cover_asset.name}", cover_asset.data, create_page=True)
+
+        # Adiciona imagens/assets ao pacote EPUB
+        # Garante que qualquer imagem anexada a regiões também esteja em document.assets
+        for chap in document.chapters:
+            for r in chap.regions:
+                if r.type == RegionType.IMAGE and r.image and r.image.data:
+                    if r.image.id not in document.assets:
+                        document.assets[r.image.id] = r.image
+
         image_items: Dict[str, epub.EpubItem] = {}
         for asset_id, asset in document.assets.items():
             if asset.data:
@@ -55,6 +83,10 @@ class EpubGenerator:
         toc_entries = []
 
         for idx, chap in enumerate(document.chapters):
+            # Se o capítulo for a Capa e o ebooklib já tiver criado a página de capa, pula para não duplicar
+            if cover_asset and chap.title == "Capa" and len(chap.regions) == 1 and chap.regions[0].type == RegionType.IMAGE:
+                continue
+
             chap_file = f"chap_{idx+1:03d}.xhtml"
             chap_item = epub.EpubHtml(
                 title=chap.title,
@@ -75,8 +107,9 @@ class EpubGenerator:
         book.add_item(epub.EpubNcx())
         book.add_item(epub.EpubNav())
 
-        # Spine com navegação e capítulos
-        book.spine = ['nav'] + epub_chapters
+        # Spine com navegação e capítulos (a capa é adicionada automaticamente no topo pelo set_cover)
+        book.spine = ['cover', 'nav'] if (cover_asset and cover_asset.data) else ['nav']
+        book.spine += epub_chapters
 
         # 5. Salva arquivo EPUB
         epub.write_epub(str(out), book, {})

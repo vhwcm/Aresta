@@ -14,14 +14,15 @@ class SpatialAssociation:
         spans: List[TextSpan],
         images: List[ImageAsset]
     ) -> List[Region]:
-        if not regions:
+        if not regions and not images:
             return []
 
-        # 1. Associa imagens às regiões de tipo IMAGE ou cria regiões para imagens órfãs
+        result_regions: List[Region] = list(regions)
+
+        # 1. Associa imagens às regiões de tipo IMAGE ou cria regiões para imagens
         assigned_image_ids = set()
-        for reg in regions:
+        for reg in result_regions:
             if reg.type == RegionType.IMAGE:
-                # Encontra a imagem cujo centro ou maior IoU casa com esta região
                 best_img = None
                 best_iou = 0.0
                 for img in images:
@@ -36,10 +37,10 @@ class SpatialAssociation:
 
         # Adiciona imagens que não foram mapeadas
         for img in images:
-            if img.id not in assigned_image_ids and img.bbox:
-                regions.append(Region(
+            if img.id not in assigned_image_ids:
+                result_regions.append(Region(
                     type=RegionType.IMAGE,
-                    bbox=img.bbox,
+                    bbox=img.bbox or BBox(0, 0, 0, 0),
                     confidence=1.0,
                     image=img
                 ))
@@ -49,7 +50,7 @@ class SpatialAssociation:
         for word in words:
             cx, cy = word.center
             matched_region = None
-            for reg in regions:
+            for reg in result_regions:
                 if reg.type != RegionType.IMAGE and reg.bbox.contains_point(cx, cy):
                     matched_region = reg
                     break
@@ -64,7 +65,7 @@ class SpatialAssociation:
             cx, cy = word.center
             best_reg = None
             min_dist = float("inf")
-            for reg in regions:
+            for reg in result_regions:
                 if reg.type == RegionType.IMAGE:
                     continue
                 # Distância vertical e horizontal até a borda mais próxima
@@ -78,7 +79,7 @@ class SpatialAssociation:
                 best_reg.words.append(word)
 
         # 4. Reconstrução de texto e ordenação interna de linhas para cada região
-        for reg in regions:
+        for reg in result_regions:
             if reg.type == RegionType.IMAGE:
                 continue
 
@@ -116,7 +117,7 @@ class SpatialAssociation:
 
         # Filtra regiões vazias de texto que não sejam imagens
         valid_regions = [
-            r for r in regions
+            r for r in result_regions
             if (r.type == RegionType.IMAGE and r.image is not None) or (r.text and r.text.strip())
         ]
 
