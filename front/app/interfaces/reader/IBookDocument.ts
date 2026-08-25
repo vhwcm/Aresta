@@ -28,7 +28,7 @@ export interface IBookDocument {
   readonly isLoaded: boolean
 
   load(source: File | ArrayBuffer, fileName?: string): Promise<void>
-  getPage(pageNumber: number): Promise<PageData>
+  getPage(pageNumber: number, targetWidth?: number, targetHeight?: number): Promise<PageData>
   getTextContent?(pageNumber: number): Promise<string>
   renderTextLayer?(pageNumber: number, container: HTMLElement, targetWidth?: number, targetHeight?: number): Promise<void>
   destroy(): void

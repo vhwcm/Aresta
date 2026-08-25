@@ -107,13 +107,30 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
     return blankRaster
   }
 
+  function getTargetPixelSize(): { width: number; height: number } {
+    const host = hostRef.value
+    const dpr = typeof window !== 'undefined' ? (window.devicePixelRatio || 1) : 1
+    const hostWidth = host?.clientWidth || 800
+    const hostHeight = host?.clientHeight || 600
+    const isTwoPage = store.isTwoPageMode && hostWidth >= 1024 && !store.isGraphOpen
+
+    const pageCssWidth = isTwoPage ? (hostWidth - 48) / 2 : (hostWidth - 48)
+    const pageCssHeight = hostHeight - 48
+
+    return {
+      width: Math.round(Math.max(300, pageCssWidth) * dpr),
+      height: Math.round(Math.max(400, pageCssHeight) * dpr),
+    }
+  }
+
   async function createRasterForPage(pageNumber: number, doc: IBookDocument): Promise<PageRaster> {
     if (pageNumber <= 0 || pageNumber > store.totalPages) {
       return getBlankRaster()
     }
 
     try {
-      const pageData: PageData = await doc.getPage(pageNumber)
+      const targetSize = getTargetPixelSize()
+      const pageData: PageData = await doc.getPage(pageNumber, targetSize.width, targetSize.height)
       const canvas = document.createElement('canvas')
       canvas.width = Math.ceil(pageData.width)
       canvas.height = Math.ceil(pageData.height)
@@ -285,6 +302,9 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
     }
   }
 
+  let lastResizeWidth = 0
+  let lastResizeHeight = 0
+
   function resizeCanvasToHost() {
     const host = hostRef.value
     if (!host || !stageCanvas || !stageCtx) return
@@ -294,6 +314,11 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
     const height = host.clientHeight
 
     if (width === 0 || height === 0) return
+
+    const widthChanged = lastResizeWidth > 0 && Math.abs(lastResizeWidth - width) > 40
+    const heightChanged = lastResizeHeight > 0 && Math.abs(lastResizeHeight - height) > 40
+    lastResizeWidth = width
+    lastResizeHeight = height
 
     stageCanvas.width = Math.round(width * dpr)
     stageCanvas.height = Math.round(height * dpr)
@@ -307,6 +332,11 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
 
     pageLayout.value = computeLayout()
     drawScene(0)
+
+    if (widthChanged || heightChanged) {
+      rasterCache.clear()
+      void renderCurrentView()
+    }
   }
 
   function drawPageShadow(ctx: CanvasRenderingContext2D, rect: PageRect, isLeftSpread = false, isRightSpread = false) {

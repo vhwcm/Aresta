@@ -73,26 +73,42 @@ export class PdfDocumentAdapter implements IBookDocument {
     this._isLoaded = true
   }
 
-  async getPage(pageNumber: number): Promise<PageData> {
+  async getPage(pageNumber: number, targetWidth?: number, targetHeight?: number): Promise<PageData> {
     if (!this._pdfDocument) throw new Error('PDF não carregado')
 
     const pdfDoc = this._pdfDocument as import('pdfjs-dist').PDFDocumentProxy
     const pdfPage = await pdfDoc.getPage(pageNumber)
 
-    // Renderiza em altíssima resolução para texto perfeitamente nítido em qualquer densidade de tela (High-DPI / Retina / 4K)
     const baseViewport = pdfPage.getViewport({ scale: 1.0 })
-    const baseMaxDim = Math.max(baseViewport.width, baseViewport.height)
-    const dpr = typeof window !== 'undefined' ? Math.max(1, window.devicePixelRatio || 1) : 1
-    
-    // Escala adaptativa: garante no mínimo 3.0x de densidade de pixels para máxima clareza tipográfica
-    const targetDim = Math.max(2800, Math.min(4096, baseMaxDim * Math.max(3.0, dpr * 1.75)))
-    const scale = Math.max(3.0, targetDim / baseMaxDim)
+    const baseWidth = baseViewport.width
+    const baseHeight = baseViewport.height
+    const aspectRatio = baseWidth / Math.max(1, baseHeight)
+
+    // Renderização nativa 1:1 calculada exatamente para o tamanho do display e DPR.
+    // Isso elimina distorção de fase, serrilhamento e o efeito de letras alternando entre negrito e fino.
+    const dpr = typeof window !== 'undefined' ? (window.devicePixelRatio || 1) : 1
+    let scale: number
+
+    if (targetWidth && targetWidth > 0 && targetHeight && targetHeight > 0) {
+      const scaleX = targetWidth / baseWidth
+      const scaleY = targetHeight / baseHeight
+      scale = Math.min(scaleX, scaleY)
+    } else if (targetWidth && targetWidth > 0) {
+      scale = targetWidth / baseWidth
+    } else if (targetHeight && targetHeight > 0) {
+      scale = targetHeight / baseHeight
+    } else {
+      scale = Math.max(2.0, dpr * 2.0)
+    }
+
+    // Garante que a escala não fique abaixo da resolução física do display
+    scale = Math.max(scale, dpr)
     const viewport = pdfPage.getViewport({ scale })
 
     const pageData: PageData = {
       width: viewport.width,
       height: viewport.height,
-      aspectRatio: viewport.width / viewport.height,
+      aspectRatio,
       render: async (ctx: CanvasRenderingContext2D): Promise<void> => {
         const canvas = ctx.canvas
         ctx.fillStyle = '#ffffff'

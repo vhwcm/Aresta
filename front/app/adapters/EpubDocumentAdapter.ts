@@ -195,13 +195,13 @@ export class EpubDocumentAdapter implements IBookDocument {
     this._isLoaded = true
   }
 
-  async getPage(pageNumber: number): Promise<PageData> {
+  async getPage(pageNumber: number, targetWidth?: number, targetHeight?: number): Promise<PageData> {
     if (!this._epub) throw new Error('EPUB não carregado')
 
     const cached = this._pageCanvases.get(pageNumber)
     if (cached) return this._canvasToPageData(cached)
 
-    const canvas = await this._renderPageToCanvas(pageNumber)
+    const canvas = await this._renderPageToCanvas(pageNumber, targetWidth, targetHeight)
     this._pageCanvases.set(pageNumber, canvas)
     return this._canvasToPageData(canvas)
   }
@@ -294,10 +294,19 @@ export class EpubDocumentAdapter implements IBookDocument {
     }
   }
 
-  private async _renderPageToCanvas(pageNumber: number): Promise<HTMLCanvasElement> {
+  private async _renderPageToCanvas(pageNumber: number, targetWidth?: number, targetHeight?: number): Promise<HTMLCanvasElement> {
     const baseWidth = 800
     const baseHeight = 1200
-    const renderScale = 2.5
+    const dpr = typeof window !== 'undefined' ? (window.devicePixelRatio || 1) : 1
+
+    let renderScale = dpr * 1.25
+    if (targetWidth && targetWidth > 0) {
+      renderScale = targetWidth / baseWidth
+    } else if (targetHeight && targetHeight > 0) {
+      renderScale = targetHeight / baseHeight
+    }
+    renderScale = Math.max(1.0, renderScale)
+
     const width = Math.round(baseWidth * renderScale)
     const height = Math.round(baseHeight * renderScale)
     const canvas = document.createElement('canvas')
@@ -334,8 +343,8 @@ export class EpubDocumentAdapter implements IBookDocument {
         <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
           <foreignObject width="100%" height="100%">
             <div xmlns="http://www.w3.org/1999/xhtml"
-              style="width:${width}px;height:${height}px;overflow:hidden;background:#faf9f7;margin:0;padding:0;box-sizing:border-box;">
-              <div style="width:${width}px;height:${height}px;padding:${padding}px;box-sizing:border-box;column-width:${columnWidth}px;column-gap:${columnGap}px;column-fill:auto;font-family:Georgia,serif;font-size:${fontSize}px;color:#1a1a1a;line-height:1.7;word-wrap:break-word;margin-left:-${colOffset}px;">
+              style="width:${width}px;height:${height}px;overflow:hidden;background:#faf9f7;margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;">
+              <div style="width:${width}px;height:${height}px;padding:${padding}px;box-sizing:border-box;column-width:${columnWidth}px;column-gap:${columnGap}px;column-fill:auto;font-family:Georgia,'Times New Roman',serif;font-size:${fontSize}px;color:#1a1a1a;line-height:1.7;word-wrap:break-word;margin-left:-${colOffset}px;">
                 ${bodyContent}
               </div>
             </div>
