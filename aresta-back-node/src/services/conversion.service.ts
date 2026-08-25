@@ -4,6 +4,8 @@ import { AppError } from '../middlewares/error.middleware.js';
 import { BookService } from './book.service.js';
 import { ConvertBookInput } from '../schemas/conversion.schema.js';
 
+import { env } from '../config/env.js';
+
 export interface ConversionResult {
   status: string;
   epubPath: string;
@@ -25,7 +27,7 @@ export class ConversionService {
 
   constructor(bookService = new BookService()) {
     this.bookService = bookService;
-    this.serviceUrl = process.env.PDF2EPUB_SERVICE_URL || 'http://localhost:8000';
+    this.serviceUrl = env.PDF2EPUB_SERVICE_URL;
   }
 
   async convert(input: ConvertBookInput): Promise<ConversionResult> {
@@ -49,7 +51,12 @@ export class ConversionService {
       throw new AppError('Nenhum arquivo de entrada fornecido.', 400);
     }
 
-    const outputEpubPath = resolvedPdfPath.replace(/\.pdf$/i, '.epub');
+    const baseNameWithoutExt = path.basename(resolvedPdfPath, path.extname(resolvedPdfPath));
+    const targetEpubsDir = env.EPUBS_PATH;
+    if (!fs.existsSync(targetEpubsDir)) {
+      fs.mkdirSync(targetEpubsDir, { recursive: true });
+    }
+    const outputEpubPath = path.join(targetEpubsDir, `${baseNameWithoutExt}.epub`);
 
     try {
       const response = await fetch(`${this.serviceUrl}/convert`, {

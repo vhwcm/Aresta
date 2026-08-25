@@ -12,12 +12,22 @@ app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Servir arquivos estáticos de capas (/covers)
-const coversPath = path.resolve(process.cwd(), 'storage/covers');
-if (!fs.existsSync(coversPath)) {
-  fs.mkdirSync(coversPath, { recursive: true });
+import { env } from './config/env.js';
+import { ROUTES } from './config/routes.js';
+
+// Garantir e servir diretórios estáticos
+const staticDirs = [
+  { route: ROUTES.COVERS, dirPath: env.COVERS_PATH },
+  { route: ROUTES.EPUBS, dirPath: env.EPUBS_PATH },
+  { route: ROUTES.PDFS, dirPath: env.PDFS_PATH },
+];
+
+for (const { route, dirPath } of staticDirs) {
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath, { recursive: true });
+  }
+  app.use(route, express.static(dirPath));
 }
-app.use('/covers', express.static(coversPath));
 
 // Rotas da aplicação e Swagger
 app.use('/', routes);

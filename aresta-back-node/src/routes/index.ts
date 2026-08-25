@@ -14,23 +14,25 @@ import conversionRoutes from './conversion.routes.js';
 
 const router = Router();
 
+import { ROUTES } from '../config/routes.js';
+
 // Documentação Swagger UI
-router.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-router.get('/api-docs.json', (_req, res) => {
+router.use(ROUTES.DOCS, swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+router.get(ROUTES.DOCS_JSON, (_req, res) => {
   res.setHeader('Content-Type', 'application/json');
   res.send(swaggerSpec);
 });
 
 // Rotas da API
-router.use('/api/auth', authRoutes);
-router.use('/api/users', userRoutes);
-router.use('/api/books', bookRoutes);
-router.use('/api/user-books', userBookRoutes);
-router.use('/api/user-settings', userSettingsRoutes);
-router.use('/api/graph', graphRoutes);
-router.use('/api/annotations', annotationRoutes);
-router.use('/api/health', healthRoutes);
-router.use('/api/convert', conversionRoutes);
+router.use(ROUTES.AUTH, authRoutes);
+router.use(ROUTES.USERS, userRoutes);
+router.use(ROUTES.BOOKS, bookRoutes);
+router.use(ROUTES.USER_BOOKS, userBookRoutes);
+router.use(ROUTES.USER_SETTINGS, userSettingsRoutes);
+router.use(ROUTES.GRAPH, graphRoutes);
+router.use(ROUTES.ANNOTATIONS, annotationRoutes);
+router.use(ROUTES.HEALTH, healthRoutes);
+router.use(ROUTES.CONVERT, conversionRoutes);
 
 export default router;
 

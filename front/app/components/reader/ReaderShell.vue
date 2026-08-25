@@ -48,6 +48,8 @@ import { BookOpenIcon, UploadIcon } from 'lucide-vue-next'
 import { useReaderStore } from '~/stores/readerStore'
 import { createBookDocument } from '~/adapters/BookDocumentFactory'
 
+import { readerProfiler } from '~/utils/readerProfiler'
+
 const store = useReaderStore()
 const route = useRoute()
 
@@ -62,6 +64,9 @@ const loadBookFromQuery = async () => {
 
   if (!bookId && !bookPath) return
 
+  const sessionName = `Abrir Livro (${bookId ? `ID: ${bookId}` : bookPath})`
+  readerProfiler.startSession(sessionName, { bookId, bookPath, pageParam })
+
   store.setLoading(true)
   try {
     let fileUrl = ''
@@ -69,47 +74,64 @@ const loadBookFromQuery = async () => {
 
     if (bookId) {
       fileUrl = `http://localhost:7070/api/books/${bookId}/file`
-      try {
-        const info = await $fetch<{ title?: string }>(`http://localhost:7070/api/books/${bookId}`)
-        if (info && info.title) {
-          title = info.title
+      await readerProfiler.measureAsync('1. Buscar Metadados da API', async () => {
+        try {
+          const info = await $fetch<{ title?: string }>(`http://localhost:7070/api/books/${bookId}`)
+          if (info && info.title) {
+            title = info.title
+          }
+        } catch {
+          /* fallback caso falhe metadados */
         }
-      } catch {
-        /* fallback caso falhe metadados */
-      }
+      }, 'network')
     } else if (bookPath) {
       if (bookPath.startsWith('http://') || bookPath.startsWith('https://')) {
         fileUrl = bookPath
       } else {
         const cleanPath = bookPath.replace(/^\//, '')
-        fileUrl = cleanPath.startsWith('storage/')
-          ? `http://localhost:7070/${cleanPath}`
-          : `http://localhost:7070/storage/books/${cleanPath.replace(/^storage\/books\//, '')}`
+        if (cleanPath.startsWith('epubs/') || cleanPath.startsWith('pdfs/') || cleanPath.startsWith('storage/')) {
+          fileUrl = `http://localhost:7070/${cleanPath}`
+        } else {
+          const folder = cleanPath.toLowerCase().endsWith('.epub') ? 'epubs' : 'pdfs'
+          fileUrl = `http://localhost:7070/${folder}/${cleanPath}`
+        }
       }
     }
 
     const type = fileUrl.toLowerCase().endsWith('.epub') ? 'epub' : 'pdf'
 
-    const res = await fetch(fileUrl)
-    if (!res.ok) {
-      throw new Error(`Status HTTP ${res.status} ao carregar arquivo`)
-    }
-    const arrayBuffer = await res.arrayBuffer()
+    const res = await readerProfiler.measureAsync('2. Download do Arquivo (HTTP Fetch)', async () => {
+      const response = await fetch(fileUrl)
+      if (!response.ok) {
+        throw new Error(`Status HTTP ${response.status} ao carregar arquivo`)
+      }
+      return response
+    }, 'network', { url: fileUrl, type })
+
+    const arrayBuffer = await readerProfiler.measureAsync('3. Conversão para ArrayBuffer em Memória', async () => {
+      return await res.arrayBuffer()
+    }, 'io', { byteLength: res.headers.get('content-length') })
 
     const doc = createBookDocument(type)
-    await doc.load(arrayBuffer, title)
-    const numericBookId = bookId ? parseInt(bookId, 10) : null
-    store.setDocument(doc, title, !isNaN(Number(numericBookId)) ? numericBookId : null)
+    await readerProfiler.measureAsync('4. Parsing e Inicialização do Documento', async () => {
+      await doc.load(arrayBuffer, title)
+    }, 'parse', { type, sizeMB: (arrayBuffer.byteLength / (1024 * 1024)).toFixed(2) })
 
-    if (pageParam) {
-      const pageNum = parseInt(pageParam, 10)
-      if (!isNaN(pageNum) && pageNum > 0) {
-        store.goToPage(pageNum)
+    readerProfiler.measureSync('5. Atualizar ReaderStore', () => {
+      const numericBookId = bookId ? parseInt(bookId, 10) : null
+      store.setDocument(doc, title, !isNaN(Number(numericBookId)) ? numericBookId : null)
+
+      if (pageParam) {
+        const pageNum = parseInt(pageParam, 10)
+        if (!isNaN(pageNum) && pageNum > 0) {
+          store.goToPage(pageNum)
+        }
       }
-    }
+    }, 'store')
   } catch (err: any) {
     console.error('Erro ao carregar livro via URL:', err)
     store.setError(`Não foi possível carregar o livro: ${err.message || err}`)
+    readerProfiler.endSession()
   } finally {
     store.setLoading(false)
   }

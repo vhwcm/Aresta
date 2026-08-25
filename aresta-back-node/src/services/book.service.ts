@@ -44,18 +44,20 @@ export class BookService {
       throw new AppError('Capa não cadastrada para este livro', 404);
     }
 
-    // Procura o arquivo relativo ao diretório atual ou raiz
-    let fullPath = path.resolve(process.cwd(), book.coverPath);
-    if (!fs.existsSync(fullPath)) {
-      // Tenta na pasta pai caso rodando dentro do backend
-      fullPath = path.resolve(process.cwd(), '..', book.coverPath);
+    const candidatePaths = [
+      path.resolve(process.cwd(), book.coverPath),
+      path.resolve(process.cwd(), '..', book.coverPath),
+      path.resolve(process.cwd(), 'storage/covers', path.basename(book.coverPath)),
+      path.resolve(process.cwd(), '..', 'storage/covers', path.basename(book.coverPath)),
+    ];
+
+    for (const candidate of candidatePaths) {
+      if (fs.existsSync(candidate)) {
+        return candidate;
+      }
     }
 
-    if (!fs.existsSync(fullPath)) {
-      throw new AppError(`Arquivo de capa não encontrado no servidor: ${book.coverPath}`, 404);
-    }
-
-    return fullPath;
+    throw new AppError(`Arquivo de capa não encontrado no servidor: ${book.coverPath}`, 404);
   }
 
   async getFilePath(id: number) {
@@ -65,16 +67,25 @@ export class BookService {
       throw new AppError('Caminho do arquivo não cadastrado para este livro', 404);
     }
 
-    let fullPath = path.resolve(process.cwd(), book.filePath);
-    if (!fs.existsSync(fullPath)) {
-      fullPath = path.resolve(process.cwd(), '..', book.filePath);
+    const baseName = path.basename(book.filePath);
+    const candidatePaths = [
+      path.resolve(process.cwd(), book.filePath),
+      path.resolve(process.cwd(), '..', book.filePath),
+      path.resolve(process.cwd(), 'storage/epubs', baseName),
+      path.resolve(process.cwd(), '..', 'storage/epubs', baseName),
+      path.resolve(process.cwd(), 'storage/pdfs', baseName),
+      path.resolve(process.cwd(), '..', 'storage/pdfs', baseName),
+      path.resolve(process.cwd(), 'storage/books', baseName),
+      path.resolve(process.cwd(), '..', 'storage/books', baseName),
+    ];
+
+    for (const candidate of candidatePaths) {
+      if (fs.existsSync(candidate)) {
+        return candidate;
+      }
     }
 
-    if (!fs.existsSync(fullPath)) {
-      throw new AppError(`Arquivo do livro não encontrado no servidor: ${book.filePath}`, 404);
-    }
-
-    return fullPath;
+    throw new AppError(`Arquivo do livro não encontrado no servidor: ${book.filePath}`, 404);
   }
 
   async create(input: CreateBookInput) {

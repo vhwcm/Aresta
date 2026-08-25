@@ -85,7 +85,7 @@ export class BookController {
    * @openapi
    * /api/books/{id}/file:
    *   get:
-   *     summary: Obter arquivo PDF do livro
+   *     summary: Obter arquivo de mídia (EPUB ou PDF) do livro
    *     tags: [Books]
    *     parameters:
    *       - in: path
@@ -95,15 +95,19 @@ export class BookController {
    *           type: integer
    *     responses:
    *       200:
-   *         description: Arquivo PDF retornado
+   *         description: Arquivo do livro retornado
    *       404:
-   *         description: Arquivo PDF não encontrado
+   *         description: Arquivo do livro não encontrado
    */
   getFile = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const id = parseInt(req.params.id, 10);
       const filePath = await this.bookService.getFilePath(id);
-      res.type('application/pdf');
+      if (filePath.toLowerCase().endsWith('.epub')) {
+        res.type('application/epub+zip');
+      } else if (filePath.toLowerCase().endsWith('.pdf')) {
+        res.type('application/pdf');
+      }
       return res.sendFile(filePath);
     } catch (error) {
       return next(error);
