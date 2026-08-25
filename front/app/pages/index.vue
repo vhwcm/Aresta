@@ -1,9 +1,14 @@
 <template>
   <div>
-    <!-- ESTADO 1: USUÁRIO AUTENTICADO (Home do Leitor / Leitura Ativa + Grafo em Telas Grandes) -->
-    <div v-if="auth.isLoggedIn.value" data-testid="auth-home" class="grid grid-cols-1 xl:grid-cols-12 gap-8 pb-20 animate-in fade-in duration-500 items-start">
+    <!-- ESTADO 1: USUÁRIO AUTENTICADO (Home do Leitor / Leitura Ativa + Grafo em Telas Grandes na Metade Inteira sem Caixa) -->
+    <div
+      v-if="auth.isLoggedIn.value"
+      data-testid="auth-home"
+      class="w-full pb-20 animate-in fade-in duration-500 transition-all"
+      :class="isGraphCollapsed ? 'max-w-3xl mx-auto' : 'grid grid-cols-1 xl:grid-cols-2 gap-8 2xl:gap-14 items-start'"
+    >
       <!-- COLUNA PRINCIPAL: FEED DE LEITURA (Leitura Ativa, Flashcards e Anotações) -->
-      <div class="xl:col-span-7 2xl:col-span-7 flex flex-col gap-8">
+      <div class="w-full flex flex-col gap-8">
         <!-- BLOCO 1: ÚLTIMA LEITURA ATIVA (Clean, sem caixa, capa clicável, ofensiva elevada no topo direito, progresso só em %) -->
         <section class="relative flex flex-row items-start gap-4 sm:gap-8 pt-1 sm:pt-2">
           <!-- Capa do Livro (Clicável diretamente no mobile e desktop) -->
@@ -60,8 +65,18 @@
             </div>
           </div>
 
-          <!-- Ofensiva no Topo Direito (Elevada, independente do alinhamento do título) -->
-          <div class="shrink-0 self-start -mt-2 sm:-mt-2.5">
+          <!-- Ofensiva e Botão de Expandir Grafo no Topo Direito -->
+          <div class="shrink-0 self-start -mt-2 sm:-mt-2.5 flex items-center gap-2.5">
+            <button
+              v-if="isGraphCollapsed"
+              @click="toggleGraph"
+              data-testid="toggle-graph-open-btn"
+              class="hidden xl:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-divider hover:border-accent/40 text-textSecondary hover:text-white text-xs font-interface transition-all cursor-pointer shadow-sm"
+              title="Expandir Grafo de Conhecimento"
+            >
+              <PanelRightOpenIcon class="w-3.5 h-3.5 text-accent" />
+              <span>Mostrar Grafo</span>
+            </button>
             <ReadingStreak />
           </div>
         </section>
@@ -145,20 +160,39 @@
         </section>
       </div>
 
-      <!-- COLUNA LATERAL: GRAFO DE CONHECIMENTO (Visível em Telas Desktop Grandes: xl e 2xl) -->
-      <div class="hidden xl:flex xl:col-span-5 2xl:col-span-5 sticky top-8 flex-col gap-3 h-[720px] max-h-[calc(100vh-6rem)]">
+      <!-- COLUNA LATERAL: GRAFO DE CONHECIMENTO (Metade Inteira na Home, Sem Caixa) -->
+      <div
+        v-if="!isGraphCollapsed"
+        data-testid="home-graph-section"
+        class="hidden xl:flex sticky top-8 flex-col gap-3 h-[calc(100vh-6.5rem)] min-h-[640px] w-full"
+      >
         <div class="flex items-center justify-between px-1">
           <div class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary flex items-center gap-2">
             <NetworkIcon class="w-3.5 h-3.5 text-accent" />
-            Grafo de Conhecimento
+            <span>Grafo de Conhecimento</span>
           </div>
-          <NuxtLink to="/grafo" class="font-technical text-xs text-accent hover:underline flex items-center gap-1" title="Ver grafo em tela cheia">
-            Expandir →
-          </NuxtLink>
+
+          <div class="flex items-center gap-3">
+            <!-- Botão Retrair Grafo -->
+            <button
+              @click="toggleGraph"
+              data-testid="retract-graph-btn"
+              class="inline-flex items-center gap-1.5 text-xs text-textSecondary hover:text-white font-interface transition-colors cursor-pointer px-2.5 py-1 rounded-lg hover:bg-white/5 border border-transparent hover:border-divider"
+              title="Retrair Grafo e centralizar painel de leitura"
+            >
+              <PanelRightCloseIcon class="w-3.5 h-3.5 text-accent" />
+              <span>Retrair</span>
+            </button>
+
+            <!-- Link Tela Cheia -->
+            <NuxtLink to="/grafo" class="font-technical text-xs text-accent hover:underline flex items-center gap-1" title="Ver grafo em tela cheia">
+              <span>Expandir →</span>
+            </NuxtLink>
+          </div>
         </div>
 
-        <!-- Card Container do Grafo -->
-        <div class="flex-1 rounded-3xl border border-divider/80 bg-bgPanel/60 backdrop-blur-xl overflow-hidden shadow-2xl relative">
+        <!-- Renderização Direta do Grafo (Sem Caixa) -->
+        <div class="flex-1 w-full h-full relative overflow-hidden">
           <SidebarGraph />
         </div>
       </div>
@@ -439,7 +473,9 @@ import {
   MailIcon,
   KeyIcon,
   AlertCircleIcon,
-  InfoIcon
+  InfoIcon,
+  PanelRightCloseIcon,
+  PanelRightOpenIcon
 } from 'lucide-vue-next'
 import ReadingStreak from '~/components/ReadingStreak.vue'
 import EbbinghausChart from '~/components/EbbinghausChart.vue'
@@ -454,6 +490,14 @@ const { loadFromServer } = useSettings()
 const { userBooks, fetchUserBooks } = useUserBooks()
 
 const coverError = ref(false)
+const isGraphCollapsed = ref(false)
+
+const toggleGraph = () => {
+  isGraphCollapsed.value = !isGraphCollapsed.value
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('aresta_home_graph_collapsed', String(isGraphCollapsed.value))
+  }
+}
 
 // Estado da Autenticação na Landing Page
 const authMode = ref<'login' | 'register'>('login')
@@ -506,6 +550,13 @@ const handleQuickRegister = async () => {
 }
 
 onMounted(async () => {
+  if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem('aresta_home_graph_collapsed')
+    if (saved !== null) {
+      isGraphCollapsed.value = saved === 'true'
+    }
+  }
+
   if (auth.isLoggedIn.value) {
     try {
       await fetchUserBooks()

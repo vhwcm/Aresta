@@ -21,7 +21,9 @@ describe('Index Page (Landing Page & Home)', () => {
     MailIcon: true,
     KeyIcon: true,
     AlertCircleIcon: true,
-    InfoIcon: true
+    InfoIcon: true,
+    PanelRightCloseIcon: true,
+    PanelRightOpenIcon: true
   }
 
   it('renders guest landing page with Ebbinghaus forgetting curve highlight and login/register tabs when not logged in', async () => {
@@ -108,5 +110,47 @@ describe('Index Page (Landing Page & Home)', () => {
 
     expect(wrapper.find('[data-testid="reading-streak"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="sidebar-graph"]').exists()).toBe(true)
+  })
+
+  it('allows retracting the knowledge graph to center content and expanding it back', async () => {
+    vi.spyOn(authComposable, 'useAuth').mockReturnValue({
+      token: ref('valid-jwt-token'),
+      user: ref({ id: 1, name: 'viktor', email: 'viktor@aresta.org', role: 'ADMIN', isActive: true }),
+      isLoggedIn: ref(true),
+      isAdmin: ref(true),
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+      deleteAccount: vi.fn(),
+      fetchCurrentUser: vi.fn()
+    } as any)
+
+    const wrapper = mount(IndexPage, {
+      global: {
+        stubs: commonStubs
+      }
+    })
+
+    // Inicialmente o grafo está expandido (visível)
+    expect(wrapper.find('[data-testid="home-graph-section"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="retract-graph-btn"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="toggle-graph-open-btn"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="auth-home"]').classes()).toContain('grid')
+
+    // Clicar para retrair o grafo
+    await wrapper.find('[data-testid="retract-graph-btn"]').trigger('click')
+
+    // Grafo retraído: seção oculta, conteúdo centralizado (max-w-3xl mx-auto) e botão de abrir visível
+    expect(wrapper.find('[data-testid="home-graph-section"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="auth-home"]').classes()).toContain('max-w-3xl')
+    expect(wrapper.find('[data-testid="auth-home"]').classes()).toContain('mx-auto')
+    expect(wrapper.find('[data-testid="toggle-graph-open-btn"]').exists()).toBe(true)
+
+    // Clicar no botão para expandir novamente
+    await wrapper.find('[data-testid="toggle-graph-open-btn"]').trigger('click')
+
+    // Grafo volta a ficar visível
+    expect(wrapper.find('[data-testid="home-graph-section"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="toggle-graph-open-btn"]').exists()).toBe(false)
   })
 })

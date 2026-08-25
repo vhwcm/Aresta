@@ -1,5 +1,5 @@
 <template>
-  <div class="relative w-full h-full overflow-hidden bg-bgApp select-none" ref="containerRef">
+  <div class="relative w-full h-full overflow-hidden bg-transparent select-none" ref="containerRef">
     <!-- Overlay de Grid de Fundo -->
     <div class="absolute inset-0 bg-grid-pattern bg-grid-size opacity-15 pointer-events-none"></div>
 

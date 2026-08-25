@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full h-full flex flex-col relative overflow-hidden bg-bgApp text-textPrimary">
+  <div class="w-full h-full flex flex-col relative overflow-hidden bg-transparent text-textPrimary">
 
     <!-- VISUALIZAÇÃO 1: GRAFO INTERATIVO -->
     <div v-if="!selectedNode" class="w-full h-full flex flex-col relative">
