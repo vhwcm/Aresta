@@ -4,6 +4,7 @@ import {
   readFileHeader,
   matchesSignature,
   detectFileTypeFromBytes,
+  detectFileTypeFromArrayBuffer,
   MAX_FILE_SIZE_BYTES,
 } from '~/utils/fileValidator'
 
@@ -172,3 +173,28 @@ describe('readFileHeader', () => {
     expect(header).toEqual(new Uint8Array([0x01, 0x02, 0x03, 0x04]))
   })
 })
+
+
+describe('detectFileTypeFromArrayBuffer', () => {
+  it('detecta PDF através do ArrayBuffer', () => {
+    const buffer = PDF_MAGIC.buffer
+    expect(detectFileTypeFromArrayBuffer(buffer)).toBe('pdf')
+  })
+
+  it('detecta EPUB através do ArrayBuffer', () => {
+    const buffer = EPUB_MAGIC.buffer
+    expect(detectFileTypeFromArrayBuffer(buffer)).toBe('epub')
+  })
+
+  it('retorna fallback quando os bytes não correspondem a PDF ou EPUB', () => {
+    const buffer = RANDOM_BYTES.buffer
+    expect(detectFileTypeFromArrayBuffer(buffer, 'pdf')).toBe('pdf')
+    expect(detectFileTypeFromArrayBuffer(buffer, 'epub')).toBe('epub')
+  })
+
+  it('retorna fallback para buffers menores que 4 bytes', () => {
+    const smallBuffer = new Uint8Array([0x25, 0x50]).buffer
+    expect(detectFileTypeFromArrayBuffer(smallBuffer, 'epub')).toBe('epub')
+  })
+})
+

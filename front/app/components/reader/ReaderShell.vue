@@ -49,8 +49,8 @@ import { useReaderStore } from '~/stores/readerStore'
 import { createBookDocument } from '~/adapters/BookDocumentFactory'
 
 import { readerProfiler } from '~/utils/readerProfiler'
-
 import { getCachedBook, saveCachedBook } from '~/utils/bookCache'
+import { detectFileTypeFromArrayBuffer } from '~/utils/fileValidator'
 
 const store = useReaderStore()
 const route = useRoute()
@@ -74,7 +74,7 @@ const loadBookFromQuery = async () => {
   try {
     let title = (route.query.title as string) || 'Livro'
     let arrayBuffer: ArrayBuffer | null = null
-    let type: 'pdf' | 'epub' = 'pdf'
+    let type: 'pdf' | 'epub' = 'epub'
 
     // 1. Tentar carregar instantaneamente do cache local (IndexedDB)
     const cached = await readerProfiler.measureAsync('1. Buscar no Cache Local (IndexedDB)', async () => {
@@ -84,7 +84,10 @@ const loadBookFromQuery = async () => {
     if (cached && cached.arrayBuffer && cached.arrayBuffer.byteLength > 0) {
       arrayBuffer = cached.arrayBuffer
       title = cached.title || title
-      type = cached.type
+      type = detectFileTypeFromArrayBuffer(cached.arrayBuffer, cached.type)
+      if (type !== cached.type) {
+        void saveCachedBook(cacheKey, arrayBuffer, title, type)
+      }
     } else {
       // 2. Se não estiver no cache, preparar URLs e paralelizar requisições
       let fileUrl = ''
@@ -104,14 +107,12 @@ const loadBookFromQuery = async () => {
         }
       }
 
-      type = fileUrl.toLowerCase().endsWith('.epub') ? 'epub' : 'pdf'
-
       // Paralelização de Metadados + Download do Binário
       const [fetchedMeta, response] = await readerProfiler.measureAsync(
         '2. Download do Arquivo & Metadados em Paralelo (HTTP Fetch)',
         async () => {
           const metaPromise = bookId
-            ? $fetch<{ title?: string }>(`http://localhost:7070/api/books/${bookId}`).catch(() => null)
+            ? $fetch<{ title?: string; filePath?: string }>(`http://localhost:7070/api/books/${bookId}`).catch(() => null)
             : Promise.resolve(null)
 
           const filePromise = fetch(fileUrl).then((res) => {
@@ -122,7 +123,7 @@ const loadBookFromQuery = async () => {
           return await Promise.all([metaPromise, filePromise])
         },
         'network',
-        { url: fileUrl, type },
+        { url: fileUrl },
       )
 
       if (fetchedMeta && fetchedMeta.title) {
@@ -132,6 +133,21 @@ const loadBookFromQuery = async () => {
       arrayBuffer = await readerProfiler.measureAsync('3. Conversão para ArrayBuffer em Memória', async () => {
         return await response.arrayBuffer()
       }, 'io', { byteLength: response.headers.get('content-length') })
+
+      // Detectar formato com prioridade: Content-Type -> filePath -> magic bytes
+      const contentType = response.headers.get('content-type') || ''
+      let fallbackType: 'pdf' | 'epub' = 'epub'
+      if (contentType.includes('application/pdf')) {
+        fallbackType = 'pdf'
+      } else if (contentType.includes('application/epub+zip')) {
+        fallbackType = 'epub'
+      } else if (fetchedMeta?.filePath) {
+        fallbackType = fetchedMeta.filePath.toLowerCase().endsWith('.pdf') ? 'pdf' : 'epub'
+      } else if (bookPath) {
+        fallbackType = bookPath.toLowerCase().endsWith('.pdf') ? 'pdf' : 'epub'
+      }
+
+      type = detectFileTypeFromArrayBuffer(arrayBuffer, fallbackType)
 
       // Salvar em background no IndexedDB para as próximas aberturas serem instantâneas
       void saveCachedBook(cacheKey, arrayBuffer, title, type)

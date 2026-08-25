@@ -94,4 +94,14 @@ export async function validateBookFile(file: File): Promise<IValidationResult> {
   }
 }
 
+export function detectFileTypeFromArrayBuffer(
+  buffer: ArrayBuffer,
+  fallback: SupportedFileType = 'epub',
+): SupportedFileType {
+  if (!buffer || buffer.byteLength < 4) return fallback
+  const header = new Uint8Array(buffer.slice(0, 8))
+  return detectFileTypeFromBytes(header) || fallback
+}
+
 export { readFileHeader, matchesSignature, detectFileTypeFromBytes, MAX_FILE_SIZE_BYTES }
+
