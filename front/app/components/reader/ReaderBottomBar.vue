@@ -22,7 +22,7 @@
       >
         <span class="text-accent font-bold font-technical">{{ store.progressPercentage }}%</span>
         <span class="text-textSecondary/60 hidden sm:inline text-[11px] font-technical">
-          ({{ store.currentPage }}/{{ store.totalPages }})
+          ({{ pageDisplay }})
         </span>
       </div>
     </div>
@@ -97,6 +97,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import {
   ArrowLeftIcon,
   BookmarkIcon,
@@ -118,6 +119,14 @@ defineEmits<{
 }>()
 
 const store = useReaderStore()
+
+const pageDisplay = computed(() => {
+  if (store.isTwoPageMode && store.totalPages > 1) {
+    const second = Math.min(store.currentPage + 1, store.totalPages)
+    return `${store.currentPage}-${second}/${store.totalPages}`
+  }
+  return `${store.currentPage}/${store.totalPages}`
+})
 </script>
 
 <style scoped>

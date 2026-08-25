@@ -104,7 +104,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useReaderStore } from '~/stores/readerStore'
 
@@ -121,6 +121,8 @@ const isSavedPagesOpen = ref(false)
 const isAnnotationModalOpen = ref(false)
 const capturedSelectionText = ref('')
 const isDesktop = ref(true)
+const canvasAreaRef = ref<HTMLElement | null>(null)
+let resizeObserver: ResizeObserver | null = null
 
 const graphPanelRef = ref<any>(null)
 const mobileGraphPanelRef = ref<any>(null)
@@ -201,8 +203,25 @@ function handleAnnotationCreated() {
 function updateDeviceType() {
   if (typeof window !== 'undefined') {
     isDesktop.value = window.innerWidth >= 1024
+    let hasSpace = true
+    if (canvasAreaRef.value) {
+      const width = canvasAreaRef.value.clientWidth
+      const height = canvasAreaRef.value.clientHeight
+      hasSpace = width >= 800 && (height > 0 ? width / height >= 1.0 : true)
+    } else {
+      hasSpace = window.innerWidth >= 1024
+    }
+    const shouldBeTwoPage = isDesktop.value && !store.isGraphOpen && hasSpace && store.totalPages > 1
+    store.setTwoPageMode(shouldBeTwoPage)
   }
 }
+
+watch(
+  [() => store.isGraphOpen, () => store.totalPages],
+  () => {
+    updateDeviceType()
+  },
+)
 
 function isTextInput(target: EventTarget | null): boolean {
   return target instanceof HTMLInputElement
@@ -227,9 +246,16 @@ onMounted(() => {
   updateDeviceType()
   window.addEventListener('resize', updateDeviceType)
   window.addEventListener('keydown', onKeyDown)
+  if (canvasAreaRef.value && typeof ResizeObserver !== 'undefined') {
+    resizeObserver = new ResizeObserver(() => {
+      updateDeviceType()
+    })
+    resizeObserver.observe(canvasAreaRef.value)
+  }
 })
 
 onUnmounted(() => {
+  resizeObserver?.disconnect()
   window.removeEventListener('resize', updateDeviceType)
   window.removeEventListener('keydown', onKeyDown)
 })

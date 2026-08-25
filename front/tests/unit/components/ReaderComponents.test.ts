@@ -100,6 +100,27 @@ describe('Reader Components', () => {
       await graphBtn.trigger('click')
       expect(wrapper.emitted('toggleGraph')).toBeTruthy()
     })
+
+    it('exibe formato de spread de duas páginas no indicador (1-2/20)', async () => {
+      const store = useReaderStore()
+      store.setDocument({
+        type: 'pdf',
+        metadata: { title: 'Livro de Teste' },
+        totalPages: 20,
+        isLoaded: true,
+        load: vi.fn(),
+        getPage: vi.fn(),
+        destroy: vi.fn(),
+      } as any, 'livro.pdf')
+      store.currentPage = 1
+      store.setTwoPageMode(true)
+
+      const wrapper = mount(ReaderBottomBar, {
+        props: { isGraphActive: false },
+      })
+
+      expect(wrapper.text()).toContain('(1-2/20)')
+    })
   })
 
   describe('ReaderSavedPagesModal', () => {

@@ -22,7 +22,7 @@ interface Point {
     time: number
 }
 
-const MAX_CACHED_PAGES = 5
+const MAX_CACHED_PAGES = 8
 const MAX_TEXTURE_EDGE = 2048
 const TURN_DURATION_MS = 520
 const TURN_THRESHOLD = 0.32
@@ -67,11 +67,15 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
 
     const rasterCache = new Map<number, PageRaster>()
     const pendingRasters = new Map<number, Promise<PageRaster>>()
+    let blankRaster: PageRaster | null = null
     let renderedPage = 0
     let activeDocument: IBookDocument | null = null
     let turnDirection: PageTurnDirection = 'next'
     let turnSource: PageRaster | null = null
     let turnTarget: PageRaster | null = null
+    let turnBack: PageRaster | null = null
+    let turnLeftStatic: PageRaster | null = null
+    let turnRightStatic: PageRaster | null = null
     let dragStart: Point | null = null
     let dragLast: Point | null = null
     let pendingDragPoint: Point | null = null
@@ -85,13 +89,16 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
     let resizeObserver: ResizeObserver | null = null
     let motionQuery: MediaQueryList | null = null
     let lastGeometryAspectRatio = -1
+    let lastGeometryTwoPageMode = false
 
     let renderer: THREE.WebGLRenderer | null = null
     let scene: THREE.Scene | null = null
     let camera: THREE.OrthographicCamera | null = null
     let pageGeometry: THREE.PlaneGeometry | null = null
     let staticGeometry: THREE.PlaneGeometry | null = null
-    let staticPage: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial> | null = null
+    let leftStaticPage: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial> | null = null
+    let rightStaticPage: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial> | null = null
+    let spineShadow: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial> | null = null
     let turningFront: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshStandardMaterial> | null = null
     let turningBack: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshStandardMaterial> | null = null
     let shadowPage: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial> | null = null
@@ -110,6 +117,38 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
         texture.magFilter = THREE.LinearFilter
         texture.generateMipmaps = false
         texture.needsUpdate = true
+    }
+
+    function getBlankRaster(aspectRatio = 0.72): PageRaster {
+        if (blankRaster && Math.abs(blankRaster.aspectRatio - aspectRatio) < 0.01) {
+            return blankRaster
+        }
+        if (blankRaster) {
+            disposeRaster(blankRaster)
+        }
+        const canvas = document.createElement('canvas')
+        canvas.width = 600
+        canvas.height = Math.max(1, Math.round(600 / Math.max(0.1, aspectRatio)))
+        const context = canvas.getContext('2d')
+        if (context) {
+            context.fillStyle = '#ffffff'
+            context.fillRect(0, 0, canvas.width, canvas.height)
+        }
+        const texture = new THREE.CanvasTexture(canvas)
+        configureTexture(texture)
+        const backTexture = texture.clone()
+        backTexture.repeat.x = -1
+        backTexture.offset.x = 1
+        configureTexture(backTexture)
+
+        blankRaster = {
+            pageNumber: 0,
+            canvas,
+            texture,
+            backTexture,
+            aspectRatio,
+        }
+        return blankRaster
     }
 
     async function createRaster(pageNumber: number, bookDocument: IBookDocument): Promise<PageRaster> {
@@ -154,11 +193,16 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
     function retainRasters() {
         const retainedPages = new Set([
             renderedPage,
+            renderedPage + 1,
             turnSource?.pageNumber,
             turnTarget?.pageNumber,
+            turnBack?.pageNumber,
+            store.currentPage - 2,
             store.currentPage - 1,
             store.currentPage,
             store.currentPage + 1,
+            store.currentPage + 2,
+            store.currentPage + 3,
         ])
 
         for (const [pageNumber, raster] of rasterCache) {
@@ -177,6 +221,10 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
 
     async function getRaster(pageNumber: number, document = activeDocument): Promise<PageRaster> {
         if (!document) throw new Error('Nenhum documento está aberto.')
+        if (pageNumber < 1 || pageNumber > store.totalPages) {
+            return getBlankRaster()
+        }
+
         const cached = rasterCache.get(pageNumber)
         if (cached) {
             rasterCache.delete(pageNumber)
@@ -211,21 +259,29 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
     }
 
     function ensurePageGeometry(aspectRatio: number) {
-        if (!scene || !staticPage || !turningFront || !turningBack || !shadowPage) return
-        if (Math.abs(aspectRatio - lastGeometryAspectRatio) < 0.001) return
+        if (!scene || !leftStaticPage || !rightStaticPage || !turningFront || !turningBack || !shadowPage || !spineShadow) return
+        const isTwoPage = store.isTwoPageMode
+        if (
+            Math.abs(aspectRatio - lastGeometryAspectRatio) < 0.001
+            && isTwoPage === lastGeometryTwoPageMode
+        ) {
+            return
+        }
 
         lastGeometryAspectRatio = aspectRatio
+        lastGeometryTwoPageMode = isTwoPage
         disposePageGeometry()
+
         const pageHeight = 2
         const pageWidth = pageHeight * aspectRatio
         const halfWidth = pageWidth / 2
         const halfHeight = pageHeight / 2
+        const boundX = isTwoPage ? pageWidth : halfWidth
 
-        // Atualiza os Planos de Corte dinamicamente para ancorar exatamente nas bordas da página
         const clipPlanes = scene.userData.clipPlanes as THREE.Plane[] | undefined
         if (clipPlanes) {
-            clipPlanes[0].constant = halfWidth
-            clipPlanes[1].constant = halfWidth
+            clipPlanes[0].constant = boundX
+            clipPlanes[1].constant = boundX
             clipPlanes[2].constant = halfHeight
             clipPlanes[3].constant = halfHeight
         }
@@ -234,12 +290,29 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
         pageGeometry = new THREE.PlaneGeometry(pageWidth, pageHeight, 60, 24)
         pageGeometry.userData.basePositions = Float32Array.from(pageGeometry.attributes.position.array)
 
-        staticPage.geometry = staticGeometry
+        leftStaticPage.geometry = staticGeometry
+        rightStaticPage.geometry = staticGeometry
         turningFront.geometry = pageGeometry
         turningBack.geometry = pageGeometry
 
         shadowPage.geometry.dispose()
         shadowPage.geometry = new THREE.PlaneGeometry(pageWidth * 1.02, pageHeight * 1.02)
+
+        spineShadow.geometry.dispose()
+        spineShadow.geometry = new THREE.PlaneGeometry(Math.max(0.02, pageWidth * 0.04), pageHeight)
+
+        if (isTwoPage) {
+            leftStaticPage.position.set(-halfWidth, 0, -0.03)
+            rightStaticPage.position.set(halfWidth, 0, -0.03)
+            rightStaticPage.visible = true
+            spineShadow.position.set(0, 0, -0.01)
+            spineShadow.visible = true
+        } else {
+            leftStaticPage.position.set(0, 0, -0.03)
+            rightStaticPage.visible = false
+            spineShadow.visible = false
+        }
+
         resizeScene(aspectRatio)
     }
 
@@ -257,8 +330,9 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
 
         if (!camera) return
         const viewportAspect = width / height
-        const pageWidth = aspectRatio * 2
-        const visibleHeight = Math.max(2.0, pageWidth / viewportAspect)
+        const isTwoPage = store.isTwoPageMode
+        const totalBookWidth = isTwoPage ? (aspectRatio * 4) : (aspectRatio * 2)
+        const visibleHeight = Math.max(2.05, (totalBookWidth * 1.05) / viewportAspect)
         const visibleWidth = visibleHeight * viewportAspect
         camera.left = -visibleWidth / 2
         camera.right = visibleWidth / 2
@@ -277,11 +351,9 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
                 antialias: true,
                 alpha: true,
                 powerPreference: 'high-performance',
-                stencil: true
+                stencil: true,
             })
             renderer.setClearColor(0x000000, 0)
-
-            // Habilita a Guilhotina de Rendering (Clipping)
             renderer.localClippingEnabled = true
 
             renderer.domElement.className = 'page-curl-canvas'
@@ -292,7 +364,6 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
             camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 20)
             camera.position.set(0, 0, 4)
 
-            // Iluminação melhorada para dar profundidade ao verso da página
             const ambient = new THREE.HemisphereLight(0xffffff, 0xffffff, 1.5)
             scene.add(ambient)
 
@@ -300,53 +371,66 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
             light.position.set(-1.5, 2, 4)
             scene.add(light)
 
-            // Luz direcional por trás para evitar que a malha invertida fique totalmente preta
             const backLight = new THREE.DirectionalLight(0xffffff, 0.8)
             backLight.position.set(1.5, -2, -4)
             scene.add(backLight)
 
-            // Criando as bordas virtuais que apagam tudo o que sair dos limites do PDF
             const clipPlanes = [
-                new THREE.Plane(new THREE.Vector3(1, 0, 0), 1), // Esquerda
-                new THREE.Plane(new THREE.Vector3(-1, 0, 0), 1), // Direita
-                new THREE.Plane(new THREE.Vector3(0, -1, 0), 1), // Topo
-                new THREE.Plane(new THREE.Vector3(0, 1, 0), 1)  // Base
+                new THREE.Plane(new THREE.Vector3(1, 0, 0), 1),
+                new THREE.Plane(new THREE.Vector3(-1, 0, 0), 1),
+                new THREE.Plane(new THREE.Vector3(0, -1, 0), 1),
+                new THREE.Plane(new THREE.Vector3(0, 1, 0), 1),
             ]
             scene.userData.clipPlanes = clipPlanes
 
-            const staticMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, clippingPlanes: clipPlanes })
+            const staticLeftMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, clippingPlanes: clipPlanes })
+            const staticRightMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, clippingPlanes: clipPlanes })
+            const spineMaterial = new THREE.MeshBasicMaterial({
+                color: 0x000000,
+                transparent: true,
+                opacity: 0.12,
+                depthWrite: false,
+                clippingPlanes: clipPlanes,
+            })
 
             const frontMaterial = new THREE.MeshStandardMaterial({
-                color: 0xffffff, roughness: 0.5, metalness: 0.1, side: THREE.FrontSide, clippingPlanes: clipPlanes
+                color: 0xffffff, roughness: 0.5, metalness: 0.1, side: THREE.FrontSide, clippingPlanes: clipPlanes,
             })
             const backMaterial = new THREE.MeshStandardMaterial({
-                color: 0xf3eee8, roughness: 0.6, metalness: 0.1, side: THREE.BackSide, clippingPlanes: clipPlanes
+                color: 0xf3eee8, roughness: 0.6, metalness: 0.1, side: THREE.BackSide, clippingPlanes: clipPlanes,
             })
             const shadowMaterial = new THREE.MeshBasicMaterial({
-                color: 0x000000, transparent: true, opacity: 0, depthWrite: false, clippingPlanes: clipPlanes
+                color: 0x000000, transparent: true, opacity: 0, depthWrite: false, clippingPlanes: clipPlanes,
             })
 
             staticGeometry = new THREE.PlaneGeometry(1, 1)
             pageGeometry = new THREE.PlaneGeometry(1, 1, 40, 18)
             pageGeometry.userData.basePositions = Float32Array.from(pageGeometry.attributes.position.array)
 
-            staticPage = new THREE.Mesh(staticGeometry, staticMaterial)
+            leftStaticPage = new THREE.Mesh(staticGeometry, staticLeftMaterial)
+            rightStaticPage = new THREE.Mesh(staticGeometry, staticRightMaterial)
+            spineShadow = new THREE.Mesh(new THREE.PlaneGeometry(0.04, 2), spineMaterial)
             turningFront = new THREE.Mesh(pageGeometry, frontMaterial)
             turningBack = new THREE.Mesh(pageGeometry, backMaterial)
             shadowPage = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), shadowMaterial)
 
-            // Ordem Estrita de Renderização para o Masking funcionar corretamente
-            turningFront.renderOrder = 1 // Desenha primeiro a página virando (escreve no stencil)
+            turningFront.renderOrder = 1
             turningBack.renderOrder = 1
-            staticPage.renderOrder = 2   // Desenha a página nova (recortada pelo stencil)
-            shadowPage.renderOrder = 3   // Sombra da nova página
+            leftStaticPage.renderOrder = 2
+            rightStaticPage.renderOrder = 2
+            shadowPage.renderOrder = 3
+            spineShadow.renderOrder = 4
 
-            staticPage.position.z = -0.03
+            leftStaticPage.position.z = -0.03
+            rightStaticPage.position.z = -0.03
+            spineShadow.position.z = -0.01
             shadowPage.position.z = -0.015
             turningFront.visible = false
             turningBack.visible = false
+            rightStaticPage.visible = false
+            spineShadow.visible = false
 
-            scene.add(staticPage, shadowPage, turningFront, turningBack)
+            scene.add(leftStaticPage, rightStaticPage, spineShadow, shadowPage, turningFront, turningBack)
             resizeScene()
         } catch (error) {
             logWarn('[Reader] WebGL indisponível; usando renderer 2D.', error)
@@ -367,7 +451,7 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
     }
 
     function renderFallback() {
-        if (!fallbackCanvas || !turnTarget) return
+        if (!fallbackCanvas) return
         const host = hostRef.value
         if (!host) return
         const pixelRatio = Math.min(window.devicePixelRatio || 1, 2)
@@ -377,39 +461,88 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
         if (!context) return
         const width = fallbackCanvas.width
         const height = fallbackCanvas.height
-        const targetRatio = turnTarget.aspectRatio
-        const targetHeight = Math.min(height, width / targetRatio)
-        const targetWidth = targetHeight * targetRatio
-        const x = (width - targetWidth) / 2
-        const y = (height - targetHeight) / 2
-
         context.clearRect(0, 0, width, height)
-        context.drawImage(turnTarget.canvas, x, y, targetWidth, targetHeight)
-        if (!turnSource || turnProgress >= 1) return
 
-        context.save()
-        context.globalAlpha = 1 - turnProgress
-        const inset = targetWidth * turnProgress * 0.06
-        context.drawImage(turnSource.canvas, x + inset, y, targetWidth - inset, targetHeight)
-        context.restore()
+        const isTwoPage = store.isTwoPageMode
+        const targetRatio = turnTarget?.aspectRatio ?? turnSource?.aspectRatio ?? 0.72
+
+        if (isTwoPage) {
+            const targetHeight = Math.min(height, width / (2 * targetRatio))
+            const targetWidth = targetHeight * targetRatio
+            const startX = (width - 2 * targetWidth) / 2
+            const y = (height - targetHeight) / 2
+
+            if (turnLeftStatic) {
+                context.drawImage(turnLeftStatic.canvas, startX, y, targetWidth, targetHeight)
+            }
+            if (turnRightStatic) {
+                context.drawImage(turnRightStatic.canvas, startX + targetWidth, y, targetWidth, targetHeight)
+            }
+
+            // Spine shadow
+            context.fillStyle = 'rgba(0,0,0,0.1)'
+            context.fillRect(startX + targetWidth - 1, y, 2, targetHeight)
+        } else {
+            if (!turnTarget && !turnSource) return
+            const target = turnTarget ?? turnSource
+            const targetHeight = Math.min(height, width / targetRatio)
+            const targetWidth = targetHeight * targetRatio
+            const x = (width - targetWidth) / 2
+            const y = (height - targetHeight) / 2
+
+            context.drawImage(target.canvas, x, y, targetWidth, targetHeight)
+            if (turnSource && turnProgress < 1 && turnTarget) {
+                context.save()
+                context.globalAlpha = 1 - turnProgress
+                const inset = targetWidth * turnProgress * 0.06
+                context.drawImage(turnSource.canvas, x + inset, y, targetWidth - inset, targetHeight)
+                context.restore()
+            }
+        }
     }
 
-    function setStaticRaster(raster: PageRaster) {
-        if (staticPage) {
-            staticPage.material.map = raster.texture
-            staticPage.material.needsUpdate = true
-            // Remove o recorte de máscara quando a página fica parada
-            if (staticPage.material instanceof THREE.Material) {
-                staticPage.material.stencilWrite = false;
+    function setStaticSpread(leftRaster: PageRaster, rightRaster?: PageRaster | null) {
+        if (leftStaticPage && rightStaticPage && spineShadow && turningFront && turningBack && shadowPage) {
+            const isTwoPage = store.isTwoPageMode
+            ensurePageGeometry(leftRaster.aspectRatio)
+
+            const halfWidth = (2 * leftRaster.aspectRatio) / 2
+
+            if (isTwoPage) {
+                leftStaticPage.material.map = leftRaster.texture
+                leftStaticPage.material.needsUpdate = true
+                leftStaticPage.material.stencilWrite = false
+                leftStaticPage.position.set(-halfWidth, 0, -0.03)
+                leftStaticPage.visible = true
+
+                const right = rightRaster ?? getBlankRaster(leftRaster.aspectRatio)
+                rightStaticPage.material.map = right.texture
+                rightStaticPage.material.needsUpdate = true
+                rightStaticPage.material.stencilWrite = false
+                rightStaticPage.position.set(halfWidth, 0, -0.03)
+                rightStaticPage.visible = true
+
+                spineShadow.position.set(0, 0, -0.01)
+                spineShadow.visible = true
+            } else {
+                leftStaticPage.material.map = leftRaster.texture
+                leftStaticPage.material.needsUpdate = true
+                leftStaticPage.material.stencilWrite = false
+                leftStaticPage.position.set(0, 0, -0.03)
+                leftStaticPage.visible = true
+
+                rightStaticPage.visible = false
+                spineShadow.visible = false
             }
-            ensurePageGeometry(raster.aspectRatio)
-            staticPage.visible = true
-            shadowPage!.visible = false
-            turningFront!.visible = false
-            turningBack!.visible = false
+
+            shadowPage.visible = false
+            turningFront.visible = false
+            turningBack.visible = false
             renderScene()
         } else {
-            turnTarget = raster
+            turnLeftStatic = leftRaster
+            turnRightStatic = rightRaster ?? null
+            turnTarget = leftRaster
             turnSource = null
             turnProgress = 1
             renderFallback()
@@ -418,57 +551,115 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
 
     function applyTurnTextures() {
         if (!turnSource || !turnTarget) return
-        if (!staticPage || !turningFront || !turningBack || !shadowPage) {
+        if (!leftStaticPage || !rightStaticPage || !turningFront || !turningBack || !shadowPage || !spineShadow) {
             renderFallback()
             return
         }
 
-        const stencilRef = 1;
+        const isTwoPage = store.isTwoPageMode
+        const stencilRef = 1
 
-        // A folha se dobra e impõe a marcação 1 na tela (Stencil)
-        turningFront.material.colorWrite = true;
-        turningFront.material.depthWrite = true;
-        turningFront.material.stencilWrite = true;
-        turningFront.material.stencilFunc = THREE.AlwaysStencilFunc;
-        turningFront.material.stencilFail = THREE.KeepStencilOp;
-        turningFront.material.stencilZFail = THREE.KeepStencilOp;
-        turningFront.material.stencilZPass = THREE.ReplaceStencilOp;
-        turningFront.material.stencilRef = stencilRef;
+        turningFront.material.colorWrite = true
+        turningFront.material.depthWrite = true
+        turningFront.material.stencilWrite = true
+        turningFront.material.stencilFunc = THREE.AlwaysStencilFunc
+        turningFront.material.stencilFail = THREE.KeepStencilOp
+        turningFront.material.stencilZFail = THREE.KeepStencilOp
+        turningFront.material.stencilZPass = THREE.ReplaceStencilOp
+        turningFront.material.stencilRef = stencilRef
 
-        turningBack.material.colorWrite = true;
-        turningBack.material.depthWrite = true;
-        turningBack.material.stencilWrite = true;
-        turningBack.material.stencilFunc = THREE.AlwaysStencilFunc;
-        turningBack.material.stencilFail = THREE.KeepStencilOp;
-        turningBack.material.stencilZFail = THREE.KeepStencilOp;
-        turningBack.material.stencilZPass = THREE.ReplaceStencilOp;
-        turningBack.material.stencilRef = stencilRef;
+        turningBack.material.colorWrite = true
+        turningBack.material.depthWrite = true
+        turningBack.material.stencilWrite = true
+        turningBack.material.stencilFunc = THREE.AlwaysStencilFunc
+        turningBack.material.stencilFail = THREE.KeepStencilOp
+        turningBack.material.stencilZFail = THREE.KeepStencilOp
+        turningBack.material.stencilZPass = THREE.ReplaceStencilOp
+        turningBack.material.stencilRef = stencilRef
 
-        // A próxima folha (estática) se desenha APENAS fora da área onde a dobra marcou 1
-        staticPage.material.map = turnTarget.texture;
-        staticPage.material.needsUpdate = true;
-        staticPage.material.stencilWrite = true;
-        staticPage.material.stencilFunc = THREE.NotEqualStencilFunc;
-        staticPage.material.stencilFail = THREE.KeepStencilOp;
-        staticPage.material.stencilZFail = THREE.KeepStencilOp;
-        staticPage.material.stencilZPass = THREE.KeepStencilOp;
-        staticPage.material.stencilRef = stencilRef;
+        shadowPage.material.stencilWrite = true
+        shadowPage.material.stencilFunc = THREE.NotEqualStencilFunc
+        shadowPage.material.stencilFail = THREE.KeepStencilOp
+        shadowPage.material.stencilZFail = THREE.KeepStencilOp
+        shadowPage.material.stencilZPass = THREE.KeepStencilOp
+        shadowPage.material.stencilRef = stencilRef
 
-        // A sombra obedece rigorosamente às mesmas regras da página nova
-        shadowPage.material.stencilWrite = true;
-        shadowPage.material.stencilFunc = THREE.NotEqualStencilFunc;
-        shadowPage.material.stencilFail = THREE.KeepStencilOp;
-        shadowPage.material.stencilZFail = THREE.KeepStencilOp;
-        shadowPage.material.stencilZPass = THREE.KeepStencilOp;
-        shadowPage.material.stencilRef = stencilRef;
+        ensurePageGeometry(turnSource.aspectRatio)
 
-        turningFront.material.map = turnSource.texture
-        turningFront.material.needsUpdate = true
-        turningBack.material.map = turnSource.backTexture
-        turningBack.material.needsUpdate = true
+        if (!isTwoPage) {
+            leftStaticPage.material.map = turnTarget.texture
+            leftStaticPage.material.needsUpdate = true
+            leftStaticPage.material.stencilWrite = true
+            leftStaticPage.material.stencilFunc = THREE.NotEqualStencilFunc
+            leftStaticPage.material.stencilFail = THREE.KeepStencilOp
+            leftStaticPage.material.stencilZFail = THREE.KeepStencilOp
+            leftStaticPage.material.stencilZPass = THREE.KeepStencilOp
+            leftStaticPage.material.stencilRef = stencilRef
+            leftStaticPage.position.set(0, 0, -0.03)
+            leftStaticPage.visible = true
 
-        ensurePageGeometry(turnTarget.aspectRatio)
-        staticPage.visible = true
+            rightStaticPage.visible = false
+            spineShadow.visible = false
+
+            turningFront.material.map = turnSource.texture
+            turningFront.material.needsUpdate = true
+            turningBack.material.map = turnSource.backTexture
+            turningBack.material.needsUpdate = true
+        } else {
+            const halfWidth = (2 * turnSource.aspectRatio) / 2
+            spineShadow.visible = true
+
+            if (turnDirection === 'next') {
+                if (turnLeftStatic) {
+                    leftStaticPage.material.map = turnLeftStatic.texture
+                    leftStaticPage.material.needsUpdate = true
+                }
+                leftStaticPage.material.stencilWrite = false
+                leftStaticPage.position.set(-halfWidth, 0, -0.04)
+                leftStaticPage.visible = true
+
+                rightStaticPage.material.map = turnTarget.texture
+                rightStaticPage.material.needsUpdate = true
+                rightStaticPage.material.stencilWrite = true
+                rightStaticPage.material.stencilFunc = THREE.NotEqualStencilFunc
+                rightStaticPage.material.stencilFail = THREE.KeepStencilOp
+                rightStaticPage.material.stencilZFail = THREE.KeepStencilOp
+                rightStaticPage.material.stencilZPass = THREE.KeepStencilOp
+                rightStaticPage.material.stencilRef = stencilRef
+                rightStaticPage.position.set(halfWidth, 0, -0.03)
+                rightStaticPage.visible = true
+
+                turningFront.material.map = turnSource.texture
+                turningFront.material.needsUpdate = true
+                turningBack.material.map = (turnBack ?? turnTarget).backTexture
+                turningBack.material.needsUpdate = true
+            } else {
+                if (turnRightStatic) {
+                    rightStaticPage.material.map = turnRightStatic.texture
+                    rightStaticPage.material.needsUpdate = true
+                }
+                rightStaticPage.material.stencilWrite = false
+                rightStaticPage.position.set(halfWidth, 0, -0.04)
+                rightStaticPage.visible = true
+
+                leftStaticPage.material.map = turnTarget.texture
+                leftStaticPage.material.needsUpdate = true
+                leftStaticPage.material.stencilWrite = true
+                leftStaticPage.material.stencilFunc = THREE.NotEqualStencilFunc
+                leftStaticPage.material.stencilFail = THREE.KeepStencilOp
+                leftStaticPage.material.stencilZFail = THREE.KeepStencilOp
+                leftStaticPage.material.stencilZPass = THREE.KeepStencilOp
+                leftStaticPage.material.stencilRef = stencilRef
+                leftStaticPage.position.set(-halfWidth, 0, -0.03)
+                leftStaticPage.visible = true
+
+                turningFront.material.map = turnSource.texture
+                turningFront.material.needsUpdate = true
+                turningBack.material.map = (turnBack ?? turnTarget).backTexture
+                turningBack.material.needsUpdate = true
+            }
+        }
+
         turningFront.visible = true
         turningBack.visible = true
         shadowPage.visible = true
@@ -482,80 +673,99 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
         const halfWidth = width / 2
         const progress = turnProgress
         const forward = turnDirection === 'next'
+        const isTwoPage = store.isTwoPageMode
 
-        // O raio da curva define quão "gorda" é a dobra da página.
-        // Começa um pouco maior e diminui no final para a folha assentar.
         const radius = width * (0.12 - (progress * 0.04))
         const circumference = Math.PI * radius
-
-        // A posição da dobra viaja de um extremo ao outro, passando um pouco da tela
-        // para garantir que a página desdobre por completo.
-        const foldX = forward
-            ? halfWidth - (width + circumference * 2) * progress
-            : -halfWidth + (width + circumference * 2) * progress
-
-        // Um leve ângulo na dobra para não parecer um cilindro reto e mecânico (efeito cone)
         const angleOffset = 0.15
 
-        for (let index = 0; index < position.count; index += 1) {
-            const originalX = basePositions[index * 3]
-            const originalY = basePositions[index * 3 + 1]
+        if (!isTwoPage) {
+            const foldX = forward
+                ? halfWidth - (width + circumference * 2) * progress
+                : -halfWidth + (width + circumference * 2) * progress
 
-            // Distância do vértice atual até a linha de dobra
-            // Aplicamos o angleOffset multiplicando pelo originalY para inclinar a dobra
-            const distanceToFold = forward
-                ? (originalX - (foldX + originalY * angleOffset))
-                : ((foldX + originalY * angleOffset) - originalX)
+            for (let index = 0; index < position.count; index += 1) {
+                const originalX = basePositions[index * 3]
+                const originalY = basePositions[index * 3 + 1]
+                const distanceToFold = forward
+                    ? (originalX - (foldX + originalY * angleOffset))
+                    : ((foldX + originalY * angleOffset) - originalX)
 
-            let finalX = originalX
-            let finalZ = 0
+                let finalX = originalX
+                let finalZ = 0
 
-            if (distanceToFold > 0) {
-                if (distanceToFold < circumference) {
-                    // 1. O VÉRTICE ESTÁ NA CURVA (no cilindro)
-                    // Convertendo a distância linear em radianos no cilindro
-                    const theta = distanceToFold / radius
-
-                    // Calculando a nova posição X e Z baseada no arco do cilindro
-                    const curlX = radius * Math.sin(theta)
-                    finalZ = radius * (1 - Math.cos(theta)) // Sobe no eixo Z (efeito 3D real)
-
-                    finalX = forward
-                        ? (foldX + originalY * angleOffset) + curlX
-                        : (foldX + originalY * angleOffset) - curlX
-                } else {
-                    // 2. O VÉRTICE JÁ PASSOU DA CURVA (Página invertida caindo do outro lado)
-                    // O quanto de papel sobrou após dar a volta no cilindro
-                    const remainingPaper = distanceToFold - circumference
-
-                    finalX = forward
-                        ? (foldX + originalY * angleOffset) - remainingPaper
-                        : (foldX + originalY * angleOffset) + remainingPaper
-
-                    // O Z no final da curva é exatamente 2 vezes o raio (diâmetro),
-                    // mas achatamos levemente à medida que a página deita.
-                    finalZ = radius * 2
+                if (distanceToFold > 0) {
+                    if (distanceToFold < circumference) {
+                        const theta = distanceToFold / radius
+                        const curlX = radius * Math.sin(theta)
+                        finalZ = radius * (1 - Math.cos(theta))
+                        finalX = forward
+                            ? (foldX + originalY * angleOffset) + curlX
+                            : (foldX + originalY * angleOffset) - curlX
+                    } else {
+                        const remainingPaper = distanceToFold - circumference
+                        finalX = forward
+                            ? (foldX + originalY * angleOffset) - remainingPaper
+                            : (foldX + originalY * angleOffset) + remainingPaper
+                        finalZ = radius * 2
+                    }
                 }
+
+                const settle = smoothstep(progress < 0.5 ? progress / 0.2 : (1 - progress) / 0.2)
+                position.setXYZ(
+                    index,
+                    finalX,
+                    originalY,
+                    THREE.MathUtils.lerp(0, finalZ, settle),
+                )
             }
+        } else {
+            const foldX = forward
+                ? width - (2 * width + circumference * 2) * progress
+                : -width + (2 * width + circumference * 2) * progress
 
-            // Suavização final para "grudar" a página na tela quando progress chega a 1 ou 0
-            const settle = smoothstep(progress < 0.5 ? progress / 0.2 : (1 - progress) / 0.2)
+            for (let index = 0; index < position.count; index += 1) {
+                const localX = basePositions[index * 3]
+                const originalY = basePositions[index * 3 + 1]
+                const bookX = forward ? (localX + halfWidth) : (localX - halfWidth)
 
-            position.setXYZ(
-                index,
-                finalX,
-                originalY,
-                // Ao assentar (progress 0 ou 1), o Z zera. Durante a transição, assume o 3D.
-                THREE.MathUtils.lerp(0, finalZ, settle)
-            )
+                const distanceToFold = forward
+                    ? (bookX - (foldX + originalY * angleOffset))
+                    : ((foldX + originalY * angleOffset) - bookX)
+
+                let finalX = bookX
+                let finalZ = 0
+
+                if (distanceToFold > 0) {
+                    if (distanceToFold < circumference) {
+                        const theta = distanceToFold / radius
+                        const curlX = radius * Math.sin(theta)
+                        finalZ = radius * (1 - Math.cos(theta))
+                        finalX = forward
+                            ? (foldX + originalY * angleOffset) + curlX
+                            : (foldX + originalY * angleOffset) - curlX
+                    } else {
+                        const remainingPaper = distanceToFold - circumference
+                        finalX = forward
+                            ? (foldX + originalY * angleOffset) - remainingPaper
+                            : (foldX + originalY * angleOffset) + remainingPaper
+                        finalZ = radius * 2
+                    }
+                }
+
+                const settle = smoothstep(progress < 0.5 ? progress / 0.2 : (1 - progress) / 0.2)
+                position.setXYZ(
+                    index,
+                    finalX,
+                    originalY,
+                    THREE.MathUtils.lerp(0, finalZ, settle),
+                )
+            }
         }
 
         position.needsUpdate = true
-
-        // Recalcula as normais rigorosamente após alterar o Z para a luz reagir corretamente à curva 3D
         pageGeometry.computeVertexNormals()
 
-        // Sombra: acompanha a curva e tem um leve efeito de fade nas pontas
         const shadowIntensity = Math.sin(progress * Math.PI)
         shadowPage.material.opacity = 0.25 * shadowIntensity
         shadowPage.scale.set(1 + progress * 0.05, 1 + progress * 0.05, 1)
@@ -615,9 +825,21 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
     }
 
     function targetFor(direction: PageTurnDirection): number | null {
-        const target = direction === 'next' ? store.currentPage + 1 : store.currentPage - 1
-        if (target < 1 || target > store.totalPages) return null
-        return target
+        if (store.isTwoPageMode) {
+            if (direction === 'next') {
+                const target = store.currentPage + 2
+                if (target > store.totalPages && store.currentPage + 1 >= store.totalPages) return null
+                return target <= store.totalPages ? target : store.totalPages
+            } else {
+                const target = store.currentPage - 2
+                if (target < 1 && store.currentPage <= 1) return null
+                return Math.max(1, target)
+            }
+        } else {
+            const target = direction === 'next' ? store.currentPage + 1 : store.currentPage - 1
+            if (target < 1 || target > store.totalPages) return null
+            return target
+        }
     }
 
     async function prepareTurn(direction: PageTurnDirection): Promise<boolean> {
@@ -627,14 +849,56 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
         isPreparing.value = true
         errorMessage.value = null
         try {
-            const [source, target] = await Promise.all([
-                getRaster(store.currentPage),
-                getRaster(targetPage),
-            ])
-            if (activeDocument !== store.document) return false
-            turnDirection = direction
-            turnSource = source
-            turnTarget = target
+            if (!store.isTwoPageMode) {
+                const [source, target] = await Promise.all([
+                    getRaster(store.currentPage),
+                    getRaster(targetPage),
+                ])
+                if (activeDocument !== store.document) return false
+                turnDirection = direction
+                turnSource = source
+                turnTarget = target
+                turnBack = null
+                turnLeftStatic = null
+                turnRightStatic = null
+            } else {
+                const currentLeft = store.currentPage
+                const currentRight = currentLeft + 1
+                if (direction === 'next') {
+                    const nextLeft = targetPage
+                    const nextRight = nextLeft + 1
+                    const [cLeft, cRight, nLeft, nRight] = await Promise.all([
+                        getRaster(currentLeft),
+                        getRaster(currentRight),
+                        getRaster(nextLeft),
+                        getRaster(nextRight),
+                    ])
+                    if (activeDocument !== store.document) return false
+                    turnDirection = 'next'
+                    turnSource = cRight
+                    turnBack = nLeft
+                    turnTarget = nRight
+                    turnLeftStatic = cLeft
+                    turnRightStatic = nRight
+                } else {
+                    const prevLeft = targetPage
+                    const prevRight = prevLeft + 1
+                    const [pLeft, pRight, cLeft, cRight] = await Promise.all([
+                        getRaster(prevLeft),
+                        getRaster(prevRight),
+                        getRaster(currentLeft),
+                        getRaster(currentRight),
+                    ])
+                    if (activeDocument !== store.document) return false
+                    turnDirection = 'previous'
+                    turnSource = cLeft
+                    turnBack = pRight
+                    turnTarget = pLeft
+                    turnLeftStatic = pLeft
+                    turnRightStatic = cRight
+                }
+            }
+
             turnProgress = 0
             applyTurnTextures()
             drawTurn()
@@ -650,17 +914,35 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
     }
 
     function settleTurn(committed: boolean) {
-        if (committed && turnTarget) {
-            renderedPage = turnTarget.pageNumber
-            store.goToPage(renderedPage)
-            setStaticRaster(turnTarget)
-            prefetchNeighbors(renderedPage)
-        } else if (turnSource) {
-            setStaticRaster(turnSource)
+        if (!store.isTwoPageMode) {
+            if (committed && turnTarget) {
+                renderedPage = turnTarget.pageNumber
+                store.goToPage(renderedPage)
+                setStaticSpread(turnTarget)
+                prefetchNeighbors(renderedPage)
+            } else if (turnSource) {
+                setStaticSpread(turnSource)
+            }
+        } else {
+            if (committed) {
+                const newLeft = turnDirection === 'next'
+                    ? (turnBack?.pageNumber ?? store.currentPage + 2)
+                    : (turnTarget?.pageNumber ?? Math.max(1, store.currentPage - 2))
+                renderedPage = newLeft
+                store.goToPage(renderedPage)
+                const rightRaster = turnDirection === 'next' ? turnTarget : turnBack
+                setStaticSpread(turnDirection === 'next' ? turnBack! : turnTarget!, rightRaster)
+                prefetchNeighbors(renderedPage)
+            } else {
+                setStaticSpread(turnLeftStatic ?? getBlankRaster(), turnRightStatic)
+            }
         }
 
         turnSource = null
         turnTarget = null
+        turnBack = null
+        turnLeftStatic = null
+        turnRightStatic = null
         turnProgress = 0
         isDragging = false
         dragStart = null
@@ -789,7 +1071,11 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
 
     function prefetchNeighbors(pageNumber: number) {
         if (!activeDocument) return
-        for (const candidate of [pageNumber - 1, pageNumber + 1]) {
+        const candidates = store.isTwoPageMode
+            ? [pageNumber - 2, pageNumber - 1, pageNumber + 2, pageNumber + 3]
+            : [pageNumber - 1, pageNumber + 1]
+
+        for (const candidate of candidates) {
             if (candidate >= 1 && candidate <= store.totalPages) {
                 void getRaster(candidate).catch(() => undefined)
             }
@@ -800,11 +1086,24 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
         if (!activeDocument || isTransitioning.value) return
         isPreparing.value = true
         try {
-            const raster = await getRaster(pageNumber)
-            if (activeDocument !== store.document) return
-            renderedPage = pageNumber
-            setStaticRaster(raster)
-            prefetchNeighbors(pageNumber)
+            if (store.isTwoPageMode) {
+                const leftPageNum = pageNumber > 1 && pageNumber % 2 === 0 ? pageNumber - 1 : pageNumber
+                const rightPageNum = leftPageNum + 1
+                const [leftRaster, rightRaster] = await Promise.all([
+                    getRaster(leftPageNum),
+                    rightPageNum <= store.totalPages ? getRaster(rightPageNum) : Promise.resolve(getBlankRaster()),
+                ])
+                if (activeDocument !== store.document) return
+                renderedPage = leftPageNum
+                setStaticSpread(leftRaster, rightRaster)
+                prefetchNeighbors(leftPageNum)
+            } else {
+                const raster = await getRaster(pageNumber)
+                if (activeDocument !== store.document) return
+                renderedPage = pageNumber
+                setStaticSpread(raster)
+                prefetchNeighbors(pageNumber)
+            }
         } catch (error) {
             const message = error instanceof Error ? error.message : String(error)
             errorMessage.value = `Não foi possível renderizar a página: ${message}`
@@ -818,6 +1117,10 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
         pendingRasters.clear()
         for (const raster of rasterCache.values()) disposeRaster(raster)
         rasterCache.clear()
+        if (blankRaster) {
+            disposeRaster(blankRaster)
+            blankRaster = null
+        }
     }
 
     async function syncDocument(document: IBookDocument | null) {
@@ -828,6 +1131,9 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
         dragCancelledWhilePreparing = false
         turnSource = null
         turnTarget = null
+        turnBack = null
+        turnLeftStatic = null
+        turnRightStatic = null
         activeDocument = document
         renderedPage = 0
         clearRasters()
@@ -837,7 +1143,9 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
 
     function destroyScene() {
         disposePageGeometry()
-        staticPage?.material.dispose()
+        leftStaticPage?.material.dispose()
+        rightStaticPage?.material.dispose()
+        spineShadow?.material.dispose()
         turningFront?.material.dispose()
         turningBack?.material.dispose()
         shadowPage?.geometry.dispose()
@@ -848,7 +1156,9 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
         renderer = null
         scene = null
         camera = null
-        staticPage = null
+        leftStaticPage = null
+        rightStaticPage = null
+        spineShadow = null
         turningFront = null
         turningBack = null
         shadowPage = null
@@ -864,6 +1174,16 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
         () => store.currentPage,
         (pageNumber) => {
             if (!isTransitioning.value && pageNumber !== renderedPage) void displayPage(pageNumber)
+        },
+    )
+
+    watch(
+        () => store.isTwoPageMode,
+        () => {
+            if (!isTransitioning.value && store.document) {
+                lastGeometryAspectRatio = -1
+                void displayPage(store.currentPage)
+            }
         },
     )
 
