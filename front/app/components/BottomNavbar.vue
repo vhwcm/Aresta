@@ -1,5 +1,6 @@
 <template>
   <div
+    v-if="!route.path.startsWith('/reader')"
     class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 flex items-center justify-center pointer-events-auto"
     role="navigation"
     aria-label="Navegação Principal"

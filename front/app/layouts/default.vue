@@ -15,8 +15,8 @@
       </main>
     </div>
 
-    <!-- Barra de Navegação Inferior Colapsável Flutuante (Apenas para Usuários Autenticados) -->
-    <BottomNavbar v-if="auth.isLoggedIn.value" />
+    <!-- Barra de Navegação Inferior Colapsável Flutuante (Apenas para Usuários Autenticados e fora do leitor) -->
+    <BottomNavbar v-if="auth.isLoggedIn.value && !route.path.startsWith('/reader')" />
 
     <!-- Modais Globais -->
     <CommandPalette v-if="auth.isLoggedIn.value" />
