@@ -9,3 +9,15 @@ export const getCoverUrl = (coverPath?: string, bookId?: number) => {
   const fileName = coverPath.replace(/^storage\/covers\//, '').replace(/^storage\//, '')
   return `http://localhost:7070/covers/${fileName}`
 }
+
+export type BookFormat = 'EPUB' | 'PDF'
+
+export const getBookFormat = (filePath?: string | null): BookFormat => {
+  if (!filePath) return 'EPUB'
+  const lower = filePath.toLowerCase()
+  if (lower.endsWith('.pdf') || lower.includes('/pdfs/') || lower.includes('.pdf?')) {
+    return 'PDF'
+  }
+  return 'EPUB'
+}
+

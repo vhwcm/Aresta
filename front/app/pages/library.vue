@@ -84,6 +84,16 @@
               <span class="font-editorial text-lg text-white/60 line-clamp-3">{{ book.title }}</span>
             </div>
 
+            <!-- Badge de Formato (EPUB / PDF) -->
+            <div class="absolute top-2.5 right-2.5 z-10">
+              <span
+                class="px-2 py-0.5 rounded-full text-[10px] font-technical uppercase font-bold tracking-wider shadow backdrop-blur-md"
+                :class="getBookFormat(book.filePath) === 'EPUB' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' : 'bg-sky-500/20 text-sky-300 border border-sky-500/40'"
+              >
+                {{ getBookFormat(book.filePath) }}
+              </span>
+            </div>
+
             <!-- Overlay de Ação ao Passar o Mouse -->
             <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4 gap-2">
               <NuxtLink
@@ -178,8 +188,17 @@
           <!-- Conteúdo -->
           <div class="flex-1 flex flex-col gap-3">
             <div class="flex items-start justify-between gap-4">
-              <div>
-                <h3 class="font-editorial text-2xl font-light text-textPrimary group-hover:text-accent transition-colors">{{ item.title }}</h3>
+              <div class="flex flex-col gap-1.5">
+                <div class="flex items-center gap-2.5 flex-wrap">
+                  <h3 class="font-editorial text-2xl font-light text-textPrimary group-hover:text-accent transition-colors">{{ item.title }}</h3>
+                  <!-- Badge do Formato (EPUB / PDF) -->
+                  <span
+                    class="px-2.5 py-0.5 rounded-full text-[10px] font-technical uppercase font-bold tracking-wider shrink-0 shadow-sm"
+                    :class="getBookFormat(item.filePath) === 'EPUB' ? 'text-amber-400 bg-amber-500/10 border border-amber-500/30' : 'text-sky-400 bg-sky-500/10 border border-sky-500/30'"
+                  >
+                    {{ getBookFormat(item.filePath) }}
+                  </span>
+                </div>
               </div>
 
               <!-- Seletor de Status -->
@@ -298,7 +317,7 @@ import {
 import { useCatalog } from '~/composables/useCatalog'
 import { useUserBooks } from '~/composables/useUserBooks'
 import { useAuth } from '~/composables/useAuth'
-import { getCoverUrl } from '~/utils/cover'
+import { getCoverUrl, getBookFormat } from '~/utils/cover'
 
 const activeTab = ref<'catalog' | 'my-books'>('catalog')
 const statusFilter = ref('TODOS')

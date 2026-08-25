@@ -97,10 +97,21 @@ const searchQuery = ref('')
 let simulation: d3.Simulation<any, any> | null = null
 let zoomBehavior: d3.ZoomBehavior<SVGSVGElement, unknown> | null = null
 
+// Helpers de cores pastéis e suaves (Low Dopamine)
+const getPastelFill = (colorHex?: string, isRoot = false) => {
+  const baseColor = colorHex || (isRoot ? '#E57B55' : '#64748B')
+  return d3.interpolateRgb('#161619', baseColor)(isRoot ? 0.35 : 0.25)
+}
+
+const getPastelStroke = (colorHex?: string, isRoot = false) => {
+  const baseColor = colorHex || (isRoot ? '#E57B55' : '#64748B')
+  return d3.interpolateRgb('#161619', baseColor)(isRoot ? 0.85 : 0.70)
+}
+
 const getNodeRadius = (node: GraphNode) => {
-  if (node.isRoot || node.id === -999) return 36
+  if (node.isRoot || node.id === -999) return 32
   const count = node.books?.length || 0
-  return Math.min(18 + count * 6, 42)
+  return Math.min(18 + count * 4, 36)
 }
 
 const initGraph = () => {
@@ -166,19 +177,19 @@ const initGraph = () => {
 
   // Criar Simulação de Forças D3 (Estilo Obsidian)
   simulation = d3.forceSimulation(simulationNodes)
-    .force('link', d3.forceLink(simulationLinks).id((d: any) => d.id).distance((d: any) => d.isRootEdge ? 180 : 130))
-    .force('charge', d3.forceManyBody().strength(-450))
+    .force('link', d3.forceLink(simulationLinks).id((d: any) => d.id).distance((d: any) => d.isRootEdge ? 170 : 120))
+    .force('charge', d3.forceManyBody().strength(-420))
     .force('center', d3.forceCenter(width / 2, height / 2))
-    .force('collide', d3.forceCollide().radius((d: any) => getNodeRadius(d) + 22))
+    .force('collide', d3.forceCollide().radius((d: any) => getNodeRadius(d) + 20))
 
-  // Renderizar Links (Arestas)
+  // Renderizar Links (Arestas) Contínuas (Solid lines)
   const linkGroup = g.select('.links-group')
   const links = linkGroup.selectAll<SVGLineElement, any>('line')
     .data(simulationLinks, (d: any) => d.id)
     .join('line')
-    .attr('stroke', (d: any) => d.isRootEdge ? 'rgba(229, 123, 85, 0.35)' : 'rgba(255, 255, 255, 0.15)')
-    .attr('stroke-width', (d: any) => d.isRootEdge ? 2.5 : 1.5)
-    .attr('stroke-dasharray', (d: any) => d.isRootEdge ? '6 3' : '4 2')
+    .attr('stroke', (d: any) => d.isRootEdge ? 'rgba(229, 123, 85, 0.25)' : 'rgba(255, 255, 255, 0.12)')
+    .attr('stroke-width', (d: any) => d.isRootEdge ? 1.5 : 1.2)
+    .attr('stroke-opacity', 1)
 
   // Renderizar Nós
   const nodeGroup = g.select('.nodes-group')
@@ -207,39 +218,86 @@ const initGraph = () => {
 
   nodesSelection.html('') // Limpar anterior
 
-  // Círculo com efeito Glow de fundo (com cor dourada/accent para a raiz)
+  // Círculo com efeito sutil de ambient ring (low-dopamine)
   nodesSelection.append('circle')
-    .attr('r', (d: any) => getNodeRadius(d) + (d.isRoot ? 10 : 6))
-    .attr('fill', (d: any) => d.isRoot ? '#E57B55' : (d.color || '#E57B55'))
-    .attr('opacity', (d: any) => d.isRoot ? 0.35 : 0.15)
+    .attr('r', (d: any) => getNodeRadius(d) + 4)
+    .attr('fill', (d: any) => getPastelFill(d.color, d.isRoot))
+    .attr('opacity', 0.16)
     .attr('class', 'transition-all duration-300')
 
-  // Círculo principal do nó
+  // Círculo principal do nó (cor de fundo pastel e borda fina delicada)
   nodesSelection.append('circle')
     .attr('r', (d: any) => getNodeRadius(d))
-    .attr('fill', (d: any) => d.isRoot ? '#2A1A14' : '#141416')
-    .attr('stroke', (d: any) => d.isRoot ? '#E57B55' : (d.color || '#E57B55'))
-    .attr('stroke-width', (d: any) => d.isRoot ? 4 : 2.5)
-    .attr('class', 'transition-all duration-300 shadow-2xl')
+    .attr('fill', (d: any) => getPastelFill(d.color, d.isRoot))
+    .attr('stroke', (d: any) => getPastelStroke(d.color, d.isRoot))
+    .attr('stroke-width', (d: any) => d.isRoot ? 1.8 : 1.2)
+    .attr('class', 'transition-all duration-300 shadow-lg')
 
-  // Ícone/Texto do centro do nó
-  nodesSelection.append('text')
-    .attr('text-anchor', 'middle')
-    .attr('dy', '0.35em')
-    .attr('fill', '#FFFFFF')
-    .attr('font-size', (d: any) => d.isRoot ? '16px' : '10px')
-    .attr('font-weight', 'bold')
+  // Ícone 2D Vetorial Clean para o Nó Raiz (Cérebro / Conhecimento)
+  const rootNodesSelection = nodesSelection.filter((d: any) => d.isRoot)
+  const rootIconGroup = rootNodesSelection.append('g')
+    .attr('transform', 'translate(-9.5, -9.5)')
     .attr('pointer-events', 'none')
-    .text((d: any) => d.isRoot ? '🧠' : (d.books?.length ? `${d.books.length}📚` : ''))
+
+  rootIconGroup.append('path')
+    .attr('d', 'M12 18V5 M15 13a4.17 4.17 0 0 1-3-4 4.17 4.17 0 0 1-3 4 M17.598 6.5A3 3 0 1 0 12 5a3 3 0 1 0-5.598 1.5 M17.997 5.125a4 4 0 0 1 2.526 5.77 M18 18a4 4 0 0 0 2-7.464 M19.967 17.483A4 4 0 1 1 12 18a4 4 0 1 1-7.967-.517 M6 18a4 4 0 0 1-2-7.464 M6.003 5.125a4 4 0 0 0-2.526 5.77')
+    .attr('fill', 'none')
+    .attr('stroke', '#FFFFFF')
+    .attr('stroke-width', '1.6')
+    .attr('stroke-linecap', 'round')
+    .attr('stroke-linejoin', 'round')
+    .attr('transform', 'scale(0.8)')
+
+  // Ícone 2D e Contagem para Nós de Temas
+  const themeNodesSelection = nodesSelection.filter((d: any) => !d.isRoot)
+  themeNodesSelection.each(function(d: any) {
+    const nodeEl = d3.select(this)
+    const bookCount = d.books?.length || 0
+
+    const iconG = nodeEl.append('g')
+      .attr('pointer-events', 'none')
+      .attr('class', 'theme-icon-group')
+
+    if (bookCount > 0) {
+      // Ícone 2D de Livro Aberto + Contagem
+      iconG.append('path')
+        .attr('d', 'M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z')
+        .attr('fill', 'none')
+        .attr('stroke', 'rgba(255, 255, 255, 0.85)')
+        .attr('stroke-width', '1.5')
+        .attr('stroke-linecap', 'round')
+        .attr('stroke-linejoin', 'round')
+        .attr('transform', 'translate(-12, -6.5) scale(0.55)')
+
+      iconG.append('text')
+        .attr('x', 3)
+        .attr('y', 3.5)
+        .attr('font-size', '10.5px')
+        .attr('font-weight', '600')
+        .attr('font-family', 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace')
+        .attr('fill', 'rgba(255, 255, 255, 0.92)')
+        .text(bookCount)
+    } else {
+      // Ícone 2D sutil para tema sem livros vinculados
+      iconG.append('path')
+        .attr('d', 'M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20')
+        .attr('fill', 'none')
+        .attr('stroke', 'rgba(255, 255, 255, 0.55)')
+        .attr('stroke-width', '1.5')
+        .attr('stroke-linecap', 'round')
+        .attr('stroke-linejoin', 'round')
+        .attr('transform', 'translate(-6, -6.5) scale(0.55)')
+    }
+  })
 
   // Rótulo/Nome do nó
   nodesSelection.append('text')
     .attr('text-anchor', 'middle')
-    .attr('dy', (d: any) => getNodeRadius(d) + 18)
+    .attr('dy', (d: any) => getNodeRadius(d) + 16)
     .attr('fill', (d: any) => d.isRoot ? '#F59E0B' : '#E2E8F0')
-    .attr('font-size', (d: any) => d.isRoot ? '13px' : '12px')
-    .attr('font-weight', (d: any) => d.isRoot ? '800' : '600')
-    .attr('font-family', 'sans-serif')
+    .attr('font-size', (d: any) => d.isRoot ? '12px' : '11px')
+    .attr('font-weight', (d: any) => d.isRoot ? '700' : '500')
+    .attr('font-family', 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif')
     .attr('pointer-events', 'none')
     .text((d: any) => d.name)
 
@@ -258,11 +316,15 @@ const initGraph = () => {
 
   // Evento de Destaque no Hover
   nodesSelection.on('mouseenter', (event, d) => {
-    links.attr('stroke', (l: any) => (l.source.id === d.id || l.target.id === d.id) ? (d.color || '#E57B55') : 'rgba(255, 255, 255, 0.08)')
-      .attr('stroke-width', (l: any) => (l.source.id === d.id || l.target.id === d.id) ? 3.5 : 1.5)
+    links
+      .attr('stroke', (l: any) => (l.source.id === d.id || l.target.id === d.id) ? (d.color || '#E57B55') : 'rgba(255, 255, 255, 0.05)')
+      .attr('stroke-width', (l: any) => (l.source.id === d.id || l.target.id === d.id) ? 2 : 1)
+      .attr('stroke-opacity', (l: any) => (l.source.id === d.id || l.target.id === d.id) ? 0.9 : 0.25)
   }).on('mouseleave', () => {
-    links.attr('stroke', (d: any) => d.isRootEdge ? 'rgba(229, 123, 85, 0.35)' : 'rgba(255, 255, 255, 0.15)')
-      .attr('stroke-width', (d: any) => d.isRootEdge ? 2.5 : 1.5)
+    links
+      .attr('stroke', (d: any) => d.isRootEdge ? 'rgba(229, 123, 85, 0.25)' : 'rgba(255, 255, 255, 0.12)')
+      .attr('stroke-width', (d: any) => d.isRootEdge ? 1.5 : 1.2)
+      .attr('stroke-opacity', 1)
   })
 
   // Atualização em cada Tick de simulação física

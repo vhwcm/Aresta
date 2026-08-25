@@ -122,6 +122,12 @@
                   >
                     {{ getStatusLabel(book.status) }}
                   </span>
+                  <span
+                    class="text-[9px] font-technical uppercase font-bold px-1.5 py-0.5 rounded"
+                    :class="getBookFormat(book.filePath) === 'EPUB' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30' : 'bg-sky-500/10 text-sky-400 border border-sky-500/30'"
+                  >
+                    {{ getBookFormat(book.filePath) }}
+                  </span>
                   <span v-if="book.status === 'LENDO'" class="text-[10px] text-textSecondary font-technical">
                     Pág. {{ book.currentPage }}
                   </span>
@@ -143,8 +149,9 @@
 
     <!-- Rodapé com ação de Excluir Nó -->
     <div class="p-4 border-t border-divider bg-bgApp/50">
-      <div v-if="node.isRoot" class="text-center text-xs font-technical text-amber-400 bg-amber-500/10 border border-amber-500/30 p-2.5 rounded-xl font-semibold">
-        🧠 Nó Central Agregador (Origem do Mapa Mental)
+      <div v-if="node.isRoot" class="flex items-center justify-center gap-2 text-center text-xs font-technical text-amber-400 bg-amber-500/10 border border-amber-500/30 p-2.5 rounded-xl font-semibold">
+        <BrainIcon class="w-4 h-4 text-amber-400 shrink-0" />
+        <span>Nó Central Agregador (Origem do Mapa Mental)</span>
       </div>
       <button
         v-else
@@ -161,8 +168,8 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 import type { GraphNode, UserBookItem } from '~/interfaces/graph'
-import { XIcon, BookOpenIcon, BookIcon, PlusIcon, TrashIcon, Trash2Icon } from 'lucide-vue-next'
-import { getCoverUrl } from '~/utils/cover'
+import { XIcon, BookOpenIcon, BookIcon, PlusIcon, TrashIcon, Trash2Icon, BrainIcon } from 'lucide-vue-next'
+import { getCoverUrl, getBookFormat } from '~/utils/cover'
 
 const props = defineProps<{
   node: GraphNode | null
