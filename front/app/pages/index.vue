@@ -199,65 +199,140 @@
     </div>
 
     <!-- ESTADO 2: VISITANTE NÃO AUTENTICADO (Página Inicial Pública / Landing Page do Aresta) -->
-    <div v-else data-testid="guest-landing" class="flex flex-col gap-16 md:gap-24 py-6 md:py-12 animate-in fade-in duration-500 max-w-6xl mx-auto w-full">
-      <!-- 1. SEÇÃO HERO DA LANDING PAGE -->
-      <header class="flex flex-col items-center text-center gap-6 max-w-4xl mx-auto pt-4 md:pt-8">
-        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/10 border border-accent/30 font-technical text-[11px] uppercase tracking-widest text-accent font-semibold shadow-sm">
-          <SparklesIcon class="w-3.5 h-3.5" />
-          <span>Segundo Cérebro & Leitura Profunda · Minimalista & Anti-Dopaminérgico</span>
+    <div v-else data-testid="guest-landing" class="flex flex-col gap-16 md:gap-24 py-6 md:py-10 animate-in fade-in duration-500 max-w-6xl mx-auto w-full">
+      <!-- 1. SEÇÃO HERO DA LANDING PAGE (LAYOUT ESTRUTURADO EM 2 COLUNAS) -->
+      <header class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center pt-2 md:pt-6">
+        <!-- Coluna da Esquerda: Textos, Chamada Principal e CTAs -->
+        <div class="lg:col-span-7 flex flex-col items-start text-left gap-5">
+          <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-accent/10 border border-accent/30 font-technical text-[10px] sm:text-[11px] uppercase tracking-widest text-accent font-semibold shadow-sm">
+            <SparklesIcon class="w-3.5 h-3.5" />
+            <span>Segundo Cérebro & Leitura Profunda · Minimalista & Anti-Dopaminérgico</span>
+          </div>
+
+          <h1 class="font-editorial text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-light text-textPrimary leading-[1.12]">
+            Transforme sua leitura em uma <span class="text-accent italic font-normal">rede viva</span> de conhecimento e competência.
+          </h1>
+
+          <p class="font-interface text-sm sm:text-base md:text-lg text-textSecondary max-w-xl leading-relaxed">
+            O <strong>Aresta</strong> é um ecossistema minimalista e calmo para leitura imersiva de EPUB e PDF, anotações ativas e mapeamento visual de conexões. Desenvolvido para quem estuda, quer se tornar especialista em sua área ou dominar novos interesses — com foco contínuo, sem feeds viciantes e com retenção definitiva.
+          </p>
+
+          <!-- Botões de Ação Hero (CTAs de Alto Impacto) -->
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 pt-1 w-full sm:w-auto">
+            <a
+              href="#comece-agora"
+              class="bg-white text-black font-interface text-sm sm:text-base font-semibold px-7 py-3.5 rounded-full hover:bg-gray-200 transition-all flex items-center justify-center gap-2.5 shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+            >
+              <span>Experimentar o Aresta Gratuitamente</span>
+              <ArrowRightIcon class="w-4 h-4 text-black" />
+            </a>
+
+            <NuxtLink
+              to="/por-que-ler"
+              class="px-6 py-3.5 rounded-full bg-white/5 hover:bg-white/10 border border-divider hover:border-accent/40 text-textPrimary font-interface text-sm transition-all flex items-center justify-center gap-2 shadow-sm"
+            >
+              <BrainIcon class="w-4 h-4 text-accent" />
+              <span>Por que Leitura Profunda?</span>
+            </NuxtLink>
+          </div>
+
+          <!-- Micro-benefícios / Selos de Valor em Grade Estruturada -->
+          <div class="grid grid-cols-2 gap-2.5 pt-3 w-full max-w-xl">
+            <div class="flex items-center gap-2.5 text-xs font-technical text-textSecondary bg-white/[0.02] border border-divider/60 rounded-xl px-3.5 py-2.5">
+              <ZapOffIcon class="w-3.5 h-3.5 text-accent shrink-0" />
+              <span>100% Anti-dopaminérgico</span>
+            </div>
+            <div class="flex items-center gap-2.5 text-xs font-technical text-textSecondary bg-white/[0.02] border border-divider/60 rounded-xl px-3.5 py-2.5">
+              <NetworkIcon class="w-3.5 h-3.5 text-accent shrink-0" />
+              <span>Segundo Cérebro</span>
+            </div>
+            <div class="flex items-center gap-2.5 text-xs font-technical text-textSecondary bg-white/[0.02] border border-divider/60 rounded-xl px-3.5 py-2.5">
+              <BookOpenIcon class="w-3.5 h-3.5 text-accent shrink-0" />
+              <span>Leitor EPUB & PDF</span>
+            </div>
+            <div class="flex items-center gap-2.5 text-xs font-technical text-textSecondary bg-white/[0.02] border border-divider/60 rounded-xl px-3.5 py-2.5">
+              <TargetIcon class="w-3.5 h-3.5 text-accent shrink-0" />
+              <span>Retenção & Maestria</span>
+            </div>
+          </div>
         </div>
 
-        <h1 class="font-editorial text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-light text-textPrimary leading-[1.12]">
-          Transforme sua leitura em uma <span class="text-accent italic font-normal">rede viva</span> de conhecimento e competência.
-        </h1>
+        <!-- Coluna da Direita: Card Estruturado de Demonstração / Preview Visual do Santuário de Leitura -->
+        <div class="lg:col-span-5 flex flex-col justify-center">
+          <div class="rounded-3xl bg-gradient-to-b from-[#18191c]/90 via-[#121315]/90 to-[#0a0a0b]/95 border border-divider/90 p-6 sm:p-7 shadow-2xl backdrop-blur-xl flex flex-col gap-5 relative overflow-hidden group hover:border-accent/40 transition-all duration-500">
+            <!-- Barra Superior do Card -->
+            <div class="flex items-center justify-between pb-3 border-b border-divider/60">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-white/10"></span>
+                <span class="w-2.5 h-2.5 rounded-full bg-white/10"></span>
+                <span class="w-2.5 h-2.5 rounded-full bg-white/10"></span>
+                <span class="font-technical text-[10px] uppercase tracking-wider text-textSecondary ml-1.5 flex items-center gap-1.5">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  Sessão Ativa · Foco Calmo
+                </span>
+              </div>
+              <ArestaLogoGraph :size="24" :to="null" />
+            </div>
 
-        <p class="font-interface text-base sm:text-lg text-textSecondary max-w-2xl leading-relaxed">
-          O <strong>Aresta</strong> é um ecossistema minimalista e calmo para leitura imersiva de EPUB e PDF, anotações ativas e mapeamento visual de conexões. Desenvolvido para quem estuda, quer se tornar especialista em sua área ou dominar novos interesses — com foco contínuo, sem feeds viciantes e com retenção definitiva.
-        </p>
+            <!-- Excerpt de Leitura com Destaque Ativo -->
+            <div class="p-4 rounded-2xl bg-black/40 border border-divider/70 flex flex-col gap-2.5">
+              <div class="flex items-center justify-between">
+                <span class="font-technical text-[10px] text-accent font-semibold uppercase tracking-wider">
+                  Machado de Assis · O Alienista
+                </span>
+                <span class="font-technical text-[10px] text-textSecondary">Pág. 42</span>
+              </div>
+              <blockquote class="font-editorial text-sm sm:text-base text-textPrimary italic border-l-2 border-accent pl-3 leading-relaxed">
+                "A razão é a perfeita saúde da alma; a loucura é a alteração dessa saúde."
+              </blockquote>
+              <p class="font-interface text-[11px] text-textSecondary pl-3 leading-snug">
+                Fronteira arbitrária entre sanidade e desvio. Observação clínica do comportamento.
+              </p>
+            </div>
 
-        <!-- Botões de Ação Hero (CTAs de Alto Impacto) -->
-        <div class="flex flex-col sm:flex-row items-center gap-4 pt-3 w-full sm:w-auto">
-          <a
-            href="#comece-agora"
-            class="w-full sm:w-auto bg-white text-black font-interface text-sm sm:text-base font-semibold px-8 py-3.5 rounded-full hover:bg-gray-200 transition-all flex items-center justify-center gap-2.5 shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-          >
-            <span>Experimentar o Aresta Gratuitamente</span>
-            <ArrowRightIcon class="w-4 h-4 text-black" />
-          </a>
+            <!-- Nós do Grafo Interconectados -->
+            <div class="flex flex-col gap-2">
+              <div class="font-technical text-[10px] uppercase tracking-wider text-textSecondary flex items-center gap-1.5">
+                <NetworkIcon class="w-3.5 h-3.5 text-accent" />
+                <span>Nós Conectados no Grafo</span>
+              </div>
+              <div class="flex items-center gap-2 flex-wrap text-[10px] font-technical">
+                <span class="px-2.5 py-1 rounded-lg bg-accent/15 border border-accent/30 text-accent font-medium">
+                  #epistemologia
+                </span>
+                <span class="text-textSecondary/60">⇄</span>
+                <span class="px-2.5 py-1 rounded-lg bg-white/5 border border-divider text-textSecondary">
+                  #filosofia-da-mente
+                </span>
+                <span class="text-textSecondary/60">⇄</span>
+                <span class="px-2.5 py-1 rounded-lg bg-white/5 border border-divider text-textSecondary">
+                  #psicologia
+                </span>
+              </div>
+            </div>
 
-          <NuxtLink
-            to="/por-que-ler"
-            class="w-full sm:w-auto px-6 py-3.5 rounded-full bg-white/5 hover:bg-white/10 border border-divider hover:border-accent/40 text-textPrimary font-interface text-sm transition-all flex items-center justify-center gap-2 shadow-sm"
-          >
-            <BrainIcon class="w-4 h-4 text-accent" />
-            <span>Por que Leitura Profunda?</span>
-          </NuxtLink>
-        </div>
-
-        <!-- Micro-benefícios / Selos de Valor -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-6 w-full text-left sm:text-center">
-          <div class="flex items-center sm:justify-center gap-2 text-xs font-technical text-textSecondary bg-white/[0.02] border border-divider/60 rounded-xl px-3 py-2">
-            <ZapOffIcon class="w-3.5 h-3.5 text-accent shrink-0" />
-            <span>100% Anti-dopaminérgico</span>
-          </div>
-          <div class="flex items-center sm:justify-center gap-2 text-xs font-technical text-textSecondary bg-white/[0.02] border border-divider/60 rounded-xl px-3 py-2">
-            <NetworkIcon class="w-3.5 h-3.5 text-accent shrink-0" />
-            <span>Segundo Cérebro</span>
-          </div>
-          <div class="flex items-center sm:justify-center gap-2 text-xs font-technical text-textSecondary bg-white/[0.02] border border-divider/60 rounded-xl px-3 py-2">
-            <BookOpenIcon class="w-3.5 h-3.5 text-accent shrink-0" />
-            <span>Leitor EPUB & PDF</span>
-          </div>
-          <div class="flex items-center sm:justify-center gap-2 text-xs font-technical text-textSecondary bg-white/[0.02] border border-divider/60 rounded-xl px-3 py-2">
-            <TargetIcon class="w-3.5 h-3.5 text-accent shrink-0" />
-            <span>Retenção & Maestria</span>
+            <!-- Mini Flashcard de Retenção Ativa -->
+            <div class="p-3.5 rounded-2xl bg-white/[0.03] border border-divider/60 flex items-center justify-between gap-3">
+              <div class="flex flex-col gap-0.5">
+                <span class="font-technical text-[9px] uppercase tracking-widest text-accent font-semibold flex items-center gap-1">
+                  <BrainIcon class="w-3 h-3 text-accent" />
+                  Flashcard de Retenção
+                </span>
+                <span class="font-interface text-xs text-textPrimary line-clamp-1">
+                  Critério de Bacamarte para a Casa Verde?
+                </span>
+              </div>
+              <span class="shrink-0 font-interface text-[10px] font-medium text-white px-3 py-1 rounded-full bg-accent/80 shadow-sm">
+                Revisar
+              </span>
+            </div>
           </div>
         </div>
       </header>
 
       <!-- 2. SEÇÃO DE INDAGAÇÕES E TRANSFORMAÇÃO PRÁTICA (COPYWRITING PERSUASIVO) -->
-      <section class="flex flex-col gap-10">
-        <div class="flex flex-col items-center text-center gap-3 max-w-2xl mx-auto">
+      <section class="flex flex-col gap-8">
+        <div class="flex flex-col items-start text-left gap-2 max-w-3xl">
           <div class="font-technical text-[10px] uppercase font-semibold tracking-widest text-accent flex items-center gap-2">
             <CompassIcon class="w-3.5 h-3.5" />
             Evolução Pessoal & Intelectual
@@ -265,7 +340,7 @@
           <h2 class="font-editorial text-3xl sm:text-4xl font-light text-textPrimary leading-tight">
             Para quem busca clareza e domínio em um mundo de atenção fragmentada
           </h2>
-          <p class="font-interface text-sm text-textSecondary leading-relaxed">
+          <p class="font-interface text-sm sm:text-base text-textSecondary leading-relaxed">
             A maioria das pessoas lê dezenas de artigos e livros, mas esquece quase tudo em semanas. Como seria sua rotina se cada página lida se transformasse em competência permanente?
           </p>
         </div>
@@ -699,6 +774,7 @@ import {
 import ReadingStreak from '~/components/ReadingStreak.vue'
 import EbbinghausChart from '~/components/EbbinghausChart.vue'
 import SidebarGraph from '~/components/SidebarGraph.vue'
+import ArestaLogoGraph from '~/components/ArestaLogoGraph.vue'
 import { useAuth } from '~/composables/useAuth'
 import { useSettings } from '~/composables/useSettings'
 import { useUserBooks } from '~/composables/useUserBooks'
@@ -752,7 +828,7 @@ if (typeof useHead === 'function') {
 }
 
 const auth = useAuth()
-const { loadFromServer } = useSettings()
+const { loadFromServer, desktopHomeGraphOpen } = useSettings()
 const { userBooks, fetchUserBooks } = useUserBooks()
 
 const coverError = ref(false)
@@ -820,6 +896,8 @@ onMounted(async () => {
     const saved = localStorage.getItem('aresta_home_graph_collapsed')
     if (saved !== null) {
       isGraphCollapsed.value = saved === 'true'
+    } else {
+      isGraphCollapsed.value = !desktopHomeGraphOpen.value
     }
   }
 

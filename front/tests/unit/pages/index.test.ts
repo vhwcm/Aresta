@@ -10,6 +10,7 @@ describe('Index Page (Landing Page & Home)', () => {
     ReadingStreak: { template: '<div data-testid="reading-streak">5</div>' },
     EbbinghausChart: { template: '<div data-testid="ebbinghaus-chart">Gráfico Ebbinghaus D3</div>' },
     SidebarGraph: { template: '<div data-testid="sidebar-graph">Grafo de Conhecimento</div>' },
+    ArestaLogoGraph: { template: '<div data-testid="aresta-logo-graph">Logo Grafo</div>' },
     ArrowRightIcon: true,
     BrainIcon: true,
     BookOpenIcon: true,
