@@ -40,6 +40,7 @@ export class GraphService {
         bookId: bt.userBook.book_id,
         title: bt.userBook.book.title,
         coverPath: bt.userBook.book.cover_path,
+        filePath: bt.userBook.book.file_path,
         status: bt.userBook.status,
         currentPage: bt.userBook.current_page,
       })),
