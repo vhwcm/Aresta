@@ -107,7 +107,241 @@
             <CheckCircle2Icon class="w-4 h-4 text-emerald-400" />
           </div>
           <span class="font-editorial text-4xl font-light text-emerald-400">91%</span>
-          <span class="font-interface text-[11px] text-textSecondary">18 flashcards dominados</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Preferências & Configurações da Aplicação -->
+    <section class="flex flex-col gap-6" data-testid="account-preferences-section">
+      <div class="flex flex-col gap-1">
+        <div class="flex items-center gap-2 font-technical text-[10px] uppercase font-semibold tracking-widest text-accent">
+          <SlidersIcon class="w-3.5 h-3.5" />
+          Preferências & Customização
+        </div>
+        <h3 class="font-editorial text-2xl font-light text-textPrimary">Configurações da Aplicação</h3>
+        <p class="font-interface text-xs text-textSecondary leading-relaxed max-w-2xl">
+          Personalize a experiência de leitura, comportamento dos grafos conceituais e aparência visual do ecossistema.
+        </p>
+      </div>
+
+      <div class="flex flex-col rounded-3xl bg-white/[0.02] border border-divider divide-y divide-divider overflow-hidden">
+        <!-- 1. Tema Visual (Claro / Escuro) -->
+        <div class="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div class="flex items-start sm:items-center gap-4 min-w-0">
+            <div class="p-3 rounded-2xl bg-accent/10 border border-accent/20 text-accent shrink-0">
+              <SunIcon v-if="themeMode === 'light'" class="w-5 h-5" />
+              <MoonIcon v-else class="w-5 h-5" />
+            </div>
+            <div class="flex flex-col gap-0.5">
+              <div class="font-interface text-sm font-medium text-textPrimary flex items-center gap-2">
+                <span>Modo de Exibição</span>
+                <span
+                  class="px-2 py-0.5 rounded-full font-technical text-[10px] font-semibold"
+                  :class="themeMode === 'dark' ? 'bg-white/10 text-textSecondary' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'"
+                >
+                  {{ themeMode === 'dark' ? 'Escuro (Dark)' : 'Claro (Light)' }}
+                </span>
+              </div>
+              <p class="font-interface text-xs text-textSecondary">
+                Alterne entre o tema escuro editorial e o modo claro suave para leitura diurna.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-center p-1 rounded-2xl bg-white/5 border border-divider shrink-0">
+            <button
+              type="button"
+              @click="setThemeMode('dark')"
+              data-testid="theme-dark-btn"
+              class="px-3.5 py-1.5 rounded-xl font-interface text-xs font-medium transition-all flex items-center gap-1.5"
+              :class="themeMode === 'dark' ? 'bg-accent text-white shadow-md' : 'text-textSecondary hover:text-textPrimary'"
+            >
+              <MoonIcon class="w-3.5 h-3.5" />
+              <span>Escuro</span>
+            </button>
+            <button
+              type="button"
+              @click="setThemeMode('light')"
+              data-testid="theme-light-btn"
+              class="px-3.5 py-1.5 rounded-xl font-interface text-xs font-medium transition-all flex items-center gap-1.5"
+              :class="themeMode === 'light' ? 'bg-accent text-white shadow-md' : 'text-textSecondary hover:text-textPrimary'"
+            >
+              <SunIcon class="w-3.5 h-3.5" />
+              <span>Claro</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 2. Grafo na Tela Inicial (Desktop) -->
+        <div class="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div class="flex items-start sm:items-center gap-4 min-w-0">
+            <div class="p-3 rounded-2xl bg-accent/10 border border-accent/20 text-accent shrink-0">
+              <NetworkIcon class="w-5 h-5" />
+            </div>
+            <div class="flex flex-col gap-0.5">
+              <div class="font-interface text-sm font-medium text-textPrimary">
+                Grafo na Tela Inicial (Desktop)
+              </div>
+              <p class="font-interface text-xs text-textSecondary">
+                Iniciar automaticamente com a barra lateral de grafo de conexões aberta na página inicial.
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            role="switch"
+            :aria-checked="desktopHomeGraphOpen"
+            data-testid="toggle-desktop-home-graph"
+            @click="setDesktopHomeGraphOpen(!desktopHomeGraphOpen)"
+            class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-accent/50"
+            :class="desktopHomeGraphOpen ? 'bg-accent' : 'bg-white/10'"
+            title="Alternar início com grafo na tela inicial"
+          >
+            <span
+              class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+              :class="desktopHomeGraphOpen ? 'translate-x-5' : 'translate-x-0'"
+            />
+          </button>
+        </div>
+
+        <!-- 3. Grafo ao Abrir Livros no Leitor (Desktop) -->
+        <div class="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div class="flex items-start sm:items-center gap-4 min-w-0">
+            <div class="p-3 rounded-2xl bg-accent/10 border border-accent/20 text-accent shrink-0">
+              <BookOpenIcon class="w-5 h-5" />
+            </div>
+            <div class="flex flex-col gap-0.5">
+              <div class="font-interface text-sm font-medium text-textPrimary">
+                Grafo no Leitor de Livros (Desktop)
+              </div>
+              <p class="font-interface text-xs text-textSecondary">
+                Abrir livros no desktop já com a visualização dividida 50/50 entre texto e grafo conceitual.
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            role="switch"
+            :aria-checked="desktopReaderGraphOpen"
+            data-testid="toggle-desktop-reader-graph"
+            @click="setDesktopReaderGraphOpen(!desktopReaderGraphOpen)"
+            class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-accent/50"
+            :class="desktopReaderGraphOpen ? 'bg-accent' : 'bg-white/10'"
+            title="Alternar início com grafo no leitor desktop"
+          >
+            <span
+              class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+              :class="desktopReaderGraphOpen ? 'translate-x-5' : 'translate-x-0'"
+            />
+          </button>
+        </div>
+
+        <!-- 4. Tamanho Padrão da Fonte (EPUB) -->
+        <div class="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div class="flex items-start sm:items-center gap-4 min-w-0">
+            <div class="p-3 rounded-2xl bg-accent/10 border border-accent/20 text-accent shrink-0">
+              <TypeIcon class="w-5 h-5" />
+            </div>
+            <div class="flex flex-col gap-0.5">
+              <div class="font-interface text-sm font-medium text-textPrimary">
+                Tamanho Padrão do Texto (EPUB)
+              </div>
+              <p class="font-interface text-xs text-textSecondary">
+                Tamanho da tipografia padrão aplicada ao abrir novos e-books.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3 shrink-0">
+            <button
+              type="button"
+              data-testid="decrease-font-btn"
+              @click="setEpubFontSize(epubFontSize - 2)"
+              :disabled="epubFontSize <= 12"
+              class="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/15 disabled:opacity-30 disabled:cursor-not-allowed border border-divider text-xs font-semibold transition-all text-textPrimary active:scale-95 flex items-center gap-1"
+              title="Diminuir tamanho da fonte padrão"
+            >
+              <span class="font-editorial text-sm">A-</span>
+              <span>Menor</span>
+            </button>
+
+            <span
+              data-testid="font-size-indicator"
+              class="font-technical text-sm font-bold text-accent min-w-[52px] text-center px-2 py-1 rounded-lg bg-accent/10 border border-accent/20"
+            >
+              {{ epubFontSize }}px
+            </span>
+
+            <button
+              type="button"
+              data-testid="increase-font-btn"
+              @click="setEpubFontSize(epubFontSize + 2)"
+              :disabled="epubFontSize >= 36"
+              class="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/15 disabled:opacity-30 disabled:cursor-not-allowed border border-divider text-xs font-semibold transition-all text-textPrimary active:scale-95 flex items-center gap-1"
+              title="Aumentar tamanho da fonte padrão"
+            >
+              <span class="font-editorial text-base font-bold">A+</span>
+              <span>Maior</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 5. Família Tipográfica Padrão (EPUB) -->
+        <div class="p-6 flex flex-col gap-4">
+          <div class="flex items-start sm:items-center gap-4 min-w-0">
+            <div class="p-3 rounded-2xl bg-accent/10 border border-accent/20 text-accent shrink-0">
+              <TypeIcon class="w-5 h-5" />
+            </div>
+            <div class="flex flex-col gap-0.5">
+              <div class="font-interface text-sm font-medium text-textPrimary">
+                Fonte Padrão (EPUB)
+              </div>
+              <p class="font-interface text-xs text-textSecondary">
+                Família tipográfica inicial utilizada na renderização dos livros em formato EPUB.
+              </p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-2">
+            <button
+              v-for="font in availableFonts"
+              :key="font.id"
+              type="button"
+              :data-testid="`font-option-${font.id}`"
+              @click="setEpubFontFamily(font.id)"
+              class="flex flex-col justify-between p-4 rounded-2xl border text-left transition-all relative overflow-hidden group"
+              :class="epubFontFamily === font.id
+                ? 'bg-accent/10 border-accent text-textPrimary shadow-lg shadow-accent/5'
+                : 'bg-white/[0.02] border-divider hover:bg-white/[0.05] text-textSecondary hover:text-textPrimary'"
+            >
+              <div class="flex items-start justify-between gap-2">
+                <span
+                  class="text-lg font-medium leading-tight"
+                  :style="{ fontFamily: font.fontFamily }"
+                  :class="epubFontFamily === font.id ? 'text-accent' : 'text-textPrimary'"
+                >
+                  {{ font.name }}
+                </span>
+                <div
+                  v-if="epubFontFamily === font.id"
+                  class="w-5 h-5 rounded-full bg-accent text-white flex items-center justify-center shrink-0"
+                >
+                  <CheckIcon class="w-3.5 h-3.5 stroke-[3]" />
+                </div>
+              </div>
+
+              <div class="mt-2 flex flex-col gap-1">
+                <span class="font-technical text-[10px] text-textSecondary uppercase tracking-wider">
+                  {{ font.category }}
+                </span>
+                <p class="font-interface text-[11px] text-textSecondary line-clamp-2 leading-relaxed">
+                  {{ font.description }}
+                </p>
+              </div>
+            </button>
+          </div>
         </div>
       </div>
     </section>
@@ -385,11 +619,34 @@ import {
   AlertTriangleIcon,
   LogOutIcon,
   Trash2Icon,
-  XIcon
+  XIcon,
+  SunIcon,
+  MoonIcon,
+  SlidersIcon,
+  TypeIcon,
+  CheckIcon
 } from 'lucide-vue-next'
 import { useAuth } from '~/composables/useAuth'
+import { useSettings } from '~/composables/useSettings'
+import { READER_FONTS } from '~/composables/useReaderTypography'
 
 const auth = useAuth()
+const settings = useSettings()
+
+const {
+  desktopHomeGraphOpen,
+  desktopReaderGraphOpen,
+  themeMode,
+  epubFontSize,
+  epubFontFamily,
+  setDesktopHomeGraphOpen,
+  setDesktopReaderGraphOpen,
+  setThemeMode,
+  setEpubFontSize,
+  setEpubFontFamily
+} = settings
+
+const availableFonts = READER_FONTS
 
 const isPro = ref(false)
 const showUpgradeModal = ref(false)

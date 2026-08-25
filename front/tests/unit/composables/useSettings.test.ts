@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { useSettings } from '~/composables/useSettings'
+import { useSettings, resetSettingsForTesting } from '~/composables/useSettings'
 import { useSettingsModal } from '~/composables/useSettingsModal'
 
 const mockFetch = vi.fn()
@@ -20,6 +20,7 @@ describe('useSettings Composable', () => {
     if (typeof localStorage !== 'undefined') {
       localStorage.clear()
     }
+    resetSettingsForTesting()
   })
 
   it('inicia com valores padrão e permite alterar a preferência de animação', () => {
@@ -52,15 +53,67 @@ describe('useSettings Composable', () => {
     expect(language.value).toBe('en-US')
   })
 
+  it('permite alterar e obter o tema visual (dark/light)', () => {
+    const { themeMode, setThemeMode, toggleThemeMode } = useSettings()
+
+    expect(themeMode.value).toBe('dark')
+
+    setThemeMode('light')
+    expect(themeMode.value).toBe('light')
+    const saved = JSON.parse(localStorage.getItem('aresta_settings') || '{}')
+    expect(saved.themeMode).toBe('light')
+
+    toggleThemeMode()
+    expect(themeMode.value).toBe('dark')
+  })
+
+  it('permite alternar a preferência de grafo na tela inicial desktop', () => {
+    const { desktopHomeGraphOpen, setDesktopHomeGraphOpen } = useSettings()
+
+    expect(desktopHomeGraphOpen.value).toBe(true)
+
+    setDesktopHomeGraphOpen(false)
+    expect(desktopHomeGraphOpen.value).toBe(false)
+    const saved = JSON.parse(localStorage.getItem('aresta_settings') || '{}')
+    expect(saved.desktopHomeGraphOpen).toBe(false)
+  })
+
+  it('permite alternar a preferência de grafo no leitor desktop', () => {
+    const { desktopReaderGraphOpen, setDesktopReaderGraphOpen } = useSettings()
+
+    expect(desktopReaderGraphOpen.value).toBe(true)
+
+    setDesktopReaderGraphOpen(false)
+    expect(desktopReaderGraphOpen.value).toBe(false)
+    const saved = JSON.parse(localStorage.getItem('aresta_settings') || '{}')
+    expect(saved.desktopReaderGraphOpen).toBe(false)
+  })
+
+  it('permite alterar e obter a família tipográfica padrão de EPUB', () => {
+    const { epubFontFamily, setEpubFontFamily } = useSettings()
+
+    expect(epubFontFamily.value).toBe('newsreader')
+
+    setEpubFontFamily('merriweather')
+    expect(epubFontFamily.value).toBe('merriweather')
+    const saved = JSON.parse(localStorage.getItem('aresta_settings') || '{}')
+    expect(saved.epubFontFamily).toBe('merriweather')
+  })
+
   it('carrega configurações do servidor quando autenticado', async () => {
     mockToken.mockReturnValue('token-abc')
     mockFetch.mockResolvedValueOnce({
       userId: 1,
       pageAnimationEnabled: false,
       language: 'en-US',
+      epubFontSize: 22,
+      epubFontFamily: 'literata',
+      themeMode: 'light',
+      desktopHomeGraphOpen: false,
+      desktopReaderGraphOpen: false,
     })
 
-    const { loadFromServer, pageAnimationEnabled, language } = useSettings()
+    const { loadFromServer, pageAnimationEnabled, language, themeMode, desktopHomeGraphOpen, desktopReaderGraphOpen, epubFontFamily } = useSettings()
     await loadFromServer()
 
     expect(mockFetch).toHaveBeenCalledWith('http://localhost:7070/api/user-settings', {
@@ -68,6 +121,10 @@ describe('useSettings Composable', () => {
     })
     expect(pageAnimationEnabled.value).toBe(false)
     expect(language.value).toBe('en-US')
+    expect(themeMode.value).toBe('light')
+    expect(desktopHomeGraphOpen.value).toBe(false)
+    expect(desktopReaderGraphOpen.value).toBe(false)
+    expect(epubFontFamily.value).toBe('literata')
   })
 
   it('envia alteração para o servidor quando autenticado', async () => {
@@ -86,7 +143,12 @@ describe('useSettings Composable', () => {
       expect(mockFetch).toHaveBeenCalledWith('http://localhost:7070/api/user-settings', {
         method: 'PUT',
         headers: { Authorization: 'Bearer token-abc' },
-        body: { pageAnimationEnabled: false, language: 'pt-BR', epubFontSize: 18 },
+        body: expect.objectContaining({
+          pageAnimationEnabled: false,
+          language: 'pt-BR',
+          epubFontSize: 18,
+          epubFontFamily: 'newsreader',
+        }),
       })
     })
   })

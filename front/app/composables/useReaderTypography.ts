@@ -54,6 +54,15 @@ function initTypography() {
   if (isInitialized || typeof window === 'undefined') return
   isInitialized = true
   try {
+    const settingsRaw = localStorage.getItem('aresta_settings')
+    if (settingsRaw) {
+      const parsed = JSON.parse(settingsRaw)
+      if (parsed.epubFontFamily && READER_FONTS.some((f) => f.id === parsed.epubFontFamily)) {
+        activeFontId.value = parsed.epubFontFamily
+        return
+      }
+    }
+
     const saved = localStorage.getItem(STORAGE_KEY)
     if (saved && READER_FONTS.some((f) => f.id === saved)) {
       activeFontId.value = saved

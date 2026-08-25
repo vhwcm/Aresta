@@ -144,28 +144,108 @@
 
               <div class="flex flex-col rounded-xl bg-white/[0.02] border border-divider divide-y divide-divider overflow-hidden">
 
-                <!-- Item 4: Escolher Idioma (Desabilitado) -->
-                <div class="p-4 flex items-center justify-between gap-4 opacity-60 cursor-not-allowed">
+                <!-- Item 4: Modo Claro / Escuro -->
+                <div class="p-4 flex items-center justify-between gap-4">
                   <div class="flex items-center gap-3 min-w-0">
-                    <div class="p-2 rounded-lg bg-white/5 text-textSecondary">
-                      <GlobeIcon class="w-4 h-4" />
+                    <div class="p-2 rounded-lg bg-accent/10 text-accent">
+                      <SunIcon v-if="themeMode === 'light'" class="w-4 h-4" />
+                      <MoonIcon v-else class="w-4 h-4" />
                     </div>
                     <div class="min-w-0">
                       <div class="font-interface text-sm text-textPrimary font-medium">
-                        Idioma do Sistema
+                        Tema da Interface
                       </div>
                       <div class="font-interface text-xs text-textSecondary">
-                        Português (Brasil)
+                        {{ themeMode === 'dark' ? 'Modo Escuro (Editorial)' : 'Modo Claro (Suave)' }}
                       </div>
                     </div>
                   </div>
 
-                  <span class="px-2 py-0.5 text-[10px] font-technical font-semibold bg-white/5 text-textSecondary border border-white/10 rounded shrink-0">
-                    Desabilitado
-                  </span>
+                  <div class="flex items-center p-0.5 rounded-xl bg-white/5 border border-divider shrink-0">
+                    <button
+                      type="button"
+                      @click="setThemeMode('dark')"
+                      class="px-2.5 py-1 rounded-lg font-interface text-xs transition-all"
+                      :class="themeMode === 'dark' ? 'bg-accent text-white shadow-sm' : 'text-textSecondary hover:text-textPrimary'"
+                    >
+                      Escuro
+                    </button>
+                    <button
+                      type="button"
+                      @click="setThemeMode('light')"
+                      class="px-2.5 py-1 rounded-lg font-interface text-xs transition-all"
+                      :class="themeMode === 'light' ? 'bg-accent text-white shadow-sm' : 'text-textSecondary hover:text-textPrimary'"
+                    >
+                      Claro
+                    </button>
+                  </div>
                 </div>
 
-                <!-- Item 5: Animação ao Virar as Páginas -->
+                <!-- Item 5: Grafo na Tela Inicial (Desktop) -->
+                <div class="p-4 flex items-center justify-between gap-4">
+                  <div class="flex items-center gap-3 min-w-0">
+                    <div class="p-2 rounded-lg bg-accent/10 text-accent">
+                      <NetworkIcon class="w-4 h-4" />
+                    </div>
+                    <div class="min-w-0">
+                      <div class="font-interface text-sm text-textPrimary font-medium">
+                        Grafo na Tela Inicial
+                      </div>
+                      <div class="font-interface text-xs text-textSecondary">
+                        Iniciar com grafo de conexões aberto no desktop
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    @click="desktopHomeGraphOpen = !desktopHomeGraphOpen"
+                    role="switch"
+                    :aria-checked="desktopHomeGraphOpen"
+                    class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-accent/50"
+                    :class="desktopHomeGraphOpen ? 'bg-accent' : 'bg-white/10'"
+                    title="Alternar início com grafo na tela inicial"
+                  >
+                    <span
+                      class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                      :class="desktopHomeGraphOpen ? 'translate-x-5' : 'translate-x-0'"
+                    />
+                  </button>
+                </div>
+
+                <!-- Item 6: Grafo no Leitor Desktop -->
+                <div class="p-4 flex items-center justify-between gap-4">
+                  <div class="flex items-center gap-3 min-w-0">
+                    <div class="p-2 rounded-lg bg-accent/10 text-accent">
+                      <BookOpenIcon class="w-4 h-4" />
+                    </div>
+                    <div class="min-w-0">
+                      <div class="font-interface text-sm text-textPrimary font-medium">
+                        Grafo no Leitor de Livros
+                      </div>
+                      <div class="font-interface text-xs text-textSecondary">
+                        Abrir livros com o painel de grafo expandido no desktop
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    @click="desktopReaderGraphOpen = !desktopReaderGraphOpen"
+                    role="switch"
+                    :aria-checked="desktopReaderGraphOpen"
+                    class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-accent/50"
+                    :class="desktopReaderGraphOpen ? 'bg-accent' : 'bg-white/10'"
+                    title="Alternar início com grafo no leitor desktop"
+                  >
+                    <span
+                      class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                      :class="desktopReaderGraphOpen ? 'translate-x-5' : 'translate-x-0'"
+                    />
+                  </button>
+                </div>
+
+                <!-- Item 7: Animação ao Virar as Páginas -->
                 <div class="p-4 flex items-center justify-between gap-4">
                   <div class="flex items-center gap-3 min-w-0">
                     <div class="p-2 rounded-lg bg-accent/10 text-accent">
@@ -197,7 +277,7 @@
                   </button>
                 </div>
 
-                <!-- Item 6: Tamanho da Fonte (EPUB) -->
+                <!-- Item 8: Tamanho da Fonte (EPUB) -->
                 <div class="p-4 flex items-center justify-between gap-4">
                   <div class="flex items-center gap-3 min-w-0">
                     <div class="p-2 rounded-lg bg-accent/10 text-accent">
@@ -275,13 +355,25 @@ import {
   BookOpenIcon,
   LogInIcon,
   TypeIcon,
+  SunIcon,
+  MoonIcon,
+  NetworkIcon,
 } from 'lucide-vue-next'
 import { useSettingsModal } from '~/composables/useSettingsModal'
 import { useSettings } from '~/composables/useSettings'
 import { useAuth } from '~/composables/useAuth'
 
 const modal = useSettingsModal()
-const { pageAnimationEnabled, epubFontSize, setEpubFontSize, loadFromServer } = useSettings()
+const {
+  pageAnimationEnabled,
+  epubFontSize,
+  setEpubFontSize,
+  themeMode,
+  setThemeMode,
+  desktopHomeGraphOpen,
+  desktopReaderGraphOpen,
+  loadFromServer,
+} = useSettings()
 const auth = useAuth()
 
 watch(

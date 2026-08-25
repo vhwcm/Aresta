@@ -18,20 +18,55 @@ interface ReaderState {
 }
 
 export const useReaderStore = defineStore('reader', {
-  state: (): ReaderState => ({
-    document: null,
-    bookId: null,
-    currentPage: 1,
-    isLoading: false,
-    error: null,
-    fileName: null,
-    bookmarks: [],
-    isGraphOpen: true,
-    isMobileGraphOpen: false,
-    isTwoPageMode: false,
-    fontSize: 18,
-    fontFamily: "'Newsreader', Georgia, serif",
-  }),
+  state: (): ReaderState => {
+    let defaultGraphOpen = true
+    let defaultFontSize = 18
+    let defaultFontFamily = "'Newsreader', Georgia, serif"
+
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('aresta_settings')
+        if (saved) {
+          const parsed = JSON.parse(saved)
+          if (typeof parsed.desktopReaderGraphOpen === 'boolean') {
+            defaultGraphOpen = parsed.desktopReaderGraphOpen
+          }
+          if (typeof parsed.epubFontSize === 'number') {
+            defaultFontSize = Math.max(12, Math.min(36, Math.round(parsed.epubFontSize)))
+          }
+          if (parsed.epubFontFamily) {
+            const fontMap: Record<string, string> = {
+              newsreader: "'Newsreader', Georgia, serif",
+              literata: "'Literata', Georgia, serif",
+              lora: "'Lora', Georgia, serif",
+              merriweather: "'Merriweather', Georgia, serif",
+              inter: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+            }
+            if (fontMap[parsed.epubFontFamily]) {
+              defaultFontFamily = fontMap[parsed.epubFontFamily]!
+            }
+          }
+        }
+      } catch {
+        // ignorar falha de parse
+      }
+    }
+
+    return {
+      document: null,
+      bookId: null,
+      currentPage: 1,
+      isLoading: false,
+      error: null,
+      fileName: null,
+      bookmarks: [],
+      isGraphOpen: defaultGraphOpen,
+      isMobileGraphOpen: false,
+      isTwoPageMode: false,
+      fontSize: defaultFontSize,
+      fontFamily: defaultFontFamily,
+    }
+  },
 
   getters: {
     totalPages: (state): number => state.document?.totalPages ?? 0,

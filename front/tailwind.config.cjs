@@ -11,12 +11,12 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        bgApp: '#0A0A0B',
-        bgPanel: '#121315',
-        textPrimary: '#F2F2F2',
-        textSecondary: '#7A7D84',
-        accent: '#E57B55',
-        divider: 'rgba(255, 255, 255, 0.06)',
+        bgApp: 'var(--bg-app, #0A0A0B)',
+        bgPanel: 'var(--bg-panel, #121315)',
+        textPrimary: 'var(--text-primary, #F2F2F2)',
+        textSecondary: 'var(--text-secondary, #7A7D84)',
+        accent: 'var(--accent, #E57B55)',
+        divider: 'var(--divider, rgba(255, 255, 255, 0.06))',
       },
       fontFamily: {
         interface: ['Inter', 'sans-serif'],
