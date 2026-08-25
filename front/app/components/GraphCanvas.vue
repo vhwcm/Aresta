@@ -52,26 +52,6 @@
       </button>
     </div>
 
-    <!-- Toolbar Flutuante de Zoom & Física no Canto Inferior -->
-    <div
-      class="absolute z-10 flex items-center gap-1.5 bg-bgPanel/80 backdrop-blur-md border border-divider rounded-2xl shadow-xl"
-      :class="isCompact ? 'bottom-3 left-3 p-1.5 scale-90 origin-bottom-left' : 'bottom-6 left-6 p-2'"
-    >
-      <button @click="zoomIn" class="p-1.5 rounded-xl text-textSecondary hover:text-white hover:bg-white/10 transition-all" title="Aumentar Zoom">
-        <ZoomInIcon class="w-3.5 h-3.5" />
-      </button>
-      <button @click="zoomOut" class="p-1.5 rounded-xl text-textSecondary hover:text-white hover:bg-white/10 transition-all" title="Diminuir Zoom">
-        <ZoomOutIcon class="w-3.5 h-3.5" />
-      </button>
-      <button @click="resetZoom" class="p-1.5 rounded-xl text-textSecondary hover:text-white hover:bg-white/10 transition-all" title="Centralizar Grafo">
-        <MaximizeIcon class="w-3.5 h-3.5" />
-      </button>
-      <div class="h-3 w-px bg-divider mx-0.5"></div>
-      <button @click="togglePhysics" class="p-1.5 rounded-xl transition-all" :class="isPhysicsPaused ? 'text-rose-400 bg-rose-500/10' : 'text-emerald-400 hover:bg-white/10'" :title="isPhysicsPaused ? 'Reativar Física' : 'Pausar Física'">
-        <PlayIcon v-if="isPhysicsPaused" class="w-3.5 h-3.5" />
-        <PauseIcon v-else class="w-3.5 h-3.5" />
-      </button>
-    </div>
 
     <!-- Indicador de Estatísticas de Nós -->
     <div
@@ -93,7 +73,7 @@
 import { ref, onMounted, watch, onBeforeUnmount } from 'vue'
 import * as d3 from 'd3'
 import type { GraphNode, GraphEdge } from '~/interfaces/graph'
-import { PlusIcon, SearchIcon, LinkIcon, ZoomInIcon, ZoomOutIcon, MaximizeIcon, PlayIcon, PauseIcon } from 'lucide-vue-next'
+import { PlusIcon, SearchIcon, LinkIcon } from 'lucide-vue-next'
 
 const props = defineProps<{
   nodes: GraphNode[]
@@ -113,7 +93,6 @@ const svgRef = ref<SVGSVGElement | null>(null)
 const gRef = ref<SVGGElement | null>(null)
 
 const searchQuery = ref('')
-const isPhysicsPaused = ref(false)
 
 let simulation: d3.Simulation<any, any> | null = null
 let zoomBehavior: d3.ZoomBehavior<SVGSVGElement, unknown> | null = null
@@ -298,31 +277,6 @@ const initGraph = () => {
   })
 }
 
-// Funções de zoom
-const zoomIn = () => {
-  if (!svgRef.value || !zoomBehavior) return
-  d3.select(svgRef.value).transition().duration(300).call(zoomBehavior.scaleBy as any, 1.3)
-}
-
-const zoomOut = () => {
-  if (!svgRef.value || !zoomBehavior) return
-  d3.select(svgRef.value).transition().duration(300).call(zoomBehavior.scaleBy as any, 0.7)
-}
-
-const resetZoom = () => {
-  if (!svgRef.value || !zoomBehavior) return
-  d3.select(svgRef.value).transition().duration(500).call(zoomBehavior.transform as any, d3.zoomIdentity)
-}
-
-const togglePhysics = () => {
-  if (!simulation) return
-  isPhysicsPaused.value = !isPhysicsPaused.value
-  if (isPhysicsPaused.value) {
-    simulation.stop()
-  } else {
-    simulation.alpha(0.3).restart()
-  }
-}
 
 let resizeObserver: ResizeObserver | null = null
 
