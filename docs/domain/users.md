@@ -34,11 +34,16 @@ model User {
 }
 
 model UserSettings {
-  user_id                Int      @id
-  page_animation_enabled Boolean  @default(true)
-  language               String   @default("pt-BR")
-  updated_at             DateTime @default(now()) @updatedAt
-  user                   User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id                   Int      @id
+  page_animation_enabled    Boolean  @default(true)
+  language                  String   @default("pt-BR")
+  epub_font_size            Int      @default(18)
+  epub_font_family          String   @default("newsreader")
+  theme_mode                String   @default("dark")
+  desktop_home_graph_open   Boolean  @default(true)
+  desktop_reader_graph_open Boolean  @default(true)
+  updated_at                DateTime @default(now()) @updatedAt
+  user                      User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@map("user_settings")
 }
@@ -55,8 +60,11 @@ model UserSettings {
    - `USER`: Acesso à estante pessoal, anotações, mapas mentais e configurações próprias.
    - `ADMIN`: Acesso à gestão de usuários, catálogo global e configurações do sistema.
 3. **Preferências do Usuário (`UserSettings`)**:
-   - Controle de animações de transição de página (acessibilidade / preferência de performance).
-   - Idioma da interface (padrão `pt-BR`).
+   - **Grafo Desktop (Tela Inicial)**: `desktop_home_graph_open` define se a home desktop inicia com painel de grafo aberto (`true`) ou retraído (`false`).
+   - **Tema Visual da Interface**: `theme_mode` (`dark` | `light`) alterna instantaneamente entre Modo Escuro editorial e Modo Claro suave.
+   - **Grafo no Leitor Desktop**: `desktop_reader_graph_open` define se ao abrir livros no desktop o leitor inicia com visualização dividida com o grafo (`true`) ou 100% leitura (`false`).
+   - **Tipografia Padrão do EPUB**: `epub_font_size` (12px a 36px) e `epub_font_family` (*newsreader*, *literata*, *lora*, *merriweather*, *inter*) definem a renderização inicial dos e-books.
+   - Controle de animações de transição de página (`page_animation_enabled`) e idioma (`language`).
 
 ---
 

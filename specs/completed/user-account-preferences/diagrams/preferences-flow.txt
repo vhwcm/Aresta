@@ -1,0 +1,46 @@
+================================================================================
+                    FLUXO DE PREFERÊNCIAS E CONFIGURAÇÕES
+================================================================================
+
+ [ Usuário em /conta ]
+         │
+         ├──► Alterna Toggle Grafo Home Desktop (true / false)
+         ├──► Alterna Tema Claro / Escuro (light / dark)
+         ├──► Alterna Toggle Grafo Leitor Desktop (true / false)
+         ├──► Ajusta Tamanho da Fonte EPUB (12px a 36px)
+         └──► Seleciona Família de Fonte Padrão (Newsreader, Literata, etc.)
+         │
+         ▼
+ ┌────────────────────────────────────────────────────────┐
+ │              Composable useSettings()                  │
+ │                                                        │
+ │ 1. Atualiza State Reativo Vue                          │
+ │ 2. Aplica imediatamente no DOM:                        │
+ │    - document.documentElement[data-theme = "light"]    │
+ │    - Atualiza variáveis CSS (--bg-app, --text-primary) │
+ │ 3. Salva em localStorage ('aresta_settings')           │
+ └───────────────────────┬────────────────────────────────┘
+                         │
+                         ▼ (Assíncrono via $fetch)
+ ┌────────────────────────────────────────────────────────┐
+ │           PUT /api/user-settings (Node.js API)         │
+ │                                                        │
+ │ 1. Autenticação Bearer JWT                             │
+ │ 2. Validação via Zod (updateUserSettingsSchema)        │
+ │ 3. Upsert no Prisma DB:                                │
+ │    - desktop_home_graph_open                           │
+ │    - desktop_reader_graph_open                         │
+ │    - theme_mode                                        │
+ │    - epub_font_size                                    │
+ │    - epub_font_family                                  │
+ └────────────────────────────────────────────────────────┘
+                         │
+                         ▼
+ ┌────────────────────────────────────────────────────────┐
+ │               Consumidores no Frontend                 │
+ │                                                        │
+ │ • index.vue     ──► Inicializa Grafo Desktop aberto    │
+ │ • readerStore   ──► Inicializa isGraphOpen & Tipografia│
+ │ • Viewer.vue    ──► Aplica tamanho e fonte do EPUB     │
+ │ • Toda a App    ──► Reage às variáveis de Dark/Light   │
+ └────────────────────────────────────────────────────────┘
