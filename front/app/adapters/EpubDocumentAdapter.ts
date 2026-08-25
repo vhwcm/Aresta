@@ -197,14 +197,14 @@ export class EpubDocumentAdapter implements IBookDocument {
 
     try {
       const doc = await section.createDocument()
-      const serialized = new XMLSerializer().serializeToString(doc.body ?? doc)
+      const bodyContent = doc.body ? doc.body.innerHTML : ''
 
       const svgContent = `
         <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
           <foreignObject width="100%" height="100%">
             <div xmlns="http://www.w3.org/1999/xhtml"
-              style="font-family:Georgia,serif;font-size:14px;padding:32px;margin:0;box-sizing:border-box;color:#1a1a1a;line-height:1.7;word-wrap:break-word;">
-              ${serialized}
+              style="font-family:Georgia,serif;font-size:14px;padding:32px;margin:0;box-sizing:border-box;color:#1a1a1a;line-height:1.7;word-wrap:break-word;width:100%;height:100%;">
+              ${bodyContent}
             </div>
           </foreignObject>
         </svg>

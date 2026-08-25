@@ -334,12 +334,14 @@ defineExpose({
   color: transparent !important;
   user-select: text !important;
   -webkit-user-select: text !important;
+  line-height: 1.7 !important;
 }
 
 .page-text-layer :deep(.epub-text-layer-content *) {
   color: transparent !important;
   background: transparent !important;
   border-color: transparent !important;
+  line-height: 1.7 !important;
 }
 
 .page-curl-loading {
