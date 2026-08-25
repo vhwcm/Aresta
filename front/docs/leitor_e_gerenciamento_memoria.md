@@ -1,6 +1,6 @@
 # Arquitetura do Leitor & Gerenciamento de Memória
 
-Esta documentação detalha o funcionamento interno do leitor digital do **Aresta**, explicando como arquivos nos formatos **PDF** e **EPUB** são carregados, processados e gerenciados em memória RAM e GPU durante a leitura.
+Esta documentação detalha o funcionamento interno do leitor digital do **Aresta**, explicando como arquivos nos formatos **PDF** e **EPUB** são carregados, processados e gerenciados em memória RAM e GPU durante a leitura, além de apresentar a ferramenta de **Profiling e Diagnóstico de Performance**.
 
 ---
 
@@ -96,9 +96,6 @@ Quando uma página sai da janela de leitura ativa, a função `disposeRaster()` 
 * `texture.dispose()` e `backTexture.dispose()` desalocam as texturas da GPU.
 * O tamanho do `<canvas>` auxiliar é reduzido para 1x1 pixel (`canvas.width = 1; canvas.height = 1`) para que o Garbage Collector do JavaScript libere a memória imediatamente.
 
-### 4.3. Camada de Texto Invisível (`TextLayer`)
-Para permitir seleção de texto com o mouse, anotações e acessibilidade sem onerar a GPU, uma camada HTML invisível com texto posicionado geometricamente sobre o Canvas é montada apenas para a página ativa.
-
 ---
 
 ## 5. Matriz de Consumo de Recursos
@@ -109,3 +106,48 @@ Para permitir seleção de texto com o mouse, anotações e acessibilidade sem o
 | **Estrutura/DOM do Livro** | RAM (Heap) | Durante a sessão | Baixo (~1MB a 5MB) |
 | **Texturas WebGL (Three.js)** | VRAM (GPU) | Máx. 8 páginas simultâneas | Constante (~15MB a 40MB na GPU) |
 | **Páginas Não Visualizadas** | N/A (Descarregadas) | Não alocadas até serem acessadas | 0 MB adicionais |
+
+---
+
+## 6. Ferramenta de Profiling e Diagnóstico de Gargalos (`readerProfiler`)
+
+Para descobrir com precisão onde está o tempo gasto ao abrir qualquer livro, foi implementado o `readerProfiler` ([`front/app/utils/readerProfiler.ts`](file:///home/bcc/vhwcm24/Aresta/front/app/utils/readerProfiler.ts)).
+
+### 6.1. O que é medido automaticamente:
+1. **1. Buscar Metadados da API** (`network`): Tempo da requisição HTTP `/api/books/:id`.
+2. **2. Download do Arquivo** (`network`): Tempo de transmissão HTTP do binário do livro (`/api/books/:id/file`).
+3. **3. Conversão para ArrayBuffer** (`io`): Tempo de transferência dos bytes para o buffer em memória.
+4. **4. Parsing do Documento** (`parse`):
+   - Importações dinâmicas (`pdfjs-dist`, `fflate`, `foliate-js`).
+   - Descompactação ZIP e parsing de estrutura.
+   - Extração de metadados e contagem de páginas.
+5. **5. Atualização da Store** (`store`): Tempo de reatividade do Pinia e inicialização de marcadores.
+6. **6. Renderização da 1ª Página** (`render` / `webgl`):
+   - Rasterização Canvas 2D da página 1.
+   - Geração de texturas WebGL Three.js e envio para a GPU.
+   - Exibição do primeiro frame interativo.
+
+### 6.2. Como inspecionar no Navegador:
+* Ao abrir um livro em ambiente de desenvolvimento (ou com `localStorage.setItem('aresta_debug_profiler', 'true')`), o console do navegador exibirá automaticamente um relatório colapsado com tabela detalhada:
+  ```text
+  ⚡ [Aresta Reader Profiler] Abrir Livro (ID: 3) — Total: 840ms
+  Tempo Total até a 1ª Página: 840ms
+  ┌─────────┬──────────────────────────────────────────┬───────────┬──────────────┬────────────┐
+  │ (index) │ Etapa / Função                           │ Categoria │ Duração (ms) │ % do Total │
+  ├─────────┼──────────────────────────────────────────┼───────────┼──────────────┼────────────┤
+  │ 0       │ 1. Buscar Metadados da API               │ NETWORK   │ 15ms         │ 1.8%       │
+  │ 1       │ 2. Download do Arquivo (HTTP Fetch)      │ NETWORK   │ 420ms        │ 50.0%      │
+  │ 2       │ 3. Conversão para ArrayBuffer            │ IO        │ 25ms         │ 3.0%       │
+  │ 3       │ 4. Parsing e Inicialização do Documento  │ PARSE     │ 210ms        │ 25.0%      │
+  │ 4       │ 6. Renderização da 1ª Página (Canvas)    │ RENDER    │ 110ms        │ 13.1%      │
+  │ 5       │ 6.3 Criar Texturas Three.js              │ WEBGL     │ 60ms         │ 7.1%       │
+  └─────────┴──────────────────────────────────────────┴───────────┴──────────────┴────────────┘
+  ⚠️ Gargalos Identificados:
+    1. [NETWORK] 2. Download do Arquivo: 420ms (50% do tempo)
+       💡 Sugestão: Download demorou 420ms. Considere pré-carregamento (prefetch), compressão brotli/gzip ou cache HTTP/IndexedDB.
+  ```
+
+* Você também pode inspecionar o último relatório via objeto global:
+  ```javascript
+  window.__ARESTA_READER_PROFILE__
+  ```

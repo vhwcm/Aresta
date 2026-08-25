@@ -1,5 +1,5 @@
-// @ts-nocheck
 import type { IBookDocument, BookMetadata, PageData } from '~/interfaces/reader/IBookDocument'
+import { readerProfiler } from '~/utils/readerProfiler'
 
 export class PdfDocumentAdapter implements IBookDocument {
   readonly type = 'pdf' as const
@@ -21,7 +21,9 @@ export class PdfDocumentAdapter implements IBookDocument {
   }
 
   async load(source: File | ArrayBuffer, fileName?: string): Promise<void> {
-    const pdfjsLib = await import('pdfjs-dist')
+    const pdfjsLib = await readerProfiler.measureAsync('4.1. Importação Dinâmica do PDF.js', async () => {
+      return await import('pdfjs-dist')
+    }, 'parse')
 
     if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
       pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
@@ -44,18 +46,22 @@ export class PdfDocumentAdapter implements IBookDocument {
 
     const typedArray = new Uint8Array(arrayBuffer)
 
-    const loadingTask = pdfjsLib.getDocument({ data: typedArray })
-    this._pdfDocument = await loadingTask.promise
+    await readerProfiler.measureAsync('4.2. PDF.js getDocument & Parse Estrutura', async () => {
+      const loadingTask = pdfjsLib.getDocument({ data: typedArray })
+      this._pdfDocument = await loadingTask.promise
+    }, 'parse', { sizeBytes: typedArray.byteLength })
 
     const pdfDoc = this._pdfDocument as import('pdfjs-dist').PDFDocumentProxy
     this._totalPages = pdfDoc.numPages
 
-    const metadataResult = await pdfDoc.getMetadata()
-    const info = (metadataResult.info || {}) as Record<string, string>
-    this._metadata = {
-      title: info['Title'] || defaultTitle,
-      author: info['Author'] ?? undefined,
-    }
+    await readerProfiler.measureAsync('4.3. PDF.js Obter Metadados', async () => {
+      const metadataResult = await pdfDoc.getMetadata()
+      const info = (metadataResult.info || {}) as Record<string, string>
+      this._metadata = {
+        title: info['Title'] || defaultTitle,
+        author: info['Author'] ?? undefined,
+      }
+    }, 'parse', { pages: this._totalPages })
 
     this._isLoaded = true
   }

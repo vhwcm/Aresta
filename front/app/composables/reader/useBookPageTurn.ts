@@ -5,6 +5,7 @@ import { useReaderStore } from '~/stores/readerStore'
 import { useSettings } from '~/composables/useSettings'
 import type { IBookDocument, PageData } from '~/interfaces/reader/IBookDocument'
 import { logWarn } from '~/utils/logger'
+import { readerProfiler } from '~/utils/readerProfiler'
 
 export type PageTurnDirection = 'next' | 'previous'
 
@@ -167,12 +168,17 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
     }
 
     async function createRaster(pageNumber: number, bookDocument: IBookDocument): Promise<PageRaster> {
-        const page = await bookDocument.getPage(pageNumber)
+        const page = await readerProfiler.measureAsync(`6.1. Obter Dados da Página ${pageNumber}`, async () => {
+            return await bookDocument.getPage(pageNumber)
+        }, 'render')
+
         const source = createRasterCanvas(page)
         const sourceContext = source.getContext('2d')
         if (!sourceContext) throw new Error('Não foi possível renderizar a página.')
 
-        await page.render(sourceContext)
+        await readerProfiler.measureAsync(`6.2. Renderizar Canvas 2D da Página ${pageNumber}`, async () => {
+            await page.render(sourceContext)
+        }, 'render')
 
         const scale = Math.min(1, MAX_TEXTURE_EDGE / Math.max(source.width, source.height))
         const canvas = document.createElement('canvas')
@@ -182,12 +188,15 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
         if (!context) throw new Error('Não foi possível preparar a textura da página.')
         context.drawImage(source, 0, 0, canvas.width, canvas.height)
 
-        const texture = new THREE.CanvasTexture(canvas)
-        configureTexture(texture)
-        const backTexture = texture.clone()
-        backTexture.repeat.x = -1
-        backTexture.offset.x = 1
-        configureTexture(backTexture)
+        const { texture, backTexture } = readerProfiler.measureSync(`6.3. Criar Texturas Three.js da Página ${pageNumber}`, () => {
+            const tex = new THREE.CanvasTexture(canvas)
+            configureTexture(tex)
+            const backTex = tex.clone()
+            backTex.repeat.x = -1
+            backTex.offset.x = 1
+            configureTexture(backTex)
+            return { texture: tex, backTexture: backTex }
+        }, 'webgl')
 
         return {
             pageNumber,
@@ -1181,17 +1190,20 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
                 renderedPage = leftPageNum
                 setStaticSpread(leftRaster, rightRaster)
                 prefetchNeighbors(leftPageNum)
+                readerProfiler.endSession()
             } else {
                 const raster = await getRaster(pageNumber)
                 if (activeDocument !== store.document) return
                 renderedPage = pageNumber
                 setStaticSpread(raster)
                 prefetchNeighbors(pageNumber)
+                readerProfiler.endSession()
             }
         } catch (error) {
             const message = error instanceof Error ? error.message : String(error)
             errorMessage.value = `Não foi possível renderizar a página: ${message}`
             store.setError(errorMessage.value)
+            readerProfiler.endSession()
         } finally {
             isPreparing.value = false
         }

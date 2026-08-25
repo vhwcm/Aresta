@@ -1,6 +1,6 @@
-// @ts-nocheck
 import type { IBookDocument, BookMetadata, PageData } from '~/interfaces/reader/IBookDocument'
 import { logWarn } from '~/utils/logger'
+import { readerProfiler } from '~/utils/readerProfiler'
 
 interface FoliateSection {
   id: string
@@ -20,10 +20,14 @@ interface FoliateEpub {
 }
 
 async function buildEpubLoader(arrayBuffer: ArrayBuffer) {
-  const { unzipSync } = await import('fflate')
+  const { unzipSync } = await readerProfiler.measureAsync('4.1. Importação Dinâmica fflate', async () => {
+    return await import('fflate')
+  }, 'parse')
 
   const zipData = new Uint8Array(arrayBuffer)
-  const unzipped = unzipSync(zipData)
+  const unzipped = await readerProfiler.measureAsync('4.2. Descompactação EPUB (fflate.unzipSync)', async () => {
+    return unzipSync(zipData)
+  }, 'parse', { entriesCount: Object.keys(zipData).length })
 
   const decoder = new TextDecoder()
 
@@ -71,7 +75,9 @@ export class EpubDocumentAdapter implements IBookDocument {
   }
 
   async load(source: File | ArrayBuffer, fileName?: string): Promise<void> {
-    const { EPUB } = await import('foliate-js/epub.js')
+    const { EPUB } = await readerProfiler.measureAsync('4.3. Importação foliate-js/epub.js', async () => {
+      return await import('foliate-js/epub.js')
+    }, 'parse')
 
     let arrayBuffer: ArrayBuffer
     let defaultTitle = fileName || 'document.epub'
@@ -88,7 +94,9 @@ export class EpubDocumentAdapter implements IBookDocument {
     const loader = await buildEpubLoader(arrayBuffer)
 
     const epub = new EPUB(loader) as FoliateEpub
-    await epub.init()
+    await readerProfiler.measureAsync('4.4. foliate-js epub.init()', async () => {
+      await epub.init()
+    }, 'parse')
     this._epub = epub
 
     const meta = epub.metadata ?? {}
