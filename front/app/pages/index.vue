@@ -66,42 +66,7 @@
 
       <div class="h-px bg-divider/60 w-full"></div>
 
-      <!-- BLOCO 2: ANOTAÇÃO DO ÚLTIMO LIVRO (Clean, sem caixa, 1 anotação) -->
-      <section class="flex flex-col gap-4">
-        <div class="flex items-center justify-between">
-          <div class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary flex items-center gap-2">
-            <FileTextIcon class="w-3.5 h-3.5 text-accent" />
-            Anotações & Destaques
-          </div>
-          <NuxtLink to="/revisao" class="font-technical text-xs text-accent hover:underline flex items-center gap-1">
-            Ver todas →
-          </NuxtLink>
-        </div>
-
-        <div
-          v-if="activeBookNote"
-          class="flex flex-col gap-2 py-2"
-        >
-          <div class="flex items-center justify-between text-xs">
-            <span class="font-technical text-[10px] uppercase font-semibold tracking-widest text-accent">
-              {{ activeBookNote.chapter }} · Pág. {{ activeBookNote.page }}
-            </span>
-            <span class="font-technical text-[10px] text-textSecondary">{{ activeBookNote.date }}</span>
-          </div>
-
-          <blockquote class="border-l-2 border-accent pl-3 text-xs sm:text-sm font-interface italic text-textPrimary/90 leading-relaxed">
-            "{{ activeBookNote.quote }}"
-          </blockquote>
-
-          <p class="font-interface text-xs text-textSecondary leading-relaxed pl-3">
-            {{ activeBookNote.insight }}
-          </p>
-        </div>
-      </section>
-
-      <div class="h-px bg-divider/60 w-full"></div>
-
-      <!-- BLOCO 3: FLASHCARDS DO DIA (Clean, sem caixa, com botão direto) -->
+      <!-- BLOCO 2: FLASHCARDS DO DIA (Clean, sem caixa, com botão direto) -->
       <section class="flex flex-col gap-4">
         <div class="flex items-center justify-between">
           <div class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary flex items-center gap-2">
@@ -136,6 +101,44 @@
           >
             <span>Fazer Flashcard</span>
           </NuxtLink>
+        </div>
+      </section>
+
+      <div class="h-px bg-divider/60 w-full"></div>
+
+      <!-- BLOCO 3: ANOTAÇÕES DO ÚLTIMO LIVRO (Clean, sem caixa, 3 anotações) -->
+      <section class="flex flex-col gap-4">
+        <div class="flex items-center justify-between">
+          <div class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary flex items-center gap-2">
+            <FileTextIcon class="w-3.5 h-3.5 text-accent" />
+            Anotações & Destaques
+          </div>
+          <NuxtLink to="/revisao" class="font-technical text-xs text-accent hover:underline flex items-center gap-1">
+            Ver todas →
+          </NuxtLink>
+        </div>
+
+        <div class="flex flex-col divide-y divide-divider/40">
+          <div
+            v-for="note in activeBookNotes"
+            :key="note.id"
+            class="flex flex-col gap-2 py-3 first:pt-0 last:pb-0"
+          >
+            <div class="flex items-center justify-between text-xs">
+              <span class="font-technical text-[10px] uppercase font-semibold tracking-widest text-accent">
+                {{ note.chapter }} · Pág. {{ note.page }}
+              </span>
+              <span class="font-technical text-[10px] text-textSecondary">{{ note.date }}</span>
+            </div>
+
+            <blockquote class="border-l-2 border-accent pl-3 text-xs sm:text-sm font-interface italic text-textPrimary/90 leading-relaxed">
+              "{{ note.quote }}"
+            </blockquote>
+
+            <p class="font-interface text-xs text-textSecondary leading-relaxed pl-3">
+              {{ note.insight }}
+            </p>
+          </div>
         </div>
       </section>
     </div>
@@ -530,16 +533,34 @@ const activeBookReaderLink = computed(() => {
   return '/reader'
 })
 
-// Anotação em destaque do último livro que está sendo lido
-const activeBookNote = computed(() => {
-  return {
-    id: 'n1',
-    chapter: 'Capítulo III',
-    page: 42,
-    date: 'Hoje',
-    quote: 'A razão é a perfeita saúde da alma; a loucura é a alteração dessa saúde.',
-    insight: 'Simão Bacamarte estabelece uma fronteira arbitrária entre sanidade e desvio mental, ilustrando o perigo do cientificismo cego.'
-  }
+// 3 Anotações em destaque do último livro que está sendo lido
+const activeBookNotes = computed(() => {
+  return [
+    {
+      id: 'n1',
+      chapter: 'Capítulo III',
+      page: 42,
+      date: 'Hoje',
+      quote: 'A razão é a perfeita saúde da alma; a loucura é a alteração dessa saúde.',
+      insight: 'Simão Bacamarte estabelece uma fronteira arbitrária entre sanidade e desvio mental, ilustrando o perigo do cientificismo cego.'
+    },
+    {
+      id: 'n2',
+      chapter: 'Capítulo V',
+      page: 68,
+      date: 'Ontem',
+      quote: 'A ciência é a minha esposa única, e a Casa Verde o meu laboratório.',
+      insight: 'O isolamento epistemológico do médico e a obsessão pela classificação universal dos desvios humanos.'
+    },
+    {
+      id: 'n3',
+      chapter: 'Capítulo VII',
+      page: 95,
+      date: 'Há 2 dias',
+      quote: 'A loucura, objeto dos meus estudos, era até agora uma ilha perdida no oceano da razão; começo a suspeitar que é um continente.',
+      insight: 'A inversão irônica da premissa: quando a norma passa a ser a exceção e toda a vila é diagnosticada como insana.'
+    }
+  ]
 })
 
 // Primeiro Flashcard do Dia

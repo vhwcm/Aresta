@@ -65,7 +65,7 @@ describe('Index Page (Landing Page & Home)', () => {
     expect(wrapper.text()).toContain('Criar Conta e Começar')
   })
 
-  it('renders active reader home dashboard with single note and Ebbinghaus info link when logged in', () => {
+  it('renders active reader home dashboard with flashcard above 3 notes and Ebbinghaus info link when logged in', () => {
     vi.spyOn(authComposable, 'useAuth').mockReturnValue({
       token: ref('valid-jwt-token'),
       user: ref({ id: 1, name: 'viktor', email: 'viktor@aresta.org', role: 'ADMIN', isActive: true }),
@@ -88,11 +88,23 @@ describe('Index Page (Landing Page & Home)', () => {
     expect(wrapper.find('[data-testid="guest-landing"]').exists()).toBe(false)
     expect(wrapper.text()).toContain('O Alienista')
     expect(wrapper.text()).toContain('33%')
-    expect(wrapper.text()).toContain('Anotações & Destaques')
     expect(wrapper.text()).toContain('Flashcards do Dia')
     expect(wrapper.text()).toContain('Por que revisar? (Curva de Ebbinghaus)')
     expect(wrapper.text()).toContain('1º Flashcard de Hoje')
     expect(wrapper.text()).toContain('Fazer Flashcard')
+    expect(wrapper.text()).toContain('Anotações & Destaques')
+
+    // Verifica que 3 anotações são renderizadas
+    expect(wrapper.text()).toContain('A razão é a perfeita saúde da alma')
+    expect(wrapper.text()).toContain('A ciência é a minha esposa única')
+    expect(wrapper.text()).toContain('A loucura, objeto dos meus estudos')
+
+    // Verifica que Flashcards do Dia aparece antes de Anotações & Destaques
+    const text = wrapper.text()
+    const flashcardsIndex = text.indexOf('Flashcards do Dia')
+    const notesIndex = text.indexOf('Anotações & Destaques')
+    expect(flashcardsIndex).toBeLessThan(notesIndex)
+
     expect(wrapper.find('[data-testid="reading-streak"]').exists()).toBe(true)
   })
 })
