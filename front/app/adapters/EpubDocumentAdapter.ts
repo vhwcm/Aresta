@@ -19,6 +19,13 @@ interface FoliateEpub {
   getCover(): Promise<Blob | null>
 }
 
+interface PageMapping {
+  globalPage: number
+  sectionIndex: number
+  pageIndexInSection: number
+  totalPagesInSection: number
+}
+
 async function buildEpubLoader(arrayBuffer: ArrayBuffer) {
   const { unzipSync } = await readerProfiler.measureAsync('4.1. Importação Dinâmica fflate', async () => {
     return await import('fflate')
@@ -53,6 +60,48 @@ async function buildEpubLoader(arrayBuffer: ArrayBuffer) {
   return { loadText, loadBlob, getSize, sha1: undefined }
 }
 
+function calculateSectionPages(doc: Document | null): number {
+  if (!doc || !doc.body) return 1
+  if (typeof document === 'undefined' || !document.createElement) {
+    const textLen = (doc.body.textContent || '').trim().length
+    return Math.max(1, Math.ceil(textLen / 1200))
+  }
+
+  try {
+    const container = document.createElement('div')
+    container.style.position = 'fixed'
+    container.style.visibility = 'hidden'
+    container.style.left = '-99999px'
+    container.style.top = '-99999px'
+    container.style.width = '800px'
+    container.style.height = '1200px'
+    container.style.padding = '48px'
+    container.style.boxSizing = 'border-box'
+    container.style.columnWidth = '704px'
+    container.style.columnGap = '96px'
+    container.style.columnFill = 'auto'
+    container.style.overflow = 'hidden'
+    container.style.fontFamily = 'Georgia, serif'
+    container.style.fontSize = '18px'
+    container.style.lineHeight = '1.7'
+    container.style.wordWrap = 'break-word'
+    container.innerHTML = doc.body.innerHTML
+
+    document.body.appendChild(container)
+    const scrollW = container.scrollWidth
+    document.body.removeChild(container)
+
+    if (scrollW > 800) {
+      return Math.max(1, Math.ceil(scrollW / 800))
+    }
+    const textLen = (doc.body.textContent || '').trim().length
+    return Math.max(1, Math.ceil(textLen / 1200))
+  } catch {
+    const textLen = (doc.body?.textContent || '').trim().length
+    return Math.max(1, Math.ceil(textLen / 1200))
+  }
+}
+
 export class EpubDocumentAdapter implements IBookDocument {
   readonly type = 'epub' as const
   private _epub: FoliateEpub | null = null
@@ -61,6 +110,8 @@ export class EpubDocumentAdapter implements IBookDocument {
   private _isLoaded = false
   private _pageCanvases: Map<number, HTMLCanvasElement> = new Map()
   private _sections: FoliateSection[] = []
+  private _sectionDocs: Map<number, Document> = new Map()
+  private _pageMap: PageMapping[] = []
 
   get metadata(): BookMetadata {
     return this._metadata
@@ -111,6 +162,33 @@ export class EpubDocumentAdapter implements IBookDocument {
       (s): s is FoliateSection => s !== null && s.linear !== false,
     )
     this._totalPages = this._sections.length
+
+    this._pageMap = []
+    this._sectionDocs.clear()
+    let globalPageCounter = 1
+
+    for (let sIdx = 0; sIdx < this._sections.length; sIdx++) {
+      const section = this._sections[sIdx]
+      let doc: Document | null = null
+      try {
+        doc = await section.createDocument()
+        this._sectionDocs.set(sIdx, doc)
+      } catch (err) {
+        logWarn(`[EpubAdapter] Erro ao carregar documento da seção ${sIdx}:`, err)
+      }
+
+      const pagesInSection = calculateSectionPages(doc)
+      for (let pIdx = 0; pIdx < pagesInSection; pIdx++) {
+        this._pageMap.push({
+          globalPage: globalPageCounter++,
+          sectionIndex: sIdx,
+          pageIndexInSection: pIdx,
+          totalPagesInSection: pagesInSection,
+        })
+      }
+    }
+
+    this._totalPages = Math.max(1, this._pageMap.length)
     this._isLoaded = true
   }
 
@@ -121,6 +199,7 @@ export class EpubDocumentAdapter implements IBookDocument {
     if (cached) return this._canvasToPageData(cached)
 
     const canvas = await this._renderSectionToCanvas(pageNumber)
+    const canvas = await this._renderPageToCanvas(pageNumber)
     this._pageCanvases.set(pageNumber, canvas)
     return this._canvasToPageData(canvas)
   }
@@ -128,12 +207,29 @@ export class EpubDocumentAdapter implements IBookDocument {
   async getTextContent(pageNumber: number): Promise<string> {
     if (!this._epub) throw new Error('EPUB não carregado')
     const section = this._sections[pageNumber - 1]
+    const mapping = this._pageMap[pageNumber - 1]
+    if (!mapping) return ''
+
+    const section = this._sections[mapping.sectionIndex]
     if (!section) return ''
 
     try {
       const doc = await section.createDocument()
+      let doc = this._sectionDocs.get(mapping.sectionIndex)
+      if (!doc) {
+        doc = await section.createDocument()
+        this._sectionDocs.set(mapping.sectionIndex, doc)
+      }
       const body = doc.body ?? doc
       return (body.innerText || body.textContent || '').replace(/\s+/g, ' ').trim()
+      const fullText = (body.innerText || body.textContent || '').replace(/\s+/g, ' ').trim()
+      if (mapping.totalPagesInSection <= 1) {
+        return fullText
+      }
+      const charsPerPage = Math.ceil(fullText.length / mapping.totalPagesInSection)
+      const start = mapping.pageIndexInSection * charsPerPage
+      const end = Math.min(fullText.length, start + charsPerPage)
+      return fullText.slice(start, end).trim()
     } catch {
       return ''
     }
@@ -142,14 +238,25 @@ export class EpubDocumentAdapter implements IBookDocument {
   async renderTextLayer(pageNumber: number, container: HTMLElement, targetWidth?: number, targetHeight?: number): Promise<void> {
     if (!this._epub) throw new Error('EPUB não carregado')
     const section = this._sections[pageNumber - 1]
+    const mapping = this._pageMap[pageNumber - 1]
+    if (!mapping) return
+
+    const section = this._sections[mapping.sectionIndex]
     if (!section) return
 
     try {
       const doc = await section.createDocument()
+      let doc = this._sectionDocs.get(mapping.sectionIndex)
+      if (!doc) {
+        doc = await section.createDocument()
+        this._sectionDocs.set(mapping.sectionIndex, doc)
+      }
+
       const baseWidth = 800
       const baseHeight = 1200
       const scaleX = targetWidth && targetWidth > 0 ? targetWidth / baseWidth : 1
       const scaleY = targetHeight && targetHeight > 0 ? targetHeight / baseHeight : 1
+      const colOffset = mapping.pageIndexInSection * baseWidth
 
       container.innerHTML = ''
       const wrapper = document.createElement('div')
@@ -173,14 +280,47 @@ export class EpubDocumentAdapter implements IBookDocument {
       wrapper.style.webkitUserSelect = 'text'
       wrapper.style.pointerEvents = 'auto'
       wrapper.innerHTML = doc.body ? doc.body.innerHTML : ''
+      const viewportWrapper = document.createElement('div')
+      viewportWrapper.className = 'epub-text-layer-viewport'
+      viewportWrapper.style.position = 'absolute'
+      viewportWrapper.style.top = '0'
+      viewportWrapper.style.left = '0'
+      viewportWrapper.style.width = `${baseWidth}px`
+      viewportWrapper.style.height = `${baseHeight}px`
+      viewportWrapper.style.overflow = 'hidden'
+      viewportWrapper.style.transform = `scale(${scaleX}, ${scaleY})`
+      viewportWrapper.style.transformOrigin = 'top left'
+      viewportWrapper.style.pointerEvents = 'auto'
 
       container.appendChild(wrapper)
+      const contentWrapper = document.createElement('div')
+      contentWrapper.className = 'epub-text-layer-content'
+      contentWrapper.style.width = `${baseWidth}px`
+      contentWrapper.style.height = `${baseHeight}px`
+      contentWrapper.style.padding = '48px'
+      contentWrapper.style.boxSizing = 'border-box'
+      contentWrapper.style.columnWidth = '704px'
+      contentWrapper.style.columnGap = '96px'
+      contentWrapper.style.columnFill = 'auto'
+      contentWrapper.style.fontFamily = 'Georgia, serif'
+      contentWrapper.style.fontSize = '18px'
+      contentWrapper.style.lineHeight = '1.7'
+      contentWrapper.style.wordWrap = 'break-word'
+      contentWrapper.style.marginLeft = `-${colOffset}px`
+      contentWrapper.style.color = 'transparent'
+      contentWrapper.style.userSelect = 'text'
+      contentWrapper.style.webkitUserSelect = 'text'
+      contentWrapper.innerHTML = doc.body ? doc.body.innerHTML : ''
+
+      viewportWrapper.appendChild(contentWrapper)
+      container.appendChild(viewportWrapper)
     } catch (err) {
       logWarn('[EpubAdapter] textLayer render error:', err)
     }
   }
 
   private async _renderSectionToCanvas(pageNumber: number): Promise<HTMLCanvasElement> {
+  private async _renderPageToCanvas(pageNumber: number): Promise<HTMLCanvasElement> {
     const baseWidth = 800
     const baseHeight = 1200
     const renderScale = 2.5
@@ -196,20 +336,37 @@ export class EpubDocumentAdapter implements IBookDocument {
     ctx.fillRect(0, 0, width, height)
 
     const section = this._sections[pageNumber - 1]
+    const mapping = this._pageMap[pageNumber - 1]
+    if (!mapping) return canvas
+
+    const section = this._sections[mapping.sectionIndex]
     if (!section) return canvas
 
     try {
       const doc = await section.createDocument()
+      let doc = this._sectionDocs.get(mapping.sectionIndex)
+      if (!doc) {
+        doc = await section.createDocument()
+        this._sectionDocs.set(mapping.sectionIndex, doc)
+      }
       const bodyContent = doc.body ? doc.body.innerHTML : ''
       const fontSize = Math.round(18 * renderScale)
       const padding = Math.round(48 * renderScale)
+      const columnWidth = Math.round(704 * renderScale)
+      const columnGap = Math.round(96 * renderScale)
+      const colOffset = mapping.pageIndexInSection * width
 
       const svgContent = `
         <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
           <foreignObject width="${width}" height="${height}">
+          <foreignObject width="100%" height="100%">
             <div xmlns="http://www.w3.org/1999/xhtml"
               style="font-family:Georgia,serif;font-size:${fontSize}px;padding:${padding}px;margin:0;box-sizing:border-box;color:#1a1a1a;line-height:1.7;word-wrap:break-word;width:100%;height:100%;">
               ${bodyContent}
+              style="width:${width}px;height:${height}px;overflow:hidden;background:#faf9f7;margin:0;padding:0;box-sizing:border-box;">
+              <div style="width:${width}px;height:${height}px;padding:${padding}px;box-sizing:border-box;column-width:${columnWidth}px;column-gap:${columnGap}px;column-fill:auto;font-family:Georgia,serif;font-size:${fontSize}px;color:#1a1a1a;line-height:1.7;word-wrap:break-word;margin-left:-${colOffset}px;">
+                ${bodyContent}
+              </div>
             </div>
           </foreignObject>
         </svg>
@@ -226,6 +383,7 @@ export class EpubDocumentAdapter implements IBookDocument {
         img.onerror = () => {
           URL.revokeObjectURL(url)
           reject(new Error('Falha ao renderizar seção EPUB'))
+          reject(new Error('Falha ao renderizar página EPUB'))
         }
         img.src = url
       })
@@ -258,8 +416,11 @@ export class EpubDocumentAdapter implements IBookDocument {
       canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height)
     })
     this._pageCanvases.clear()
+    this._sectionDocs.clear()
+    this._pageMap = []
     this._epub = null
     this._sections = []
+    this._totalPages = 0
     this._isLoaded = false
   }
 }

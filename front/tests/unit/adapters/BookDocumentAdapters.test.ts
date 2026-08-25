@@ -131,7 +131,7 @@ describe('Book Document Adapters and Factory', () => {
       await adapter.load(buffer, 'meu_livro.epub')
 
       expect(adapter.isLoaded).toBe(true)
-      expect(adapter.totalPages).toBe(1)
+      expect(adapter.totalPages).toBeGreaterThanOrEqual(1)
       expect(adapter.metadata.title).toBe('EPUB de Teste')
       expect(adapter.metadata.author).toBe('Autor EPUB')
 
@@ -141,6 +141,52 @@ describe('Book Document Adapters and Factory', () => {
       const container = document.createElement('div')
       await adapter.renderTextLayer(1, container, 600, 900)
       expect(container.children.length).toBeGreaterThan(0)
+
+      adapter.destroy()
+      expect(adapter.isLoaded).toBe(false)
+    })
+
+    it('handles multi-page sections with column pagination', async () => {
+      const adapter = new EpubDocumentAdapter()
+      const longText = 'Parágrafo de teste com muito conteúdo. '.repeat(100)
+      const mockEpubInstance = {
+        metadata: { title: 'Livro Longo', creator: 'Autor' },
+        sections: [
+          {
+            id: 'chap1',
+            linear: true,
+            createDocument: () => Promise.resolve({
+              body: { innerHTML: `<p>${longText}</p>`, textContent: longText }
+            })
+          }
+        ],
+        init: () => Promise.resolve()
+      }
+
+      // Mock temporário para esta seção longa
+      const { EPUB } = await import('foliate-js/epub.js')
+      const origEPUB = (EPUB as any)
+      vi.spyOn(origEPUB.prototype, 'init').mockImplementation(function (this: any) {
+        this.metadata = mockEpubInstance.metadata
+        this.sections = mockEpubInstance.sections
+        return Promise.resolve()
+      })
+
+      const buffer = new ArrayBuffer(16)
+      await adapter.load(buffer, 'longo.epub')
+
+      expect(adapter.totalPages).toBeGreaterThan(1)
+      const page1Text = await adapter.getTextContent(1)
+      const page2Text = await adapter.getTextContent(2)
+      expect(page1Text).toBeTruthy()
+      expect(page2Text).toBeTruthy()
+
+      const container = document.createElement('div')
+      await adapter.renderTextLayer(2, container, 800, 1200)
+      expect(container.children.length).toBeGreaterThan(0)
+      const content = container.querySelector('.epub-text-layer-content') as HTMLElement
+      expect(content).not.toBeNull()
+      expect(content.style.marginLeft).toBe('-800px')
 
       adapter.destroy()
       expect(adapter.isLoaded).toBe(false)
