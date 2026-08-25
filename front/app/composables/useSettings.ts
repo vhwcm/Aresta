@@ -4,12 +4,14 @@ import { useAuth } from '~/composables/useAuth'
 export interface SettingsState {
   pageAnimationEnabled: boolean
   language: string
+  epubFontSize: number
 }
 
 export interface UserSettingsResponse {
   userId: number
   pageAnimationEnabled: boolean
   language: string
+  epubFontSize?: number
   updatedAt?: string | null
 }
 
@@ -19,6 +21,7 @@ const STORAGE_KEY = 'aresta_settings'
 const settings = reactive<SettingsState>({
   pageAnimationEnabled: true,
   language: 'pt-BR',
+  epubFontSize: 18,
 })
 
 let isInitialized = false
@@ -36,6 +39,9 @@ function initSettings() {
       if (typeof parsed.language === 'string') {
         settings.language = parsed.language
       }
+      if (typeof parsed.epubFontSize === 'number') {
+        settings.epubFontSize = Math.max(12, Math.min(36, Math.round(parsed.epubFontSize)))
+      }
     }
   } catch {
     // ignorar falha de parse
@@ -45,6 +51,9 @@ function initSettings() {
 function applyServerSettings(data: UserSettingsResponse) {
   settings.pageAnimationEnabled = data.pageAnimationEnabled
   settings.language = data.language
+  if (typeof data.epubFontSize === 'number') {
+    settings.epubFontSize = Math.max(12, Math.min(36, Math.round(data.epubFontSize)))
+  }
 }
 
 export function useSettings() {
@@ -71,6 +80,7 @@ export function useSettings() {
         body: {
           pageAnimationEnabled: settings.pageAnimationEnabled,
           language: settings.language,
+          epubFontSize: settings.epubFontSize,
         },
       })
     } catch {
@@ -104,6 +114,13 @@ export function useSettings() {
     void persistToServer()
   }
 
+  const setEpubFontSize = (size: number) => {
+    const clamped = Math.max(12, Math.min(36, Math.round(size)))
+    settings.epubFontSize = clamped
+    saveLocally()
+    void persistToServer()
+  }
+
   const pageAnimationEnabled = computed({
     get: () => settings.pageAnimationEnabled,
     set: (val: boolean) => setPageAnimationEnabled(val),
@@ -114,12 +131,19 @@ export function useSettings() {
     set: (val: string) => setLanguage(val),
   })
 
+  const epubFontSize = computed({
+    get: () => settings.epubFontSize,
+    set: (val: number) => setEpubFontSize(val),
+  })
+
   return {
     settings: readonly(settings),
     pageAnimationEnabled,
     language,
+    epubFontSize,
     setPageAnimationEnabled,
     setLanguage,
+    setEpubFontSize,
     loadFromServer,
   }
 }

@@ -1,0 +1,32 @@
+================================================================================
+FLUXO DE ALTERAÇÃO DINÂMICA DE TAMANHO DE FONTE (EPUB FONT SIZE FLOW)
+================================================================================
+
+                    ┌──────────────────────────────────────┐
+                    │      ReaderBottomBar (Botão 'Aa')    │
+                    └──────────────────┬───────────────────┘
+                                       │ 1. Abre popover e clica em A+ / A-
+                                       ▼
+                    ┌──────────────────────────────────────┐
+                    │       readerStore.setFontSize(size)  │
+                    └─────────┬──────────────────┬─────────┘
+                              │                  │
+           2. doc.setFontSize(size, currPage)    │ 5. Atualiza useSettings
+                              ▼                  ▼
+      ┌────────────────────────────────┐  ┌────────────────────────────────┐
+      │      EpubDocumentAdapter       │  │          useSettings           │
+      │ 1. Limpa _pageCanvases (cache) │  │ 1. Salva em localStorage       │
+      │ 2. Recalcula _pageMap com CSS  │  │ 2. Opcional: PUT /user-settings│
+      │ 3. Mapeia nova currentPage     │  └────────────────────────────────┘
+      │ 4. Retorna newCurrentPage      │
+      └───────────────┬────────────────┘
+                      │
+                      │ 3. Retorna nova currentPage e totalPages
+                      ▼
+      ┌────────────────────────────────┐
+      │        useBookPageTurn         │
+      │ 1. Invalida rasterCache        │
+      │ 2. Chama renderCurrentView()   │
+      │ 3. Desenha Canvas 2D + Text    │
+      └────────────────────────────────┘
+================================================================================

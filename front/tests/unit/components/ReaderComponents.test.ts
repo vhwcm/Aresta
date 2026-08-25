@@ -128,6 +128,57 @@ describe('Reader Components', () => {
       await togglePageBtn.trigger('click')
       expect(store.isTwoPageMode).toBe(false)
     })
+
+    it('exibe controle de tamanho de fonte para EPUB e permite alterar tamanho via popover', async () => {
+      const store = useReaderStore()
+      store.setDocument({
+        type: 'epub',
+        metadata: { title: 'Livro EPUB' },
+        totalPages: 15,
+        isLoaded: true,
+        load: vi.fn(),
+        getPage: vi.fn(),
+        setFontSize: vi.fn((size: number) => 1),
+        destroy: vi.fn(),
+      } as any, 'livro.epub')
+      store.fontSize = 18
+
+      const wrapper = mount(ReaderBottomBar, {
+        props: { isGraphActive: false },
+      })
+
+      const fontBtn = wrapper.find('#btn-font-size-toggle')
+      expect(fontBtn.exists()).toBe(true)
+      expect(fontBtn.text()).toContain('18px')
+
+      // Abre o popover
+      await fontBtn.trigger('click')
+      expect(wrapper.find('[aria-label="Controle de tamanho do texto"]').exists()).toBe(true)
+
+      // Clica em A+
+      const increaseBtn = wrapper.find('button[aria-label="Aumentar tamanho da fonte"]')
+      expect(increaseBtn.exists()).toBe(true)
+      await increaseBtn.trigger('click')
+      expect(store.fontSize).toBe(20)
+
+      // Clica em A-
+      const decreaseBtn = wrapper.find('button[aria-label="Diminuir tamanho da fonte"]')
+      expect(decreaseBtn.exists()).toBe(true)
+      await decreaseBtn.trigger('click')
+      expect(store.fontSize).toBe(18)
+
+      // Clica em um preset rápido (ex: 26)
+      const presetBtn = wrapper.findAll('button').find((b) => b.text() === '26')
+      expect(presetBtn?.exists()).toBe(true)
+      await presetBtn?.trigger('click')
+      expect(store.fontSize).toBe(26)
+
+      // Clica em Padrão
+      const resetBtn = wrapper.findAll('button').find((b) => b.text() === 'Padrão')
+      expect(resetBtn?.exists()).toBe(true)
+      await resetBtn?.trigger('click')
+      expect(store.fontSize).toBe(18)
+    })
   })
 
   describe('ReaderSavedPagesModal', () => {

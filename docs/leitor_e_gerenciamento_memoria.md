@@ -73,6 +73,7 @@ const [fetchedMeta, response] = await Promise.all([
 * Utiliza a biblioteca `fflate` (`unzipSync`) para descompactar o contêiner ZIP do EPUB na memória do navegador.
 * O parser do `foliate-js` mapeia os capítulos e seções lineares (`spine`).
 * As seções XHTML são convertidas em canvas/SVG e texturas apenas quando o usuário navega até elas.
+* **Ajuste Dinâmico de Tipografia e Repaginação (`setFontSize`)**: Permite alterar o tamanho da fonte (12px a 36px) durante a leitura com repaginação proporcional por coluna e preservação exata da posição de leitura na seção ativa.
 
 ---
 

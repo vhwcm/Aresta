@@ -197,6 +197,49 @@
                   </button>
                 </div>
 
+                <!-- Item 6: Tamanho da Fonte (EPUB) -->
+                <div class="p-4 flex items-center justify-between gap-4">
+                  <div class="flex items-center gap-3 min-w-0">
+                    <div class="p-2 rounded-lg bg-accent/10 text-accent">
+                      <TypeIcon class="w-4 h-4" />
+                    </div>
+                    <div class="min-w-0">
+                      <div class="font-interface text-sm text-textPrimary font-medium">
+                        Tamanho da Fonte (EPUB)
+                      </div>
+                      <div class="font-interface text-xs text-textSecondary">
+                        Tamanho padrão do texto durante a leitura
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      @click="setEpubFontSize(epubFontSize - 2)"
+                      :disabled="epubFontSize <= 12"
+                      class="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/15 disabled:opacity-30 border border-divider text-xs font-semibold transition-all text-textPrimary active:scale-95"
+                      title="Diminuir fonte padrão"
+                      aria-label="Diminuir fonte padrão"
+                    >
+                      A-
+                    </button>
+                    <span class="font-technical text-xs font-bold text-accent min-w-[40px] text-center">
+                      {{ epubFontSize }}px
+                    </span>
+                    <button
+                      type="button"
+                      @click="setEpubFontSize(epubFontSize + 2)"
+                      :disabled="epubFontSize >= 36"
+                      class="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/15 disabled:opacity-30 border border-divider text-xs font-semibold transition-all text-textPrimary active:scale-95"
+                      title="Aumentar fonte padrão"
+                      aria-label="Aumentar fonte padrão"
+                    >
+                      A+
+                    </button>
+                  </div>
+                </div>
+
               </div>
             </div>
 
@@ -231,13 +274,14 @@ import {
   GlobeIcon,
   BookOpenIcon,
   LogInIcon,
+  TypeIcon,
 } from 'lucide-vue-next'
 import { useSettingsModal } from '~/composables/useSettingsModal'
 import { useSettings } from '~/composables/useSettings'
 import { useAuth } from '~/composables/useAuth'
 
 const modal = useSettingsModal()
-const { pageAnimationEnabled, loadFromServer } = useSettings()
+const { pageAnimationEnabled, epubFontSize, setEpubFontSize, loadFromServer } = useSettings()
 const auth = useAuth()
 
 watch(

@@ -253,4 +253,45 @@ describe('useReaderStore', () => {
       expect(store.savedPages).not.toContain(1)
     })
   })
+
+  describe('tamanho de fonte (fontSize)', () => {
+    it('inicia com valor padrão 18', () => {
+      const store = useReaderStore()
+      expect(store.fontSize).toBe(18)
+    })
+
+    it('ajusta tamanho de fonte com setFontSize respeitando limites e atualizando documento', () => {
+      const store = useReaderStore()
+      const mockDoc = createMockDocument({
+        type: 'epub',
+        setFontSize: vi.fn((size: number, currPage?: number) => (currPage || 1) + 1),
+      })
+      store.setDocument(mockDoc, 'livro.epub')
+
+      store.setFontSize(22)
+      expect(store.fontSize).toBe(22)
+      expect(mockDoc.setFontSize).toHaveBeenCalledWith(22, 1)
+
+      // Testar limites mínimos e máximos (12 a 36)
+      store.setFontSize(8)
+      expect(store.fontSize).toBe(12)
+
+      store.setFontSize(48)
+      expect(store.fontSize).toBe(36)
+    })
+
+    it('aumenta e diminui tamanho de fonte com increaseFontSize e decreaseFontSize', () => {
+      const store = useReaderStore()
+      store.setFontSize(18)
+
+      store.increaseFontSize(2)
+      expect(store.fontSize).toBe(20)
+
+      store.decreaseFontSize(4)
+      expect(store.fontSize).toBe(16)
+
+      store.resetFontSize()
+      expect(store.fontSize).toBe(18)
+    })
+  })
 })

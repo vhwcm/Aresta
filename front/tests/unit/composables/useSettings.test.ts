@@ -86,9 +86,28 @@ describe('useSettings Composable', () => {
       expect(mockFetch).toHaveBeenCalledWith('http://localhost:7070/api/user-settings', {
         method: 'PUT',
         headers: { Authorization: 'Bearer token-abc' },
-        body: { pageAnimationEnabled: false, language: 'pt-BR' },
+        body: { pageAnimationEnabled: false, language: 'pt-BR', epubFontSize: 18 },
       })
     })
+  })
+
+  it('permite alterar e obter o tamanho da fonte de EPUB com persistência', () => {
+    const { epubFontSize, setEpubFontSize } = useSettings()
+
+    expect(epubFontSize.value).toBe(18)
+
+    setEpubFontSize(24)
+    expect(epubFontSize.value).toBe(24)
+
+    const saved = JSON.parse(localStorage.getItem('aresta_settings') || '{}')
+    expect(saved.epubFontSize).toBe(24)
+
+    // Clamping entre 12 e 36
+    setEpubFontSize(8)
+    expect(epubFontSize.value).toBe(12)
+
+    setEpubFontSize(50)
+    expect(epubFontSize.value).toBe(36)
   })
 })
 

@@ -27,6 +27,7 @@ FLUXO DE ADAPTAÇÃO E RENDERIZAÇÃO DO LEITOR (READER ADAPTER FLOW)
                     ┌──────────────────────────────────────┐
                     │      Interface `IBookDocument`       │
                     │   - totalPages, title, getPage()     │
+                    │   - fontSize, setFontSize()          │
                     │   - getTextContent(), renderText()   │
                     └──────────────────┬───────────────────┘
                                        │

@@ -51,6 +51,9 @@ model UserBook {
    - Ao atingir a última página do documento, o status pode ser marcado como `LIDO`.
 2. **Atualização de Progresso**:
    - O leitor dispara atualizações em debounce para `POST /api/user-books/:id/progress`, atualizando `current_page` e `last_accessed_at`.
+3. **Tipografia & Repaginação Dinâmica (EPUB)**:
+   - Durante a leitura de arquivos EPUB, o usuário pode alterar o tamanho da fonte (12px a 36px).
+   - O adaptador recalcula as páginas mantendo a proporcionalidade de leitura do capítulo ativo e persistindo a preferência em `UserSettings`.
 
 ---
 

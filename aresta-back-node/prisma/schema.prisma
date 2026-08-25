@@ -137,6 +137,7 @@ model UserSettings {
   user_id                Int      @id
   page_animation_enabled Boolean  @default(true)
   language               String   @default("pt-BR")
+  epub_font_size         Int      @default(18)
   updated_at             DateTime @default(now()) @updatedAt
   user                   User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
