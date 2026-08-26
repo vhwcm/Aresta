@@ -13,5 +13,7 @@ export const env = {
   EPUBS_PATH: process.env.EPUBS_PATH || path.resolve(process.cwd(), 'storage/epubs'),
   COVERS_PATH: process.env.COVERS_PATH || path.resolve(process.cwd(), 'storage/covers'),
   PDF2EPUB_SERVICE_URL: process.env.PDF2EPUB_SERVICE_URL || 'http://localhost:8000',
+  OCR_GRPC_URL: process.env.OCR_GRPC_URL || 'localhost:50051',
+  OCR_PROTO_PATH: process.env.OCR_PROTO_PATH || path.resolve(process.cwd(), '../aresta-ocr/proto/ocr/v1/ocr.proto'),
 };
 

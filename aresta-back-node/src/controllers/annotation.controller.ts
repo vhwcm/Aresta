@@ -1,5 +1,6 @@
 import { Response, NextFunction } from 'express';
 import { AnnotationService } from '../services/annotation.service.js';
+import { ocrClient } from '../services/ocr.client.js';
 import { AuthenticatedRequest } from '../types/index.js';
 
 export class AnnotationController {
@@ -203,5 +204,104 @@ export class AnnotationController {
       return next(error);
     }
   };
+
+  /**
+   * @openapi
+   * /api/annotations/with-ocr:
+   *   post:
+   *     summary: Criar nova anotação transcrevendo escrita manual via OCR (gRPC)
+   *     tags: [Annotations]
+   *     security:
+   *       - bearerAuth: []
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required: [bookId, cfi, imageBase64]
+   *             properties:
+   *               bookId:
+   *                 type: integer
+   *               cfi:
+   *                 type: string
+   *               selectedText:
+   *                 type: string
+   *               chapterTitle:
+   *                 type: string
+   *               progress:
+   *                 type: number
+   *               themeIds:
+   *                 type: array
+   *                 items:
+   *                   type: integer
+   *               imageBase64:
+   *                 type: string
+   *                 description: Imagem em base64 (com ou sem prefixo data:image/png;base64)
+   *               mimeType:
+   *                 type: string
+   *                 default: "image/png"
+   *               promptHint:
+   *                 type: string
+   *     responses:
+   *       201:
+   *         description: Anotação criada e transcrita com sucesso
+   *       400:
+   *         description: Dados de entrada inválidos
+   *       502:
+   *         description: Falha na transcrição do serviço de OCR
+   */
+  createAnnotationWithOcr = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const userId = this.getUserId(req);
+      const {
+        bookId,
+        cfi,
+        selectedText,
+        chapterTitle,
+        progress,
+        themeIds,
+        imageBase64,
+        mimeType = 'image/png',
+        promptHint,
+      } = req.body;
+
+      // Sanitiza base64 removendo cabeçalho data:...;base64, se existir
+      const cleanBase64 = imageBase64.replace(/^data:image\/[a-zA-Z0-9+.-]+;base64,/, '');
+      const imageBuffer = Buffer.from(cleanBase64, 'base64');
+
+      if (!imageBuffer || imageBuffer.length === 0) {
+        return res.status(400).json({ error: 'Buffer de imagem inválido ou vazio.' });
+      }
+
+      // Executa OCR via gRPC
+      let extractedText = '';
+      try {
+        const ocrResult = await ocrClient.extractText(imageBuffer, mimeType, promptHint);
+        extractedText = ocrResult.text;
+      } catch (ocrErr: any) {
+        console.error('Falha ao processar OCR para anotação:', ocrErr);
+        return res.status(502).json({
+          error: ocrErr.message || 'Falha ao processar transcrição da escrita pelo serviço OCR.',
+        });
+      }
+
+      // Cria a anotação persistindo o texto transcrito
+      const annotation = await this.annotationService.createAnnotation(userId, {
+        bookId,
+        cfi,
+        selectedText,
+        chapterTitle,
+        progress,
+        themeIds,
+        note: extractedText,
+      });
+
+      return res.status(201).json(annotation);
+    } catch (error) {
+      return next(error);
+    }
+  };
 }
+
 

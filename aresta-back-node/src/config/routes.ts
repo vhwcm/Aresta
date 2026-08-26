@@ -14,6 +14,7 @@ export const ROUTES = {
   USER_SETTINGS: '/api/user-settings',
   GRAPH: '/api/graph',
   ANNOTATIONS: '/api/annotations',
+  OCR: '/api/ocr',
   HEALTH: '/api/health',
   CONVERT: '/api/convert',
 

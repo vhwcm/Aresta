@@ -4,6 +4,7 @@ import { optionalAuthenticate } from '../middlewares/auth.middleware.js';
 import { validateRequest } from '../middlewares/validate.middleware.js';
 import {
   createAnnotationSchema,
+  createAnnotationWithOcrSchema,
   updateAnnotationSchema,
   annotationIdParamSchema,
   getAnnotationsQuerySchema,
@@ -17,6 +18,7 @@ router.use(optionalAuthenticate);
 router.get('/', validateRequest({ query: getAnnotationsQuerySchema }), annotationController.getAnnotations);
 router.get('/:id', validateRequest({ params: annotationIdParamSchema }), annotationController.getAnnotationById);
 router.post('/', validateRequest({ body: createAnnotationSchema }), annotationController.createAnnotation);
+router.post('/with-ocr', validateRequest({ body: createAnnotationWithOcrSchema }), annotationController.createAnnotationWithOcr);
 router.put('/:id', validateRequest({ params: annotationIdParamSchema, body: updateAnnotationSchema }), annotationController.updateAnnotation);
 router.delete('/:id', validateRequest({ params: annotationIdParamSchema }), annotationController.deleteAnnotation);
 

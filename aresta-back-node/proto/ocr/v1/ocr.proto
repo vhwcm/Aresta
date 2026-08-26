@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package ocr.v1;
+
+option go_package = "aresta-ocr/gen/ocr/v1;ocrv1";
+
+// OcrService define o serviço gRPC de extração de escrita de imagens
+service OcrService {
+  rpc ExtractText(ExtractTextRequest) returns (ExtractTextResponse);
+}
+
+// ExtractTextRequest encapsula a imagem e metadados para processamento
+message ExtractTextRequest {
+  bytes image_data = 1;
+  string mime_type = 2; // ex: "image/jpeg", "image/png", "image/webp"
+  string prompt_hint = 3;
+}
+
+// ExtractTextResponse retorna o texto transcrito puro
+message ExtractTextResponse {
+  string text = 1;
+  string model_used = 2;
+}

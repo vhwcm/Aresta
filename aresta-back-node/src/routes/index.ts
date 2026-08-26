@@ -9,6 +9,7 @@ import userBookRoutes from './userBook.routes.js';
 import userSettingsRoutes from './userSettings.routes.js';
 import graphRoutes from './graph.routes.js';
 import annotationRoutes from './annotation.routes.js';
+import ocrRoutes from './ocr.routes.js';
 import streakRoutes from './streak.routes.js';
 import healthRoutes from './health.routes.js';
 import conversionRoutes from './conversion.routes.js';
@@ -33,6 +34,7 @@ router.use(ROUTES.USER_BOOKS, userBookRoutes);
 router.use(ROUTES.USER_SETTINGS, userSettingsRoutes);
 router.use(ROUTES.GRAPH, graphRoutes);
 router.use(ROUTES.ANNOTATIONS, annotationRoutes);
+router.use(ROUTES.OCR, ocrRoutes);
 router.use(ROUTES.HEALTH, healthRoutes);
 router.use(ROUTES.CONVERT, conversionRoutes);
 
