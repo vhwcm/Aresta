@@ -32,7 +32,12 @@ describe('Index Page (Landing Page & Home)', () => {
     TargetIcon: true,
     GraduationCapIcon: true,
     CompassIcon: true,
-    CheckCircle2Icon: true
+    CheckCircle2Icon: true,
+    MicroscopeIcon: true,
+    HeartPulseIcon: true,
+    ShieldCheckIcon: true,
+    LayersIcon: true,
+    LightbulbIcon: true
   }
 
   it('renders guest landing page with PKM, deep reading, copywriting questions, de-emphasized forgetting curve, and CTA', async () => {
@@ -61,6 +66,30 @@ describe('Index Page (Landing Page & Home)', () => {
     expect(wrapper.text()).toContain('Transforme sua leitura em uma rede viva de conhecimento e competência')
     expect(wrapper.text()).toContain('Experimentar o Aresta Gratuitamente')
     expect(wrapper.text()).toContain('Anti-Dopaminérgico')
+
+    // Verificação da Seção 1: Benefícios da Leitura Profunda e Neurociência
+    expect(wrapper.text()).toContain('Neurociência Cognitiva & Pesquisas Científicas')
+    expect(wrapper.text()).toContain('Por que a leitura profunda molda a arquitetura do seu raciocínio')
+    expect(wrapper.text()).toContain('Raciocínio Lógico & Pensamento Crítico')
+    expect(wrapper.text()).toContain('Stanford University')
+    expect(wrapper.text()).toContain('Neuroplasticidade & Conectividade Expandida')
+    expect(wrapper.text()).toContain('Emory University (fMRI)')
+    expect(wrapper.text()).toContain('Reserva Cognitiva & Blindagem Cerebral')
+    expect(wrapper.text()).toContain('Teoria da Mente & Inteligência Social')
+    expect(wrapper.text()).toContain('Desaceleração Fisiológica do Estresse')
+    expect(wrapper.text()).toContain('Fluência Verbal & Articulação de Ideias')
+
+    // Verificação da Seção 2: Importância da Anotação e Síntese Ativa para Retenção
+    expect(wrapper.text()).toContain('Ciência da Aprendizagem & Memória de Longo Prazo')
+    expect(wrapper.text()).toContain('Por que anotar multiplica a retenção e transforma leitura em competência')
+    expect(wrapper.text()).toContain('Processamento Semântico Profundo')
+    expect(wrapper.text()).toContain('Craik & Lockhart')
+    expect(wrapper.text()).toContain('Efeito de Geração & Síntese')
+    expect(wrapper.text()).toContain('Mueller & Oppenheimer')
+    expect(wrapper.text()).toContain('Recuperação Ativa de Memória')
+    expect(wrapper.text()).toContain('Roediger & Karpicke')
+    expect(wrapper.text()).toContain('Externalização em Grafo Vivo')
+
     expect(wrapper.text()).toContain('Gostaria de se sentir mais competente?')
     expect(wrapper.text()).toContain('Quer se tornar especialista em algo?')
     expect(wrapper.text()).toContain('Quer dominar um novo hobby ou paixão?')
@@ -78,12 +107,16 @@ describe('Index Page (Landing Page & Home)', () => {
     expect(wrapper.text()).toContain('Acessar Conta')
     expect(wrapper.text()).toContain('Criar Conta')
 
-    // Verifica que a apresentação das perguntas e pilares vem antes da Curva de Esquecimento
+    // Verifica que a apresentação das seções científicas e pilares vem antes da Curva de Esquecimento
     const fullText = wrapper.text()
+    const readingBenefitsIndex = fullText.indexOf('Por que a leitura profunda molda a arquitetura do seu raciocínio')
+    const noteRetentionIndex = fullText.indexOf('Por que anotar multiplica a retenção')
     const competentIndex = fullText.indexOf('Gostaria de se sentir mais competente?')
     const pilaresIndex = fullText.indexOf('O Ecossistema Completo do Leitor')
     const ebbinghausIndex = fullText.indexOf('A Revisão de Conhecimento & Curva de Ebbinghaus')
 
+    expect(readingBenefitsIndex).toBeLessThan(noteRetentionIndex)
+    expect(noteRetentionIndex).toBeLessThan(competentIndex)
     expect(competentIndex).toBeLessThan(pilaresIndex)
     expect(pilaresIndex).toBeLessThan(ebbinghausIndex)
   })

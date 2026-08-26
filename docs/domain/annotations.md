@@ -58,5 +58,15 @@ model AnnotationTheme {
 - **Backend**:
   - `src/controllers/annotation.controller.ts`, `src/controllers/ocr.controller.ts`, `src/services/annotation.service.ts`, `src/services/ocr.client.ts`, `src/schemas/annotation.schema.ts`
 - **Frontend**:
-  - `front/app/composables/useAnnotations.ts`, `front/app/components/reader/ReaderAnnotationModal.vue`, `front/app/components/reader/ReaderAnnotationDrawer.vue`, `front/app/components/reader/HandwritingCanvas.vue`
+  - `front/app/composables/useAnnotations.ts`, `front/app/components/reader/ReaderAnnotationModal.vue`, `front/app/components/reader/ReaderAnnotationDrawer.vue`, `front/app/components/reader/HandwritingCanvas.vue`, `front/app/pages/index.vue`
+
+---
+
+## 5. Fundamentação Científica da Anotação & Retenção de Conhecimento
+- **Processamento Semântico Profundo (*Levels of Processing*)**: Anotar e reformular com as próprias palavras força o cérebro a codificar significados semânticos profundos, superando a memorização superficial (Fergus Craik & Robert Lockhart, 1972 / Craik & Tulving, 1975).
+- **Efeito de Geração & Síntese Ativa**: A síntese e reorganização conceitual autoral gera compreensão e retenção de longo prazo expressivamente superior à transcrição literal passiva (Pam Mueller & Daniel Oppenheimer, Princeton & UCLA, *Psychological Science*, 2014).
+- **Recuperação Ativa (*Retrieval Practice* & *Testing Effect*)**: Converter anotações em perguntas e flashcards consolida sinapses e retém até 80% mais dados a longo prazo (Dr. Henry Roediger & Dr. Jeffrey Karpicke, Washington University, *Science*, 2006).
+- **Teoria da Carga Cognitiva & Mente Estendida**: Conectar anotações em um grafo conceitual descarrega a memória de trabalho limitada (4-7 itens), liberando largura de banda neural para raciocínios superiores (John Sweller, *Cognitive Load Theory*; Andy Clark & David Chalmers, *The Extended Mind*, 1998).
+- **Curva do Esquecimento & Repetição Espaçada**: A revisão ativa em intervalos distribuídos reseta o decaimento mnemônico (Hermann Ebbinghaus; Cepeda et al., *Psychological Bulletin*).
+
 

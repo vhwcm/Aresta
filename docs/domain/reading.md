@@ -65,3 +65,15 @@ model UserBook {
 - **Frontend**:
   - `front/app/composables/useUserBooks.ts`
   - `front/app/pages/reader/[id].vue`
+  - `front/app/pages/index.vue`
+  - `front/app/pages/por-que-ler.vue`
+
+---
+
+## 5. Fundamentação Científica & Neurociência da Leitura Profunda
+- **Raciocínio Lógico & Pensamento Crítico**: A leitura profunda ativa conexões bidirecionais entre hemisférios cerebrais e o córtex pré-frontal dorsolateral (Drª Maryanne Wolf, Stanford & Tufts).
+- **Neuroplasticidade & Conectividade Cerebral (fMRI)**: A imersão em obras densas eleva a conectividade de repouso no córtex temporal esquerdo e sulco motor por dias (Dr. Gregory Berns, Emory University, 2013).
+- **Reserva Cognitiva & Proteção contra Declínio (-32%)**: Atividades de leitura contínua criam reserva sináptica protetora (Dr. Robert S. Wilson, Rush University Medical Center, *Neurology*).
+- **Teoria da Mente & Empatia Cognitiva**: A leitura de narrativas complexas exercita a capacidade de inferir estados mentais e emoções de terceiros (Kidd & Castano, *Science*, 2013; Dr. Raymond Mar, Univ. de Toronto).
+- **Desaceleração Fisiológica (-68% em 6 min)**: Redução expressiva de cortisol e frequência cardíaca em ambiente calmo (Dr. David Lewis, Univ. of Sussex).
+

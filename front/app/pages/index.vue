@@ -339,7 +339,303 @@
         <HomeKnowledgeGraphDemo />
       </section>
 
-      <!-- 3. SEÇÃO DE INDAGAÇÕES E TRANSFORMAÇÃO PRÁTICA (COPYWRITING PERSUASIVO) -->
+      <!-- 3. SEÇÃO CIENTÍFICA I: OS BENEFÍCIOS DA LEITURA PROFUNDA & RACIOCÍNIO (NEUROCIÊNCIA) -->
+      <section id="beneficios-leitura" class="flex flex-col gap-10 scroll-mt-10">
+        <div class="flex flex-col items-start text-left gap-3 max-w-3xl">
+          <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-accent/10 border border-accent/30 text-accent font-technical text-[10px] sm:text-[11px] uppercase tracking-widest font-semibold shadow-sm">
+            <MicroscopeIcon class="w-3.5 h-3.5" />
+            <span>Neurociência Cognitiva & Pesquisas Científicas</span>
+          </div>
+          <h2 class="font-editorial text-3xl sm:text-4xl md:text-5xl font-light text-textPrimary leading-[1.15]">
+            Por que a leitura profunda molda a <span class="text-accent italic font-normal">arquitetura do seu raciocínio</span>
+          </h2>
+          <p class="font-interface text-sm sm:text-base text-textSecondary leading-relaxed">
+            Ao contrário do consumo efêmero de feeds digitais que estimulam o modo de escaneamento superficial, a leitura de textos densos e livros recruta circuitos cerebrais sofisticados. A neurociência contemporânea comprova ganhos estruturais na massa cinzenta, na capacidade dedutiva e na regulação emocional.
+          </p>
+        </div>
+
+        <!-- Grade de Benefícios Científicos da Leitura -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <!-- Benefício 1: Raciocínio Lógico & Pensamento Crítico -->
+          <div class="p-7 rounded-3xl bg-white/[0.02] border border-divider hover:border-accent/40 transition-all duration-300 flex flex-col justify-between gap-5 group">
+            <div class="flex flex-col gap-3.5">
+              <div class="flex items-center justify-between">
+                <div class="w-10 h-10 rounded-2xl bg-accent/15 border border-accent/30 text-accent flex items-center justify-center group-hover:scale-105 transition-transform">
+                  <LightbulbIcon class="w-5 h-5" />
+                </div>
+                <span class="font-technical text-[9px] uppercase tracking-wider text-accent font-semibold px-2.5 py-1 rounded-md bg-accent/10 border border-accent/20">
+                  Stanford University
+                </span>
+              </div>
+              <h3 class="font-editorial text-xl sm:text-2xl font-light text-textPrimary group-hover:text-accent transition-colors">
+                Raciocínio Lógico & Pensamento Crítico
+              </h3>
+              <p class="font-interface text-xs sm:text-sm text-textSecondary leading-relaxed">
+                Acompanhar teses extensas e argumentos dedutivos exercita o córtex pré-frontal dorsolateral. A decodificação sequencial treina a mente a identificar falácias, sustentar hipóteses e estruturar silogismos complexos com rigor analítico.
+              </p>
+            </div>
+            <div class="pt-3 border-t border-divider/60 flex flex-col gap-1">
+              <span class="font-technical text-[10px] text-textSecondary/80 uppercase tracking-wider">Evidência Científica:</span>
+              <p class="font-interface text-[11px] text-textSecondary italic">
+                Drª Maryanne Wolf (Stanford & Tufts): A leitura profunda conecta circuitos hemisféricos bidirecionais essenciais para o pensamento analítico.
+              </p>
+            </div>
+          </div>
+
+          <!-- Benefício 2: Neuroplasticidade & Conectividade Neural -->
+          <div class="p-7 rounded-3xl bg-white/[0.02] border border-divider hover:border-accent/40 transition-all duration-300 flex flex-col justify-between gap-5 group">
+            <div class="flex flex-col gap-3.5">
+              <div class="flex items-center justify-between">
+                <div class="w-10 h-10 rounded-2xl bg-accent/15 border border-accent/30 text-accent flex items-center justify-center group-hover:scale-105 transition-transform">
+                  <BrainIcon class="w-5 h-5" />
+                </div>
+                <span class="font-technical text-[9px] uppercase tracking-wider text-accent font-semibold px-2.5 py-1 rounded-md bg-accent/10 border border-accent/20">
+                  Emory University (fMRI)
+                </span>
+              </div>
+              <h3 class="font-editorial text-xl sm:text-2xl font-light text-textPrimary group-hover:text-accent transition-colors">
+                Neuroplasticidade & Conectividade Expandida
+              </h3>
+              <p class="font-interface text-xs sm:text-sm text-textSecondary leading-relaxed">
+                Estudos com ressonância magnética funcional revelam que a imersão em narrativas e livros densos eleva a conectividade de repouso no córtex temporal esquerdo e no sulco motor, criando um estado de prontidão cognitiva persistente por dias.
+              </p>
+            </div>
+            <div class="pt-3 border-t border-divider/60 flex flex-col gap-1">
+              <span class="font-technical text-[10px] text-textSecondary/80 uppercase tracking-wider">Evidência Científica:</span>
+              <p class="font-interface text-[11px] text-textSecondary italic">
+                Dr. Gregory Berns (Brain Connectivity, 2013): A leitura imersiva provoca alterações mensuráveis e duradouras nas redes somatossensoriais.
+              </p>
+            </div>
+          </div>
+
+          <!-- Benefício 3: Reserva Cognitiva & Longevidade -->
+          <div class="p-7 rounded-3xl bg-white/[0.02] border border-divider hover:border-accent/40 transition-all duration-300 flex flex-col justify-between gap-5 group">
+            <div class="flex flex-col gap-3.5">
+              <div class="flex items-center justify-between">
+                <div class="w-10 h-10 rounded-2xl bg-accent/15 border border-accent/30 text-accent flex items-center justify-center group-hover:scale-105 transition-transform">
+                  <ShieldCheckIcon class="w-5 h-5" />
+                </div>
+                <span class="font-technical text-[9px] uppercase tracking-wider text-accent font-semibold px-2.5 py-1 rounded-md bg-accent/10 border border-accent/20">
+                  Neurology · 32% Proteção
+                </span>
+              </div>
+              <h3 class="font-editorial text-xl sm:text-2xl font-light text-textPrimary group-hover:text-accent transition-colors">
+                Reserva Cognitiva & Blindagem Cerebral
+              </h3>
+              <p class="font-interface text-xs sm:text-sm text-textSecondary leading-relaxed">
+                O hábito de leitura ao longo da vida atua como uma barreira protetora contra o envelhecimento celular, estimulando a sinaptogênese e preservando a flexibilidade mental mesmo em fases avançadas da vida adulta.
+              </p>
+            </div>
+            <div class="pt-3 border-t border-divider/60 flex flex-col gap-1">
+              <span class="font-technical text-[10px] text-textSecondary/80 uppercase tracking-wider">Evidência Científica:</span>
+              <p class="font-interface text-[11px] text-textSecondary italic">
+                Rush University Medical Center (Dr. Robert S. Wilson): Leitores assíduos apresentaram taxa de declínio cognitivo 32% mais lenta.
+              </p>
+            </div>
+          </div>
+
+          <!-- Benefício 4: Teoria da Mente & Empatia Cognitiva -->
+          <div class="p-7 rounded-3xl bg-white/[0.02] border border-divider hover:border-accent/40 transition-all duration-300 flex flex-col justify-between gap-5 group">
+            <div class="flex flex-col gap-3.5">
+              <div class="flex items-center justify-between">
+                <div class="w-10 h-10 rounded-2xl bg-accent/15 border border-accent/30 text-accent flex items-center justify-center group-hover:scale-105 transition-transform">
+                  <CompassIcon class="w-5 h-5" />
+                </div>
+                <span class="font-technical text-[9px] uppercase tracking-wider text-accent font-semibold px-2.5 py-1 rounded-md bg-accent/10 border border-accent/20">
+                  Science Magazine
+                </span>
+              </div>
+              <h3 class="font-editorial text-xl sm:text-2xl font-light text-textPrimary group-hover:text-accent transition-colors">
+                Teoria da Mente & Inteligência Social
+              </h3>
+              <p class="font-interface text-xs sm:text-sm text-textSecondary leading-relaxed">
+                Ler obras com múltiplos pontos de vista ativa as redes neuronais de Teoria da Mente (ToM), refinando a capacidade de decodificar intenções complexas, antecipar reações humanas e tomar decisões em ambientes sociais de alta incerteza.
+              </p>
+            </div>
+            <div class="pt-3 border-t border-divider/60 flex flex-col gap-1">
+              <span class="font-technical text-[10px] text-textSecondary/80 uppercase tracking-wider">Evidência Científica:</span>
+              <p class="font-interface text-[11px] text-textSecondary italic">
+                Kidd & Castano (Science, 2013 / Univ. de Toronto): A leitura profunda expande a sensibilidade empática e a acurácia na inferência de estados mentais.
+              </p>
+            </div>
+          </div>
+
+          <!-- Benefício 5: Redução de Estresse & Foco Calmo -->
+          <div class="p-7 rounded-3xl bg-white/[0.02] border border-divider hover:border-accent/40 transition-all duration-300 flex flex-col justify-between gap-5 group">
+            <div class="flex flex-col gap-3.5">
+              <div class="flex items-center justify-between">
+                <div class="w-10 h-10 rounded-2xl bg-accent/15 border border-accent/30 text-accent flex items-center justify-center group-hover:scale-105 transition-transform">
+                  <HeartPulseIcon class="w-5 h-5" />
+                </div>
+                <span class="font-technical text-[9px] uppercase tracking-wider text-accent font-semibold px-2.5 py-1 rounded-md bg-accent/10 border border-accent/20">
+                  Sussex Univ. · 68% Alívio
+                </span>
+              </div>
+              <h3 class="font-editorial text-xl sm:text-2xl font-light text-textPrimary group-hover:text-accent transition-colors">
+                Desaceleração Fisiológica do Estresse
+              </h3>
+              <p class="font-interface text-xs sm:text-sm text-textSecondary leading-relaxed">
+                Apenas 6 minutos de leitura concentrada em ambiente sem distrações desaceleram os batimentos cardíacos e diminuem a tensão muscular, ativando o sistema nervoso parassimpático e restabelecendo o foco atencional.
+              </p>
+            </div>
+            <div class="pt-3 border-t border-divider/60 flex flex-col gap-1">
+              <span class="font-technical text-[10px] text-textSecondary/80 uppercase tracking-wider">Evidência Científica:</span>
+              <p class="font-interface text-[11px] text-textSecondary italic">
+                Dr. David Lewis (Mindlab / University of Sussex): Ler em silêncio reduz o estresse em até 68%, superando caminhar (42%) ou ouvir música (61%).
+              </p>
+            </div>
+          </div>
+
+          <!-- Benefício 6: Fluência Verbal & Densidade Lexical -->
+          <div class="p-7 rounded-3xl bg-white/[0.02] border border-divider hover:border-accent/40 transition-all duration-300 flex flex-col justify-between gap-5 group">
+            <div class="flex flex-col gap-3.5">
+              <div class="flex items-center justify-between">
+                <div class="w-10 h-10 rounded-2xl bg-accent/15 border border-accent/30 text-accent flex items-center justify-center group-hover:scale-105 transition-transform">
+                  <GraduationCapIcon class="w-5 h-5" />
+                </div>
+                <span class="font-technical text-[9px] uppercase tracking-wider text-accent font-semibold px-2.5 py-1 rounded-md bg-accent/10 border border-accent/20">
+                  UCL & Oxford
+                </span>
+              </div>
+              <h3 class="font-editorial text-xl sm:text-2xl font-light text-textPrimary group-hover:text-accent transition-colors">
+                Fluência Verbal & Articulação de Ideias
+              </h3>
+              <p class="font-interface text-xs sm:text-sm text-textSecondary leading-relaxed">
+                A exposição a vocabulários ricos e estruturas sintáticas variadas amplifica a precisão conceitual. Indivíduos que leem livros comunicam teses com maior clareza, persuasão e autoridade intelectual.
+              </p>
+            </div>
+            <div class="pt-3 border-t border-divider/60 flex flex-col gap-1">
+              <span class="font-technical text-[10px] text-textSecondary/80 uppercase tracking-wider">Evidência Científica:</span>
+              <p class="font-interface text-[11px] text-textSecondary italic">
+                Centre for Longitudinal Studies (UCL): O hábito da leitura na vida adulta é o maior preditor isolado de crescimento no vocabulário e na cognição verbal.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. SEÇÃO CIENTÍFICA II: A CIÊNCIA DA ANOTAÇÃO & RETENÇÃO DEFINITIVA (SEGUNDO CÉREBRO) -->
+      <section id="ciencia-anotacao" class="p-8 sm:p-12 rounded-3xl bg-gradient-to-br from-white/[0.03] via-bgPanel to-bgPanel border border-divider shadow-2xl flex flex-col gap-10 scroll-mt-10">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div class="flex flex-col gap-3 max-w-2xl">
+            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-accent/15 border border-accent/30 text-accent font-technical text-[10px] sm:text-[11px] uppercase tracking-widest font-semibold w-fit">
+              <LayersIcon class="w-3.5 h-3.5" />
+              <span>Ciência da Aprendizagem & Memória de Longo Prazo</span>
+            </div>
+            <h2 class="font-editorial text-3xl sm:text-4xl md:text-5xl font-light text-textPrimary leading-tight">
+              Por que anotar <span class="text-accent italic font-normal">multiplica a retenção</span> e transforma leitura em competência
+            </h2>
+            <p class="font-interface text-sm sm:text-base text-textSecondary leading-relaxed">
+              Sublinhar passivamente ou apenas reler cria a <em>ilusão de competência</em>: você reconhece o texto, mas não o domina. Anotar reflexivamente, conectar ideias em um grafo e praticar recuperação ativa são os únicos métodos com suporte empírico para fixação perene.
+            </p>
+          </div>
+
+          <NuxtLink
+            to="/curva-do-esquecimento"
+            class="px-5 py-3 rounded-full bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 border border-divider hover:border-accent/40 text-textPrimary font-interface text-xs transition-all flex items-center gap-2 shrink-0 self-start md:self-auto shadow-sm group"
+          >
+            <InfoIcon class="w-4 h-4 text-accent group-hover:scale-110 transition-transform" />
+            <span>Ver Curva de Esquecimento</span>
+            <ArrowRightIcon class="w-3.5 h-3.5 text-textSecondary group-hover:text-textPrimary transition-colors" />
+          </NuxtLink>
+        </div>
+
+        <!-- Pilares Científicos da Anotação e Retenção -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+          <!-- Pilar de Anotação 1: Níveis de Processamento -->
+          <div class="p-6 rounded-2xl bg-black/[0.02] dark:bg-black/40 border border-divider flex flex-col justify-between gap-4">
+            <div class="flex flex-col gap-2.5">
+              <div class="flex items-center justify-between">
+                <span class="font-technical text-[9px] uppercase tracking-widest text-accent font-semibold">Teoria Semântica</span>
+                <span class="font-technical text-[9px] text-textSecondary">1972 / 1975</span>
+              </div>
+              <h4 class="font-editorial text-lg text-textPrimary font-light">Processamento Semântico Profundo</h4>
+              <p class="font-interface text-xs text-textSecondary leading-relaxed">
+                Anotar conceitos com suas próprias palavras força o cérebro a decodificar significados profundos, gerando traços de memória duradouros que a leitura passiva não consegue criar.
+              </p>
+            </div>
+            <div class="pt-2 border-t border-divider/40 font-technical text-[10px] text-textSecondary/90 italic">
+              Craik & Lockhart (JEP): A profundidade do processamento determina a retenção mnemônica.
+            </div>
+          </div>
+
+          <!-- Pilar de Anotação 2: Efeito de Geração -->
+          <div class="p-6 rounded-2xl bg-black/[0.02] dark:bg-black/40 border border-divider flex flex-col justify-between gap-4">
+            <div class="flex flex-col gap-2.5">
+              <div class="flex items-center justify-between">
+                <span class="font-technical text-[9px] uppercase tracking-widest text-accent font-semibold">Síntese Ativa</span>
+                <span class="font-technical text-[9px] text-textSecondary">Psychol. Sci.</span>
+              </div>
+              <h4 class="font-editorial text-lg text-textPrimary font-light">Efeito de Geração & Síntese</h4>
+              <p class="font-interface text-xs text-textSecondary leading-relaxed">
+                Ao selecionar e sintetizar passagens-chave em vez de copiar passivamente, a mente reorganiza o conhecimento e potencializa a capacidade de generalização e aplicação prática.
+              </p>
+            </div>
+            <div class="pt-2 border-t border-divider/40 font-technical text-[10px] text-textSecondary/90 italic">
+              Mueller & Oppenheimer (Princeton & UCLA): Síntese ativa gera compreensão conceitual superior.
+            </div>
+          </div>
+
+          <!-- Pilar de Anotação 3: Retrieval Practice -->
+          <div class="p-6 rounded-2xl bg-black/[0.02] dark:bg-black/40 border border-divider flex flex-col justify-between gap-4">
+            <div class="flex flex-col gap-2.5">
+              <div class="flex items-center justify-between">
+                <span class="font-technical text-[9px] uppercase tracking-widest text-accent font-semibold">Testing Effect</span>
+                <span class="font-technical text-[9px] text-textSecondary">Science 2006</span>
+              </div>
+              <h4 class="font-editorial text-lg text-textPrimary font-light">Recuperação Ativa de Memória</h4>
+              <p class="font-interface text-xs text-textSecondary leading-relaxed">
+                O Aresta converte suas anotações em flashcards. Responder perguntas a partir das anotações consolida sinapses e retém até 80% mais dados a longo prazo do que apenas reler.
+              </p>
+            </div>
+            <div class="pt-2 border-t border-divider/40 font-technical text-[10px] text-textSecondary/90 italic">
+              Roediger & Karpicke (Science): Testar e recuperar ativamente supera qualquer releitura passiva.
+            </div>
+          </div>
+
+          <!-- Pilar de Anotação 4: Carga Cognitiva & Grafos -->
+          <div class="p-6 rounded-2xl bg-black/[0.02] dark:bg-black/40 border border-divider flex flex-col justify-between gap-4">
+            <div class="flex flex-col gap-2.5">
+              <div class="flex items-center justify-between">
+                <span class="font-technical text-[9px] uppercase tracking-widest text-accent font-semibold">Mente Estendida</span>
+                <span class="font-technical text-[9px] text-textSecondary">Cognitive Load</span>
+              </div>
+              <h4 class="font-editorial text-lg text-textPrimary font-light">Externalização em Grafo Vivo</h4>
+              <p class="font-interface text-xs text-textSecondary leading-relaxed">
+                Conectar notas em um grafo visual descarrega a memória de trabalho (capacidade finita de 4 a 7 itens), liberando largura de banda mental para insights interdisciplinares e criatividade.
+              </p>
+            </div>
+            <div class="pt-2 border-t border-divider/40 font-technical text-[10px] text-textSecondary/90 italic">
+              Sweller & Clark/Chalmers: Mapas e nós conceituais reduzem a sobrecarga cognitiva extrínseca.
+            </div>
+          </div>
+        </div>
+
+        <!-- Box de Destaque / Comparativo: Leitura Passiva vs Sistema Aresta -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 pt-2">
+          <div class="p-6 rounded-2xl bg-red-500/[0.04] border border-red-500/20 flex flex-col gap-3">
+            <div class="flex items-center gap-2 text-red-400 font-technical text-xs uppercase tracking-wider font-semibold">
+              <ZapOffIcon class="w-4 h-4" />
+              <span>O Ciclo Ineficiente da Leitura Tradicional</span>
+            </div>
+            <p class="font-interface text-xs sm:text-sm text-textSecondary leading-relaxed">
+              Você lê um livro de 300 páginas sem anotar ou grifando passivamente. Em 48 horas, 70% das teses foram esquecidas (Curva de Ebbinghaus). Ao final de 6 meses, restam apenas vagas impressões e nenhuma capacidade real de citar, aplicar ou cruzar conceitos no trabalho.
+            </p>
+          </div>
+
+          <div class="p-6 rounded-2xl bg-accent/[0.08] border border-accent/30 flex flex-col gap-3">
+            <div class="flex items-center gap-2 text-accent font-technical text-xs uppercase tracking-wider font-semibold">
+              <SparklesIcon class="w-4 h-4" />
+              <span>O Fluxo Científico Integrado do Aresta</span>
+            </div>
+            <p class="font-interface text-xs sm:text-sm text-textPrimary/90 leading-relaxed">
+              Você lê com foco limpo, anota reflexões sem fricção, visualiza conceitos se conectando no grafo de conhecimento e revisa micro-flashcards diários com repetição espaçada. O resultado é a transferência definitiva do conteúdo para a sua memória de longo prazo e competência prática.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. SEÇÃO DE INDAGAÇÕES E TRANSFORMAÇÃO PRÁTICA (COPYWRITING PERSUASIVO) -->
       <section class="flex flex-col gap-8">
         <div class="flex flex-col items-start text-left gap-2 max-w-3xl">
           <div class="font-technical text-[10px] uppercase font-semibold tracking-widest text-accent flex items-center gap-2">
@@ -350,7 +646,7 @@
             Para quem busca clareza e domínio em um mundo de atenção fragmentada
           </h2>
           <p class="font-interface text-sm sm:text-base text-textSecondary leading-relaxed">
-            A maioria das pessoas lê dezenas de artigos e livros, mas esquece quase tudo em semanas. Como seria sua rotina se cada página lida se transformasse em competência permanente?
+            A maioria das pessoas lê dezenas de artigos e livros, mas esquece quase tudo em semanas. Como seria sua rotina se cada página lida se transformasse em competência permanente embasada pela neurociência?
           </p>
         </div>
 
@@ -417,13 +713,13 @@
         </div>
       </section>
 
-      <!-- 3. SEÇÃO DE FILOSOFIA: MINIMALISMO & TECNOLOGIA CALMA (ANTI-DOPAMINA) -->
+      <!-- 6. SEÇÃO DE FILOSOFIA: MINIMALISMO & TECNOLOGIA CALMA (ANTI-DOPAMINA) -->
       <section class="p-8 sm:p-10 rounded-3xl bg-gradient-to-br from-white/[0.04] via-white/[0.02] to-transparent border border-divider flex flex-col gap-8">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div class="flex flex-col gap-2 max-w-2xl">
             <div class="font-technical text-[10px] uppercase font-semibold tracking-widest text-accent flex items-center gap-2">
               <ZapOffIcon class="w-4 h-4" />
-              A Filosofia do Aresta
+              A Filosofia do Aresta · Neurobiologia da Atenção
             </div>
             <h2 class="font-editorial text-2xl sm:text-3xl md:text-4xl font-light text-textPrimary leading-tight">
               Por que o Aresta é intencionalmente minimalista e anti-dopaminérgico?
@@ -440,29 +736,38 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
           <div class="p-5 rounded-2xl bg-black/[0.02] dark:bg-black/40 border border-divider flex flex-col gap-2.5">
-            <h4 class="font-editorial text-lg text-textPrimary">Silêncio Cognitivo</h4>
+            <div class="flex items-center justify-between">
+              <h4 class="font-editorial text-lg text-textPrimary">Silêncio Cognitivo</h4>
+              <span class="font-technical text-[9px] uppercase tracking-wider text-accent">Zero Ruído</span>
+            </div>
             <p class="font-interface text-xs text-textSecondary leading-relaxed">
               Sem banners, sem pop-ups estridentes e sem notificações viciantes. Uma interface limpa que desaparece para que apenas você e a linha de raciocínio existam.
             </p>
           </div>
 
           <div class="p-5 rounded-2xl bg-black/[0.02] dark:bg-black/40 border border-divider flex flex-col gap-2.5">
-            <h4 class="font-editorial text-lg text-textPrimary">Foco Sustentado</h4>
+            <div class="flex items-center justify-between">
+              <h4 class="font-editorial text-lg text-textPrimary">Foco Sustentado</h4>
+              <span class="font-technical text-[9px] uppercase tracking-wider text-accent">Baixa Dopamina</span>
+            </div>
             <p class="font-interface text-xs text-textSecondary leading-relaxed">
               Substituímos o vício em micro-recompensas rápidas pelo prazer autêntico da leitura contínua. Treine sua musculatura de concentração página por página.
             </p>
           </div>
 
           <div class="p-5 rounded-2xl bg-black/[0.02] dark:bg-black/40 border border-divider flex flex-col gap-2.5">
-            <h4 class="font-editorial text-lg text-textPrimary">Processamento Ativo</h4>
+            <div class="flex items-center justify-between">
+              <h4 class="font-editorial text-lg text-textPrimary">Processamento Ativo</h4>
+              <span class="font-technical text-[9px] uppercase tracking-wider text-accent">Digestão Semântica</span>
+            </div>
             <p class="font-interface text-xs text-textSecondary leading-relaxed">
-              Ler sem refletir é passividade. O Aresta transforma você em um leitor ativo que destaca teses, gera perguntas de flashcard e tece conexões conceituais.
+              Ler sem refletir é passividade. O Aresta transforma você em um leitor ativo que destaca teses, gera perguntas de flashcard e tece conexões conceituais no grafo.
             </p>
           </div>
         </div>
       </section>
 
-      <!-- 4. FUNCIONALIDADES DO ECOSSISTEMA ARESTA (PILARES) -->
+      <!-- 7. FUNCIONALIDADES DO ECOSSISTEMA ARESTA (PILARES) -->
       <section id="pilares" class="flex flex-col gap-8 scroll-mt-10">
         <div class="flex flex-col items-center text-center gap-2 max-w-2xl mx-auto">
           <div class="font-technical text-[10px] uppercase font-semibold tracking-widest text-accent">
@@ -472,7 +777,7 @@
             O Ecossistema Completo do Leitor
           </h2>
           <p class="font-interface text-sm sm:text-base text-textSecondary leading-relaxed">
-            Cada ferramenta foi desenhada como uma extensão do seu pensamento, unindo leitura, memória e conexão.
+            Cada ferramenta foi desenhada como uma extensão do seu pensamento, unindo leitura, memória e conexão com suporte da ciência cognitiva.
           </p>
         </div>
 
@@ -495,7 +800,7 @@
             </div>
             <h3 class="font-editorial text-lg font-light text-textPrimary">Grafo Conceitual</h3>
             <p class="font-interface text-xs text-textSecondary leading-relaxed">
-              Conecte nós de temas e ideias entre diferentes obras em um mapa mental vivo e navegável que se expande junto com seu conhecimento.
+              Conecte nós de temas e ideias entre diferentes obras em um mapa mental vivo e navegável baseado na Teoria da Mente Estendida.
             </p>
           </div>
 
@@ -523,7 +828,7 @@
         </div>
       </section>
 
-      <!-- 5. A CIÊNCIA DA RETENÇÃO & CURVA DO ESQUECIMENTO (COLOCADA APÓS A DESCRIÇÃO DO PRODUTO) -->
+      <!-- 8. A CIÊNCIA DA RETENÇÃO & CURVA DO ESQUECIMENTO (COLOCADA APÓS A DESCRIÇÃO DO PRODUTO) -->
       <section class="p-6 sm:p-8 rounded-3xl bg-bgPanel border border-divider shadow-2xl flex flex-col gap-6">
         <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div class="flex flex-col gap-1.5 max-w-2xl">
@@ -557,7 +862,7 @@
         </div>
       </section>
 
-      <!-- 6. SEÇÃO DE CONVERSÃO / EXPERIMENTE O ARESTA (CHAMADA PARA AÇÃO COM LINKS DEDICADOS) -->
+      <!-- 9. SEÇÃO DE CONVERSÃO / EXPERIMENTE O ARESTA (CHAMADA PARA AÇÃO COM LINKS DEDICADOS) -->
       <section id="comece-agora" class="flex flex-col lg:flex-row items-center justify-between gap-8 p-8 sm:p-12 rounded-3xl bg-bgPanel border border-divider shadow-2xl">
         <div class="flex flex-col gap-4 text-left max-w-2xl">
           <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-accent/15 border border-accent/30 text-accent font-technical text-[10px] uppercase tracking-widest font-semibold w-fit">
@@ -637,7 +942,12 @@ import {
   TargetIcon,
   GraduationCapIcon,
   CompassIcon,
-  CheckCircle2Icon
+  CheckCircle2Icon,
+  MicroscopeIcon,
+  HeartPulseIcon,
+  ShieldCheckIcon,
+  LayersIcon,
+  LightbulbIcon
 } from 'lucide-vue-next'
 import ReadingStreak from '~/components/ReadingStreak.vue'
 import EbbinghausChart from '~/components/EbbinghausChart.vue'
