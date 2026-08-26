@@ -1,0 +1,59 @@
+================================================================================
+ARQUITETURA & FLUXO DE DADOS: ARESTA-OCR SERVICE (GO + GEMINI + SOLID DIP)
+================================================================================
+
+                           ┌───────────────────────────┐
+                           │    aresta-back-node /     │
+                           │     gRPC Client           │
+                           └─────────────┬─────────────┘
+                                         │
+                                         │ 1. ExtractText(bytes, mimeType)
+                                         ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  aresta-ocr Service (gRPC Transport Layer)                                  │
+│                                                                              │
+│  ┌────────────────────────────────────────────────────────────────────────┐  │
+│  │ internal/transport/grpc/handler.go                                     │  │
+│  │                                                                        │  │
+│  │ - Valida payload gRPC (ExtractTextRequest)                             │  │
+│  │ - Mapeia para domain.ExtractRequest                                    │  │
+│  │ - Chama extractor.ExtractText(ctx, req)                                │  │
+│  └───────────────────────────────────┬────────────────────────────────────┘  │
+│                                      │                                       │
+│                                      │ 2. Depende apenas da Interface (DIP)  │
+│                                      ▼                                       │
+│  ┌────────────────────────────────────────────────────────────────────────┐  │
+│  │ internal/domain/extractor.go (SOLID Abstraction)                       │  │
+│  │                                                                        │  │
+│  │   type TextExtractor interface {                                       │  │
+│  │       ExtractText(ctx, req) (*ExtractResult, error)                    │  │
+│  │   }                                                                    │  │
+│  └───────────────────────────────────┬────────────────────────────────────┘  │
+│                                      │                                       │
+│                     ┌────────────────┴────────────────┐                      │
+│                     │                                 │                      │
+│                     ▼                                 ▼                      │
+│  ┌─────────────────────────────────────┐   ┌──────────────────────────────┐  │
+│  │ internal/adapters/gemini            │   │ internal/adapters/mock       │  │
+│  │                                     │   │                              │  │
+│  │ • Strict System Instruction         │   │ • MockExtractor para testes  │  │
+│  │ • Model: gemini-flash-latest        │   │   unitários ultra rápidos    │  │
+│  │ • SDK: google.golang.org/genai      │   │ • Zero chamadas de rede      │  │
+│  │ • Output Sanitizer (strip wrapper)  │   └──────────────────────────────┘  │
+│  └──────────────────┬──────────────────┘                                     │
+│                     │                                                        │
+└─────────────────────┼────────────────────────────────────────────────────────┘
+                      │
+                      │ 3. HTTPS REST/gRPC API Call (Image Part + System Prompt)
+                      ▼
+       ┌──────────────────────────────┐
+       │   Google Gemini Flash API    │
+       │   (gemini-flash-latest)      │
+       └──────────────┬───────────────┘
+                      │
+                      │ 4. Retorna transcrição estrita do texto
+                      ▼
+       ┌──────────────────────────────┐
+       │     Sanitizer & Response     │
+       │    (Apenas a escrita pura)   │
+       └──────────────────────────────┘
