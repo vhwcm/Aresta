@@ -5,6 +5,24 @@
 @tailwind utilities;
 
 :root {
+  --bg-app: #F8F9FA;
+  --bg-panel: #FFFFFF;
+  --text-primary: #18191B;
+  --text-secondary: #6B7280;
+  --accent: #E57B55;
+  --divider: rgba(0, 0, 0, 0.08);
+  --color-bg: #F8F9FA;
+  --color-surface: #FFFFFF;
+  --color-border: rgba(0, 0, 0, 0.08);
+  --color-text-primary: #18191B;
+  --color-text-secondary: #6B7280;
+  --color-accent: #E57B55;
+  --color-error: #EF4444;
+}
+
+[data-theme="dark"],
+html.dark-theme,
+body.dark-theme {
   --bg-app: #0A0A0B;
   --bg-panel: #121315;
   --text-primary: #F2F2F2;
@@ -27,14 +45,14 @@ body.light-theme {
   --bg-panel: #FFFFFF;
   --text-primary: #18191B;
   --text-secondary: #6B7280;
-  --accent: #D9653B;
+  --accent: #E57B55;
   --divider: rgba(0, 0, 0, 0.08);
   --color-bg: #F8F9FA;
   --color-surface: #FFFFFF;
   --color-border: rgba(0, 0, 0, 0.08);
   --color-text-primary: #18191B;
   --color-text-secondary: #6B7280;
-  --color-accent: #D9653B;
+  --color-accent: #E57B55;
   --color-error: #EF4444;
 }
 
@@ -44,8 +62,8 @@ body.light-theme {
   }
 
   ::selection {
-    background-color: rgba(229, 123, 85, 0.3);
-    color: #ffffff;
+    background-color: rgba(229, 123, 85, 0.25);
+    color: inherit;
   }
 }
 

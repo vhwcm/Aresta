@@ -34,7 +34,7 @@ const settings = reactive<SettingsState>({
   language: 'pt-BR',
   epubFontSize: 18,
   epubFontFamily: 'newsreader',
-  themeMode: 'dark',
+  themeMode: 'light',
   desktopHomeGraphOpen: true,
   desktopReaderGraphOpen: true,
 })
@@ -46,7 +46,7 @@ export function resetSettingsForTesting() {
   settings.language = 'pt-BR'
   settings.epubFontSize = 18
   settings.epubFontFamily = 'newsreader'
-  settings.themeMode = 'dark'
+  settings.themeMode = 'light'
   settings.desktopHomeGraphOpen = true
   settings.desktopReaderGraphOpen = true
   isInitialized = false
@@ -60,10 +60,18 @@ export function applyTheme(mode: ThemeMode) {
   root.setAttribute('data-theme', mode)
   if (mode === 'light') {
     root.classList.add('light-theme')
-    if (body) body.classList.add('light-theme')
+    root.classList.remove('dark-theme')
+    if (body) {
+      body.classList.add('light-theme')
+      body.classList.remove('dark-theme')
+    }
   } else {
     root.classList.remove('light-theme')
-    if (body) body.classList.remove('light-theme')
+    root.classList.add('dark-theme')
+    if (body) {
+      body.classList.remove('light-theme')
+      body.classList.add('dark-theme')
+    }
   }
 }
 
