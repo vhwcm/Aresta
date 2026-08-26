@@ -7,7 +7,7 @@
   >
     <!-- Container Principal da Navbar com transição suave de expansão lateral -->
     <nav
-      class="relative flex items-center h-14 md:h-16 rounded-2xl bg-bgPanel/90 backdrop-blur-xl border border-divider shadow-xl transition-all duration-300 ease-in-out"
+      class="relative flex items-center h-14 md:h-16 rounded-2xl bg-bgPanel border border-divider shadow-2xl transition-all duration-300 ease-in-out"
       :class="[
         isCollapsed
           ? 'w-14 md:w-16 px-0 justify-center'
@@ -62,7 +62,7 @@
           <!-- Dropdown Flutuante de Livros (Um debaixo do outro) -->
           <div
             v-if="isBooksOpen"
-            class="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 w-60 md:w-64 p-2 rounded-2xl bg-bgPanel/95 backdrop-blur-xl border border-divider shadow-2xl flex flex-col gap-1 z-50 animate-in fade-in zoom-in-95 duration-200"
+            class="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 w-60 md:w-64 p-2 rounded-2xl bg-bgPanel border border-divider shadow-2xl flex flex-col gap-1 z-50 animate-in fade-in zoom-in-95 duration-200"
           >
             <!-- 1. Meus Livros -->
             <NuxtLink
