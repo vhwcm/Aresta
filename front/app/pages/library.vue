@@ -14,11 +14,11 @@
 
       <!-- Tab Navigation & Action -->
       <div class="flex items-center gap-3">
-        <div class="flex items-center bg-white/5 p-1 rounded-full border border-divider w-max">
+        <div class="flex items-center bg-black/5 dark:bg-white/5 p-1 rounded-full border border-divider w-max">
           <button
             @click="activeTab = 'catalog'"
             class="px-6 py-2 rounded-full font-interface text-sm font-medium transition-all duration-300 flex items-center gap-2"
-            :class="activeTab === 'catalog' ? 'bg-white text-black shadow-lg' : 'text-textSecondary hover:text-white'"
+            :class="activeTab === 'catalog' ? 'bg-textPrimary text-bgApp shadow-md' : 'text-textSecondary hover:text-textPrimary'"
           >
             <CompassIcon class="w-4 h-4" />
             Catálogo Geral
@@ -26,7 +26,7 @@
           <button
             @click="handleSelectMyBooksTab"
             class="px-6 py-2 rounded-full font-interface text-sm font-medium transition-all duration-300 flex items-center gap-2"
-            :class="activeTab === 'my-books' ? 'bg-white text-black shadow-lg' : 'text-textSecondary hover:text-white'"
+            :class="activeTab === 'my-books' ? 'bg-textPrimary text-bgApp shadow-md' : 'text-textSecondary hover:text-textPrimary'"
           >
             <LibraryIcon class="w-4 h-4" />
             Minha Estante
@@ -166,7 +166,7 @@
           :key="filter"
           @click="statusFilter = filter"
           class="px-3 py-1 rounded-xl text-xs font-technical transition-all"
-          :class="statusFilter === filter ? 'bg-accent text-white font-bold shadow' : 'bg-white/5 text-textSecondary hover:text-white'"
+          :class="statusFilter === filter ? 'bg-accent text-white font-bold shadow' : 'bg-white/5 text-textSecondary hover:text-textPrimary'"
         >
           {{ getFilterLabel(filter) }}
         </button>
@@ -240,7 +240,7 @@
 
             <NuxtLink
               to="/grafo"
-              class="p-3 rounded-xl bg-white/5 border border-divider text-textSecondary hover:text-white transition-all"
+              class="p-3 rounded-xl bg-white/5 border border-divider text-textSecondary hover:text-textPrimary transition-all"
               title="Ver no Mapa Mental"
             >
               <NetworkIcon class="w-4 h-4" />
@@ -285,7 +285,7 @@
         </div>
 
         <div class="flex items-center justify-center gap-3 pt-2">
-          <button @click="isLoginModalOpen = false" class="px-5 py-2.5 rounded-xl border border-divider text-xs text-textSecondary hover:text-white transition-all">
+          <button @click="isLoginModalOpen = false" class="px-5 py-2.5 rounded-xl border border-divider text-xs text-textSecondary hover:text-textPrimary transition-all">
             Continuar Explorando
           </button>
           <NuxtLink to="/login" class="px-6 py-2.5 rounded-xl bg-accent text-white font-semibold text-xs hover:bg-accent/90 transition-all shadow-lg">

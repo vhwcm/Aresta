@@ -108,8 +108,13 @@ const handleLogin = async () => {
 
   if (result.success) {
     await loadFromServer()
-    const redirectUrl = ((route.query as any).redirect as string) || '/users'
-    navigateTo(redirectUrl)
+    const redirectUrl = ((route.query as any).redirect as string) || '/'
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+      document.documentElement.scrollTop = 0
+      document.body.scrollTop = 0
+    }
+    await navigateTo(redirectUrl)
   } else {
     errorMessage.value = result.error || 'Falha ao autenticar. Verifique o usuário e a senha.'
   }

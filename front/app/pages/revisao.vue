@@ -15,11 +15,11 @@
       </div>
 
       <!-- Abas Internas da Revisão -->
-      <div class="flex items-center bg-white/5 p-1 rounded-2xl border border-divider">
+      <div class="flex items-center bg-black/5 dark:bg-white/5 p-1 rounded-2xl border border-divider">
         <button
           @click="activeTab = 'flashcards'"
           class="px-5 py-2 rounded-xl font-interface text-xs font-medium transition-all flex items-center gap-2"
-          :class="activeTab === 'flashcards' ? 'bg-accent text-white shadow-md' : 'text-textSecondary hover:text-white'"
+          :class="activeTab === 'flashcards' ? 'bg-accent text-white shadow-md' : 'text-textSecondary hover:text-textPrimary'"
         >
           <LayersIcon class="w-4 h-4" />
           Flashcards ({{ cards.length }})
@@ -27,7 +27,7 @@
         <button
           @click="activeTab = 'summaries'"
           class="px-5 py-2 rounded-xl font-interface text-xs font-medium transition-all flex items-center gap-2"
-          :class="activeTab === 'summaries' ? 'bg-accent text-white shadow-md' : 'text-textSecondary hover:text-white'"
+          :class="activeTab === 'summaries' ? 'bg-accent text-white shadow-md' : 'text-textSecondary hover:text-textPrimary'"
         >
           <FileTextIcon class="w-4 h-4" />
           Resumos & Anotações ({{ summaries.length }})

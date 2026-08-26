@@ -24,10 +24,27 @@
 </template>
 
 <script setup lang="ts">
+import { watch, nextTick } from 'vue'
 import BottomNavbar from '~/components/BottomNavbar.vue'
 import CommandPalette from '~/components/CommandPalette.vue'
 import { useAuth } from '~/composables/useAuth'
 
 const route = useRoute()
 const auth = useAuth()
+
+watch(
+  () => route.fullPath,
+  async () => {
+    if (typeof window !== 'undefined') {
+      await nextTick()
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+      document.documentElement.scrollTop = 0
+      document.body.scrollTop = 0
+      const mainElem = document.querySelector('main')
+      if (mainElem) {
+        mainElem.scrollTop = 0
+      }
+    }
+  }
+)
 </script>

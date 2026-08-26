@@ -757,7 +757,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import {
   ArrowRightIcon,
   BrainIcon,
@@ -864,6 +864,34 @@ const registerPassword = ref('')
 const isAuthLoading = ref(false)
 const authError = ref('')
 
+const resetScrollToTop = () => {
+  if (typeof window !== 'undefined') {
+    if (window.location.hash) {
+      window.history.replaceState(null, '', window.location.pathname)
+    }
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+    document.documentElement.scrollTop = 0
+    document.body.scrollTop = 0
+    const mainElem = document.querySelector('main')
+    if (mainElem) {
+      mainElem.scrollTop = 0
+    }
+  }
+}
+
+watch(
+  () => auth.isLoggedIn.value,
+  async (loggedIn) => {
+    if (loggedIn) {
+      await nextTick()
+      resetScrollToTop()
+      if (typeof window !== 'undefined') {
+        window.requestAnimationFrame(() => resetScrollToTop())
+      }
+    }
+  }
+)
+
 const handleQuickLogin = async () => {
   isAuthLoading.value = true
   authError.value = ''
@@ -872,12 +900,15 @@ const handleQuickLogin = async () => {
   isAuthLoading.value = false
 
   if (result.success) {
+    resetScrollToTop()
     void loadFromServer()
     try {
       await fetchUserBooks()
     } catch (e) {
       // Silencioso
     }
+    await nextTick()
+    resetScrollToTop()
   } else {
     authError.value = result.error || 'Falha ao autenticar. Verifique o usuário e a senha.'
   }
@@ -891,12 +922,15 @@ const handleQuickRegister = async () => {
   isAuthLoading.value = false
 
   if (result.success) {
+    resetScrollToTop()
     void loadFromServer()
     try {
       await fetchUserBooks()
     } catch (e) {
       // Silencioso
     }
+    await nextTick()
+    resetScrollToTop()
   } else {
     authError.value = result.error || 'Falha ao registrar usuário.'
   }
@@ -913,6 +947,7 @@ onMounted(async () => {
   }
 
   if (auth.isLoggedIn.value) {
+    resetScrollToTop()
     try {
       await fetchUserBooks()
     } catch (e) {
