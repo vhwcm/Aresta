@@ -166,6 +166,121 @@ export class UserBookController {
 
   /**
    * @openapi
+   * /api/user-books/{id}/themes:
+   *   put:
+   *     summary: Definir todos os temas/tags de um livro da estante
+   *     tags: [UserBooks]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: integer
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required: [themeIds]
+   *             properties:
+   *               themeIds:
+   *                 type: array
+   *                 items:
+   *                   type: integer
+   *     responses:
+   *       200:
+   *         description: Livro atualizado com os novos temas
+   */
+  setThemes = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const userId = this.getUserId(req);
+      const id = parseInt(req.params.id, 10);
+      const updated = await this.userBookService.setThemes(id, userId, req.body.themeIds);
+      return res.status(200).json(updated);
+    } catch (error) {
+      return next(error);
+    }
+  };
+
+  /**
+   * @openapi
+   * /api/user-books/{id}/themes:
+   *   post:
+   *     summary: Adicionar um tema/tag a um livro da estante
+   *     tags: [UserBooks]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: integer
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required: [themeId]
+   *             properties:
+   *               themeId:
+   *                 type: integer
+   *     responses:
+   *       200:
+   *         description: Tema vinculado ao livro
+   */
+  addTheme = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const userId = this.getUserId(req);
+      const id = parseInt(req.params.id, 10);
+      const updated = await this.userBookService.addTheme(id, userId, req.body.themeId);
+      return res.status(200).json(updated);
+    } catch (error) {
+      return next(error);
+    }
+  };
+
+  /**
+   * @openapi
+   * /api/user-books/{id}/themes/{themeId}:
+   *   delete:
+   *     summary: Remover um tema/tag de um livro da estante
+   *     tags: [UserBooks]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: integer
+   *       - in: path
+   *         name: themeId
+   *         required: true
+   *         schema:
+   *           type: integer
+   *     responses:
+   *       200:
+   *         description: Tema desvinculado do livro
+   */
+  removeTheme = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const userId = this.getUserId(req);
+      const id = parseInt(req.params.id, 10);
+      const themeId = parseInt(req.params.themeId, 10);
+      const updated = await this.userBookService.removeTheme(id, userId, themeId);
+      return res.status(200).json(updated);
+    } catch (error) {
+      return next(error);
+    }
+  };
+
+  /**
+   * @openapi
    * /api/user-books/book/{bookId}:
    *   delete:
    *     summary: Remover livro da estante por ID do livro

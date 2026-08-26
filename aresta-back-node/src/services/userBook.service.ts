@@ -3,11 +3,38 @@ import { AppError } from '../middlewares/error.middleware.js';
 import { CreateUserBookInput, UpdateUserBookInput } from '../schemas/userBook.schema.js';
 
 export class UserBookService {
+  private mapUserBook(ub: any) {
+    return {
+      id: ub.id,
+      userId: ub.user_id,
+      bookId: ub.book_id,
+      title: ub.book?.title ?? '',
+      coverPath: ub.book?.cover_path ?? null,
+      filePath: ub.book?.file_path ?? '',
+      status: ub.status,
+      currentPage: ub.current_page,
+      lastAccessedAt: ub.last_accessed_at,
+      createdAt: ub.created_at,
+      updatedAt: ub.updated_at,
+      themes: (ub.bookThemes || []).map((bt: any) => ({
+        id: bt.theme.id,
+        name: bt.theme.name,
+        color: bt.theme.color || '#E57B55',
+        description: bt.theme.description || '',
+      })),
+    };
+  }
+
   async getByUserId(userId: number) {
     const userBooks = await prisma.userBook.findMany({
       where: { user_id: userId },
       include: {
         book: true,
+        bookThemes: {
+          include: {
+            theme: true,
+          },
+        },
       },
       orderBy: [
         { last_accessed_at: 'desc' },
@@ -15,19 +42,7 @@ export class UserBookService {
       ],
     });
 
-    return userBooks.map((ub) => ({
-      id: ub.id,
-      userId: ub.user_id,
-      bookId: ub.book_id,
-      title: ub.book.title,
-      coverPath: ub.book.cover_path,
-      filePath: ub.book.file_path,
-      status: ub.status,
-      currentPage: ub.current_page,
-      lastAccessedAt: ub.last_accessed_at,
-      createdAt: ub.created_at,
-      updatedAt: ub.updated_at,
-    }));
+    return userBooks.map((ub) => this.mapUserBook(ub));
   }
 
   async getById(id: number) {
@@ -35,6 +50,11 @@ export class UserBookService {
       where: { id },
       include: {
         book: true,
+        bookThemes: {
+          include: {
+            theme: true,
+          },
+        },
       },
     });
 
@@ -42,19 +62,7 @@ export class UserBookService {
       throw new AppError(`Livro do usuário não encontrado com ID: ${id}`, 404);
     }
 
-    return {
-      id: ub.id,
-      userId: ub.user_id,
-      bookId: ub.book_id,
-      title: ub.book.title,
-      coverPath: ub.book.cover_path,
-      filePath: ub.book.file_path,
-      status: ub.status,
-      currentPage: ub.current_page,
-      lastAccessedAt: ub.last_accessed_at,
-      createdAt: ub.created_at,
-      updatedAt: ub.updated_at,
-    };
+    return this.mapUserBook(ub);
   }
 
   async addUserBook(userId: number, input: CreateUserBookInput) {
@@ -88,22 +96,15 @@ export class UserBookService {
       },
       include: {
         book: true,
+        bookThemes: {
+          include: {
+            theme: true,
+          },
+        },
       },
     });
 
-    return {
-      id: saved.id,
-      userId: saved.user_id,
-      bookId: saved.book_id,
-      title: saved.book.title,
-      coverPath: saved.book.cover_path,
-      filePath: saved.book.file_path,
-      status: saved.status,
-      currentPage: saved.current_page,
-      lastAccessedAt: saved.last_accessed_at,
-      createdAt: saved.created_at,
-      updatedAt: saved.updated_at,
-    };
+    return this.mapUserBook(saved);
   }
 
   async updateUserBook(id: number, input: UpdateUserBookInput) {
@@ -126,22 +127,15 @@ export class UserBookService {
       data: dataToUpdate,
       include: {
         book: true,
+        bookThemes: {
+          include: {
+            theme: true,
+          },
+        },
       },
     });
 
-    return {
-      id: updated.id,
-      userId: updated.user_id,
-      bookId: updated.book_id,
-      title: updated.book.title,
-      coverPath: updated.book.cover_path,
-      filePath: updated.book.file_path,
-      status: updated.status,
-      currentPage: updated.current_page,
-      lastAccessedAt: updated.last_accessed_at,
-      createdAt: updated.created_at,
-      updatedAt: updated.updated_at,
-    };
+    return this.mapUserBook(updated);
   }
 
   async recordAccess(id: number, userId: number) {
@@ -160,22 +154,104 @@ export class UserBookService {
       },
       include: {
         book: true,
+        bookThemes: {
+          include: {
+            theme: true,
+          },
+        },
       },
     });
 
-    return {
-      id: updated.id,
-      userId: updated.user_id,
-      bookId: updated.book_id,
-      title: updated.book.title,
-      coverPath: updated.book.cover_path,
-      filePath: updated.book.file_path,
-      status: updated.status,
-      currentPage: updated.current_page,
-      lastAccessedAt: updated.last_accessed_at,
-      createdAt: updated.created_at,
-      updatedAt: updated.updated_at,
-    };
+    return this.mapUserBook(updated);
+  }
+
+  async setThemes(userBookId: number, userId: number, themeIds: number[]) {
+    const userBook = await prisma.userBook.findFirst({
+      where: { id: userBookId, user_id: userId },
+    });
+
+    if (!userBook) {
+      throw new AppError('Livro não encontrado na estante do usuário.', 404);
+    }
+
+    // Validar temas do usuário
+    const validThemes = await prisma.theme.findMany({
+      where: {
+        id: { in: themeIds },
+        user_id: userId,
+      },
+    });
+
+    const validThemeIds = validThemes.map((t) => t.id);
+
+    await prisma.$transaction([
+      prisma.bookTheme.deleteMany({
+        where: { user_book_id: userBookId },
+      }),
+      ...validThemeIds.map((tId) =>
+        prisma.bookTheme.create({
+          data: {
+            user_book_id: userBookId,
+            theme_id: tId,
+          },
+        })
+      ),
+    ]);
+
+    return this.getById(userBookId);
+  }
+
+  async addTheme(userBookId: number, userId: number, themeId: number) {
+    const userBook = await prisma.userBook.findFirst({
+      where: { id: userBookId, user_id: userId },
+    });
+
+    if (!userBook) {
+      throw new AppError('Livro não encontrado na estante do usuário.', 404);
+    }
+
+    const theme = await prisma.theme.findFirst({
+      where: { id: themeId, user_id: userId },
+    });
+
+    if (!theme) {
+      throw new AppError('Tema não encontrado.', 404);
+    }
+
+    await prisma.bookTheme.upsert({
+      where: {
+        user_book_id_theme_id: {
+          user_book_id: userBookId,
+          theme_id: themeId,
+        },
+      },
+      update: {},
+      create: {
+        user_book_id: userBookId,
+        theme_id: themeId,
+      },
+    });
+
+    return this.getById(userBookId);
+  }
+
+  async removeTheme(userBookId: number, userId: number, themeId: number) {
+    const userBook = await prisma.userBook.findFirst({
+      where: { id: userBookId, user_id: userId },
+    });
+
+    if (!userBook) {
+      throw new AppError('Livro não encontrado na estante do usuário.', 404);
+    }
+
+    await prisma.bookTheme.deleteMany({
+      where: {
+        user_book_id: userBookId,
+        theme_id: themeId,
+      },
+    });
+
+    return this.getById(userBookId);
   }
 
   async deleteUserBook(id: number, userId: number) {

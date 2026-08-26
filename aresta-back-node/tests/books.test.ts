@@ -112,6 +112,47 @@ describe('Books Endpoints', () => {
       expect(res.status).toBe(200);
       expect(res.body.lastAccessedAt).toBeDefined();
     });
+
+    it('POST, PUT e DELETE /api/user-books/:id/themes deve gerenciar temas/tags do livro', async () => {
+      // 1. Criar dois temas
+      const theme1 = await prisma.theme.create({
+        data: { user_id: 1, name: 'Psicologia & Loucura', color: '#10B981' },
+      });
+      const theme2 = await prisma.theme.create({
+        data: { user_id: 1, name: 'Literatura Brasileira', color: '#6366F1' },
+      });
+
+      // 2. Adicionar theme1 via POST
+      const postRes = await request(app)
+        .post(`/api/user-books/${userBookId}/themes`)
+        .send({ themeId: theme1.id });
+      expect(postRes.status).toBe(200);
+      expect(postRes.body.themes).toBeDefined();
+      expect(postRes.body.themes.some((t: any) => t.id === theme1.id)).toBe(true);
+
+      // 3. Atualizar lista total via PUT com theme1 e theme2
+      const putRes = await request(app)
+        .put(`/api/user-books/${userBookId}/themes`)
+        .send({ themeIds: [theme1.id, theme2.id] });
+      expect(putRes.status).toBe(200);
+      expect(putRes.body.themes.length).toBe(2);
+
+      // 4. GET /api/user-books deve retornar o livro com os temas
+      const listRes = await request(app).get('/api/user-books');
+      expect(listRes.status).toBe(200);
+      const ub = listRes.body.find((b: any) => b.id === userBookId);
+      expect(ub).toBeDefined();
+      expect(ub.themes.length).toBe(2);
+
+      // 5. Remover theme1 via DELETE
+      const delRes = await request(app).delete(`/api/user-books/${userBookId}/themes/${theme1.id}`);
+      expect(delRes.status).toBe(200);
+      expect(delRes.body.themes.length).toBe(1);
+      expect(delRes.body.themes[0].id).toBe(theme2.id);
+
+      // Cleanup
+      await prisma.theme.deleteMany({ where: { id: { in: [theme1.id, theme2.id] } } });
+    });
   });
 });
 
