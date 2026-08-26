@@ -36,15 +36,19 @@ model Book {
 3. **Disponibilização e Streaming**:
    - O endpoint `GET /api/books/:id/download` serve o binário com cabeçalhos adequados de `Content-Type` e `Content-Disposition`.
    - O endpoint `GET /api/books/:id/cover` serve a imagem de capa em cache.
+4. **Vínculo com Nós/Temas do Grafo (`BookTheme`)**:
+   - Livros na estante do usuário (`UserBook`) podem ser associados a múltiplos nós do Grafo de Conhecimento (`Theme`).
+   - Os endpoints `PUT /api/user-books/:id/themes`, `POST /api/user-books/:id/themes` e `DELETE /api/user-books/:id/themes/:themeId` gerenciam esses vínculos.
+   - Na interface de estante (`/library`), as tags de temas são exibidas com as cores configuradas nos nós e permitem filtragem instantânea combinada com o status de leitura.
 
 ---
 
 ## 4. Código Relacionado
 - **Backend**:
-  - Controller: `aresta-back-node/src/controllers/book.controller.ts`
-  - Service: `aresta-back-node/src/services/book.service.ts`
-  - Routes: `aresta-back-node/src/routes/book.routes.ts`
-  - Schema: `aresta-back-node/src/schemas/book.schema.ts`
+  - Controllers: `aresta-back-node/src/controllers/book.controller.ts`, `aresta-back-node/src/controllers/userBook.controller.ts`
+  - Services: `aresta-back-node/src/services/book.service.ts`, `aresta-back-node/src/services/userBook.service.ts`
+  - Routes: `aresta-back-node/src/routes/book.routes.ts`, `aresta-back-node/src/routes/userBook.routes.ts`
+  - Schemas: `aresta-back-node/src/schemas/book.schema.ts`, `aresta-back-node/src/schemas/userBook.schema.ts`
 - **Frontend**:
-  - Composables: `front/app/composables/useCatalog.ts`
-  - Componentes: `front/app/components/BookCard.vue`
+  - Composables: `front/app/composables/useCatalog.ts`, `front/app/composables/useUserBooks.ts`, `front/app/composables/useGraph.ts`
+  - Páginas e Componentes: `front/app/pages/library.vue`, `front/app/components/NodeDrawer.vue`
