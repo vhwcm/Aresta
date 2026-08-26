@@ -56,15 +56,15 @@ describe('useSettings Composable', () => {
   it('permite alterar e obter o tema visual (dark/light)', () => {
     const { themeMode, setThemeMode, toggleThemeMode } = useSettings()
 
-    expect(themeMode.value).toBe('dark')
-
-    setThemeMode('light')
     expect(themeMode.value).toBe('light')
+
+    setThemeMode('dark')
+    expect(themeMode.value).toBe('dark')
     const saved = JSON.parse(localStorage.getItem('aresta_settings') || '{}')
-    expect(saved.themeMode).toBe('light')
+    expect(saved.themeMode).toBe('dark')
 
     toggleThemeMode()
-    expect(themeMode.value).toBe('dark')
+    expect(themeMode.value).toBe('light')
   })
 
   it('permite alternar a preferência de grafo na tela inicial desktop', () => {

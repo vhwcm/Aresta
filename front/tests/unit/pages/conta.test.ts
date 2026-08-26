@@ -61,14 +61,15 @@ describe('Conta Page (/conta)', () => {
 
     expect(lightBtn.exists()).toBe(true)
     expect(darkBtn.exists()).toBe(true)
-
-    // Clica para ativar modo claro
-    await lightBtn.trigger('click')
     expect(wrapper.text()).toContain('Claro (Light)')
 
-    // Clica para voltar ao modo escuro
+    // Clica para ativar modo escuro
     await darkBtn.trigger('click')
     expect(wrapper.text()).toContain('Escuro (Dark)')
+
+    // Clica para voltar ao modo claro
+    await lightBtn.trigger('click')
+    expect(wrapper.text()).toContain('Claro (Light)')
   })
 
   it('permite alternar o switch de Grafo na Tela Inicial (Desktop)', async () => {
