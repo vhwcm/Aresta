@@ -35,7 +35,7 @@
       </defs>
 
       <!-- Arestas (Linhas que formam o A) com movimento orgânico -->
-      <g class="edges-layer stroke-accent/70" stroke-width="1.8" stroke-linecap="round">
+      <g class="edges-layer" stroke-linecap="round">
         <!-- Aresta Topo -> Barra Esquerda -->
         <line x1="20" y1="7" x2="12" y2="23" class="edge edge-t-l" />
         <!-- Aresta Barra Esquerda -> Base Esquerda -->
@@ -47,7 +47,7 @@
         <!-- Travessão Horizontal da Letra A -->
         <line x1="12" y1="23" x2="28" y2="23" class="edge edge-bar" />
         <!-- Aresta sutil interna para dar sensação de grafo completo -->
-        <line x1="20" y1="7" x2="20" y2="23" class="edge-subtle stroke-accent/25" stroke-dasharray="2 2" stroke-width="1" />
+        <line x1="20" y1="7" x2="20" y2="23" class="edge-subtle" stroke-dasharray="2 2" />
       </g>
 
       <!-- Nós (Vértices do Grafo Vivo com oscilação orgânica lenta) -->
@@ -72,19 +72,19 @@
 
         <!-- Nó 4: Base Esquerda -->
         <g class="node-wrap node-bot-left">
-          <circle cx="7" cy="33" r="2.5" class="fill-[#0A0A0B] stroke-accent/80 stroke-[1.4]" />
+          <circle cx="7" cy="33" r="2.5" class="fill-[#0A0A0B] stroke-accent stroke-[1.4]" stroke-opacity="0.8" />
           <circle cx="7" cy="33" r="0.9" class="fill-accent" />
         </g>
 
         <!-- Nó 5: Base Direita -->
         <g class="node-wrap node-bot-right">
-          <circle cx="33" cy="33" r="2.5" class="fill-[#0A0A0B] stroke-accent/80 stroke-[1.4]" />
+          <circle cx="33" cy="33" r="2.5" class="fill-[#0A0A0B] stroke-accent stroke-[1.4]" stroke-opacity="0.8" />
           <circle cx="33" cy="33" r="0.9" class="fill-accent" />
         </g>
 
         <!-- Nó Central sutil na travessa -->
         <g class="node-wrap node-center">
-          <circle cx="20" cy="23" r="1.8" class="fill-accent/90" />
+          <circle cx="20" cy="23" r="1.8" class="fill-accent" fill-opacity="0.9" />
         </g>
       </g>
     </svg>
@@ -125,13 +125,13 @@
       </defs>
 
       <!-- Arestas (Linhas que formam o A) com movimento orgânico -->
-      <g class="edges-layer stroke-accent/70" stroke-width="1.8" stroke-linecap="round">
+      <g class="edges-layer" stroke-linecap="round">
         <line x1="20" y1="7" x2="12" y2="23" class="edge edge-t-l" />
         <line x1="12" y1="23" x2="7" y2="33" class="edge edge-l-b" />
         <line x1="20" y1="7" x2="28" y2="23" class="edge edge-t-r" />
         <line x1="28" y1="23" x2="33" y2="33" class="edge edge-r-b" />
         <line x1="12" y1="23" x2="28" y2="23" class="edge edge-bar" />
-        <line x1="20" y1="7" x2="20" y2="23" class="edge-subtle stroke-accent/25" stroke-dasharray="2 2" stroke-width="1" />
+        <line x1="20" y1="7" x2="20" y2="23" class="edge-subtle" stroke-dasharray="2 2" />
       </g>
 
       <!-- Nós (Vértices do Grafo Vivo com oscilação orgânica lenta) -->
@@ -149,15 +149,15 @@
           <circle cx="28" cy="23" r="1" class="fill-[#FF9E79]" />
         </g>
         <g class="node-wrap node-bot-left">
-          <circle cx="7" cy="33" r="2.5" class="fill-[#0A0A0B] stroke-accent/80 stroke-[1.4]" />
+          <circle cx="7" cy="33" r="2.5" class="fill-[#0A0A0B] stroke-accent stroke-[1.4]" stroke-opacity="0.8" />
           <circle cx="7" cy="33" r="0.9" class="fill-accent" />
         </g>
         <g class="node-wrap node-bot-right">
-          <circle cx="33" cy="33" r="2.5" class="fill-[#0A0A0B] stroke-accent/80 stroke-[1.4]" />
+          <circle cx="33" cy="33" r="2.5" class="fill-[#0A0A0B] stroke-accent stroke-[1.4]" stroke-opacity="0.8" />
           <circle cx="33" cy="33" r="0.9" class="fill-accent" />
         </g>
         <g class="node-wrap node-center">
-          <circle cx="20" cy="23" r="1.8" class="fill-accent/90" />
+          <circle cx="20" cy="23" r="1.8" class="fill-accent" fill-opacity="0.9" />
         </g>
       </g>
     </svg>
@@ -180,6 +180,24 @@ withDefaults(
 </script>
 
 <style scoped>
+/* Arestas sempre visíveis por padrão */
+.edge {
+  stroke: var(--accent, #E57B55);
+  stroke-opacity: 0.8;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  transition: stroke 0.3s ease, stroke-width 0.3s ease, stroke-opacity 0.3s ease;
+}
+
+.edge-subtle {
+  stroke: var(--accent, #E57B55);
+  stroke-opacity: 0.35;
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
+  stroke-linecap: round;
+  transition: stroke 0.3s ease, stroke-opacity 0.3s ease;
+}
+
 /* Animação orgânica de grafo vivo: nós e arestas flutuando suavemente */
 .node-top {
   animation: floatTop 6s ease-in-out infinite alternate;
@@ -247,10 +265,15 @@ withDefaults(
   100% { transform: scale(0.95); opacity: 0.8; }
 }
 
-/* Transição de arestas quando em hover no container */
+/* Transição e realce das arestas no hover */
 .group:hover .edge {
   stroke: #FF9E79;
+  stroke-opacity: 1;
   stroke-width: 2.1;
-  transition: all 0.3s ease;
+}
+
+.group:hover .edge-subtle {
+  stroke: #FF9E79;
+  stroke-opacity: 0.6;
 }
 </style>
