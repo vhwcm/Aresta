@@ -73,6 +73,8 @@ describe('Index Page (Landing Page & Home)', () => {
     expect(wrapper.text()).toContain('A Revisão de Conhecimento & Curva de Ebbinghaus')
     expect(wrapper.find('[data-testid="ebbinghaus-info-link"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="ebbinghaus-chart"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="landing-cta-login-btn"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="landing-cta-register-btn"]').exists()).toBe(true)
     expect(wrapper.text()).toContain('Acessar Conta')
     expect(wrapper.text()).toContain('Criar Conta')
 
@@ -84,15 +86,6 @@ describe('Index Page (Landing Page & Home)', () => {
 
     expect(competentIndex).toBeLessThan(pilaresIndex)
     expect(pilaresIndex).toBeLessThan(ebbinghausIndex)
-
-    // Alternar para aba de Registro
-    const registerTab = wrapper.find('[data-testid="tab-register"]')
-    await registerTab.trigger('click')
-
-    expect(wrapper.find('[data-testid="register-name-input"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="register-email-input"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="register-password-input"]').exists()).toBe(true)
-    expect(wrapper.text()).toContain('Criar Conta e Começar')
   })
 
   it('renders active reader home dashboard with flashcard above 3 notes and Ebbinghaus info link when logged in', () => {
@@ -180,45 +173,4 @@ describe('Index Page (Landing Page & Home)', () => {
     expect(wrapper.find('[data-testid="home-graph-section"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="toggle-graph-open-btn"]').exists()).toBe(false)
   })
-
-  it('resets scroll position to top when quick login succeeds', async () => {
-    const scrollToSpy = vi.fn()
-    window.scrollTo = scrollToSpy
-
-    const loginMock = vi.fn().mockResolvedValue({
-      success: true,
-      user: { id: 1, name: 'viktor', email: 'viktor@aresta.org', role: 'ADMIN', isActive: true }
-    })
-    const isLoggedInRef = ref(false)
-
-    vi.spyOn(authComposable, 'useAuth').mockReturnValue({
-      token: ref(null),
-      user: ref(null),
-      isLoggedIn: isLoggedInRef,
-      isAdmin: ref(false),
-      login: loginMock,
-      register: vi.fn(),
-      logout: vi.fn(),
-      deleteAccount: vi.fn(),
-      fetchCurrentUser: vi.fn()
-    } as any)
-
-    const wrapper = mount(IndexPage, {
-      global: {
-        stubs: commonStubs
-      }
-    })
-
-    const loginInput = wrapper.find('[data-testid="login-input"]')
-    const passwordInput = wrapper.find('[data-testid="password-input"]')
-    await loginInput.setValue('viktor')
-    await passwordInput.setValue('orlaweb123123#')
-
-    const form = wrapper.find('form')
-    await form.trigger('submit')
-
-    expect(loginMock).toHaveBeenCalledWith('viktor', 'orlaweb123123#')
-    expect(scrollToSpy).toHaveBeenCalledWith({ top: 0, left: 0, behavior: 'instant' })
-  })
 })
-

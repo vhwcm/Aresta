@@ -219,13 +219,13 @@
 
           <!-- Botões de Ação Hero (CTAs de Alto Impacto) -->
           <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 pt-1 w-full sm:w-auto">
-            <a
-              href="#comece-agora"
+            <NuxtLink
+              to="/login"
               class="bg-textPrimary text-bgApp font-interface text-sm sm:text-base font-semibold px-7 py-3.5 rounded-full hover:opacity-90 transition-all flex items-center justify-center gap-2.5 shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
             >
               <span>Experimentar o Aresta Gratuitamente</span>
               <ArrowRightIcon class="w-4 h-4 text-bgApp" />
-            </a>
+            </NuxtLink>
 
             <NuxtLink
               to="/por-que-ler"
@@ -557,9 +557,9 @@
         </div>
       </section>
 
-      <!-- 6. SEÇÃO DE CONVERSÃO / EXPERIMENTE O ARESTA (AUTENTICAÇÃO COM COPYWRITING) -->
-      <section id="comece-agora" class="flex flex-col lg:flex-row items-center gap-10 p-8 sm:p-12 rounded-3xl bg-bgPanel border border-divider shadow-2xl scroll-mt-8">
-        <div class="flex flex-col gap-5 flex-1 text-left">
+      <!-- 6. SEÇÃO DE CONVERSÃO / EXPERIMENTE O ARESTA (CHAMADA PARA AÇÃO COM LINKS DEDICADOS) -->
+      <section id="comece-agora" class="flex flex-col lg:flex-row items-center justify-between gap-8 p-8 sm:p-12 rounded-3xl bg-bgPanel border border-divider shadow-2xl">
+        <div class="flex flex-col gap-4 text-left max-w-2xl">
           <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-accent/15 border border-accent/30 text-accent font-technical text-[10px] uppercase tracking-widest font-semibold w-fit">
             Acesso Imediato
           </div>
@@ -572,184 +572,43 @@
             Junte-se a leitores, estudantes e pesquisadores que construíram seu segundo cérebro no Aresta. Crie sua conta gratuita em menos de 1 minuto ou acesse instantaneamente a demonstração.
           </p>
 
-          <div class="flex flex-col gap-2.5 pt-2 text-xs sm:text-sm text-textSecondary font-interface">
-            <div class="flex items-center gap-2.5">
-              <CheckCircle2Icon class="w-4 h-4 text-accent shrink-0" />
-              <span>Leitor universal para seus arquivos EPUB e PDF</span>
-            </div>
-            <div class="flex items-center gap-2.5">
-              <CheckCircle2Icon class="w-4 h-4 text-accent shrink-0" />
-              <span>Grafo de conexões conceituais navegável</span>
-            </div>
-            <div class="flex items-center gap-2.5">
-              <CheckCircle2Icon class="w-4 h-4 text-accent shrink-0" />
-              <span>Flashcards inteligentes e repetição espaçada</span>
-            </div>
-            <div class="flex items-center gap-2.5">
-              <CheckCircle2Icon class="w-4 h-4 text-accent shrink-0" />
-              <span>100% livre de distrações, anúncios e algoritmos viciantes</span>
-            </div>
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 pt-2">
+            <NuxtLink
+              to="/login"
+              data-testid="landing-cta-login-btn"
+              class="bg-textPrimary text-bgApp font-interface text-sm sm:text-base font-semibold px-7 py-3.5 rounded-full hover:opacity-90 transition-all flex items-center justify-center gap-2.5 shadow-xl hover:scale-[1.02] active:scale-[0.98]"
+            >
+              <span>Acessar Conta</span>
+              <ArrowRightIcon class="w-4 h-4 text-bgApp" />
+            </NuxtLink>
+
+            <NuxtLink
+              to="/login?tab=register"
+              data-testid="landing-cta-register-btn"
+              class="px-7 py-3.5 rounded-full bg-accent text-white font-interface text-sm sm:text-base font-semibold hover:bg-accent/90 transition-all flex items-center justify-center gap-2.5 shadow-lg shadow-accent/20 hover:scale-[1.02] active:scale-[0.98]"
+            >
+              <span>Criar Conta</span>
+            </NuxtLink>
           </div>
         </div>
 
-        <!-- Card Central de Acesso Rápido / Autenticação Simplificada -->
-        <div class="w-full max-w-md bg-bgApp/60 border border-divider backdrop-blur-xl rounded-3xl p-6 sm:p-8 shadow-2xl flex flex-col gap-6 shrink-0">
-          <!-- Alternador de Abas: Login / Cadastro -->
-          <div class="flex items-center p-1 rounded-2xl bg-black/5 dark:bg-white/5 border border-divider">
-            <button
-              @click="authMode = 'login'"
-              data-testid="tab-login"
-              class="flex-1 py-2 rounded-xl font-interface text-xs font-medium transition-all text-center cursor-pointer"
-              :class="authMode === 'login' ? 'bg-accent text-white shadow-md' : 'text-textSecondary hover:text-textPrimary'"
-            >
-              Acessar Conta
-            </button>
-            <button
-              @click="authMode = 'register'"
-              data-testid="tab-register"
-              class="flex-1 py-2 rounded-xl font-interface text-xs font-medium transition-all text-center cursor-pointer"
-              :class="authMode === 'register' ? 'bg-accent text-white shadow-md' : 'text-textSecondary hover:text-textPrimary'"
-            >
-              Criar Conta
-            </button>
+        <div class="flex flex-col gap-3 text-xs sm:text-sm text-textSecondary font-interface bg-black/[0.02] dark:bg-white/[0.02] border border-divider/60 rounded-2xl p-6 lg:max-w-sm w-full">
+          <div class="flex items-center gap-2.5">
+            <CheckCircle2Icon class="w-4 h-4 text-accent shrink-0" />
+            <span>Leitor universal para seus arquivos EPUB e PDF</span>
           </div>
-
-          <!-- Alerta de Dica de Demonstração (Exibido na aba Login) -->
-          <div v-if="authMode === 'login'" class="bg-accent/10 border border-accent/25 rounded-2xl p-3.5 flex items-start gap-2.5 text-xs text-textPrimary">
-            <KeyIcon class="w-4 h-4 text-accent shrink-0 mt-0.5" />
-            <div class="flex flex-col gap-0.5">
-              <span class="font-semibold text-accent uppercase tracking-wider text-[9px]">Acesso Rápido Demo</span>
-              <span class="font-technical text-textSecondary text-[11px]">
-                Login: <strong>viktor</strong> · Senha: <strong>orlaweb123123#</strong>
-              </span>
-            </div>
+          <div class="flex items-center gap-2.5">
+            <CheckCircle2Icon class="w-4 h-4 text-accent shrink-0" />
+            <span>Grafo de conexões conceituais navegável</span>
           </div>
-
-          <!-- Alerta de Erro de Autenticação -->
-          <div v-if="authError" class="bg-rose-500/10 border border-rose-500/30 rounded-xl p-3 text-xs text-rose-400 flex items-center gap-2">
-            <AlertCircleIcon class="w-4 h-4 shrink-0" />
-            <span>{{ authError }}</span>
+          <div class="flex items-center gap-2.5">
+            <CheckCircle2Icon class="w-4 h-4 text-accent shrink-0" />
+            <span>Flashcards inteligentes e repetição espaçada</span>
           </div>
-
-          <!-- Formulário de Login -->
-          <form v-if="authMode === 'login'" @submit.prevent="handleQuickLogin" class="flex flex-col gap-4">
-            <div class="flex flex-col gap-1">
-              <label class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary">
-                Usuário ou E-mail
-              </label>
-              <div class="relative">
-                <UserIcon class="w-4 h-4 text-textSecondary absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input
-                  v-model="loginIdentifier"
-                  type="text"
-                  required
-                  data-testid="login-input"
-                  placeholder="viktor"
-                  class="w-full bg-black/40 border border-divider rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-textPrimary placeholder:text-textSecondary/40 focus:outline-none focus:border-accent transition-colors"
-                />
-              </div>
-            </div>
-
-            <div class="flex flex-col gap-1">
-              <label class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary">
-                Senha
-              </label>
-              <div class="relative">
-                <LockIcon class="w-4 h-4 text-textSecondary absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input
-                  v-model="loginPassword"
-                  type="password"
-                  required
-                  data-testid="password-input"
-                  placeholder="••••••••••••"
-                  class="w-full bg-black/40 border border-divider rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-textPrimary placeholder:text-textSecondary/40 focus:outline-none focus:border-accent transition-colors"
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              :disabled="isAuthLoading"
-              data-testid="submit-login-btn"
-              class="w-full mt-2 bg-white text-black font-interface font-medium text-xs sm:text-sm py-3 rounded-xl hover:bg-gray-200 transition-all flex items-center justify-center gap-2 shadow-lg disabled:opacity-50 cursor-pointer"
-            >
-              <span v-if="!isAuthLoading">Entrar no Aresta</span>
-              <span v-else class="flex items-center gap-2">
-                <span class="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></span>
-                Acessando...
-              </span>
-              <ArrowRightIcon v-if="!isAuthLoading" class="w-4 h-4" />
-            </button>
-          </form>
-
-          <!-- Formulário de Registro / Criar Conta -->
-          <form v-else @submit.prevent="handleQuickRegister" class="flex flex-col gap-4">
-            <div class="flex flex-col gap-1">
-              <label class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary">
-                Nome Completo
-              </label>
-              <div class="relative">
-                <UserIcon class="w-4 h-4 text-textSecondary absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input
-                  v-model="registerName"
-                  type="text"
-                  required
-                  data-testid="register-name-input"
-                  placeholder="Seu Nome"
-                  class="w-full bg-black/40 border border-divider rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-textPrimary placeholder:text-textSecondary/40 focus:outline-none focus:border-accent transition-colors"
-                />
-              </div>
-            </div>
-
-            <div class="flex flex-col gap-1">
-              <label class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary">
-                E-mail
-              </label>
-              <div class="relative">
-                <MailIcon class="w-4 h-4 text-textSecondary absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input
-                  v-model="registerEmail"
-                  type="email"
-                  required
-                  data-testid="register-email-input"
-                  placeholder="seu.email@exemplo.com"
-                  class="w-full bg-black/40 border border-divider rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-textPrimary placeholder:text-textSecondary/40 focus:outline-none focus:border-accent transition-colors"
-                />
-              </div>
-            </div>
-
-            <div class="flex flex-col gap-1">
-              <label class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary">
-                Senha (mínimo 6 caracteres)
-              </label>
-              <div class="relative">
-                <LockIcon class="w-4 h-4 text-textSecondary absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input
-                  v-model="registerPassword"
-                  type="password"
-                  required
-                  minlength="6"
-                  data-testid="register-password-input"
-                  placeholder="••••••••••••"
-                  class="w-full bg-black/40 border border-divider rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-textPrimary placeholder:text-textSecondary/40 focus:outline-none focus:border-accent transition-colors"
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              :disabled="isAuthLoading"
-              data-testid="submit-register-btn"
-              class="w-full mt-2 bg-accent text-white font-interface font-medium text-xs sm:text-sm py-3 rounded-xl hover:bg-accent/90 transition-all flex items-center justify-center gap-2 shadow-lg shadow-accent/20 disabled:opacity-50 cursor-pointer"
-            >
-              <span v-if="!isAuthLoading">Criar Conta e Começar</span>
-              <span v-else class="flex items-center gap-2">
-                <span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                Criando conta...
-              </span>
-              <ArrowRightIcon v-if="!isAuthLoading" class="w-4 h-4" />
-            </button>
-          </form>
+          <div class="flex items-center gap-2.5">
+            <CheckCircle2Icon class="w-4 h-4 text-accent shrink-0" />
+            <span>100% livre de distrações, anúncios e algoritmos viciantes</span>
+          </div>
         </div>
       </section>
     </div>
@@ -852,18 +711,6 @@ const toggleGraph = () => {
   }
 }
 
-// Estado da Autenticação na Landing Page
-const authMode = ref<'login' | 'register'>('login')
-const loginIdentifier = ref('viktor')
-const loginPassword = ref('orlaweb123123#')
-
-const registerName = ref('')
-const registerEmail = ref('')
-const registerPassword = ref('')
-
-const isAuthLoading = ref(false)
-const authError = ref('')
-
 const resetScrollToTop = () => {
   if (typeof window !== 'undefined') {
     if (window.location.hash) {
@@ -891,50 +738,6 @@ watch(
     }
   }
 )
-
-const handleQuickLogin = async () => {
-  isAuthLoading.value = true
-  authError.value = ''
-
-  const result = await auth.login(loginIdentifier.value, loginPassword.value)
-  isAuthLoading.value = false
-
-  if (result.success) {
-    resetScrollToTop()
-    void loadFromServer()
-    try {
-      await fetchUserBooks()
-    } catch (e) {
-      // Silencioso
-    }
-    await nextTick()
-    resetScrollToTop()
-  } else {
-    authError.value = result.error || 'Falha ao autenticar. Verifique o usuário e a senha.'
-  }
-}
-
-const handleQuickRegister = async () => {
-  isAuthLoading.value = true
-  authError.value = ''
-
-  const result = await auth.register(registerName.value, registerEmail.value, registerPassword.value)
-  isAuthLoading.value = false
-
-  if (result.success) {
-    resetScrollToTop()
-    void loadFromServer()
-    try {
-      await fetchUserBooks()
-    } catch (e) {
-      // Silencioso
-    }
-    await nextTick()
-    resetScrollToTop()
-  } else {
-    authError.value = result.error || 'Falha ao registrar usuário.'
-  }
-}
 
 onMounted(async () => {
   if (typeof window !== 'undefined') {
