@@ -45,7 +45,7 @@
           <span class="font-technical text-xs text-textSecondary">Filtrar por Obra:</span>
           <select
             v-model="selectedBookFilter"
-            class="bg-[#121315] text-textPrimary text-xs rounded-xl px-3 py-1.5 border border-divider focus:outline-none focus:border-accent"
+            class="bg-bgPanel text-textPrimary text-xs rounded-xl px-3 py-1.5 border border-divider focus:outline-none focus:border-accent"
           >
             <option value="all">Todas as Obras</option>
             <option value="kuhn">A Estrutura das Revoluções Científicas</option>
@@ -56,7 +56,7 @@
 
         <div class="flex items-center gap-3 text-xs font-technical text-textSecondary">
           <span>Card {{ currentCardIndex + 1 }} de {{ filteredCards.length }}</span>
-          <div class="w-24 h-1.5 bg-white/10 rounded-full overflow-hidden">
+          <div class="w-24 h-1.5 bg-black/10 dark:bg-white/10 rounded-full overflow-hidden">
             <div
               class="h-full bg-accent transition-all duration-300 rounded-full"
               :style="{ width: `${((currentCardIndex + 1) / (filteredCards.length || 1)) * 100}%` }"
@@ -73,9 +73,9 @@
         >
           <div class="card-object" :class="{ 'is-flipped': isFlipped }">
             <!-- FACE FRENTE (Pergunta) -->
-            <div class="card-face card-front p-8 flex flex-col justify-between rounded-3xl bg-[#141518]/90 border border-divider hover:border-white/20 shadow-2xl backdrop-blur-xl transition-all">
+            <div class="card-face card-front p-8 flex flex-col justify-between rounded-3xl bg-bgPanel/95 border border-divider hover:border-accent/40 shadow-2xl backdrop-blur-xl transition-all">
               <div class="flex items-center justify-between">
-                <span class="px-2.5 py-0.5 rounded-full bg-white/5 border border-divider font-technical text-[10px] text-textSecondary uppercase tracking-wider">
+                <span class="px-2.5 py-0.5 rounded-full bg-black/5 dark:bg-white/5 border border-divider font-technical text-[10px] text-textSecondary uppercase tracking-wider">
                   {{ currentCard.bookTitle }}
                 </span>
                 <span class="font-technical text-[10px] text-accent flex items-center gap-1">
@@ -97,7 +97,7 @@
             </div>
 
             <!-- FACE VERSO (Resposta) -->
-            <div class="card-face card-back p-8 flex flex-col justify-between rounded-3xl bg-[#18191c]/95 border border-accent/40 shadow-2xl backdrop-blur-xl">
+            <div class="card-face card-back p-8 flex flex-col justify-between rounded-3xl bg-bgPanel/95 border border-accent/40 shadow-2xl backdrop-blur-xl">
               <div class="flex items-center justify-between">
                 <span class="px-2.5 py-0.5 rounded-full bg-accent/15 border border-accent/30 font-technical text-[10px] text-accent uppercase tracking-wider">
                   Resposta Explicada

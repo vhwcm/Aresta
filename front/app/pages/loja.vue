@@ -32,8 +32,8 @@
     <div class="h-px bg-divider w-full"></div>
 
     <!-- Destaque da Semana -->
-    <section v-if="featuredBook" class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-accent/15 via-white/[0.03] to-transparent border border-accent/30 p-8 md:p-12 flex flex-col md:flex-row items-center gap-8">
-      <div class="w-32 md:w-44 h-48 md:h-64 rounded-2xl bg-[#1a1b1e] border border-white/20 shadow-2xl flex flex-col items-center justify-center p-4 text-center shrink-0">
+    <section v-if="featuredBook" class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-accent/15 via-black/[0.02] dark:via-white/[0.03] to-transparent border border-accent/30 p-8 md:p-12 flex flex-col md:flex-row items-center gap-8 shadow-sm">
+      <div class="w-32 md:w-44 h-48 md:h-64 rounded-2xl bg-bgPanel border border-divider shadow-2xl flex flex-col items-center justify-center p-4 text-center shrink-0">
         <BookOpenIcon class="w-10 h-10 text-accent mb-2" />
         <span class="font-editorial text-sm font-semibold text-textPrimary line-clamp-3">{{ featuredBook.title }}</span>
         <span class="font-interface text-[10px] text-textSecondary mt-1">{{ featuredBook.author }}</span>
@@ -132,14 +132,14 @@
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-in fade-in duration-200"
       @click.self="selectedBook = null"
     >
-      <div class="max-w-lg w-full p-8 rounded-3xl bg-[#141518] border border-white/15 shadow-2xl flex flex-col gap-6">
+      <div class="max-w-lg w-full p-8 rounded-3xl bg-bgPanel border border-divider shadow-2xl flex flex-col gap-6">
         <div class="flex items-start justify-between">
           <div class="flex items-center gap-2">
             <span class="px-2 py-0.5 rounded-md bg-accent/20 text-accent font-technical text-[10px] font-semibold uppercase">
               {{ selectedBook.category }}
             </span>
           </div>
-          <button @click="selectedBook = null" class="p-1 rounded-lg text-textSecondary hover:text-white">
+          <button @click="selectedBook = null" class="p-1 rounded-lg text-textSecondary hover:text-textPrimary">
             <XIcon class="w-5 h-5" />
           </button>
         </div>

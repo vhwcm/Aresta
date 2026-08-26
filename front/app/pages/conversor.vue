@@ -97,7 +97,7 @@
           <!-- Detecção de Capítulos -->
           <div class="flex flex-col gap-1.5 p-3 rounded-xl bg-white/5 border border-divider/50">
             <span class="text-textPrimary font-medium">Detecção de Sumário / Capítulos</span>
-            <select v-model="options.chapterDetection" class="bg-[#121315] text-textPrimary text-xs rounded-lg p-2 border border-divider focus:outline-none focus:border-accent">
+            <select v-model="options.chapterDetection" class="bg-bgApp text-textPrimary text-xs rounded-lg p-2 border border-divider focus:outline-none focus:border-accent">
               <option value="auto">Automática (Baseada em tamanho de fonte)</option>
               <option value="strict">Rigorosa (Sumário original)</option>
               <option value="headings">Apenas Cabeçalhos Principais</option>

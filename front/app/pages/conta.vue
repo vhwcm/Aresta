@@ -17,7 +17,7 @@
 
       <!-- Badge de Status do Plano -->
       <div class="flex items-center gap-3">
-        <div class="flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/5 border border-divider">
+        <div class="flex items-center gap-2 px-4 py-2 rounded-2xl bg-black/5 dark:bg-white/5 border border-divider">
           <div
             class="w-2.5 h-2.5 rounded-full"
             :class="isPro ? 'bg-accent animate-pulse' : 'bg-textSecondary'"
@@ -33,7 +33,7 @@
     <div class="h-px bg-divider w-full"></div>
 
     <!-- Perfil do Usuário -->
-    <section class="flex flex-col sm:flex-row items-center justify-between gap-6 p-8 rounded-3xl bg-white/[0.02] border border-divider">
+    <section class="flex flex-col sm:flex-row items-center justify-between gap-6 p-8 rounded-3xl bg-bgPanel border border-divider shadow-sm">
       <div class="flex items-center gap-5">
         <div class="w-16 h-16 rounded-2xl bg-accent/15 border border-accent/40 text-accent font-technical text-xl font-bold flex items-center justify-center shadow-lg">
           {{ userInitials }}
@@ -71,7 +71,7 @@
 
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <!-- Métrica 1: Livros -->
-        <div class="p-6 rounded-2xl bg-white/[0.02] border border-divider flex flex-col gap-2">
+        <div class="p-6 rounded-2xl bg-bgPanel border border-divider shadow-sm flex flex-col gap-2">
           <div class="flex items-center justify-between text-textSecondary">
             <span class="font-technical text-[10px] uppercase tracking-wider">Livros no Acervo</span>
             <BookOpenIcon class="w-4 h-4 text-accent" />
@@ -81,7 +81,7 @@
         </div>
 
         <!-- Métrica 2: Horas de Leitura -->
-        <div class="p-6 rounded-2xl bg-white/[0.02] border border-divider flex flex-col gap-2">
+        <div class="p-6 rounded-2xl bg-bgPanel border border-divider shadow-sm flex flex-col gap-2">
           <div class="flex items-center justify-between text-textSecondary">
             <span class="font-technical text-[10px] uppercase tracking-wider">Tempo Total</span>
             <ClockIcon class="w-4 h-4 text-accent" />
@@ -91,7 +91,7 @@
         </div>
 
         <!-- Métrica 3: Nós do Grafo -->
-        <div class="p-6 rounded-2xl bg-white/[0.02] border border-divider flex flex-col gap-2">
+        <div class="p-6 rounded-2xl bg-bgPanel border border-divider shadow-sm flex flex-col gap-2">
           <div class="flex items-center justify-between text-textSecondary">
             <span class="font-technical text-[10px] uppercase tracking-wider">Nós Conectados</span>
             <NetworkIcon class="w-4 h-4 text-accent" />
@@ -101,12 +101,12 @@
         </div>
 
         <!-- Métrica 4: Retenção -->
-        <div class="p-6 rounded-2xl bg-white/[0.02] border border-divider flex flex-col gap-2">
+        <div class="p-6 rounded-2xl bg-bgPanel border border-divider shadow-sm flex flex-col gap-2">
           <div class="flex items-center justify-between text-textSecondary">
             <span class="font-technical text-[10px] uppercase tracking-wider">Taxa de Retenção</span>
-            <CheckCircle2Icon class="w-4 h-4 text-emerald-400" />
+            <CheckCircle2Icon class="w-4 h-4 text-emerald-500" />
           </div>
-          <span class="font-editorial text-4xl font-light text-emerald-400">91%</span>
+          <span class="font-editorial text-4xl font-light text-emerald-500">91%</span>
         </div>
       </div>
     </section>
@@ -124,7 +124,7 @@
         </p>
       </div>
 
-      <div class="flex flex-col rounded-3xl bg-white/[0.02] border border-divider divide-y divide-divider overflow-hidden">
+      <div class="flex flex-col rounded-3xl bg-bgPanel border border-divider divide-y divide-divider overflow-hidden shadow-sm">
         <!-- 1. Tema Visual (Claro / Escuro) -->
         <div class="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div class="flex items-start sm:items-center gap-4 min-w-0">
@@ -137,7 +137,7 @@
                 <span>Modo de Exibição</span>
                 <span
                   class="px-2 py-0.5 rounded-full font-technical text-[10px] font-semibold"
-                  :class="themeMode === 'dark' ? 'bg-white/10 text-textSecondary' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'"
+                  :class="themeMode === 'dark' ? 'bg-black/5 dark:bg-white/10 text-textSecondary' : 'bg-accent/15 text-accent border border-accent/30'"
                 >
                   {{ themeMode === 'dark' ? 'Escuro (Dark)' : 'Claro (Light)' }}
                 </span>
@@ -148,7 +148,7 @@
             </div>
           </div>
 
-          <div class="flex items-center p-1 rounded-2xl bg-white/5 border border-divider shrink-0">
+          <div class="flex items-center p-1 rounded-2xl bg-black/5 dark:bg-white/5 border border-divider shrink-0">
             <button
               type="button"
               @click="setThemeMode('dark')"
@@ -195,7 +195,7 @@
             data-testid="toggle-desktop-home-graph"
             @click="setDesktopHomeGraphOpen(!desktopHomeGraphOpen)"
             class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-accent/50"
-            :class="desktopHomeGraphOpen ? 'bg-accent' : 'bg-white/10'"
+            :class="desktopHomeGraphOpen ? 'bg-accent' : 'bg-black/10 dark:bg-white/10'"
             title="Alternar início com grafo na tela inicial"
           >
             <span
@@ -228,7 +228,7 @@
             data-testid="toggle-desktop-reader-graph"
             @click="setDesktopReaderGraphOpen(!desktopReaderGraphOpen)"
             class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-accent/50"
-            :class="desktopReaderGraphOpen ? 'bg-accent' : 'bg-white/10'"
+            :class="desktopReaderGraphOpen ? 'bg-accent' : 'bg-black/10 dark:bg-white/10'"
             title="Alternar início com grafo no leitor desktop"
           >
             <span
@@ -260,7 +260,7 @@
               data-testid="decrease-font-btn"
               @click="setEpubFontSize(epubFontSize - 2)"
               :disabled="epubFontSize <= 12"
-              class="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/15 disabled:opacity-30 disabled:cursor-not-allowed border border-divider text-xs font-semibold transition-all text-textPrimary active:scale-95 flex items-center gap-1"
+              class="px-3 py-2 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/15 disabled:opacity-30 disabled:cursor-not-allowed border border-divider text-xs font-semibold transition-all text-textPrimary active:scale-95 flex items-center gap-1"
               title="Diminuir tamanho da fonte padrão"
             >
               <span class="font-editorial text-sm">A-</span>
@@ -279,7 +279,7 @@
               data-testid="increase-font-btn"
               @click="setEpubFontSize(epubFontSize + 2)"
               :disabled="epubFontSize >= 36"
-              class="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/15 disabled:opacity-30 disabled:cursor-not-allowed border border-divider text-xs font-semibold transition-all text-textPrimary active:scale-95 flex items-center gap-1"
+              class="px-3 py-2 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/15 disabled:opacity-30 disabled:cursor-not-allowed border border-divider text-xs font-semibold transition-all text-textPrimary active:scale-95 flex items-center gap-1"
               title="Aumentar tamanho da fonte padrão"
             >
               <span class="font-editorial text-base font-bold">A+</span>
@@ -314,7 +314,7 @@
               class="flex flex-col justify-between p-4 rounded-2xl border text-left transition-all relative overflow-hidden group"
               :class="epubFontFamily === font.id
                 ? 'bg-accent/10 border-accent text-textPrimary shadow-lg shadow-accent/5'
-                : 'bg-white/[0.02] border-divider hover:bg-white/[0.05] text-textSecondary hover:text-textPrimary'"
+                : 'bg-black/[0.02] dark:bg-white/[0.02] border-divider hover:bg-black/[0.04] dark:hover:bg-white/[0.05] text-textSecondary hover:text-textPrimary'"
             >
               <div class="flex items-start justify-between gap-2">
                 <span
@@ -454,13 +454,13 @@
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 animate-in fade-in duration-200"
       @click.self="showUpgradeModal = false"
     >
-      <div class="max-w-md w-full p-8 rounded-3xl bg-[#141518] border border-accent/40 shadow-2xl flex flex-col gap-6">
+      <div class="max-w-md w-full p-8 rounded-3xl bg-bgPanel border border-accent/40 shadow-2xl flex flex-col gap-6">
         <div class="flex items-start justify-between">
           <div class="flex items-center gap-2">
             <CrownIcon class="w-5 h-5 text-accent" />
             <h3 class="font-editorial text-2xl text-textPrimary">Plano Aresta Pro</h3>
           </div>
-          <button @click="showUpgradeModal = false" class="p-1 rounded-lg text-textSecondary hover:text-white">
+          <button @click="showUpgradeModal = false" class="p-1 rounded-lg text-textSecondary hover:text-textPrimary">
             <XIcon class="w-5 h-5" />
           </button>
         </div>
@@ -473,7 +473,7 @@
           <label
             @click="selectedBillingCycle = 'annual'"
             class="flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all"
-            :class="selectedBillingCycle === 'annual' ? 'border-accent bg-accent/10' : 'border-divider bg-white/5'"
+            :class="selectedBillingCycle === 'annual' ? 'border-accent bg-accent/10' : 'border-divider bg-black/5 dark:bg-white/5'"
           >
             <div class="flex flex-col">
               <span class="font-interface text-xs font-semibold text-textPrimary">Anual (Recomendado)</span>
@@ -485,7 +485,7 @@
           <label
             @click="selectedBillingCycle = 'monthly'"
             class="flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all"
-            :class="selectedBillingCycle === 'monthly' ? 'border-accent bg-accent/10' : 'border-divider bg-white/5'"
+            :class="selectedBillingCycle === 'monthly' ? 'border-accent bg-accent/10' : 'border-divider bg-black/5 dark:bg-white/5'"
           >
             <div class="flex flex-col">
               <span class="font-interface text-xs font-semibold text-textPrimary">Mensal</span>
@@ -520,7 +520,7 @@
       aria-modal="true"
       aria-labelledby="delete-account-title"
     >
-      <div class="max-w-lg w-full p-8 rounded-3xl bg-[#151214] border border-rose-500/40 shadow-2xl flex flex-col gap-6">
+      <div class="max-w-lg w-full p-8 rounded-3xl bg-bgPanel border border-rose-500/40 shadow-2xl flex flex-col gap-6">
         <div class="flex items-start justify-between">
           <div class="flex items-center gap-3">
             <div class="p-2.5 rounded-2xl bg-rose-500/15 text-rose-400 border border-rose-500/30">
@@ -535,18 +535,18 @@
           </div>
           <button
             @click="closeDeleteModal"
-            class="p-1 rounded-lg text-textSecondary hover:text-white transition-colors"
+            class="p-1 rounded-lg text-textSecondary hover:text-textPrimary transition-colors"
             aria-label="Fechar modal"
           >
             <XIcon class="w-5 h-5" />
           </button>
         </div>
 
-        <div class="bg-rose-500/10 border border-rose-500/25 rounded-2xl p-4 flex flex-col gap-2 text-xs text-rose-200">
+        <div class="bg-rose-500/10 border border-rose-500/25 rounded-2xl p-4 flex flex-col gap-2 text-xs text-rose-600 dark:text-rose-200">
           <p class="font-interface leading-relaxed">
             <strong>Atenção:</strong> Ao confirmar a exclusão, todos os seus dados serão apagados definitivamente do Aresta:
           </p>
-          <ul class="list-disc list-inside space-y-1 text-rose-300/90 text-[11px] font-interface">
+          <ul class="list-disc list-inside space-y-1 text-rose-700 dark:text-rose-300/90 text-[11px] font-interface">
             <li>Livros e documentos enviados</li>
             <li>Progresso de leitura e histórico</li>
             <li>Anotações, citações e flashcards</li>
@@ -554,14 +554,14 @@
           </ul>
         </div>
 
-        <div v-if="deleteError" class="bg-rose-500/20 border border-rose-500/40 rounded-xl p-3 text-xs text-rose-300">
+        <div v-if="deleteError" class="bg-rose-500/20 border border-rose-500/40 rounded-xl p-3 text-xs text-rose-600 dark:text-rose-300">
           {{ deleteError }}
         </div>
 
         <div class="flex flex-col gap-2">
           <label class="font-interface text-xs text-textSecondary">
             Para confirmar, digite exatamente a frase:
-            <span class="font-technical font-semibold text-textPrimary select-all bg-white/10 px-2 py-0.5 rounded ml-1">
+            <span class="font-technical font-semibold text-textPrimary select-all bg-black/5 dark:bg-white/10 px-2 py-0.5 rounded ml-1">
               {{ requiredConfirmationPhrase }}
             </span>
           </label>
@@ -570,7 +570,7 @@
             type="text"
             data-testid="delete-confirmation-input"
             :placeholder="requiredConfirmationPhrase"
-            class="w-full bg-black/50 border border-divider focus:border-rose-500/80 rounded-xl px-4 py-3 text-xs md:text-sm text-textPrimary placeholder:text-textSecondary/30 focus:outline-none transition-colors"
+            class="w-full bg-bgApp border border-divider focus:border-rose-500/80 rounded-xl px-4 py-3 text-xs md:text-sm text-textPrimary placeholder:text-textSecondary/30 focus:outline-none transition-colors"
             @keyup.enter="isPhraseMatching && handleDeleteAccount()"
           />
         </div>
