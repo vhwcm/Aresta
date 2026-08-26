@@ -330,7 +330,16 @@
         </div>
       </header>
 
-      <!-- 2. SEÇÃO DE INDAGAÇÕES E TRANSFORMAÇÃO PRÁTICA (COPYWRITING PERSUASIVO) -->
+      <!-- 2. DEMONSTRAÇÕES INTERATIVAS AO VIVO: LEITOR IMERSIVO & GRAFO DE CONHECIMENTO -->
+      <section class="flex flex-col gap-12 sm:gap-16">
+        <!-- Demonstração Interativa do Leitor de Livro -->
+        <HomeBookReaderDemo />
+
+        <!-- Exemplo Interativo do Grafo de Conhecimento -->
+        <HomeKnowledgeGraphDemo />
+      </section>
+
+      <!-- 3. SEÇÃO DE INDAGAÇÕES E TRANSFORMAÇÃO PRÁTICA (COPYWRITING PERSUASIVO) -->
       <section class="flex flex-col gap-8">
         <div class="flex flex-col items-start text-left gap-2 max-w-3xl">
           <div class="font-technical text-[10px] uppercase font-semibold tracking-widest text-accent flex items-center gap-2">
@@ -775,6 +784,8 @@ import ReadingStreak from '~/components/ReadingStreak.vue'
 import EbbinghausChart from '~/components/EbbinghausChart.vue'
 import SidebarGraph from '~/components/SidebarGraph.vue'
 import ArestaLogoGraph from '~/components/ArestaLogoGraph.vue'
+import HomeBookReaderDemo from '~/components/HomeBookReaderDemo.vue'
+import HomeKnowledgeGraphDemo from '~/components/HomeKnowledgeGraphDemo.vue'
 import { useAuth } from '~/composables/useAuth'
 import { useSettings } from '~/composables/useSettings'
 import { useUserBooks } from '~/composables/useUserBooks'

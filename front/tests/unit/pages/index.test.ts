@@ -11,6 +11,8 @@ describe('Index Page (Landing Page & Home)', () => {
     EbbinghausChart: { template: '<div data-testid="ebbinghaus-chart">Gráfico Ebbinghaus D3</div>' },
     SidebarGraph: { template: '<div data-testid="sidebar-graph">Grafo de Conhecimento</div>' },
     ArestaLogoGraph: { template: '<div data-testid="aresta-logo-graph">Logo Grafo</div>' },
+    HomeBookReaderDemo: { template: '<div data-testid="home-book-reader-demo">Demonstração do Leitor</div>' },
+    HomeKnowledgeGraphDemo: { template: '<div data-testid="home-knowledge-graph-demo">Demonstração do Grafo</div>' },
     ArrowRightIcon: true,
     BrainIcon: true,
     BookOpenIcon: true,
@@ -54,6 +56,8 @@ describe('Index Page (Landing Page & Home)', () => {
 
     expect(wrapper.find('[data-testid="guest-landing"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="auth-home"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="home-book-reader-demo"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="home-knowledge-graph-demo"]').exists()).toBe(true)
     expect(wrapper.text()).toContain('Transforme sua leitura em uma rede viva de conhecimento e competência')
     expect(wrapper.text()).toContain('Experimentar o Aresta Gratuitamente')
     expect(wrapper.text()).toContain('Anti-Dopaminérgico')
