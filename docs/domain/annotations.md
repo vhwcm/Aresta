@@ -48,13 +48,15 @@ model AnnotationTheme {
 1. **Localização Exata com CFI (Canonical Fragment Identifier)**:
    - Em arquivos EPUB, a posição é ancorada por uma string padrão CFI (`epubcfi(...)`), garantindo que o highlight seja restaurado independentemente do tamanho da tela.
    - Em arquivos PDF, a posição armazena o número da página e coordenadas relativas.
-2. **Vínculo com Mapa Mental**:
-   - Uma anotação pode ser associada a múltiplos temas conceituais via `AnnotationTheme`.
+3. **Escrita Manual e Transcrição via OCR**:
+   - O leitor pode redigir notas digitando ou desenhando à mão em um painel expandido (50% desktop/tablet, 100% mobile).
+   - Ao salvar uma nota desenhada no Canvas (`HandwritingCanvas.vue`), a imagem é transmitida ao backend Node.js, que se comunica via gRPC com o microsserviço `aresta-ocr` para transcrever os traços e persistir a anotação diretamente no banco de dados.
 
 ---
 
 ## 4. Código Relacionado
 - **Backend**:
-  - `src/controllers/annotation.controller.ts`, `src/services/annotation.service.ts`, `src/schemas/annotation.schema.ts`
+  - `src/controllers/annotation.controller.ts`, `src/controllers/ocr.controller.ts`, `src/services/annotation.service.ts`, `src/services/ocr.client.ts`, `src/schemas/annotation.schema.ts`
 - **Frontend**:
-  - `front/app/composables/useAnnotations.ts`, `front/app/components/AnnotationModal.vue`
+  - `front/app/composables/useAnnotations.ts`, `front/app/components/reader/ReaderAnnotationModal.vue`, `front/app/components/reader/ReaderAnnotationDrawer.vue`, `front/app/components/reader/HandwritingCanvas.vue`
+

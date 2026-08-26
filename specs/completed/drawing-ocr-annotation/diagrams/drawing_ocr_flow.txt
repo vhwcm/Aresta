@@ -1,0 +1,100 @@
+========================================================================================
+    FLUXO DE ANOTAÇÃO COM PAINEL EXPANDIDO, CANVAS DE DESENHO E ORQUESTRAÇÃO DE OCR
+========================================================================================
+
++--------------------------------------------------------------------------------------+
+|                                 1. FRONTEND (Nuxt / Vue 3)                           |
++--------------------------------------------------------------------------------------+
+|                                                                                      |
+|  [Leitor de Livros]                                                                  |
+|         │                                                                            |
+|         ├─► Abre Modal de Anotação ──► [Botão: "Expandir / Modo Caneta"]             |
+|         │                                        │                                   |
+|         │                                        ▼                                   |
+|         │                        +──────────────────────────────────+                |
+|         │                        | ReaderAnnotationDrawer.vue       |                |
+|         │                        | (Desktop: 50% | Mobile: 100%)    |                |
+|         │                        +─────────────────┬────────────────+                |
+|         │                                          │                                 |
+|         │                         ┌────────────────┴────────────────┐                |
+|         │                         ▼                                 ▼                |
+|         │                 [Modo Digitação]                  [Modo Desenho]           |
+|         │                  • Textarea                        • HandwritingCanvas.vue |
+|         │                                                    • Caneta / Espessuras   |
+|         │                                                    • Borracha / Undo       |
+|         │                                                    • Limpar Tudo           |
+|         │                                                           │                |
+|         │                                                           ▼                |
+|         │                                                  [Salvar Anotação]         |
+|         │                                                  Exporta Canvas (Base64)   |
+|         │                                                           │                |
++─────────┼───────────────────────────────────────────────────────────┼────────────────+
+          │                                                           │
+          │ HTTP POST /api/annotations/with-ocr                       │
+          │ { bookId, cfi, imageBase64, themeIds, ... }               │
+          ▼                                                           ▼
++--------------------------------------------------------------------------------------+
+|                             2. BACKEND (aresta-back-node)                            |
++--------------------------------------------------------------------------------------+
+|                                                                                      |
+|  [Express Router / AnnotationRoutes]                                                 |
+|         │                                                                            |
+|         ▼                                                                            |
+|  [AnnotationController.createAnnotationWithOcr]                                      |
+|         │                                                                            |
+|         ├─► Valida Payload via Zod (createAnnotationWithOcrSchema)                   |
+|         │                                                                            |
+|         ├─► Invoca OcrClient.extractText(buffer, mimeType)                           |
+|         │        │                                                                   |
+|         │        │  gRPC: ocr.v1.OcrService/ExtractText                              |
+|         │        ▼                                                                   |
++─────────┼────────┼───────────────────────────────────────────────────────────────────+
+          │        │
+          │        │ gRPC Request (image_data, mime_type)
+          ▼        ▼
++--------------------------------------------------------------------------------------+
+|                             3. MICROSSERVIÇO (aresta-ocr em Go)                      |
++--------------------------------------------------------------------------------------+
+|                                                                                      |
+|  [OcrServiceServer (gRPC)]                                                           |
+|         │                                                                            |
+|         ▼                                                                            |
+|  [gemini.Extractor.ExtractText]                                                      |
+|         │                                                                            |
+|         ├─► Processamento com Google Gemini Vision API                               |
+|         ├─► Sanitização do texto retornado                                           |
+|         │                                                                            |
+|         ▼                                                                            |
+|  Retorna: ExtractTextResponse { text: "Texto manuscrito...", model_used: "..." }    |
+|                                                                                      |
++──────────────────┬───────────────────────────────────────────────────────────────────+
+                   │
+                   │ gRPC Response (text)
+                   ▼
++--------------------------------------------------------------------------------------+
+|                             2. BACKEND (Continuação)                                 |
++--------------------------------------------------------------------------------------+
+|                                                                                      |
+|  [AnnotationService.createAnnotation]                                                |
+|         │                                                                            |
+|         ├─► Insere anotação no PostgreSQL/SQLite via Prisma com note = text          |
+|         ├─► Associa themes (Node) no Grafo de Conhecimento                           |
+|         │                                                                            |
+|         ▼                                                                            |
+|  Retorna HTTP 201 Created (JSON com a anotação persistida)                           |
+|                                                                                      |
++──────────────────┬───────────────────────────────────────────────────────────────────+
+                   │
+                   │ HTTP Response 201 Created
+                   ▼
++--------------------------------------------------------------------------------------+
+|                             1. FRONTEND (Continuação)                                |
++--------------------------------------------------------------------------------------+
+|                                                                                      |
+|  [ReaderAnnotationDrawer]                                                            |
+|         │                                                                            |
+|         ├─► Emite evento 'created' com a anotação salva                              |
+|         ├─► Atualiza a lista de anotações no leitor e nós do Grafo                   |
+|         └─► Fecha o Drawer suavemente                                                |
+|                                                                                      |
++--------------------------------------------------------------------------------------+

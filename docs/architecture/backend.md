@@ -101,8 +101,9 @@ Contêm todas as regras de negócio puras, cálculos de streaks, conexões de te
 | `GET /api/auth/me` | Dados do usuário logado | Requer JWT |
 | `GET /api/books` | Listagem do catálogo de livros globais | Requer JWT |
 | `GET /api/books/:id/download` | Download/streaming do binário EPUB/PDF | Requer JWT |
-| `GET /api/user-books` | Livros na estante do usuário e progresso | Requer JWT |
 | `POST /api/annotations` | Criação de anotação/citação com CFI | Requer JWT |
+| `POST /api/annotations/with-ocr` | Criação de anotação com transcrição de escrita manual via gRPC OCR | Requer JWT |
+| `POST /api/ocr/transcribe` | Transcrição avulsa de imagem em base64 via OCR Gemini | Requer JWT |
 | `GET /api/graph` | Nós e arestas do grafo de conhecimento | Requer JWT |
 | `POST /api/streak/track-reading` | Registro de leitura diária e ofensivas | Requer JWT |
 | `GET /api/health` | Healthcheck do servidor e banco | Pública |
