@@ -30,8 +30,8 @@
               @click="readerTheme = 'dark'"
               data-testid="theme-dark-btn"
               class="px-3 py-1.5 rounded-xl text-xs font-technical transition-all cursor-pointer"
-              :class="readerTheme === 'dark' ? 'bg-white/20 text-white font-bold shadow-sm' : 'text-textSecondary hover:text-white'"
-              title="Modo Noite (Padrão Aresta)"
+              :class="readerTheme === 'dark' ? 'bg-accent text-white font-bold shadow-sm' : 'text-textSecondary hover:text-textPrimary'"
+              title="Modo Noite"
             >
               Noite
             </button>
@@ -39,7 +39,7 @@
               @click="readerTheme = 'sepia'"
               data-testid="theme-sepia-btn"
               class="px-3 py-1.5 rounded-xl text-xs font-technical transition-all cursor-pointer"
-              :class="readerTheme === 'sepia' ? 'bg-[#8C6D46] text-[#FFF9EE] font-bold shadow-sm' : 'text-textSecondary hover:text-white'"
+              :class="readerTheme === 'sepia' ? 'bg-[#8C6D46] text-[#FFF9EE] font-bold shadow-sm' : 'text-textSecondary hover:text-textPrimary'"
               title="Modo Sépia"
             >
               Sépia
@@ -48,7 +48,7 @@
               @click="readerTheme = 'light'"
               data-testid="theme-light-btn"
               class="px-3 py-1.5 rounded-xl text-xs font-technical transition-all cursor-pointer"
-              :class="readerTheme === 'light' ? 'bg-neutral-900 text-white font-bold shadow-sm' : 'text-textSecondary hover:text-white'"
+              :class="readerTheme === 'light' ? 'bg-accent text-white font-bold shadow-sm' : 'text-textSecondary hover:text-textPrimary'"
               title="Modo Claro"
             >
               Claro
@@ -60,7 +60,7 @@
             <button
               @click="fontFamily = 'editorial'"
               class="px-3 py-1.5 rounded-xl text-xs font-editorial transition-all cursor-pointer"
-              :class="fontFamily === 'editorial' ? 'bg-white/20 text-white font-semibold' : 'text-textSecondary hover:text-white'"
+              :class="fontFamily === 'editorial' ? 'bg-black/10 dark:bg-white/20 text-textPrimary font-semibold' : 'text-textSecondary hover:text-textPrimary'"
               title="Fonte Editorial Serifada"
             >
               Serif
@@ -68,7 +68,7 @@
             <button
               @click="fontFamily = 'interface'"
               class="px-3 py-1.5 rounded-xl text-xs font-interface transition-all cursor-pointer"
-              :class="fontFamily === 'interface' ? 'bg-white/20 text-white font-semibold' : 'text-textSecondary hover:text-white'"
+              :class="fontFamily === 'interface' ? 'bg-black/10 dark:bg-white/20 text-textPrimary font-semibold' : 'text-textSecondary hover:text-textPrimary'"
               title="Fonte Sans-Serif Moderna"
             >
               Sans
@@ -76,7 +76,7 @@
             <button
               @click="fontFamily = 'technical'"
               class="px-3 py-1.5 rounded-xl text-xs font-technical transition-all cursor-pointer"
-              :class="fontFamily === 'technical' ? 'bg-white/20 text-white font-semibold' : 'text-textSecondary hover:text-white'"
+              :class="fontFamily === 'technical' ? 'bg-black/10 dark:bg-white/20 text-textPrimary font-semibold' : 'text-textSecondary hover:text-textPrimary'"
               title="Fonte Monospaçada"
             >
               Mono
@@ -87,7 +87,7 @@
           <div class="flex items-center p-1 rounded-2xl border" :class="themeClasses.controlsBg">
             <button
               @click="fontSize = Math.max(14, fontSize - 1)"
-              class="w-8 h-7 rounded-xl text-xs font-technical flex items-center justify-center text-textSecondary hover:text-white cursor-pointer"
+              class="w-8 h-7 rounded-xl text-xs font-technical flex items-center justify-center text-textSecondary hover:text-textPrimary cursor-pointer"
               title="Diminuir fonte"
             >
               A-
@@ -95,7 +95,7 @@
             <span class="text-xs font-technical px-2 text-accent font-semibold">{{ fontSize }}px</span>
             <button
               @click="fontSize = Math.min(22, fontSize + 1)"
-              class="w-8 h-7 rounded-xl text-xs font-technical flex items-center justify-center text-textSecondary hover:text-white cursor-pointer"
+              class="w-8 h-7 rounded-xl text-xs font-technical flex items-center justify-center text-textSecondary hover:text-textPrimary cursor-pointer"
               title="Aumentar fonte"
             >
               A+
@@ -243,7 +243,7 @@
         <div
           v-if="activeHighlight"
           data-testid="highlight-popover"
-          class="absolute bottom-6 left-8 right-8 sm:left-24 sm:right-24 z-30 p-5 sm:p-6 rounded-3xl bg-[#121316]/98 border border-accent/50 shadow-2xl backdrop-blur-2xl text-textPrimary flex flex-col gap-3.5 animate-fadeIn max-w-4xl mx-auto"
+          class="absolute bottom-6 left-8 right-8 sm:left-24 sm:right-24 z-30 p-5 sm:p-6 rounded-3xl bg-bgPanel border border-accent/50 shadow-2xl backdrop-blur-2xl text-textPrimary flex flex-col gap-3.5 animate-fadeIn max-w-4xl mx-auto"
         >
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
@@ -254,7 +254,7 @@
             </div>
             <button
               @click="activeHighlight = null"
-              class="text-textSecondary hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
+              class="text-textSecondary hover:text-textPrimary p-1 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer"
             >
               <XIcon class="w-5 h-5" />
             </button>
@@ -296,7 +296,7 @@
         <!-- Indicador de Progresso em Porcentagem -->
         <div class="flex items-center gap-3 text-xs font-technical text-textSecondary">
           <span class="text-accent font-semibold">{{ currentProgressPercent }}% Concluído</span>
-          <div class="w-32 h-1.5 bg-white/10 rounded-full overflow-hidden">
+          <div class="w-32 h-1.5 bg-black/10 dark:bg-white/10 rounded-full overflow-hidden">
             <div class="h-full bg-accent transition-all duration-300" :style="{ width: `${currentProgressPercent}%` }"></div>
           </div>
           <span>{{ currentLeftPage.pageNumber }} de 128 páginas</span>
@@ -309,7 +309,7 @@
             :key="sIdx"
             @click="currentSpreadIndex = sIdx"
             class="px-3 py-1 rounded-xl text-xs font-technical border transition-all cursor-pointer"
-            :class="currentSpreadIndex === sIdx ? 'bg-accent text-white border-accent font-bold' : 'bg-white/5 border-divider text-textSecondary hover:text-white'"
+            :class="currentSpreadIndex === sIdx ? 'bg-accent text-white border-accent font-bold' : 'bg-black/5 dark:bg-white/5 border-divider text-textSecondary hover:text-textPrimary'"
           >
             {{ spread.label }}
           </button>
@@ -321,10 +321,10 @@
     <div
       v-if="isFlashcardOpen"
       data-testid="flashcard-modal"
-      class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn"
+      class="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn"
       @click.self="isFlashcardOpen = false"
     >
-      <div class="w-full max-w-lg rounded-3xl bg-[#141518] border border-accent/40 p-6 sm:p-8 flex flex-col gap-5 shadow-2xl relative text-left">
+      <div class="w-full max-w-lg rounded-3xl bg-bgPanel border border-accent/40 p-6 sm:p-8 flex flex-col gap-5 shadow-2xl relative text-left">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2.5">
             <div class="w-9 h-9 rounded-2xl bg-accent/15 border border-accent/30 flex items-center justify-center text-accent">
@@ -341,7 +341,7 @@
           </div>
           <button
             @click="isFlashcardOpen = false"
-            class="p-2 rounded-xl text-textSecondary hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+            class="p-2 rounded-xl text-textSecondary hover:text-textPrimary hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer"
           >
             <XIcon class="w-5 h-5" />
           </button>
@@ -350,7 +350,7 @@
         <!-- Card com Efeito Flip Interativo -->
         <div
           @click="isFlashcardFlipped = !isFlashcardFlipped"
-          class="w-full min-h-[180px] p-6 rounded-2xl bg-black/60 border border-divider hover:border-accent/50 transition-all flex flex-col justify-between cursor-pointer select-none group"
+          class="w-full min-h-[180px] p-6 rounded-2xl bg-black/[0.03] dark:bg-black/60 border border-divider hover:border-accent/50 transition-all flex flex-col justify-between cursor-pointer select-none group"
         >
           <div class="flex items-center justify-between">
             <span class="font-technical text-[10px] uppercase tracking-wider text-textSecondary">
@@ -395,7 +395,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import {
   BookOpenIcon,
   SparklesIcon,
@@ -404,6 +404,9 @@ import {
   RotateCcwIcon,
   ArrowRightIcon
 } from 'lucide-vue-next'
+import { useSettings } from '~/composables/useSettings'
+
+const { themeMode } = useSettings()
 
 interface HighlightData {
   text: string
@@ -434,7 +437,13 @@ interface DemoSpread {
   rightPage: DemoPage
 }
 
-const readerTheme = ref<'dark' | 'sepia' | 'light'>('dark')
+const readerTheme = ref<'dark' | 'sepia' | 'light'>(themeMode.value === 'dark' ? 'dark' : 'light')
+
+watch(themeMode, (mode) => {
+  if (readerTheme.value !== 'sepia') {
+    readerTheme.value = mode
+  }
+})
 const fontFamily = ref<'editorial' | 'interface' | 'technical'>('editorial')
 const fontSize = ref(17)
 const isDoublePage = ref(true)
@@ -634,26 +643,26 @@ const themeClasses = computed(() => {
   }
   if (readerTheme.value === 'light') {
     return {
-      wrapper: 'bg-[#FAFAFA] text-[#1A1A1A]',
-      border: 'border-gray-200',
-      heading: 'text-black',
-      subtext: 'text-gray-600',
-      controlsBg: 'bg-white border-gray-200 text-gray-800',
-      article: 'text-[#1A1A1A]',
-      highlight: 'bg-amber-100 text-black border-amber-500',
-      floatingNav: 'bg-white border-gray-200 text-gray-800 hover:bg-gray-100 hover:text-accent'
+      wrapper: 'bg-[#FAFAFA] text-textPrimary',
+      border: 'border-divider',
+      heading: 'text-textPrimary',
+      subtext: 'text-textSecondary',
+      controlsBg: 'bg-bgPanel border-divider text-textPrimary',
+      article: 'text-textPrimary',
+      highlight: 'bg-amber-100 text-amber-950 border-amber-500',
+      floatingNav: 'bg-bgPanel border-divider text-textSecondary hover:bg-black/5 hover:text-accent'
     }
   }
-  // Dark (Padrão Aresta)
+  // Dark (Modo Noite)
   return {
-    wrapper: 'bg-[#0A0A0C] text-textPrimary',
-    border: 'border-divider/70',
-    heading: 'text-textPrimary',
-    subtext: 'text-textSecondary',
-    controlsBg: 'bg-white/5 border-divider text-textPrimary',
-    article: 'text-textPrimary/95',
-    highlight: 'bg-accent/20 text-white border-accent',
-    floatingNav: 'bg-black/60 border-divider text-textSecondary hover:text-white hover:border-accent/40'
+    wrapper: 'bg-[#0A0A0C] text-[#F2F2F2]',
+    border: 'border-white/10',
+    heading: 'text-[#FFFFFF]',
+    subtext: 'text-[#A1A1AA]',
+    controlsBg: 'bg-white/10 border-white/15 text-[#F2F2F2]',
+    article: 'text-[#E4E4E7]',
+    highlight: 'bg-accent/25 text-white border-accent',
+    floatingNav: 'bg-black/80 border-white/15 text-[#A1A1AA] hover:text-white hover:border-accent/40'
   }
 })
 

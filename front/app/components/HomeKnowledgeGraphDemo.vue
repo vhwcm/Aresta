@@ -1,7 +1,7 @@
 <template>
   <div
     data-testid="home-knowledge-graph-demo"
-    class="w-full rounded-3xl bg-gradient-to-b from-[#141518]/90 via-[#0e0f11]/95 to-[#070708] border border-divider/90 shadow-2xl p-4 sm:p-7 flex flex-col gap-5 relative overflow-hidden backdrop-blur-xl group hover:border-accent/40 transition-all duration-500"
+    class="w-full rounded-3xl bg-bgPanel border border-divider shadow-xl p-4 sm:p-7 flex flex-col gap-5 relative overflow-hidden backdrop-blur-xl group hover:border-accent/40 transition-all duration-500"
   >
     <!-- Topo da Seção de Demonstração -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-divider/60">
@@ -28,7 +28,7 @@
           @click="activeCategory = cat.id"
           :data-testid="`filter-cat-${cat.id}`"
           class="px-3 py-1.5 rounded-xl font-technical text-xs transition-all cursor-pointer border"
-          :class="activeCategory === cat.id ? 'bg-accent text-white border-accent shadow-sm' : 'bg-white/5 border-divider text-textSecondary hover:text-white hover:bg-white/10'"
+          :class="activeCategory === cat.id ? 'bg-accent text-white border-accent shadow-sm' : 'bg-black/5 dark:bg-white/5 border-divider text-textSecondary hover:text-textPrimary hover:bg-black/10 dark:hover:bg-white/10'"
         >
           {{ cat.label }}
         </button>
@@ -36,7 +36,7 @@
     </div>
 
     <!-- Container do Grafo Interativo + Painel Lateral de Detalhes -->
-    <div class="relative w-full h-[420px] sm:h-[500px] rounded-2xl overflow-hidden bg-black/40 border border-divider/80 flex flex-col md:flex-row">
+    <div class="relative w-full h-[420px] sm:h-[500px] rounded-2xl overflow-hidden bg-black/[0.02] dark:bg-black/40 border border-divider flex flex-col md:flex-row">
       <!-- Canvas SVG Interativo D3 -->
       <div class="relative flex-1 h-full select-none overflow-hidden" ref="graphContainerRef">
         <!-- Grid de fundo sutil -->
@@ -52,12 +52,12 @@
         </svg>
 
         <!-- Controles Flutuantes de Zoom / Ação -->
-        <div class="absolute bottom-4 left-4 z-10 flex items-center gap-1.5 bg-bgPanel/80 backdrop-blur-md border border-divider p-1.5 rounded-2xl shadow-xl">
+        <div class="absolute bottom-4 left-4 z-10 flex items-center gap-1.5 bg-bgPanel/90 backdrop-blur-md border border-divider p-1.5 rounded-2xl shadow-xl">
           <button
             @click="handleZoomIn"
             title="Aumentar zoom"
             aria-label="Aumentar zoom"
-            class="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/15 text-textPrimary flex items-center justify-center transition-colors text-sm font-bold cursor-pointer"
+            class="w-8 h-8 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/15 text-textPrimary flex items-center justify-center transition-colors text-sm font-bold cursor-pointer"
           >
             +
           </button>
@@ -65,7 +65,7 @@
             @click="handleZoomOut"
             title="Diminuir zoom"
             aria-label="Diminuir zoom"
-            class="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/15 text-textPrimary flex items-center justify-center transition-colors text-sm font-bold cursor-pointer"
+            class="w-8 h-8 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/15 text-textPrimary flex items-center justify-center transition-colors text-sm font-bold cursor-pointer"
           >
             -
           </button>
@@ -73,7 +73,7 @@
             @click="handleResetZoom"
             title="Recentralizar grafo"
             aria-label="Recentralizar grafo"
-            class="px-2.5 h-8 rounded-xl bg-white/5 hover:bg-white/15 text-textSecondary hover:text-white flex items-center gap-1.5 transition-colors text-xs font-technical cursor-pointer"
+            class="px-2.5 h-8 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/15 text-textSecondary hover:text-textPrimary flex items-center gap-1.5 transition-colors text-xs font-technical cursor-pointer"
           >
             <RotateCcwIcon class="w-3.5 h-3.5" />
             <span>Resetar</span>
@@ -81,7 +81,7 @@
         </div>
 
         <!-- Dica de Interação Flutuante no Topo Esquerdo -->
-        <div class="absolute top-3 left-3 pointer-events-none z-10 bg-black/60 backdrop-blur-md border border-divider/60 px-3 py-1.5 rounded-xl font-technical text-[10px] text-textSecondary flex items-center gap-1.5">
+        <div class="absolute top-3 left-3 pointer-events-none z-10 bg-bgPanel/90 backdrop-blur-md border border-divider px-3 py-1.5 rounded-xl font-technical text-[10px] text-textSecondary flex items-center gap-1.5 shadow-sm">
           <SparklesIcon class="w-3 h-3 text-accent" />
           <span>Arraste os nós ou clique para inspecionar</span>
         </div>
@@ -106,7 +106,7 @@
             </div>
             <button
               @click="selectedNode = null"
-              class="text-textSecondary hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
+              class="text-textSecondary hover:text-textPrimary p-1 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer"
               title="Fechar painel"
               aria-label="Fechar painel"
             >
@@ -133,7 +133,7 @@
               <div
                 v-for="b in selectedNode.books"
                 :key="b.title"
-                class="p-2.5 rounded-xl bg-white/[0.03] border border-divider/60 flex flex-col gap-1 hover:border-accent/30 transition-colors"
+                class="p-2.5 rounded-xl bg-black/[0.02] dark:bg-white/[0.03] border border-divider/60 flex flex-col gap-1 hover:border-accent/30 transition-colors"
               >
                 <div class="flex items-center justify-between text-xs">
                   <span class="font-interface font-medium text-textPrimary truncate">{{ b.title }}</span>
@@ -209,7 +209,7 @@
 
 <script setup lang="ts">
 // @ts-nocheck
-import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import * as d3 from 'd3'
 import {
   SparklesIcon,
@@ -218,6 +218,10 @@ import {
   ArrowRightIcon,
   NetworkIcon
 } from 'lucide-vue-next'
+import { useSettings } from '~/composables/useSettings'
+
+const { themeMode } = useSettings()
+const isLightMode = computed(() => themeMode.value === 'light')
 
 interface DemoBook {
   title: string
@@ -358,11 +362,13 @@ const sampleEdges: DemoEdge[] = [
 ]
 
 const getPastelFill = (colorHex: string, isRoot = false) => {
-  return d3.interpolateRgb('#121316', colorHex)(isRoot ? 0.45 : 0.3)
+  const neutral = isLightMode.value ? '#FFFFFF' : '#121316'
+  return d3.interpolateRgb(neutral, colorHex)(isRoot ? 0.45 : (isLightMode.value ? 0.35 : 0.3))
 }
 
 const getPastelStroke = (colorHex: string, isRoot = false) => {
-  return d3.interpolateRgb('#121316', colorHex)(isRoot ? 0.95 : 0.75)
+  const neutral = isLightMode.value ? '#CBD5E1' : '#121316'
+  return d3.interpolateRgb(neutral, colorHex)(isRoot ? 0.95 : (isLightMode.value ? 0.85 : 0.75))
 }
 
 const initGraphSimulation = () => {
@@ -413,7 +419,7 @@ const initGraphSimulation = () => {
   const links = linkGroup.selectAll<SVGLineElement, any>('line')
     .data(visibleEdges, (d: any) => d.id)
     .join('line')
-    .attr('stroke', (d: any) => (d.source?.isRoot || d.target?.isRoot) ? 'rgba(229, 123, 85, 0.35)' : 'rgba(255, 255, 255, 0.16)')
+    .attr('stroke', (d: any) => (d.source?.isRoot || d.target?.isRoot) ? (isLightMode.value ? 'rgba(229, 123, 85, 0.45)' : 'rgba(229, 123, 85, 0.35)') : (isLightMode.value ? 'rgba(0, 0, 0, 0.15)' : 'rgba(255, 255, 255, 0.16)'))
     .attr('stroke-width', (d: any) => (d.source?.isRoot || d.target?.isRoot) ? 1.6 : 1.2)
     .attr('stroke-opacity', 0.8)
 
@@ -463,7 +469,7 @@ const initGraphSimulation = () => {
     .attr('font-size', (d: any) => d.isRoot ? '12px' : '11px')
     .attr('font-weight', '700')
     .attr('font-family', 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace')
-    .attr('fill', '#FFFFFF')
+    .attr('fill', (d: any) => isLightMode.value ? (d.isRoot ? '#9A3412' : '#0F172A') : '#FFFFFF')
     .attr('pointer-events', 'none')
     .text((d: any) => d.isRoot ? '★' : d.books.length)
 
@@ -471,7 +477,7 @@ const initGraphSimulation = () => {
   nodes.append('text')
     .attr('text-anchor', 'middle')
     .attr('dy', (d: any) => (d.isRoot ? 30 : 22) + 16)
-    .attr('fill', (d: any) => d.isRoot ? '#F59E0B' : '#E2E8F0')
+    .attr('fill', (d: any) => d.isRoot ? (isLightMode.value ? '#9A3412' : '#F59E0B') : (isLightMode.value ? '#0F172A' : '#E2E8F0'))
     .attr('font-size', (d: any) => d.isRoot ? '13px' : '11.5px')
     .attr('font-weight', (d: any) => d.isRoot ? '700' : '600')
     .attr('font-family', 'system-ui, -apple-system, sans-serif')
@@ -527,7 +533,7 @@ const handleResetZoom = () => {
   )
 }
 
-watch(activeCategory, () => {
+watch([activeCategory, themeMode], () => {
   initGraphSimulation()
 })
 
