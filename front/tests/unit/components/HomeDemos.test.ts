@@ -57,8 +57,8 @@ describe('Home Page Interactive Demos', () => {
       })
 
       expect(wrapper.find('[data-testid="home-book-reader-demo"]').exists()).toBe(true)
-      expect(wrapper.text()).toContain('Experiência de Leitura Imersiva')
-      expect(wrapper.text()).toContain('Machado de Assis · O Alienista')
+      expect(wrapper.text()).toContain('Experiência de Leitura Sem Bordas & Imersiva')
+      expect(wrapper.text()).toContain('Machado de Assis')
       expect(wrapper.text()).toContain('A Casa Verde')
       expect(wrapper.text()).toContain('Pág. 42')
       expect(wrapper.find('[data-testid="theme-dark-btn"]').exists()).toBe(true)
@@ -79,7 +79,7 @@ describe('Home Page Interactive Demos', () => {
 
       const lightBtn = wrapper.find('[data-testid="theme-light-btn"]')
       await lightBtn.trigger('click')
-      expect(wrapper.html()).toContain('bg-[#FFFFFF]')
+      expect(wrapper.html()).toContain('bg-[#FAFAFA]')
     })
 
     it('opens highlight popover and generates flashcard when clicking highlighted text', async () => {
@@ -96,7 +96,7 @@ describe('Home Page Interactive Demos', () => {
 
       // Verifica que o popover de reflexão abre
       expect(wrapper.find('[data-testid="highlight-popover"]').exists()).toBe(true)
-      expect(wrapper.text()).toContain('Anotação Reflexiva Vinculada')
+      expect(wrapper.text()).toContain('Anotação Reflexiva & Vínculo ao Grafo')
       expect(wrapper.text()).toContain('#epistemologia')
 
       // Clicar em Gerar Flashcard
@@ -106,7 +106,7 @@ describe('Home Page Interactive Demos', () => {
 
       // Verifica que o modal de flashcard abre
       expect(wrapper.find('[data-testid="flashcard-modal"]').exists()).toBe(true)
-      expect(wrapper.text()).toContain('Curva de Retenção Ebbinghaus')
+      expect(wrapper.text()).toContain('Repetição Espaçada Ebbinghaus')
     })
   })
 })
