@@ -33,6 +33,18 @@ export interface CreateAnnotationPayload {
   themeIds?: number[]
 }
 
+export interface CreateAnnotationWithOcrPayload {
+  bookId: number
+  cfi: string
+  selectedText?: string | null
+  chapterTitle?: string | null
+  progress?: number
+  themeIds?: number[]
+  imageBase64: string
+  mimeType?: 'image/png' | 'image/jpeg' | 'image/webp'
+  promptHint?: string
+}
+
 const API_BASE = 'http://localhost:7070/api'
 
 export const useAnnotations = () => {
@@ -94,6 +106,27 @@ export const useAnnotations = () => {
     }
   }
 
+  const createAnnotationWithOcr = async (payload: CreateAnnotationWithOcrPayload): Promise<AnnotationItem> => {
+    loading.value = true
+    error.value = null
+    try {
+      const created = await $fetch<AnnotationItem>(`${API_BASE}/annotations/with-ocr`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: payload,
+      })
+      annotations.value = [created, ...annotations.value]
+      return created
+    } catch (err: any) {
+      console.error('Erro ao criar anotação com OCR:', err)
+      const msg = err.data?.error || err.message || 'Falha ao processar escrita manual via OCR.'
+      error.value = msg
+      throw new Error(msg)
+    } finally {
+      loading.value = false
+    }
+  }
+
   const updateAnnotationNote = async (id: number, note: string): Promise<AnnotationItem> => {
     loading.value = true
     error.value = null
@@ -142,6 +175,7 @@ export const useAnnotations = () => {
     error,
     fetchAnnotations,
     createAnnotation,
+    createAnnotationWithOcr,
     updateAnnotationNote,
     deleteAnnotation,
   }

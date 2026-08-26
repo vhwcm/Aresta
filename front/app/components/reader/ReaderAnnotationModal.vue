@@ -19,13 +19,25 @@
             <p class="text-xs text-textSecondary">Página {{ currentPage }}</p>
           </div>
         </div>
-        <button
-          @click="$emit('close')"
-          class="p-2 text-textSecondary hover:text-textPrimary hover:bg-white/5 rounded-xl transition-colors"
-          aria-label="Fechar"
-        >
-          <XIcon class="w-5 h-5" />
-        </button>
+        <div class="flex items-center gap-1.5">
+          <button
+            type="button"
+            @click="$emit('expand')"
+            class="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-accent hover:bg-accent/10 border border-accent/30 rounded-xl transition-all shadow-sm"
+            title="Expandir tela / Modo Caneta (OCR)"
+          >
+            <SparklesIcon class="w-3.5 h-3.5" />
+            <span class="hidden sm:inline">Modo Caneta (OCR)</span>
+            <Maximize2Icon class="w-3.5 h-3.5" />
+          </button>
+          <button
+            @click="$emit('close')"
+            class="p-2 text-textSecondary hover:text-textPrimary hover:bg-white/5 rounded-xl transition-colors"
+            aria-label="Fechar"
+          >
+            <XIcon class="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
       <!-- Form Body -->
@@ -149,7 +161,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
-import { HighlighterIcon, XIcon, PlusIcon, CheckIcon } from 'lucide-vue-next'
+import { HighlighterIcon, XIcon, PlusIcon, CheckIcon, SparklesIcon, Maximize2Icon } from 'lucide-vue-next'
 import { useGraph } from '~/composables/useGraph'
 import { useAnnotations, type AnnotationItem } from '~/composables/useAnnotations'
 
@@ -162,6 +174,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'close'): void
+  (e: 'expand'): void
   (e: 'created', annotation: AnnotationItem): void
 }>()
 

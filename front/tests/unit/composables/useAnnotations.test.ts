@@ -90,4 +90,41 @@ describe('useAnnotations', () => {
     expect(success).toBe(true)
     expect(annotations.value).toHaveLength(0)
   })
+
+  it('createAnnotationWithOcr envia imagem para /annotations/with-ocr e atualiza a lista', async () => {
+    const ocrCreatedItem = {
+      id: 3,
+      userId: 10,
+      bookId: 1,
+      cfi: 'page:5',
+      selectedText: 'Citação da página 5',
+      note: 'Texto manuscrito transcrito pelo OCR',
+      themes: [{ id: 7, name: 'História' }],
+    }
+    mockFetch.mockResolvedValueOnce(ocrCreatedItem)
+
+    const { annotations, createAnnotationWithOcr } = useAnnotations()
+    const res = await createAnnotationWithOcr({
+      bookId: 1,
+      cfi: 'page:5',
+      selectedText: 'Citação da página 5',
+      imageBase64: 'data:image/png;base64,iVBORw0KGgo...',
+      themeIds: [7],
+    })
+
+    expect(res).toEqual(ocrCreatedItem)
+    expect(annotations.value[0]).toEqual(ocrCreatedItem)
+    expect(mockFetch).toHaveBeenCalledWith(
+      'http://localhost:7070/api/annotations/with-ocr',
+      expect.objectContaining({
+        method: 'POST',
+        body: expect.objectContaining({
+          bookId: 1,
+          cfi: 'page:5',
+          imageBase64: 'data:image/png;base64,iVBORw0KGgo...',
+          themeIds: [7],
+        }),
+      })
+    )
+  })
 })
