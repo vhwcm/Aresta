@@ -100,7 +100,7 @@
               <span class="font-technical text-[9px] uppercase tracking-widest text-accent font-semibold">
                 {{ book.category }}
               </span>
-              <h4 class="font-editorial text-lg text-textPrimary font-light group-hover:text-white transition-colors line-clamp-2">
+              <h4 class="font-editorial text-lg text-textPrimary font-light group-hover:text-accent transition-colors line-clamp-2">
                 {{ book.title }}
               </h4>
               <span class="font-interface text-xs text-textSecondary">{{ book.author }}</span>
