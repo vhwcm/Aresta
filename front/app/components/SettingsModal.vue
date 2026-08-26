@@ -203,7 +203,7 @@
                     role="switch"
                     :aria-checked="desktopHomeGraphOpen"
                     class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-accent/50"
-                    :class="desktopHomeGraphOpen ? 'bg-accent' : 'bg-white/10'"
+                    :class="desktopHomeGraphOpen ? 'bg-accent' : 'bg-black/10 dark:bg-white/10'"
                     title="Alternar início com grafo na tela inicial"
                   >
                     <span
@@ -235,7 +235,7 @@
                     role="switch"
                     :aria-checked="desktopReaderGraphOpen"
                     class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-accent/50"
-                    :class="desktopReaderGraphOpen ? 'bg-accent' : 'bg-white/10'"
+                    :class="desktopReaderGraphOpen ? 'bg-accent' : 'bg-black/10 dark:bg-white/10'"
                     title="Alternar início com grafo no leitor desktop"
                   >
                     <span
@@ -267,7 +267,7 @@
                     role="switch"
                     :aria-checked="pageAnimationEnabled"
                     class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-accent/50"
-                    :class="pageAnimationEnabled ? 'bg-accent' : 'bg-white/10'"
+                    :class="pageAnimationEnabled ? 'bg-accent' : 'bg-black/10 dark:bg-white/10'"
                     title="Alternar animação ao virar páginas"
                   >
                     <span
@@ -298,7 +298,7 @@
                       type="button"
                       @click="setEpubFontSize(epubFontSize - 2)"
                       :disabled="epubFontSize <= 12"
-                      class="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/15 disabled:opacity-30 border border-divider text-xs font-semibold transition-all text-textPrimary active:scale-95"
+                      class="px-2.5 py-1.5 rounded-lg bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/15 disabled:opacity-30 border border-divider text-xs font-semibold transition-all text-textPrimary active:scale-95"
                       title="Diminuir fonte padrão"
                       aria-label="Diminuir fonte padrão"
                     >
@@ -311,7 +311,7 @@
                       type="button"
                       @click="setEpubFontSize(epubFontSize + 2)"
                       :disabled="epubFontSize >= 36"
-                      class="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/15 disabled:opacity-30 border border-divider text-xs font-semibold transition-all text-textPrimary active:scale-95"
+                      class="px-2.5 py-1.5 rounded-lg bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/15 disabled:opacity-30 border border-divider text-xs font-semibold transition-all text-textPrimary active:scale-95"
                       title="Aumentar fonte padrão"
                       aria-label="Aumentar fonte padrão"
                     >
@@ -326,13 +326,13 @@
           </div>
 
           <!-- Modal Footer -->
-          <div class="px-6 py-4 border-t border-divider bg-white/[0.01] flex items-center justify-between shrink-0">
+          <div class="px-6 py-4 border-t border-divider bg-black/[0.02] dark:bg-white/[0.01] flex items-center justify-between shrink-0">
             <span class="font-technical text-[10px] text-textSecondary opacity-50">
               Aresta v1.0 • Configurações
             </span>
             <button
               @click="modal.close()"
-              class="px-4 py-2 text-xs font-interface font-medium bg-white/5 hover:bg-white/10 text-textPrimary border border-divider rounded-xl transition-colors"
+              class="px-4 py-2 text-xs font-interface font-medium bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-textPrimary border border-divider rounded-xl transition-colors"
             >
               Concluído
             </button>

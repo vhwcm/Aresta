@@ -4,12 +4,12 @@
     <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
       <!-- Legenda Direta: Tempo vs Absorção -->
       <div class="flex items-center gap-3 flex-wrap text-[10px] font-technical">
-        <div class="flex items-center gap-1 text-rose-400">
+        <div class="flex items-center gap-1 text-rose-500 dark:text-rose-400">
           <div class="w-2.5 h-0.5 bg-rose-500 rounded-full"></div>
           <span>Sem Revisão</span>
         </div>
-        <div class="flex items-center gap-1 text-emerald-400">
-          <div class="w-2.5 h-0.5 bg-emerald-400 rounded-full"></div>
+        <div class="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+          <div class="w-2.5 h-0.5 bg-emerald-500 rounded-full"></div>
           <span>Com Repetição Espaçada</span>
         </div>
       </div>
@@ -17,12 +17,12 @@
       <!-- Seletor Rápido de Simulação -->
       <div class="flex items-center gap-1.5 ml-auto">
         <span class="font-technical text-[9px] uppercase tracking-wider text-textSecondary hidden sm:inline">Simulação:</span>
-        <div class="flex items-center gap-1 bg-white/5 p-0.5 rounded-lg border border-divider">
+        <div class="flex items-center gap-1 bg-black/5 dark:bg-white/5 p-0.5 rounded-lg border border-divider">
           <button
             v-for="step in [1, 2, 3, 4]"
             :key="step"
             @click="activeRevisions = step"
-            :class="activeRevisions === step ? 'bg-accent text-white shadow-sm' : 'text-textSecondary hover:text-white'"
+            :class="activeRevisions === step ? 'bg-accent text-white shadow-sm' : 'text-textSecondary hover:text-textPrimary'"
             class="px-2 py-0.5 rounded font-technical text-[9px] transition-all"
           >
             {{ step }}ª Rev
@@ -32,7 +32,7 @@
     </div>
 
     <!-- Container do SVG D3 Comprimido Vertical e Horizontalmente -->
-    <div ref="containerRef" class="w-full h-40 sm:h-48 md:h-52 relative bg-black/40 rounded-xl sm:rounded-2xl border border-divider overflow-hidden p-1 sm:p-2">
+    <div ref="containerRef" class="w-full h-40 sm:h-48 md:h-52 relative bg-bgPanel/60 rounded-xl sm:rounded-2xl border border-divider overflow-hidden p-1 sm:p-2">
       <svg ref="svgRef" class="w-full h-full"></svg>
     </div>
 
@@ -49,12 +49,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import * as d3 from 'd3'
+import { useSettings } from '~/composables/useSettings'
 
 const containerRef = ref<HTMLElement | null>(null)
 const svgRef = ref<SVGSVGElement | null>(null)
 const activeRevisions = ref(3)
+
+const { themeMode } = useSettings()
+const isLightMode = computed(() => themeMode.value === 'light')
 
 // Função exponencial de Ebbinghaus R = e^(-t / S)
 const generateData = (revisions: number) => {
@@ -137,7 +141,7 @@ const renderChart = () => {
     .attr('class', 'grid')
     .call(yGrid)
     .selectAll('line')
-    .attr('stroke', 'rgba(255,255,255,0.05)')
+    .attr('stroke', isLightMode.value ? 'rgba(0, 0, 0, 0.07)' : 'rgba(255, 255, 255, 0.05)')
     .attr('stroke-dasharray', '2,2')
 
   // Eixos Simplificados
@@ -147,17 +151,17 @@ const renderChart = () => {
   g.append('g')
     .attr('transform', `translate(0,${innerHeight})`)
     .call(xAxis)
-    .attr('color', 'rgba(255,255,255,0.2)')
+    .attr('color', isLightMode.value ? 'rgba(0, 0, 0, 0.15)' : 'rgba(255, 255, 255, 0.2)')
     .selectAll('text')
-    .attr('fill', '#9ca3af')
+    .attr('fill', isLightMode.value ? '#6B7280' : '#9ca3af')
     .attr('font-size', '9px')
     .attr('font-family', 'var(--font-technical, monospace)')
 
   g.append('g')
     .call(yAxis)
-    .attr('color', 'rgba(255,255,255,0.2)')
+    .attr('color', isLightMode.value ? 'rgba(0, 0, 0, 0.15)' : 'rgba(255, 255, 255, 0.2)')
     .selectAll('text')
-    .attr('fill', '#9ca3af')
+    .attr('fill', isLightMode.value ? '#6B7280' : '#9ca3af')
     .attr('font-size', '9px')
     .attr('font-family', 'var(--font-technical, monospace)')
 
@@ -236,6 +240,10 @@ const renderChart = () => {
 }
 
 watch(activeRevisions, () => {
+  renderChart()
+})
+
+watch(themeMode, () => {
   renderChart()
 })
 

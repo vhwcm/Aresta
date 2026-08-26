@@ -57,10 +57,11 @@
 
 <script setup lang="ts">
 // @ts-nocheck
-import { ref, onMounted, watch, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, watch, onBeforeUnmount } from 'vue'
 import * as d3 from 'd3'
 import type { GraphNode, GraphEdge } from '~/interfaces/graph'
 import { PlusIcon, SearchIcon, LinkIcon } from 'lucide-vue-next'
+import { useSettings } from '~/composables/useSettings'
 
 const props = defineProps<{
   nodes: GraphNode[]
@@ -75,6 +76,9 @@ const emit = defineEmits<{
   (e: 'openConnectModal'): void
 }>()
 
+const { themeMode } = useSettings()
+const isLightMode = computed(() => themeMode.value === 'light')
+
 const containerRef = ref<HTMLElement | null>(null)
 const svgRef = ref<SVGSVGElement | null>(null)
 const gRef = ref<SVGGElement | null>(null)
@@ -87,12 +91,14 @@ let zoomBehavior: d3.ZoomBehavior<SVGSVGElement, unknown> | null = null
 // Helpers de cores pastéis e suaves (Low Dopamine)
 const getPastelFill = (colorHex?: string, isRoot = false) => {
   const baseColor = colorHex || (isRoot ? '#E57B55' : '#64748B')
-  return d3.interpolateRgb('#161619', baseColor)(isRoot ? 0.35 : 0.25)
+  const neutral = isLightMode.value ? '#FFFFFF' : '#161619'
+  return d3.interpolateRgb(neutral, baseColor)(isRoot ? 0.35 : 0.25)
 }
 
 const getPastelStroke = (colorHex?: string, isRoot = false) => {
   const baseColor = colorHex || (isRoot ? '#E57B55' : '#64748B')
-  return d3.interpolateRgb('#161619', baseColor)(isRoot ? 0.85 : 0.70)
+  const neutral = isLightMode.value ? '#CBD5E1' : '#161619'
+  return d3.interpolateRgb(neutral, baseColor)(isRoot ? 0.85 : 0.70)
 }
 
 const getNodeRadius = (node: GraphNode) => {
@@ -174,7 +180,7 @@ const initGraph = () => {
   const links = linkGroup.selectAll<SVGLineElement, any>('line')
     .data(simulationLinks, (d: any) => d.id)
     .join('line')
-    .attr('stroke', (d: any) => d.isRootEdge ? 'rgba(229, 123, 85, 0.25)' : 'rgba(255, 255, 255, 0.12)')
+    .attr('stroke', (d: any) => d.isRootEdge ? 'rgba(229, 123, 85, 0.35)' : (isLightMode.value ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.12)'))
     .attr('stroke-width', (d: any) => d.isRootEdge ? 1.5 : 1.2)
     .attr('stroke-opacity', 1)
 
@@ -262,14 +268,14 @@ const initGraph = () => {
         .attr('font-size', '11.5px')
         .attr('font-weight', '600')
         .attr('font-family', 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace')
-        .attr('fill', 'rgba(255, 255, 255, 0.92)')
+        .attr('fill', isLightMode.value ? '#1E293B' : 'rgba(255, 255, 255, 0.92)')
         .text(bookCount)
     } else {
       // Ícone 2D sutil para tema sem livros vinculados
       iconG.append('path')
         .attr('d', 'M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20')
         .attr('fill', 'none')
-        .attr('stroke', 'rgba(255, 255, 255, 0.55)')
+        .attr('stroke', isLightMode.value ? 'rgba(0, 0, 0, 0.45)' : 'rgba(255, 255, 255, 0.55)')
         .attr('stroke-width', '1.5')
         .attr('stroke-linecap', 'round')
         .attr('stroke-linejoin', 'round')
@@ -281,7 +287,7 @@ const initGraph = () => {
   nodesSelection.append('text')
     .attr('text-anchor', 'middle')
     .attr('dy', (d: any) => getNodeRadius(d) + 18)
-    .attr('fill', (d: any) => d.isRoot ? '#F59E0B' : '#E2E8F0')
+    .attr('fill', (d: any) => d.isRoot ? (isLightMode.value ? '#D97706' : '#F59E0B') : (isLightMode.value ? '#1E293B' : '#E2E8F0'))
     .attr('font-size', (d: any) => d.isRoot ? '14px' : '12.5px')
     .attr('font-weight', (d: any) => d.isRoot ? '700' : '500')
     .attr('font-family', 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif')
@@ -304,12 +310,12 @@ const initGraph = () => {
   // Evento de Destaque no Hover
   nodesSelection.on('mouseenter', (event, d) => {
     links
-      .attr('stroke', (l: any) => (l.source.id === d.id || l.target.id === d.id) ? (d.color || '#E57B55') : 'rgba(255, 255, 255, 0.05)')
+      .attr('stroke', (l: any) => (l.source.id === d.id || l.target.id === d.id) ? (d.color || '#E57B55') : (isLightMode.value ? 'rgba(0, 0, 0, 0.04)' : 'rgba(255, 255, 255, 0.05)'))
       .attr('stroke-width', (l: any) => (l.source.id === d.id || l.target.id === d.id) ? 2 : 1)
       .attr('stroke-opacity', (l: any) => (l.source.id === d.id || l.target.id === d.id) ? 0.9 : 0.25)
   }).on('mouseleave', () => {
     links
-      .attr('stroke', (d: any) => d.isRootEdge ? 'rgba(229, 123, 85, 0.25)' : 'rgba(255, 255, 255, 0.12)')
+      .attr('stroke', (d: any) => d.isRootEdge ? 'rgba(229, 123, 85, 0.35)' : (isLightMode.value ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.12)'))
       .attr('stroke-width', (d: any) => d.isRootEdge ? 1.5 : 1.2)
       .attr('stroke-opacity', 1)
   })
@@ -332,6 +338,10 @@ let resizeObserver: ResizeObserver | null = null
 watch(() => [props.nodes, props.edges], () => {
   initGraph()
 }, { deep: true })
+
+watch(themeMode, () => {
+  initGraph()
+})
 
 onMounted(() => {
   initGraph()

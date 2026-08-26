@@ -25,7 +25,7 @@
     <!-- Popover Flutuante com Estatísticas e Calendário Semanal -->
     <div
       v-if="isOpen"
-      class="absolute right-0 top-full mt-3 w-84 sm:w-92 p-5 rounded-2xl bg-[#141518]/95 backdrop-blur-xl border border-divider shadow-2xl z-50 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200"
+      class="absolute right-0 top-full mt-3 w-84 sm:w-92 p-5 rounded-2xl bg-bgPanel/95 backdrop-blur-xl border border-divider shadow-2xl z-50 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200"
     >
       <!-- Header do Popover -->
       <div class="flex items-center justify-between border-b border-divider pb-3">

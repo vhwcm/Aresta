@@ -3,7 +3,7 @@
     v-if="isShareModalOpen"
     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in"
   >
-    <div class="relative w-full max-w-sm rounded-3xl bg-[#18191c] border border-white/10 p-6 text-center shadow-2xl flex flex-col items-center gap-4">
+    <div class="relative w-full max-w-sm rounded-3xl bg-bgPanel border border-divider p-6 text-center shadow-2xl flex flex-col items-center gap-4">
       <h3 class="font-editorial text-2xl text-textPrimary">Compartilhar Ofensiva</h3>
       <div class="p-6 rounded-2xl bg-white/5 border border-accent/30 w-full flex flex-col items-center gap-2">
         <span class="text-4xl">🔥</span>

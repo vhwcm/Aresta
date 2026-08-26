@@ -6,7 +6,7 @@
         class="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] bg-black/40 backdrop-blur-md"
         @click.self="close"
       >
-        <div class="w-full max-w-2xl bg-[rgba(18,19,21,0.85)] rounded-2xl shadow-2xl overflow-hidden border border-divider backdrop-blur-xl">
+        <div class="w-full max-w-2xl bg-bgPanel/95 rounded-2xl shadow-2xl overflow-hidden border border-divider backdrop-blur-xl">
           <div class="px-6 py-5 flex items-center gap-4">
             <SearchIcon class="w-6 h-6 text-textSecondary" />
             <input
@@ -26,7 +26,7 @@
               Resultados de Conhecimento
             </div>
 
-            <div class="p-4 rounded-xl hover:bg-white/5 cursor-pointer flex flex-col gap-2 transition-colors mb-1 group">
+            <div class="p-4 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer flex flex-col gap-2 transition-colors mb-1 group">
               <div class="font-editorial text-xl font-light text-textPrimary group-hover:text-accent transition-colors">
                 O Efeito Observador na Mecânica Quântica
               </div>
@@ -35,7 +35,7 @@
               </div>
             </div>
 
-            <div class="p-4 rounded-xl hover:bg-white/5 cursor-pointer flex flex-col gap-2 transition-colors mb-1 group">
+            <div class="p-4 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer flex flex-col gap-2 transition-colors mb-1 group">
               <div class="font-editorial text-xl font-light text-textPrimary group-hover:text-accent transition-colors">
                 Design de Interfaces Escalas
               </div>
@@ -46,12 +46,12 @@
           </div>
 
           <!-- Ajuda / Atalhos -->
-          <div v-else class="border-t border-divider px-6 py-4 flex items-center justify-between text-textSecondary font-interface text-sm opacity-50">
+          <div v-else class="border-t border-divider px-6 py-4 flex items-center justify-between text-textSecondary font-interface text-sm opacity-60">
             <span>Comece a escrever para pesquisar...</span>
             <div class="flex items-center gap-3 font-technical text-[10px] uppercase font-semibold tracking-widest">
-              <div class="flex items-center gap-1"><span class="bg-white/10 px-1.5 py-0.5 rounded">↑↓</span> Navegar</div>
-              <div class="flex items-center gap-1"><span class="bg-white/10 px-1.5 py-0.5 rounded">Enter</span> Selecionar</div>
-              <div class="flex items-center gap-1"><span class="bg-white/10 px-1.5 py-0.5 rounded">Esc</span> Fechar</div>
+              <div class="flex items-center gap-1"><span class="bg-black/5 dark:bg-white/10 px-1.5 py-0.5 rounded">↑↓</span> Navegar</div>
+              <div class="flex items-center gap-1"><span class="bg-black/5 dark:bg-white/10 px-1.5 py-0.5 rounded">Enter</span> Selecionar</div>
+              <div class="flex items-center gap-1"><span class="bg-black/5 dark:bg-white/10 px-1.5 py-0.5 rounded">Esc</span> Fechar</div>
             </div>
           </div>
         </div>
