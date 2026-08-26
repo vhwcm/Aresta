@@ -4,6 +4,8 @@
   "scripts": {
     "start": "./start.sh",
     "dev": "./start.sh",
+    "models": "node list-gemini-models.js",
+    "list-models": "node list-gemini-models.js",
     "setup:hooks": "bash scripts/setup-hooks.sh"
   },
   "devDependencies": {
