@@ -1,3 +1,10 @@
+export interface BookThemeItem {
+  id: number
+  name: string
+  color?: string
+  description?: string
+}
+
 export interface UserBookItem {
   userBookId: number
   bookId: number
@@ -7,6 +14,7 @@ export interface UserBookItem {
   status: 'QUERO_LER' | 'LENDO' | 'LIDO' | 'ABANDONADO' | string
   currentPage: number
   lastAccessedAt?: string
+  themes?: BookThemeItem[]
 }
 
 export interface GraphNode {

@@ -34,7 +34,8 @@ export const useUserBooks = () => {
             filePath: item.filePath,
             status: item.status,
             currentPage: item.currentPage,
-            lastAccessedAt: item.lastAccessedAt
+            lastAccessedAt: item.lastAccessedAt,
+            themes: item.themes || []
           }))
         : []
     } catch (e: any) {
@@ -71,6 +72,50 @@ export const useUserBooks = () => {
       return res
     } catch (e: any) {
       console.error('Erro ao atualizar livro da estante:', e)
+      throw e
+    }
+  }
+
+  const setBookThemes = async (userBookId: number, themeIds: number[]) => {
+    try {
+      const res = await $fetch<any>(`${API_BASE}/user-books/${userBookId}/themes`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: { themeIds }
+      })
+      await fetchUserBooks()
+      return res
+    } catch (e: any) {
+      console.error('Erro ao definir temas do livro:', e)
+      throw e
+    }
+  }
+
+  const addThemeToBook = async (userBookId: number, themeId: number) => {
+    try {
+      const res = await $fetch<any>(`${API_BASE}/user-books/${userBookId}/themes`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: { themeId }
+      })
+      await fetchUserBooks()
+      return res
+    } catch (e: any) {
+      console.error('Erro ao adicionar tema ao livro:', e)
+      throw e
+    }
+  }
+
+  const removeThemeFromBook = async (userBookId: number, themeId: number) => {
+    try {
+      const res = await $fetch<any>(`${API_BASE}/user-books/${userBookId}/themes/${themeId}`, {
+        method: 'DELETE',
+        headers: getHeaders()
+      })
+      await fetchUserBooks()
+      return res
+    } catch (e: any) {
+      console.error('Erro ao remover tema do livro:', e)
       throw e
     }
   }
@@ -130,6 +175,9 @@ export const useUserBooks = () => {
     fetchUserBooks,
     addUserBook,
     updateUserBook,
+    setBookThemes,
+    addThemeToBook,
+    removeThemeFromBook,
     recordBookAccess,
     deleteUserBook,
     deleteUserBookByBookId,
