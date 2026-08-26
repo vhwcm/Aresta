@@ -456,18 +456,15 @@ export class EpubDocumentAdapter implements IBookDocument {
         this._sectionDocs.set(mapping.sectionIndex, doc)
       }
       const bodyContent = doc.body ? doc.body.innerHTML : ''
-      const fontSize = Math.round(this._fontSize * renderScale)
-      const padding = Math.round(48 * renderScale)
-      const columnWidth = Math.round(704 * renderScale)
-      const columnGap = Math.round(96 * renderScale)
-      const colOffset = mapping.pageIndexInSection * width
+      const colOffset = mapping.pageIndexInSection * baseWidth
 
       const svgContent = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
-          <foreignObject width="100%" height="100%">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${baseWidth} ${baseHeight}" width="${width}" height="${height}">
+          <foreignObject width="${baseWidth}" height="${baseHeight}">
             <div xmlns="http://www.w3.org/1999/xhtml"
-              style="width:${width}px;height:${height}px;overflow:hidden;background:#faf9f7;margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;">
-              <div style="width:${width}px;height:${height}px;padding:${padding}px;box-sizing:border-box;column-width:${columnWidth}px;column-gap:${columnGap}px;column-fill:auto;font-family:${this._fontFamily};font-size:${fontSize}px;color:#1a1a1a;line-height:1.7;word-wrap:break-word;margin-left:-${colOffset}px;">
+              style="width:${baseWidth}px;height:${baseHeight}px;overflow:hidden;background:#faf9f7;margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;">
+              <div class="epub-text-layer-content"
+                style="width:${baseWidth}px;height:${baseHeight}px;padding:48px;box-sizing:border-box;column-width:704px;column-gap:96px;column-fill:auto;font-family:${this._fontFamily};font-size:${this._fontSize}px;color:#1a1a1a;line-height:1.7;word-wrap:break-word;margin-left:-${colOffset}px;">
                 ${bodyContent}
               </div>
             </div>

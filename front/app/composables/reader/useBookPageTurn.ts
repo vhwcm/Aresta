@@ -224,7 +224,8 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
 
     const currentPage = store.currentPage
     const currentRaster = rasterCache.get(currentPage)
-    const aspectRatio = currentRaster?.aspectRatio || 0.72
+    const defaultAspectRatio = store.document?.type === 'epub' ? 800 / 1200 : 0.72
+    const aspectRatio = currentRaster?.aspectRatio || defaultAspectRatio
 
     if (isTwoPage) {
       const leftNum = currentPage % 2 === 0 ? Math.max(1, currentPage - 1) : currentPage
@@ -447,18 +448,18 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
     errorMessage.value = null
 
     try {
-      const layout = computeLayout()
-      pageLayout.value = layout
+      pageLayout.value = computeLayout()
 
-      if (layout.isTwoPage) {
+      if (pageLayout.value.isTwoPage) {
         const promises: Promise<PageRaster>[] = []
-        if (layout.leftPage) promises.push(getPageRaster(layout.leftPage.pageNumber))
-        if (layout.rightPage) promises.push(getPageRaster(layout.rightPage.pageNumber))
+        if (pageLayout.value.leftPage) promises.push(getPageRaster(pageLayout.value.leftPage.pageNumber))
+        if (pageLayout.value.rightPage) promises.push(getPageRaster(pageLayout.value.rightPage.pageNumber))
         await Promise.all(promises)
-      } else if (layout.singlePage) {
-        await getPageRaster(layout.singlePage.pageNumber)
+      } else if (pageLayout.value.singlePage) {
+        await getPageRaster(pageLayout.value.singlePage.pageNumber)
       }
 
+      pageLayout.value = computeLayout()
       drawScene(0)
       prefetchSurroundingPages(store.currentPage)
     } catch (err) {
@@ -525,6 +526,8 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
       })
 
       store.goToPage(targetPage)
+      pageLayout.value = computeLayout()
+      drawScene(0)
     } finally {
       isTransitioning.value = false
       if (animationFrame) cancelAnimationFrame(animationFrame)

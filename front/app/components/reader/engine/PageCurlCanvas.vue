@@ -404,8 +404,7 @@ defineExpose({
   color: #1a1a1a !important;
   user-select: text !important;
   -webkit-user-select: text !important;
-  line-height: 1.75 !important;
-  font-family: 'Newsreader', Georgia, 'Times New Roman', serif !important;
+  line-height: 1.7 !important;
   -webkit-font-smoothing: antialiased !important;
   -moz-osx-font-smoothing: grayscale !important;
   text-rendering: optimizeLegibility !important;
@@ -413,33 +412,7 @@ defineExpose({
 
 .page-text-layer :deep(.epub-text-layer-content *) {
   color: #1a1a1a !important;
-  line-height: 1.75 !important;
-}
-
-.page-text-layer :deep(.epub-text-layer-content h1),
-.page-text-layer :deep(.epub-text-layer-content h2),
-.page-text-layer :deep(.epub-text-layer-content h3),
-.page-text-layer :deep(.epub-text-layer-content h4) {
-  font-weight: 700 !important;
-  margin-top: 0.2em !important;
-  margin-bottom: 0.6em !important;
-  line-height: 1.25 !important;
-  color: #111111 !important;
-}
-
-.page-text-layer :deep(.epub-text-layer-content h1) {
-  font-size: 2.2rem !important;
-}
-
-.page-text-layer :deep(.epub-text-layer-content h2) {
-  font-size: 1.6rem !important;
-}
-
-.page-text-layer :deep(.epub-text-layer-content p) {
-  margin-bottom: 1em !important;
-  text-align: justify;
-  text-justify: inter-word;
-  hyphens: auto;
+  line-height: 1.7 !important;
 }
 
 .page-curl-loading {
