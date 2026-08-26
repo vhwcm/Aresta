@@ -82,14 +82,14 @@
               </td>
               <td class="px-6 py-4">
                 <div class="flex flex-col">
-                  <span class="font-medium text-textPrimary group-hover:text-white transition-colors">{{ userItem.name }}</span>
+                  <span class="font-medium text-textPrimary group-hover:text-accent transition-colors">{{ userItem.name }}</span>
                   <span class="text-xs text-textSecondary">{{ userItem.email }}</span>
                 </div>
               </td>
               <td class="px-6 py-4">
                 <span
                   class="font-technical text-[10px] uppercase font-semibold px-2.5 py-1 rounded-md border"
-                  :class="userItem.role === 'ADMIN' ? 'bg-accent/10 border-accent/30 text-accent' : 'bg-white/5 border-divider text-textSecondary'"
+                  :class="userItem.role === 'ADMIN' ? 'bg-accent/10 border-accent/30 text-accent' : 'bg-black/5 dark:bg-white/5 border-divider text-textSecondary'"
                 >
                   {{ userItem.role }}
                 </span>
@@ -110,7 +110,7 @@
                 <div class="flex items-center justify-end gap-2">
                   <button
                     @click="openEditModal(userItem)"
-                    class="p-2 rounded-lg text-textSecondary hover:text-white hover:bg-white/10 transition-colors"
+                    class="p-2 rounded-lg text-textSecondary hover:text-textPrimary hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
                     title="Editar Usuário"
                   >
                     <Edit3Icon class="w-4 h-4" />
@@ -149,7 +149,7 @@
           <h3 class="font-editorial text-2xl font-light text-textPrimary">
             {{ isEditing ? 'Editar Usuário' : 'Novo Usuário' }}
           </h3>
-          <button @click="closeModal" class="text-textSecondary hover:text-white transition-colors">
+          <button @click="closeModal" class="text-textSecondary hover:text-textPrimary transition-colors">
             <XIcon class="w-5 h-5" />
           </button>
         </div>
@@ -162,7 +162,7 @@
               type="text"
               required
               placeholder="Ex: Ana Silva"
-              class="bg-black/40 border border-divider rounded-xl px-4 py-2.5 text-sm text-textPrimary focus:outline-none focus:border-accent"
+              class="bg-black/[0.03] dark:bg-black/40 border border-divider rounded-xl px-4 py-2.5 text-sm text-textPrimary focus:outline-none focus:border-accent"
             />
           </div>
 
@@ -173,7 +173,7 @@
               type="email"
               required
               placeholder="ana@empresa.com"
-              class="bg-black/40 border border-divider rounded-xl px-4 py-2.5 text-sm text-textPrimary focus:outline-none focus:border-accent"
+              class="bg-black/[0.03] dark:bg-black/40 border border-divider rounded-xl px-4 py-2.5 text-sm text-textPrimary focus:outline-none focus:border-accent"
             />
           </div>
 
@@ -186,7 +186,7 @@
               type="password"
               :required="!isEditing"
               placeholder="••••••••"
-              class="bg-black/40 border border-divider rounded-xl px-4 py-2.5 text-sm text-textPrimary focus:outline-none focus:border-accent"
+              class="bg-black/[0.03] dark:bg-black/40 border border-divider rounded-xl px-4 py-2.5 text-sm text-textPrimary focus:outline-none focus:border-accent"
             />
           </div>
 
@@ -195,7 +195,7 @@
               <label class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary">Papel (Role)</label>
               <select
                 v-model="form.role"
-                class="bg-black/40 border border-divider rounded-xl px-3 py-2.5 text-xs text-textPrimary focus:outline-none focus:border-accent"
+                class="bg-black/[0.03] dark:bg-black/40 border border-divider rounded-xl px-3 py-2.5 text-xs text-textPrimary focus:outline-none focus:border-accent"
               >
                 <option value="USER">USER</option>
                 <option value="ADMIN">ADMIN</option>
@@ -206,7 +206,7 @@
               <label class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary">Status</label>
               <select
                 v-model="form.isActive"
-                class="bg-black/40 border border-divider rounded-xl px-3 py-2.5 text-xs text-textPrimary focus:outline-none focus:border-accent"
+                class="bg-black/[0.03] dark:bg-black/40 border border-divider rounded-xl px-3 py-2.5 text-xs text-textPrimary focus:outline-none focus:border-accent"
               >
                 <option :value="true">Ativo</option>
                 <option :value="false">Inativo</option>
@@ -218,13 +218,13 @@
             <button
               type="button"
               @click="closeModal"
-              class="px-4 py-2 rounded-xl text-xs font-interface text-textSecondary hover:text-white transition-colors"
+              class="px-4 py-2 rounded-xl text-xs font-interface text-textSecondary hover:text-textPrimary transition-colors"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              class="bg-white text-black font-interface text-xs font-medium px-5 py-2.5 rounded-xl hover:bg-gray-200 transition-colors shadow-md"
+              class="bg-textPrimary text-bgApp font-interface text-xs font-medium px-5 py-2.5 rounded-xl hover:opacity-90 transition-all shadow-md"
             >
               {{ isEditing ? 'Salvar Alterações' : 'Criar Usuário' }}
             </button>

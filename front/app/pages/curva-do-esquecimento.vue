@@ -5,7 +5,7 @@
       <div class="flex items-center justify-between flex-wrap gap-4">
         <NuxtLink
           to="/"
-          class="font-technical text-xs text-textSecondary hover:text-white flex items-center gap-1.5 transition-colors"
+          class="font-technical text-xs text-textSecondary hover:text-textPrimary flex items-center gap-1.5 transition-colors"
         >
           <ArrowLeftIcon class="w-3.5 h-3.5" />
           Voltar para o Início

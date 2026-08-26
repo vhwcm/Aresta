@@ -40,7 +40,7 @@
               v-for="(prompt, index) in suggestedPrompts"
               :key="index"
               @click="sendSuggestedPrompt(prompt)"
-              class="px-4 py-2 rounded-full bg-white/5 border border-divider text-xs font-interface text-textSecondary hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+              class="px-4 py-2 rounded-full bg-black/5 dark:bg-white/5 border border-divider text-xs font-interface text-textSecondary hover:text-textPrimary hover:bg-black/10 dark:hover:bg-white/10 transition-colors cursor-pointer"
             >
               {{ prompt }}
             </button>

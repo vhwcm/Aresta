@@ -158,18 +158,68 @@
         </div>
       </div>
 
-      <!-- Filtros por Status -->
-      <div class="flex items-center gap-3 border-b border-divider pb-4">
-        <span class="text-xs font-technical uppercase font-bold text-textSecondary">Filtrar:</span>
-        <button
-          v-for="filter in ['TODOS', 'LENDO', 'LIDO', 'QUERO_LER']"
-          :key="filter"
-          @click="statusFilter = filter"
-          class="px-3 py-1 rounded-xl text-xs font-technical transition-all"
-          :class="statusFilter === filter ? 'bg-accent text-white font-bold shadow' : 'bg-white/5 text-textSecondary hover:text-textPrimary'"
-        >
-          {{ getFilterLabel(filter) }}
-        </button>
+      <!-- Filtros por Status e Temas do Grafo -->
+      <div class="flex flex-col gap-4 border-b border-divider pb-5">
+        <!-- Linha 1: Filtro por Status -->
+        <div class="flex items-center gap-3 flex-wrap">
+          <span class="text-xs font-technical uppercase font-bold text-textSecondary">Filtrar:</span>
+          <button
+            v-for="filter in ['TODOS', 'LENDO', 'LIDO', 'QUERO_LER', 'ABANDONADO']"
+            :key="filter"
+            @click="statusFilter = filter"
+            class="px-3 py-1 rounded-xl text-xs font-technical transition-all"
+            :class="statusFilter === filter ? 'bg-accent text-white font-bold shadow' : 'bg-white/5 text-textSecondary hover:text-textPrimary'"
+          >
+            {{ getFilterLabel(filter) }}
+          </button>
+        </div>
+
+        <!-- Linha 2: Filtro por Temas / Tags do Grafo -->
+        <div class="flex items-center gap-2 flex-wrap pt-3 border-t border-divider/40">
+          <span class="text-xs font-technical uppercase font-bold text-textSecondary flex items-center gap-1.5 mr-1">
+            <NetworkIcon class="w-3.5 h-3.5 text-accent" />
+            Temas do Grafo:
+          </span>
+
+          <button
+            @click="selectedThemeId = null"
+            class="px-3 py-1 rounded-xl text-xs font-technical transition-all flex items-center gap-1.5"
+            :class="selectedThemeId === null ? 'bg-textPrimary text-bgApp font-bold shadow-sm' : 'bg-white/5 text-textSecondary hover:text-textPrimary'"
+          >
+            <span>Todos os Temas</span>
+            <span class="text-[10px] opacity-70">({{ userBooks.length }})</span>
+          </button>
+
+          <button
+            v-for="theme in availableThemes"
+            :key="theme.id"
+            @click="selectedThemeId = selectedThemeId === theme.id ? null : theme.id"
+            class="px-3 py-1 rounded-xl text-xs font-technical transition-all flex items-center gap-1.5 border"
+            :style="selectedThemeId === theme.id ? {
+              backgroundColor: (theme.color || '#E57B55'),
+              borderColor: (theme.color || '#E57B55'),
+              color: '#FFFFFF',
+              boxShadow: '0 2px 8px ' + (theme.color || '#E57B55') + '40'
+            } : {
+              backgroundColor: (theme.color || '#E57B55') + '10',
+              borderColor: (theme.color || '#E57B55') + '30',
+              color: 'inherit'
+            }"
+          >
+            <span class="w-2 h-2 rounded-full shrink-0" :style="{ backgroundColor: theme.color || '#E57B55' }"></span>
+            <span class="font-medium">{{ theme.name }}</span>
+            <span class="text-[10px] opacity-70">({{ countByTheme(theme.id) }})</span>
+          </button>
+
+          <NuxtLink
+            to="/grafo"
+            class="text-xs text-accent hover:underline font-technical ml-auto flex items-center gap-1 hover:opacity-80 transition-all"
+            title="Abrir Mapa Mental Completo"
+          >
+            <NetworkIcon class="w-3.5 h-3.5" />
+            <span>Ver Grafo</span>
+          </NuxtLink>
+        </div>
       </div>
 
       <!-- Lista da Estante -->
@@ -188,7 +238,7 @@
           <!-- Conteúdo -->
           <div class="flex-1 flex flex-col gap-3">
             <div class="flex items-start justify-between gap-4">
-              <div class="flex flex-col gap-1.5">
+              <div class="flex flex-col gap-2">
                 <div class="flex items-center gap-2.5 flex-wrap">
                   <h3 class="font-editorial text-2xl font-light text-textPrimary group-hover:text-accent transition-colors">{{ item.title }}</h3>
                   <!-- Badge do Formato (EPUB / PDF) -->
@@ -198,6 +248,35 @@
                   >
                     {{ getBookFormat(item.filePath) }}
                   </span>
+                </div>
+
+                <!-- Tags / Temas do Livro -->
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span
+                    v-for="theme in (item.themes || [])"
+                    :key="theme.id"
+                    @click.stop="selectedThemeId = selectedThemeId === theme.id ? null : theme.id"
+                    class="cursor-pointer text-[10px] font-technical uppercase font-bold px-2 py-0.5 rounded-md flex items-center gap-1.5 border transition-all hover:scale-105"
+                    :style="{
+                      borderColor: (theme.color || '#E57B55') + '60',
+                      backgroundColor: (theme.color || '#E57B55') + '18',
+                      color: theme.color || '#E57B55'
+                    }"
+                    :title="`Filtrar estante por '${theme.name}'`"
+                  >
+                    <span class="w-1.5 h-1.5 rounded-full shrink-0" :style="{ backgroundColor: theme.color || '#E57B55' }"></span>
+                    <span>{{ theme.name }}</span>
+                  </span>
+
+                  <!-- Botão de Editar / Adicionar Tags -->
+                  <button
+                    @click="openTagModal(item)"
+                    class="text-[10px] font-technical text-textSecondary hover:text-accent border border-dashed border-divider hover:border-accent px-2 py-0.5 rounded-md flex items-center gap-1 transition-all bg-white/5 hover:bg-accent/10"
+                    title="Vincular ou gerenciar nós do mapa mental neste livro"
+                  >
+                    <TagIcon class="w-3 h-3" />
+                    <span>{{ (item.themes && item.themes.length > 0) ? 'Editar Temas' : '+ Adicionar Tema' }}</span>
+                  </button>
                 </div>
               </div>
 
@@ -270,6 +349,111 @@
       </div>
     </section>
 
+    <!-- Modal para Gerenciar Temas/Tags do Livro -->
+    <div v-if="tagModalBook" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
+      <div class="bg-bgPanel border border-divider rounded-3xl w-full max-w-lg p-6 shadow-2xl space-y-6 text-textPrimary">
+        <div class="flex items-start justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-accent/20 border border-accent/40 text-accent flex items-center justify-center shrink-0">
+              <TagIcon class="w-5 h-5" />
+            </div>
+            <div>
+              <h3 class="text-lg font-bold font-editorial">Vincular Temas do Grafo</h3>
+              <p class="text-xs text-textSecondary line-clamp-1 font-interface">
+                {{ tagModalBook.title }}
+              </p>
+            </div>
+          </div>
+          <button @click="tagModalBook = null" class="p-2 rounded-xl text-textSecondary hover:text-white hover:bg-white/10 transition-all">
+            <XIcon class="w-5 h-5" />
+          </button>
+        </div>
+
+        <!-- Lista de Temas Disponíveis para Seleção -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-technical uppercase font-bold text-textSecondary">Selecione os temas vinculados:</span>
+            <span class="text-xs font-technical text-accent">{{ selectedThemeIdsForModal.length }} selecionado(s)</span>
+          </div>
+
+          <div v-if="availableThemes.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-60 overflow-y-auto pr-1">
+            <div
+              v-for="theme in availableThemes"
+              :key="theme.id"
+              @click="toggleModalTheme(theme.id)"
+              class="flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all duration-200"
+              :class="selectedThemeIdsForModal.includes(theme.id)
+                ? 'border-accent bg-accent/15 shadow-sm'
+                : 'border-divider bg-white/5 hover:border-divider/80 hover:bg-white/10'"
+            >
+              <div class="flex items-center gap-2.5 truncate">
+                <span class="w-3 h-3 rounded-full shrink-0 shadow-sm" :style="{ backgroundColor: theme.color || '#E57B55' }"></span>
+                <span class="text-xs font-interface font-medium truncate">{{ theme.name }}</span>
+              </div>
+              <CheckIcon
+                class="w-4 h-4 shrink-0 transition-opacity"
+                :class="selectedThemeIdsForModal.includes(theme.id) ? 'text-accent opacity-100' : 'opacity-0'"
+              />
+            </div>
+          </div>
+
+          <div v-else class="text-center py-6 border border-dashed border-divider rounded-2xl text-xs text-textSecondary">
+            Você ainda não possui temas criados no seu Mapa Mental.
+          </div>
+        </div>
+
+        <!-- Seção: Criar Novo Tema Rápido -->
+        <div class="pt-3 border-t border-divider space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-technical uppercase font-bold text-textSecondary">Criar Novo Tema no Grafo</span>
+            <button
+              @click="showCreateThemeInline = !showCreateThemeInline"
+              class="text-xs text-accent hover:underline font-semibold flex items-center gap-1"
+            >
+              <PlusIcon class="w-3.5 h-3.5" />
+              <span>{{ showCreateThemeInline ? 'Fechar' : 'Novo Tema' }}</span>
+            </button>
+          </div>
+
+          <div v-if="showCreateThemeInline" class="flex flex-col sm:flex-row items-center gap-2 bg-white/5 border border-divider p-3 rounded-2xl">
+            <input
+              v-model="newThemeName"
+              type="text"
+              placeholder="Nome do tema (ex: Estoicismo)"
+              class="flex-1 w-full bg-bgApp border border-divider rounded-xl px-3 py-2 text-xs text-textPrimary focus:outline-none focus:border-accent"
+              @keyup.enter="handleCreateThemeInline"
+            />
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+              <input v-model="newThemeColor" type="color" class="w-8 h-8 rounded-lg bg-transparent border-0 cursor-pointer" />
+              <button
+                @click="handleCreateThemeInline"
+                :disabled="!newThemeName.trim() || creatingTheme"
+                class="flex-1 sm:flex-initial px-4 py-2 rounded-xl bg-accent text-white font-interface text-xs font-semibold hover:bg-accent/90 disabled:opacity-50 transition-all flex items-center justify-center gap-1"
+              >
+                <PlusIcon class="w-3.5 h-3.5" />
+                <span>Adicionar</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rodapé / Ações -->
+        <div class="flex items-center justify-end gap-3 pt-2">
+          <button @click="tagModalBook = null" class="px-5 py-2.5 rounded-xl border border-divider text-xs text-textSecondary hover:text-textPrimary transition-all">
+            Cancelar
+          </button>
+          <button
+            @click="handleSaveBookThemes"
+            :disabled="savingThemes"
+            class="px-6 py-2.5 rounded-xl bg-accent text-white font-semibold text-xs hover:bg-accent/90 transition-all shadow-lg flex items-center gap-2"
+          >
+            <span v-if="savingThemes" class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+            <span>Salvar Alterações</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Modal de Convite ao Login -->
     <div v-if="isLoginModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
       <div class="bg-bgPanel border border-divider rounded-3xl w-full max-w-md p-6 shadow-2xl space-y-6 text-textPrimary text-center">
@@ -311,21 +495,47 @@ import {
   Trash2Icon,
   BookOpenIcon,
   LogInIcon,
-  UploadIcon
+  UploadIcon,
+  TagIcon,
+  XIcon,
+  CheckIcon
 } from 'lucide-vue-next'
 
+import type { UserBookItem } from '~/interfaces/graph'
 import { useCatalog } from '~/composables/useCatalog'
 import { useUserBooks } from '~/composables/useUserBooks'
+import { useGraph } from '~/composables/useGraph'
 import { useAuth } from '~/composables/useAuth'
 import { getCoverUrl, getBookFormat } from '~/utils/cover'
 
 const activeTab = ref<'catalog' | 'my-books'>('catalog')
 const statusFilter = ref('TODOS')
+const selectedThemeId = ref<number | null>(null)
 const isLoginModalOpen = ref(false)
 
+const tagModalBook = ref<UserBookItem | null>(null)
+const selectedThemeIdsForModal = ref<number[]>([])
+const showCreateThemeInline = ref(false)
+const newThemeName = ref('')
+const newThemeColor = ref('#E57B55')
+const creatingTheme = ref(false)
+const savingThemes = ref(false)
+
 const { books: catalogBooks, loading: catalogLoading, fetchCatalog } = useCatalog()
-const { userBooks, fetchUserBooks, addUserBook, updateUserBook, deleteUserBook, deleteUserBookByBookId, isBookInShelf } = useUserBooks()
+const {
+  userBooks,
+  fetchUserBooks,
+  addUserBook,
+  updateUserBook,
+  setBookThemes,
+  deleteUserBook,
+  deleteUserBookByBookId,
+  isBookInShelf
+} = useUserBooks()
+const { graphData, fetchGraph, createNode } = useGraph()
 const auth = useAuth()
+
+const availableThemes = computed(() => graphData.value.nodes || [])
 
 const handleSelectMyBooksTab = () => {
   if (!auth.isLoggedIn.value) {
@@ -367,9 +577,16 @@ const countByStatus = (status: string) => {
   return userBooks.value.filter(b => b.status === status).length
 }
 
+const countByTheme = (themeId: number) => {
+  return userBooks.value.filter(b => b.themes?.some(t => t.id === themeId)).length
+}
+
 const filteredUserBooks = computed(() => {
-  if (statusFilter.value === 'TODOS') return userBooks.value
-  return userBooks.value.filter(b => b.status === statusFilter.value)
+  return userBooks.value.filter((b) => {
+    const matchesStatus = statusFilter.value === 'TODOS' || b.status === statusFilter.value
+    const matchesTheme = selectedThemeId.value === null || (b.themes && b.themes.some(t => t.id === selectedThemeId.value))
+    return matchesStatus && matchesTheme
+  })
 })
 
 const getFilterLabel = (filter: string) => {
@@ -378,7 +595,55 @@ const getFilterLabel = (filter: string) => {
     case 'LENDO': return 'Lendo'
     case 'LIDO': return 'Lidos'
     case 'QUERO_LER': return 'Quero Ler'
+    case 'ABANDONADO': return 'Abandonados'
     default: return filter
+  }
+}
+
+const openTagModal = (book: UserBookItem) => {
+  tagModalBook.value = book
+  selectedThemeIdsForModal.value = (book.themes || []).map(t => t.id)
+  showCreateThemeInline.value = false
+  newThemeName.value = ''
+}
+
+const toggleModalTheme = (themeId: number) => {
+  const idx = selectedThemeIdsForModal.value.indexOf(themeId)
+  if (idx > -1) {
+    selectedThemeIdsForModal.value.splice(idx, 1)
+  } else {
+    selectedThemeIdsForModal.value.push(themeId)
+  }
+}
+
+const handleCreateThemeInline = async () => {
+  if (!newThemeName.value.trim()) return
+  creatingTheme.value = true
+  try {
+    const created = await createNode(newThemeName.value.trim(), newThemeColor.value)
+    if (created && created.id) {
+      selectedThemeIdsForModal.value.push(created.id)
+    }
+    newThemeName.value = ''
+    showCreateThemeInline.value = false
+  } catch (e) {
+    console.error('Erro ao criar tema:', e)
+  } finally {
+    creatingTheme.value = false
+  }
+}
+
+const handleSaveBookThemes = async () => {
+  if (!tagModalBook.value) return
+  savingThemes.value = true
+  try {
+    await setBookThemes(tagModalBook.value.userBookId, selectedThemeIdsForModal.value)
+    await fetchGraph()
+    tagModalBook.value = null
+  } catch (e) {
+    console.error('Erro ao salvar temas do livro:', e)
+  } finally {
+    savingThemes.value = false
   }
 }
 
@@ -386,6 +651,7 @@ onMounted(() => {
   fetchCatalog()
   if (auth.isLoggedIn.value) {
     fetchUserBooks()
+    fetchGraph()
   }
 })
 </script>

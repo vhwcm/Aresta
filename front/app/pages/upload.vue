@@ -17,7 +17,7 @@
 
       <NuxtLink
         to="/library"
-        class="px-5 py-2.5 rounded-full border border-divider text-xs font-technical text-textSecondary hover:text-white hover:border-white/30 transition-all flex items-center gap-2 w-max"
+        class="px-5 py-2.5 rounded-full border border-divider text-xs font-technical text-textSecondary hover:text-textPrimary hover:border-divider/80 transition-all flex items-center gap-2 w-max"
       >
         <BookOpenIcon class="w-4 h-4" />
         <span>Ir para Biblioteca</span>

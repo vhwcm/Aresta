@@ -9,7 +9,7 @@
         <div class="w-4 h-4 rounded-full shadow-md shrink-0" :style="{ backgroundColor: node.color || '#E57B55' }"></div>
         <h2 class="text-lg font-semibold font-interface truncate max-w-[200px]">{{ node.name }}</h2>
       </div>
-      <button @click="$emit('close')" class="p-2 rounded-xl text-textSecondary hover:text-white hover:bg-white/10 transition-all">
+      <button @click="$emit('close')" class="p-2 rounded-xl text-textSecondary hover:text-textPrimary hover:bg-black/5 dark:hover:bg-white/10 transition-all">
         <XIcon class="w-5 h-5" />
       </button>
     </div>

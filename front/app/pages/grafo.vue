@@ -15,7 +15,7 @@
       <div class="flex items-center gap-3">
         <button
           @click="fetchGraph"
-          class="p-2 rounded-xl bg-white/5 border border-divider text-textSecondary hover:text-white transition-all"
+          class="p-2 rounded-xl bg-black/5 dark:bg-white/5 border border-divider text-textSecondary hover:text-textPrimary transition-all"
           title="Recarregar Grafo"
         >
           <RotateCwIcon class="w-4 h-4" :class="{ 'animate-spin': loading }" />

@@ -192,7 +192,7 @@
           <div class="p-6 rounded-2xl bg-white/[0.03] border border-divider hover:bg-white/[0.06] transition-all duration-300 flex flex-col gap-3 group">
             <div class="flex items-center justify-between">
               <span class="font-technical text-[10px] uppercase font-bold tracking-widest text-accent">Plataforma / Canal</span>
-              <ExternalLinkIcon class="w-4 h-4 text-textSecondary group-hover:text-white transition-colors" />
+              <ExternalLinkIcon class="w-4 h-4 text-textSecondary group-hover:text-accent transition-colors" />
             </div>
             <h4 class="font-editorial text-xl font-light text-textPrimary group-hover:text-accent transition-colors">
               Reservatório de Dopamina
@@ -206,7 +206,7 @@
           <div class="p-6 rounded-2xl bg-white/[0.03] border border-divider hover:bg-white/[0.06] transition-all duration-300 flex flex-col gap-3 group">
             <div class="flex items-center justify-between">
               <span class="font-technical text-[10px] uppercase font-bold tracking-widest text-accent">Livro · Anna Lembke</span>
-              <BookIcon class="w-4 h-4 text-textSecondary group-hover:text-white transition-colors" />
+              <BookIcon class="w-4 h-4 text-textSecondary group-hover:text-accent transition-colors" />
             </div>
             <h4 class="font-editorial text-xl font-light text-textPrimary group-hover:text-accent transition-colors">
               Nação Dopamina
@@ -220,7 +220,7 @@
           <div class="p-6 rounded-2xl bg-white/[0.03] border border-divider hover:bg-white/[0.06] transition-all duration-300 flex flex-col gap-3 group">
             <div class="flex items-center justify-between">
               <span class="font-technical text-[10px] uppercase font-bold tracking-widest text-accent">Psicologia Cognitiva</span>
-              <BrainIcon class="w-4 h-4 text-textSecondary group-hover:text-white transition-colors" />
+              <BrainIcon class="w-4 h-4 text-textSecondary group-hover:text-accent transition-colors" />
             </div>
             <h4 class="font-editorial text-xl font-light text-textPrimary group-hover:text-accent transition-colors">
               Estudos sobre Teoria da Mente na Ficção
@@ -234,7 +234,7 @@
           <div class="p-6 rounded-2xl bg-white/[0.03] border border-divider hover:bg-white/[0.06] transition-all duration-300 flex flex-col gap-3 group">
             <div class="flex items-center justify-between">
               <span class="font-technical text-[10px] uppercase font-bold tracking-widest text-accent">Livro · Daniel Goleman</span>
-              <BookIcon class="w-4 h-4 text-textSecondary group-hover:text-white transition-colors" />
+              <BookIcon class="w-4 h-4 text-textSecondary group-hover:text-accent transition-colors" />
             </div>
             <h4 class="font-editorial text-xl font-light text-textPrimary group-hover:text-accent transition-colors">
               Foco

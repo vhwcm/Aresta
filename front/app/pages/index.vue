@@ -71,7 +71,7 @@
               v-if="isGraphCollapsed"
               @click="toggleGraph"
               data-testid="toggle-graph-open-btn"
-              class="hidden xl:inline-flex items-center gap-2 px-3.5 py-2 rounded-full bg-white/5 hover:bg-white/10 border border-divider hover:border-accent/40 text-textSecondary hover:text-white text-xs sm:text-sm font-interface transition-all cursor-pointer shadow-sm"
+              class="hidden xl:inline-flex items-center gap-2 px-3.5 py-2 rounded-full bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 border border-divider hover:border-accent/40 text-textSecondary hover:text-textPrimary text-xs sm:text-sm font-interface transition-all cursor-pointer shadow-sm"
               title="Expandir Grafo de Conhecimento"
             >
               <PanelRightOpenIcon class="w-4 h-4 text-accent" />
@@ -177,7 +177,7 @@
             <button
               @click="toggleGraph"
               data-testid="retract-graph-btn"
-              class="inline-flex items-center gap-1.5 text-xs sm:text-sm text-textSecondary hover:text-white font-interface transition-colors cursor-pointer px-3 py-1.5 rounded-lg hover:bg-white/5 border border-transparent hover:border-divider"
+              class="inline-flex items-center gap-1.5 text-xs sm:text-sm text-textSecondary hover:text-textPrimary font-interface transition-colors cursor-pointer px-3 py-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 border border-transparent hover:border-divider"
               title="Retrair Grafo e centralizar painel de leitura"
             >
               <PanelRightCloseIcon class="w-4 h-4 text-accent" />
