@@ -160,7 +160,7 @@
       <!-- Estado Quando Nenhum Nó Está Selecionado (Desktop) -->
       <div
         v-else
-        class="hidden md:flex md:w-72 border-l border-divider/80 bg-black/20 p-5 flex-col justify-between text-left"
+        class="hidden md:flex md:w-72 border-l border-divider/80 bg-bgPanel/60 dark:bg-black/20 p-5 flex-col justify-between text-left"
       >
         <div class="flex flex-col gap-3">
           <div class="font-technical text-[10px] uppercase tracking-widest text-textSecondary font-semibold flex items-center gap-2">
@@ -178,19 +178,19 @@
           <div class="flex flex-col gap-2 pt-2 text-[11px] font-technical text-textSecondary">
             <div class="flex items-center gap-2">
               <span class="w-2 h-2 rounded-full bg-[#E57B55]"></span>
-              <span>Epistemologia & Razão</span>
+              <span class="text-textPrimary/80">Epistemologia & Razão</span>
             </div>
             <div class="flex items-center gap-2">
               <span class="w-2 h-2 rounded-full bg-[#38BDF8]"></span>
-              <span>Filosofia da Mente</span>
+              <span class="text-textPrimary/80">Filosofia da Mente</span>
             </div>
             <div class="flex items-center gap-2">
               <span class="w-2 h-2 rounded-full bg-[#34D399]"></span>
-              <span>Literatura Brasileira</span>
+              <span class="text-textPrimary/80">Literatura Brasileira</span>
             </div>
             <div class="flex items-center gap-2">
               <span class="w-2 h-2 rounded-full bg-[#F472B6]"></span>
-              <span>Psicologia Comportamental</span>
+              <span class="text-textPrimary/80">Psicologia Comportamental</span>
             </div>
           </div>
         </div>
@@ -467,9 +467,9 @@ const initGraphSimulation = () => {
     .attr('text-anchor', 'middle')
     .attr('dy', 4)
     .attr('font-size', (d: any) => d.isRoot ? '12px' : '11px')
-    .attr('font-weight', '700')
+    .attr('font-weight', '600')
     .attr('font-family', 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace')
-    .attr('fill', (d: any) => isLightMode.value ? (d.isRoot ? '#9A3412' : '#0F172A') : '#FFFFFF')
+    .attr('fill', (d: any) => isLightMode.value ? (d.isRoot ? '#C2410C' : '#475569') : '#FFFFFF')
     .attr('pointer-events', 'none')
     .text((d: any) => d.isRoot ? '★' : d.books.length)
 
@@ -477,9 +477,9 @@ const initGraphSimulation = () => {
   nodes.append('text')
     .attr('text-anchor', 'middle')
     .attr('dy', (d: any) => (d.isRoot ? 30 : 22) + 16)
-    .attr('fill', (d: any) => d.isRoot ? (isLightMode.value ? '#9A3412' : '#F59E0B') : (isLightMode.value ? '#0F172A' : '#E2E8F0'))
-    .attr('font-size', (d: any) => d.isRoot ? '13px' : '11.5px')
-    .attr('font-weight', (d: any) => d.isRoot ? '700' : '600')
+    .attr('fill', (d: any) => d.isRoot ? (isLightMode.value ? '#C2410C' : '#F59E0B') : (isLightMode.value ? '#475569' : '#E2E8F0'))
+    .attr('font-size', (d: any) => d.isRoot ? '12.5px' : '11px')
+    .attr('font-weight', (d: any) => d.isRoot ? '600' : '500')
     .attr('font-family', 'system-ui, -apple-system, sans-serif')
     .attr('pointer-events', 'none')
     .text((d: any) => d.name)
