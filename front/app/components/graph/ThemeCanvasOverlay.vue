@@ -1,17 +1,17 @@
 <template>
   <div
     v-if="isOpen && theme"
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-10 animate-in fade-in duration-300"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-10 animate-in fade-in duration-200"
   >
-    <!-- Backdrop com blur -->
+    <!-- Backdrop suave sem blur pesado -->
     <div
-      class="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity"
+      class="absolute inset-0 bg-black/40 transition-opacity"
       @click="$emit('close')"
     ></div>
 
-    <!-- Container do Canvas Modal -->
+    <!-- Container do Canvas Modal 100% Nítido e Sólido -->
     <div
-      class="relative w-full max-w-4xl max-h-[90vh] bg-bgPanel/95 border border-divider rounded-3xl shadow-2xl backdrop-blur-xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-300"
+      class="relative w-full max-w-4xl max-h-[90vh] bg-bgPanel border border-divider rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
     >
       <!-- Cabeçalho do Tema -->
       <header class="p-6 border-b border-divider flex items-center justify-between shrink-0 bg-white/[0.02]">

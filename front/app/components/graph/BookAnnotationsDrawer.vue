@@ -1,7 +1,7 @@
 <template>
   <div
     v-if="isOpen && book"
-    class="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-bgPanel border-l border-divider shadow-2xl backdrop-blur-xl flex flex-col animate-in slide-in-from-right duration-300"
+    class="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-bgPanel border-l border-divider shadow-2xl flex flex-col animate-in slide-in-from-right duration-300"
   >
     <!-- Cabeçalho do Livro -->
     <header class="p-6 border-b border-divider flex items-start justify-between shrink-0 bg-white/[0.02]">
