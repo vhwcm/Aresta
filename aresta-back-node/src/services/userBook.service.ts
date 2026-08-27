@@ -4,6 +4,7 @@ import { CreateUserBookInput, UpdateUserBookInput } from '../schemas/userBook.sc
 
 export class UserBookService {
   private mapUserBook(ub: any) {
+    const bookThemes = ub.book?.bookThemes || [];
     return {
       id: ub.id,
       userId: ub.user_id,
@@ -16,7 +17,7 @@ export class UserBookService {
       lastAccessedAt: ub.last_accessed_at,
       createdAt: ub.created_at,
       updatedAt: ub.updated_at,
-      themes: (ub.bookThemes || []).map((bt: any) => ({
+      themes: bookThemes.map((bt: any) => ({
         id: bt.theme.id,
         name: bt.theme.name,
         color: bt.theme.color || '#E57B55',
@@ -29,10 +30,13 @@ export class UserBookService {
     const userBooks = await prisma.userBook.findMany({
       where: { user_id: userId },
       include: {
-        book: true,
-        bookThemes: {
+        book: {
           include: {
-            theme: true,
+            bookThemes: {
+              include: {
+                theme: true,
+              },
+            },
           },
         },
       },
@@ -49,10 +53,13 @@ export class UserBookService {
     const ub = await prisma.userBook.findUnique({
       where: { id },
       include: {
-        book: true,
-        bookThemes: {
+        book: {
           include: {
-            theme: true,
+            bookThemes: {
+              include: {
+                theme: true,
+              },
+            },
           },
         },
       },
@@ -95,10 +102,13 @@ export class UserBookService {
         last_accessed_at: input.lastAccessedAt ?? now,
       },
       include: {
-        book: true,
-        bookThemes: {
+        book: {
           include: {
-            theme: true,
+            bookThemes: {
+              include: {
+                theme: true,
+              },
+            },
           },
         },
       },
@@ -126,10 +136,13 @@ export class UserBookService {
       where: { id },
       data: dataToUpdate,
       include: {
-        book: true,
-        bookThemes: {
+        book: {
           include: {
-            theme: true,
+            bookThemes: {
+              include: {
+                theme: true,
+              },
+            },
           },
         },
       },
@@ -153,10 +166,13 @@ export class UserBookService {
         last_accessed_at: new Date(),
       },
       include: {
-        book: true,
-        bookThemes: {
+        book: {
           include: {
-            theme: true,
+            bookThemes: {
+              include: {
+                theme: true,
+              },
+            },
           },
         },
       },
@@ -165,33 +181,23 @@ export class UserBookService {
     return this.mapUserBook(updated);
   }
 
-  async setThemes(userBookId: number, userId: number, themeIds: number[]) {
-    const userBook = await prisma.userBook.findFirst({
-      where: { id: userBookId, user_id: userId },
+  async setThemes(userBookId: number, _userId: number, themeIds: number[]) {
+    const userBook = await prisma.userBook.findUnique({
+      where: { id: userBookId },
     });
 
     if (!userBook) {
       throw new AppError('Livro não encontrado na estante do usuário.', 404);
     }
 
-    // Validar temas do usuário
-    const validThemes = await prisma.theme.findMany({
-      where: {
-        id: { in: themeIds },
-        user_id: userId,
-      },
-    });
-
-    const validThemeIds = validThemes.map((t) => t.id);
-
     await prisma.$transaction([
       prisma.bookTheme.deleteMany({
-        where: { user_book_id: userBookId },
+        where: { book_id: userBook.book_id },
       }),
-      ...validThemeIds.map((tId) =>
+      ...themeIds.map((tId) =>
         prisma.bookTheme.create({
           data: {
-            user_book_id: userBookId,
+            book_id: userBook.book_id,
             theme_id: tId,
           },
         })
@@ -201,33 +207,25 @@ export class UserBookService {
     return this.getById(userBookId);
   }
 
-  async addTheme(userBookId: number, userId: number, themeId: number) {
-    const userBook = await prisma.userBook.findFirst({
-      where: { id: userBookId, user_id: userId },
+  async addTheme(userBookId: number, _userId: number, themeId: number) {
+    const userBook = await prisma.userBook.findUnique({
+      where: { id: userBookId },
     });
 
     if (!userBook) {
       throw new AppError('Livro não encontrado na estante do usuário.', 404);
     }
 
-    const theme = await prisma.theme.findFirst({
-      where: { id: themeId, user_id: userId },
-    });
-
-    if (!theme) {
-      throw new AppError('Tema não encontrado.', 404);
-    }
-
     await prisma.bookTheme.upsert({
       where: {
-        user_book_id_theme_id: {
-          user_book_id: userBookId,
+        book_id_theme_id: {
+          book_id: userBook.book_id,
           theme_id: themeId,
         },
       },
       update: {},
       create: {
-        user_book_id: userBookId,
+        book_id: userBook.book_id,
         theme_id: themeId,
       },
     });
@@ -235,9 +233,9 @@ export class UserBookService {
     return this.getById(userBookId);
   }
 
-  async removeTheme(userBookId: number, userId: number, themeId: number) {
-    const userBook = await prisma.userBook.findFirst({
-      where: { id: userBookId, user_id: userId },
+  async removeTheme(userBookId: number, _userId: number, themeId: number) {
+    const userBook = await prisma.userBook.findUnique({
+      where: { id: userBookId },
     });
 
     if (!userBook) {
@@ -246,7 +244,7 @@ export class UserBookService {
 
     await prisma.bookTheme.deleteMany({
       where: {
-        user_book_id: userBookId,
+        book_id: userBook.book_id,
         theme_id: themeId,
       },
     });
@@ -291,4 +289,3 @@ export class UserBookService {
     return true;
   }
 }
-

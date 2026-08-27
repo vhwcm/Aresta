@@ -60,23 +60,38 @@ async function main() {
 
   // 4. Livros Padrão (formato EPUB 3 em storage/epubs/)
   const booksData = [
-    { id: 1, title: 'Contos Fluminenses', file_path: 'storage/epubs/5ca0e9_0c9dc557fbc54bf6baabb862a6457dbd.epub', cover_path: 'storage/covers/5ca0e9_0c9dc557fbc54bf6baabb862a6457dbd.png' },
-    { id: 2, title: 'Curso de Pré-Cálculo', file_path: 'storage/epubs/5ca0e9_accda79d9c314d2bbbfdbc75ac9df45e.epub', cover_path: 'storage/covers/5ca0e9_accda79d9c314d2bbbfdbc75ac9df45e.png' },
-    { id: 3, title: 'A Cartomante', file_path: 'storage/epubs/a-cartomante.epub', cover_path: 'storage/covers/a-cartomante.png' },
-    { id: 4, title: 'Como Tocar Piano', file_path: 'storage/epubs/Como-tocar-piano.epub', cover_path: 'storage/covers/Como-tocar-piano.png' },
-    { id: 5, title: 'Curso de Desenho - Carlos Damasceno', file_path: 'storage/epubs/curso-de-desenho-carlos-damasceno.epub', cover_path: 'storage/covers/curso-de-desenho-carlos-damasceno.png' },
-    { id: 6, title: 'Aprenda a Desenhar do Zero', file_path: 'storage/epubs/ebook_aprendaadesenhardozero.epub', cover_path: 'storage/covers/ebook_aprendaadesenhardozero.png' },
-    { id: 7, title: 'Inglês Aplicado a Eventos', file_path: 'storage/epubs/ingles-aplicado-a-eventos.epub', cover_path: 'storage/covers/ingles-aplicado-a-eventos.png' },
-    { id: 8, title: 'Informática Avançada', file_path: 'storage/epubs/livro_informatica_avancada_compressed.epub', cover_path: 'storage/covers/livro_informatica_avancada_compressed.png' },
-    { id: 9, title: 'Microeconomia', file_path: 'storage/epubs/microeconomia-compress.epub', cover_path: 'storage/covers/microeconomia-compress.png' },
-    { id: 10, title: 'O Alienista', file_path: 'storage/epubs/O-Alienista.epub', cover_path: 'storage/covers/O-Alienista.png' },
+    { id: 1, title: 'Contos Fluminenses', author: 'Machado de Assis', summary: 'Coletânea de contos que retratam a sociedade carioca do século XIX com ironia e perspicácia psicológica.', file_path: 'storage/epubs/5ca0e9_0c9dc557fbc54bf6baabb862a6457dbd.epub', cover_path: 'storage/covers/5ca0e9_0c9dc557fbc54bf6baabb862a6457dbd.png' },
+    { id: 2, title: 'Curso de Pré-Cálculo', author: 'Equipe Acadêmica', summary: 'Fundamentos de funções, trigonometria e álgebra para estudantes universitários.', file_path: 'storage/epubs/5ca0e9_accda79d9c314d2bbbfdbc75ac9df45e.epub', cover_path: 'storage/covers/5ca0e9_accda79d9c314d2bbbfdbc75ac9df45e.png' },
+    { id: 3, title: 'A Cartomante', author: 'Machado de Assis', summary: 'Um dos contos mais famosos sobre traição, destino e ironia trágica.', file_path: 'storage/epubs/a-cartomante.epub', cover_path: 'storage/covers/a-cartomante.png' },
+    { id: 4, title: 'Como Tocar Piano', author: 'Mestre da Música', summary: 'Guia prático para iniciantes em teclado e teoria musical aplicada.', file_path: 'storage/epubs/Como-tocar-piano.epub', cover_path: 'storage/covers/Como-tocar-piano.png' },
+    { id: 5, title: 'Curso de Desenho', author: 'Carlos Damasceno', summary: 'Técnicas de sombreamento, proporção e esboço para ilustradores.', file_path: 'storage/epubs/curso-de-desenho-carlos-damasceno.epub', cover_path: 'storage/covers/curso-de-desenho-carlos-damasceno.png' },
+    { id: 6, title: 'Aprenda a Desenhar do Zero', author: 'Ilustra Brasil', summary: 'Manual passo a passo para desenvolver a expressão visual e desenho livre.', file_path: 'storage/epubs/ebook_aprendaadesenhardozero.epub', cover_path: 'storage/covers/ebook_aprendaadesenhardozero.png' },
+    { id: 7, title: 'Inglês Aplicado a Eventos', author: 'Línguas Global', summary: 'Vocabulário e expressões situacionais para turismo e organização de eventos.', file_path: 'storage/epubs/ingles-aplicado-a-eventos.epub', cover_path: 'storage/covers/ingles-aplicado-a-eventos.png' },
+    { id: 8, title: 'Informática Avançada', author: 'Tech Academy', summary: 'Conceitos avançados de sistemas operacionais, redes e arquitetura computacional.', file_path: 'storage/epubs/livro_informatica_avancada_compressed.epub', cover_path: 'storage/covers/livro_informatica_avancada_compressed.png' },
+    { id: 9, title: 'Microeconomia', author: 'Economia Moderna', summary: 'Análise de mercados, comportamento do consumidor e estruturas de custo.', file_path: 'storage/epubs/microeconomia-compress.epub', cover_path: 'storage/covers/microeconomia-compress.png' },
+    { id: 10, title: 'O Alienista', author: 'Machado de Assis', summary: 'Sátira brilhante sobre a loucura, poder e a ciência na figura de Simão Bacamarte.', file_path: 'storage/epubs/O-Alienista.epub', cover_path: 'storage/covers/O-Alienista.png' },
   ];
 
   for (const b of booksData) {
     await prisma.book.upsert({
       where: { id: b.id },
       update: { title: b.title, file_path: b.file_path, cover_path: b.cover_path },
-      create: b,
+      create: {
+        id: b.id,
+        title: b.title,
+        file_path: b.file_path,
+        cover_path: b.cover_path,
+      },
+    });
+
+    await prisma.bookPublicInfo.upsert({
+      where: { book_id: b.id },
+      update: { author: b.author, summary: b.summary },
+      create: {
+        book_id: b.id,
+        author: b.author,
+        summary: b.summary,
+      },
     });
   }
 
@@ -102,16 +117,17 @@ async function main() {
     });
   }
 
-  // 6. Temas (Nós do Grafo)
+  // 6. Temas Globais (Nós do Grafo)
   const themes = [
-    { id: 1, user_id: 1, name: 'Literatura Brasileira', color: '#E57B55', description: 'Obras clássicas da literatura e prosa nacional' },
-    { id: 2, user_id: 1, name: 'Machado de Assis', color: '#F59E0B', description: 'Foco na obra e realismo machadiano' },
-    { id: 3, user_id: 1, name: 'Exatas & Matemática', color: '#3B82F6', description: 'Cálculo, lógica e exatas' },
-    { id: 4, user_id: 1, name: 'Artes & Criatividade', color: '#EC4899', description: 'Técnicas de desenho e expressão visual' },
-    { id: 5, user_id: 1, name: 'Música & Teoria', color: '#8B5CF6', description: 'Prática instrumental e piano' },
-    { id: 6, user_id: 1, name: 'Línguas & Idiomas', color: '#10B981', description: 'Comunicação e inglês aplicado' },
-    { id: 7, user_id: 1, name: 'Tecnologia & Computação', color: '#06B6D4', description: 'Informática e desenvolvimento' },
-    { id: 8, user_id: 1, name: 'Ciências Sociais & Economia', color: '#6366F1', description: 'Princípios de micro e macroeconomia' },
+    { id: 1, name: 'Literatura Brasileira', color: '#E57B55', description: 'Obras clássicas da literatura e prosa nacional' },
+    { id: 2, name: 'Machado de Assis', color: '#F59E0B', description: 'Foco na obra e realismo machadiano' },
+    { id: 3, name: 'Exatas & Matemática', color: '#3B82F6', description: 'Cálculo, lógica e exatas' },
+    { id: 4, name: 'Artes & Criatividade', color: '#EC4899', description: 'Técnicas de desenho e expressão visual' },
+    { id: 5, name: 'Música & Teoria', color: '#8B5CF6', description: 'Prática instrumental e piano' },
+    { id: 6, name: 'Línguas & Idiomas', color: '#10B981', description: 'Comunicação e inglês aplicado' },
+    { id: 7, name: 'Tecnologia & Programação', color: '#06B6D4', description: 'Ciência da computação, programação e ferramentas' },
+    { id: 8, name: 'Ciências Sociais & Economia', color: '#6366F1', description: 'Princípios de micro e macroeconomia' },
+    { id: 9, name: 'Mentalidade & Ferramentas', color: '#14B8A6', description: 'Boas práticas e mentalidade de desenvolvimento' },
   ];
 
   for (const t of themes) {
@@ -122,51 +138,49 @@ async function main() {
     });
   }
 
-  // 7. Conexões de Temas (Arestas do Grafo)
-  const connections = [
-    { user_id: 1, source_theme_id: 1, target_theme_id: 2 },
-    { user_id: 1, source_theme_id: 3, target_theme_id: 7 },
-    { user_id: 1, source_theme_id: 4, target_theme_id: 5 },
-    { user_id: 1, source_theme_id: 7, target_theme_id: 8 },
-    { user_id: 1, source_theme_id: 6, target_theme_id: 8 },
+  // 7. Hierarquias de Temas (Subtemas: parent -> child)
+  const hierarchies = [
+    { parent_theme_id: 1, child_theme_id: 2 }, // Literatura Brasileira -> Machado de Assis
+    { parent_theme_id: 7, child_theme_id: 9 }, // Tecnologia & Programação -> Mentalidade & Ferramentas
+    { parent_theme_id: 4, child_theme_id: 5 }, // Artes & Criatividade -> Música & Teoria
   ];
 
-  for (const c of connections) {
-    await prisma.themeConnection.upsert({
+  for (const h of hierarchies) {
+    await prisma.themeHierarchy.upsert({
       where: {
-        user_id_source_theme_id_target_theme_id: {
-          user_id: c.user_id,
-          source_theme_id: c.source_theme_id,
-          target_theme_id: c.target_theme_id,
+        parent_theme_id_child_theme_id: {
+          parent_theme_id: h.parent_theme_id,
+          child_theme_id: h.child_theme_id,
         },
       },
       update: {},
-      create: c,
+      create: h,
     });
   }
 
-  // 8. Associação Livro <-> Tema (BookTheme)
+  // 8. Associação Global Livro <-> Tema (BookTheme)
   const bookThemes = [
-    { user_book_id: 1, theme_id: 1 },
-    { user_book_id: 1, theme_id: 2 },
-    { user_book_id: 2, theme_id: 3 },
-    { user_book_id: 3, theme_id: 1 },
-    { user_book_id: 3, theme_id: 2 },
-    { user_book_id: 4, theme_id: 5 },
-    { user_book_id: 5, theme_id: 4 },
-    { user_book_id: 6, theme_id: 4 },
-    { user_book_id: 7, theme_id: 6 },
-    { user_book_id: 8, theme_id: 7 },
-    { user_book_id: 9, theme_id: 8 },
-    { user_book_id: 10, theme_id: 1 },
-    { user_book_id: 10, theme_id: 2 },
+    { book_id: 1, theme_id: 1 },
+    { book_id: 1, theme_id: 2 },
+    { book_id: 2, theme_id: 3 },
+    { book_id: 3, theme_id: 1 },
+    { book_id: 3, theme_id: 2 },
+    { book_id: 4, theme_id: 5 },
+    { book_id: 5, theme_id: 4 },
+    { book_id: 6, theme_id: 4 },
+    { book_id: 7, theme_id: 6 },
+    { book_id: 8, theme_id: 7 },
+    { book_id: 8, theme_id: 9 },
+    { book_id: 9, theme_id: 8 },
+    { book_id: 10, theme_id: 1 },
+    { book_id: 10, theme_id: 2 },
   ];
 
   for (const bt of bookThemes) {
     await prisma.bookTheme.upsert({
       where: {
-        user_book_id_theme_id: {
-          user_book_id: bt.user_book_id,
+        book_id_theme_id: {
+          book_id: bt.book_id,
           theme_id: bt.theme_id,
         },
       },
@@ -186,4 +200,3 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
-

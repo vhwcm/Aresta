@@ -4,16 +4,15 @@ import path from 'node:path';
 import fs from 'node:fs';
 import routes from './routes/index.js';
 import { errorHandler } from './middlewares/error.middleware.js';
+import { env } from './config/env.js';
+import { ROUTES } from './config/routes.js';
 
 export const app = express();
 
 // Middlewares essenciais
 app.use(cors({ origin: true, credentials: true }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-import { env } from './config/env.js';
-import { ROUTES } from './config/routes.js';
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Garantir e servir diretórios estáticos
 const staticDirs = [
@@ -34,4 +33,3 @@ app.use('/', routes);
 
 // Middleware centralizado de tratamento de erros
 app.use(errorHandler);
-

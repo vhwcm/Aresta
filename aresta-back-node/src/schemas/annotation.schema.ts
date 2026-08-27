@@ -2,20 +2,20 @@ import { z } from 'zod';
 
 export const createAnnotationSchema = z.object({
   bookId: z.number().int().positive('bookId deve ser um número inteiro positivo'),
-  cfi: z.string().min(1, 'cfi é obrigatório'),
+  cfi: z.string().optional().nullable(),
   selectedText: z.string().optional().nullable(),
   note: z.string().optional().nullable(),
   chapterTitle: z.string().optional().nullable(),
-  progress: z.number().min(0).max(1).optional().default(0.0),
+  progress: z.number().min(0).max(100).optional().default(0.0),
   themeIds: z.array(z.number().int().positive()).optional().default([]),
 });
 
 export const updateAnnotationSchema = z.object({
-  cfi: z.string().min(1).optional(),
+  cfi: z.string().optional().nullable(),
   selectedText: z.string().optional().nullable(),
   note: z.string().optional().nullable(),
   chapterTitle: z.string().optional().nullable(),
-  progress: z.number().min(0).max(1).optional(),
+  progress: z.number().min(0).max(100).optional(),
   themeIds: z.array(z.number().int().positive()).optional(),
 });
 
@@ -35,10 +35,10 @@ export const linkAnnotationParamSchema = z.object({
 
 export const createAnnotationWithOcrSchema = z.object({
   bookId: z.number().int().positive('bookId deve ser um número inteiro positivo'),
-  cfi: z.string().min(1, 'cfi é obrigatório'),
+  cfi: z.string().optional().nullable(),
   selectedText: z.string().optional().nullable(),
   chapterTitle: z.string().optional().nullable(),
-  progress: z.number().min(0).max(1).optional().default(0.0),
+  progress: z.number().min(0).max(100).optional().default(0.0),
   themeIds: z.array(z.number().int().positive()).optional().default([]),
   imageBase64: z.string().min(10, 'imageBase64 é obrigatório'),
   mimeType: z.enum(['image/png', 'image/jpeg', 'image/webp']).optional().default('image/png'),
@@ -49,5 +49,3 @@ export type CreateAnnotationInput = z.infer<typeof createAnnotationSchema>;
 export type CreateAnnotationWithOcrInput = z.infer<typeof createAnnotationWithOcrSchema>;
 export type UpdateAnnotationInput = z.infer<typeof updateAnnotationSchema>;
 export type GetAnnotationsQuery = z.infer<typeof getAnnotationsQuerySchema>;
-
-

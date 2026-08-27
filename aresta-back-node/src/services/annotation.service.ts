@@ -13,12 +13,27 @@ export class AnnotationService {
       throw new AppError('Livro não encontrado.', 404);
     }
 
-    // 2. Criar a anotação
+    // 2. Validar se os temas informados pertencem ao livro
+    if (input.themeIds && input.themeIds.length > 0) {
+      const bookThemes = await prisma.bookTheme.findMany({
+        where: { book_id: input.bookId },
+        select: { theme_id: true },
+      });
+      const allowedThemeIds = new Set(bookThemes.map((bt) => bt.theme_id));
+
+      for (const tid of input.themeIds) {
+        if (!allowedThemeIds.has(tid)) {
+          throw new AppError(`O tema ID ${tid} não pertence a este livro. Anotações só podem ser vinculadas a temas do livro.`, 400);
+        }
+      }
+    }
+
+    // 3. Criar a anotação (CFI é opcional para notas soltas)
     const annotation = await prisma.annotation.create({
       data: {
         user_id: userId,
         book_id: input.bookId,
-        cfi: input.cfi,
+        cfi: input.cfi || null,
         selected_text: input.selectedText || null,
         note: input.note || null,
         chapter_title: input.chapterTitle || null,
@@ -26,24 +41,14 @@ export class AnnotationService {
       },
     });
 
-    // 3. Vincular temas caso fornecidos
+    // 4. Vincular temas
     if (input.themeIds && input.themeIds.length > 0) {
-      // Validar temas pertencentes ao usuário
-      const validThemes = await prisma.theme.findMany({
-        where: {
-          id: { in: input.themeIds },
-          user_id: userId,
-        },
+      await prisma.annotationTheme.createMany({
+        data: input.themeIds.map((themeId) => ({
+          annotation_id: annotation.id,
+          theme_id: themeId,
+        })),
       });
-
-      if (validThemes.length > 0) {
-        await prisma.annotationTheme.createMany({
-          data: validThemes.map((theme) => ({
-            annotation_id: annotation.id,
-            theme_id: theme.id,
-          })),
-        });
-      }
     }
 
     return this.getAnnotationById(userId, annotation.id);
@@ -171,6 +176,21 @@ export class AnnotationService {
       throw new AppError('Anotação não encontrada.', 404);
     }
 
+    // Se novos temas forem passados, validar se pertencem ao livro
+    if (input.themeIds !== undefined && input.themeIds.length > 0) {
+      const bookThemes = await prisma.bookTheme.findMany({
+        where: { book_id: existing.book_id },
+        select: { theme_id: true },
+      });
+      const allowedThemeIds = new Set(bookThemes.map((bt) => bt.theme_id));
+
+      for (const tid of input.themeIds) {
+        if (!allowedThemeIds.has(tid)) {
+          throw new AppError(`O tema ID ${tid} não pertence a este livro. Anotações só podem ser vinculadas a temas do livro.`, 400);
+        }
+      }
+    }
+
     const dataToUpdate: any = {};
     if (input.cfi !== undefined) dataToUpdate.cfi = input.cfi;
     if (input.selectedText !== undefined) dataToUpdate.selected_text = input.selectedText;
@@ -185,27 +205,17 @@ export class AnnotationService {
 
     // Re-sincronizar temas se fornecidos
     if (input.themeIds !== undefined) {
-      // Remover vínculos anteriores
       await prisma.annotationTheme.deleteMany({
         where: { annotation_id: id },
       });
 
       if (input.themeIds.length > 0) {
-        const validThemes = await prisma.theme.findMany({
-          where: {
-            id: { in: input.themeIds },
-            user_id: userId,
-          },
+        await prisma.annotationTheme.createMany({
+          data: input.themeIds.map((tId) => ({
+            annotation_id: id,
+            theme_id: tId,
+          })),
         });
-
-        if (validThemes.length > 0) {
-          await prisma.annotationTheme.createMany({
-            data: validThemes.map((t) => ({
-              annotation_id: id,
-              theme_id: t.id,
-            })),
-          });
-        }
       }
     }
 
@@ -238,6 +248,18 @@ export class AnnotationService {
 
     if (!annotation || !theme) {
       throw new AppError('Anotação ou Tema não encontrado.', 404);
+    }
+
+    // Validar se o tema pertence ao livro da anotação
+    const isBookTheme = await prisma.bookTheme.findFirst({
+      where: {
+        book_id: annotation.book_id,
+        theme_id: themeId,
+      },
+    });
+
+    if (!isBookTheme) {
+      throw new AppError('Este tema não está associado ao livro desta anotação.', 400);
     }
 
     await prisma.annotationTheme.upsert({
@@ -278,4 +300,3 @@ export class AnnotationService {
     return true;
   }
 }
-

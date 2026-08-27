@@ -25,12 +25,18 @@ describe('OCR & Drawing Annotation Endpoints', () => {
 
     const theme = await prisma.theme.create({
       data: {
-        user_id: 1,
-        name: 'Tema OCR Anotação',
+        name: 'Tema OCR Anotação ' + Date.now(),
         color: '#10B981',
       },
     });
     testThemeId = theme.id;
+
+    await prisma.bookTheme.create({
+      data: {
+        book_id: testBookId,
+        theme_id: testThemeId,
+      },
+    });
   });
 
   afterAll(async () => {

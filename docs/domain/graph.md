@@ -1,7 +1,7 @@
-# Domínio: Grafo de Conhecimento & Mapa Mental (`Theme`)
+# Domínio: Grafo de Conhecimento, Temas & Livros (`Theme`)
 
 ## 1. Propósito
-O Grafo de Conhecimento do Aresta permite ao leitor criar temas conceituais, interconectar ideias transversais entre múltiplos livros e visualizar essas relações como um mapa mental interativo com física de nós.
+O Grafo de Conhecimento do Aresta organiza e interconecta ideias, livros e anotações a partir de um **Catálogo Global Dinâmico de Temas** e **Hierarquia de Subtemas**, gerados e enriquecidos com auxílio de IA (Gemini Grounding + Embeddings).
 
 ---
 
@@ -11,61 +11,62 @@ O Grafo de Conhecimento do Aresta permite ao leitor criar temas conceituais, int
 ```prisma
 model Theme {
   id                Int               @id @default(autoincrement())
-  user_id           Int
-  name              String
+  name              String            @unique
   color             String?           @default("#E57B55")
   description       String?
+  embedding         String?           // Vetor de embeddings JSON
   created_at        DateTime          @default(now())
-  user              User              @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  sourceConnections ThemeConnection[] @relation("SourceTheme")
-  targetConnections ThemeConnection[] @relation("TargetTheme")
+  parentHierarchies ThemeHierarchy[]  @relation("ParentTheme")
+  childHierarchies  ThemeHierarchy[]  @relation("ChildTheme")
   bookThemes        BookTheme[]
   annotationThemes  AnnotationTheme[]
 
   @@map("themes")
 }
 
-model ThemeConnection {
+model ThemeHierarchy {
   id              Int      @id @default(autoincrement())
-  user_id         Int
-  source_theme_id Int
-  target_theme_id Int
+  parent_theme_id Int
+  child_theme_id  Int
   created_at      DateTime @default(now())
-  user            User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  sourceTheme     Theme    @relation("SourceTheme", fields: [source_theme_id], references: [id], onDelete: Cascade)
-  targetTheme     Theme    @relation("TargetTheme", fields: [target_theme_id], references: [id], onDelete: Cascade)
+  parentTheme     Theme    @relation("ParentTheme", fields: [parent_theme_id], references: [id], onDelete: Cascade)
+  childTheme      Theme    @relation("ChildTheme", fields: [child_theme_id], references: [id], onDelete: Cascade)
 
-  @@unique([user_id, source_theme_id, target_theme_id])
-  @@map("theme_connections")
+  @@unique([parent_theme_id, child_theme_id])
+  @@map("theme_hierarchies")
 }
 
 model BookTheme {
-  id           Int      @id @default(autoincrement())
-  user_book_id Int
-  theme_id     Int
-  created_at   DateTime @default(now())
-  userBook     UserBook @relation(fields: [user_book_id], references: [id], onDelete: Cascade)
-  theme        Theme    @relation(fields: [theme_id], references: [id], onDelete: Cascade)
+  id         Int      @id @default(autoincrement())
+  book_id    Int
+  theme_id   Int
+  created_at DateTime @default(now())
+  book       Book     @relation(fields: [book_id], references: [id], onDelete: Cascade)
+  theme      Theme    @relation(fields: [theme_id], references: [id], onDelete: Cascade)
 
-  @@unique([user_book_id, theme_id])
+  @@unique([book_id, theme_id])
   @@map("book_themes")
 }
 ```
 
 ---
 
-## 3. Regras de Negócio e Visualização
+## 3. Regras de Negócio e Interações
 
-1. **Grafo Direcionado & Ponderado**:
-   - Conexões entre temas (`ThemeConnection`) representam pontes conceituais criadas pelo usuário.
-   - O endpoint `GET /api/graph` agrega nós (Livros, Temas, Anotações) e links para consumo direto pelo D3.js.
-2. **Cores e Identidade Visual**:
-   - Cada tema possui uma cor hexadecimal customizável (padrão `#E57B55`), aplicada aos nós e arestas correspondentes.
+1. **Nós de Livros no Grafo**:
+   - Cada livro no catálogo é renderizado como um nó individual no grafo com miniatura de capa.
+   - O título é truncado em até 10 caracteres (`nome.length > 10 ? nome.slice(0, 10) + '...' : nome`).
+2. **Nós de Temas e Subtemas**:
+   - Temas principais conectam-se ao nó de conhecimento central ou a outros temas superiores através da tabela `ThemeHierarchy`.
+3. **Interações do Usuário**:
+   - **Clique no Nó do Livro**: Abre o painel lateral com resumo do livro, todas as suas anotações e formulário para cadastrar **Anotações Soltas** (sem CFI).
+   - **Clique no Nó de Tema**: Abre o **Canvas Overlay** contendo um carrossel horizontal de livros no topo e a lista de anotações relacionadas abaixo.
+   - **Vínculo Restrito de Anotações**: Anotações só podem ser vinculadas a temas que façam parte do conjunto de temas associados ao respectivo livro.
 
 ---
 
 ## 4. Código Relacionado
 - **Backend**:
-  - `src/controllers/graph.controller.ts`, `src/services/graph.service.ts`, `src/schemas/graph.schema.ts`
+  - `src/controllers/graph.controller.ts`, `src/services/graph.service.ts`, `src/schemas/graph.schema.ts`, `src/services/ai.client.ts`
 - **Frontend**:
-  - `front/app/composables/useGraph.ts`, `front/app/components/GraphCanvas.vue`, `front/app/pages/graph.vue`
+  - `front/app/composables/useGraph.ts`, `front/app/components/GraphCanvas.vue`, `front/app/components/graph/ThemeCanvasOverlay.vue`, `front/app/components/graph/BookAnnotationsDrawer.vue`, `front/app/pages/grafo.vue`

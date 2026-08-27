@@ -5,10 +5,16 @@
 
     <!-- Canvas D3 / SVG do Grafo -->
     <svg ref="svgRef" class="w-full h-full cursor-grab active:cursor-grabbing">
+      <defs>
+        <!-- Filtro para sombra dos nós de livros -->
+        <filter id="node-shadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="4" stdDeviation="6" flood-opacity="0.25" />
+        </filter>
+      </defs>
       <g ref="gRef">
         <!-- Links/Arestas -->
         <g class="links-group"></g>
-        <!-- Nós/Temas -->
+        <!-- Nós/Temas e Livros -->
         <g class="nodes-group"></g>
       </g>
     </svg>
@@ -45,18 +51,16 @@
       <button
         @click="$emit('openConnectModal')"
         class="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-white/5 border border-divider text-textPrimary text-xs sm:text-sm hover:bg-white/10 transition-all active:scale-95 shrink-0"
-        title="Criar conexão entre temas"
+        title="Criar conexão hierárquica entre temas"
       >
         <LinkIcon class="w-4 h-4 text-accent" />
         <span :class="{ 'hidden sm:inline': isCompact }">Conectar</span>
       </button>
     </div>
-
   </div>
 </template>
 
 <script setup lang="ts">
-// @ts-nocheck
 import { ref, computed, onMounted, watch, onBeforeUnmount } from 'vue'
 import * as d3 from 'd3'
 import type { GraphNode, GraphEdge } from '~/interfaces/graph'
@@ -66,7 +70,7 @@ import { useSettings } from '~/composables/useSettings'
 const props = defineProps<{
   nodes: GraphNode[]
   edges: GraphEdge[]
-  selectedNodeId?: number | null
+  selectedNodeId?: string | number | null
   isCompact?: boolean
 }>()
 
@@ -85,10 +89,11 @@ const gRef = ref<SVGGElement | null>(null)
 
 const searchQuery = ref('')
 
-let simulation: d3.Simulation<any, any> | null = null
-let zoomBehavior: d3.ZoomBehavior<SVGSVGElement, unknown> | null = null
+let simulation: any = null
+let zoomBehavior: any = null
 
-// Helpers de cores pastéis e suaves (Low Dopamine)
+const API_BASE = 'http://localhost:7070'
+
 const getPastelFill = (colorHex?: string, isRoot = false) => {
   const baseColor = colorHex || (isRoot ? '#E57B55' : '#64748B')
   const neutral = isLightMode.value ? '#FFFFFF' : '#161619'
@@ -102,9 +107,15 @@ const getPastelStroke = (colorHex?: string, isRoot = false) => {
 }
 
 const getNodeRadius = (node: GraphNode) => {
-  if (node.isRoot || node.id === -999) return 36
-  const count = node.books?.length || 0
-  return Math.min(22 + count * 4, 40)
+  if (node.isRoot || node.id === -999 || node.id === 'root') return 36
+  if (node.type === 'book') return 26
+  const count = node.bookCount || 0
+  return Math.min(24 + count * 3, 40)
+}
+
+const getTruncatedTitle = (title?: string) => {
+  if (!title) return ''
+  return title.length > 10 ? `${title.slice(0, 10)}...` : title
 }
 
 const initGraph = () => {
@@ -117,7 +128,8 @@ const initGraph = () => {
   const g = d3.select(gRef.value)
 
   // Configurar Zoom
-  zoomBehavior = d3.zoom<SVGSVGElement, unknown>()
+  zoomBehavior = d3
+    .zoom<SVGSVGElement, unknown>()
     .scaleExtent([0.1, 4])
     .on('zoom', (event) => {
       g.attr('transform', event.transform)
@@ -127,113 +139,231 @@ const initGraph = () => {
 
   // 1. Nó Central de Origem (Meu Conhecimento)
   const rootNode: GraphNode = {
-    id: -999,
+    id: 'root',
+    rawId: -999,
     name: 'Meu Conhecimento',
     color: '#E57B55',
     description: 'Nó central agregador do seu universo de leitura',
-    books: [],
+    type: 'theme',
     isRoot: true,
     x: width / 2,
     y: height / 2,
     fx: width / 2,
-    fy: height / 2
+    fy: height / 2,
   }
 
-  // Copiar dados para simulação
-  const themeNodes = props.nodes.map(n => ({ ...n }))
-  const simulationNodes = [rootNode, ...themeNodes]
-  const nodeMap = new Map(simulationNodes.map(n => [n.id, n]))
+  // Filtrar nós conforme busca
+  const query = searchQuery.value.trim().toLowerCase()
+  const filteredPropsNodes = query
+    ? props.nodes.filter(
+        (n) =>
+          (n.name && n.name.toLowerCase().includes(query)) ||
+          (n.fullTitle && n.fullTitle.toLowerCase().includes(query)) ||
+          (n.author && n.author.toLowerCase().includes(query))
+      )
+    : props.nodes
 
-  // 2. Links explícitos entre temas
-  const themeLinks = props.edges
-    .map(e => {
-      const sourceId = typeof e.source === 'object' ? e.source.id : e.source
-      const targetId = typeof e.target === 'object' ? e.target.id : e.target
+  const inputNodes = filteredPropsNodes.map((n) => ({ ...n }))
+  const simulationNodes = [rootNode, ...inputNodes]
+  const nodeMap = new Map(simulationNodes.map((n) => [String(n.id), n]))
+
+  // 2. Links explícitos entre nós
+  const explicitLinks = props.edges
+    .map((e) => {
+      const sourceId = String(typeof e.source === 'object' ? e.source.id : e.source)
+      const targetId = String(typeof e.target === 'object' ? e.target.id : e.target)
       return {
-        id: `theme-edge-${e.id}`,
+        id: String(e.id),
         source: nodeMap.get(sourceId),
         target: nodeMap.get(targetId),
-        isRootEdge: false
+        type: e.type || 'theme-hierarchy',
+        isRootEdge: false,
       }
     })
-    .filter(link => link.source && link.target)
+    .filter((link) => link.source && link.target)
 
-  // 3. Links radiais conectando o Nó Central aos nós de temas principais
-  const rootLinks = themeNodes.map(node => ({
-    id: `root-edge-${node.id}`,
-    source: rootNode,
-    target: nodeMap.get(node.id),
-    isRootEdge: true
-  })).filter(link => link.target)
+  // 3. Links conectando Nós de Temas principais ao Nó Raiz
+  const themeNodes = inputNodes.filter((n) => n.type === 'theme')
+  const rootLinks = themeNodes
+    .map((node) => ({
+      id: `root-edge-${node.id}`,
+      source: rootNode,
+      target: nodeMap.get(String(node.id)),
+      type: 'root',
+      isRootEdge: true,
+    }))
+    .filter((link) => link.target)
 
-  const simulationLinks = [...rootLinks, ...themeLinks]
+  const simulationLinks = [...rootLinks, ...explicitLinks]
 
-  // Criar Simulação de Forças D3 (Estilo Obsidian)
-  simulation = d3.forceSimulation(simulationNodes)
-    .force('link', d3.forceLink(simulationLinks).id((d: any) => d.id).distance((d: any) => d.isRootEdge ? 180 : 130))
-    .force('charge', d3.forceManyBody().strength(-460))
+  // Criar Simulação de Forças D3
+  simulation = d3
+    .forceSimulation(simulationNodes)
+    .force(
+      'link',
+      d3
+        .forceLink(simulationLinks)
+        .id((d: any) => String(d.id))
+        .distance((d: any) => (d.isRootEdge ? 180 : d.type === 'book-theme' ? 95 : 140))
+    )
+    .force('charge', d3.forceManyBody().strength((d: any) => (d.type === 'book' ? -220 : -440)))
     .force('center', d3.forceCenter(width / 2, height / 2))
-    .force('collide', d3.forceCollide().radius((d: any) => getNodeRadius(d) + 24))
+    .force('collide', d3.forceCollide().radius((d: any) => getNodeRadius(d) + 20))
 
-  // Renderizar Links (Arestas) Contínuas (Solid lines)
+  // Renderizar Links (Arestas)
   const linkGroup = g.select('.links-group')
-  const links = linkGroup.selectAll<SVGLineElement, any>('line')
+  const links = linkGroup
+    .selectAll<SVGLineElement, any>('line')
     .data(simulationLinks, (d: any) => d.id)
     .join('line')
-    .attr('stroke', (d: any) => d.isRootEdge ? (isLightMode.value ? 'rgba(229, 123, 85, 0.45)' : 'rgba(229, 123, 85, 0.35)') : (isLightMode.value ? 'rgba(0, 0, 0, 0.15)' : 'rgba(255, 255, 255, 0.12)'))
-    .attr('stroke-width', (d: any) => d.isRootEdge ? 1.6 : 1.2)
+    .attr('stroke', (d: any) =>
+      d.isRootEdge
+        ? isLightMode.value
+          ? 'rgba(229, 123, 85, 0.45)'
+          : 'rgba(229, 123, 85, 0.35)'
+        : d.type === 'book-theme'
+        ? isLightMode.value
+          ? 'rgba(59, 130, 246, 0.35)'
+          : 'rgba(59, 130, 246, 0.30)'
+        : isLightMode.value
+        ? 'rgba(0, 0, 0, 0.15)'
+        : 'rgba(255, 255, 255, 0.12)'
+    )
+    .attr('stroke-width', (d: any) => (d.isRootEdge ? 1.6 : d.type === 'book-theme' ? 1.4 : 1.2))
+    .attr('stroke-dasharray', (d: any) => (d.type === 'book-theme' ? '3,3' : 'none'))
     .attr('stroke-opacity', 1)
 
   // Renderizar Nós
   const nodeGroup = g.select('.nodes-group')
-  const nodesSelection = nodeGroup.selectAll<SVGGElement, any>('g.node')
-    .data(simulationNodes, (d: any) => d.id)
+  const nodesSelection = nodeGroup
+    .selectAll<SVGGElement, any>('g.node')
+    .data(simulationNodes, (d: any) => String(d.id))
     .join('g')
     .attr('class', 'node cursor-pointer')
-    .call(d3.drag<SVGGElement, any>()
-      .on('start', (event, d) => {
-        if (!event.active && simulation) simulation.alphaTarget(0.3).restart()
-        d.fx = d.x
-        d.fy = d.y
-      })
-      .on('drag', (event, d) => {
-        d.fx = event.x
-        d.fy = event.y
-      })
-      .on('end', (event, d) => {
-        if (!event.active && simulation) simulation.alphaTarget(0)
-        if (!d.isRoot) {
-          d.fx = null
-          d.fy = null
-        }
-      })
+    .call(
+      d3
+        .drag<SVGGElement, any>()
+        .on('start', (event, d) => {
+          if (!event.active && simulation) simulation.alphaTarget(0.3).restart()
+          d.fx = d.x
+          d.fy = d.y
+        })
+        .on('drag', (event, d) => {
+          d.fx = event.x
+          d.fy = event.y
+        })
+        .on('end', (event, d) => {
+          if (!event.active && simulation) simulation.alphaTarget(0)
+          if (!d.isRoot) {
+            d.fx = null
+            d.fy = null
+          }
+        })
     )
 
-  nodesSelection.html('') // Limpar anterior
+  nodesSelection.html('') // Limpar renderização anterior
 
-  // Círculo com efeito sutil de ambient ring (low-dopamine)
-  nodesSelection.append('circle')
+  // ----------------------------------------------------
+  // A. NÓS DE LIVROS (TIPO 'book')
+  // ----------------------------------------------------
+  const bookNodesSelection = nodesSelection.filter((d: any) => d.type === 'book')
+
+  // Fundo/Card arredondado para livro
+  bookNodesSelection
+    .append('rect')
+    .attr('x', -22)
+    .attr('y', -30)
+    .attr('width', 44)
+    .attr('height', 60)
+    .attr('rx', 8)
+    .attr('ry', 8)
+    .attr('fill', isLightMode.value ? '#FFFFFF' : '#1E1E24')
+    .attr('stroke', isLightMode.value ? '#CBD5E1' : '#334155')
+    .attr('stroke-width', 1.5)
+    .attr('filter', 'url(#node-shadow)')
+    .attr('class', 'transition-all duration-300 hover:scale-105')
+
+  // Miniatura da Capa do Livro
+  bookNodesSelection.each(function (d: any) {
+    const nodeEl = d3.select(this)
+    const coverUrl = d.coverPath
+      ? d.coverPath.startsWith('http')
+        ? d.coverPath
+        : `${API_BASE}/api/books/${d.rawId}/cover`
+      : null
+
+    if (coverUrl) {
+      const clipId = `book-clip-${d.rawId}`
+      nodeEl
+        .append('clipPath')
+        .attr('id', clipId)
+        .append('rect')
+        .attr('x', -21)
+        .attr('y', -29)
+        .attr('width', 42)
+        .attr('height', 58)
+        .attr('rx', 7)
+        .attr('ry', 7)
+
+      nodeEl
+        .append('image')
+        .attr('href', coverUrl)
+        .attr('x', -21)
+        .attr('y', -29)
+        .attr('width', 42)
+        .attr('height', 58)
+        .attr('preserveAspectRatio', 'xMidYMid slice')
+        .attr('clip-path', `url(#${clipId})`)
+    }
+  })
+
+  // Rótulo do Livro: Título truncado em 10 caracteres + '...'
+  bookNodesSelection
+    .append('text')
+    .attr('text-anchor', 'middle')
+    .attr('dy', 44)
+    .attr('fill', isLightMode.value ? '#0F172A' : '#F1F5F9')
+    .attr('font-size', '11px')
+    .attr('font-weight', '600')
+    .attr('font-family', 'system-ui, -apple-system, sans-serif')
+    .attr('pointer-events', 'none')
+    .text((d: any) => getTruncatedTitle(d.fullTitle || d.name))
+
+  // ----------------------------------------------------
+  // B. NÓS DE TEMAS & NÓ RAIZ (TIPO 'theme' / isRoot)
+  // ----------------------------------------------------
+  const themeAndRootNodesSelection = nodesSelection.filter((d: any) => d.type !== 'book')
+
+  // Círculo com efeito de ambient ring
+  themeAndRootNodesSelection
+    .append('circle')
     .attr('r', (d: any) => getNodeRadius(d) + 5)
     .attr('fill', (d: any) => getPastelFill(d.color, d.isRoot))
     .attr('opacity', 0.16)
     .attr('class', 'transition-all duration-300')
 
-  // Círculo principal do nó (cor de fundo pastel e borda fina delicada)
-  nodesSelection.append('circle')
+  // Círculo principal do nó
+  themeAndRootNodesSelection
+    .append('circle')
     .attr('r', (d: any) => getNodeRadius(d))
     .attr('fill', (d: any) => getPastelFill(d.color, d.isRoot))
     .attr('stroke', (d: any) => getPastelStroke(d.color, d.isRoot))
-    .attr('stroke-width', (d: any) => d.isRoot ? 2 : 1.4)
+    .attr('stroke-width', (d: any) => (d.isRoot ? 2 : 1.4))
     .attr('class', 'transition-all duration-300 shadow-lg')
 
-  // Ícone 2D Vetorial Clean para o Nó Raiz (Cérebro / Conhecimento)
-  const rootNodesSelection = nodesSelection.filter((d: any) => d.isRoot)
-  const rootIconGroup = rootNodesSelection.append('g')
+  // Ícone Nó Raiz (Meu Conhecimento)
+  const rootNodesSelection = themeAndRootNodesSelection.filter((d: any) => d.isRoot)
+  const rootIconGroup = rootNodesSelection
+    .append('g')
     .attr('transform', 'translate(-10.5, -10.5)')
     .attr('pointer-events', 'none')
 
-  rootIconGroup.append('path')
-    .attr('d', 'M12 18V5 M15 13a4.17 4.17 0 0 1-3-4 4.17 4.17 0 0 1-3 4 M17.598 6.5A3 3 0 1 0 12 5a3 3 0 1 0-5.598 1.5 M17.997 5.125a4 4 0 0 1 2.526 5.77 M18 18a4 4 0 0 0 2-7.464 M19.967 17.483A4 4 0 1 1 12 18a4 4 0 1 1-7.967-.517 M6 18a4 4 0 0 1-2-7.464 M6.003 5.125a4 4 0 0 0-2.526 5.77')
+  rootIconGroup
+    .append('path')
+    .attr(
+      'd',
+      'M12 18V5 M15 13a4.17 4.17 0 0 1-3-4 4.17 4.17 0 0 1-3 4 M17.598 6.5A3 3 0 1 0 12 5a3 3 0 1 0-5.598 1.5 M17.997 5.125a4 4 0 0 1 2.526 5.77 M18 18a4 4 0 0 0 2-7.464 M19.967 17.483A4 4 0 1 1 12 18a4 4 0 1 1-7.967-.517 M6 18a4 4 0 0 1-2-7.464 M6.003 5.125a4 4 0 0 0-2.526 5.77'
+    )
     .attr('fill', 'none')
     .attr('stroke', isLightMode.value ? '#C2410C' : '#FFFFFF')
     .attr('stroke-width', '1.6')
@@ -241,19 +371,17 @@ const initGraph = () => {
     .attr('stroke-linejoin', 'round')
     .attr('transform', 'scale(0.9)')
 
-  // Ícone 2D e Contagem para Nós de Temas
-  const themeNodesSelection = nodesSelection.filter((d: any) => !d.isRoot)
-  themeNodesSelection.each(function(d: any) {
+  // Ícone & Contagem para Temas
+  const standardThemeSelection = themeAndRootNodesSelection.filter((d: any) => !d.isRoot)
+  standardThemeSelection.each(function (d: any) {
     const nodeEl = d3.select(this)
-    const bookCount = d.books?.length || 0
+    const bookCount = d.bookCount || 0
 
-    const iconG = nodeEl.append('g')
-      .attr('pointer-events', 'none')
-      .attr('class', 'theme-icon-group')
+    const iconG = nodeEl.append('g').attr('pointer-events', 'none').attr('class', 'theme-icon-group')
 
     if (bookCount > 0) {
-      // Ícone 2D de Livro Aberto + Contagem
-      iconG.append('path')
+      iconG
+        .append('path')
         .attr('d', 'M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z')
         .attr('fill', 'none')
         .attr('stroke', isLightMode.value ? 'rgba(30, 41, 59, 0.85)' : 'rgba(255, 255, 255, 0.85)')
@@ -262,17 +390,18 @@ const initGraph = () => {
         .attr('stroke-linejoin', 'round')
         .attr('transform', 'translate(-13, -7.5) scale(0.62)')
 
-      iconG.append('text')
+      iconG
+        .append('text')
         .attr('x', 4)
         .attr('y', 4)
         .attr('font-size', '11.5px')
         .attr('font-weight', '600')
-        .attr('font-family', 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace')
+        .attr('font-family', 'ui-monospace, monospace')
         .attr('fill', isLightMode.value ? '#1E293B' : 'rgba(255, 255, 255, 0.92)')
         .text(bookCount)
     } else {
-      // Ícone 2D sutil para tema sem livros vinculados
-      iconG.append('path')
+      iconG
+        .append('path')
         .attr('d', 'M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20')
         .attr('fill', 'none')
         .attr('stroke', isLightMode.value ? 'rgba(30, 41, 59, 0.75)' : 'rgba(255, 255, 255, 0.55)')
@@ -283,44 +412,73 @@ const initGraph = () => {
     }
   })
 
-  // Rótulo/Nome do nó
-  nodesSelection.append('text')
+  // Rótulo para Temas
+  themeAndRootNodesSelection
+    .append('text')
     .attr('text-anchor', 'middle')
     .attr('dy', (d: any) => getNodeRadius(d) + 18)
-    .attr('fill', (d: any) => d.isRoot ? (isLightMode.value ? '#9A3412' : '#F59E0B') : (isLightMode.value ? '#1E293B' : '#E2E8F0'))
-    .attr('font-size', (d: any) => d.isRoot ? '13.5px' : '12px')
+    .attr('fill', (d: any) =>
+      d.isRoot ? (isLightMode.value ? '#9A3412' : '#F59E0B') : isLightMode.value ? '#1E293B' : '#E2E8F0'
+    )
+    .attr('font-size', (d: any) => (d.isRoot ? '13.5px' : '12px'))
     .attr('font-weight', '600')
-    .attr('font-family', 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif')
+    .attr('font-family', 'system-ui, -apple-system, sans-serif')
     .attr('pointer-events', 'none')
     .text((d: any) => d.name)
 
-  // Evento de Clique no Nó
+  // ----------------------------------------------------
+  // INTERAÇÕES & EVENTOS
+  // ----------------------------------------------------
   nodesSelection.on('click', (event, d) => {
     event.stopPropagation()
     if (d.isRoot) {
       emit('selectNode', rootNode)
     } else {
-      const originalNode = props.nodes.find(n => n.id === d.id)
+      const originalNode = props.nodes.find((n) => String(n.id) === String(d.id))
       if (originalNode) {
         emit('selectNode', originalNode)
+      } else {
+        emit('selectNode', d)
       }
     }
   })
 
-  // Evento de Destaque no Hover
-  nodesSelection.on('mouseenter', (event, d) => {
-    links
-      .attr('stroke', (l: any) => (l.source.id === d.id || l.target.id === d.id) ? (d.color || '#E57B55') : (isLightMode.value ? 'rgba(0, 0, 0, 0.04)' : 'rgba(255, 255, 255, 0.05)'))
-      .attr('stroke-width', (l: any) => (l.source.id === d.id || l.target.id === d.id) ? 2 : 1)
-      .attr('stroke-opacity', (l: any) => (l.source.id === d.id || l.target.id === d.id) ? 0.9 : 0.25)
-  }).on('mouseleave', () => {
-    links
-      .attr('stroke', (d: any) => d.isRootEdge ? 'rgba(229, 123, 85, 0.35)' : (isLightMode.value ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.12)'))
-      .attr('stroke-width', (d: any) => d.isRootEdge ? 1.5 : 1.2)
-      .attr('stroke-opacity', 1)
-  })
+  // Destaque no Hover
+  nodesSelection
+    .on('mouseenter', (event, d) => {
+      links
+        .attr('stroke', (l: any) =>
+          String(l.source.id) === String(d.id) || String(l.target.id) === String(d.id)
+            ? d.color || '#E57B55'
+            : isLightMode.value
+            ? 'rgba(0, 0, 0, 0.04)'
+            : 'rgba(255, 255, 255, 0.05)'
+        )
+        .attr('stroke-width', (l: any) =>
+          String(l.source.id) === String(d.id) || String(l.target.id) === String(d.id) ? 2 : 1
+        )
+        .attr('stroke-opacity', (l: any) =>
+          String(l.source.id) === String(d.id) || String(l.target.id) === String(d.id) ? 0.9 : 0.25
+        )
+    })
+    .on('mouseleave', () => {
+      links
+        .attr('stroke', (d: any) =>
+          d.isRootEdge
+            ? 'rgba(229, 123, 85, 0.35)'
+            : d.type === 'book-theme'
+            ? isLightMode.value
+              ? 'rgba(59, 130, 246, 0.35)'
+              : 'rgba(59, 130, 246, 0.30)'
+            : isLightMode.value
+            ? 'rgba(0, 0, 0, 0.08)'
+            : 'rgba(255, 255, 255, 0.12)'
+        )
+        .attr('stroke-width', (d: any) => (d.isRootEdge ? 1.5 : 1.2))
+        .attr('stroke-opacity', 1)
+    })
 
-  // Atualização em cada Tick de simulação física
+  // Tick da simulação
   simulation.on('tick', () => {
     links
       .attr('x1', (d: any) => d.source.x)
@@ -332,12 +490,15 @@ const initGraph = () => {
   })
 }
 
-
 let resizeObserver: ResizeObserver | null = null
 
-watch(() => [props.nodes, props.edges], () => {
-  initGraph()
-}, { deep: true })
+watch(
+  () => [props.nodes, props.edges, searchQuery.value],
+  () => {
+    initGraph()
+  },
+  { deep: true }
+)
 
 watch(themeMode, () => {
   initGraph()

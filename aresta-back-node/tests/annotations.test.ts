@@ -12,7 +12,7 @@ describe('Annotations Endpoints & Graph Integration', () => {
   beforeAll(async () => {
     await prisma.$connect();
 
-    // Criar livro de teste se não houver
+    // Criar livro de teste
     const book = await prisma.book.create({
       data: {
         title: 'Livro de Teste Anotações',
@@ -21,11 +21,10 @@ describe('Annotations Endpoints & Graph Integration', () => {
     });
     testBookId = book.id;
 
-    // Criar temas de teste para vincular no grafo
+    // Criar temas de teste globais
     const theme1 = await prisma.theme.create({
       data: {
-        user_id: 1,
-        name: 'Tema Teste Anotação 1',
+        name: 'Tema Teste Anotação 101',
         color: '#3B82F6',
         description: 'Tema azul',
       },
@@ -34,29 +33,36 @@ describe('Annotations Endpoints & Graph Integration', () => {
 
     const theme2 = await prisma.theme.create({
       data: {
-        user_id: 1,
-        name: 'Tema Teste Anotação 2',
+        name: 'Tema Teste Anotação 102',
         color: '#EC4899',
         description: 'Tema rosa',
       },
     });
     testThemeId2 = theme2.id;
+
+    // Vincular temas ao livro
+    await prisma.bookTheme.createMany({
+      data: [
+        { book_id: testBookId, theme_id: testThemeId },
+        { book_id: testBookId, theme_id: testThemeId2 },
+      ],
+    });
   });
 
   afterAll(async () => {
     if (createdAnnotationId) {
       await prisma.annotation.deleteMany({ where: { id: createdAnnotationId } });
     }
-    if (testThemeId) {
-      await prisma.theme.deleteMany({ where: { id: { in: [testThemeId, testThemeId2] } } });
-    }
     if (testBookId) {
       await prisma.book.deleteMany({ where: { id: testBookId } });
+    }
+    if (testThemeId) {
+      await prisma.theme.deleteMany({ where: { id: { in: [testThemeId, testThemeId2] } } });
     }
     await prisma.$disconnect();
   });
 
-  it('POST /api/annotations deve criar anotação de EPUB vinculada a um tema', async () => {
+  it('POST /api/annotations deve criar anotação de EPUB vinculada a um tema do livro', async () => {
     const res = await request(app)
       .post('/api/annotations')
       .send({
@@ -79,6 +85,45 @@ describe('Annotations Endpoints & Graph Integration', () => {
     expect(res.body.themes[0].color).toBe('#3B82F6');
 
     createdAnnotationId = res.body.id;
+  });
+
+  it('POST /api/annotations deve permitir criar "Anotação Solta" (sem CFI e sem selectedText)', async () => {
+    const res = await request(app)
+      .post('/api/annotations')
+      .send({
+        bookId: testBookId,
+        note: 'Esta é uma anotação solta sobre o livro inteiro',
+        themeIds: [testThemeId2],
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body.id).toBeDefined();
+    expect(res.body.cfi).toBeNull();
+    expect(res.body.note).toBe('Esta é uma anotação solta sobre o livro inteiro');
+    expect(res.body.themes[0].id).toBe(testThemeId2);
+
+    // Cleanup
+    await prisma.annotation.delete({ where: { id: res.body.id } });
+  });
+
+  it('POST /api/annotations deve rejeitar vínculo com tema que não pertence ao livro', async () => {
+    // Criar tema avulso sem vínculo com o livro
+    const unlinkedTheme = await prisma.theme.create({
+      data: { name: 'Tema Desconexo 999', color: '#999999' },
+    });
+
+    const res = await request(app)
+      .post('/api/annotations')
+      .send({
+        bookId: testBookId,
+        note: 'Tentativa de vincular tema inválido',
+        themeIds: [unlinkedTheme.id],
+      });
+
+    expect(res.status).toBe(400);
+
+    // Cleanup
+    await prisma.theme.delete({ where: { id: unlinkedTheme.id } });
   });
 
   it('GET /api/annotations deve listar anotações com filtros de livro e tema', async () => {
@@ -114,41 +159,6 @@ describe('Annotations Endpoints & Graph Integration', () => {
     expect(res.body.themes).toHaveLength(2);
   });
 
-  it('GET /api/graph deve exibir as anotações vinculadas dentro do nó de tema', async () => {
-    const res = await request(app).get('/api/graph');
-
-    expect(res.status).toBe(200);
-    const targetNode = res.body.nodes.find((n: any) => n.id === testThemeId);
-    expect(targetNode).toBeDefined();
-    expect(targetNode.annotations).toBeDefined();
-    expect(targetNode.annotations.some((a: any) => a.id === createdAnnotationId)).toBe(true);
-    expect(targetNode.annotations.find((a: any) => a.id === createdAnnotationId).cfi).toBe(
-      'epubcfi(/6/14[chapter_3]!/4/2/10/1:15,/4/2/10/1:58)'
-    );
-  });
-
-  it('DELETE /api/graph/nodes/:id/annotations/:annotationId deve desvincular do nó', async () => {
-    const res = await request(app).delete(
-      `/api/graph/nodes/${testThemeId}/annotations/${createdAnnotationId}`
-    );
-
-    expect(res.status).toBe(204);
-
-    // Verificar se ainda tem o outro tema
-    const check = await request(app).get(`/api/annotations/${createdAnnotationId}`);
-    expect(check.body.themes).toHaveLength(1);
-    expect(check.body.themes[0].id).toBe(testThemeId2);
-  });
-
-  it('POST /api/graph/nodes/:id/annotations/:annotationId deve revincular ao nó', async () => {
-    const res = await request(app).post(
-      `/api/graph/nodes/${testThemeId}/annotations/${createdAnnotationId}`
-    );
-
-    expect(res.status).toBe(200);
-    expect(res.body.success).toBe(true);
-  });
-
   it('DELETE /api/annotations/:id deve deletar a anotação', async () => {
     const res = await request(app).delete(`/api/annotations/${createdAnnotationId}`);
     expect(res.status).toBe(204);
@@ -157,4 +167,3 @@ describe('Annotations Endpoints & Graph Integration', () => {
     expect(check.status).toBe(404);
   });
 });
-

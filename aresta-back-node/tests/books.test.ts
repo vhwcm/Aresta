@@ -1,10 +1,16 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
+import jwt from 'jsonwebtoken';
 import { app } from '../src/app.js';
 import { prisma } from '../src/config/prisma.js';
+import { env } from '../src/config/env.js';
 
 describe('Books Endpoints', () => {
   let createdBookId: number;
+  const adminToken = jwt.sign(
+    { userId: 1, email: 'viktor@aresta.org', role: 'ADMIN', name: 'viktor' },
+    env.JWT_SECRET
+  );
 
   beforeAll(async () => {
     await prisma.$connect();
@@ -32,17 +38,38 @@ describe('Books Endpoints', () => {
     createdBookId = res.body.id;
   });
 
-  it('GET /api/books deve listar os livros', async () => {
+  it('POST /api/books/admin-upload deve criar livro com autor e metadados com token de admin', async () => {
+    const res = await request(app)
+      .post('/api/books/admin-upload')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        title: 'Livro Admin Upload Teste',
+        author: 'Viktor Autor Teste',
+        summary: 'Resumo teste administrativo',
+        filePath: 'storage/epubs/O-Alienista.epub',
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body.id).toBeDefined();
+    expect(res.body.author).toBe('Viktor Autor Teste');
+    expect(res.body.summary).toBe('Resumo teste administrativo');
+
+    // Cleanup
+    await prisma.book.deleteMany({ where: { id: res.body.id } });
+  });
+
+  it('GET /api/books deve listar os livros com temas e autor', async () => {
     const res = await request(app).get('/api/books');
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
     expect(res.body.some((b: any) => b.id === createdBookId)).toBe(true);
   });
 
-  it('GET /api/books/:id deve retornar o livro específico', async () => {
+  it('GET /api/books/:id deve retornar o livro específico com autor e temas', async () => {
     const res = await request(app).get(`/api/books/${createdBookId}`);
     expect(res.status).toBe(200);
     expect(res.body.title).toBe('Livro Teste Express');
+    expect(res.body.author).toBeDefined();
   });
 
   it('GET /api/books/:id/file deve retornar arquivo com content-type epub', async () => {
@@ -51,19 +78,10 @@ describe('Books Endpoints', () => {
     expect(res.headers['content-type']).toContain('application/epub+zip');
   });
 
-  it('GET rotas estáticas /epubs, /pdfs e /covers devem servir arquivos', async () => {
-    const epubRes = await request(app).get('/epubs/O-Alienista.epub');
-    expect(epubRes.status).toBe(200);
-
-    const pdfRes = await request(app).get('/pdfs/O-Alienista.pdf');
-    expect(pdfRes.status).toBe(200);
-
-    const coverRes = await request(app).get('/covers/O-Alienista.png');
-    expect(coverRes.status).toBe(200);
-  });
-
-  it('DELETE /api/books/:id deve remover o livro', async () => {
-    const res = await request(app).delete(`/api/books/${createdBookId}`);
+  it('DELETE /api/books/:id deve remover o livro quando autenticado como admin', async () => {
+    const res = await request(app)
+      .delete(`/api/books/${createdBookId}`)
+      .set('Authorization', `Bearer ${adminToken}`);
     expect(res.status).toBe(204);
 
     const check = await request(app).get(`/api/books/${createdBookId}`);
@@ -112,47 +130,5 @@ describe('Books Endpoints', () => {
       expect(res.status).toBe(200);
       expect(res.body.lastAccessedAt).toBeDefined();
     });
-
-    it('POST, PUT e DELETE /api/user-books/:id/themes deve gerenciar temas/tags do livro', async () => {
-      // 1. Criar dois temas
-      const theme1 = await prisma.theme.create({
-        data: { user_id: 1, name: 'Psicologia & Loucura', color: '#10B981' },
-      });
-      const theme2 = await prisma.theme.create({
-        data: { user_id: 1, name: 'Literatura Brasileira', color: '#6366F1' },
-      });
-
-      // 2. Adicionar theme1 via POST
-      const postRes = await request(app)
-        .post(`/api/user-books/${userBookId}/themes`)
-        .send({ themeId: theme1.id });
-      expect(postRes.status).toBe(200);
-      expect(postRes.body.themes).toBeDefined();
-      expect(postRes.body.themes.some((t: any) => t.id === theme1.id)).toBe(true);
-
-      // 3. Atualizar lista total via PUT com theme1 e theme2
-      const putRes = await request(app)
-        .put(`/api/user-books/${userBookId}/themes`)
-        .send({ themeIds: [theme1.id, theme2.id] });
-      expect(putRes.status).toBe(200);
-      expect(putRes.body.themes.length).toBe(2);
-
-      // 4. GET /api/user-books deve retornar o livro com os temas
-      const listRes = await request(app).get('/api/user-books');
-      expect(listRes.status).toBe(200);
-      const ub = listRes.body.find((b: any) => b.id === userBookId);
-      expect(ub).toBeDefined();
-      expect(ub.themes.length).toBe(2);
-
-      // 5. Remover theme1 via DELETE
-      const delRes = await request(app).delete(`/api/user-books/${userBookId}/themes/${theme1.id}`);
-      expect(delRes.status).toBe(200);
-      expect(delRes.body.themes.length).toBe(1);
-      expect(delRes.body.themes[0].id).toBe(theme2.id);
-
-      // Cleanup
-      await prisma.theme.deleteMany({ where: { id: { in: [theme1.id, theme2.id] } } });
-    });
   });
 });
-

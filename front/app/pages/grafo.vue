@@ -5,14 +5,24 @@
       <div>
         <div class="flex items-center gap-2">
           <NetworkIcon class="w-5 h-5 text-accent" />
-          <h1 class="text-xl font-bold font-interface tracking-tight">Mapa Mental & Grafo de Leitura</h1>
+          <h1 class="text-xl font-bold font-interface tracking-tight">Mapa Mental & Grafo de Conhecimento</h1>
         </div>
         <p class="text-xs text-textSecondary font-light mt-0.5">
-          Conexões semânticas criadas automaticamente a partir dos livros que você lê e edições manuais.
+          Conexões semânticas entre temas, subtemas e livros geradas dinamicamente com IA.
         </p>
       </div>
 
       <div class="flex items-center gap-3">
+        <!-- Link para Upload Admin -->
+        <NuxtLink
+          to="/admin/upload"
+          class="px-4 py-2 rounded-xl bg-accent/10 border border-accent/30 text-accent hover:bg-accent/20 transition-all text-xs font-technical flex items-center gap-2"
+          title="Upload de Livros & Enriquecimento por IA"
+        >
+          <SparklesIcon class="w-3.5 h-3.5" />
+          <span>Upload & IA (Admin)</span>
+        </NuxtLink>
+
         <button
           @click="fetchGraph"
           class="p-2 rounded-xl bg-black/5 dark:bg-white/5 border border-divider text-textSecondary hover:text-textPrimary transition-all"
@@ -41,19 +51,23 @@
         @open-connect-modal="isConnectModalOpen = true"
       />
 
-      <!-- Drawer de Detalhes do Nó -->
-      <NodeDrawer
-        :node="selectedNode"
-        :all-user-books="userBooks"
-        @close="selectedNode = null"
-        @update-node="handleUpdateNode"
-        @delete-node="handleDeleteNode"
-        @link-book="handleLinkBook"
-        @unlink-book="handleUnlinkBook"
+      <!-- 1. Canvas Overlay Deslizante do Tema (Carrossel Horizontal de Livros + Feed de Anotações) -->
+      <ThemeCanvasOverlay
+        :is-open="isThemeOverlayOpen"
+        :theme="selectedThemeNode"
+        @close="isThemeOverlayOpen = false"
+        @select-book="handleBookSelectedFromTheme"
+      />
+
+      <!-- 2. Drawer Lateral de Anotações do Livro (Feed de Anotações + Criação de Anotações Soltas) -->
+      <BookAnnotationsDrawer
+        :is-open="isBookDrawerOpen"
+        :book="selectedBookNode"
+        @close="isBookDrawerOpen = false"
       />
     </main>
 
-    <!-- Modais -->
+    <!-- Modais Auxiliares -->
     <CreateNodeModal
       :is-open="isCreateModalOpen"
       @close="isCreateModalOpen = false"
@@ -71,66 +85,66 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { NetworkIcon, RotateCwIcon } from 'lucide-vue-next'
-import type { GraphNode } from '~/interfaces/graph'
+import { NetworkIcon, RotateCwIcon, SparklesIcon } from 'lucide-vue-next'
+import type { GraphNode, BookItem } from '~/interfaces/graph'
 import { useGraph } from '~/composables/useGraph'
-import { useUserBooks } from '~/composables/useUserBooks'
 
 import GraphCanvas from '~/components/GraphCanvas.vue'
-import NodeDrawer from '~/components/NodeDrawer.vue'
+import ThemeCanvasOverlay from '~/components/graph/ThemeCanvasOverlay.vue'
+import BookAnnotationsDrawer from '~/components/graph/BookAnnotationsDrawer.vue'
 import CreateNodeModal from '~/components/CreateNodeModal.vue'
 import ConnectNodesModal from '~/components/ConnectNodesModal.vue'
 
-const { graphData, loading, fetchGraph, createNode, updateNode, deleteNode, createConnection, linkBookToNode, unlinkBookFromNode } = useGraph()
-const { userBooks, fetchUserBooks } = useUserBooks()
+const { graphData, loading, fetchGraph, createNode, createConnection } = useGraph()
 
 const selectedNode = ref<GraphNode | null>(null)
+const selectedThemeNode = ref<GraphNode | null>(null)
+const selectedBookNode = ref<GraphNode | null>(null)
+
+const isThemeOverlayOpen = ref(false)
+const isBookDrawerOpen = ref(false)
 const isCreateModalOpen = ref(false)
 const isConnectModalOpen = ref(false)
 
 const handleSelectNode = (node: GraphNode) => {
   selectedNode.value = node
+
+  if (node.type === 'book') {
+    selectedBookNode.value = node
+    isBookDrawerOpen.value = true
+    isThemeOverlayOpen.value = false
+  } else if (node.type === 'theme' && !node.isRoot) {
+    selectedThemeNode.value = node
+    isThemeOverlayOpen.value = true
+    isBookDrawerOpen.value = false
+  }
 }
 
-const handleCreateNode = async (payload: { name: string, color: string, description: string }) => {
+const handleBookSelectedFromTheme = (book: BookItem) => {
+  isThemeOverlayOpen.value = false
+  selectedBookNode.value = {
+    id: `book-${book.id}`,
+    rawId: book.id,
+    type: 'book',
+    name: book.title,
+    fullTitle: book.title,
+    author: book.author,
+    summary: book.summary,
+    coverPath: book.coverPath,
+    filePath: book.filePath,
+  }
+  isBookDrawerOpen.value = true
+}
+
+const handleCreateNode = async (payload: { name: string; color: string; description: string }) => {
   await createNode(payload.name, payload.color, payload.description)
 }
 
-const handleUpdateNode = async (payload: { id: number, name: string, color: string, description: string }) => {
-  await updateNode(payload.id, payload.name, payload.color, payload.description)
-  if (selectedNode.value && selectedNode.value.id === payload.id) {
-    selectedNode.value = { ...selectedNode.value, ...payload }
-  }
-}
-
-const handleDeleteNode = async (id: number) => {
-  await deleteNode(id)
-  selectedNode.value = null
-}
-
-const handleConnectNodes = async (payload: { sourceId: number, targetId: number }) => {
+const handleConnectNodes = async (payload: { sourceId: number; targetId: number }) => {
   await createConnection(payload.sourceId, payload.targetId)
-}
-
-const handleLinkBook = async (payload: { nodeId: number, userBookId: number }) => {
-  await linkBookToNode(payload.nodeId, payload.userBookId)
-  // Atualizar selectedNode
-  if (selectedNode.value) {
-    const updatedNode = graphData.value.nodes.find(n => n.id === payload.nodeId)
-    if (updatedNode) selectedNode.value = updatedNode
-  }
-}
-
-const handleUnlinkBook = async (payload: { nodeId: number, userBookId: number }) => {
-  await unlinkBookFromNode(payload.nodeId, payload.userBookId)
-  if (selectedNode.value) {
-    const updatedNode = graphData.value.nodes.find(n => n.id === payload.nodeId)
-    if (updatedNode) selectedNode.value = updatedNode
-  }
 }
 
 onMounted(() => {
   fetchGraph()
-  fetchUserBooks()
 })
 </script>

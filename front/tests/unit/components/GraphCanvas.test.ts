@@ -3,17 +3,17 @@ import { mount } from '@vue/test-utils'
 import GraphCanvas from '../../../app/components/GraphCanvas.vue'
 
 describe('GraphCanvas Component', () => {
-  it('renders SVG graph canvas and control toolbar', () => {
+  it('renders SVG graph canvas with theme and book nodes', () => {
     const wrapper = mount(GraphCanvas, {
       props: {
         nodes: [
-          { id: 1, name: 'Filosofia', color: '#3B82F6', books: [] },
-          { id: 2, name: 'Ficção Científica', color: '#10B981', books: [{ userBookId: 10, bookId: 1, title: 'Duna', status: 'LENDO', currentPage: 42 }] }
+          { id: 'theme-1', rawId: 1, type: 'theme', name: 'Filosofia', color: '#3B82F6', bookCount: 1 },
+          { id: 'book-10', rawId: 10, type: 'book', name: 'O Programa...', fullTitle: 'O Programador Pragmático', author: 'Andy Hunt', coverPath: 'storage/covers/test.png' },
         ],
         edges: [
-          { id: 1, source: 1, target: 2 }
-        ]
-      }
+          { id: 'edge-1', source: 'theme-1', target: 'book-10', type: 'book-theme' },
+        ],
+      },
     })
 
     expect(wrapper.find('svg').exists()).toBe(true)
@@ -27,13 +27,13 @@ describe('GraphCanvas Component', () => {
     const wrapper = mount(GraphCanvas, {
       props: {
         nodes: [],
-        edges: []
-      }
+        edges: [],
+      },
     })
 
     const buttons = wrapper.findAll('button')
-    const createBtn = buttons.find(b => b.text().includes('Novo Tema'))
-    const connectBtn = buttons.find(b => b.text().includes('Conectar'))
+    const createBtn = buttons.find((b) => b.text().includes('Novo Tema'))
+    const connectBtn = buttons.find((b) => b.text().includes('Conectar'))
 
     if (createBtn) {
       await createBtn.trigger('click')

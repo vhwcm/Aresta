@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	aiv1 "aresta-ocr/gen/ai/v1"
 	ocrv1 "aresta-ocr/gen/ocr/v1"
 	"aresta-ocr/internal/adapters/gemini"
 	"aresta-ocr/internal/adapters/mock"
@@ -16,6 +17,7 @@ import (
 	"aresta-ocr/internal/domain"
 	grpchandler "aresta-ocr/internal/transport/grpc"
 
+	"google.golang.org/genai"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
@@ -28,7 +30,7 @@ func main() {
 
 	cfg := config.LoadConfig()
 
-	logger.Info("starting aresta-ocr service",
+	logger.Info("starting aresta-ai/ocr service",
 		"grpc_port", cfg.GRPCPort,
 		"model", cfg.GeminiModel,
 		"mock_mode", cfg.UseMock,
@@ -37,27 +39,29 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// Injeção de dependência conforme o Princípio da Inversão de Dependência (SOLID - DIP)
 	var extractor domain.TextExtractor
+	var analyzer domain.BookAnalyzer
 
 	if cfg.UseMock {
-		logger.Info("using MockExtractor (no external API calls)")
+		logger.Info("using MockExtractor & MockBookAnalyzer (no external API calls)")
 		extractor = mock.NewMockExtractor()
+		analyzer = mock.NewMockBookAnalyzer()
 	} else {
 		if cfg.GeminiAPIKey == "" {
 			logger.Error("GEMINI_API_KEY environment variable is not set. Set GEMINI_API_KEY or run with USE_MOCK=true")
 			os.Exit(1)
 		}
 
-		geminiAdapter, err := gemini.NewGeminiExtractor(ctx, gemini.Config{
+		genaiClient, err := genai.NewClient(ctx, &genai.ClientConfig{
 			APIKey: cfg.GeminiAPIKey,
-			Model:  cfg.GeminiModel,
 		})
 		if err != nil {
-			logger.Error("failed to initialize gemini extractor", "error", err)
+			logger.Error("failed to initialize genai client", "error", err)
 			os.Exit(1)
 		}
-		extractor = geminiAdapter
+
+		extractor = gemini.NewGeminiExtractorWithClient(genaiClient, cfg.GeminiModel)
+		analyzer = gemini.NewGeminiBookAnalyzer(genaiClient, cfg.GeminiModel, logger)
 	}
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", cfg.GRPCPort))
@@ -67,8 +71,15 @@ func main() {
 	}
 
 	grpcServer := grpc.NewServer()
+
+	// Registrar OCR Service
 	ocrHandler := grpchandler.NewOcrHandler(extractor, logger)
 	ocrv1.RegisterOcrServiceServer(grpcServer, ocrHandler)
+
+	// Registrar AI Service (AnalyzeBook, Grounding, Embeddings)
+	aiHandler := grpchandler.NewAIHandler(analyzer, logger)
+	aiv1.RegisterAIServiceServer(grpcServer, aiHandler)
+
 	reflection.Register(grpcServer)
 
 	// Graceful shutdown
@@ -87,5 +98,5 @@ func main() {
 		os.Exit(1)
 	}
 
-	logger.Info("aresta-ocr service stopped")
+	logger.Info("aresta-ai service stopped")
 }

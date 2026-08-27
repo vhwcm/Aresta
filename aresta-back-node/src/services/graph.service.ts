@@ -3,26 +3,92 @@ import { AppError } from '../middlewares/error.middleware.js';
 import { CreateNodeInput, UpdateNodeInput } from '../schemas/graph.schema.js';
 
 export class GraphService {
-  async getGraphForUser(userId: number) {
-    // 1. Buscar todos os temas (nós) do usuário
+  async getUnifiedGraph(userId: number) {
+    // 1. Buscar todos os temas globais com hierarquia e livros vinculados
     const themes = await prisma.theme.findMany({
-      where: { user_id: userId },
       orderBy: { id: 'asc' },
+      include: {
+        parentHierarchies: true,
+        childHierarchies: true,
+        bookThemes: true,
+      },
+    });
+
+    // 2. Buscar todos os livros com informações públicas
+    const books = await prisma.book.findMany({
+      orderBy: { id: 'asc' },
+      include: {
+        publicInfo: true,
+        bookThemes: true,
+      },
+    });
+
+    // 3. Buscar todas as hierarquias de temas
+    const hierarchies = await prisma.themeHierarchy.findMany();
+
+    // 4. Montar nós de Temas
+    const themeNodes = themes.map((t) => ({
+      id: `theme-${t.id}`,
+      rawId: t.id,
+      type: 'theme' as const,
+      name: t.name,
+      color: t.color || '#E57B55',
+      description: t.description || '',
+      bookCount: t.bookThemes.length,
+      isRoot: false,
+    }));
+
+    // 5. Montar nós de Livros (com título truncado em 10 caracteres se maior)
+    const bookNodes = books.map((b) => {
+      const truncatedName = b.title.length > 10 ? `${b.title.slice(0, 10)}...` : b.title;
+      return {
+        id: `book-${b.id}`,
+        rawId: b.id,
+        type: 'book' as const,
+        name: truncatedName,
+        fullTitle: b.title,
+        author: b.publicInfo?.author || 'Autor Desconhecido',
+        summary: b.publicInfo?.summary || null,
+        coverPath: b.cover_path || null,
+        filePath: b.file_path,
+        color: '#3B82F6',
+        isRoot: false,
+      };
+    });
+
+    // 6. Montar Arestas:
+    // - Hierarquia de temas (parent -> child)
+    const hierarchyEdges = hierarchies.map((h) => ({
+      id: `hierarchy-${h.id}`,
+      source: `theme-${h.parent_theme_id}`,
+      target: `theme-${h.child_theme_id}`,
+      type: 'theme-hierarchy' as const,
+    }));
+
+    // - Vínculos Livro <-> Tema
+    const allBookThemes = await prisma.bookTheme.findMany();
+    const bookThemeEdges = allBookThemes.map((bt) => ({
+      id: `book-theme-${bt.book_id}-${bt.theme_id}`,
+      source: `theme-${bt.theme_id}`,
+      target: `book-${bt.book_id}`,
+      type: 'book-theme' as const,
+    }));
+
+    return {
+      nodes: [...themeNodes, ...bookNodes],
+      edges: [...hierarchyEdges, ...bookThemeEdges],
+    };
+  }
+
+  async getThemeBooks(themeId: number) {
+    const theme = await prisma.theme.findUnique({
+      where: { id: themeId },
       include: {
         bookThemes: {
           include: {
-            userBook: {
+            book: {
               include: {
-                book: true,
-              },
-            },
-          },
-        },
-        annotationThemes: {
-          include: {
-            annotation: {
-              include: {
-                book: true,
+                publicInfo: true,
               },
             },
           },
@@ -30,55 +96,74 @@ export class GraphService {
       },
     });
 
-    const nodes = themes.map((t) => ({
-      id: t.id,
-      name: t.name,
-      color: t.color || '#E57B55',
-      description: t.description || '',
-      books: t.bookThemes.map((bt) => ({
-        userBookId: bt.userBook.id,
-        bookId: bt.userBook.book_id,
-        title: bt.userBook.book.title,
-        coverPath: bt.userBook.book.cover_path,
-        filePath: bt.userBook.book.file_path,
-        status: bt.userBook.status,
-        currentPage: bt.userBook.current_page,
-      })),
-      annotations: t.annotationThemes.map((at) => ({
-        id: at.annotation.id,
-        bookId: at.annotation.book_id,
-        bookTitle: at.annotation.book.title,
-        cfi: at.annotation.cfi,
-        selectedText: at.annotation.selected_text,
-        note: at.annotation.note,
-        chapterTitle: at.annotation.chapter_title,
-        progress: at.annotation.progress,
-        createdAt: at.annotation.created_at,
-      })),
+    if (!theme) {
+      throw new AppError(`Tema não encontrado: ${themeId}`, 404);
+    }
+
+    return theme.bookThemes.map((bt) => ({
+      id: bt.book.id,
+      title: bt.book.title,
+      author: bt.book.publicInfo?.author || 'Autor Desconhecido',
+      summary: bt.book.publicInfo?.summary || null,
+      coverPath: bt.book.cover_path,
+      filePath: bt.book.file_path,
     }));
-
-    // 2. Buscar todas as conexões (arestas) do usuário
-    const connections = await prisma.themeConnection.findMany({
-      where: { user_id: userId },
-      orderBy: { id: 'asc' },
-    });
-
-    const edges = connections.map((c) => ({
-      id: c.id,
-      source: c.source_theme_id,
-      target: c.target_theme_id,
-    }));
-
-    return {
-      nodes,
-      edges,
-    };
   }
 
-  async createTheme(userId: number, input: CreateNodeInput) {
+  async getThemeAnnotations(themeId: number, userId: number) {
+    const annotations = await prisma.annotation.findMany({
+      where: {
+        user_id: userId,
+        annotationThemes: {
+          some: { theme_id: themeId },
+        },
+      },
+      include: {
+        book: {
+          select: {
+            id: true,
+            title: true,
+            cover_path: true,
+          },
+        },
+        annotationThemes: {
+          include: {
+            theme: {
+              select: {
+                id: true,
+                name: true,
+                color: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { created_at: 'desc' },
+    });
+
+    return annotations.map((a) => ({
+      id: a.id,
+      userId: a.user_id,
+      bookId: a.book_id,
+      bookTitle: a.book.title,
+      bookCover: a.book.cover_path,
+      cfi: a.cfi,
+      selectedText: a.selected_text,
+      note: a.note,
+      chapterTitle: a.chapter_title,
+      progress: a.progress,
+      themes: a.annotationThemes.map((at) => ({
+        id: at.theme.id,
+        name: at.theme.name,
+        color: at.theme.color,
+      })),
+      createdAt: a.created_at,
+    }));
+  }
+
+  async createTheme(input: CreateNodeInput) {
     const created = await prisma.theme.create({
       data: {
-        user_id: userId,
         name: input.name,
         color: input.color || '#E57B55',
         description: input.description || null,
@@ -87,7 +172,6 @@ export class GraphService {
 
     return {
       id: created.id,
-      userId: created.user_id,
       name: created.name,
       color: created.color,
       description: created.description,
@@ -95,9 +179,9 @@ export class GraphService {
     };
   }
 
-  async updateTheme(themeId: number, userId: number, input: UpdateNodeInput) {
-    const existing = await prisma.theme.findFirst({
-      where: { id: themeId, user_id: userId },
+  async updateTheme(themeId: number, input: UpdateNodeInput) {
+    const existing = await prisma.theme.findUnique({
+      where: { id: themeId },
     });
 
     if (!existing) {
@@ -116,7 +200,6 @@ export class GraphService {
 
     return {
       id: updated.id,
-      userId: updated.user_id,
       name: updated.name,
       color: updated.color,
       description: updated.description,
@@ -124,9 +207,9 @@ export class GraphService {
     };
   }
 
-  async deleteTheme(themeId: number, userId: number) {
-    const existing = await prisma.theme.findFirst({
-      where: { id: themeId, user_id: userId },
+  async deleteTheme(themeId: number) {
+    const existing = await prisma.theme.findUnique({
+      where: { id: themeId },
     });
 
     if (!existing) {
@@ -140,91 +223,74 @@ export class GraphService {
     return true;
   }
 
-  async createConnection(userId: number, sourceId: number, targetId: number) {
-    if (sourceId === targetId) {
+  async createHierarchy(parentThemeId: number, childThemeId: number) {
+    if (parentThemeId === childThemeId) {
       throw new AppError('Não é possível conectar um tema a ele mesmo.', 400);
     }
 
-    const sourceTheme = await prisma.theme.findFirst({
-      where: { id: sourceId, user_id: userId },
-    });
-    const targetTheme = await prisma.theme.findFirst({
-      where: { id: targetId, user_id: userId },
-    });
+    const parent = await prisma.theme.findUnique({ where: { id: parentThemeId } });
+    const child = await prisma.theme.findUnique({ where: { id: childThemeId } });
 
-    if (!sourceTheme || !targetTheme) {
+    if (!parent || !child) {
       throw new AppError('Um ou ambos os temas não foram encontrados.', 404);
     }
 
-    const connection = await prisma.themeConnection.upsert({
+    const hierarchy = await prisma.themeHierarchy.upsert({
       where: {
-        user_id_source_theme_id_target_theme_id: {
-          user_id: userId,
-          source_theme_id: sourceId,
-          target_theme_id: targetId,
+        parent_theme_id_child_theme_id: {
+          parent_theme_id: parentThemeId,
+          child_theme_id: childThemeId,
         },
       },
       update: {},
       create: {
-        user_id: userId,
-        source_theme_id: sourceId,
-        target_theme_id: targetId,
+        parent_theme_id: parentThemeId,
+        child_theme_id: childThemeId,
       },
     });
 
-    return {
-      id: connection.id,
-      userId: connection.user_id,
-      sourceThemeId: connection.source_theme_id,
-      targetThemeId: connection.target_theme_id,
-      createdAt: connection.created_at,
-    };
+    return hierarchy;
   }
 
-  async deleteConnectionBetweenThemes(userId: number, sourceId: number, targetId: number) {
-    const connection = await prisma.themeConnection.findFirst({
+  async deleteHierarchy(parentThemeId: number, childThemeId: number) {
+    const hierarchy = await prisma.themeHierarchy.findUnique({
       where: {
-        user_id: userId,
-        OR: [
-          { source_theme_id: sourceId, target_theme_id: targetId },
-          { source_theme_id: targetId, target_theme_id: sourceId },
-        ],
+        parent_theme_id_child_theme_id: {
+          parent_theme_id: parentThemeId,
+          child_theme_id: childThemeId,
+        },
       },
     });
 
-    if (!connection) {
-      throw new AppError('Conexão não encontrada.', 404);
+    if (!hierarchy) {
+      throw new AppError('Hierarquia não encontrada.', 404);
     }
 
-    await prisma.themeConnection.delete({
-      where: { id: connection.id },
+    await prisma.themeHierarchy.delete({
+      where: { id: hierarchy.id },
     });
 
     return true;
   }
 
-  async linkBookToTheme(userBookId: number, themeId: number) {
-    const userBook = await prisma.userBook.findUnique({
-      where: { id: userBookId },
-    });
-    const theme = await prisma.theme.findUnique({
-      where: { id: themeId },
-    });
+  async linkBookToTheme(bookId: number, themeId: number) {
+    const book = await prisma.book.findUnique({ where: { id: bookId } });
+    const theme = await prisma.theme.findUnique({ where: { id: themeId } });
 
-    if (!userBook || !theme) {
+    if (!book || !theme) {
       throw new AppError('Livro ou Tema não encontrado.', 404);
     }
 
     await prisma.bookTheme.upsert({
       where: {
-        user_book_id_theme_id: {
-          user_book_id: userBookId,
+        book_id_theme_id: {
+          book_id: bookId,
           theme_id: themeId,
         },
       },
       update: {},
       create: {
-        user_book_id: userBookId,
+        book_id: bookId,
         theme_id: themeId,
       },
     });
@@ -232,11 +298,11 @@ export class GraphService {
     return { success: true };
   }
 
-  async unlinkBookFromTheme(userBookId: number, themeId: number) {
+  async unlinkBookFromTheme(bookId: number, themeId: number) {
     const bookTheme = await prisma.bookTheme.findUnique({
       where: {
-        user_book_id_theme_id: {
-          user_book_id: userBookId,
+        book_id_theme_id: {
+          book_id: bookId,
           theme_id: themeId,
         },
       },
@@ -252,55 +318,4 @@ export class GraphService {
 
     return true;
   }
-
-  async linkAnnotationToTheme(annotationId: number, themeId: number) {
-    const annotation = await prisma.annotation.findUnique({
-      where: { id: annotationId },
-    });
-    const theme = await prisma.theme.findUnique({
-      where: { id: themeId },
-    });
-
-    if (!annotation || !theme) {
-      throw new AppError('Anotação ou Tema não encontrado.', 404);
-    }
-
-    await prisma.annotationTheme.upsert({
-      where: {
-        annotation_id_theme_id: {
-          annotation_id: annotationId,
-          theme_id: themeId,
-        },
-      },
-      update: {},
-      create: {
-        annotation_id: annotationId,
-        theme_id: themeId,
-      },
-    });
-
-    return { success: true };
-  }
-
-  async unlinkAnnotationFromTheme(annotationId: number, themeId: number) {
-    const link = await prisma.annotationTheme.findUnique({
-      where: {
-        annotation_id_theme_id: {
-          annotation_id: annotationId,
-          theme_id: themeId,
-        },
-      },
-    });
-
-    if (!link) {
-      throw new AppError('Vínculo entre anotação e tema não encontrado.', 404);
-    }
-
-    await prisma.annotationTheme.delete({
-      where: { id: link.id },
-    });
-
-    return true;
-  }
 }
-

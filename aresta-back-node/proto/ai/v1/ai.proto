@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package ai.v1;
+
+option go_package = "aresta-ocr/gen/ai/v1;aiv1";
+
+// AIService expõe métodos de inteligência artificial para pesquisa e categorização de livros
+service AIService {
+  rpc AnalyzeBook(AnalyzeBookRequest) returns (AnalyzeBookResponse);
+}
+
+message ThemeItem {
+  int32 id = 1;
+  string name = 2;
+  repeated float embedding = 3;
+}
+
+message AnalyzeBookRequest {
+  string title = 1;
+  string author = 2;
+  repeated ThemeItem existing_themes = 3;
+}
+
+message NewThemeSuggestion {
+  string name = 1;
+  string description = 2;
+  string color = 3;
+  repeated float embedding = 4;
+  string parent_theme_name = 5; // Nome do tema pai se for um subtema
+}
+
+message AnalyzeBookResponse {
+  string summary = 1;
+  repeated int32 matched_theme_ids = 2;
+  repeated NewThemeSuggestion new_themes = 3;
+}

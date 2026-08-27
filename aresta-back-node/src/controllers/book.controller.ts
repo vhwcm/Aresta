@@ -149,6 +149,75 @@ export class BookController {
 
   /**
    * @openapi
+   * /api/books/admin-upload:
+   *   post:
+   *     summary: Upload administrativo de livro (PDF/EPUB + Título + Autor + IA)
+   *     tags: [Books]
+   *     security:
+   *       - bearerAuth: []
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required: [title, author]
+   *             properties:
+   *               title:
+   *                 type: string
+   *               author:
+   *                 type: string
+   *               summary:
+   *                 type: string
+   *               fileBase64:
+   *                 type: string
+   *               fileName:
+   *                 type: string
+   *               coverBase64:
+   *                 type: string
+   *     responses:
+   *       201:
+   *         description: Livro cadastrado e enriquecido com sucesso
+   */
+  adminUpload = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const book = await this.bookService.adminUpload(req.body);
+      return res.status(201).json(book);
+    } catch (error) {
+      return next(error);
+    }
+  };
+
+  /**
+   * @openapi
+   * /api/books/{id}/enrich:
+   *   post:
+   *     summary: Reexecuta enriquecimento de IA para o livro
+   *     tags: [Books]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: integer
+   *     responses:
+   *       200:
+   *         description: Livro enriquecido com sucesso
+   */
+  enrich = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      const book = await this.bookService.enrichBook(id);
+      return res.status(200).json(book);
+    } catch (error) {
+      return next(error);
+    }
+  };
+
+  /**
+   * @openapi
    * /api/books/{id}:
    *   delete:
    *     summary: Remover livro do acervo
@@ -173,4 +242,3 @@ export class BookController {
     }
   };
 }
-

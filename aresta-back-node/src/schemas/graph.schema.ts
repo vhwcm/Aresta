@@ -27,12 +27,12 @@ export const connectionParamSchema = z.object({
 });
 
 export const linkBookSchema = z.object({
-  userBookId: z.number().int().positive('userBookId deve ser um número inteiro'),
+  bookId: z.number().int().positive('bookId deve ser um número inteiro'),
 });
 
 export const unlinkBookParamSchema = z.object({
   id: z.string().regex(/^\d+$/),
-  userBookId: z.string().regex(/^\d+$/),
+  bookId: z.string().regex(/^\d+$/),
 });
 
 export const unlinkAnnotationParamSchema = z.object({
@@ -44,4 +44,3 @@ export type CreateNodeInput = z.infer<typeof createNodeSchema>;
 export type UpdateNodeInput = z.infer<typeof updateNodeSchema>;
 export type CreateConnectionInput = z.infer<typeof createConnectionSchema>;
 export type LinkBookInput = z.infer<typeof linkBookSchema>;
-

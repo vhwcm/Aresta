@@ -115,7 +115,7 @@
 
           <!-- CTA Direto -->
           <NuxtLink
-            to="/reader"
+            to="/reader?book=/books/O-Alienista.epub&title=O%20Alienista"
             class="px-5 py-2.5 rounded-full bg-accent hover:bg-accent/90 text-white font-interface text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 shadow-lg shadow-accent/20 cursor-pointer shrink-0"
           >
             <span>Abrir no Leitor</span>

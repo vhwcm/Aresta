@@ -5,24 +5,44 @@ export interface BookThemeItem {
   description?: string
 }
 
-export interface UserBookItem {
-  userBookId: number
-  bookId: number
+export interface BookItem {
+  id: number
   title: string
-  coverPath?: string
+  author?: string
+  summary?: string | null
+  coverPath?: string | null
   filePath?: string
-  status: 'QUERO_LER' | 'LENDO' | 'LIDO' | 'ABANDONADO' | string
-  currentPage: number
-  lastAccessedAt?: string
   themes?: BookThemeItem[]
 }
 
-export interface GraphNode {
+export interface AnnotationThemeItem {
   id: number
+  userId: number
+  bookId: number
+  bookTitle?: string
+  bookCover?: string | null
+  cfi?: string | null
+  selectedText?: string | null
+  note?: string | null
+  chapterTitle?: string | null
+  progress?: number | null
+  themes?: BookThemeItem[]
+  createdAt: string
+}
+
+export interface GraphNode {
+  id: string | number
+  rawId?: number
+  type?: 'theme' | 'book'
   name: string
-  color: string
+  fullTitle?: string
+  author?: string
+  summary?: string | null
+  color?: string
   description?: string
-  books?: UserBookItem[]
+  coverPath?: string | null
+  filePath?: string
+  bookCount?: number
   isRoot?: boolean
   // D3 force fields
   x?: number
@@ -34,9 +54,10 @@ export interface GraphNode {
 }
 
 export interface GraphEdge {
-  id: number
-  source: number | GraphNode
-  target: number | GraphNode
+  id: string | number
+  source: string | number | GraphNode
+  target: string | number | GraphNode
+  type?: 'root' | 'theme-hierarchy' | 'book-theme' | string
 }
 
 export interface GraphData {

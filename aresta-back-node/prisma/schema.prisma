@@ -8,53 +8,64 @@ datasource db {
 }
 
 model User {
-  id               Int               @id @default(autoincrement())
-  name             String
-  email            String            @unique
-  password_hash    String?
-  role             String            @default("USER")
-  is_active        Boolean           @default(true)
-  created_at       DateTime          @default(now())
-  updated_at       DateTime?         @updatedAt
-  current_streak   Int               @default(0)
-  longest_streak   Int               @default(0)
-  streak_freeze_count Int            @default(0)
-  target_streak_days Int             @default(7)
-  last_active_date String?
-  userBooks        UserBook[]
-  themes           Theme[]
-  themeConnections ThemeConnection[]
-  userSettings     UserSettings?
-  annotations      Annotation[]
-  dailyActivities  DailyActivity[]
+  id                  Int               @id @default(autoincrement())
+  name                String
+  email               String            @unique
+  password_hash       String?
+  role                String            @default("USER")
+  is_active           Boolean           @default(true)
+  created_at          DateTime          @default(now())
+  updated_at          DateTime?         @updatedAt
+  current_streak      Int               @default(0)
+  longest_streak      Int               @default(0)
+  streak_freeze_count Int               @default(0)
+  target_streak_days  Int               @default(7)
+  last_active_date    String?
+  userBooks           UserBook[]
+  userSettings        UserSettings?
+  annotations         Annotation[]
+  dailyActivities     DailyActivity[]
 
   @@map("users")
 }
 
 model Book {
-  id          Int          @id @default(autoincrement())
+  id          Int             @id @default(autoincrement())
   title       String
   file_path   String
   cover_path  String?
-  created_at  DateTime     @default(now())
+  created_at  DateTime        @default(now())
+  publicInfo  BookPublicInfo?
   userBooks   UserBook[]
+  bookThemes  BookTheme[]
   annotations Annotation[]
 
   @@map("books")
 }
 
+model BookPublicInfo {
+  id         Int      @id @default(autoincrement())
+  book_id    Int      @unique
+  author     String
+  summary    String?
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+  book       Book     @relation(fields: [book_id], references: [id], onDelete: Cascade)
+
+  @@map("book_public_infos")
+}
+
 model UserBook {
-  id               Int         @id @default(autoincrement())
+  id               Int       @id @default(autoincrement())
   user_id          Int
   book_id          Int
-  status           String      @default("QUERO_LER")
-  current_page     Int         @default(0)
+  status           String    @default("QUERO_LER")
+  current_page     Int       @default(0)
   last_accessed_at DateTime?
-  created_at       DateTime    @default(now())
-  updated_at       DateTime    @default(now()) @updatedAt
-  user             User        @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  book             Book        @relation(fields: [book_id], references: [id], onDelete: Cascade)
-  bookThemes       BookTheme[]
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @default(now()) @updatedAt
+  user             User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  book             Book      @relation(fields: [book_id], references: [id], onDelete: Cascade)
 
   @@unique([user_id, book_id])
   @@map("user_books")
@@ -62,43 +73,40 @@ model UserBook {
 
 model Theme {
   id                Int               @id @default(autoincrement())
-  user_id           Int
-  name              String
+  name              String            @unique
   color             String?           @default("#E57B55")
   description       String?
+  embedding         String?
   created_at        DateTime          @default(now())
-  user              User              @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  sourceConnections ThemeConnection[] @relation("SourceTheme")
-  targetConnections ThemeConnection[] @relation("TargetTheme")
+  parentHierarchies ThemeHierarchy[]  @relation("ParentTheme")
+  childHierarchies  ThemeHierarchy[]  @relation("ChildTheme")
   bookThemes        BookTheme[]
   annotationThemes  AnnotationTheme[]
 
   @@map("themes")
 }
 
-model ThemeConnection {
+model ThemeHierarchy {
   id              Int      @id @default(autoincrement())
-  user_id         Int
-  source_theme_id Int
-  target_theme_id Int
+  parent_theme_id Int
+  child_theme_id  Int
   created_at      DateTime @default(now())
-  user            User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  sourceTheme     Theme    @relation("SourceTheme", fields: [source_theme_id], references: [id], onDelete: Cascade)
-  targetTheme     Theme    @relation("TargetTheme", fields: [target_theme_id], references: [id], onDelete: Cascade)
+  parentTheme     Theme    @relation("ParentTheme", fields: [parent_theme_id], references: [id], onDelete: Cascade)
+  childTheme      Theme    @relation("ChildTheme", fields: [child_theme_id], references: [id], onDelete: Cascade)
 
-  @@unique([user_id, source_theme_id, target_theme_id])
-  @@map("theme_connections")
+  @@unique([parent_theme_id, child_theme_id])
+  @@map("theme_hierarchies")
 }
 
 model BookTheme {
-  id           Int      @id @default(autoincrement())
-  user_book_id Int
-  theme_id     Int
-  created_at   DateTime @default(now())
-  userBook     UserBook @relation(fields: [user_book_id], references: [id], onDelete: Cascade)
-  theme        Theme    @relation(fields: [theme_id], references: [id], onDelete: Cascade)
+  id         Int      @id @default(autoincrement())
+  book_id    Int
+  theme_id   Int
+  created_at DateTime @default(now())
+  book       Book     @relation(fields: [book_id], references: [id], onDelete: Cascade)
+  theme      Theme    @relation(fields: [theme_id], references: [id], onDelete: Cascade)
 
-  @@unique([user_book_id, theme_id])
+  @@unique([book_id, theme_id])
   @@map("book_themes")
 }
 
@@ -106,7 +114,7 @@ model Annotation {
   id               Int               @id @default(autoincrement())
   user_id          Int
   book_id          Int
-  cfi              String
+  cfi              String?
   selected_text    String?
   note             String?
   chapter_title    String?
@@ -170,4 +178,3 @@ model DailyActivity {
   @@unique([user_id, date])
   @@map("daily_activities")
 }
-

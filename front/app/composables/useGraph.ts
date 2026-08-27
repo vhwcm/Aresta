@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import type { GraphData, GraphNode, GraphEdge } from '~/interfaces/graph'
+import type { GraphData, GraphNode, GraphEdge, BookItem, AnnotationThemeItem } from '~/interfaces/graph'
 import { useAuth } from '~/composables/useAuth'
 
 const API_BASE = 'http://localhost:7070/api'
@@ -23,7 +23,7 @@ export const useGraph = () => {
     error.value = null
     try {
       const data = await $fetch<GraphData>(`${API_BASE}/graph`, {
-        headers: getHeaders()
+        headers: getHeaders(),
       })
       graphData.value = data
     } catch (e: any) {
@@ -34,12 +34,67 @@ export const useGraph = () => {
     }
   }
 
+  const fetchThemeBooks = async (themeId: number): Promise<BookItem[]> => {
+    try {
+      return await $fetch<BookItem[]>(`${API_BASE}/graph/themes/${themeId}/books`, {
+        headers: getHeaders(),
+      })
+    } catch (e: any) {
+      console.error(`Erro ao buscar livros do tema ${themeId}:`, e)
+      return []
+    }
+  }
+
+  const fetchThemeAnnotations = async (themeId: number): Promise<AnnotationThemeItem[]> => {
+    try {
+      return await $fetch<AnnotationThemeItem[]>(`${API_BASE}/graph/themes/${themeId}/annotations`, {
+        headers: getHeaders(),
+      })
+    } catch (e: any) {
+      console.error(`Erro ao buscar anotações do tema ${themeId}:`, e)
+      return []
+    }
+  }
+
+  const fetchBookAnnotations = async (bookId: number): Promise<AnnotationThemeItem[]> => {
+    try {
+      return await $fetch<AnnotationThemeItem[]>(`${API_BASE}/annotations?bookId=${bookId}`, {
+        headers: getHeaders(),
+      })
+    } catch (e: any) {
+      console.error(`Erro ao buscar anotações do livro ${bookId}:`, e)
+      return []
+    }
+  }
+
+  const createLooseAnnotation = async (
+    bookId: number,
+    note: string,
+    themeIds: number[] = []
+  ): Promise<AnnotationThemeItem> => {
+    try {
+      const res = await $fetch<AnnotationThemeItem>(`${API_BASE}/annotations`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: {
+          bookId,
+          note,
+          themeIds,
+        },
+      })
+      return res
+    } catch (e: any) {
+      console.error('Erro ao criar anotação solta:', e)
+      throw e
+    }
+  }
+
   const createNode = async (name: string, color = '#E57B55', description = '') => {
     try {
       const newNode = await $fetch<GraphNode>(`${API_BASE}/graph/nodes`, {
         method: 'POST',
         headers: getHeaders(),
-        body: { name, color, description }
+        body: { name, color, description },
       })
       await fetchGraph()
       return newNode
@@ -54,7 +109,7 @@ export const useGraph = () => {
       const updated = await $fetch<GraphNode>(`${API_BASE}/graph/nodes/${id}`, {
         method: 'PUT',
         headers: getHeaders(),
-        body: { name, color, description }
+        body: { name, color, description },
       })
       await fetchGraph()
       return updated
@@ -68,7 +123,7 @@ export const useGraph = () => {
     try {
       await $fetch(`${API_BASE}/graph/nodes/${id}`, {
         method: 'DELETE',
-        headers: getHeaders()
+        headers: getHeaders(),
       })
       await fetchGraph()
     } catch (e: any) {
@@ -82,7 +137,7 @@ export const useGraph = () => {
       const conn = await $fetch<GraphEdge>(`${API_BASE}/graph/connections`, {
         method: 'POST',
         headers: getHeaders(),
-        body: { sourceId, targetId }
+        body: { sourceId, targetId },
       })
       await fetchGraph()
       return conn
@@ -96,7 +151,7 @@ export const useGraph = () => {
     try {
       await $fetch(`${API_BASE}/graph/connections/${sourceId}/${targetId}`, {
         method: 'DELETE',
-        headers: getHeaders()
+        headers: getHeaders(),
       })
       await fetchGraph()
     } catch (e: any) {
@@ -105,12 +160,12 @@ export const useGraph = () => {
     }
   }
 
-  const linkBookToNode = async (nodeId: number, userBookId: number) => {
+  const linkBookToNode = async (nodeId: number, bookId: number) => {
     try {
       await $fetch(`${API_BASE}/graph/nodes/${nodeId}/books`, {
         method: 'POST',
         headers: getHeaders(),
-        body: { userBookId }
+        body: { bookId },
       })
       await fetchGraph()
     } catch (e: any) {
@@ -119,11 +174,11 @@ export const useGraph = () => {
     }
   }
 
-  const unlinkBookFromNode = async (nodeId: number, userBookId: number) => {
+  const unlinkBookFromNode = async (nodeId: number, bookId: number) => {
     try {
-      await $fetch(`${API_BASE}/graph/nodes/${nodeId}/books/${userBookId}`, {
+      await $fetch(`${API_BASE}/graph/nodes/${nodeId}/books/${bookId}`, {
         method: 'DELETE',
-        headers: getHeaders()
+        headers: getHeaders(),
       })
       await fetchGraph()
     } catch (e: any) {
@@ -137,12 +192,16 @@ export const useGraph = () => {
     loading,
     error,
     fetchGraph,
+    fetchThemeBooks,
+    fetchThemeAnnotations,
+    fetchBookAnnotations,
+    createLooseAnnotation,
     createNode,
     updateNode,
     deleteNode,
     createConnection,
     deleteConnection,
     linkBookToNode,
-    unlinkBookFromNode
+    unlinkBookFromNode,
   }
 }

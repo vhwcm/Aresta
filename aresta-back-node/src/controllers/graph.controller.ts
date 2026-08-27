@@ -13,19 +13,74 @@ export class GraphController {
    * @openapi
    * /api/graph:
    *   get:
-   *     summary: Obter estrutura do grafo (nós e conexões) do usuário
+   *     summary: Obter estrutura unificada do grafo (nós de temas, livros e conexões)
    *     tags: [Graph]
    *     security:
    *       - bearerAuth: []
    *     responses:
    *       200:
-   *         description: Dados do grafo contendo nós e arestas
+   *         description: Dados do grafo contendo nós de livros/temas e arestas
    */
   getGraph = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const userId = this.getUserId(req);
-      const graph = await this.graphService.getGraphForUser(userId);
+      const graph = await this.graphService.getUnifiedGraph(userId);
       return res.status(200).json(graph);
+    } catch (error) {
+      return next(error);
+    }
+  };
+
+  /**
+   * @openapi
+   * /api/graph/themes/{id}/books:
+   *   get:
+   *     summary: Listar todos os livros pertencentes a um tema
+   *     tags: [Graph]
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: integer
+   *     responses:
+   *       200:
+   *         description: Lista de livros do tema
+   */
+  getThemeBooks = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      const books = await this.graphService.getThemeBooks(id);
+      return res.status(200).json(books);
+    } catch (error) {
+      return next(error);
+    }
+  };
+
+  /**
+   * @openapi
+   * /api/graph/themes/{id}/annotations:
+   *   get:
+   *     summary: Listar anotações do usuário vinculadas ao tema
+   *     tags: [Graph]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: integer
+   *     responses:
+   *       200:
+   *         description: Lista de anotações vinculadas ao tema
+   */
+  getThemeAnnotations = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const userId = this.getUserId(req);
+      const id = parseInt(req.params.id, 10);
+      const annotations = await this.graphService.getThemeAnnotations(id, userId);
+      return res.status(200).json(annotations);
     } catch (error) {
       return next(error);
     }
@@ -35,7 +90,7 @@ export class GraphController {
    * @openapi
    * /api/graph/nodes:
    *   post:
-   *     summary: Criar novo nó (tema) no grafo
+   *     summary: Criar novo nó (tema global) no grafo
    *     tags: [Graph]
    *     security:
    *       - bearerAuth: []
@@ -59,8 +114,7 @@ export class GraphController {
    */
   createNode = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
-      const userId = this.getUserId(req);
-      const created = await this.graphService.createTheme(userId, req.body);
+      const created = await this.graphService.createTheme(req.body);
       return res.status(201).json(created);
     } catch (error) {
       return next(error);
@@ -87,9 +141,8 @@ export class GraphController {
    */
   updateNode = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
-      const userId = this.getUserId(req);
       const id = parseInt(req.params.id, 10);
-      const updated = await this.graphService.updateTheme(id, userId, req.body);
+      const updated = await this.graphService.updateTheme(id, req.body);
       return res.status(200).json(updated);
     } catch (error) {
       return next(error);
@@ -116,9 +169,8 @@ export class GraphController {
    */
   deleteNode = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
-      const userId = this.getUserId(req);
       const id = parseInt(req.params.id, 10);
-      await this.graphService.deleteTheme(id, userId);
+      await this.graphService.deleteTheme(id);
       return res.status(204).send();
     } catch (error) {
       return next(error);
@@ -129,7 +181,7 @@ export class GraphController {
    * @openapi
    * /api/graph/connections:
    *   post:
-   *     summary: Conectar dois nós no grafo
+   *     summary: Criar relação hierárquica entre dois temas (subtema)
    *     tags: [Graph]
    *     security:
    *       - bearerAuth: []
@@ -147,13 +199,12 @@ export class GraphController {
    *                 type: integer
    *     responses:
    *       201:
-   *         description: Conexão estabelecida
+   *         description: Conexão hierárquica estabelecida
    */
   createConnection = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
-      const userId = this.getUserId(req);
       const { sourceId, targetId } = req.body;
-      const connection = await this.graphService.createConnection(userId, sourceId, targetId);
+      const connection = await this.graphService.createHierarchy(sourceId, targetId);
       return res.status(201).json(connection);
     } catch (error) {
       return next(error);
@@ -164,7 +215,7 @@ export class GraphController {
    * @openapi
    * /api/graph/connections/{sourceId}/{targetId}:
    *   delete:
-   *     summary: Remover conexão entre dois temas
+   *     summary: Remover conexão hierárquica entre dois temas
    *     tags: [Graph]
    *     security:
    *       - bearerAuth: []
@@ -185,10 +236,9 @@ export class GraphController {
    */
   deleteConnection = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
-      const userId = this.getUserId(req);
       const sourceId = parseInt(req.params.sourceId, 10);
       const targetId = parseInt(req.params.targetId, 10);
-      await this.graphService.deleteConnectionBetweenThemes(userId, sourceId, targetId);
+      await this.graphService.deleteHierarchy(sourceId, targetId);
       return res.status(204).send();
     } catch (error) {
       return next(error);
@@ -199,7 +249,7 @@ export class GraphController {
    * @openapi
    * /api/graph/nodes/{id}/books:
    *   post:
-   *     summary: Vincular livro da estante a um tema
+   *     summary: Vincular livro a um tema
    *     tags: [Graph]
    *     security:
    *       - bearerAuth: []
@@ -215,9 +265,9 @@ export class GraphController {
    *         application/json:
    *           schema:
    *             type: object
-   *             required: [userBookId]
+   *             required: [bookId]
    *             properties:
-   *               userBookId:
+   *               bookId:
    *                 type: integer
    *     responses:
    *       200:
@@ -226,8 +276,8 @@ export class GraphController {
   linkBookToNode = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const id = parseInt(req.params.id, 10);
-      const { userBookId } = req.body;
-      const result = await this.graphService.linkBookToTheme(userBookId, id);
+      const { bookId } = req.body;
+      const result = await this.graphService.linkBookToTheme(bookId, id);
       return res.status(200).json(result);
     } catch (error) {
       return next(error);
@@ -236,9 +286,9 @@ export class GraphController {
 
   /**
    * @openapi
-   * /api/graph/nodes/{id}/books/{userBookId}:
+   * /api/graph/nodes/{id}/books/{bookId}:
    *   delete:
-   *     summary: Desvincular livro da estante de um tema
+   *     summary: Desvincular livro de um tema
    *     tags: [Graph]
    *     security:
    *       - bearerAuth: []
@@ -249,7 +299,7 @@ export class GraphController {
    *         schema:
    *           type: integer
    *       - in: path
-   *         name: userBookId
+   *         name: bookId
    *         required: true
    *         schema:
    *           type: integer
@@ -260,80 +310,11 @@ export class GraphController {
   unlinkBookFromNode = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const id = parseInt(req.params.id, 10);
-      const userBookId = parseInt(req.params.userBookId, 10);
-      await this.graphService.unlinkBookFromTheme(userBookId, id);
-      return res.status(204).send();
-    } catch (error) {
-      return next(error);
-    }
-  };
-
-  /**
-   * @openapi
-   * /api/graph/nodes/{id}/annotations/{annotationId}:
-   *   post:
-   *     summary: Vincular anotação a um tema (nó do grafo)
-   *     tags: [Graph]
-   *     security:
-   *       - bearerAuth: []
-   *     parameters:
-   *       - in: path
-   *         name: id
-   *         required: true
-   *         schema:
-   *           type: integer
-   *       - in: path
-   *         name: annotationId
-   *         required: true
-   *         schema:
-   *           type: integer
-   *     responses:
-   *       200:
-   *         description: Anotação vinculada ao tema com sucesso
-   */
-  linkAnnotationToNode = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-    try {
-      const id = parseInt(req.params.id, 10);
-      const annotationId = parseInt(req.params.annotationId, 10);
-      const result = await this.graphService.linkAnnotationToTheme(annotationId, id);
-      return res.status(200).json(result);
-    } catch (error) {
-      return next(error);
-    }
-  };
-
-  /**
-   * @openapi
-   * /api/graph/nodes/{id}/annotations/{annotationId}:
-   *   delete:
-   *     summary: Desvincular anotação de um tema (nó do grafo)
-   *     tags: [Graph]
-   *     security:
-   *       - bearerAuth: []
-   *     parameters:
-   *       - in: path
-   *         name: id
-   *         required: true
-   *         schema:
-   *           type: integer
-   *       - in: path
-   *         name: annotationId
-   *         required: true
-   *         schema:
-   *           type: integer
-   *     responses:
-   *       204:
-   *         description: Anotação desvinculada do tema
-   */
-  unlinkAnnotationFromNode = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-    try {
-      const id = parseInt(req.params.id, 10);
-      const annotationId = parseInt(req.params.annotationId, 10);
-      await this.graphService.unlinkAnnotationFromTheme(annotationId, id);
+      const bookId = parseInt(req.params.bookId, 10);
+      await this.graphService.unlinkBookFromTheme(bookId, id);
       return res.status(204).send();
     } catch (error) {
       return next(error);
     }
   };
 }
-

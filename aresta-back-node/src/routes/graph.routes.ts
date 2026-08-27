@@ -10,7 +10,6 @@ import {
   connectionParamSchema,
   linkBookSchema,
   unlinkBookParamSchema,
-  unlinkAnnotationParamSchema,
 } from '../schemas/graph.schema.js';
 
 const router = Router();
@@ -19,6 +18,9 @@ const graphController = new GraphController();
 router.use(optionalAuthenticate);
 
 router.get('/', graphController.getGraph);
+router.get('/themes/:id/books', validateRequest({ params: nodeIdParamSchema }), graphController.getThemeBooks);
+router.get('/themes/:id/annotations', validateRequest({ params: nodeIdParamSchema }), graphController.getThemeAnnotations);
+
 router.post('/nodes', validateRequest({ body: createNodeSchema }), graphController.createNode);
 router.put('/nodes/:id', validateRequest({ params: nodeIdParamSchema, body: updateNodeSchema }), graphController.updateNode);
 router.delete('/nodes/:id', validateRequest({ params: nodeIdParamSchema }), graphController.deleteNode);
@@ -27,10 +29,6 @@ router.post('/connections', validateRequest({ body: createConnectionSchema }), g
 router.delete('/connections/:sourceId/:targetId', validateRequest({ params: connectionParamSchema }), graphController.deleteConnection);
 
 router.post('/nodes/:id/books', validateRequest({ params: nodeIdParamSchema, body: linkBookSchema }), graphController.linkBookToNode);
-router.delete('/nodes/:id/books/:userBookId', validateRequest({ params: unlinkBookParamSchema }), graphController.unlinkBookFromNode);
-
-router.post('/nodes/:id/annotations/:annotationId', validateRequest({ params: unlinkAnnotationParamSchema }), graphController.linkAnnotationToNode);
-router.delete('/nodes/:id/annotations/:annotationId', validateRequest({ params: unlinkAnnotationParamSchema }), graphController.unlinkAnnotationFromNode);
+router.delete('/nodes/:id/books/:bookId', validateRequest({ params: unlinkBookParamSchema }), graphController.unlinkBookFromNode);
 
 export default router;
-
