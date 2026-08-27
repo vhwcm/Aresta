@@ -1,0 +1,153 @@
+================================================================================
+FLUXO DE DADOS & ARQUITETURA: REFATORAÇÃO DE TEMAS, LIVROS E GRAFO DE CONHECIMENTO
+================================================================================
+
+1. FLUXO DE CADASTRO E ENRIQUECIMENTO POR IA (VIKTOR / ADMIN)
+--------------------------------------------------------------------------------
+
+  [ Viktor (Admin) ]
+         │
+         │ 1. Upload PDF/EPUB + Title + Author
+         ▼
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │ Frontend Nuxt (/admin/upload)                                          │
+  │ - Valida permissão de ADMIN                                            │
+  │ - Envia FormData para POST /api/books/admin-upload                     │
+  └──────────────────────────────────┬─────────────────────────────────────┘
+                                     │
+                                     │ 2. Multipart/form-data
+                                     ▼
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │ Backend Node.js (aresta-back-node)                                     │
+  │ - Salva arquivo localmente / extrai imagem de capa                     │
+  │ - Cria registro na tabela `Book`                                       │
+  │ - Coleta lista de temas existentes com embeddings                      │
+  │ - Invoca gRPC AnalyzeBook no microserviço Go                           │
+  └──────────────────────────────────┬─────────────────────────────────────┘
+                                     │
+                                     │ 3. gRPC AnalyzeBook(Title, Author, ExistingThemes)
+                                     ▼
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │ Microserviço Go (aresta-ocr / aresta-ai)                               │
+  │ - Gemini 2.5 Flash + Google Search Grounding:                          │
+  │     Busca dados públicos do livro, contexto e tópicos                  │
+  │ - Gera Resumo oficial                                                  │
+  │ - Gera Embeddings dos temas e calcula similaridade de cosseno          │
+  │ - Determina temas existentes + novos temas e subtemas hierárquicos     │
+  └──────────────────────────────────┬─────────────────────────────────────┘
+                                     │
+                                     │ 4. Retorna { Summary, MatchedThemes, NewThemesWithHierarchy }
+                                     ▼
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │ Backend Node.js (Persistência no SQLite via Prisma)                    │
+  │ - Salva dados em `BookPublicInfo` (autor, resumo)                      │
+  │ - Insere novos temas na tabela global `Theme`                          │
+  │ - Insere vínculos pai/filho em `ThemeHierarchy`                       │
+  │ - Insere vínculos livro-tema em `BookTheme`                            │
+  └──────────────────────────────────┬─────────────────────────────────────┘
+                                     │
+                                     │ 5. Resposta 201 Created com Livro + Temas
+                                     ▼
+  [ Viktor (Admin) Visualiza Livro Enriquecido no Catálogo ]
+
+
+2. MODELO DE DADOS RELACIONAL (PRISMA / SQLITE)
+--------------------------------------------------------------------------------
+
+  ┌──────────────┐          ┌───────────────────┐          ┌──────────────┐
+  │     Book     │ 1      N │     BookTheme     │ N      1 │    Theme     │
+  ├──────────────┤──────────├───────────────────┤──────────├──────────────┤
+  │ id (PK)      │          │ id (PK)           │          │ id (PK)      │
+  │ title        │          │ book_id (FK)      │          │ name         │
+  │ file_path    │          │ theme_id (FK)     │          │ color        │
+  │ cover_path   │          └───────────────────┘          │ description  │
+  │ created_at   │                                         │ embedding    │
+  └──────┬───────┘                                         └──────┬───────┘
+         │ 1                                                      │ 1 (Parent)
+         │                                                        │
+         │ 1                                                      │ N (Children)
+  ┌──────┴───────────┐                                     ┌──────┴───────────┐
+  │  BookPublicInfo  │                                     │  ThemeHierarchy  │
+  ├──────────────────┤                                     ├──────────────────┤
+  │ id (PK)          │                                     │ id (PK)          │
+  │ book_id (FK, UQ) │                                     │ parent_theme_id  │
+  │ author           │                                     │ child_theme_id   │
+  │ summary          │                                     └──────────────────┘
+  │ created_at       │
+  └──────────────────┘
+         │ 1
+         │
+         │ N
+  ┌──────┴───────────┐          ┌───────────────────────┐
+  │    Annotation    │ 1      N │    AnnotationTheme    │
+  ├──────────────────┤──────────├───────────────────────┤
+  │ id (PK)          │          │ id (PK)               │
+  │ user_id (FK)     │          │ annotation_id (FK)    │
+  │ book_id (FK)     │          │ theme_id (FK)         │
+  │ cfi (Nullable)   │          └───────────────────────┘
+  │ selected_text    │
+  │ note             │
+  │ chapter_title    │
+  └──────────────────┘
+
+
+3. VISUALIZAÇÃO E INTERAÇÃO NO GRAFO DE CONHECIMENTO
+--------------------------------------------------------------------------------
+
+                ┌──────────────────────────────────────────────┐
+                │          [ Meu Conhecimento (Raiz) ]         │
+                └──────────────────────┬───────────────────────┘
+                                       │
+                    ┌──────────────────┴──────────────────┐
+                    ▼                                     ▼
+        ┌───────────────────────┐             ┌───────────────────────┐
+        │  Tema: Programação    │             │  Tema: Arquitetura    │
+        │  (Círculo Colorido)   │             │  (Círculo Colorido)   │
+        └───────────┬───────────┘             └───────────┬───────────┘
+                    │                                     │
+           ┌────────┴────────┐                            │
+           ▼                 ▼                            ▼
+  ┌─────────────────┐ ┌───────────────┐          ┌─────────────────┐
+  │ Subtema:        │ │ [ Livro Node] │          │ [ Livro Node ]  │
+  │ Ferramentas     │ │ ┌───────────┐ │          │ ┌───────────┐   │
+  │                 │ │ │[CAPA FOTO]│ │          │ │[CAPA FOTO]│   │
+  │                 │ │ └───────────┘ │          │ └───────────┘   │
+  │                 │ │ "O Program..."│          │ "Clean Arc..."  │
+  └────────┬────────┘ └───────────────┘          └─────────────────┘
+           │
+           ▼
+  ┌─────────────────┐
+  │ [ Livro Node ]  │
+  │ ┌───────────┐   │
+  │ │[CAPA FOTO]│   │
+  │ └───────────┘   │
+  │ "Pragmatic..."  │
+  └─────────────────┘
+
+  INTERAÇÕES DO USUÁRIO:
+  ---------------------
+  • CLIQUE NO NÓ DO LIVRO:
+    ├── Abre Drawer Lateral de Anotações do Livro
+    └── Permite cadastrar "Anotação Solta" vinculada ao livro (e temas do livro).
+
+  • CLIQUE NO NÓ DE TEMA:
+    └── Abre Canvas Overlay sobre o Grafo:
+        ┌─────────────────────────────────────────────────────────────┐
+        │ Canvas Overlay do Tema: "Programação"                     ✕ │
+        ├─────────────────────────────────────────────────────────────┤
+        │ Livros deste tema (Scroll Horizontal):                      │
+        │ ┌─────────┐ ┌─────────┐ ┌─────────┐                         │
+        │ │ [CAPA]  │ │ [CAPA]  │ │ [CAPA]  │  ...                    │
+        │ │ O Progr.│ │ Clean A.│ │ Refacto.│                         │
+        │ └─────────┘ └─────────┘ └─────────┘                         │
+        ├─────────────────────────────────────────────────────────────┤
+        │ Anotações vinculadas a este tema:                           │
+        │ ┌─────────────────────────────────────────────────────────┐ │
+        │ │ 📖 O Programador Pragmático                             │ │
+        │ │ "A automação é o segredo da produtividade..."           │ │
+        │ └─────────────────────────────────────────────────────────┘ │
+        │ ┌─────────────────────────────────────────────────────────┐ │
+        │ │ 📖 Clean Architecture                                   │ │
+        │ │ "Arquitetura é sobre a intenção do sistema..."          │ │
+        │ └─────────────────────────────────────────────────────────┘ │
+        └─────────────────────────────────────────────────────────────┘
