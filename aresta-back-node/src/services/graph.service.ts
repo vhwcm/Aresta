@@ -114,9 +114,20 @@ export class GraphService {
     const annotations = await prisma.annotation.findMany({
       where: {
         user_id: userId,
-        annotationThemes: {
-          some: { theme_id: themeId },
-        },
+        OR: [
+          {
+            annotationThemes: {
+              some: { theme_id: themeId },
+            },
+          },
+          {
+            book: {
+              bookThemes: {
+                some: { theme_id: themeId },
+              },
+            },
+          },
+        ],
       },
       include: {
         book: {
@@ -124,6 +135,11 @@ export class GraphService {
             id: true,
             title: true,
             cover_path: true,
+            bookThemes: {
+              include: {
+                theme: true,
+              },
+            },
           },
         },
         annotationThemes: {
@@ -141,24 +157,35 @@ export class GraphService {
       orderBy: { created_at: 'desc' },
     });
 
-    return annotations.map((a) => ({
-      id: a.id,
-      userId: a.user_id,
-      bookId: a.book_id,
-      bookTitle: a.book.title,
-      bookCover: a.book.cover_path,
-      cfi: a.cfi,
-      selectedText: a.selected_text,
-      note: a.note,
-      chapterTitle: a.chapter_title,
-      progress: a.progress,
-      themes: a.annotationThemes.map((at) => ({
-        id: at.theme.id,
-        name: at.theme.name,
-        color: at.theme.color,
-      })),
-      createdAt: a.created_at,
-    }));
+    return annotations.map((a) => {
+      const themes =
+        a.annotationThemes.length > 0
+          ? a.annotationThemes.map((at) => ({
+              id: at.theme.id,
+              name: at.theme.name,
+              color: at.theme.color,
+            }))
+          : (a.book.bookThemes || []).map((bt) => ({
+              id: bt.theme.id,
+              name: bt.theme.name,
+              color: bt.theme.color,
+            }));
+
+      return {
+        id: a.id,
+        userId: a.user_id,
+        bookId: a.book_id,
+        bookTitle: a.book.title,
+        bookCover: a.book.cover_path,
+        cfi: a.cfi,
+        selectedText: a.selected_text,
+        note: a.note,
+        chapterTitle: a.chapter_title,
+        progress: a.progress,
+        themes,
+        createdAt: a.created_at,
+      };
+    });
   }
 
   async createTheme(input: CreateNodeInput) {

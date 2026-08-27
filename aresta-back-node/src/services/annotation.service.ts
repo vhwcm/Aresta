@@ -7,6 +7,9 @@ export class AnnotationService {
     // 1. Validar se o livro existe
     const book = await prisma.book.findUnique({
       where: { id: input.bookId },
+      include: {
+        bookThemes: true,
+      },
     });
 
     if (!book) {
@@ -14,18 +17,22 @@ export class AnnotationService {
     }
 
     // 2. Validar se os temas informados pertencem ao livro
-    if (input.themeIds && input.themeIds.length > 0) {
-      const bookThemes = await prisma.bookTheme.findMany({
-        where: { book_id: input.bookId },
-        select: { theme_id: true },
-      });
-      const allowedThemeIds = new Set(bookThemes.map((bt) => bt.theme_id));
+    const allowedThemeIds = new Set(book.bookThemes.map((bt) => bt.theme_id));
 
+    let finalThemeIds: number[] = [];
+    if (input.themeIds && input.themeIds.length > 0) {
       for (const tid of input.themeIds) {
         if (!allowedThemeIds.has(tid)) {
-          throw new AppError(`O tema ID ${tid} não pertence a este livro. Anotações só podem ser vinculadas a temas do livro.`, 400);
+          throw new AppError(
+            `O tema ID ${tid} não pertence a este livro. Anotações só podem ser vinculadas a temas do livro.`,
+            400
+          );
         }
       }
+      finalThemeIds = input.themeIds;
+    } else if (book.bookThemes.length > 0) {
+      // Se não foram informados temas específicos, herdar automaticamente os temas do livro
+      finalThemeIds = book.bookThemes.map((bt) => bt.theme_id);
     }
 
     // 3. Criar a anotação (CFI é opcional para notas soltas)
@@ -42,9 +49,9 @@ export class AnnotationService {
     });
 
     // 4. Vincular temas
-    if (input.themeIds && input.themeIds.length > 0) {
+    if (finalThemeIds.length > 0) {
       await prisma.annotationTheme.createMany({
-        data: input.themeIds.map((themeId) => ({
+        data: finalThemeIds.map((themeId) => ({
           annotation_id: annotation.id,
           theme_id: themeId,
         })),
@@ -64,11 +71,24 @@ export class AnnotationService {
     }
 
     if (filters?.themeId) {
-      whereClause.annotationThemes = {
-        some: {
-          theme_id: filters.themeId,
+      whereClause.OR = [
+        {
+          annotationThemes: {
+            some: {
+              theme_id: filters.themeId,
+            },
+          },
         },
-      };
+        {
+          book: {
+            bookThemes: {
+              some: {
+                theme_id: filters.themeId,
+              },
+            },
+          },
+        },
+      ];
     }
 
     const annotations = await prisma.annotation.findMany({
@@ -80,6 +100,11 @@ export class AnnotationService {
             id: true,
             title: true,
             cover_path: true,
+            bookThemes: {
+              include: {
+                theme: true,
+              },
+            },
           },
         },
         annotationThemes: {
@@ -96,25 +121,36 @@ export class AnnotationService {
       },
     });
 
-    return annotations.map((a) => ({
-      id: a.id,
-      userId: a.user_id,
-      bookId: a.book_id,
-      bookTitle: a.book.title,
-      bookCover: a.book.cover_path,
-      cfi: a.cfi,
-      selectedText: a.selected_text,
-      note: a.note,
-      chapterTitle: a.chapter_title,
-      progress: a.progress,
-      themes: a.annotationThemes.map((at) => ({
-        id: at.theme.id,
-        name: at.theme.name,
-        color: at.theme.color,
-      })),
-      createdAt: a.created_at,
-      updatedAt: a.updated_at,
-    }));
+    return annotations.map((a) => {
+      const themes =
+        a.annotationThemes.length > 0
+          ? a.annotationThemes.map((at) => ({
+              id: at.theme.id,
+              name: at.theme.name,
+              color: at.theme.color,
+            }))
+          : (a.book.bookThemes || []).map((bt) => ({
+              id: bt.theme.id,
+              name: bt.theme.name,
+              color: bt.theme.color,
+            }));
+
+      return {
+        id: a.id,
+        userId: a.user_id,
+        bookId: a.book_id,
+        bookTitle: a.book.title,
+        bookCover: a.book.cover_path,
+        cfi: a.cfi,
+        selectedText: a.selected_text,
+        note: a.note,
+        chapterTitle: a.chapter_title,
+        progress: a.progress,
+        themes,
+        createdAt: a.created_at,
+        updatedAt: a.updated_at,
+      };
+    });
   }
 
   async getAnnotationById(userId: number, id: number) {
@@ -126,6 +162,11 @@ export class AnnotationService {
             id: true,
             title: true,
             cover_path: true,
+            bookThemes: {
+              include: {
+                theme: true,
+              },
+            },
           },
         },
         annotationThemes: {
@@ -146,6 +187,19 @@ export class AnnotationService {
       throw new AppError('Anotação não encontrada.', 404);
     }
 
+    const themes =
+      a.annotationThemes.length > 0
+        ? a.annotationThemes.map((at) => ({
+            id: at.theme.id,
+            name: at.theme.name,
+            color: at.theme.color,
+          }))
+        : (a.book.bookThemes || []).map((bt) => ({
+            id: bt.theme.id,
+            name: bt.theme.name,
+            color: bt.theme.color,
+          }));
+
     return {
       id: a.id,
       userId: a.user_id,
@@ -157,11 +211,7 @@ export class AnnotationService {
       note: a.note,
       chapterTitle: a.chapter_title,
       progress: a.progress,
-      themes: a.annotationThemes.map((at) => ({
-        id: at.theme.id,
-        name: at.theme.name,
-        color: at.theme.color,
-      })),
+      themes,
       createdAt: a.created_at,
       updatedAt: a.updated_at,
     };
@@ -176,8 +226,7 @@ export class AnnotationService {
       throw new AppError('Anotação não encontrada.', 404);
     }
 
-    // Se novos temas forem passados, validar se pertencem ao livro
-    if (input.themeIds !== undefined && input.themeIds.length > 0) {
+    if (input.themeIds && input.themeIds.length > 0) {
       const bookThemes = await prisma.bookTheme.findMany({
         where: { book_id: existing.book_id },
         select: { theme_id: true },
@@ -186,24 +235,19 @@ export class AnnotationService {
 
       for (const tid of input.themeIds) {
         if (!allowedThemeIds.has(tid)) {
-          throw new AppError(`O tema ID ${tid} não pertence a este livro. Anotações só podem ser vinculadas a temas do livro.`, 400);
+          throw new AppError(
+            `O tema ID ${tid} não pertence a este livro. Anotações só podem ser vinculadas a temas do livro.`,
+            400
+          );
         }
       }
     }
 
     const dataToUpdate: any = {};
-    if (input.cfi !== undefined) dataToUpdate.cfi = input.cfi;
-    if (input.selectedText !== undefined) dataToUpdate.selected_text = input.selectedText;
     if (input.note !== undefined) dataToUpdate.note = input.note;
     if (input.chapterTitle !== undefined) dataToUpdate.chapter_title = input.chapterTitle;
     if (input.progress !== undefined) dataToUpdate.progress = input.progress;
 
-    await prisma.annotation.update({
-      where: { id },
-      data: dataToUpdate,
-    });
-
-    // Re-sincronizar temas se fornecidos
     if (input.themeIds !== undefined) {
       await prisma.annotationTheme.deleteMany({
         where: { annotation_id: id },
@@ -211,13 +255,18 @@ export class AnnotationService {
 
       if (input.themeIds.length > 0) {
         await prisma.annotationTheme.createMany({
-          data: input.themeIds.map((tId) => ({
+          data: input.themeIds.map((themeId) => ({
             annotation_id: id,
-            theme_id: tId,
+            theme_id: themeId,
           })),
         });
       }
     }
+
+    await prisma.annotation.update({
+      where: { id },
+      data: dataToUpdate,
+    });
 
     return this.getAnnotationById(userId, id);
   }
@@ -233,68 +282,6 @@ export class AnnotationService {
 
     await prisma.annotation.delete({
       where: { id },
-    });
-
-    return true;
-  }
-
-  async linkToTheme(annotationId: number, themeId: number) {
-    const annotation = await prisma.annotation.findUnique({
-      where: { id: annotationId },
-    });
-    const theme = await prisma.theme.findUnique({
-      where: { id: themeId },
-    });
-
-    if (!annotation || !theme) {
-      throw new AppError('Anotação ou Tema não encontrado.', 404);
-    }
-
-    // Validar se o tema pertence ao livro da anotação
-    const isBookTheme = await prisma.bookTheme.findFirst({
-      where: {
-        book_id: annotation.book_id,
-        theme_id: themeId,
-      },
-    });
-
-    if (!isBookTheme) {
-      throw new AppError('Este tema não está associado ao livro desta anotação.', 400);
-    }
-
-    await prisma.annotationTheme.upsert({
-      where: {
-        annotation_id_theme_id: {
-          annotation_id: annotationId,
-          theme_id: themeId,
-        },
-      },
-      update: {},
-      create: {
-        annotation_id: annotationId,
-        theme_id: themeId,
-      },
-    });
-
-    return { success: true };
-  }
-
-  async unlinkFromTheme(annotationId: number, themeId: number) {
-    const link = await prisma.annotationTheme.findUnique({
-      where: {
-        annotation_id_theme_id: {
-          annotation_id: annotationId,
-          theme_id: themeId,
-        },
-      },
-    });
-
-    if (!link) {
-      throw new AppError('Vínculo entre anotação e tema não encontrado.', 404);
-    }
-
-    await prisma.annotationTheme.delete({
-      where: { id: link.id },
     });
 
     return true;

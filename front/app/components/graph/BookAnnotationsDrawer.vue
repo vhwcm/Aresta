@@ -222,6 +222,7 @@ const loadBookData = async () => {
     // Buscar os temas que pertencem a este livro
     const res = await $fetch<any>(`${API_BASE}/api/books/${bookId}`)
     availableThemes.value = res.themes || []
+    selectedThemeIds.value = availableThemes.value.map((t: any) => t.id)
   } catch (e) {
     console.error('Erro ao carregar anotações do livro:', e)
   } finally {
