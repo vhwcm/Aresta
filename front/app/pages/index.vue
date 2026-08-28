@@ -1010,6 +1010,7 @@ if (typeof useHead === 'function') {
 const auth = useAuth()
 const { loadFromServer, desktopHomeGraphOpen } = useSettings()
 const { userBooks, fetchUserBooks } = useUserBooks()
+const flashcards = useFlashcards()
 
 const coverError = ref(false)
 const isGraphCollapsed = ref(false)
@@ -1049,6 +1050,13 @@ watch(
   }
 )
 
+watch(
+  () => desktopHomeGraphOpen.value,
+  (val) => {
+    isGraphCollapsed.value = !val
+  }
+)
+
 onMounted(async () => {
   if (typeof window !== 'undefined') {
     const saved = localStorage.getItem('aresta_home_graph_collapsed')
@@ -1063,6 +1071,7 @@ onMounted(async () => {
     resetScrollToTop()
     try {
       await fetchUserBooks()
+      await flashcards.fetchFirstDailyCard()
     } catch (e) {
       // Fallback gracioso caso backend esteja offline
     }
@@ -1141,6 +1150,15 @@ const activeBookNotes = computed(() => {
 
 // Primeiro Flashcard do Dia
 const dailyFlashcard = computed(() => {
+  if (flashcards.firstCard.value) {
+    return {
+      id: String(flashcards.firstCard.value.id),
+      bookTitle: flashcards.firstCard.value.bookTitle,
+      chapter: flashcards.firstCard.value.chapterTitle || 'Revisão Espaçada',
+      question: flashcards.firstCard.value.question,
+      answer: flashcards.firstCard.value.answer
+    }
+  }
   return {
     id: 'f1',
     bookTitle: activeBookShortTitle.value,

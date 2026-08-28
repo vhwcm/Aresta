@@ -22,7 +22,7 @@
           :class="activeTab === 'flashcards' ? 'bg-accent text-white shadow-md' : 'text-textSecondary hover:text-textPrimary'"
         >
           <LayersIcon class="w-4 h-4" />
-          Flashcards ({{ cards.length }})
+          Flashcards ({{ displayCards.length }})
         </button>
         <button
           @click="activeTab = 'summaries'"
@@ -47,26 +47,50 @@
             v-model="selectedBookFilter"
             class="bg-bgPanel text-textPrimary text-xs rounded-xl px-3 py-1.5 border border-divider focus:outline-none focus:border-accent"
           >
-            <option value="all">Todas as Obras</option>
-            <option value="kuhn">A Estrutura das Revoluções Científicas</option>
-            <option value="sapiens">Sapiens</option>
-            <option value="norman">O Design do Dia a Dia</option>
+            <option value="all">Todas as Obras ({{ displayCards.length }})</option>
+            <option
+              v-for="book in availableBooks"
+              :key="book.id"
+              :value="String(book.id)"
+            >
+              {{ book.title }}
+            </option>
           </select>
         </div>
 
         <div class="flex items-center gap-3 text-xs font-technical text-textSecondary">
-          <span>Card {{ currentCardIndex + 1 }} de {{ filteredCards.length }}</span>
+          <span>Card {{ filteredCards.length > 0 ? currentCardIndex + 1 : 0 }} de {{ filteredCards.length }}</span>
           <div class="w-24 h-1.5 bg-black/10 dark:bg-white/10 rounded-full overflow-hidden">
             <div
               class="h-full bg-accent transition-all duration-300 rounded-full"
-              :style="{ width: `${((currentCardIndex + 1) / (filteredCards.length || 1)) * 100}%` }"
+              :style="{ width: `${filteredCards.length > 0 ? ((currentCardIndex + 1) / filteredCards.length) * 100 : 0}%` }"
             ></div>
           </div>
         </div>
       </div>
 
+      <!-- ESTADO VAZIO: Sem flashcards -->
+      <div
+        v-if="filteredCards.length === 0 && !flashcards.isLoading.value"
+        class="flex flex-col items-center justify-center p-12 rounded-3xl bg-bgPanel/60 border border-divider text-center gap-4 max-w-xl mx-auto"
+      >
+        <div class="w-12 h-12 rounded-full bg-accent/15 flex items-center justify-center text-accent">
+          <BrainIcon class="w-6 h-6" />
+        </div>
+        <h3 class="font-editorial text-2xl font-light text-textPrimary">Nenhum Flashcard Pendente</h3>
+        <p class="font-interface text-sm text-textSecondary max-w-md">
+          Você não possui flashcards pendentes de revisão hoje. Continue lendo seus livros e adicionando anotações para gerar novos cards inteligentes.
+        </p>
+        <NuxtLink
+          to="/"
+          class="px-5 py-2.5 rounded-full bg-accent text-white font-interface text-xs font-medium hover:bg-accent/90 transition-all shadow-md mt-2"
+        >
+          Voltar para Leitura
+        </NuxtLink>
+      </div>
+
       <!-- Container do Flashcard Interativo (Flip 3D) -->
-      <div v-if="currentCard" class="flex flex-col items-center gap-6">
+      <div v-else-if="currentCard" class="flex flex-col items-center gap-6">
         <div
           class="card-scene w-full max-w-xl h-80 cursor-pointer select-none"
           @click="isFlipped = !isFlipped"
@@ -75,7 +99,7 @@
             <!-- FACE FRENTE (Pergunta) -->
             <div class="card-face card-front p-8 flex flex-col justify-between rounded-3xl bg-bgPanel/95 border border-divider hover:border-accent/40 shadow-2xl backdrop-blur-xl transition-all">
               <div class="flex items-center justify-between">
-                <span class="px-2.5 py-0.5 rounded-full bg-black/5 dark:bg-white/5 border border-divider font-technical text-[10px] text-textSecondary uppercase tracking-wider">
+                <span class="px-2.5 py-0.5 rounded-full bg-black/5 dark:bg-white/5 border border-divider font-technical text-[10px] text-textSecondary uppercase tracking-wider truncate max-w-[240px]">
                   {{ currentCard.bookTitle }}
                 </span>
                 <span class="font-technical text-[10px] text-accent flex items-center gap-1">
@@ -85,14 +109,20 @@
               </div>
 
               <div class="my-auto text-center px-4">
-                <span class="font-technical text-xs uppercase tracking-widest text-textSecondary mb-2 block font-medium">Pergunta Conceitual</span>
+                <span class="font-technical text-xs uppercase tracking-widest text-textSecondary mb-2 block font-medium">
+                  {{ formatCardType(currentCard.cardType) }}
+                </span>
                 <h3 class="font-editorial text-2xl md:text-3xl font-light text-textPrimary leading-snug">
                   {{ currentCard.question }}
                 </h3>
               </div>
 
-              <div class="flex items-center justify-center text-xs text-textSecondary font-interface">
-                <span>Toque no cartão para ver a resposta</span>
+              <div class="flex items-center justify-between text-xs text-textSecondary font-interface">
+                <span v-if="currentCard.chapterTitle" class="truncate max-w-[300px]">
+                  {{ currentCard.chapterTitle }}
+                </span>
+                <span v-else>Toque no cartão para ver a resposta</span>
+                <span class="font-technical text-[10px] text-accent font-semibold">Nível {{ currentCard.repetitionLevel }}</span>
               </div>
             </div>
 
@@ -102,19 +132,19 @@
                 <span class="px-2.5 py-0.5 rounded-full bg-accent/15 border border-accent/30 font-technical text-[10px] text-accent uppercase tracking-wider">
                   Resposta Explicada
                 </span>
-                <span class="font-technical text-[10px] text-textSecondary">
-                  Capítulo: {{ currentCard.chapter }}
+                <span v-if="currentCard.chapterTitle" class="font-technical text-[10px] text-textSecondary truncate max-w-[200px]">
+                  {{ currentCard.chapterTitle }}
                 </span>
               </div>
 
-              <div class="my-auto text-center px-4">
+              <div class="my-auto text-center px-4 overflow-y-auto max-h-44">
                 <p class="font-interface text-sm md:text-base text-textPrimary leading-relaxed font-normal">
                   {{ currentCard.answer }}
                 </p>
               </div>
 
               <div class="flex items-center justify-between text-[11px] text-textSecondary font-technical border-t border-divider pt-2">
-                <span>Revisão Espaçada</span>
+                <span>Repetição Espaçada</span>
                 <span class="text-accent">Aresta Memory Engine</span>
               </div>
             </div>
@@ -124,20 +154,23 @@
         <!-- Botões de Autoavaliação da Repetição Espaçada -->
         <div v-if="isFlipped" class="flex flex-wrap items-center justify-center gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
           <button
-            @click="rateCard('hard')"
-            class="px-5 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 font-interface text-xs font-medium transition-all"
+            @click="rateCurrentCard('hard')"
+            :disabled="flashcards.isSubmitting.value"
+            class="px-5 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 font-interface text-xs font-medium transition-all disabled:opacity-50"
           >
             Difícil (Repetir amanhã)
           </button>
           <button
-            @click="rateCard('good')"
-            class="px-5 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 font-interface text-xs font-medium transition-all"
+            @click="rateCurrentCard('good')"
+            :disabled="flashcards.isSubmitting.value"
+            class="px-5 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 font-interface text-xs font-medium transition-all disabled:opacity-50"
           >
             Bom (3 dias)
           </button>
           <button
-            @click="rateCard('easy')"
-            class="px-5 py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 font-interface text-xs font-medium transition-all"
+            @click="rateCurrentCard('easy')"
+            :disabled="flashcards.isSubmitting.value"
+            class="px-5 py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 font-interface text-xs font-medium transition-all disabled:opacity-50"
           >
             Fácil (7 dias)
           </button>
@@ -230,25 +263,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import {
   LayersIcon,
   FileTextIcon,
   RotateCwIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  PlusIcon
+  PlusIcon,
+  BrainIcon
 } from 'lucide-vue-next'
 import { useReadingStreak } from '~/composables/useReadingStreak'
-
-interface Flashcard {
-  id: string
-  bookId: string
-  bookTitle: string
-  chapter: string
-  question: string
-  answer: string
-}
+import { useFlashcards, type FlashcardItem } from '~/composables/useFlashcards'
 
 interface AnnotationSummary {
   id: string
@@ -266,48 +292,98 @@ const selectedBookFilter = ref('all')
 const currentCardIndex = ref(0)
 const isFlipped = ref(false)
 
-const cards = ref<Flashcard[]>([
+const streak = useReadingStreak()
+const flashcards = useFlashcards()
+
+// Mock inicial como fallback caso o backend esteja vazio ou offline
+const fallbackCards = ref<FlashcardItem[]>([
   {
-    id: '1',
-    bookId: 'kuhn',
+    id: 1,
+    userId: 1,
+    annotationId: 1,
+    bookId: 101,
     bookTitle: 'A Estrutura das Revoluções Científicas',
-    chapter: 'Cap. II: O Caminho para a Ciência Normal',
+    bookCover: null,
+    chapterTitle: 'Cap. II: O Caminho para a Ciência Normal',
+    selectedText: 'A ciência normal consiste na realização da promessa...',
+    note: 'Ciência normal e paradigmas',
+    cardType: 'CONCEPT_RECALL',
     question: 'O que caracteriza a "Ciência Normal" segundo Thomas Kuhn?',
-    answer: 'É a pesquisa firmemente baseada em uma ou mais realizações científicas passadas, que uma comunidade científica reconhece como base para sua prática posterior de resolução de quebra-cabeças.'
+    answer: 'É a pesquisa firmemente baseada em uma ou mais realizações científicas passadas, que uma comunidade científica reconhece como base para sua prática posterior de resolução de quebra-cabeças.',
+    contextSummary: 'Epistemologia kuhniana',
+    repetitionLevel: 1,
+    nextReviewAt: new Date().toISOString()
   },
   {
-    id: '2',
-    bookId: 'kuhn',
+    id: 2,
+    userId: 1,
+    annotationId: 2,
+    bookId: 101,
     bookTitle: 'A Estrutura das Revoluções Científicas',
-    chapter: 'Cap. IX: A Natureza das Revoluções Científicas',
+    chapterTitle: 'Cap. IX: A Natureza das Revoluções Científicas',
+    bookCover: null,
+    selectedText: 'A mudança de paradigma é uma ruptura...',
+    note: 'Revoluções científicas',
+    cardType: 'CONCEPT_RECALL',
     question: 'O que define uma mudança de paradigma?',
-    answer: 'É uma ruptura não-cumulativa onde um paradigma antigo é total ou parcialmente substituído por um novo e incompatível, alterando a visão de mundo da comunidade científica.'
+    answer: 'É uma ruptura não-cumulativa onde um paradigma antigo é total ou parcialmente substituído por um novo e incompatível, alterando a visão de mundo da comunidade científica.',
+    contextSummary: 'Revolução paradigmática',
+    repetitionLevel: 2,
+    nextReviewAt: new Date().toISOString()
   },
   {
-    id: '3',
-    bookId: 'sapiens',
+    id: 3,
+    userId: 1,
+    annotationId: 3,
+    bookId: 102,
     bookTitle: 'Sapiens',
-    chapter: 'Cap. 2: A Árvore do Conhecimento',
+    chapterTitle: 'Cap. 2: A Árvore do Conhecimento',
+    bookCover: null,
+    selectedText: 'Mitos compartilhados permitiram a cooperação...',
+    note: 'Revolução cognitiva',
+    cardType: 'REAL_SITUATION',
     question: 'Qual foi o principal gatilho da Revolução Cognitiva há 70.000 anos?',
-    answer: 'O surgimento da capacidade linguística de transmitir informações sobre coisas que não existem no mundo físico (a habilidade de criar e acreditar em ficções e mitos compartilhados).'
-  },
-  {
-    id: '4',
-    bookId: 'norman',
-    bookTitle: 'O Design do Dia a Dia',
-    chapter: 'Cap. 1: As Coisas Psicológicas Cotidianas',
-    question: 'O que é uma "Affordance" no design de interfaces?',
-    answer: 'É a relação entre as propriedades físicas de um objeto e as capacidades do agente que determinam como o objeto pode ser utilizado (ex: uma maçaneta plana convida a empurrar).'
-  },
-  {
-    id: '5',
-    bookId: 'sapiens',
-    bookTitle: 'Sapiens',
-    chapter: 'Cap. 5: O Maior Golpe da História',
-    question: 'Por que Harari chama a Revolução Agrícola de "o maior golpe da história"?',
-    answer: 'Porque embora tenha aumentado o total de alimentos disponíveis para a espécie, gerou dietas piores, mais horas de trabalho extenuante e maior vulnerabilidade a pragas e secas para a média dos indivíduos.'
+    answer: 'O surgimento da capacidade linguística de transmitir informações sobre coisas que não existem no mundo físico (a habilidade de criar e acreditar em ficções e mitos compartilhados).',
+    contextSummary: 'Evolução social humana',
+    repetitionLevel: 1,
+    nextReviewAt: new Date().toISOString()
   }
 ])
+
+const displayCards = computed<FlashcardItem[]>(() => {
+  if (flashcards.dailyDeck.value.length > 0) {
+    return flashcards.dailyDeck.value
+  }
+  return fallbackCards.value
+})
+
+const availableBooks = computed(() => {
+  const map = new Map<number, { id: number; title: string }>()
+  for (const c of displayCards.value) {
+    if (c.bookId && !map.has(c.bookId)) {
+      map.set(c.bookId, { id: c.bookId, title: c.bookTitle })
+    }
+  }
+  return Array.from(map.values())
+})
+
+const filteredCards = computed(() => {
+  if (selectedBookFilter.value === 'all') return displayCards.value
+  return displayCards.value.filter((c) => String(c.bookId) === selectedBookFilter.value)
+})
+
+const currentCard = computed(() => filteredCards.value[currentCardIndex.value] || null)
+
+const formatCardType = (cardType?: string) => {
+  switch (cardType) {
+    case 'REAL_SITUATION':
+      return 'Situação Real'
+    case 'CONCEPT_UNION':
+      return 'União de Conceitos'
+    default:
+      return 'Relembração de Conceito'
+  }
+}
 
 const summaries = ref<AnnotationSummary[]>([
   {
@@ -332,14 +408,13 @@ const summaries = ref<AnnotationSummary[]>([
   }
 ])
 
-const streak = useReadingStreak()
-
-const filteredCards = computed(() => {
-  if (selectedBookFilter.value === 'all') return cards.value
-  return cards.value.filter((c) => c.bookId === selectedBookFilter.value)
+onMounted(async () => {
+  try {
+    await flashcards.fetchDailyDeck()
+  } catch (e) {
+    // Fallback gracioso
+  }
 })
-
-const currentCard = computed(() => filteredCards.value[currentCardIndex.value] || null)
 
 const nextCard = () => {
   if (currentCardIndex.value < filteredCards.value.length - 1) {
@@ -355,8 +430,18 @@ const prevCard = () => {
   }
 }
 
-const rateCard = async (_rating: 'hard' | 'good' | 'easy') => {
-  void streak.recordFlashcardReview(1)
+const rateCurrentCard = async (rating: 'hard' | 'good' | 'easy') => {
+  if (!currentCard.value) return
+
+  try {
+    if (flashcards.dailyDeck.value.length > 0) {
+      await flashcards.reviewFlashcard(currentCard.value.id, rating)
+    } else {
+      void streak.recordFlashcardReview(1)
+    }
+  } catch (err) {
+    console.error('Erro ao avaliar flashcard:', err)
+  }
 
   if (currentCardIndex.value < filteredCards.value.length - 1) {
     nextCard()
@@ -366,16 +451,25 @@ const rateCard = async (_rating: 'hard' | 'good' | 'easy') => {
 }
 
 const createCardFromSummary = (summary: AnnotationSummary) => {
-  cards.value.push({
-    id: String(Date.now()),
-    bookId: 'custom',
+  fallbackCards.value.push({
+    id: Date.now(),
+    userId: 1,
+    annotationId: Date.now(),
+    bookId: 999,
     bookTitle: summary.bookTitle,
-    chapter: summary.chapter,
+    bookCover: null,
+    chapterTitle: summary.chapter,
+    selectedText: summary.highlightQuote,
+    note: summary.topic,
+    cardType: 'CONCEPT_RECALL',
     question: `Qual a importância de "${summary.topic}"?`,
-    answer: summary.aiSynthesis
+    answer: summary.aiSynthesis,
+    contextSummary: 'Criado a partir de anotação',
+    repetitionLevel: 1,
+    nextReviewAt: new Date().toISOString()
   })
   activeTab.value = 'flashcards'
-  currentCardIndex.value = cards.value.length - 1
+  currentCardIndex.value = fallbackCards.value.length - 1
 }
 </script>
 
