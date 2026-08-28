@@ -26,6 +26,7 @@
       "pages": [
         "architecture/backend",
         "architecture/frontend",
+        "architecture/canvas",
         "architecture/database",
         "architecture/infrastructure"
       ]

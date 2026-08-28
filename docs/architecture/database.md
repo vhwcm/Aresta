@@ -88,6 +88,7 @@ O Aresta utiliza **SQLite** com **Prisma ORM** como motor de persistência relac
 | `AnnotationTheme`| `annotation_themes`| Vínculo entre anotações e temas (restritos aos temas pertencentes ao livro correspondente). |
 | `UserSettings` | `user_settings` | Preferências de leitura (animação de virar página, idioma). |
 | `DailyActivity` | `daily_activities` | Registro diário de leitura (segundos lidos, flashcards revisados, status de conclusão). |
+| `Canvas` | `canvases` | Quadros brancos infinitos no padrão aberto JSON Canvas (v1.0) com nós, arestas e caligrafia IA. |
 
 ---
 
