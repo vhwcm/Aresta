@@ -1,7 +1,7 @@
 import { reactive, computed, readonly } from 'vue'
 import { useAuth } from '~/composables/useAuth'
 
-export type ThemeMode = 'dark' | 'light'
+export type ThemeMode = 'dark' | 'light' | 'sepia'
 export type EpubFontFamilyId = 'newsreader' | 'literata' | 'lora' | 'merriweather' | 'inter'
 export type ReaderColorTheme = 'sepia' | 'white' | 'black'
 
@@ -63,20 +63,11 @@ export function applyTheme(mode: ThemeMode) {
   const body = document.body
 
   root.setAttribute('data-theme', mode)
-  if (mode === 'light') {
-    root.classList.add('light-theme')
-    root.classList.remove('dark-theme')
-    if (body) {
-      body.classList.add('light-theme')
-      body.classList.remove('dark-theme')
-    }
-  } else {
-    root.classList.remove('light-theme')
-    root.classList.add('dark-theme')
-    if (body) {
-      body.classList.remove('light-theme')
-      body.classList.add('dark-theme')
-    }
+  root.classList.remove('light-theme', 'dark-theme', 'sepia-theme')
+  root.classList.add(`${mode}-theme`)
+  if (body) {
+    body.classList.remove('light-theme', 'dark-theme', 'sepia-theme')
+    body.classList.add(`${mode}-theme`)
   }
 }
 
@@ -99,7 +90,7 @@ function initSettings() {
       if (typeof parsed.epubFontFamily === 'string' && ['newsreader', 'literata', 'lora', 'merriweather', 'inter'].includes(parsed.epubFontFamily)) {
         settings.epubFontFamily = parsed.epubFontFamily
       }
-      if (parsed.themeMode === 'dark' || parsed.themeMode === 'light') {
+      if (parsed.themeMode === 'dark' || parsed.themeMode === 'light' || parsed.themeMode === 'sepia') {
         settings.themeMode = parsed.themeMode
       }
       if (parsed.readerTheme === 'white' || parsed.readerTheme === 'sepia' || parsed.readerTheme === 'black') {
@@ -151,7 +142,7 @@ function applyServerSettings(data: UserSettingsResponse) {
   if (data.epubFontFamily && ['newsreader', 'literata', 'lora', 'merriweather', 'inter'].includes(data.epubFontFamily)) {
     settings.epubFontFamily = data.epubFontFamily
   }
-  if (data.themeMode === 'dark' || data.themeMode === 'light') {
+  if (data.themeMode === 'dark' || data.themeMode === 'light' || data.themeMode === 'sepia') {
     settings.themeMode = data.themeMode
   }
   if (typeof data.desktopHomeGraphOpen === 'boolean') {
@@ -279,7 +270,13 @@ export function useSettings() {
   }
 
   const toggleThemeMode = () => {
-    setThemeMode(settings.themeMode === 'dark' ? 'light' : 'dark')
+    if (settings.themeMode === 'dark') {
+      setThemeMode('light')
+    } else if (settings.themeMode === 'light') {
+      setThemeMode('sepia')
+    } else {
+      setThemeMode('dark')
+    }
   }
 
   const pageAnimationEnabled = computed({

@@ -24,6 +24,7 @@ describe('Conta Page (/conta)', () => {
     SlidersIcon: true,
     TypeIcon: true,
     CheckIcon: true,
+    PaletteIcon: true,
   }
 
   beforeEach(() => {
@@ -49,7 +50,7 @@ describe('Conta Page (/conta)', () => {
     expect(wrapper.text()).toContain('Deletar Minha Conta')
   })
 
-  it('permite alternar entre modo claro e escuro', async () => {
+  it('permite alternar entre modo claro, escuro e amarelado (livro/kindle)', async () => {
     const wrapper = mount(ContaPage, {
       global: {
         stubs: defaultStubs,
@@ -58,18 +59,49 @@ describe('Conta Page (/conta)', () => {
 
     const lightBtn = wrapper.find('[data-testid="theme-light-btn"]')
     const darkBtn = wrapper.find('[data-testid="theme-dark-btn"]')
+    const sepiaBtn = wrapper.find('[data-testid="theme-sepia-btn"]')
 
     expect(lightBtn.exists()).toBe(true)
     expect(darkBtn.exists()).toBe(true)
+    expect(sepiaBtn.exists()).toBe(true)
     expect(wrapper.text()).toContain('Claro (Light)')
 
     // Clica para ativar modo escuro
     await darkBtn.trigger('click')
     expect(wrapper.text()).toContain('Escuro (Dark)')
 
+    // Clica para ativar modo livro/sepia
+    await sepiaBtn.trigger('click')
+    expect(wrapper.text()).toContain('Amarelado (Kindle / Livro)')
+
     // Clica para voltar ao modo claro
     await lightBtn.trigger('click')
     expect(wrapper.text()).toContain('Claro (Light)')
+  })
+
+  it('permite configurar o fundo de leitura independente no painel da conta', async () => {
+    const wrapper = mount(ContaPage, {
+      global: {
+        stubs: defaultStubs,
+      },
+    })
+
+    const sepiaReaderBtn = wrapper.find('[data-testid="reader-theme-sepia-btn"]')
+    const whiteReaderBtn = wrapper.find('[data-testid="reader-theme-white-btn"]')
+    const blackReaderBtn = wrapper.find('[data-testid="reader-theme-black-btn"]')
+
+    expect(sepiaReaderBtn.exists()).toBe(true)
+    expect(whiteReaderBtn.exists()).toBe(true)
+    expect(blackReaderBtn.exists()).toBe(true)
+
+    await whiteReaderBtn.trigger('click')
+    expect(localStorage.getItem('aresta_reader_theme')).toBe('white')
+
+    await blackReaderBtn.trigger('click')
+    expect(localStorage.getItem('aresta_reader_theme')).toBe('black')
+
+    await sepiaReaderBtn.trigger('click')
+    expect(localStorage.getItem('aresta_reader_theme')).toBe('sepia')
   })
 
   it('permite alternar o switch de Grafo na Tela Inicial (Desktop)', async () => {

@@ -144,39 +144,49 @@
 
               <div class="flex flex-col rounded-xl bg-white/[0.02] border border-divider divide-y divide-divider overflow-hidden">
 
-                <!-- Item 4: Modo Claro / Escuro -->
+                <!-- Item 4: Tema Geral da Interface -->
                 <div class="p-4 flex items-center justify-between gap-4">
                   <div class="flex items-center gap-3 min-w-0">
                     <div class="p-2 rounded-lg bg-accent/10 text-accent">
                       <SunIcon v-if="themeMode === 'light'" class="w-4 h-4" />
+                      <PaletteIcon v-else-if="themeMode === 'sepia'" class="w-4 h-4" />
                       <MoonIcon v-else class="w-4 h-4" />
                     </div>
                     <div class="min-w-0">
                       <div class="font-interface text-sm text-textPrimary font-medium">
-                        Tema da Interface
+                        Tema do App
                       </div>
                       <div class="font-interface text-xs text-textSecondary">
-                        {{ themeMode === 'dark' ? 'Modo Escuro (Editorial)' : 'Modo Claro (Suave)' }}
+                        {{ themeMode === 'dark' ? 'Modo Escuro (Dark)' : (themeMode === 'sepia' ? 'Amarelado (Estilo Livro / Kindle)' : 'Modo Claro (Light)') }}
                       </div>
                     </div>
                   </div>
 
-                  <div class="flex items-center p-0.5 rounded-xl bg-white/5 border border-divider shrink-0">
+                  <div class="flex items-center p-0.5 rounded-xl bg-white/5 border border-divider shrink-0 gap-0.5">
                     <button
                       type="button"
                       @click="setThemeMode('dark')"
-                      class="px-2.5 py-1 rounded-lg font-interface text-xs transition-all"
-                      :class="themeMode === 'dark' ? 'bg-accent text-white shadow-sm' : 'text-textSecondary hover:text-textPrimary'"
+                      class="px-2 py-1 rounded-lg font-interface text-xs transition-all"
+                      :class="themeMode === 'dark' ? 'bg-accent text-white shadow-sm font-semibold' : 'text-textSecondary hover:text-textPrimary'"
                     >
                       Escuro
                     </button>
                     <button
                       type="button"
                       @click="setThemeMode('light')"
-                      class="px-2.5 py-1 rounded-lg font-interface text-xs transition-all"
-                      :class="themeMode === 'light' ? 'bg-accent text-white shadow-sm' : 'text-textSecondary hover:text-textPrimary'"
+                      class="px-2 py-1 rounded-lg font-interface text-xs transition-all"
+                      :class="themeMode === 'light' ? 'bg-accent text-white shadow-sm font-semibold' : 'text-textSecondary hover:text-textPrimary'"
                     >
                       Claro
+                    </button>
+                    <button
+                      type="button"
+                      @click="setThemeMode('sepia')"
+                      class="px-2 py-1 rounded-lg font-interface text-xs transition-all flex items-center gap-1"
+                      :class="themeMode === 'sepia' ? 'bg-amber-400/20 text-amber-300 border border-amber-400/40 shadow-xs font-semibold' : 'text-textSecondary hover:text-textPrimary'"
+                    >
+                      <span class="w-2 h-2 rounded-full bg-[#f5eedc] inline-block border border-amber-900/30"></span>
+                      <span>Livro</span>
                     </button>
                   </div>
                 </div>

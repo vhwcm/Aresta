@@ -81,7 +81,8 @@ const emit = defineEmits<{
 }>()
 
 const { themeMode } = useSettings()
-const isLightMode = computed(() => themeMode.value === 'light')
+const isLightMode = computed(() => themeMode.value === 'light' || themeMode.value === 'sepia')
+const isSepiaMode = computed(() => themeMode.value === 'sepia')
 
 const containerRef = ref<HTMLElement | null>(null)
 const svgRef = ref<SVGSVGElement | null>(null)
@@ -96,13 +97,13 @@ const API_BASE = 'http://localhost:7070'
 
 const getPastelFill = (colorHex?: string, isRoot = false) => {
   const baseColor = colorHex || (isRoot ? '#E57B55' : '#64748B')
-  const neutral = isLightMode.value ? '#FFFFFF' : '#161619'
+  const neutral = isSepiaMode.value ? '#F5EEDC' : (isLightMode.value ? '#FFFFFF' : '#161619')
   return d3.interpolateRgb(neutral, baseColor)(isRoot ? 0.35 : 0.25)
 }
 
 const getPastelStroke = (colorHex?: string, isRoot = false) => {
   const baseColor = colorHex || (isRoot ? '#E57B55' : '#64748B')
-  const neutral = isLightMode.value ? '#CBD5E1' : '#161619'
+  const neutral = isSepiaMode.value ? '#D8CCB0' : (isLightMode.value ? '#CBD5E1' : '#161619')
   return d3.interpolateRgb(neutral, baseColor)(isRoot ? 0.85 : 0.70)
 }
 
@@ -277,8 +278,8 @@ const initGraph = () => {
     .attr('height', 60)
     .attr('rx', 8)
     .attr('ry', 8)
-    .attr('fill', isLightMode.value ? '#FFFFFF' : '#1E1E24')
-    .attr('stroke', isLightMode.value ? '#CBD5E1' : '#334155')
+    .attr('fill', isSepiaMode.value ? '#FAF5E8' : (isLightMode.value ? '#FFFFFF' : '#1E1E24'))
+    .attr('stroke', isSepiaMode.value ? '#D8CCB0' : (isLightMode.value ? '#CBD5E1' : '#334155'))
     .attr('stroke-width', 1.5)
     .attr('filter', 'url(#node-shadow)')
     .attr('class', 'transition-all duration-300 hover:scale-105')
@@ -322,7 +323,7 @@ const initGraph = () => {
     .append('text')
     .attr('text-anchor', 'middle')
     .attr('dy', 44)
-    .attr('fill', isLightMode.value ? '#0F172A' : '#F1F5F9')
+    .attr('fill', isSepiaMode.value ? '#2C2621' : (isLightMode.value ? '#0F172A' : '#F1F5F9'))
     .attr('font-size', '11px')
     .attr('font-weight', '600')
     .attr('font-family', 'system-ui, -apple-system, sans-serif')

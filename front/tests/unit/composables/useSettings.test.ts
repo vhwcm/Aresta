@@ -53,18 +53,48 @@ describe('useSettings Composable', () => {
     expect(language.value).toBe('en-US')
   })
 
-  it('permite alterar e obter o tema visual (dark/light)', () => {
+  it('permite alterar e obter o tema visual (dark/light/sepia)', () => {
     const { themeMode, setThemeMode, toggleThemeMode } = useSettings()
 
     expect(themeMode.value).toBe('light')
 
     setThemeMode('dark')
     expect(themeMode.value).toBe('dark')
-    const saved = JSON.parse(localStorage.getItem('aresta_settings') || '{}')
+    let saved = JSON.parse(localStorage.getItem('aresta_settings') || '{}')
     expect(saved.themeMode).toBe('dark')
+
+    setThemeMode('sepia')
+    expect(themeMode.value).toBe('sepia')
+    saved = JSON.parse(localStorage.getItem('aresta_settings') || '{}')
+    expect(saved.themeMode).toBe('sepia')
+
+    // toggleThemeMode cycles: sepia -> dark -> light -> sepia
+    toggleThemeMode()
+    expect(themeMode.value).toBe('dark')
 
     toggleThemeMode()
     expect(themeMode.value).toBe('light')
+
+    toggleThemeMode()
+    expect(themeMode.value).toBe('sepia')
+  })
+
+  it('permite alterar e obter o tema de fundo de leitura independente', () => {
+    const { readerTheme, setReaderTheme } = useSettings()
+
+    expect(readerTheme.value).toBe('sepia')
+
+    setReaderTheme('white')
+    expect(readerTheme.value).toBe('white')
+    expect(localStorage.getItem('aresta_reader_theme')).toBe('white')
+
+    setReaderTheme('black')
+    expect(readerTheme.value).toBe('black')
+    expect(localStorage.getItem('aresta_reader_theme')).toBe('black')
+
+    setReaderTheme('sepia')
+    expect(readerTheme.value).toBe('sepia')
+    expect(localStorage.getItem('aresta_reader_theme')).toBe('sepia')
   })
 
   it('permite alternar a preferência de grafo na tela inicial desktop', () => {

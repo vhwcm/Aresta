@@ -58,7 +58,7 @@ const svgRef = ref<SVGSVGElement | null>(null)
 const activeRevisions = ref(3)
 
 const { themeMode } = useSettings()
-const isLightMode = computed(() => themeMode.value === 'light')
+const isLightMode = computed(() => themeMode.value === 'light' || themeMode.value === 'sepia')
 
 // Função exponencial de Ebbinghaus R = e^(-t / S)
 const generateData = (revisions: number) => {

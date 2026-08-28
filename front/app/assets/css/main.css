@@ -56,6 +56,24 @@ body.light-theme {
   --color-error: #EF4444;
 }
 
+[data-theme="sepia"],
+html.sepia-theme,
+body.sepia-theme {
+  --bg-app: #F5EEDC;
+  --bg-panel: #FAF5E8;
+  --text-primary: #2C2621;
+  --text-secondary: #786C5E;
+  --accent: #E57B55;
+  --divider: rgba(80, 60, 30, 0.12);
+  --color-bg: #F5EEDC;
+  --color-surface: #FAF5E8;
+  --color-border: rgba(80, 60, 30, 0.12);
+  --color-text-primary: #2C2621;
+  --color-text-secondary: #786C5E;
+  --color-accent: #E57B55;
+  --color-error: #DC2626;
+}
+
 @layer base {
   body {
     @apply bg-bgApp text-textPrimary font-interface antialiased transition-colors duration-150;
