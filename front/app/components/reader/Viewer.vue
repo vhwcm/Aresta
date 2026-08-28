@@ -1,5 +1,8 @@
 <template>
-  <div class="reader-viewer" :class="{ 'reader-viewer--zen': store.isZenMode }">
+  <div
+    class="reader-viewer"
+    :class="['reader-viewer--theme-' + store.readerTheme, { 'reader-viewer--zen': store.isZenMode }]"
+  >
     <!-- Corpo Principal com Divisão Leitor / Grafo -->
     <div class="reader-viewer__body">
       <!-- Seção do Leitor (Mobile: 100% / Desktop: 50% ou 100%) -->
@@ -7,6 +10,17 @@
         class="reader-viewer__reader-pane"
         :class="(store.isGraphOpen && !store.isZenMode) ? 'reader-viewer__reader-pane--half' : 'reader-viewer__reader-pane--full'"
       >
+        <!-- Barra de Ferramentas de Leitura (Esquerda no Desktop/Tablet, Inferior no Mobile) (Oculta no Modo Zen) -->
+        <ReaderBottomBar
+          v-if="!store.isZenMode"
+          :is-graph-active="isDesktop ? store.isGraphOpen : store.isMobileGraphOpen"
+          @close="handleClose"
+          @open-saved-pages="isSavedPagesOpen = true"
+          @open-annotation="handleOpenAnnotation"
+          @toggle-graph="handleToggleGraph"
+          @open-typography="isTypographyOpen = true"
+        />
+
         <!-- Área do Livro / Stage -->
         <main
           class="reader-viewer__canvas-area"
@@ -44,17 +58,6 @@
             </button>
           </div>
         </main>
-
-        <!-- Barra Inferior de Controles (Oculta no Modo Zen) -->
-        <ReaderBottomBar
-          v-if="!store.isZenMode"
-          :is-graph-active="isDesktop ? store.isGraphOpen : store.isMobileGraphOpen"
-          @close="handleClose"
-          @open-saved-pages="isSavedPagesOpen = true"
-          @open-annotation="handleOpenAnnotation"
-          @toggle-graph="handleToggleGraph"
-          @open-typography="isTypographyOpen = true"
-        />
       </section>
 
       <!-- Seção do Grafo de Conhecimento no Desktop (Oculta no Modo Zen) -->
@@ -558,6 +561,12 @@ onUnmounted(() => {
   min-width: 0;
   position: relative;
   transition: width 0.3s ease;
+}
+
+@media (min-width: 768px) {
+  .reader-viewer__reader-pane {
+    flex-direction: row;
+  }
 }
 
 .reader-viewer__reader-pane--half {
