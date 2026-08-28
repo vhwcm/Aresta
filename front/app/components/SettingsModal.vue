@@ -181,6 +181,56 @@
                   </div>
                 </div>
 
+                <!-- Item 4.5: Fundo da Leitura de Livros (PDF & EPUB) -->
+                <div class="p-4 flex items-center justify-between gap-4">
+                  <div class="flex items-center gap-3 min-w-0">
+                    <div class="p-2 rounded-lg bg-accent/10 text-accent">
+                      <PaletteIcon class="w-4 h-4" />
+                    </div>
+                    <div class="min-w-0">
+                      <div class="font-interface text-sm text-textPrimary font-medium">
+                        Fundo da Leitura
+                      </div>
+                      <div class="font-interface text-xs text-textSecondary">
+                        {{ readerTheme === 'sepia' ? 'Amarelado (Estilo Livro)' : (readerTheme === 'white' ? 'Branco (Clássico)' : 'Preto (Noturno)') }}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center p-0.5 rounded-xl bg-white/5 border border-divider shrink-0 gap-0.5">
+                    <button
+                      type="button"
+                      @click="setReaderTheme('sepia')"
+                      class="px-2 py-1 rounded-lg font-interface text-xs transition-all flex items-center gap-1"
+                      :class="readerTheme === 'sepia' ? 'bg-amber-400/20 text-amber-300 border border-amber-400/40 shadow-xs font-semibold' : 'text-textSecondary hover:text-textPrimary'"
+                      title="Amarelado (Estilo Livro)"
+                    >
+                      <span class="w-2.5 h-2.5 rounded-full bg-[#f5eedc] inline-block border border-amber-900/30"></span>
+                      <span>Livro</span>
+                    </button>
+                    <button
+                      type="button"
+                      @click="setReaderTheme('white')"
+                      class="px-2 py-1 rounded-lg font-interface text-xs transition-all flex items-center gap-1"
+                      :class="readerTheme === 'white' ? 'bg-white/20 text-white border border-white/40 shadow-xs font-semibold' : 'text-textSecondary hover:text-textPrimary'"
+                      title="Branco"
+                    >
+                      <span class="w-2.5 h-2.5 rounded-full bg-[#ffffff] inline-block border border-slate-400"></span>
+                      <span>Branco</span>
+                    </button>
+                    <button
+                      type="button"
+                      @click="setReaderTheme('black')"
+                      class="px-2 py-1 rounded-lg font-interface text-xs transition-all flex items-center gap-1"
+                      :class="readerTheme === 'black' ? 'bg-white/10 text-white border border-white/30 shadow-xs font-semibold' : 'text-textSecondary hover:text-textPrimary'"
+                      title="Preto"
+                    >
+                      <span class="w-2.5 h-2.5 rounded-full bg-[#121214] inline-block border border-white/30"></span>
+                      <span>Preto</span>
+                    </button>
+                  </div>
+                </div>
+
                 <!-- Item 5: Grafo na Tela Inicial (Desktop) -->
                 <div class="p-4 flex items-center justify-between gap-4">
                   <div class="flex items-center gap-3 min-w-0">
@@ -358,6 +408,7 @@ import {
   SunIcon,
   MoonIcon,
   NetworkIcon,
+  PaletteIcon,
 } from 'lucide-vue-next'
 import { useSettingsModal } from '~/composables/useSettingsModal'
 import { useSettings } from '~/composables/useSettings'
@@ -370,6 +421,8 @@ const {
   setEpubFontSize,
   themeMode,
   setThemeMode,
+  readerTheme,
+  setReaderTheme,
   desktopHomeGraphOpen,
   desktopReaderGraphOpen,
   loadFromServer,

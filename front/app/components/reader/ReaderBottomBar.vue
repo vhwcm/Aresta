@@ -50,79 +50,145 @@
         <span class="text-xs md:hidden">Anotar</span>
       </button>
 
-      <!-- Botão Tamanho do Texto (Apenas para EPUB) -->
-      <div v-if="store.documentType === 'epub'" class="relative" ref="fontSizeWrapperRef">
+      <!-- Botão Aparência / Tema de Leitura & Tipografia (PDF e EPUB) -->
+      <div class="relative" ref="appearanceWrapperRef">
         <button
-          @click="isFontSizePopoverOpen = !isFontSizePopoverOpen"
-          class="flex flex-row md:flex-col items-center justify-center gap-1.5 md:gap-0.5 px-2.5 py-1.5 sm:px-3 sm:py-2 md:w-11 md:h-11 md:p-0 rounded-xl border transition-all text-xs font-semibold active:scale-95"
-          :class="isFontSizePopoverOpen
+          @click="isAppearancePopoverOpen = !isAppearancePopoverOpen"
+          class="flex flex-row md:flex-col items-center justify-center gap-1.5 md:gap-0.5 px-2.5 py-1.5 sm:px-3 sm:py-2 md:w-11 md:h-11 md:p-0 rounded-xl border transition-all text-xs font-semibold active:scale-95 group relative"
+          :class="isAppearancePopoverOpen
             ? 'bg-accent/20 border-accent text-accent shadow-sm'
             : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary hover:bg-white/10'"
-          title="Ajustar tamanho do texto (EPUB)"
-          aria-label="Ajustar tamanho do texto"
-          id="btn-font-size-toggle"
+          title="Aparência de leitura (Cor de fundo, tema e tipografia)"
+          aria-label="Aparência de leitura"
+          id="btn-appearance-toggle"
         >
-          <TypeIcon class="w-4 h-4" />
-          <span class="text-xs md:text-[9px] font-technical font-bold leading-tight">{{ store.fontSize }}px</span>
+          <!-- Ícone com indicador de cor do tema -->
+          <div class="relative">
+            <PaletteIcon class="w-4 h-4 group-hover:scale-110 transition-transform" />
+            <span
+              class="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-black/40 shadow-xs"
+              :class="{
+                'bg-[#f5eedc]': store.readerTheme === 'sepia',
+                'bg-[#ffffff]': store.readerTheme === 'white',
+                'bg-[#121214]': store.readerTheme === 'black'
+              }"
+            />
+          </div>
+          <span class="text-xs md:text-[9px] font-technical font-medium leading-tight">
+            {{ store.readerTheme === 'sepia' ? 'Livro' : (store.readerTheme === 'white' ? 'Branco' : 'Preto') }}
+          </span>
         </button>
 
-        <!-- Popover Flutuante de Tipografia (Mobile: Abre para cima | Tablet/Desktop: Abre para a direita) -->
+        <!-- Popover Flutuante de Aparência & Fundo de Leitura (Mobile: Abre para cima | Tablet/Desktop: Abre para a direita) -->
         <div
-          v-if="isFontSizePopoverOpen"
-          class="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 md:bottom-auto md:top-1/2 md:-translate-y-1/2 md:left-full md:ml-3 md:translate-x-0 bg-bgPanel/95 backdrop-blur-xl border border-divider rounded-2xl p-4 shadow-2xl z-50 flex flex-col gap-3 min-w-[220px] sm:min-w-[260px] animate-fadeIn"
+          v-if="isAppearancePopoverOpen"
+          class="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 md:bottom-auto md:top-1/2 md:-translate-y-1/2 md:left-full md:ml-3 md:translate-x-0 bg-bgPanel/95 backdrop-blur-xl border border-divider rounded-2xl p-4 shadow-2xl z-50 flex flex-col gap-3.5 min-w-[240px] sm:min-w-[280px] animate-fadeIn text-textPrimary"
           role="dialog"
-          aria-label="Controle de tamanho do texto"
+          aria-label="Controle de aparência e fundo de leitura"
         >
-          <div class="flex items-center justify-between">
+          <!-- Seção de Fundo / Tema de Leitura -->
+          <div class="flex flex-col gap-2">
             <span class="text-[11px] font-technical uppercase tracking-wider text-textSecondary font-semibold">
-              Tamanho do Texto
+              Fundo da Leitura
             </span>
-            <button
-              @click="store.resetFontSize()"
-              class="text-[10px] text-accent hover:underline font-technical"
-              title="Redefinir para o padrão (18px)"
-            >
-              Padrão
-            </button>
+            <div class="grid grid-cols-3 gap-1.5">
+              <!-- Amarelado (Livro) -->
+              <button
+                @click="store.setReaderTheme('sepia')"
+                class="flex flex-col items-center justify-center p-2 rounded-xl border transition-all text-center group"
+                :class="store.readerTheme === 'sepia'
+                  ? 'bg-amber-400/15 border-amber-500/80 text-textPrimary shadow-sm'
+                  : 'bg-white/5 border-divider hover:bg-white/10 text-textSecondary hover:text-textPrimary'"
+                title="Fundo amarelado suave estilo livro físico"
+              >
+                <div class="w-5 h-5 rounded-full border border-amber-600/30 bg-[#f5eedc] shadow-inner mb-1 flex items-center justify-center">
+                  <CheckIcon v-if="store.readerTheme === 'sepia'" class="w-3 h-3 text-amber-950 stroke-[3]" />
+                </div>
+                <span class="text-[11px] font-semibold">Amarelado</span>
+                <span class="text-[9px] opacity-70">Livro</span>
+              </button>
+
+              <!-- Branco -->
+              <button
+                @click="store.setReaderTheme('white')"
+                class="flex flex-col items-center justify-center p-2 rounded-xl border transition-all text-center group"
+                :class="store.readerTheme === 'white'
+                  ? 'bg-white/20 border-white/80 text-textPrimary shadow-sm'
+                  : 'bg-white/5 border-divider hover:bg-white/10 text-textSecondary hover:text-textPrimary'"
+                title="Fundo branco claro"
+              >
+                <div class="w-5 h-5 rounded-full border border-slate-300 bg-[#ffffff] shadow-inner mb-1 flex items-center justify-center">
+                  <CheckIcon v-if="store.readerTheme === 'white'" class="w-3 h-3 text-slate-800 stroke-[3]" />
+                </div>
+                <span class="text-[11px] font-semibold">Branco</span>
+                <span class="text-[9px] opacity-70">Clássico</span>
+              </button>
+
+              <!-- Preto -->
+              <button
+                @click="store.setReaderTheme('black')"
+                class="flex flex-col items-center justify-center p-2 rounded-xl border transition-all text-center group"
+                :class="store.readerTheme === 'black'
+                  ? 'bg-white/15 border-accent/80 text-textPrimary shadow-sm'
+                  : 'bg-white/5 border-divider hover:bg-white/10 text-textSecondary hover:text-textPrimary'"
+                title="Fundo preto noturno"
+              >
+                <div class="w-5 h-5 rounded-full border border-white/30 bg-[#121214] shadow-inner mb-1 flex items-center justify-center">
+                  <CheckIcon v-if="store.readerTheme === 'black'" class="w-3 h-3 text-white stroke-[3]" />
+                </div>
+                <span class="text-[11px] font-semibold">Preto</span>
+                <span class="text-[9px] opacity-70">Noturno</span>
+              </button>
+            </div>
           </div>
 
-          <!-- Controles A- e A+ com indicador numérico -->
-          <div class="flex items-center justify-between gap-2 bg-white/5 rounded-xl p-1.5 border border-divider">
-            <button
-              @click="store.decreaseFontSize(2)"
-              :disabled="store.fontSize <= 12"
-              class="flex items-center justify-center w-8 h-8 rounded-lg bg-white/5 hover:bg-white/15 disabled:opacity-30 disabled:hover:bg-transparent text-sm font-semibold transition-all active:scale-95 text-textPrimary"
-              title="Diminuir tamanho da fonte"
-              aria-label="Diminuir tamanho da fonte"
-            >
-              A-
-            </button>
-            <span class="font-technical font-bold text-sm text-textPrimary px-2">
-              {{ store.fontSize }} px
-            </span>
-            <button
-              @click="store.increaseFontSize(2)"
-              :disabled="store.fontSize >= 36"
-              class="flex items-center justify-center w-8 h-8 rounded-lg bg-white/5 hover:bg-white/15 disabled:opacity-30 disabled:hover:bg-transparent text-base font-semibold transition-all active:scale-95 text-textPrimary"
-              title="Aumentar tamanho da fonte"
-              aria-label="Aumentar tamanho da fonte"
-            >
-              A+
-            </button>
-          </div>
+          <!-- Seção de Tamanho de Texto e Fonte (Apenas EPUB) -->
+          <div v-if="store.documentType === 'epub'" class="flex flex-col gap-2 pt-2 border-t border-divider">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-technical uppercase tracking-wider text-textSecondary font-semibold">
+                Tamanho da Fonte
+              </span>
+              <button
+                @click="store.resetFontSize()"
+                class="text-[10px] text-accent hover:underline font-technical"
+                title="Redefinir para 18px"
+              >
+                Padrão
+              </button>
+            </div>
 
-          <!-- Presets Rápidos -->
-          <div class="grid grid-cols-4 gap-1.5 pt-1 border-t border-divider">
+            <!-- Controles A- e A+ -->
+            <div class="flex items-center justify-between gap-2 bg-white/5 rounded-xl p-1.5 border border-divider">
+              <button
+                @click="store.decreaseFontSize(2)"
+                :disabled="store.fontSize <= 12"
+                class="flex items-center justify-center w-8 h-8 rounded-lg bg-white/5 hover:bg-white/15 disabled:opacity-30 disabled:hover:bg-transparent text-sm font-semibold transition-all active:scale-95 text-textPrimary"
+                title="Diminuir tamanho da fonte"
+                aria-label="Diminuir tamanho da fonte"
+              >
+                A-
+              </button>
+              <span class="font-technical font-bold text-sm text-textPrimary px-2">
+                {{ store.fontSize }} px
+              </span>
+              <button
+                @click="store.increaseFontSize(2)"
+                :disabled="store.fontSize >= 36"
+                class="flex items-center justify-center w-8 h-8 rounded-lg bg-white/5 hover:bg-white/15 disabled:opacity-30 disabled:hover:bg-transparent text-base font-semibold transition-all active:scale-95 text-textPrimary"
+                title="Aumentar tamanho da fonte"
+                aria-label="Aumentar tamanho da fonte"
+              >
+                A+
+              </button>
+            </div>
+
+            <!-- Botão Mais Tipografia -->
             <button
-              v-for="preset in [14, 18, 22, 26]"
-              :key="preset"
-              @click="store.setFontSize(preset)"
-              class="py-1 px-1.5 rounded-lg text-center text-xs font-technical transition-all"
-              :class="store.fontSize === preset
-                ? 'bg-accent text-white font-bold shadow-sm'
-                : 'bg-white/5 hover:bg-white/10 text-textSecondary hover:text-textPrimary'"
+              @click="$emit('openTypography'); isAppearancePopoverOpen = false"
+              class="w-full py-1.5 px-2 rounded-xl bg-white/5 hover:bg-white/10 border border-divider text-xs text-textSecondary hover:text-textPrimary flex items-center justify-center gap-1.5 transition-all mt-1"
             >
-              {{ preset }}
+              <TypeIcon class="w-3.5 h-3.5 text-accent" />
+              <span>Mais Fontes & Tipografia</span>
             </button>
           </div>
         </div>
@@ -218,10 +284,12 @@ import {
   BookmarkIcon,
   BookmarkCheckIcon,
   BookOpenIcon,
+  CheckIcon,
   FileTextIcon,
   HighlighterIcon,
   Maximize2Icon,
   NetworkIcon,
+  PaletteIcon,
   TypeIcon,
 } from 'lucide-vue-next'
 import { useReaderStore } from '~/stores/readerStore'
@@ -235,11 +303,12 @@ defineEmits<{
   (e: 'openSavedPages'): void
   (e: 'openAnnotation'): void
   (e: 'toggleGraph'): void
+  (e: 'openTypography'): void
 }>()
 
 const store = useReaderStore()
-const isFontSizePopoverOpen = ref(false)
-const fontSizeWrapperRef = ref<HTMLElement | null>(null)
+const isAppearancePopoverOpen = ref(false)
+const appearanceWrapperRef = ref<HTMLElement | null>(null)
 
 const pageDisplay = computed(() => {
   if (store.isTwoPageMode && store.totalPages > 1) {
@@ -259,17 +328,17 @@ const pageDisplayShort = computed(() => {
 
 function handleClickOutside(event: MouseEvent) {
   if (
-    isFontSizePopoverOpen.value &&
-    fontSizeWrapperRef.value &&
-    !fontSizeWrapperRef.value.contains(event.target as Node)
+    isAppearancePopoverOpen.value &&
+    appearanceWrapperRef.value &&
+    !appearanceWrapperRef.value.contains(event.target as Node)
   ) {
-    isFontSizePopoverOpen.value = false
+    isAppearancePopoverOpen.value = false
   }
 }
 
 function handleKeydown(event: KeyboardEvent) {
-  if (event.key === 'Escape' && isFontSizePopoverOpen.value) {
-    isFontSizePopoverOpen.value = false
+  if (event.key === 'Escape' && isAppearancePopoverOpen.value) {
+    isAppearancePopoverOpen.value = false
   }
 }
 

@@ -35,10 +35,66 @@
           </button>
         </div>
 
-        <!-- Seletor de Família de Fontes -->
+        <!-- Seletor de Tema / Fundo da Leitura -->
         <div class="space-y-2">
           <label class="text-[11px] font-semibold text-textSecondary uppercase tracking-wider block">
-            Família Tipográfica
+            Fundo da Leitura
+          </label>
+          <div class="grid grid-cols-3 gap-2">
+            <!-- Amarelado / Sépia (Estilo Livro) -->
+            <button
+              @click="store.setReaderTheme('sepia')"
+              class="flex flex-col items-center justify-center p-3 rounded-xl border transition-all text-center group relative"
+              :class="store.readerTheme === 'sepia'
+                ? 'bg-[#f5eedc]/15 border-amber-400/60 shadow-sm text-white'
+                : 'bg-white/[0.03] border-divider hover:bg-white/[0.07] text-textSecondary hover:text-textPrimary'"
+              title="Fundo amarelado suave estilo livro físico"
+            >
+              <div class="w-6 h-6 rounded-full border border-amber-600/30 bg-[#f5eedc] shadow-inner mb-1.5 flex items-center justify-center">
+                <CheckIcon v-if="store.readerTheme === 'sepia'" class="w-3.5 h-3.5 text-amber-900 stroke-[3]" />
+              </div>
+              <span class="text-xs font-semibold">Amarelado</span>
+              <span class="text-[10px] opacity-75">Estilo Livro</span>
+            </button>
+
+            <!-- Branco -->
+            <button
+              @click="store.setReaderTheme('white')"
+              class="flex flex-col items-center justify-center p-3 rounded-xl border transition-all text-center group relative"
+              :class="store.readerTheme === 'white'
+                ? 'bg-white/15 border-white/60 shadow-sm text-white'
+                : 'bg-white/[0.03] border-divider hover:bg-white/[0.07] text-textSecondary hover:text-textPrimary'"
+              title="Fundo branco claro"
+            >
+              <div class="w-6 h-6 rounded-full border border-slate-300 bg-[#ffffff] shadow-inner mb-1.5 flex items-center justify-center">
+                <CheckIcon v-if="store.readerTheme === 'white'" class="w-3.5 h-3.5 text-slate-800 stroke-[3]" />
+              </div>
+              <span class="text-xs font-semibold">Branco</span>
+              <span class="text-[10px] opacity-75">Clássico</span>
+            </button>
+
+            <!-- Preto -->
+            <button
+              @click="store.setReaderTheme('black')"
+              class="flex flex-col items-center justify-center p-3 rounded-xl border transition-all text-center group relative"
+              :class="store.readerTheme === 'black'
+                ? 'bg-white/10 border-accent/80 shadow-sm text-white'
+                : 'bg-white/[0.03] border-divider hover:bg-white/[0.07] text-textSecondary hover:text-textPrimary'"
+              title="Fundo preto para leitura noturna"
+            >
+              <div class="w-6 h-6 rounded-full border border-white/20 bg-[#121214] shadow-inner mb-1.5 flex items-center justify-center">
+                <CheckIcon v-if="store.readerTheme === 'black'" class="w-3.5 h-3.5 text-white stroke-[3]" />
+              </div>
+              <span class="text-xs font-semibold">Preto</span>
+              <span class="text-[10px] opacity-75">Noturno</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Seletor de Família de Fontes -->
+        <div class="space-y-2 border-t border-divider pt-4">
+          <label class="text-[11px] font-semibold text-textSecondary uppercase tracking-wider block">
+            Família Tipográfica (EPUB)
           </label>
           <div class="grid grid-cols-1 gap-2">
             <button

@@ -661,10 +661,65 @@ onUnmounted(() => {
 }
 
 /* =========================================================================
+   Temas de Leitura (Amarelado / Sépia, Branco, Preto)
+   ========================================================================= */
+.reader-viewer--theme-sepia,
+.reader-viewer--theme-sepia .reader-viewer__canvas-area,
+.reader-viewer--theme-sepia .reader-viewer__book-stage {
+  background-color: #f5eedc !important;
+}
+
+.reader-viewer--theme-white,
+.reader-viewer--theme-white .reader-viewer__canvas-area,
+.reader-viewer--theme-white .reader-viewer__book-stage {
+  background-color: #ffffff !important;
+}
+
+.reader-viewer--theme-black,
+.reader-viewer--theme-black .reader-viewer__canvas-area,
+.reader-viewer--theme-black .reader-viewer__book-stage {
+  background-color: #121214 !important;
+}
+
+/* Botões de Navegação adaptados a cada tema */
+.reader-viewer--theme-sepia .reader-viewer__nav-btn {
+  background: rgba(235, 224, 200, 0.85);
+  border-color: rgba(180, 160, 130, 0.35);
+  color: #5c4d3c;
+  box-shadow: 0 4px 12px rgba(60, 45, 20, 0.12);
+}
+
+.reader-viewer--theme-sepia .reader-viewer__nav-btn:not(:disabled):hover {
+  background: rgba(229, 123, 85, 0.2);
+  border-color: rgba(229, 123, 85, 0.6);
+  color: var(--color-accent, #E57B55);
+}
+
+.reader-viewer--theme-white .reader-viewer__nav-btn {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(0, 0, 0, 0.12);
+  color: #374151;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.reader-viewer--theme-white .reader-viewer__nav-btn:not(:disabled):hover {
+  background: rgba(229, 123, 85, 0.15);
+  border-color: rgba(229, 123, 85, 0.5);
+  color: var(--color-accent, #E57B55);
+}
+
+.reader-viewer--theme-black .reader-viewer__nav-btn {
+  background: rgba(25, 25, 30, 0.85);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #d1d5db;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+/* =========================================================================
    Estilos do Modo Zen (Imersão Total)
    ========================================================================= */
 .reader-viewer--zen {
-  background: #0a0a0e;
+  background: #0a0a0e !important;
 }
 
 .reader-viewer--zen .reader-viewer__nav-btn {

@@ -87,6 +87,32 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
     reducedMotion.value = motionQuery?.matches ?? false
   }
 
+  function getThemeColors() {
+    const theme = store.readerTheme || 'sepia'
+    if (theme === 'sepia') {
+      return {
+        bg: '#f5eedc',
+        shadow: 'rgba(60, 45, 20, 0.18)',
+        spineGradient: 'rgba(60, 45, 20, 0.16)',
+        spineCrease: 'rgba(60, 45, 20, 0.14)',
+      }
+    } else if (theme === 'black') {
+      return {
+        bg: '#121214',
+        shadow: 'rgba(0, 0, 0, 0.6)',
+        spineGradient: 'rgba(0, 0, 0, 0.4)',
+        spineCrease: 'rgba(255, 255, 255, 0.08)',
+      }
+    } else {
+      return {
+        bg: '#ffffff',
+        shadow: 'rgba(0, 0, 0, 0.18)',
+        spineGradient: 'rgba(0, 0, 0, 0.14)',
+        spineCrease: 'rgba(0, 0, 0, 0.12)',
+      }
+    }
+  }
+
   function getBlankRaster(aspectRatio = 0.72): PageRaster {
     if (blankRaster && Math.abs(blankRaster.aspectRatio - aspectRatio) < 0.01) {
       return blankRaster
@@ -96,7 +122,8 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
     canvas.height = Math.max(1, Math.round(1200 / Math.max(0.1, aspectRatio)))
     const context = canvas.getContext('2d')
     if (context) {
-      context.fillStyle = '#ffffff'
+      const colors = getThemeColors()
+      context.fillStyle = colors.bg
       context.fillRect(0, 0, canvas.width, canvas.height)
     }
     blankRaster = {
@@ -143,6 +170,14 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
       ctx.fillStyle = '#ffffff'
       ctx.fillRect(0, 0, canvas.width, canvas.height)
       await pageData.render(ctx)
+
+      if (store.readerTheme === 'sepia') {
+        ctx.save()
+        ctx.globalCompositeOperation = 'multiply'
+        ctx.fillStyle = '#f5eedc'
+        ctx.fillRect(0, 0, canvas.width, canvas.height)
+        ctx.restore()
+      }
 
       const raster: PageRaster = {
         pageNumber,
@@ -336,12 +371,13 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
   }
 
   function drawPageShadow(ctx: CanvasRenderingContext2D, rect: PageRect, isLeftSpread = false, isRightSpread = false) {
+    const colors = getThemeColors()
     ctx.save()
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.4)'
+    ctx.shadowColor = colors.shadow
     ctx.shadowBlur = 20
     ctx.shadowOffsetX = isLeftSpread ? -6 : (isRightSpread ? 6 : 0)
     ctx.shadowOffsetY = 0
-    ctx.fillStyle = '#ffffff'
+    ctx.fillStyle = colors.bg
     ctx.fillRect(rect.left, rect.top, rect.width, rect.height)
     ctx.restore()
   }
@@ -353,11 +389,17 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
     }
 
     drawPageShadow(ctx, targetRect, isLeftSpread, isRightSpread)
+    const colors = getThemeColors()
 
     if (raster && raster.canvas) {
       ctx.save()
       ctx.imageSmoothingEnabled = true
       ctx.imageSmoothingQuality = 'high'
+
+      if (store.readerTheme === 'black') {
+        ctx.filter = 'invert(0.92) hue-rotate(180deg) contrast(0.95)'
+      }
+
       ctx.drawImage(
         raster.canvas,
         0, 0, raster.canvas.width, raster.canvas.height,
@@ -365,7 +407,7 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
       )
       ctx.restore()
     } else {
-      ctx.fillStyle = '#ffffff'
+      ctx.fillStyle = colors.bg
       ctx.fillRect(targetRect.left, targetRect.top, targetRect.width, targetRect.height)
     }
   }
@@ -375,22 +417,23 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
     const top = leftPage.top
     const height = leftPage.height
     const spineWidth = 28
+    const colors = getThemeColors()
 
     ctx.save()
     const gradLeft = ctx.createLinearGradient(centerX - spineWidth, top, centerX, top)
     gradLeft.addColorStop(0, 'rgba(0, 0, 0, 0)')
-    gradLeft.addColorStop(1, 'rgba(0, 0, 0, 0.18)')
+    gradLeft.addColorStop(1, colors.spineGradient)
     ctx.fillStyle = gradLeft
     ctx.fillRect(centerX - spineWidth, top, spineWidth, height)
 
     const gradRight = ctx.createLinearGradient(centerX, top, centerX + spineWidth, top)
-    gradRight.addColorStop(0, 'rgba(0, 0, 0, 0.18)')
+    gradRight.addColorStop(0, colors.spineGradient)
     gradRight.addColorStop(1, 'rgba(0, 0, 0, 0)')
     ctx.fillStyle = gradRight
     ctx.fillRect(centerX, top, spineWidth, height)
 
     // Linha de vinco central
-    ctx.strokeStyle = 'rgba(0, 0, 0, 0.16)'
+    ctx.strokeStyle = colors.spineCrease
     ctx.lineWidth = 1
     ctx.beginPath()
     ctx.moveTo(centerX, top)
@@ -696,8 +739,9 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
   }
 
   watch(
-    [() => store.fontSize, () => store.fontFamily],
+    [() => store.fontSize, () => store.fontFamily, () => store.readerTheme],
     () => {
+      blankRaster = null
       rasterCache.clear()
       pendingRasters.clear()
       void renderCurrentView()

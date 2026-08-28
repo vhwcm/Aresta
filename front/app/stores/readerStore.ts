@@ -2,6 +2,8 @@ import { defineStore } from 'pinia'
 import { markRaw } from 'vue'
 import type { IBookDocument } from '~/interfaces/reader/IBookDocument'
 
+export type ReaderColorTheme = 'sepia' | 'white' | 'black'
+
 interface ReaderState {
   document: IBookDocument | null
   bookId: number | null
@@ -16,6 +18,7 @@ interface ReaderState {
   isZenMode: boolean
   fontSize: number
   fontFamily: string
+  readerTheme: ReaderColorTheme
 }
 
 export const useReaderStore = defineStore('reader', {
@@ -23,9 +26,15 @@ export const useReaderStore = defineStore('reader', {
     let defaultGraphOpen = true
     let defaultFontSize = 18
     let defaultFontFamily = "'Newsreader', Georgia, serif"
+    let defaultReaderTheme: ReaderColorTheme = 'sepia'
 
     if (typeof window !== 'undefined') {
       try {
+        const savedTheme = localStorage.getItem('aresta_reader_theme')
+        if (savedTheme === 'white' || savedTheme === 'sepia' || savedTheme === 'black') {
+          defaultReaderTheme = savedTheme
+        }
+
         const saved = localStorage.getItem('aresta_settings')
         if (saved) {
           const parsed = JSON.parse(saved)
@@ -34,6 +43,9 @@ export const useReaderStore = defineStore('reader', {
           }
           if (typeof parsed.epubFontSize === 'number') {
             defaultFontSize = Math.max(12, Math.min(36, Math.round(parsed.epubFontSize)))
+          }
+          if (parsed.readerTheme === 'white' || parsed.readerTheme === 'sepia' || parsed.readerTheme === 'black') {
+            defaultReaderTheme = parsed.readerTheme
           }
           if (parsed.epubFontFamily) {
             const fontMap: Record<string, string> = {
@@ -67,6 +79,7 @@ export const useReaderStore = defineStore('reader', {
       isZenMode: false,
       fontSize: defaultFontSize,
       fontFamily: defaultFontFamily,
+      readerTheme: defaultReaderTheme,
     }
   },
 
@@ -225,6 +238,22 @@ export const useReaderStore = defineStore('reader', {
 
     setTwoPageMode(isTwoPage: boolean) {
       this.isTwoPageMode = isTwoPage
+    },
+
+    setReaderTheme(theme: ReaderColorTheme) {
+      if (theme !== 'white' && theme !== 'sepia' && theme !== 'black') return
+      this.readerTheme = theme
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('aresta_reader_theme', theme)
+          const saved = localStorage.getItem('aresta_settings')
+          const settings = saved ? JSON.parse(saved) : {}
+          settings.readerTheme = theme
+          localStorage.setItem('aresta_settings', JSON.stringify(settings))
+        } catch {
+          // ignorar erro
+        }
+      }
     },
 
     setZenMode(zen: boolean) {

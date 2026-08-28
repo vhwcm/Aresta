@@ -3,6 +3,7 @@ import { useAuth } from '~/composables/useAuth'
 
 export type ThemeMode = 'dark' | 'light'
 export type EpubFontFamilyId = 'newsreader' | 'literata' | 'lora' | 'merriweather' | 'inter'
+export type ReaderColorTheme = 'sepia' | 'white' | 'black'
 
 export interface SettingsState {
   pageAnimationEnabled: boolean
@@ -12,6 +13,7 @@ export interface SettingsState {
   themeMode: ThemeMode
   desktopHomeGraphOpen: boolean
   desktopReaderGraphOpen: boolean
+  readerTheme: ReaderColorTheme
 }
 
 export interface UserSettingsResponse {
@@ -23,6 +25,7 @@ export interface UserSettingsResponse {
   themeMode?: ThemeMode
   desktopHomeGraphOpen?: boolean
   desktopReaderGraphOpen?: boolean
+  readerTheme?: ReaderColorTheme
   updatedAt?: string | null
 }
 
@@ -37,6 +40,7 @@ const settings = reactive<SettingsState>({
   themeMode: 'light',
   desktopHomeGraphOpen: true,
   desktopReaderGraphOpen: true,
+  readerTheme: 'sepia',
 })
 
 let isInitialized = false
@@ -49,6 +53,7 @@ export function resetSettingsForTesting() {
   settings.themeMode = 'light'
   settings.desktopHomeGraphOpen = true
   settings.desktopReaderGraphOpen = true
+  settings.readerTheme = 'sepia'
   isInitialized = false
 }
 
@@ -97,12 +102,20 @@ function initSettings() {
       if (parsed.themeMode === 'dark' || parsed.themeMode === 'light') {
         settings.themeMode = parsed.themeMode
       }
+      if (parsed.readerTheme === 'white' || parsed.readerTheme === 'sepia' || parsed.readerTheme === 'black') {
+        settings.readerTheme = parsed.readerTheme
+      }
       if (typeof parsed.desktopHomeGraphOpen === 'boolean') {
         settings.desktopHomeGraphOpen = parsed.desktopHomeGraphOpen
       }
       if (typeof parsed.desktopReaderGraphOpen === 'boolean') {
         settings.desktopReaderGraphOpen = parsed.desktopReaderGraphOpen
       }
+    }
+
+    const legacyReaderTheme = localStorage.getItem('aresta_reader_theme')
+    if (legacyReaderTheme === 'white' || legacyReaderTheme === 'sepia' || legacyReaderTheme === 'black') {
+      settings.readerTheme = legacyReaderTheme as ReaderColorTheme
     }
 
     // Compatibilidade retroativa com chave antiga do grafo home
@@ -250,6 +263,21 @@ export function useSettings() {
     void persistToServer()
   }
 
+  const setReaderTheme = (theme: ReaderColorTheme) => {
+    if (theme === 'white' || theme === 'sepia' || theme === 'black') {
+      settings.readerTheme = theme
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('aresta_reader_theme', theme)
+        } catch {
+          // ignorar erro
+        }
+      }
+      saveLocally()
+      void persistToServer()
+    }
+  }
+
   const toggleThemeMode = () => {
     setThemeMode(settings.themeMode === 'dark' ? 'light' : 'dark')
   }
@@ -279,6 +307,11 @@ export function useSettings() {
     set: (val: ThemeMode) => setThemeMode(val),
   })
 
+  const readerTheme = computed({
+    get: () => settings.readerTheme,
+    set: (val: ReaderColorTheme) => setReaderTheme(val),
+  })
+
   const desktopHomeGraphOpen = computed({
     get: () => settings.desktopHomeGraphOpen,
     set: (val: boolean) => setDesktopHomeGraphOpen(val),
@@ -296,6 +329,7 @@ export function useSettings() {
     epubFontSize,
     epubFontFamily,
     themeMode,
+    readerTheme,
     desktopHomeGraphOpen,
     desktopReaderGraphOpen,
     setPageAnimationEnabled,
@@ -303,6 +337,7 @@ export function useSettings() {
     setEpubFontSize,
     setEpubFontFamily,
     setThemeMode,
+    setReaderTheme,
     toggleThemeMode,
     setDesktopHomeGraphOpen,
     setDesktopReaderGraphOpen,
