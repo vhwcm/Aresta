@@ -37,13 +37,41 @@
           </button>
 
           <button
-            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primaryHover text-white text-xs md:text-sm font-semibold transition-all shadow-md hover:scale-102"
+            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primaryHover text-white text-xs md:text-sm font-semibold transition-all shadow-md hover:scale-102 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+            :disabled="isCreating"
             @click="handleCreateCanvas"
           >
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg
+              v-if="isCreating"
+              class="w-4 h-4 animate-spin"
+              viewBox="0 0 24 24"
+              fill="none"
+            >
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"
+              />
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v8H4z"
+              />
+            </svg>
+            <svg
+              v-else
+              class="w-4 h-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
               <path d="M12 5v14M5 12h14" />
             </svg>
-            <span>Novo Quadro</span>
+            <span>{{ isCreating ? 'Criando...' : 'Novo Quadro' }}</span>
           </button>
         </div>
       </div>
@@ -74,6 +102,20 @@
         </span>
       </div>
 
+      <!-- Error State Alert -->
+      <div
+        v-if="errorMessage"
+        class="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm flex items-center justify-between"
+      >
+        <span>{{ errorMessage }}</span>
+        <button
+          class="text-xs font-semibold underline hover:text-red-300 ml-4 cursor-pointer"
+          @click="errorMessage = null"
+        >
+          Fechar
+        </button>
+      </div>
+
       <!-- Canvases Grid -->
       <div v-if="filteredCanvases.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         <div
@@ -93,7 +135,7 @@
               <!-- Context Actions Dropdown / Buttons -->
               <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity" @click.stop>
                 <button
-                  class="p-1.5 rounded-lg hover:bg-bgElevated text-textSecondary hover:text-textPrimary transition-colors"
+                  class="p-1.5 rounded-lg hover:bg-bgElevated text-textSecondary hover:text-textPrimary transition-colors cursor-pointer"
                   title="Duplicar Quadro"
                   @click="handleDuplicate(item.id)"
                 >
@@ -103,7 +145,7 @@
                   </svg>
                 </button>
                 <button
-                  class="p-1.5 rounded-lg hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-colors"
+                  class="p-1.5 rounded-lg hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-colors cursor-pointer"
                   title="Excluir Quadro"
                   @click="handleDelete(item.id)"
                 >
@@ -153,10 +195,41 @@
           Crie seu primeiro quadro infinito para estruturar suas ideias, conectar anotações e desenhar livremente com IA.
         </p>
         <button
-          class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primaryHover text-white text-sm font-medium shadow-md transition-all"
+          class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary hover:bg-primaryHover text-white text-sm font-medium shadow-md transition-all cursor-pointer hover:scale-102 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+          :disabled="isCreating"
           @click="handleCreateCanvas"
         >
-          Criar Primeiro Quadro
+          <svg
+            v-if="isCreating"
+            class="w-4 h-4 animate-spin"
+            viewBox="0 0 24 24"
+            fill="none"
+          >
+            <circle
+              class="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="4"
+            />
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8v8H4z"
+            />
+          </svg>
+          <svg
+            v-else
+            class="w-4 h-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          <span>{{ isCreating ? 'Criando quadro...' : 'Criar Primeiro Quadro' }}</span>
         </button>
       </div>
     </div>
@@ -165,12 +238,12 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
 import { useCanvas } from '~/composables/useCanvas';
 
-const router = useRouter();
 const searchQuery = ref('');
 const fileInputRef = ref<HTMLInputElement | null>(null);
+const isCreating = ref(false);
+const errorMessage = ref<string | null>(null);
 
 const {
   canvasesList,
@@ -183,7 +256,11 @@ const {
 } = useCanvas();
 
 onMounted(async () => {
-  await fetchCanvases();
+  try {
+    await fetchCanvases();
+  } catch (err: any) {
+    console.error('Erro ao carregar quadros:', err);
+  }
 });
 
 const filteredCanvases = computed(() => {
@@ -196,24 +273,45 @@ const filteredCanvases = computed(() => {
   );
 });
 
-const openCanvas = (id: string) => {
-  router.push(`/canvas/${id}`);
+const openCanvas = async (id: string) => {
+  await navigateTo(`/canvas/${id}`);
 };
 
 const handleCreateCanvas = async () => {
-  const newCanvas = await createCanvas('Novo Quadro');
-  if (newCanvas?.id) {
-    router.push(`/canvas/${newCanvas.id}`);
+  if (isCreating.value) return;
+  isCreating.value = true;
+  errorMessage.value = null;
+
+  try {
+    const newCanvas = await createCanvas('Novo Quadro');
+    if (newCanvas?.id) {
+      await navigateTo(`/canvas/${newCanvas.id}`);
+    } else {
+      throw new Error('Identificador do quadro não foi retornado.');
+    }
+  } catch (err: any) {
+    console.error('Erro ao criar quadro:', err);
+    errorMessage.value = 'Falha ao criar o quadro. Verifique se o servidor está ativo e tente novamente.';
+  } finally {
+    isCreating.value = false;
   }
 };
 
 const handleDuplicate = async (id: string) => {
-  await duplicateCanvas(id);
+  try {
+    await duplicateCanvas(id);
+  } catch (err) {
+    console.error('Erro ao duplicar quadro:', err);
+  }
 };
 
 const handleDelete = async (id: string) => {
   if (confirm('Tem certeza que deseja excluir este quadro?')) {
-    await deleteCanvas(id);
+    try {
+      await deleteCanvas(id);
+    } catch (err) {
+      console.error('Erro ao excluir quadro:', err);
+    }
   }
 };
 
@@ -225,9 +323,14 @@ const handleFileImport = async (e: Event) => {
   const target = e.target as HTMLInputElement;
   if (target.files && target.files[0]) {
     const file = target.files[0];
-    const created = await importJsonCanvas(file);
-    if (created?.id) {
-      router.push(`/canvas/${created.id}`);
+    try {
+      const created = await importJsonCanvas(file);
+      if (created?.id) {
+        await navigateTo(`/canvas/${created.id}`);
+      }
+    } catch (err) {
+      console.error('Erro ao importar quadro:', err);
+      errorMessage.value = 'Falha ao importar o arquivo .canvas.';
     }
   }
 };

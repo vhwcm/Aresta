@@ -309,7 +309,18 @@ export function useCanvas() {
           data: initialData || '{"nodes":[],"edges":[],"viewport":{"x":0,"y":0,"zoom":1}}',
         },
       });
-      await fetchCanvases();
+      if (created) {
+        canvasesList.value.unshift({
+          id: created.id,
+          userId: created.userId,
+          title: created.title,
+          description: created.description,
+          nodeCount: 0,
+          edgeCount: 0,
+          createdAt: created.createdAt,
+          updatedAt: created.updatedAt,
+        });
+      }
       return created;
     } catch (err: any) {
       console.error('Erro ao criar quadro:', err);
