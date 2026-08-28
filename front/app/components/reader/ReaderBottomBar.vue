@@ -183,6 +183,18 @@
         <NetworkIcon class="w-4 h-4 text-accent" />
         <span class="hidden sm:inline">Grafo</span>
       </button>
+
+      <!-- Botão Modo Zen (Foco) -->
+      <button
+        @click="store.toggleZenMode()"
+        class="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl bg-white/5 border border-divider text-xs font-semibold text-textSecondary hover:text-textPrimary hover:bg-white/10 transition-all active:scale-95"
+        title="Entrar no Modo Zen / Foco (Pressione Esc ou Voltar para sair)"
+        aria-label="Entrar no Modo Zen"
+        id="btn-zen-mode"
+      >
+        <Maximize2Icon class="w-4 h-4 text-accent" />
+        <span class="hidden sm:inline">Zen</span>
+      </button>
     </div>
   </footer>
 </template>
@@ -196,6 +208,7 @@ import {
   BookOpenIcon,
   FileTextIcon,
   HighlighterIcon,
+  Maximize2Icon,
   NetworkIcon,
   TypeIcon,
 } from 'lucide-vue-next'

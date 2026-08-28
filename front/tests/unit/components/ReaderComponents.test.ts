@@ -183,6 +183,24 @@ describe('Reader Components', () => {
       await resetBtn?.trigger('click')
       expect(store.fontSize).toBe(18)
     })
+
+    it('alterna Modo Zen ao clicar no botão Zen', async () => {
+      const store = useReaderStore()
+      expect(store.isZenMode).toBe(false)
+
+      const wrapper = mount(ReaderBottomBar, {
+        props: { isGraphActive: false },
+      })
+
+      const zenBtn = wrapper.find('#btn-zen-mode')
+      expect(zenBtn.exists()).toBe(true)
+
+      await zenBtn.trigger('click')
+      expect(store.isZenMode).toBe(true)
+
+      await zenBtn.trigger('click')
+      expect(store.isZenMode).toBe(false)
+    })
   })
 
   describe('ReaderSavedPagesModal', () => {

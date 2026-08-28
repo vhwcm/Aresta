@@ -13,6 +13,7 @@ interface ReaderState {
   isGraphOpen: boolean
   isMobileGraphOpen: boolean
   isTwoPageMode: boolean
+  isZenMode: boolean
   fontSize: number
   fontFamily: string
 }
@@ -63,6 +64,7 @@ export const useReaderStore = defineStore('reader', {
       isGraphOpen: defaultGraphOpen,
       isMobileGraphOpen: false,
       isTwoPageMode: false,
+      isZenMode: false,
       fontSize: defaultFontSize,
       fontFamily: defaultFontFamily,
     }
@@ -225,6 +227,14 @@ export const useReaderStore = defineStore('reader', {
       this.isTwoPageMode = isTwoPage
     },
 
+    setZenMode(zen: boolean) {
+      this.isZenMode = zen
+    },
+
+    toggleZenMode() {
+      this.isZenMode = !this.isZenMode
+    },
+
     setLoading(loading: boolean) {
       this.isLoading = loading
     },
@@ -260,6 +270,7 @@ export const useReaderStore = defineStore('reader', {
       this.fileName = null
       this.bookmarks = []
       this.isMobileGraphOpen = false
+      this.isZenMode = false
     },
   },
 })

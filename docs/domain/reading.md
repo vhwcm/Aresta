@@ -54,6 +54,9 @@ model UserBook {
 3. **Tipografia & Repaginação Dinâmica (EPUB)**:
    - Durante a leitura de arquivos EPUB, o usuário pode alterar o tamanho da fonte (12px a 36px).
    - O adaptador recalcula as páginas mantendo a proporcionalidade de leitura do capítulo ativo e persistindo a preferência em `UserSettings`.
+4. **Modo Zen (Foco & Imersão)**:
+   - Permite leitura em tela cheia livre de distrações, ocultando controles secundários.
+   - Saída via tecla `Escape` (Desktop) ou botão/gesto Voltar do celular (Mobile `popstate`).
 
 ---
 

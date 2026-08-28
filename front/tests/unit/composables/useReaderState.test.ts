@@ -294,4 +294,40 @@ describe('useReaderStore', () => {
       expect(store.fontSize).toBe(18)
     })
   })
+
+  describe('Modo Zen (isZenMode)', () => {
+    it('inicia desativado por padrão', () => {
+      const store = useReaderStore()
+      expect(store.isZenMode).toBe(false)
+    })
+
+    it('ativa e desativa modo zen com setZenMode', () => {
+      const store = useReaderStore()
+      store.setZenMode(true)
+      expect(store.isZenMode).toBe(true)
+
+      store.setZenMode(false)
+      expect(store.isZenMode).toBe(false)
+    })
+
+    it('alterna modo zen com toggleZenMode', () => {
+      const store = useReaderStore()
+      expect(store.isZenMode).toBe(false)
+
+      store.toggleZenMode()
+      expect(store.isZenMode).toBe(true)
+
+      store.toggleZenMode()
+      expect(store.isZenMode).toBe(false)
+    })
+
+    it('reseta isZenMode para false ao chamar reset()', () => {
+      const store = useReaderStore()
+      store.setZenMode(true)
+      expect(store.isZenMode).toBe(true)
+
+      store.reset()
+      expect(store.isZenMode).toBe(false)
+    })
+  })
 })

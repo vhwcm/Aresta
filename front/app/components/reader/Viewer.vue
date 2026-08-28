@@ -1,11 +1,11 @@
 <template>
-  <div class="reader-viewer">
+  <div class="reader-viewer" :class="{ 'reader-viewer--zen': store.isZenMode }">
     <!-- Corpo Principal com Divisão Leitor / Grafo -->
     <div class="reader-viewer__body">
       <!-- Seção do Leitor (Mobile: 100% / Desktop: 50% ou 100%) -->
       <section
         class="reader-viewer__reader-pane"
-        :class="store.isGraphOpen ? 'reader-viewer__reader-pane--half' : 'reader-viewer__reader-pane--full'"
+        :class="(store.isGraphOpen && !store.isZenMode) ? 'reader-viewer__reader-pane--half' : 'reader-viewer__reader-pane--full'"
       >
         <!-- Área do Livro / Stage -->
         <main
@@ -45,8 +45,9 @@
           </div>
         </main>
 
-        <!-- Barra Inferior de Controles -->
+        <!-- Barra Inferior de Controles (Oculta no Modo Zen) -->
         <ReaderBottomBar
+          v-if="!store.isZenMode"
           :is-graph-active="isDesktop ? store.isGraphOpen : store.isMobileGraphOpen"
           @close="handleClose"
           @open-saved-pages="isSavedPagesOpen = true"
@@ -56,9 +57,9 @@
         />
       </section>
 
-      <!-- Seção do Grafo de Conhecimento no Desktop (50% da tela) -->
+      <!-- Seção do Grafo de Conhecimento no Desktop (Oculta no Modo Zen) -->
       <aside
-        v-if="store.isGraphOpen"
+        v-if="store.isGraphOpen && !store.isZenMode"
         class="hidden lg:flex lg:w-1/2 h-full flex-col shrink-0 transition-all duration-300"
       >
         <ReaderGraphPanel
@@ -70,9 +71,9 @@
       </aside>
     </div>
 
-    <!-- Grafo de Conhecimento em Tela Cheia no Mobile -->
+    <!-- Grafo de Conhecimento em Tela Cheia no Mobile (Oculto no Modo Zen) -->
     <div
-      v-if="store.isMobileGraphOpen"
+      v-if="store.isMobileGraphOpen && !store.isZenMode"
       class="fixed inset-0 z-50 flex flex-col bg-bgApp lg:hidden animate-fadeIn"
       role="dialog"
       aria-modal="true"
@@ -83,6 +84,34 @@
         @close="store.setMobileGraphOpen(false)"
         @open-annotation-modal="handleOpenAnnotation"
       />
+    </div>
+
+    <!-- Controles e Avisos Flutuantes do Modo Zen -->
+    <div v-if="store.isZenMode" class="reader-viewer__zen-overlay">
+      <!-- Toast Transitório de Boas-Vindas ao Modo Zen -->
+      <transition name="fade">
+        <div
+          v-if="showZenToast"
+          class="reader-viewer__zen-toast"
+          role="status"
+          aria-live="polite"
+        >
+          <span class="font-medium text-white">Modo Zen ativado</span>
+          <span class="text-white/70 text-xs hidden xs:inline">• Pressione <kbd class="px-1.5 py-0.5 rounded bg-white/20 text-[11px] font-mono text-white">Esc</kbd> ou Voltar para sair</span>
+        </div>
+      </transition>
+
+      <!-- Botão Flutuante Discreto para Sair do Modo Zen -->
+      <button
+        @click="exitZenMode"
+        class="reader-viewer__zen-exit-btn group"
+        title="Sair do Modo Zen (Esc ou Voltar)"
+        aria-label="Sair do Modo Zen"
+        id="btn-exit-zen-mode"
+      >
+        <Minimize2Icon class="w-4 h-4 text-white/70 group-hover:text-white transition-colors" />
+        <span class="text-xs font-medium text-white/70 group-hover:text-white transition-colors hidden sm:inline">Sair do Zen</span>
+      </button>
     </div>
 
     <!-- Modal de Páginas Salvas (Bookmarks) -->
@@ -137,6 +166,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { Minimize2Icon } from 'lucide-vue-next'
 import { useReaderStore } from '~/stores/readerStore'
 import { useReaderTypography } from '~/composables/useReaderTypography'
 
@@ -165,6 +195,10 @@ const isDesktop = ref(true)
 const canvasAreaRef = ref<HTMLElement | null>(null)
 let resizeObserver: ResizeObserver | null = null
 
+// Estado do Modo Zen (Toast e Controle)
+const showZenToast = ref(false)
+let zenToastTimeout: any = null
+
 // Estado do Tooltip de Seleção Flutuante
 const isSelectionTooltipVisible = ref(false)
 const selectionTooltipX = ref(0)
@@ -190,6 +224,14 @@ function handleClose() {
     router.back()
   } else {
     router.push('/library')
+  }
+}
+
+function exitZenMode() {
+  if (!store.isZenMode) return
+  store.setZenMode(false)
+  if (typeof window !== 'undefined' && window.history.state?.arestaZenMode) {
+    window.history.back()
   }
 }
 
@@ -357,14 +399,42 @@ function updateDeviceType() {
     } else {
       hasSpace = window.innerWidth >= 1024
     }
-    const shouldBeTwoPage = isDesktop.value && !store.isGraphOpen && hasSpace && store.totalPages > 1
+    const isGraphShowing = store.isGraphOpen && !store.isZenMode
+    const shouldBeTwoPage = isDesktop.value && !isGraphShowing && hasSpace && store.totalPages > 1
     store.setTwoPageMode(shouldBeTwoPage)
+  }
+}
+
+function onPopState() {
+  if (store.isZenMode) {
+    // Ao pressionar o botão de voltar no celular ou navegador, sai do Modo Zen
+    store.setZenMode(false)
   }
 }
 
 watch(
   [() => store.isGraphOpen, () => store.totalPages],
   () => {
+    updateDeviceType()
+  },
+)
+
+watch(
+  () => store.isZenMode,
+  (isZen) => {
+    if (isZen) {
+      showZenToast.value = true
+      if (zenToastTimeout) clearTimeout(zenToastTimeout)
+      zenToastTimeout = setTimeout(() => {
+        showZenToast.value = false
+      }, 2800)
+
+      if (typeof window !== 'undefined' && !window.history.state?.arestaZenMode) {
+        window.history.pushState({ arestaZenMode: true }, '')
+      }
+    } else {
+      showZenToast.value = false
+    }
     updateDeviceType()
   },
 )
@@ -385,6 +455,42 @@ function isTextInput(target: EventTarget | null): boolean {
 
 function onKeyDown(event: KeyboardEvent) {
   if (!store.hasDocument || isTransitioning.value || isTextInput(event.target)) return
+
+  if (event.key === 'Escape') {
+    if (isAnnotationModalOpen.value) {
+      isAnnotationModalOpen.value = false
+      return
+    }
+    if (isAnnotationDrawerOpen.value) {
+      isAnnotationDrawerOpen.value = false
+      return
+    }
+    if (isSavedPagesOpen.value) {
+      isSavedPagesOpen.value = false
+      return
+    }
+    if (isTypographyOpen.value) {
+      isTypographyOpen.value = false
+      return
+    }
+    if (store.isZenMode) {
+      event.preventDefault()
+      exitZenMode()
+      return
+    }
+  }
+
+  // Atalho 'z' ou 'Z' para alternar Modo Zen
+  if ((event.key === 'z' || event.key === 'Z') && !event.ctrlKey && !event.metaKey && !event.altKey) {
+    event.preventDefault()
+    if (store.isZenMode) {
+      exitZenMode()
+    } else {
+      store.setZenMode(true)
+    }
+    return
+  }
+
   if (event.key === 'ArrowRight') {
     event.preventDefault()
     void pageRenderer.value?.next()
@@ -402,6 +508,7 @@ onMounted(() => {
   updateDeviceType()
   window.addEventListener('resize', updateDeviceType)
   window.addEventListener('keydown', onKeyDown)
+  window.addEventListener('popstate', onPopState)
   document.addEventListener('selectionchange', onDocumentSelectionChange)
   if (canvasAreaRef.value && typeof ResizeObserver !== 'undefined') {
     resizeObserver = new ResizeObserver(() => {
@@ -412,10 +519,15 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  if (zenToastTimeout) clearTimeout(zenToastTimeout)
   resizeObserver?.disconnect()
   window.removeEventListener('resize', updateDeviceType)
   window.removeEventListener('keydown', onKeyDown)
+  window.removeEventListener('popstate', onPopState)
   document.removeEventListener('selectionchange', onDocumentSelectionChange)
+  if (store.isZenMode) {
+    store.setZenMode(false)
+  }
 })
 </script>
 
@@ -427,6 +539,7 @@ onUnmounted(() => {
   width: 100%;
   overflow: hidden;
   background: var(--color-bg);
+  position: relative;
 }
 
 .reader-viewer__body {
@@ -536,5 +649,100 @@ onUnmounted(() => {
 .reader-viewer__nav-btn:disabled {
   opacity: 0.15;
   cursor: not-allowed;
+}
+
+/* =========================================================================
+   Estilos do Modo Zen (Imersão Total)
+   ========================================================================= */
+.reader-viewer--zen {
+  background: #0a0a0e;
+}
+
+.reader-viewer--zen .reader-viewer__nav-btn {
+  background: rgba(15, 15, 22, 0.4);
+  border-color: rgba(255, 255, 255, 0.08);
+  opacity: 0.25;
+}
+
+.reader-viewer--zen .reader-viewer__nav-btn:not(:disabled):hover {
+  opacity: 1;
+  background: rgba(229, 123, 85, 0.25);
+  border-color: rgba(229, 123, 85, 0.5);
+}
+
+.reader-viewer__zen-overlay {
+  position: absolute;
+  top: 1rem;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.25rem;
+  pointer-events: none;
+  z-index: 40;
+}
+
+.reader-viewer__zen-toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(18, 18, 24, 0.88);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(229, 123, 85, 0.35);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  border-radius: 9999px;
+  padding: 0.5rem 1rem;
+  font-size: 0.825rem;
+  animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reader-viewer__zen-exit-btn {
+  pointer-events: auto;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(18, 18, 24, 0.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+  padding: 0.45rem 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.reader-viewer__zen-exit-btn:hover {
+  background: rgba(229, 123, 85, 0.2);
+  border-color: rgba(229, 123, 85, 0.45);
+  transform: translateY(-1px);
+}
+
+.reader-viewer__zen-exit-btn:active {
+  transform: scale(0.96);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
 }
 </style>

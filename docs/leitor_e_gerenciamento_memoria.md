@@ -58,6 +58,12 @@ const [fetchedMeta, response] = await Promise.all([
 * **Modo Adaptativo de Páginas**: Suporte a 1 página (mobile e com grafo aberto) e 2 páginas lado a lado (desktop) com alternância dinâmica pela barra inferior.
 * **Desacoplamento do *Prefetch***: A rasterização das páginas seguintes é processada em segundo plano via `requestIdleCallback`, garantindo resposta imediata ao folhear.
 
+### 3.4. Modo Zen / Modo Foco (`isZenMode`)
+* **Imersão Visual 100%**: Recolhe automaticamente a barra de ferramentas inferior (`ReaderBottomBar`), painéis laterais e o grafo de conhecimento, dedicando toda a viewport do dispositivo ao livro.
+* **Saída Instantânea no Desktop**: Pressionar a tecla **`Escape` (`Esc`)** ou a tecla **`Z`** encerra o Modo Zen e restaura as ferramentas contextuais.
+* **Saída Fluida no Mobile (`popstate`)**: Ao ativar o Modo Zen, o estado é registrado no histórico (`history.pushState`). O acionamento do **botão Voltar** (físico, barra de navegação virtual ou gesto lateral do Android/iOS) intercepta o evento `popstate` para sair do Modo Zen sem fechar a obra ou desviar da rota.
+* **Controles Suaves**: Inclui toast visual transitório (*fade-out* em 2.8s) e botão flutuante discreto com efeito *glassmorphism* no canto superior da tela.
+
 ---
 
 ## 4. Detalhamento por Camada
