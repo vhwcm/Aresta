@@ -260,5 +260,52 @@ describe('Book Document Adapters and Factory', () => {
 
       adapter.destroy()
     })
+
+    it('preserves chapter headings and embedded styles in renderTextLayer', async () => {
+      const adapter = new EpubDocumentAdapter()
+      const chapterHtml = '<h1 class="chapter-title">Capítulo I: O Começo</h1><p>Era uma vez...</p>'
+      const mockEpubInstance = {
+        metadata: { title: 'Livro Capítulos', creator: 'Autor' },
+        sections: [
+          {
+            id: 'sec1',
+            linear: true,
+            createDocument: () => Promise.resolve({
+              head: {
+                querySelectorAll: () => [{ innerHTML: '.chapter-title { color: #333; }' }]
+              },
+              body: { innerHTML: chapterHtml, textContent: 'Capítulo I: O Começo Era uma vez...' },
+              querySelectorAll: (selector: string) => selector === 'style' ? [{ innerHTML: '.chapter-title { color: #333; }' }] : []
+            })
+          }
+        ],
+        init: () => Promise.resolve()
+      }
+
+      const foliateMod: any = await import('foliate-js/epub.js')
+      const EPUB = foliateMod.EPUB || foliateMod.default || foliateMod.Book
+      const origEPUB = (EPUB as any)
+      vi.spyOn(origEPUB.prototype, 'init').mockImplementation(function (this: any) {
+        this.metadata = mockEpubInstance.metadata
+        this.sections = mockEpubInstance.sections
+        return Promise.resolve()
+      })
+
+      const buffer = new ArrayBuffer(16)
+      await adapter.load(buffer, 'capitulos.epub')
+
+      const container = document.createElement('div')
+      await adapter.renderTextLayer(1, container, 800, 1200)
+
+      const heading = container.querySelector('h1.chapter-title')
+      expect(heading).not.toBeNull()
+      expect(heading?.textContent).toBe('Capítulo I: O Começo')
+
+      const styleTag = container.querySelector('style')
+      expect(styleTag).not.toBeNull()
+      expect(styleTag?.innerHTML).toContain('.chapter-title')
+
+      adapter.destroy()
+    })
   })
 })

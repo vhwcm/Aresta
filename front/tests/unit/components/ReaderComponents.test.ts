@@ -7,6 +7,7 @@ import ReaderAnnotationModal from '../../../app/components/reader/ReaderAnnotati
 import ReaderAnnotationDrawer from '../../../app/components/reader/ReaderAnnotationDrawer.vue'
 import HandwritingCanvas from '../../../app/components/reader/HandwritingCanvas.vue'
 import ReaderSelectionTooltip from '../../../app/components/reader/ReaderSelectionTooltip.vue'
+import ReaderTypographyPopover from '../../../app/components/reader/ReaderTypographyPopover.vue'
 import { useReaderStore } from '../../../app/stores/readerStore'
 
 vi.mock('~/composables/useGraph', () => ({
@@ -151,13 +152,12 @@ describe('Reader Components', () => {
         props: { isGraphActive: false },
       })
 
-      const fontBtn = wrapper.find('#btn-font-size-toggle')
+      const fontBtn = wrapper.find('#btn-appearance-toggle')
       expect(fontBtn.exists()).toBe(true)
-      expect(fontBtn.text()).toContain('18px')
 
       // Abre o popover
       await fontBtn.trigger('click')
-      expect(wrapper.find('[aria-label="Controle de tamanho do texto"]').exists()).toBe(true)
+      expect(wrapper.find('[aria-label="Controle de aparência e fundo de leitura"]').exists()).toBe(true)
 
       // Clica em A+
       const increaseBtn = wrapper.find('button[aria-label="Aumentar tamanho da fonte"]')
@@ -171,17 +171,52 @@ describe('Reader Components', () => {
       await decreaseBtn.trigger('click')
       expect(store.fontSize).toBe(18)
 
-      // Clica em um preset rápido (ex: 26)
-      const presetBtn = wrapper.findAll('button').find((b) => b.text() === '26')
-      expect(presetBtn?.exists()).toBe(true)
-      await presetBtn?.trigger('click')
-      expect(store.fontSize).toBe(26)
+      // Clica em A+ novamente
+      await increaseBtn.trigger('click')
+      expect(store.fontSize).toBe(20)
 
       // Clica em Padrão
       const resetBtn = wrapper.findAll('button').find((b) => b.text() === 'Padrão')
       expect(resetBtn?.exists()).toBe(true)
       await resetBtn?.trigger('click')
       expect(store.fontSize).toBe(18)
+    })
+
+    it('possui tema amarelado (sepia) por padrão e permite alternar entre Branco, Amarelado e Preto', async () => {
+      const store = useReaderStore()
+      expect(store.readerTheme).toBe('sepia')
+
+      const wrapper = mount(ReaderBottomBar, {
+        props: { isGraphActive: false },
+      })
+
+      const appearanceBtn = wrapper.find('#btn-appearance-toggle')
+      expect(appearanceBtn.exists()).toBe(true)
+
+      // Abre popover de aparência
+      await appearanceBtn.trigger('click')
+      expect(wrapper.find('[aria-label="Controle de aparência e fundo de leitura"]').exists()).toBe(true)
+
+      // Clica em Branco
+      const brancoBtn = wrapper.find('button[title="Fundo branco claro"]')
+      expect(brancoBtn.exists()).toBe(true)
+      await brancoBtn.trigger('click')
+      expect(store.readerTheme).toBe('white')
+      expect(localStorage.getItem('aresta_reader_theme')).toBe('white')
+
+      // Clica em Preto
+      const pretoBtn = wrapper.find('button[title="Fundo preto noturno"]')
+      expect(pretoBtn.exists()).toBe(true)
+      await pretoBtn.trigger('click')
+      expect(store.readerTheme).toBe('black')
+      expect(localStorage.getItem('aresta_reader_theme')).toBe('black')
+
+      // Clica em Amarelado (Livro)
+      const amareladoBtn = wrapper.find('button[title="Fundo amarelado suave estilo livro físico"]')
+      expect(amareladoBtn.exists()).toBe(true)
+      await amareladoBtn.trigger('click')
+      expect(store.readerTheme).toBe('sepia')
+      expect(localStorage.getItem('aresta_reader_theme')).toBe('sepia')
     })
 
     it('alterna Modo Zen ao clicar no botão Zen', async () => {
@@ -447,6 +482,45 @@ describe('Reader Components', () => {
       await expandBtn.trigger('click')
 
       expect(wrapper.emitted('expand')).toBeTruthy()
+    })
+  })
+
+  describe('ReaderTypographyPopover', () => {
+    it('renderiza opções de fundo de leitura (Amarelado, Branco, Preto) e altera o tema na store', async () => {
+      const store = useReaderStore()
+      expect(store.readerTheme).toBe('sepia')
+
+      const wrapper = mount(ReaderTypographyPopover, {
+        props: { isOpen: true },
+        global: {
+          stubs: {
+            Teleport: true,
+          },
+        },
+      })
+
+      expect(wrapper.text()).toContain('Fundo da Leitura')
+      expect(wrapper.text()).toContain('Amarelado')
+      expect(wrapper.text()).toContain('Branco')
+      expect(wrapper.text()).toContain('Preto')
+
+      // Clicar em Branco
+      const brancoBtn = wrapper.find('button[title="Fundo branco claro"]')
+      expect(brancoBtn.exists()).toBe(true)
+      await brancoBtn.trigger('click')
+      expect(store.readerTheme).toBe('white')
+
+      // Clicar em Preto
+      const pretoBtn = wrapper.find('button[title="Fundo preto para leitura noturna"]')
+      expect(pretoBtn.exists()).toBe(true)
+      await pretoBtn.trigger('click')
+      expect(store.readerTheme).toBe('black')
+
+      // Clicar em Amarelado
+      const amareladoBtn = wrapper.find('button[title="Fundo amarelado suave estilo livro físico"]')
+      expect(amareladoBtn.exists()).toBe(true)
+      await amareladoBtn.trigger('click')
+      expect(store.readerTheme).toBe('sepia')
     })
   })
 })

@@ -2,7 +2,7 @@
   <div
     ref="stageRef"
     class="page-curl-wrapper"
-    :class="{ 'page-curl-wrapper--dragging': isTransitioning }"
+    :class="['theme-' + store.readerTheme, { 'page-curl-wrapper--dragging': isTransitioning }]"
     role="region"
     aria-label="Página do livro. Arraste as bordas para folhear ou selecione o texto com o mouse."
     @pointerdown="onPointerDown"
@@ -387,7 +387,7 @@ defineExpose({
 
 .page-text-layer :deep(.epub-text-layer-content *::selection) {
   background: rgba(229, 123, 85, 0.38) !important;
-  color: #1a1a1a !important;
+  color: inherit !important;
 }
 
 .page-text-layer :deep(br::selection) {
@@ -396,8 +396,20 @@ defineExpose({
 
 /* EPUB Native Typography Layer (Texto HTML 100% Vetorial e Nítido) */
 .page-text-layer :deep(.epub-text-layer-viewport) {
-  background: #faf9f7;
+  background: transparent;
   border-radius: 1px;
+}
+
+.theme-sepia .page-text-layer :deep(.epub-text-layer-viewport) {
+  background: #f5eedc;
+}
+
+.theme-white .page-text-layer :deep(.epub-text-layer-viewport) {
+  background: #ffffff;
+}
+
+.theme-black .page-text-layer :deep(.epub-text-layer-viewport) {
+  background: #121214;
 }
 
 .page-text-layer :deep(.epub-text-layer-content) {
@@ -410,9 +422,139 @@ defineExpose({
   text-rendering: optimizeLegibility !important;
 }
 
-.page-text-layer :deep(.epub-text-layer-content *) {
+.theme-sepia .page-text-layer :deep(.epub-text-layer-content),
+.theme-sepia .page-text-layer :deep(.epub-text-layer-content *) {
+  color: #2a2521 !important;
+}
+
+.theme-white .page-text-layer :deep(.epub-text-layer-content),
+.theme-white .page-text-layer :deep(.epub-text-layer-content *) {
   color: #1a1a1a !important;
+}
+
+.theme-black .page-text-layer :deep(.epub-text-layer-content),
+.theme-black .page-text-layer :deep(.epub-text-layer-content *) {
+  color: #e4e4e7 !important;
+}
+
+/* Tipografia Estrutural de Livros (Títulos de Capítulos, Cabeçalhos e Parágrafos) */
+.page-text-layer :deep(.epub-text-layer-content h1),
+.page-text-layer :deep(.epub-text-layer-content .chapter-title),
+.page-text-layer :deep(.epub-text-layer-content .title),
+.page-text-layer :deep(.epub-text-layer-content [class*="title"]) {
+  font-size: 2em !important;
+  font-weight: 700 !important;
+  line-height: 1.25 !important;
+  margin-top: 0.8em !important;
+  margin-bottom: 0.5em !important;
+  display: block !important;
+}
+
+.page-text-layer :deep(.epub-text-layer-content h2),
+.page-text-layer :deep(.epub-text-layer-content .chapter-subtitle),
+.page-text-layer :deep(.epub-text-layer-content .subtitle),
+.page-text-layer :deep(.epub-text-layer-content [class*="subtitle"]) {
+  font-size: 1.5em !important;
+  font-weight: 700 !important;
+  line-height: 1.3 !important;
+  margin-top: 0.75em !important;
+  margin-bottom: 0.4em !important;
+  display: block !important;
+}
+
+.page-text-layer :deep(.epub-text-layer-content h3) {
+  font-size: 1.25em !important;
+  font-weight: 600 !important;
+  line-height: 1.35 !important;
+  margin-top: 0.7em !important;
+  margin-bottom: 0.35em !important;
+  display: block !important;
+}
+
+.page-text-layer :deep(.epub-text-layer-content h4) {
+  font-size: 1.1em !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+  margin-top: 0.6em !important;
+  margin-bottom: 0.3em !important;
+  display: block !important;
+}
+
+.page-text-layer :deep(.epub-text-layer-content h5) {
+  font-size: 1em !important;
+  font-weight: 600 !important;
+  margin-top: 0.55em !important;
+  margin-bottom: 0.25em !important;
+  display: block !important;
+}
+
+.page-text-layer :deep(.epub-text-layer-content h6) {
+  font-size: 0.9em !important;
+  font-weight: 600 !important;
+  margin-top: 0.5em !important;
+  margin-bottom: 0.2em !important;
+  display: block !important;
+}
+
+.page-text-layer :deep(.epub-text-layer-content p) {
+  margin-top: 0 !important;
+  margin-bottom: 0.85em !important;
   line-height: 1.7 !important;
+  text-align: justify !important;
+  text-justify: inter-word !important;
+}
+
+.page-text-layer :deep(.epub-text-layer-content strong),
+.page-text-layer :deep(.epub-text-layer-content b) {
+  font-weight: 700 !important;
+}
+
+.page-text-layer :deep(.epub-text-layer-content em),
+.page-text-layer :deep(.epub-text-layer-content i) {
+  font-style: italic !important;
+}
+
+.page-text-layer :deep(.epub-text-layer-content blockquote) {
+  margin: 1em 1.5em !important;
+  padding-left: 1em !important;
+  border-left: 2px solid rgba(0, 0, 0, 0.15) !important;
+  font-style: italic !important;
+}
+
+.theme-black .page-text-layer :deep(.epub-text-layer-content blockquote) {
+  border-left-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.page-text-layer :deep(.epub-text-layer-content hr) {
+  margin: 1.5em auto !important;
+  border: none !important;
+  border-top: 1px solid rgba(0, 0, 0, 0.15) !important;
+  width: 60% !important;
+}
+
+.theme-black .page-text-layer :deep(.epub-text-layer-content hr) {
+  border-top-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.page-text-layer :deep(.epub-text-layer-content ul),
+.page-text-layer :deep(.epub-text-layer-content ol) {
+  margin: 0.75em 0 0.75em 1.5em !important;
+  padding-left: 1em !important;
+}
+
+.page-text-layer :deep(.epub-text-layer-content li) {
+  margin-bottom: 0.35em !important;
+  line-height: 1.6 !important;
+}
+
+.page-text-layer :deep(.epub-text-layer-content sub) {
+  font-size: 0.75em !important;
+  vertical-align: sub !important;
+}
+
+.page-text-layer :deep(.epub-text-layer-content sup) {
+  font-size: 0.75em !important;
+  vertical-align: super !important;
 }
 
 .page-curl-loading {

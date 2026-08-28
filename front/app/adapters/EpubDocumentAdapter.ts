@@ -60,6 +60,83 @@ async function buildEpubLoader(arrayBuffer: ArrayBuffer) {
   return { loadText, loadBlob, getSize, sha1: undefined }
 }
 
+const EPUB_TYPOGRAPHY_STYLES = `
+  .epub-text-layer-content h1, .epub-text-layer-content .chapter-title, .epub-text-layer-content .title, .epub-text-layer-content [class*="title"] {
+    font-size: 2em !important;
+    font-weight: 700 !important;
+    line-height: 1.25 !important;
+    margin-top: 0.8em !important;
+    margin-bottom: 0.5em !important;
+    display: block !important;
+  }
+  .epub-text-layer-content h2, .epub-text-layer-content .chapter-subtitle, .epub-text-layer-content .subtitle, .epub-text-layer-content [class*="subtitle"] {
+    font-size: 1.5em !important;
+    font-weight: 700 !important;
+    line-height: 1.3 !important;
+    margin-top: 0.75em !important;
+    margin-bottom: 0.4em !important;
+    display: block !important;
+  }
+  .epub-text-layer-content h3 {
+    font-size: 1.25em !important;
+    font-weight: 600 !important;
+    line-height: 1.35 !important;
+    margin-top: 0.7em !important;
+    margin-bottom: 0.35em !important;
+    display: block !important;
+  }
+  .epub-text-layer-content h4 {
+    font-size: 1.1em !important;
+    font-weight: 600 !important;
+    line-height: 1.4 !important;
+    margin-top: 0.6em !important;
+    margin-bottom: 0.3em !important;
+    display: block !important;
+  }
+  .epub-text-layer-content h5 {
+    font-size: 1em !important;
+    font-weight: 600 !important;
+    margin-top: 0.55em !important;
+    margin-bottom: 0.25em !important;
+    display: block !important;
+  }
+  .epub-text-layer-content h6 {
+    font-size: 0.9em !important;
+    font-weight: 600 !important;
+    margin-top: 0.5em !important;
+    margin-bottom: 0.2em !important;
+    display: block !important;
+  }
+  .epub-text-layer-content p {
+    margin-top: 0 !important;
+    margin-bottom: 0.85em !important;
+    line-height: 1.7 !important;
+    text-align: justify !important;
+    text-justify: inter-word !important;
+  }
+  .epub-text-layer-content strong, .epub-text-layer-content b { font-weight: 700 !important; }
+  .epub-text-layer-content em, .epub-text-layer-content i { font-style: italic !important; }
+  .epub-text-layer-content blockquote {
+    margin: 1em 1.5em !important;
+    padding-left: 1em !important;
+    border-left: 2px solid rgba(0, 0, 0, 0.15) !important;
+    font-style: italic !important;
+  }
+  .epub-text-layer-content hr {
+    margin: 1.5em auto !important;
+    border: none !important;
+    border-top: 1px solid rgba(0, 0, 0, 0.15) !important;
+    width: 60% !important;
+  }
+  .epub-text-layer-content ul, .epub-text-layer-content ol {
+    margin: 0.75em 0 0.75em 1.5em !important;
+    padding-left: 1em !important;
+  }
+  .epub-text-layer-content li { margin-bottom: 0.35em !important; line-height: 1.6 !important; }
+  .epub-text-layer-content sub { font-size: 0.75em !important; vertical-align: sub !important; }
+  .epub-text-layer-content sup { font-size: 0.75em !important; vertical-align: super !important; }
+`
+
 function calculateSectionPages(
   doc: Document | null,
   fontSize: number = 18,
@@ -74,6 +151,7 @@ function calculateSectionPages(
 
   try {
     const container = document.createElement('div')
+    container.className = 'epub-text-layer-content'
     container.style.position = 'fixed'
     container.style.visibility = 'hidden'
     container.style.left = '-99999px'
@@ -372,6 +450,8 @@ export class EpubDocumentAdapter implements IBookDocument {
         this._sectionDocs.set(mapping.sectionIndex, doc)
       }
 
+      const docStyles = doc && typeof doc.querySelectorAll === 'function' ? Array.from(doc.querySelectorAll('style')).map((s) => s.innerHTML).join('\n') : ''
+
       const baseWidth = 800
       const baseHeight = 1200
       const scaleX = targetWidth && targetWidth > 0 ? targetWidth / baseWidth : 1
@@ -390,6 +470,12 @@ export class EpubDocumentAdapter implements IBookDocument {
       viewportWrapper.style.transform = `scale(${scaleX}, ${scaleY})`
       viewportWrapper.style.transformOrigin = 'top left'
       viewportWrapper.style.pointerEvents = 'auto'
+
+      if (docStyles) {
+        const styleTag = document.createElement('style')
+        styleTag.innerHTML = docStyles
+        viewportWrapper.appendChild(styleTag)
+      }
 
       const contentWrapper = document.createElement('div')
       contentWrapper.className = 'epub-text-layer-content'
@@ -455,11 +541,16 @@ export class EpubDocumentAdapter implements IBookDocument {
         doc = await section.createDocument()
         this._sectionDocs.set(mapping.sectionIndex, doc)
       }
+      const docStyles = doc && typeof doc.querySelectorAll === 'function' ? Array.from(doc.querySelectorAll('style')).map((s) => s.innerHTML).join('\n') : ''
       const bodyContent = doc.body ? doc.body.innerHTML : ''
       const colOffset = mapping.pageIndexInSection * baseWidth
 
       const svgContent = `
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${baseWidth} ${baseHeight}" width="${width}" height="${height}">
+          <style>
+            ${EPUB_TYPOGRAPHY_STYLES}
+            ${docStyles}
+          </style>
           <foreignObject width="${baseWidth}" height="${baseHeight}">
             <div xmlns="http://www.w3.org/1999/xhtml"
               style="width:${baseWidth}px;height:${baseHeight}px;overflow:hidden;background:#faf9f7;margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;">
