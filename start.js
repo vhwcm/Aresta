@@ -104,7 +104,9 @@ if (uvicornCmd) {
   });
   children.push(convChild);
 } else {
-  console.log(`${colors.yellow}[Conversor]${colors.reset} Ambiente virtual Python não encontrado em pdf2epub/.venv. Pulando conversor.`);
+  console.log(`${colors.yellow}[Conversor]${colors.reset} ⚠ Ambiente virtual Python não encontrado em pdf2epub/.venv.`);
+  console.log(`            ${colors.yellow}→ Execute ${colors.bold}${colors.cyan}npm run setup${colors.reset}${colors.yellow} para configurar o conversor (requer Python 3 instalado).${colors.reset}`);
+  console.log(`            ${colors.yellow}→ Continuando inicialização sem o conversor Python...${colors.reset}\n`);
 }
 
 // 2. Backend

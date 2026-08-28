@@ -33,7 +33,9 @@ try {
         $conv = Start-Process -FilePath $pythonPath -ArgumentList "-m uvicorn pdf2epub.api.server:app --host 0.0.0.0 --port 8000" -WorkingDirectory (Join-Path $ROOT_DIR "pdf2epub") -PassThru -NoNewWindow
         $processes += $conv
     } else {
-        Write-Host "[Conversor] Ambiente virtual Python não encontrado em pdf2epub/.venv. Pulando conversor." -ForegroundColor Yellow
+        Write-Host "[Conversor] ⚠ Ambiente virtual Python não encontrado em pdf2epub\.venv." -ForegroundColor Yellow
+        Write-Host "            → Execute 'npm run setup' para configurar o conversor (requer Python 3 instalado)." -ForegroundColor Yellow
+        Write-Host "            → Continuando sem o microsserviço conversor...`n" -ForegroundColor Yellow
     }
 
     # 2. Backend

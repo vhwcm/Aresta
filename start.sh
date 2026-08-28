@@ -36,11 +36,14 @@ cleanup() {
 # Registrar o trap para escutar sinais de interrupção
 trap cleanup SIGINT SIGTERM EXIT
 
-# 1. Iniciar Conversor PDF -> EPUB (Python / FastAPI na porta 8000)
 if [ -f "$ROOT_DIR/pdf2epub/.venv/bin/uvicorn" ]; then
     echo -e "${GREEN}[Conversor]${NC} Iniciando microsserviço Python em pdf2epub (porta 8000)..."
     (cd "$ROOT_DIR/pdf2epub" && PYTHONPATH=src .venv/bin/uvicorn pdf2epub.api.server:app --host 0.0.0.0 --port 8000) &
     CONV_PID=$!
+else
+    echo -e "${YELLOW}[Conversor]${NC} ⚠ Ambiente virtual Python não encontrado em pdf2epub/.venv."
+    echo -e "            ${YELLOW}→ Execute ${BLUE}npm run setup${YELLOW} para configurar o conversor (requer Python 3 instalado).${NC}"
+    echo -e "            ${YELLOW}→ Continuando sem o microsserviço conversor...\n${NC}"
 fi
 
 # 2. Iniciar Backend (Express.js / Node na porta 7070)
