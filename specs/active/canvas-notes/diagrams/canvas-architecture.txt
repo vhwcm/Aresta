@@ -1,0 +1,54 @@
+================================================================================
+                    ARESTA INFINITE CANVAS & AI OCR ARCHITECTURE
+================================================================================
+
+                               +-----------------------+
+                               |     USER INTERFACE    |
+                               | (Mouse, Touch, Stylus)|
+                               +-----------+-----------+
+                                           |
+                                           v
++------------------------------------------------------------------------------+
+| NUXT 3 CANVAS VIEWPORT (DOM + SVG HYBRID ENGINE)                             |
+|                                                                              |
+|  [ CSS Transform Matrix: translate(panX, panY) scale(zoom) ]                 |
+|                                                                              |
+|  +------------------------+   +------------------------+   +---------------+ |
+|  |     SVG EDGE LAYER     |   |     DOM NODE LAYER     |   | INKING OVERLAY| |
+|  |                        |   |                        |   | (Handwriting) | |
+|  |  [Anchor Snap Engine]  |   | [Selection & Resize]   |   |               | |
+|  |   - Top, Right,        |   |   - Text Note (Md)     |   | [Pen Buffer]  | |
+|  |     Bottom, Left       |   |   - Shapes (Rect,      |   |  - Mouse/Touch| |
+|  |   - Cubic Bézier Path  |   |     Circle, Diamond)   |   |    events     | |
+|  |   - Direction Arrows   |   |   - Book / Highlight   |   |  - BoundingBox| |
+|  |   - Text Edge Labels   |   |   - Markdown Editor    |   |    Calculator | |
+|  +-----------+------------+   +-----------+------------+   +-------+-------+ |
+|              |                            |                        |         |
++--------------|----------------------------|------------------------|---------+
+               |                            |                        |
+               v                            v                        v
++-------------------------------------------------------+ +--------------------+
+| useCanvas COMPOSABLE / PINIA STORE                    | | ✨ "Transcrever"   |
+|  - Nodes & Edges State (JSON Canvas Spec v1.0)         | | Action Pill Button |
+|  - Undo / Redo History Stack (Ctrl+Z / Ctrl+Shift+Z)  | +---------+----------+
+|  - Debounced Autosave (750ms)                         |           |
++---------------------------+---------------------------+           | Crop BBox
+                            |                                       | to PNG
+                            | REST (JSON Canvas Payload)            | Base64
+                            v                                       v
++------------------------------------------------------------------------------+
+| BACKEND NODE.JS (aresta-back-node)                                           |
+|                                                                              |
+|   +--------------------------+               +--------------------------+    |
+|   | /api/canvases Controller |               | /api/ocr/transcribe      |    |
+|   | - CRUD & Duplicate       |               | - OcrController          |    |
+|   +------------+-------------+               +------------+-------------+    |
+|                |                                          |                  |
+|                v                                          v gRPC             |
+|   +--------------------------+               +--------------------------+    |
+|   | SQLite DB (Prisma Model) |               | aresta-ocr Service       |    |
+|   | Table: canvases          |               | (Gemini Vision 2.0 Flash)|    |
+|   | (id, user_id, title, data|               +--------------------------+    |
+|   +--------------------------+                                               |
++------------------------------------------------------------------------------+
+================================================================================
