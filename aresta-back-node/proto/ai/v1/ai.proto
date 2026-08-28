@@ -4,9 +4,11 @@ package ai.v1;
 
 option go_package = "aresta-ocr/gen/ai/v1;aiv1";
 
-// AIService expõe métodos de inteligência artificial para pesquisa e categorização de livros
+// AIService expõe métodos de inteligência artificial para pesquisa de livros, embeddings e flashcards
 service AIService {
   rpc AnalyzeBook(AnalyzeBookRequest) returns (AnalyzeBookResponse);
+  rpc GenerateEmbedding(GenerateEmbeddingRequest) returns (GenerateEmbeddingResponse);
+  rpc GenerateFlashcard(GenerateFlashcardRequest) returns (GenerateFlashcardResponse);
 }
 
 message ThemeItem {
@@ -33,4 +35,34 @@ message AnalyzeBookResponse {
   string summary = 1;
   repeated int32 matched_theme_ids = 2;
   repeated NewThemeSuggestion new_themes = 3;
+}
+
+message GenerateEmbeddingRequest {
+  string text = 1;
+}
+
+message GenerateEmbeddingResponse {
+  repeated float embedding = 1;
+}
+
+message ContextAnnotation {
+  string note = 1;
+  string quote = 2;
+  string chapter = 3;
+}
+
+message GenerateFlashcardRequest {
+  string book_title = 1;
+  string target_quote = 2;
+  string target_note = 3;
+  string chapter_title = 4;
+  repeated string themes = 5;
+  repeated ContextAnnotation context_notes = 6;
+}
+
+message GenerateFlashcardResponse {
+  string question = 1;
+  string answer = 2;
+  string card_type = 3; // REAL_SITUATION | CONCEPT_RECALL | CONCEPT_UNION
+  string context_summary = 4;
 }

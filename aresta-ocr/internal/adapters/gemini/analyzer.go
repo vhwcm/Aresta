@@ -197,6 +197,119 @@ Responda OBRIGATORIAMENTE em formato JSON válido conforme a estrutura:
 	return result, nil
 }
 
+func (a *GeminiBookAnalyzer) GenerateEmbedding(ctx context.Context, text string) ([]float32, error) {
+	emb := a.getEmbeddingSafe(ctx, text)
+	if emb == nil {
+		return nil, fmt.Errorf("falha ao gerar embedding para o texto fornecido")
+	}
+	return emb, nil
+}
+
+type flashcardJSONResponse struct {
+	Question       string `json:"question"`
+	Answer         string `json:"answer"`
+	CardType       string `json:"card_type"`
+	ContextSummary string `json:"context_summary"`
+}
+
+func (a *GeminiBookAnalyzer) GenerateFlashcard(ctx context.Context, req domain.GenerateFlashcardRequest) (*domain.GenerateFlashcardResult, error) {
+	var contextNotesText string
+	if len(req.ContextNotes) > 0 {
+		var b strings.Builder
+		b.WriteString("\nAnotações vizinhas recuperadas via RAG:\n")
+		for i, cn := range req.ContextNotes {
+			b.WriteString(fmt.Sprintf("%d. Capítulo: %s | Citação: \"%s\" | Nota: \"%s\"\n", i+1, cn.Chapter, cn.Quote, cn.Note))
+		}
+		contextNotesText = b.String()
+	}
+
+	themesText := strings.Join(req.Themes, ", ")
+	if themesText == "" {
+		themesText = "Geral"
+	}
+
+	prompt := fmt.Sprintf(`Você é um tutor pedagógico de elite especializado em memorização e active recall.
+Gere exatamente 1 flashcard inteligente de alta qualidade baseado no trecho lido e na anotação do leitor.
+
+DADOS DA LEITURA:
+- Livro: "%s"
+- Capítulo: "%s"
+- Temas: %s
+- Citação Marcada: "%s"
+- Nota do Leitor: "%s"
+%s
+
+ARQUÉTIPOS PEDAGÓGICOS (Selecione o mais adequado):
+1. REAL_SITUATION: Aplicação prática do conceito em um cenário verossímil.
+2. CONCEPT_RECALL: Pergunta socrática e reflexiva sobre o mecanismo ou princípio fundamental.
+3. CONCEPT_UNION: Conexão profunda entre a anotação alvo e as anotações vizinhas de contexto.
+
+Responda OBRIGATORIAMENTE em formato JSON válido:
+{
+  "question": "Pergunta concisa e instigante...",
+  "answer": "Resposta explicada e didática...",
+  "card_type": "REAL_SITUATION" | "CONCEPT_RECALL" | "CONCEPT_UNION",
+  "context_summary": "Resumo conciso do contexto..."
+}`, req.BookTitle, req.ChapterTitle, themesText, req.TargetQuote, req.TargetNote, contextNotesText)
+
+	content := &genai.Content{
+		Parts: []*genai.Part{genai.NewPartFromText(prompt)},
+		Role:  "user",
+	}
+
+	systemInstruction := &genai.Content{
+		Parts: []*genai.Part{genai.NewPartFromText("Você é um especialista em neurociência da aprendizagem e repetição espaçada. Responda estritamente em JSON com pergunta, resposta, tipo de card e resumo contextual.")},
+		Role:  "user",
+	}
+
+	genConfig := &genai.GenerateContentConfig{
+		SystemInstruction: systemInstruction,
+		ResponseMIMEType:  "application/json",
+	}
+
+	resp, err := a.client.Models.GenerateContent(ctx, a.model, []*genai.Content{content}, genConfig)
+	if err != nil {
+		return nil, fmt.Errorf("gemini flashcard generation failed: %w", err)
+	}
+
+	rawJSON := resp.Text()
+	cleanedJSON := strings.TrimSpace(rawJSON)
+	cleanedJSON = strings.TrimPrefix(cleanedJSON, "```json")
+	cleanedJSON = strings.TrimPrefix(cleanedJSON, "```")
+	cleanedJSON = strings.TrimSuffix(cleanedJSON, "```")
+	cleanedJSON = strings.TrimSpace(cleanedJSON)
+
+	var parsed flashcardJSONResponse
+	if err := json.Unmarshal([]byte(cleanedJSON), &parsed); err != nil {
+		a.logger.Error("failed to parse flashcard json output", "raw", rawJSON, "error", err)
+		quote := req.TargetQuote
+		if quote == "" {
+			quote = req.TargetNote
+		}
+		parsed.Question = fmt.Sprintf("Qual o conceito essencial destacado em '%s'?", quote)
+		parsed.Answer = fmt.Sprintf("O trecho aborda ideias centrais em '%s'. Anotação: %s", req.BookTitle, req.TargetNote)
+		parsed.CardType = "CONCEPT_RECALL"
+		parsed.ContextSummary = fmt.Sprintf("Leitura de %s", req.BookTitle)
+	}
+
+	validType := "CONCEPT_RECALL"
+	switch strings.ToUpper(parsed.CardType) {
+	case "REAL_SITUATION":
+		validType = "REAL_SITUATION"
+	case "CONCEPT_UNION":
+		validType = "CONCEPT_UNION"
+	default:
+		validType = "CONCEPT_RECALL"
+	}
+
+	return &domain.GenerateFlashcardResult{
+		Question:       parsed.Question,
+		Answer:         parsed.Answer,
+		CardType:       validType,
+		ContextSummary: parsed.ContextSummary,
+	}, nil
+}
+
 func (a *GeminiBookAnalyzer) getEmbeddingSafe(ctx context.Context, text string) []float32 {
 	content := &genai.Content{
 		Parts: []*genai.Part{genai.NewPartFromText(text)},

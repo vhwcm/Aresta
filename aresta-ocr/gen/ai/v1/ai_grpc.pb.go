@@ -19,16 +19,16 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AIService_AnalyzeBook_FullMethodName = "/ai.v1.AIService/AnalyzeBook"
+	AIService_AnalyzeBook_FullMethodName       = "/ai.v1.AIService/AnalyzeBook"
+	AIService_GenerateEmbedding_FullMethodName = "/ai.v1.AIService/GenerateEmbedding"
+	AIService_GenerateFlashcard_FullMethodName = "/ai.v1.AIService/GenerateFlashcard"
 )
 
 // AIServiceClient is the client API for AIService service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-//
-// AIService expõe métodos de inteligência artificial para pesquisa e categorização de livros
 type AIServiceClient interface {
 	AnalyzeBook(ctx context.Context, in *AnalyzeBookRequest, opts ...grpc.CallOption) (*AnalyzeBookResponse, error)
+	GenerateEmbedding(ctx context.Context, in *GenerateEmbeddingRequest, opts ...grpc.CallOption) (*GenerateEmbeddingResponse, error)
+	GenerateFlashcard(ctx context.Context, in *GenerateFlashcardRequest, opts ...grpc.CallOption) (*GenerateFlashcardResponse, error)
 }
 
 type aIServiceClient struct {
@@ -49,41 +49,58 @@ func (c *aIServiceClient) AnalyzeBook(ctx context.Context, in *AnalyzeBookReques
 	return out, nil
 }
 
+func (c *aIServiceClient) GenerateEmbedding(ctx context.Context, in *GenerateEmbeddingRequest, opts ...grpc.CallOption) (*GenerateEmbeddingResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenerateEmbeddingResponse)
+	err := c.cc.Invoke(ctx, AIService_GenerateEmbedding_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aIServiceClient) GenerateFlashcard(ctx context.Context, in *GenerateFlashcardRequest, opts ...grpc.CallOption) (*GenerateFlashcardResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenerateFlashcardResponse)
+	err := c.cc.Invoke(ctx, AIService_GenerateFlashcard_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AIServiceServer is the server API for AIService service.
 // All implementations must embed UnimplementedAIServiceServer
 // for forward compatibility.
-//
-// AIService expõe métodos de inteligência artificial para pesquisa e categorização de livros
 type AIServiceServer interface {
 	AnalyzeBook(context.Context, *AnalyzeBookRequest) (*AnalyzeBookResponse, error)
+	GenerateEmbedding(context.Context, *GenerateEmbeddingRequest) (*GenerateEmbeddingResponse, error)
+	GenerateFlashcard(context.Context, *GenerateFlashcardRequest) (*GenerateFlashcardResponse, error)
 	mustEmbedUnimplementedAIServiceServer()
 }
 
 // UnimplementedAIServiceServer must be embedded to have
 // forward compatible implementations.
-//
-// NOTE: this should be embedded by value instead of pointer to avoid a nil
-// pointer dereference when methods are called.
 type UnimplementedAIServiceServer struct{}
 
 func (UnimplementedAIServiceServer) AnalyzeBook(context.Context, *AnalyzeBookRequest) (*AnalyzeBookResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method AnalyzeBook not implemented")
 }
+func (UnimplementedAIServiceServer) GenerateEmbedding(context.Context, *GenerateEmbeddingRequest) (*GenerateEmbeddingResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GenerateEmbedding not implemented")
+}
+func (UnimplementedAIServiceServer) GenerateFlashcard(context.Context, *GenerateFlashcardRequest) (*GenerateFlashcardResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GenerateFlashcard not implemented")
+}
 func (UnimplementedAIServiceServer) mustEmbedUnimplementedAIServiceServer() {}
 func (UnimplementedAIServiceServer) testEmbeddedByValue()                   {}
 
 // UnsafeAIServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to AIServiceServer will
-// result in compilation errors.
 type UnsafeAIServiceServer interface {
 	mustEmbedUnimplementedAIServiceServer()
 }
 
 func RegisterAIServiceServer(s grpc.ServiceRegistrar, srv AIServiceServer) {
-	// If the following call panics, it indicates UnimplementedAIServiceServer was
-	// embedded by pointer and is nil.  This will cause panics if an
-	// unimplemented method is ever invoked, so we test this at initialization
-	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
@@ -108,9 +125,43 @@ func _AIService_AnalyzeBook_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AIService_GenerateEmbedding_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GenerateEmbeddingRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AIServiceServer).GenerateEmbedding(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AIService_GenerateEmbedding_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AIServiceServer).GenerateEmbedding(ctx, req.(*GenerateEmbeddingRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AIService_GenerateFlashcard_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GenerateFlashcardRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AIServiceServer).GenerateFlashcard(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AIService_GenerateFlashcard_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AIServiceServer).GenerateFlashcard(ctx, req.(*GenerateFlashcardRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AIService_ServiceDesc is the grpc.ServiceDesc for AIService service.
-// It's only intended for direct use with grpc.RegisterService,
-// and not to be introspected or modified (even as a copy)
 var AIService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "ai.v1.AIService",
 	HandlerType: (*AIServiceServer)(nil),
@@ -118,6 +169,14 @@ var AIService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AnalyzeBook",
 			Handler:    _AIService_AnalyzeBook_Handler,
+		},
+		{
+			MethodName: "GenerateEmbedding",
+			Handler:    _AIService_GenerateEmbedding_Handler,
+		},
+		{
+			MethodName: "GenerateFlashcard",
+			Handler:    _AIService_GenerateFlashcard_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

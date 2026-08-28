@@ -277,6 +277,221 @@ func (x *AnalyzeBookResponse) GetNewThemes() []*NewThemeSuggestion {
 	return nil
 }
 
+type GenerateEmbeddingRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Text          string                 `protobuf:"bytes,1,opt,name=text,proto3" json:"text,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GenerateEmbeddingRequest) Reset() {
+	*x = GenerateEmbeddingRequest{}
+	mi := &file_ai_v1_ai_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GenerateEmbeddingRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GenerateEmbeddingRequest) ProtoMessage() {}
+
+func (x *GenerateEmbeddingRequest) GetText() string {
+	if x != nil {
+		return x.Text
+	}
+	return ""
+}
+
+type GenerateEmbeddingResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Embedding     []float32              `protobuf:"fixed32,1,rep,packed,name=embedding,proto3" json:"embedding,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GenerateEmbeddingResponse) Reset() {
+	*x = GenerateEmbeddingResponse{}
+	mi := &file_ai_v1_ai_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GenerateEmbeddingResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GenerateEmbeddingResponse) ProtoMessage() {}
+
+func (x *GenerateEmbeddingResponse) GetEmbedding() []float32 {
+	if x != nil {
+		return x.Embedding
+	}
+	return nil
+}
+
+type ContextAnnotation struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Note          string                 `protobuf:"bytes,1,opt,name=note,proto3" json:"note,omitempty"`
+	Quote         string                 `protobuf:"bytes,2,opt,name=quote,proto3" json:"quote,omitempty"`
+	Chapter       string                 `protobuf:"bytes,3,opt,name=chapter,proto3" json:"chapter,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ContextAnnotation) Reset() {
+	*x = ContextAnnotation{}
+	mi := &file_ai_v1_ai_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ContextAnnotation) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ContextAnnotation) ProtoMessage() {}
+
+func (x *ContextAnnotation) GetNote() string {
+	if x != nil {
+		return x.Note
+	}
+	return ""
+}
+
+func (x *ContextAnnotation) GetQuote() string {
+	if x != nil {
+		return x.Quote
+	}
+	return ""
+}
+
+func (x *ContextAnnotation) GetChapter() string {
+	if x != nil {
+		return x.Chapter
+	}
+	return ""
+}
+
+type GenerateFlashcardRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	BookTitle     string                 `protobuf:"bytes,1,opt,name=book_title,json=bookTitle,proto3" json:"book_title,omitempty"`
+	TargetQuote   string                 `protobuf:"bytes,2,opt,name=target_quote,json=targetQuote,proto3" json:"target_quote,omitempty"`
+	TargetNote    string                 `protobuf:"bytes,3,opt,name=target_note,json=targetNote,proto3" json:"target_note,omitempty"`
+	ChapterTitle  string                 `protobuf:"bytes,4,opt,name=chapter_title,json=chapterTitle,proto3" json:"chapter_title,omitempty"`
+	Themes        []string               `protobuf:"bytes,5,rep,name=themes,proto3" json:"themes,omitempty"`
+	ContextNotes  []*ContextAnnotation   `protobuf:"bytes,6,rep,name=context_notes,json=contextNotes,proto3" json:"context_notes,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GenerateFlashcardRequest) Reset() {
+	*x = GenerateFlashcardRequest{}
+	mi := &file_ai_v1_ai_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GenerateFlashcardRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GenerateFlashcardRequest) ProtoMessage() {}
+
+func (x *GenerateFlashcardRequest) GetBookTitle() string {
+	if x != nil {
+		return x.BookTitle
+	}
+	return ""
+}
+
+func (x *GenerateFlashcardRequest) GetTargetQuote() string {
+	if x != nil {
+		return x.TargetQuote
+	}
+	return ""
+}
+
+func (x *GenerateFlashcardRequest) GetTargetNote() string {
+	if x != nil {
+		return x.TargetNote
+	}
+	return ""
+}
+
+func (x *GenerateFlashcardRequest) GetChapterTitle() string {
+	if x != nil {
+		return x.ChapterTitle
+	}
+	return ""
+}
+
+func (x *GenerateFlashcardRequest) GetThemes() []string {
+	if x != nil {
+		return x.Themes
+	}
+	return nil
+}
+
+func (x *GenerateFlashcardRequest) GetContextNotes() []*ContextAnnotation {
+	if x != nil {
+		return x.ContextNotes
+	}
+	return nil
+}
+
+type GenerateFlashcardResponse struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Question       string                 `protobuf:"bytes,1,opt,name=question,proto3" json:"question,omitempty"`
+	Answer         string                 `protobuf:"bytes,2,opt,name=answer,proto3" json:"answer,omitempty"`
+	CardType       string                 `protobuf:"bytes,3,opt,name=card_type,json=cardType,proto3" json:"card_type,omitempty"`
+	ContextSummary string                 `protobuf:"bytes,4,opt,name=context_summary,json=contextSummary,proto3" json:"context_summary,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *GenerateFlashcardResponse) Reset() {
+	*x = GenerateFlashcardResponse{}
+	mi := &file_ai_v1_ai_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GenerateFlashcardResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GenerateFlashcardResponse) ProtoMessage() {}
+
+func (x *GenerateFlashcardResponse) GetQuestion() string {
+	if x != nil {
+		return x.Question
+	}
+	return ""
+}
+
+func (x *GenerateFlashcardResponse) GetAnswer() string {
+	if x != nil {
+		return x.Answer
+	}
+	return ""
+}
+
+func (x *GenerateFlashcardResponse) GetCardType() string {
+	if x != nil {
+		return x.CardType
+	}
+	return ""
+}
+
+func (x *GenerateFlashcardResponse) GetContextSummary() string {
+	if x != nil {
+		return x.ContextSummary
+	}
+	return ""
+}
+
 var File_ai_v1_ai_proto protoreflect.FileDescriptor
 
 const file_ai_v1_ai_proto_rawDesc = "" +

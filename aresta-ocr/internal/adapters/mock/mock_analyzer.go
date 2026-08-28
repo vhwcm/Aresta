@@ -68,3 +68,43 @@ func (m *MockBookAnalyzer) AnalyzeBook(ctx context.Context, req domain.AnalyzeBo
 
 	return result, nil
 }
+
+func (m *MockBookAnalyzer) GenerateEmbedding(ctx context.Context, text string) ([]float32, error) {
+	// Retorna um embedding determinístico simulado com 768 dimensões
+	emb := make([]float32, 768)
+	var sum float32
+	for i, r := range text {
+		idx := i % 768
+		emb[idx] += float32(r) * 0.01
+		sum += emb[idx]
+	}
+	if sum == 0 {
+		sum = 1
+	}
+	for i := range emb {
+		emb[i] = emb[i] / sum
+	}
+	return emb, nil
+}
+
+func (m *MockBookAnalyzer) GenerateFlashcard(ctx context.Context, req domain.GenerateFlashcardRequest) (*domain.GenerateFlashcardResult, error) {
+	cardType := "CONCEPT_RECALL"
+	if len(req.ContextNotes) > 0 {
+		cardType = "CONCEPT_UNION"
+	}
+
+	quote := req.TargetQuote
+	if quote == "" {
+		quote = req.TargetNote
+	}
+
+	question := fmt.Sprintf("Qual o conceito central abordado no trecho: \"%s\"?", quote)
+	answer := fmt.Sprintf("O trecho explora ideias fundamentais em '%s'. Anotação do leitor: %s.", req.BookTitle, req.TargetNote)
+
+	return &domain.GenerateFlashcardResult{
+		Question:       question,
+		Answer:         answer,
+		CardType:       cardType,
+		ContextSummary: fmt.Sprintf("Gerado a partir da leitura de '%s'", req.BookTitle),
+	}, nil
+}

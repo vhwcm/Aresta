@@ -74,3 +74,56 @@ func (h *AIHandler) AnalyzeBook(ctx context.Context, req *aiv1.AnalyzeBookReques
 		NewThemes:       newThemes,
 	}, nil
 }
+
+func (h *AIHandler) GenerateEmbedding(ctx context.Context, req *aiv1.GenerateEmbeddingRequest) (*aiv1.GenerateEmbeddingResponse, error) {
+	if req.Text == "" {
+		return nil, status.Error(codes.InvalidArgument, "text is required")
+	}
+
+	emb, err := h.analyzer.GenerateEmbedding(ctx, req.Text)
+	if err != nil {
+		h.logger.Error("failed to generate embedding", "error", err)
+		return nil, status.Errorf(codes.Internal, "failed to generate embedding: %v", err)
+	}
+
+	return &aiv1.GenerateEmbeddingResponse{
+		Embedding: emb,
+	}, nil
+}
+
+func (h *AIHandler) GenerateFlashcard(ctx context.Context, req *aiv1.GenerateFlashcardRequest) (*aiv1.GenerateFlashcardResponse, error) {
+	if req.TargetNote == "" && req.TargetQuote == "" {
+		return nil, status.Error(codes.InvalidArgument, "target note or quote is required")
+	}
+
+	ctxNotes := make([]domain.ContextAnnotation, len(req.ContextNotes))
+	for i, cn := range req.ContextNotes {
+		ctxNotes[i] = domain.ContextAnnotation{
+			Note:    cn.Note,
+			Quote:   cn.Quote,
+			Chapter: cn.Chapter,
+		}
+	}
+
+	domainReq := domain.GenerateFlashcardRequest{
+		BookTitle:    req.BookTitle,
+		TargetQuote:  req.TargetQuote,
+		TargetNote:   req.TargetNote,
+		ChapterTitle: req.ChapterTitle,
+		Themes:       req.Themes,
+		ContextNotes: ctxNotes,
+	}
+
+	res, err := h.analyzer.GenerateFlashcard(ctx, domainReq)
+	if err != nil {
+		h.logger.Error("failed to generate flashcard", "error", err)
+		return nil, status.Errorf(codes.Internal, "failed to generate flashcard: %v", err)
+	}
+
+	return &aiv1.GenerateFlashcardResponse{
+		Question:       res.Question,
+		Answer:         res.Answer,
+		CardType:       res.CardType,
+		ContextSummary: res.ContextSummary,
+	}, nil
+}

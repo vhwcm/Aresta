@@ -35,9 +35,36 @@ type AnalyzeBookResult struct {
 	NewThemes       []NewTheme
 }
 
-// BookAnalyzer define a interface de domínio para pesquisa e enriquecimento de livros via IA.
+// ContextAnnotation representa uma anotação vizinha recuperada via RAG.
+type ContextAnnotation struct {
+	Note    string
+	Quote   string
+	Chapter string
+}
+
+// GenerateFlashcardRequest contém os dados para geração do flashcard via small-shot pedagógico.
+type GenerateFlashcardRequest struct {
+	BookTitle    string
+	TargetQuote  string
+	TargetNote   string
+	ChapterTitle string
+	Themes       []string
+	ContextNotes []ContextAnnotation
+}
+
+// GenerateFlashcardResult contém a pergunta, resposta, arquétipo pedagógico e resumo contextual.
+type GenerateFlashcardResult struct {
+	Question       string
+	Answer         string
+	CardType       string // REAL_SITUATION | CONCEPT_RECALL | CONCEPT_UNION
+	ContextSummary string
+}
+
+// BookAnalyzer define a interface de domínio para pesquisa de livros, embeddings e flashcards via IA.
 type BookAnalyzer interface {
 	AnalyzeBook(ctx context.Context, req AnalyzeBookRequest) (*AnalyzeBookResult, error)
+	GenerateEmbedding(ctx context.Context, text string) ([]float32, error)
+	GenerateFlashcard(ctx context.Context, req GenerateFlashcardRequest) (*GenerateFlashcardResult, error)
 }
 
 // CosineSimilarity calcula a similaridade de cosseno entre dois vetores de embeddings.
