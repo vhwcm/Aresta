@@ -2,7 +2,7 @@
   <div
     ref="stageRef"
     class="page-curl-wrapper"
-    :class="['theme-' + store.readerTheme, { 'page-curl-wrapper--dragging': isTransitioning }]"
+    :class="['theme-' + store.readerTheme, { 'page-curl-wrapper--dragging': isDragging }]"
     role="region"
     aria-label="Página do livro. Arraste as bordas para folhear ou selecione o texto com o mouse."
     @pointerdown="onPointerDown"
@@ -10,65 +10,185 @@
     @pointerup="onPointerUp"
     @pointercancel="onPointerCancel"
   >
-    <!-- Camada de Texto Invisível (TextLayer Overlay) -->
     <div
-      v-if="!isTransitioning && store.document"
-      class="page-text-overlay-container"
-      aria-hidden="false"
+      class="book-viewport-track"
+      :style="{
+        transform: `translate3d(${dragOffset}px, 0, 0)`,
+        transition: isDragging ? 'none' : (isTransitioning ? `transform ${TURN_DURATION_MS}ms cubic-bezier(0.22, 1, 0.36, 1)` : 'none'),
+      }"
     >
-      <!-- Modo 2 Páginas: Página Esquerda -->
-      <div
-        v-if="pageLayout.isTwoPage && pageLayout.leftPage && pageLayout.leftPage.pageNumber > 0"
-        ref="leftTextLayerRef"
-        class="page-text-layer page-text-layer--left"
-        :style="{
-          left: `${pageLayout.leftPage.left}px`,
-          top: `${pageLayout.leftPage.top}px`,
-          width: `${pageLayout.leftPage.width}px`,
-          height: `${pageLayout.leftPage.height}px`,
-        }"
-      />
+      <!-- Spread Atual (Página Ativa) -->
+      <div v-if="store.document" class="spread-container spread-container--current">
+        <!-- Modo 2 Páginas: Página Esquerda -->
+        <div
+          v-if="pageLayout.isTwoPage && pageLayout.leftPage && pageLayout.leftPage.pageNumber > 0"
+          class="page-sheet page-sheet--left"
+          :style="{
+            left: `${pageLayout.leftPage.left}px`,
+            top: `${pageLayout.leftPage.top}px`,
+            width: `${pageLayout.leftPage.width}px`,
+            height: `${pageLayout.leftPage.height}px`,
+          }"
+        >
+          <canvas
+            v-if="store.document?.type === 'pdf'"
+            ref="leftCanvasRef"
+            class="page-pdf-canvas"
+          />
+          <div
+            ref="leftTextLayerRef"
+            class="page-text-layer page-text-layer--left"
+          />
+        </div>
 
-      <!-- Modo 2 Páginas: Página Direita -->
-      <div
-        v-if="pageLayout.isTwoPage && pageLayout.rightPage && pageLayout.rightPage.pageNumber > 0"
-        ref="rightTextLayerRef"
-        class="page-text-layer page-text-layer--right"
-        :style="{
-          left: `${pageLayout.rightPage.left}px`,
-          top: `${pageLayout.rightPage.top}px`,
-          width: `${pageLayout.rightPage.width}px`,
-          height: `${pageLayout.rightPage.height}px`,
-        }"
-      />
+        <!-- Modo 2 Páginas: Lombada Central -->
+        <div
+          v-if="pageLayout.isTwoPage && pageLayout.leftPage && pageLayout.rightPage && pageLayout.leftPage.pageNumber > 0 && pageLayout.rightPage.pageNumber > 0"
+          class="book-spine-divider"
+          :style="{
+            left: `${pageLayout.leftPage.left + pageLayout.leftPage.width - 16}px`,
+            top: `${pageLayout.leftPage.top}px`,
+            width: '32px',
+            height: `${pageLayout.leftPage.height}px`,
+          }"
+          aria-hidden="true"
+        />
 
-      <!-- Modo 2 Páginas: Divisor Vertical de Lombada / Vinco Central -->
-      <div
-        v-if="pageLayout.isTwoPage && pageLayout.leftPage && pageLayout.rightPage && pageLayout.leftPage.pageNumber > 0 && pageLayout.rightPage.pageNumber > 0"
-        class="book-spine-divider"
-        :style="{
-          left: `${pageLayout.leftPage.left + pageLayout.leftPage.width - 16}px`,
-          top: `${pageLayout.leftPage.top}px`,
-          width: '32px',
-          height: `${pageLayout.leftPage.height}px`,
-        }"
-        aria-hidden="true"
-      />
+        <!-- Modo 2 Páginas: Página Direita -->
+        <div
+          v-if="pageLayout.isTwoPage && pageLayout.rightPage && pageLayout.rightPage.pageNumber > 0"
+          class="page-sheet page-sheet--right"
+          :style="{
+            left: `${pageLayout.rightPage.left}px`,
+            top: `${pageLayout.rightPage.top}px`,
+            width: `${pageLayout.rightPage.width}px`,
+            height: `${pageLayout.rightPage.height}px`,
+          }"
+        >
+          <canvas
+            v-if="store.document?.type === 'pdf'"
+            ref="rightCanvasRef"
+            class="page-pdf-canvas"
+          />
+          <div
+            ref="rightTextLayerRef"
+            class="page-text-layer page-text-layer--right"
+          />
+        </div>
 
-      <!-- Modo 1 Página: Página Única Central -->
+        <!-- Modo 1 Página: Página Única Central -->
+        <div
+          v-if="!pageLayout.isTwoPage && pageLayout.singlePage && pageLayout.singlePage.pageNumber > 0"
+          class="page-sheet page-sheet--single"
+          :style="{
+            left: `${pageLayout.singlePage.left}px`,
+            top: `${pageLayout.singlePage.top}px`,
+            width: `${pageLayout.singlePage.width}px`,
+            height: `${pageLayout.singlePage.height}px`,
+          }"
+        >
+          <canvas
+            v-if="store.document?.type === 'pdf'"
+            ref="singleCanvasRef"
+            class="page-pdf-canvas"
+          />
+          <div
+            ref="singleTextLayerRef"
+            class="page-text-layer page-text-layer--single"
+          />
+        </div>
+      </div>
+
+      <!-- Spread Entrante (Durante Transição ou Arraste) -->
       <div
-        v-if="!pageLayout.isTwoPage && pageLayout.singlePage && pageLayout.singlePage.pageNumber > 0"
-        ref="singleTextLayerRef"
-        class="page-text-layer page-text-layer--single"
+        v-if="store.document && incomingTargetPage > 0"
+        class="spread-container spread-container--incoming"
         :style="{
-          left: `${pageLayout.singlePage.left}px`,
-          top: `${pageLayout.singlePage.top}px`,
-          width: `${pageLayout.singlePage.width}px`,
-          height: `${pageLayout.singlePage.height}px`,
+          left: `${incomingSpreadOffsetX}px`,
         }"
-      />
+      >
+        <!-- Modo 2 Páginas Entrante: Página Esquerda -->
+        <div
+          v-if="pageLayout.isTwoPage && incomingLeftPageNumber > 0"
+          class="page-sheet page-sheet--left"
+          :style="{
+            left: `${pageLayout.leftPage?.left || 0}px`,
+            top: `${pageLayout.leftPage?.top || 0}px`,
+            width: `${pageLayout.leftPage?.width || 0}px`,
+            height: `${pageLayout.leftPage?.height || 0}px`,
+          }"
+        >
+          <canvas
+            v-if="store.document?.type === 'pdf'"
+            ref="incomingLeftCanvasRef"
+            class="page-pdf-canvas"
+          />
+          <div
+            ref="incomingLeftTextLayerRef"
+            class="page-text-layer page-text-layer--left"
+          />
+        </div>
+
+        <!-- Modo 2 Páginas Entrante: Lombada Central -->
+        <div
+          v-if="pageLayout.isTwoPage && pageLayout.leftPage && incomingLeftPageNumber > 0 && incomingRightPageNumber > 0"
+          class="book-spine-divider"
+          :style="{
+            left: `${pageLayout.leftPage.left + pageLayout.leftPage.width - 16}px`,
+            top: `${pageLayout.leftPage.top}px`,
+            width: '32px',
+            height: `${pageLayout.leftPage.height}px`,
+          }"
+          aria-hidden="true"
+        />
+
+        <!-- Modo 2 Páginas Entrante: Página Direita -->
+        <div
+          v-if="pageLayout.isTwoPage && incomingRightPageNumber > 0"
+          class="page-sheet page-sheet--right"
+          :style="{
+            left: `${pageLayout.rightPage?.left || 0}px`,
+            top: `${pageLayout.rightPage?.top || 0}px`,
+            width: `${pageLayout.rightPage?.width || 0}px`,
+            height: `${pageLayout.rightPage?.height || 0}px`,
+          }"
+        >
+          <canvas
+            v-if="store.document?.type === 'pdf'"
+            ref="incomingRightCanvasRef"
+            class="page-pdf-canvas"
+          />
+          <div
+            ref="incomingRightTextLayerRef"
+            class="page-text-layer page-text-layer--right"
+          />
+        </div>
+
+        <!-- Modo 1 Página Entrante: Página Única -->
+        <div
+          v-if="!pageLayout.isTwoPage && incomingSinglePageNumber > 0"
+          class="page-sheet page-sheet--single"
+          :style="{
+            left: `${pageLayout.singlePage?.left || 0}px`,
+            top: `${pageLayout.singlePage?.top || 0}px`,
+            width: `${pageLayout.singlePage?.width || 0}px`,
+            height: `${pageLayout.singlePage?.height || 0}px`,
+          }"
+        >
+          <canvas
+            v-if="store.document?.type === 'pdf'"
+            ref="incomingSingleCanvasRef"
+            class="page-pdf-canvas"
+          />
+          <div
+            ref="incomingSingleTextLayerRef"
+            class="page-text-layer page-text-layer--single"
+          />
+        </div>
+      </div>
     </div>
 
+    <!-- Indicador de Carregamento -->
     <div
       v-if="isPreparing"
       class="page-curl-loading"
@@ -77,6 +197,7 @@
     >
       <div class="page-curl-loading__spinner" />
     </div>
+
     <p v-if="errorMessage" class="page-curl-error" role="alert">
       {{ errorMessage }}
     </p>
@@ -84,9 +205,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { useReaderStore } from '~/stores/readerStore'
-import { useBookPageTurn, type PageTurnDirection } from '~/composables/reader/useBookPageTurn'
+import { TURN_DURATION_MS, useBookPageTurn, type PageTurnDirection } from '~/composables/reader/useBookPageTurn'
 
 interface ReaderPointer {
   x: number
@@ -96,15 +217,32 @@ interface ReaderPointer {
 
 const store = useReaderStore()
 const stageRef = ref<HTMLElement | null>(null)
+
+// Refs de elementos do Spread Atual
+const leftCanvasRef = ref<HTMLCanvasElement | null>(null)
 const leftTextLayerRef = ref<HTMLElement | null>(null)
+const rightCanvasRef = ref<HTMLCanvasElement | null>(null)
 const rightTextLayerRef = ref<HTMLElement | null>(null)
+const singleCanvasRef = ref<HTMLCanvasElement | null>(null)
 const singleTextLayerRef = ref<HTMLElement | null>(null)
+
+// Refs de elementos do Spread Entrante
+const incomingLeftCanvasRef = ref<HTMLCanvasElement | null>(null)
+const incomingLeftTextLayerRef = ref<HTMLElement | null>(null)
+const incomingRightCanvasRef = ref<HTMLCanvasElement | null>(null)
+const incomingRightTextLayerRef = ref<HTMLElement | null>(null)
+const incomingSingleCanvasRef = ref<HTMLCanvasElement | null>(null)
+const incomingSingleTextLayerRef = ref<HTMLElement | null>(null)
 
 const {
   isTransitioning,
+  isDragging,
   isPreparing,
   errorMessage,
   pageLayout,
+  dragOffset,
+  transitionDirection,
+  incomingTargetPage,
   requestTurn,
   beginDrag,
   updateDrag,
@@ -117,7 +255,29 @@ const emit = defineEmits<{
 }>()
 
 let activePointerId: number | null = null
-let renderVersion = 0
+let currentRenderVersion = 0
+
+const incomingSpreadOffsetX = computed(() => {
+  const hostWidth = stageRef.value?.clientWidth || 800
+  return transitionDirection.value === 'next' ? hostWidth : -hostWidth
+})
+
+const incomingLeftPageNumber = computed(() => {
+  if (incomingTargetPage.value <= 0) return 0
+  return incomingTargetPage.value % 2 === 0
+    ? Math.max(1, incomingTargetPage.value - 1)
+    : incomingTargetPage.value
+})
+
+const incomingRightPageNumber = computed(() => {
+  if (incomingTargetPage.value <= 0) return 0
+  const left = incomingLeftPageNumber.value
+  return left + 1 <= store.totalPages ? left + 1 : 0
+})
+
+const incomingSinglePageNumber = computed(() => {
+  return incomingTargetPage.value > 0 ? incomingTargetPage.value : 0
+})
 
 function pointFrom(event: PointerEvent): ReaderPointer {
   const bounds = stageRef.value?.getBoundingClientRect()
@@ -182,7 +342,7 @@ function onPointerDown(event: PointerEvent) {
 
   activePointerId = event.pointerId
   stageRef.value.setPointerCapture(event.pointerId)
-  void beginDrag(direction, pointFrom(event))
+  beginDrag(direction, pointFrom(event))
 }
 
 function onPointerMove(event: PointerEvent) {
@@ -201,58 +361,137 @@ function onPointerUp(event: PointerEvent) {
 function onPointerCancel(event: PointerEvent) {
   if (event.pointerId !== activePointerId) return
   activePointerId = null
-  void cancelDrag(pointFrom(event))
+  cancelDrag(pointFrom(event))
 }
 
-async function renderTextLayers() {
-  const currentRenderVersion = ++renderVersion
-  if (isTransitioning.value || !store.document) return
+async function renderPageToElement(
+  pageNumber: number,
+  canvasEl: HTMLCanvasElement | null,
+  textLayerEl: HTMLElement | null,
+  width: number,
+  height: number,
+) {
+  if (pageNumber <= 0 || !store.document || width <= 0 || height <= 0) return
+  const doc = store.document
+  const dpr = typeof window !== 'undefined' ? (window.devicePixelRatio || 1) : 1
+
+  if (doc.type === 'pdf') {
+    if (canvasEl) {
+      canvasEl.width = Math.round(width * dpr)
+      canvasEl.height = Math.round(height * dpr)
+      canvasEl.style.width = `${width}px`
+      canvasEl.style.height = `${height}px`
+
+      const ctx = canvasEl.getContext('2d', { alpha: false })
+      if (ctx) {
+        ctx.setTransform(1, 0, 0, 1, 0, 0)
+        ctx.scale(dpr, dpr)
+        const pageData = await doc.getPage(pageNumber, Math.round(width * dpr), Math.round(height * dpr))
+        await pageData.render(ctx)
+      }
+    }
+    if (textLayerEl && doc.renderTextLayer) {
+      await doc.renderTextLayer(pageNumber, textLayerEl, width, height)
+    }
+  } else if (doc.type === 'epub') {
+    if (textLayerEl && doc.renderTextLayer) {
+      await doc.renderTextLayer(pageNumber, textLayerEl, width, height)
+    }
+  }
+}
+
+async function renderCurrentSpread() {
+  const version = ++currentRenderVersion
+  if (!store.document) return
 
   await nextTick()
-  if (currentRenderVersion !== renderVersion) return
-
-  const doc = store.document
-  if (!doc.renderTextLayer) return
+  if (version !== currentRenderVersion) return
 
   const layout = pageLayout.value
-
   if (layout.isTwoPage) {
-    if (leftTextLayerRef.value && layout.leftPage && layout.leftPage.pageNumber > 0) {
-      void doc.renderTextLayer(
+    if (layout.leftPage && layout.leftPage.pageNumber > 0) {
+      void renderPageToElement(
         layout.leftPage.pageNumber,
+        leftCanvasRef.value,
         leftTextLayerRef.value,
         layout.leftPage.width,
         layout.leftPage.height,
       )
     }
-    if (rightTextLayerRef.value && layout.rightPage && layout.rightPage.pageNumber > 0) {
-      void doc.renderTextLayer(
+    if (layout.rightPage && layout.rightPage.pageNumber > 0) {
+      void renderPageToElement(
         layout.rightPage.pageNumber,
+        rightCanvasRef.value,
         rightTextLayerRef.value,
         layout.rightPage.width,
         layout.rightPage.height,
       )
     }
-  } else {
-    if (singleTextLayerRef.value && layout.singlePage && layout.singlePage.pageNumber > 0) {
-      void doc.renderTextLayer(
-        layout.singlePage.pageNumber,
-        singleTextLayerRef.value,
-        layout.singlePage.width,
-        layout.singlePage.height,
+  } else if (layout.singlePage && layout.singlePage.pageNumber > 0) {
+    void renderPageToElement(
+      layout.singlePage.pageNumber,
+      singleCanvasRef.value,
+      singleTextLayerRef.value,
+      layout.singlePage.width,
+      layout.singlePage.height,
+    )
+  }
+}
+
+async function renderIncomingSpread() {
+  if (!store.document || incomingTargetPage.value <= 0) return
+
+  await nextTick()
+  const layout = pageLayout.value
+
+  if (layout.isTwoPage) {
+    if (incomingLeftPageNumber.value > 0 && layout.leftPage) {
+      void renderPageToElement(
+        incomingLeftPageNumber.value,
+        incomingLeftCanvasRef.value,
+        incomingLeftTextLayerRef.value,
+        layout.leftPage.width,
+        layout.leftPage.height,
       )
     }
+    if (incomingRightPageNumber.value > 0 && layout.rightPage) {
+      void renderPageToElement(
+        incomingRightPageNumber.value,
+        incomingRightCanvasRef.value,
+        incomingRightTextLayerRef.value,
+        layout.rightPage.width,
+        layout.rightPage.height,
+      )
+    }
+  } else if (incomingSinglePageNumber.value > 0 && layout.singlePage) {
+    void renderPageToElement(
+      incomingSinglePageNumber.value,
+      incomingSingleCanvasRef.value,
+      incomingSingleTextLayerRef.value,
+      layout.singlePage.width,
+      layout.singlePage.height,
+    )
   }
 }
 
 watch(isTransitioning, (value) => emit('transition-state', value), { immediate: true })
 
 watch(
-  [() => store.currentPage, () => store.document, () => pageLayout.value, isTransitioning],
+  [() => store.currentPage, () => store.document, () => pageLayout.value, () => store.fontSize, () => store.fontFamily],
   () => {
-    void renderTextLayers()
+    void renderCurrentSpread()
   },
   { deep: true, flush: 'post' },
+)
+
+watch(
+  incomingTargetPage,
+  (val) => {
+    if (val > 0) {
+      void renderIncomingSpread()
+    }
+  },
+  { flush: 'post' },
 )
 
 defineExpose({
@@ -274,6 +513,7 @@ defineExpose({
   touch-action: pan-y;
   user-select: text;
   -webkit-user-select: text;
+  overflow: hidden;
 }
 
 .page-curl-wrapper--dragging {
@@ -282,45 +522,76 @@ defineExpose({
   -webkit-user-select: none !important;
 }
 
-.page-curl-wrapper :deep(.page-2d-canvas),
-.page-curl-wrapper :deep(.page-curl-canvas) {
-  display: block;
-  width: 100%;
-  height: 100%;
-  outline: none;
-}
-
-.page-text-overlay-container {
+.book-viewport-track {
   position: absolute;
   inset: 0;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
-  z-index: 10;
+  will-change: transform;
 }
 
-.page-text-layer {
+.spread-container {
   position: absolute;
-  overflow: hidden;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.page-sheet {
+  position: absolute;
   pointer-events: auto;
+  overflow: hidden;
   user-select: text;
   -webkit-user-select: text;
+  box-sizing: border-box;
 }
 
-.page-text-layer--left {
+.theme-sepia .page-sheet {
+  background-color: #f5eedc;
+}
+.theme-white .page-sheet {
+  background-color: #ffffff;
+}
+.theme-black .page-sheet {
+  background-color: #121214;
+}
+
+.page-sheet--left {
   box-shadow: -4px 0 20px rgba(0, 0, 0, 0.45);
   border-left: 1px solid rgba(255, 255, 255, 0.04);
   border-right: 1px solid rgba(0, 0, 0, 0.12);
 }
 
-.page-text-layer--right {
+.page-sheet--right {
   box-shadow: 4px 0 20px rgba(0, 0, 0, 0.45);
   border-left: 1px solid rgba(0, 0, 0, 0.12);
   border-right: 1px solid rgba(255, 255, 255, 0.04);
 }
 
-.page-text-layer--single {
+.page-sheet--single {
   box-shadow: 0 0 24px rgba(0, 0, 0, 0.5);
   border-left: 1px solid rgba(255, 255, 255, 0.04);
   border-right: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.page-pdf-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+  width: 100%;
+  height: 100%;
+}
+
+.page-text-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: auto;
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 .book-spine-divider {

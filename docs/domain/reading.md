@@ -54,9 +54,15 @@ model UserBook {
 3. **Tipografia & Repaginação Dinâmica (EPUB)**:
    - Durante a leitura de arquivos EPUB, o usuário pode alterar o tamanho da fonte (12px a 36px).
    - O adaptador recalcula as páginas mantendo a proporcionalidade de leitura do capítulo ativo e persistindo a preferência em `UserSettings`.
-4. **Modo Zen (Foco & Imersão)**:
-   - Permite leitura em tela cheia livre de distrações, ocultando controles secundários.
-   - Saída via tecla `Escape` (Desktop) ou botão/gesto Voltar do celular (Mobile `popstate`).
+5. **Dicionário Offline Local & Lematização**:
+   - Durante a leitura de EPUBs, a seleção de uma única palavra aciona a opção "Dicionário" no tooltip de seleção.
+   - A consulta é 100% offline, operando sobre o `IndexedDB` (`aresta_dictionary_db`) com pacotes baixados em segundo plano.
+   - Suporta pares de idiomas entre Português (`pt`), Inglês (`en`) e Espanhol (`es`), com lematização morfológica offline para formas flexionadas e verbos conjugados.
+   - Permite alternância rápida de par de línguas e exibe fonética IPA, classe gramatical, traduções para a língua nativa, significados numerados e exemplos.
+6. **Transição de Páginas 2D Fluida (GPU 60/120 FPS)**:
+   - A virada e arraste de páginas são executados com aceleração de hardware via CSS Transforms (`translate3d`), preservando 100% da tipografia, proporção e nitidez dos glifos sem distorção ou redimensionamento de palavras durante a transição.
+
+
 
 ---
 

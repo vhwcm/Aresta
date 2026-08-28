@@ -310,16 +310,8 @@ export function useCanvas() {
         },
       });
       if (created) {
-        canvasesList.value.unshift({
-          id: created.id,
-          userId: created.userId,
-          title: created.title,
-          description: created.description,
-          nodeCount: 0,
-          edgeCount: 0,
-          createdAt: created.createdAt,
-          updatedAt: created.updatedAt,
-        });
+        canvasesList.value.unshift(created);
+        currentCanvas.value = created;
       }
       return created;
     } catch (err: any) {
