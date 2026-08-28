@@ -17,6 +17,8 @@ export const ROUTES = {
   OCR: '/api/ocr',
   HEALTH: '/api/health',
   CONVERT: '/api/convert',
+  FLASHCARDS: '/api/flashcards',
+  FLASHCARDS_V1: '/api/v1/flashcards',
 
   // Rotas de arquivos estáticos
   COVERS: '/covers',

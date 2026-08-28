@@ -25,6 +25,8 @@ model User {
   userSettings        UserSettings?
   annotations         Annotation[]
   dailyActivities     DailyActivity[]
+  flashcards          Flashcard[]
+  dailyDeckCards      DailyDeckCard[]
 
   @@map("users")
 }
@@ -39,6 +41,7 @@ model Book {
   userBooks   UserBook[]
   bookThemes  BookTheme[]
   annotations Annotation[]
+  flashcards  Flashcard[]
 
   @@map("books")
 }
@@ -119,11 +122,13 @@ model Annotation {
   note             String?
   chapter_title    String?
   progress         Float?            @default(0.0)
+  embedding        String?           // JSON array string com vetor float[]
   created_at       DateTime          @default(now())
   updated_at       DateTime          @default(now()) @updatedAt
   user             User              @relation(fields: [user_id], references: [id], onDelete: Cascade)
   book             Book              @relation(fields: [book_id], references: [id], onDelete: Cascade)
   annotationThemes AnnotationTheme[]
+  flashcard        Flashcard?
 
   @@index([user_id, book_id])
   @@map("annotations")
@@ -139,6 +144,52 @@ model AnnotationTheme {
 
   @@unique([annotation_id, theme_id])
   @@map("annotation_themes")
+}
+
+model Flashcard {
+  id                Int             @id @default(autoincrement())
+  user_id           Int
+  annotation_id     Int             @unique
+  book_id           Int
+  card_type         String          @default("CONCEPT_RECALL") // REAL_SITUATION | CONCEPT_RECALL | CONCEPT_UNION
+  question          String
+  answer            String
+  context_summary   String?
+  repetition_level  Int             @default(1)
+  next_review_at    DateTime        @default(now())
+  last_reviewed_at  DateTime?
+  review_count      Int             @default(0)
+  difficulty        Float           @default(2.5)
+  created_at        DateTime        @default(now())
+  updated_at        DateTime        @default(now()) @updatedAt
+
+  user              User            @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  annotation        Annotation      @relation(fields: [annotation_id], references: [id], onDelete: Cascade)
+  book              Book            @relation(fields: [book_id], references: [id], onDelete: Cascade)
+  dailyDeckCards    DailyDeckCard[]
+
+  @@index([user_id, next_review_at])
+  @@map("flashcards")
+}
+
+model DailyDeckCard {
+  id           Int        @id @default(autoincrement())
+  user_id      Int
+  deck_date    String     // Formato YYYY-MM-DD
+  flashcard_id Int
+  position     Int
+  is_reviewed  Boolean    @default(false)
+  rating       String?    // 'hard' | 'good' | 'easy'
+  reviewed_at  DateTime?
+  created_at   DateTime   @default(now())
+  updated_at   DateTime   @default(now()) @updatedAt
+
+  user         User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  flashcard    Flashcard  @relation(fields: [flashcard_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, deck_date, flashcard_id])
+  @@index([user_id, deck_date, position])
+  @@map("daily_deck_cards")
 }
 
 model UserSettings {

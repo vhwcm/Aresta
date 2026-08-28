@@ -1,6 +1,7 @@
 import { app } from './app.js';
 import { env } from './config/env.js';
 import { prisma } from './config/prisma.js';
+import { flashcardSchedulerService } from './services/flashcardScheduler.service.js';
 
 async function bootstrap() {
   try {
@@ -10,6 +11,9 @@ async function bootstrap() {
     // Conectar ao banco via Prisma
     await prisma.$connect();
     console.log('💾 Conexão com banco de dados SQLite estabelecida.');
+
+    // Iniciar scheduler de flashcards
+    flashcardSchedulerService.start();
 
     const server = app.listen(env.PORT, () => {
       console.log(`\n==================================================`);
@@ -22,6 +26,7 @@ async function bootstrap() {
     // Tratamento de encerramento gracioso
     const gracefulShutdown = async (signal: string) => {
       console.log(`\n🛑 Recebido sinal ${signal}. Encerrando servidor graciosamente...`);
+      flashcardSchedulerService.stop();
       server.close(async () => {
         await prisma.$disconnect();
         console.log('🔒 Servidor e conexões com banco encerradas.');

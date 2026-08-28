@@ -22,9 +22,10 @@ describe('Annotations Endpoints & Graph Integration', () => {
     testBookId = book.id;
 
     // Criar temas de teste globais
+    const uniqueSuffix = `${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
     const theme1 = await prisma.theme.create({
       data: {
-        name: 'Tema Teste Anotação 101',
+        name: `Tema Teste Anotação 101 ${uniqueSuffix}`,
         color: '#3B82F6',
         description: 'Tema azul',
       },
@@ -33,7 +34,7 @@ describe('Annotations Endpoints & Graph Integration', () => {
 
     const theme2 = await prisma.theme.create({
       data: {
-        name: 'Tema Teste Anotação 102',
+        name: `Tema Teste Anotação 102 ${uniqueSuffix}`,
         color: '#EC4899',
         description: 'Tema rosa',
       },

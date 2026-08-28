@@ -13,6 +13,7 @@ import ocrRoutes from './ocr.routes.js';
 import streakRoutes from './streak.routes.js';
 import healthRoutes from './health.routes.js';
 import conversionRoutes from './conversion.routes.js';
+import flashcardRoutes from './flashcard.routes.js';
 
 const router = Router();
 
@@ -37,6 +38,8 @@ router.use(ROUTES.ANNOTATIONS, annotationRoutes);
 router.use(ROUTES.OCR, ocrRoutes);
 router.use(ROUTES.HEALTH, healthRoutes);
 router.use(ROUTES.CONVERT, conversionRoutes);
+router.use(ROUTES.FLASHCARDS, flashcardRoutes);
+router.use(ROUTES.FLASHCARDS_V1, flashcardRoutes);
 
 export default router;
 

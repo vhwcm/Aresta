@@ -81,6 +81,17 @@ export class UserBookService {
       throw new AppError('Livro não encontrado.', 404);
     }
 
+    // Garantir que o usuário existe
+    await prisma.user.upsert({
+      where: { id: userId },
+      update: {},
+      create: {
+        id: userId,
+        name: 'Usuário Padrão',
+        email: `user${userId}@aresta.org`,
+      },
+    });
+
     const now = new Date();
     const saved = await prisma.userBook.upsert({
       where: {

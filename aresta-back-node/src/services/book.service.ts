@@ -230,8 +230,8 @@ export class BookService {
     // 2. Chamar o microsserviço Go via gRPC
     const aiResult = await aiClient.analyzeBook(book.title, author, existingThemesForAI);
 
-    // 3. Atualizar resumo se fornecido
-    if (aiResult.summary) {
+    // 3. Atualizar resumo se fornecido e se não foi definido manualmente
+    if (aiResult.summary && !book.publicInfo?.summary) {
       await prisma.bookPublicInfo.upsert({
         where: { book_id: bookId },
         update: { summary: aiResult.summary },

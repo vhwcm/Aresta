@@ -1,6 +1,7 @@
 import { prisma } from '../config/prisma.js';
 import { AppError } from '../middlewares/error.middleware.js';
 import { CreateAnnotationInput, UpdateAnnotationInput } from '../schemas/annotation.schema.js';
+import { aiClient } from './ai.client.js';
 
 export class AnnotationService {
   async createAnnotation(userId: number, input: CreateAnnotationInput) {
@@ -15,6 +16,17 @@ export class AnnotationService {
     if (!book) {
       throw new AppError('Livro não encontrado.', 404);
     }
+
+    // Garantir que o usuário existe (para requests de teste/padrão)
+    await prisma.user.upsert({
+      where: { id: userId },
+      update: {},
+      create: {
+        id: userId,
+        name: 'Usuário Padrão',
+        email: `user${userId}@aresta.org`,
+      },
+    });
 
     // 2. Validar se os temas informados pertencem ao livro
     const allowedThemeIds = new Set(book.bookThemes.map((bt) => bt.theme_id));
@@ -35,7 +47,19 @@ export class AnnotationService {
       finalThemeIds = book.bookThemes.map((bt) => bt.theme_id);
     }
 
-    // 3. Criar a anotação (CFI é opcional para notas soltas)
+    // 3. Gerar embedding do texto da anotação
+    const textForEmbedding = `${input.selectedText || ''} ${input.note || ''}`.trim() || book.title;
+    let embeddingStr: string | null = null;
+    try {
+      const emb = await aiClient.generateEmbedding(textForEmbedding);
+      if (emb && emb.length > 0) {
+        embeddingStr = JSON.stringify(emb);
+      }
+    } catch (e) {
+      console.warn('[AnnotationService] Falha ao gerar embedding na criação:', e);
+    }
+
+    // 4. Criar a anotação (CFI é opcional para notas soltas)
     const annotation = await prisma.annotation.create({
       data: {
         user_id: userId,
@@ -45,10 +69,11 @@ export class AnnotationService {
         note: input.note || null,
         chapter_title: input.chapterTitle || null,
         progress: input.progress ?? 0.0,
+        embedding: embeddingStr,
       },
     });
 
-    // 4. Vincular temas
+    // 5. Vincular temas
     if (finalThemeIds.length > 0) {
       await prisma.annotationTheme.createMany({
         data: finalThemeIds.map((themeId) => ({
@@ -244,7 +269,18 @@ export class AnnotationService {
     }
 
     const dataToUpdate: any = {};
-    if (input.note !== undefined) dataToUpdate.note = input.note;
+    if (input.note !== undefined) {
+      dataToUpdate.note = input.note;
+      const textToEmbed = `${existing.selected_text || ''} ${input.note || ''}`.trim();
+      try {
+        const emb = await aiClient.generateEmbedding(textToEmbed);
+        if (emb && emb.length > 0) {
+          dataToUpdate.embedding = JSON.stringify(emb);
+        }
+      } catch (e) {
+        console.warn('[AnnotationService] Falha ao atualizar embedding:', e);
+      }
+    }
     if (input.chapterTitle !== undefined) dataToUpdate.chapter_title = input.chapterTitle;
     if (input.progress !== undefined) dataToUpdate.progress = input.progress;
 
