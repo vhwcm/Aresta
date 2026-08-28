@@ -21,7 +21,8 @@ const ROOT_DIR = __dirname;
 const children = [];
 
 console.log(`${colors.blue}======================================================${colors.reset}`);
-console.log(`${colors.blue}   Iniciando Aresta (Backend, Frontend e Conversor)   ${colors.reset}`);
+console.log(`${colors.blue}   Iniciando Aresta (Modo Nativo / Host - Sem Docker) ${colors.reset}`);
+console.log(`${colors.blue}   Serviços: Conversor (Python), Backend (Node), Front${colors.reset}`);
 console.log(`${colors.blue}======================================================${colors.reset}\n`);
 
 function killProcess(child) {
