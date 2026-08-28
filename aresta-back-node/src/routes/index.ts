@@ -14,6 +14,7 @@ import streakRoutes from './streak.routes.js';
 import healthRoutes from './health.routes.js';
 import conversionRoutes from './conversion.routes.js';
 import flashcardRoutes from './flashcard.routes.js';
+import canvasRoutes from './canvas.routes.js';
 
 const router = Router();
 
@@ -40,6 +41,7 @@ router.use(ROUTES.HEALTH, healthRoutes);
 router.use(ROUTES.CONVERT, conversionRoutes);
 router.use(ROUTES.FLASHCARDS, flashcardRoutes);
 router.use(ROUTES.FLASHCARDS_V1, flashcardRoutes);
+router.use(ROUTES.CANVASES, canvasRoutes);
 
 export default router;
 

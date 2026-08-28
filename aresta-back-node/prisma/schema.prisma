@@ -27,6 +27,7 @@ model User {
   dailyActivities     DailyActivity[]
   flashcards          Flashcard[]
   dailyDeckCards      DailyDeckCard[]
+  canvases            Canvas[]
 
   @@map("users")
 }
@@ -228,4 +229,19 @@ model DailyActivity {
 
   @@unique([user_id, date])
   @@map("daily_activities")
+}
+
+model Canvas {
+  id          String    @id @default(uuid())
+  user_id     Int
+  title       String    @default("Quadro sem título")
+  description String?
+  data        String    // JSON Canvas Spec (nodes, edges, viewport)
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @default(now()) @updatedAt
+
+  user        User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, updated_at])
+  @@map("canvases")
 }

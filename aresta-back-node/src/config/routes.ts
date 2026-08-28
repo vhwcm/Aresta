@@ -19,6 +19,7 @@ export const ROUTES = {
   CONVERT: '/api/convert',
   FLASHCARDS: '/api/flashcards',
   FLASHCARDS_V1: '/api/v1/flashcards',
+  CANVASES: '/api/canvases',
 
   // Rotas de arquivos estáticos
   COVERS: '/covers',
