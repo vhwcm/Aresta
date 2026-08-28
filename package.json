@@ -2,8 +2,10 @@
   "name": "aresta-monorepo",
   "private": true,
   "scripts": {
-    "start": "./start.sh",
-    "dev": "./start.sh",
+    "start": "node start.js",
+    "dev": "node start.js",
+    "start:sh": "./start.sh",
+    "start:ps1": "powershell -ExecutionPolicy Bypass -File ./start.ps1",
     "models": "node list-gemini-models.js",
     "list-models": "node list-gemini-models.js",
     "setup:hooks": "bash scripts/setup-hooks.sh"
