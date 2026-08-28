@@ -1,12 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { mount } from '@vue/test-utils';
+import { ref } from 'vue';
 import CanvasIndexPage from '~/pages/canvas/index.vue';
 
 // Mock useCanvas
 const mockCreateCanvas = vi.fn();
 const mockFetchCanvases = vi.fn();
-const mockCanvasesList = { value: [] };
-const mockIsLoading = { value: false };
+const mockCanvasesList = ref<any[]>([]);
+const mockIsLoading = ref(false);
 
 vi.mock('~/composables/useCanvas', () => ({
   useCanvas: () => ({
