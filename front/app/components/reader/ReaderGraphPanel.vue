@@ -1,23 +1,50 @@
 <template>
-  <div class="w-full h-full flex flex-col relative overflow-hidden bg-bgApp text-textPrimary border-l border-divider">
+  <div
+    class="w-full h-full flex flex-col relative overflow-hidden transition-colors duration-200"
+    :class="{
+      'bg-[#f5eedc] text-[#2a2521] border-l border-[#dfd5c0]': theme === 'sepia',
+      'bg-[#ffffff] text-[#1a1a1a] border-l border-gray-200': theme === 'white',
+      'bg-[#121214] text-[#e4e4e7] border-l border-white/10': theme === 'black',
+      'bg-bgApp text-textPrimary border-l border-divider': !theme,
+    }"
+    :data-theme="theme === 'sepia' ? 'sepia' : (theme === 'white' ? 'light' : (theme === 'black' ? 'dark' : undefined))"
+  >
     <!-- VISUALIZAÇÃO 1: GRAFO INTERATIVO -->
     <div v-if="!selectedTheme" class="w-full h-full flex flex-col relative">
       <!-- Header do Painel do Grafo -->
-      <div class="p-3.5 border-b border-divider flex items-center justify-between bg-bgPanel/80 backdrop-blur-md z-10">
+      <div
+        class="p-3.5 border-b flex items-center justify-between backdrop-blur-md z-10 transition-colors duration-200"
+        :class="{
+          'bg-[#FAF5E8]/90 border-[#dfd5c0] text-[#2a2521]': theme === 'sepia',
+          'bg-white/90 border-gray-200 text-gray-900': theme === 'white',
+          'bg-[#161619]/90 border-white/10 text-[#e4e4e7]': theme === 'black',
+          'bg-bgPanel/80 border-divider text-textPrimary': !theme,
+        }"
+      >
         <div class="flex items-center gap-2">
           <div class="p-1.5 rounded-lg bg-accent/10 border border-accent/20 text-accent">
             <NetworkIcon class="w-4 h-4" />
           </div>
           <div>
             <h3 class="font-bold text-xs">Grafo de Conhecimento</h3>
-            <p class="text-[10px] text-textSecondary">Selecione um tema para ver anotações</p>
+            <p
+              class="text-[10px]"
+              :class="theme === 'sepia' ? 'text-[#786C5E]' : (theme === 'white' ? 'text-gray-500' : 'text-textSecondary')"
+            >
+              Selecione um tema para ver anotações
+            </p>
           </div>
         </div>
 
         <div class="flex items-center gap-1.5">
           <button
             @click="$emit('close')"
-            class="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-textSecondary hover:text-textPrimary transition-all"
+            class="p-1.5 rounded-lg transition-all"
+            :class="theme === 'sepia'
+              ? 'bg-[#EBE2CE] hover:bg-[#dfd5c0] text-[#5c4d3c] hover:text-[#2a2521]'
+              : (theme === 'white'
+                ? 'bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-900'
+                : 'bg-white/5 hover:bg-white/10 text-textSecondary hover:text-textPrimary')"
             title="Recolher Grafo para focar na leitura"
           >
             <ChevronRightIcon v-if="!isMobile" class="w-4 h-4" />
@@ -27,9 +54,13 @@
       </div>
 
       <!-- State de Carregamento -->
-      <div v-if="graphLoading && (!graphData.nodes || graphData.nodes.length === 0)" class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-bgApp/90">
+      <div
+        v-if="graphLoading && (!graphData.nodes || graphData.nodes.length === 0)"
+        class="absolute inset-0 z-20 flex flex-col items-center justify-center backdrop-blur-sm"
+        :class="theme === 'sepia' ? 'bg-[#f5eedc]/90' : (theme === 'white' ? 'bg-white/90' : 'bg-bgApp/90')"
+      >
         <div class="w-8 h-8 rounded-full border-2 border-accent border-t-transparent animate-spin mb-3"></div>
-        <p class="text-[10px] font-technical text-textSecondary uppercase tracking-widest">Carregando Temas...</p>
+        <p class="text-[10px] font-technical uppercase tracking-widest" :class="theme === 'sepia' ? 'text-[#786C5E]' : 'text-textSecondary'">Carregando Temas...</p>
       </div>
 
       <!-- Canvas D3 no modo compacto -->
@@ -38,6 +69,7 @@
           :nodes="graphData.nodes || []"
           :edges="graphData.edges || []"
           :is-compact="true"
+          :theme-override="theme"
           @select-node="handleSelectNode"
           @open-create-node="isCreateModalOpen = true"
           @open-connect-modal="isConnectModalOpen = true"
@@ -46,9 +78,26 @@
     </div>
 
     <!-- VISUALIZAÇÃO 2: LISTA DE ANOTAÇÕES DO TEMA SELECIONADO -->
-    <div v-else class="w-full h-full flex flex-col bg-bgPanel/95 backdrop-blur-xl z-20 relative animate-fadeIn">
+    <div
+      v-else
+      class="w-full h-full flex flex-col backdrop-blur-xl z-20 relative animate-fadeIn transition-colors duration-200"
+      :class="{
+        'bg-[#f5eedc] text-[#2a2521]': theme === 'sepia',
+        'bg-[#ffffff] text-[#1a1a1a]': theme === 'white',
+        'bg-[#121214] text-[#e4e4e7]': theme === 'black',
+        'bg-bgPanel/95 text-textPrimary': !theme,
+      }"
+    >
       <!-- Cabeçalho do Tema com Botão Voltar -->
-      <div class="p-4 border-b border-divider flex flex-col gap-3 bg-bgApp/40">
+      <div
+        class="p-4 border-b flex flex-col gap-3"
+        :class="{
+          'bg-[#FAF5E8]/90 border-[#dfd5c0]': theme === 'sepia',
+          'bg-white/90 border-gray-200': theme === 'white',
+          'bg-[#161619]/90 border-white/10': theme === 'black',
+          'bg-bgApp/40 border-divider': !theme,
+        }"
+      >
         <div class="flex items-center justify-between">
           <button
             @click="goBackToGraph"
@@ -60,7 +109,12 @@
 
           <button
             @click="$emit('close')"
-            class="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-textSecondary hover:text-textPrimary transition-all"
+            class="p-1.5 rounded-lg transition-all"
+            :class="theme === 'sepia'
+              ? 'bg-[#EBE2CE] hover:bg-[#dfd5c0] text-[#5c4d3c] hover:text-[#2a2521]'
+              : (theme === 'white'
+                ? 'bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-900'
+                : 'bg-white/5 hover:bg-white/10 text-textSecondary hover:text-textPrimary')"
             title="Fechar painel"
           >
             <XIcon class="w-4 h-4" />
@@ -73,10 +127,10 @@
             :style="{ backgroundColor: selectedTheme.color || '#E57B55' }"
           ></div>
           <div>
-            <h2 class="text-sm font-bold text-textPrimary leading-tight truncate">
+            <h2 class="text-sm font-bold leading-tight truncate" :class="theme === 'sepia' ? 'text-[#2a2521]' : (theme === 'white' ? 'text-gray-900' : 'text-textPrimary')">
               {{ selectedTheme.name }}
             </h2>
-            <p class="text-[10px] text-textSecondary font-technical mt-0.5">
+            <p class="text-[10px] font-technical mt-0.5" :class="theme === 'sepia' ? 'text-[#786C5E]' : (theme === 'white' ? 'text-gray-500' : 'text-textSecondary')">
               {{ themeAnnotations.length }} {{ themeAnnotations.length === 1 ? 'anotação vinculada' : 'anotações vinculadas' }}
             </p>
           </div>
@@ -87,17 +141,31 @@
       <div class="flex-1 overflow-y-auto p-4 space-y-3.5">
         <div v-if="annotationsLoading" class="flex flex-col items-center justify-center py-12">
           <div class="w-7 h-7 rounded-full border-2 border-accent border-t-transparent animate-spin mb-2"></div>
-          <p class="text-xs text-textSecondary font-technical">Carregando anotações...</p>
+          <p class="text-xs font-technical" :class="theme === 'sepia' ? 'text-[#786C5E]' : 'text-textSecondary'">Carregando anotações...</p>
         </div>
 
         <div v-else-if="themeAnnotations.length > 0" class="space-y-3">
           <div
             v-for="item in themeAnnotations"
             :key="item.id"
-            class="bg-bgApp/80 border border-divider/70 hover:border-accent/40 rounded-xl p-3.5 transition-all space-y-2.5 group"
+            class="rounded-xl p-3.5 transition-all space-y-2.5 group border shadow-sm"
+            :class="{
+              'bg-[#FAF5E8] border-[#dfd5c0] hover:border-accent/60 text-[#2a2521]': theme === 'sepia',
+              'bg-white border-gray-200 hover:border-accent/60 text-gray-900': theme === 'white',
+              'bg-[#161619] border-white/10 hover:border-accent/40 text-[#e4e4e7]': theme === 'black',
+              'bg-bgApp/80 border-divider/70 hover:border-accent/40 text-textPrimary': !theme,
+            }"
           >
             <!-- Citação / Texto Selecionado Original (Imutável) -->
-            <div v-if="item.selectedText" class="p-2.5 rounded-lg bg-black/20 border-l-2 border-accent/60 text-xs text-textSecondary italic">
+            <div
+              v-if="item.selectedText"
+              class="p-2.5 rounded-lg border-l-2 border-accent/60 text-xs italic"
+              :class="{
+                'bg-[#f0e7d3] text-[#5c4d3c]': theme === 'sepia',
+                'bg-gray-50 text-gray-600': theme === 'white',
+                'bg-black/20 text-textSecondary': !theme || theme === 'black',
+              }"
+            >
               "{{ item.selectedText }}"
             </div>
 
@@ -109,20 +177,31 @@
               <textarea
                 v-model="editNoteText"
                 rows="3"
-                class="w-full bg-bgApp border border-accent/60 rounded-xl p-2.5 text-xs text-textPrimary focus:outline-none resize-none"
+                class="w-full border border-accent/60 rounded-xl p-2.5 text-xs focus:outline-none resize-none"
+                :class="{
+                  'bg-[#FAF5E8] text-[#2a2521]': theme === 'sepia',
+                  'bg-white text-gray-900': theme === 'white',
+                  'bg-[#121214] text-[#e4e4e7]': theme === 'black',
+                  'bg-bgApp text-textPrimary': !theme,
+                }"
                 placeholder="Escreva sua reflexão..."
               ></textarea>
               <div class="flex items-center justify-end gap-2">
                 <button
                   @click="cancelEdit"
-                  class="px-2.5 py-1 text-xs text-textSecondary hover:text-textPrimary bg-white/5 rounded-lg"
+                  class="px-2.5 py-1 text-xs rounded-lg transition-colors"
+                  :class="{
+                    'text-[#786C5E] hover:text-[#2a2521] bg-[#EBE2CE]': theme === 'sepia',
+                    'text-gray-600 hover:text-gray-900 bg-gray-100': theme === 'white',
+                    'text-textSecondary hover:text-textPrimary bg-white/5': !theme || theme === 'black',
+                  }"
                 >
                   Cancelar
                 </button>
                 <button
                   @click="handleSaveNote(item.id)"
                   :disabled="isSavingNote"
-                  class="px-3 py-1 text-xs font-semibold bg-accent text-white rounded-lg hover:bg-accent/90 disabled:opacity-50 flex items-center gap-1"
+                  class="px-3 py-1 text-xs font-semibold bg-accent text-white rounded-lg hover:bg-accent/90 disabled:opacity-50 flex items-center gap-1 shadow-xs"
                 >
                   <CheckIcon class="w-3 h-3" />
                   <span>{{ isSavingNote ? 'Salvando...' : 'Salvar Nota' }}</span>
@@ -134,23 +213,40 @@
             <div
               v-else
               @click="startEdit(item)"
-              class="cursor-pointer hover:bg-white/5 p-2 rounded-lg transition-colors"
+              class="cursor-pointer p-2 rounded-lg transition-colors"
+              :class="{
+                'hover:bg-[#f0e7d3]': theme === 'sepia',
+                'hover:bg-gray-100': theme === 'white',
+                'hover:bg-white/5': !theme || theme === 'black',
+              }"
               title="Clique para alterar esta anotação"
             >
               <div class="flex items-center justify-between mb-1">
-                <span class="text-[10px] font-technical uppercase font-bold text-textSecondary">Sua Nota:</span>
+                <span
+                  class="text-[10px] font-technical uppercase font-bold"
+                  :class="theme === 'sepia' ? 'text-[#786C5E]' : (theme === 'white' ? 'text-gray-500' : 'text-textSecondary')"
+                >
+                  Sua Nota:
+                </span>
                 <span class="text-[10px] text-accent opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 font-medium">
                   <Edit3Icon class="w-3 h-3" />
                   <span>Editar</span>
                 </span>
               </div>
-              <p class="text-xs text-textPrimary whitespace-pre-wrap leading-relaxed">
+              <p class="text-xs whitespace-pre-wrap leading-relaxed">
                 {{ item.note || 'Sem comentário escrito. Clique para adicionar.' }}
               </p>
             </div>
 
             <!-- Rodapé da Anotação (Data / Página / Ação) -->
-            <div class="flex items-center justify-between pt-2 border-t border-divider/40 text-[10px] text-textSecondary font-technical">
+            <div
+              class="flex items-center justify-between pt-2 border-t text-[10px] font-technical"
+              :class="{
+                'border-[#dfd5c0] text-[#786C5E]': theme === 'sepia',
+                'border-gray-200 text-gray-500': theme === 'white',
+                'border-divider/40 text-textSecondary': !theme || theme === 'black',
+              }"
+            >
               <span>{{ formatDate(item.createdAt) }}</span>
               <button
                 v-if="getPageFromCfi(item.cfi)"
@@ -166,25 +262,42 @@
         </div>
 
         <!-- Vazio -->
-        <div v-else class="flex flex-col items-center justify-center py-12 text-center text-textSecondary space-y-2">
+        <div
+          v-else
+          class="flex flex-col items-center justify-center py-12 text-center space-y-2"
+          :class="theme === 'sepia' ? 'text-[#786C5E]' : (theme === 'white' ? 'text-gray-500' : 'text-textSecondary')"
+        >
           <BookOpenIcon class="w-8 h-8 opacity-30 mx-auto" />
-          <p class="text-xs font-semibold text-textPrimary">Nenhuma anotação vinculada</p>
+          <p class="text-xs font-semibold" :class="theme === 'sepia' ? 'text-[#2a2521]' : (theme === 'white' ? 'text-gray-900' : 'text-textPrimary')">Nenhuma anotação vinculada</p>
           <p class="text-[11px]">Selecione um trecho do livro e associe a este tema para salvar anotações.</p>
         </div>
       </div>
 
       <!-- Rodapé -->
-      <div class="p-3 border-t border-divider bg-bgApp/60 flex items-center justify-between">
+      <div
+        class="p-3 border-t flex items-center justify-between"
+        :class="{
+          'bg-[#FAF5E8]/90 border-[#dfd5c0]': theme === 'sepia',
+          'bg-white/90 border-gray-200': theme === 'white',
+          'bg-[#161619]/90 border-white/10': theme === 'black',
+          'bg-bgApp/60 border-divider': !theme,
+        }"
+      >
         <button
           @click="goBackToGraph"
-          class="px-3 py-1.5 text-xs text-textSecondary hover:text-textPrimary bg-white/5 rounded-xl transition-colors flex items-center gap-1.5"
+          class="px-3 py-1.5 text-xs rounded-xl transition-colors flex items-center gap-1.5"
+          :class="{
+            'text-[#786C5E] hover:text-[#2a2521] bg-[#EBE2CE]': theme === 'sepia',
+            'text-gray-600 hover:text-gray-900 bg-gray-100': theme === 'white',
+            'text-textSecondary hover:text-textPrimary bg-white/5': !theme || theme === 'black',
+          }"
         >
           <ArrowLeftIcon class="w-3.5 h-3.5" />
           <span>Voltar ao Grafo</span>
         </button>
         <button
           @click="$emit('openAnnotationModal')"
-          class="px-3 py-1.5 text-xs font-semibold bg-accent text-white rounded-xl hover:bg-accent/90 transition-colors flex items-center gap-1.5"
+          class="px-3 py-1.5 text-xs font-semibold bg-accent text-white rounded-xl hover:bg-accent/90 transition-colors flex items-center gap-1.5 shadow-xs"
         >
           <PlusIcon class="w-3.5 h-3.5" />
           <span>Nova Anotação</span>
@@ -232,6 +345,7 @@ import ConnectNodesModal from '~/components/ConnectNodesModal.vue'
 
 defineProps<{
   isMobile?: boolean
+  theme?: 'sepia' | 'white' | 'black'
 }>()
 
 const emit = defineEmits<{

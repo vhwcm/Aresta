@@ -548,12 +548,15 @@ defineExpose({
   box-sizing: border-box;
 }
 
+.theme-sepia.page-curl-wrapper,
 .theme-sepia .page-sheet {
   background-color: #f5eedc;
 }
+.theme-white.page-curl-wrapper,
 .theme-white .page-sheet {
   background-color: #ffffff;
 }
+.theme-black.page-curl-wrapper,
 .theme-black .page-sheet {
   background-color: #121214;
 }
@@ -574,6 +577,22 @@ defineExpose({
   box-shadow: 0 0 24px rgba(0, 0, 0, 0.5);
   border-left: 1px solid rgba(255, 255, 255, 0.04);
   border-right: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.theme-sepia .page-sheet--left,
+.theme-sepia .page-sheet--right,
+.theme-sepia .page-sheet--single {
+  box-shadow: 0 4px 20px rgba(60, 45, 20, 0.16);
+  border-left-color: rgba(140, 110, 70, 0.2);
+  border-right-color: rgba(140, 110, 70, 0.2);
+}
+
+.theme-white .page-sheet--left,
+.theme-white .page-sheet--right,
+.theme-white .page-sheet--single {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border-left-color: rgba(0, 0, 0, 0.08);
+  border-right-color: rgba(0, 0, 0, 0.08);
 }
 
 .page-pdf-canvas {

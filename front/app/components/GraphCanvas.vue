@@ -1,7 +1,15 @@
 <template>
   <div class="relative w-full h-full overflow-hidden bg-transparent select-none" ref="containerRef">
     <!-- Overlay de Grid de Fundo -->
-    <div class="absolute inset-0 bg-grid-pattern bg-grid-size opacity-15 pointer-events-none"></div>
+    <div
+      class="absolute inset-0 bg-grid-size pointer-events-none transition-opacity duration-300"
+      :class="isSepiaMode ? 'opacity-25' : (isLightMode ? 'opacity-20' : 'opacity-15')"
+      :style="{
+        backgroundImage: isSepiaMode
+          ? 'radial-gradient(circle, #786C5E 1.2px, transparent 1.2px)'
+          : (isLightMode ? 'radial-gradient(circle, #94a3b8 1.2px, transparent 1.2px)' : 'radial-gradient(circle, #333 1px, transparent 1px)')
+      }"
+    ></div>
 
     <!-- Canvas D3 / SVG do Grafo -->
     <svg ref="svgRef" class="w-full h-full cursor-grab active:cursor-grabbing">
@@ -21,21 +29,38 @@
 
     <!-- Toolbar Flutuante de Controles Superiores -->
     <div
-      class="absolute z-10 flex items-center gap-2 bg-bgPanel/80 backdrop-blur-md border border-divider p-2.5 rounded-2xl shadow-2xl max-w-[calc(100%-1.5rem)] flex-wrap"
-      :class="isCompact ? 'top-3 left-3 right-3 justify-between' : 'top-6 left-6'"
+      class="absolute z-10 flex items-center gap-2 backdrop-blur-md border p-2.5 rounded-2xl shadow-2xl max-w-[calc(100%-1.5rem)] flex-wrap transition-colors duration-200"
+      :class="[
+        isCompact ? 'top-3 left-3 right-3 justify-between' : 'top-6 left-6',
+        isSepiaMode
+          ? 'bg-[#FAF5E8]/90 border-[#dfd5c0] text-[#2C2621]'
+          : (isLightMode ? 'bg-white/90 border-gray-200 text-gray-900' : 'bg-bgPanel/80 border-divider text-textPrimary')
+      ]"
     >
       <!-- Campo de Busca -->
       <div class="relative flex items-center flex-1 min-w-[110px]">
-        <SearchIcon class="w-4 h-4 text-textSecondary absolute left-3 pointer-events-none" />
+        <SearchIcon
+          class="w-4 h-4 absolute left-3 pointer-events-none"
+          :class="isSepiaMode ? 'text-[#786C5E]' : (isLightMode ? 'text-gray-500' : 'text-textSecondary')"
+        />
         <input
           v-model="searchQuery"
           type="text"
           placeholder="Buscar tema ou livro..."
-          class="bg-bgApp/60 border border-divider/60 rounded-xl pl-9 pr-3 py-1.5 sm:py-2 text-xs sm:text-sm text-textPrimary placeholder:text-textSecondary/50 focus:outline-none focus:border-accent w-full transition-all"
+          class="rounded-xl pl-9 pr-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:outline-none focus:border-accent w-full transition-all border"
+          :class="isSepiaMode
+            ? 'bg-[#F5EEDC]/80 border-[#dfd5c0] text-[#2C2621] placeholder:text-[#786C5E]/60'
+            : (isLightMode
+              ? 'bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400'
+              : 'bg-bgApp/60 border-divider/60 text-textPrimary placeholder:text-textSecondary/50')"
         />
       </div>
 
-      <div v-if="!isCompact" class="h-5 w-px bg-divider"></div>
+      <div
+        v-if="!isCompact"
+        class="h-5 w-px"
+        :class="isSepiaMode ? 'bg-[#dfd5c0]' : (isLightMode ? 'bg-gray-200' : 'bg-divider')"
+      ></div>
 
       <!-- Botão Novo Tema -->
       <button
@@ -50,7 +75,12 @@
       <!-- Botão Conectar Nós -->
       <button
         @click="$emit('openConnectModal')"
-        class="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-white/5 border border-divider text-textPrimary text-xs sm:text-sm hover:bg-white/10 transition-all active:scale-95 shrink-0"
+        class="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl border text-xs sm:text-sm transition-all active:scale-95 shrink-0"
+        :class="isSepiaMode
+          ? 'bg-[#F5EEDC]/60 border-[#dfd5c0] text-[#2C2621] hover:bg-[#F5EEDC]'
+          : (isLightMode
+            ? 'bg-gray-50 border-gray-200 text-gray-800 hover:bg-gray-100'
+            : 'bg-white/5 border-divider text-textPrimary hover:bg-white/10')"
         title="Criar conexão hierárquica entre temas"
       >
         <LinkIcon class="w-4 h-4 text-accent" />
@@ -67,12 +97,18 @@ import type { GraphNode, GraphEdge } from '~/interfaces/graph'
 import { PlusIcon, SearchIcon, LinkIcon } from 'lucide-vue-next'
 import { useSettings } from '~/composables/useSettings'
 
-const props = defineProps<{
-  nodes: GraphNode[]
-  edges: GraphEdge[]
-  selectedNodeId?: string | number | null
-  isCompact?: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    nodes: GraphNode[]
+    edges: GraphEdge[]
+    selectedNodeId?: string | number | null
+    isCompact?: boolean
+    themeOverride?: 'sepia' | 'white' | 'black' | null
+  }>(),
+  {
+    themeOverride: null,
+  }
+)
 
 const emit = defineEmits<{
   (e: 'selectNode', node: GraphNode): void
@@ -81,8 +117,14 @@ const emit = defineEmits<{
 }>()
 
 const { themeMode } = useSettings()
-const isLightMode = computed(() => themeMode.value === 'light' || themeMode.value === 'sepia')
-const isSepiaMode = computed(() => themeMode.value === 'sepia')
+
+const effectiveTheme = computed(() => {
+  if (props.themeOverride) return props.themeOverride
+  return themeMode.value
+})
+
+const isSepiaMode = computed(() => effectiveTheme.value === 'sepia')
+const isLightMode = computed(() => effectiveTheme.value === 'light' || effectiveTheme.value === 'white' || effectiveTheme.value === 'sepia')
 
 const containerRef = ref<HTMLElement | null>(null)
 const svgRef = ref<SVGSVGElement | null>(null)
@@ -219,13 +261,19 @@ const initGraph = () => {
     .join('line')
     .attr('stroke', (d: any) =>
       d.isRootEdge
-        ? isLightMode.value
+        ? isSepiaMode.value
+          ? 'rgba(217, 119, 6, 0.45)'
+          : isLightMode.value
           ? 'rgba(229, 123, 85, 0.45)'
           : 'rgba(229, 123, 85, 0.35)'
         : d.type === 'book-theme'
-        ? isLightMode.value
+        ? isSepiaMode.value
+          ? 'rgba(180, 83, 9, 0.40)'
+          : isLightMode.value
           ? 'rgba(59, 130, 246, 0.35)'
           : 'rgba(59, 130, 246, 0.30)'
+        : isSepiaMode.value
+        ? 'rgba(120, 108, 94, 0.22)'
         : isLightMode.value
         ? 'rgba(0, 0, 0, 0.15)'
         : 'rgba(255, 255, 255, 0.12)'
@@ -419,7 +467,17 @@ const initGraph = () => {
     .attr('text-anchor', 'middle')
     .attr('dy', (d: any) => getNodeRadius(d) + 18)
     .attr('fill', (d: any) =>
-      d.isRoot ? (isLightMode.value ? '#9A3412' : '#F59E0B') : isLightMode.value ? '#1E293B' : '#E2E8F0'
+      d.isRoot
+        ? isSepiaMode.value
+          ? '#8B4513'
+          : isLightMode.value
+          ? '#9A3412'
+          : '#F59E0B'
+        : isSepiaMode.value
+        ? '#2C2621'
+        : isLightMode.value
+        ? '#1E293B'
+        : '#E2E8F0'
     )
     .attr('font-size', (d: any) => (d.isRoot ? '13.5px' : '12px'))
     .attr('font-weight', '600')
@@ -451,6 +509,8 @@ const initGraph = () => {
         .attr('stroke', (l: any) =>
           String(l.source.id) === String(d.id) || String(l.target.id) === String(d.id)
             ? d.color || '#E57B55'
+            : isSepiaMode.value
+            ? 'rgba(120, 108, 94, 0.08)'
             : isLightMode.value
             ? 'rgba(0, 0, 0, 0.04)'
             : 'rgba(255, 255, 255, 0.05)'
@@ -466,11 +526,17 @@ const initGraph = () => {
       links
         .attr('stroke', (d: any) =>
           d.isRootEdge
-            ? 'rgba(229, 123, 85, 0.35)'
+            ? isSepiaMode.value
+              ? 'rgba(217, 119, 6, 0.45)'
+              : 'rgba(229, 123, 85, 0.35)'
             : d.type === 'book-theme'
-            ? isLightMode.value
+            ? isSepiaMode.value
+              ? 'rgba(180, 83, 9, 0.40)'
+              : isLightMode.value
               ? 'rgba(59, 130, 246, 0.35)'
               : 'rgba(59, 130, 246, 0.30)'
+            : isSepiaMode.value
+            ? 'rgba(120, 108, 94, 0.18)'
             : isLightMode.value
             ? 'rgba(0, 0, 0, 0.08)'
             : 'rgba(255, 255, 255, 0.12)'
@@ -501,9 +567,12 @@ watch(
   { deep: true }
 )
 
-watch(themeMode, () => {
-  initGraph()
-})
+watch(
+  () => effectiveTheme.value,
+  () => {
+    initGraph()
+  }
+)
 
 onMounted(() => {
   initGraph()

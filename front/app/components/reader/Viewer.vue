@@ -2,6 +2,7 @@
   <div
     class="reader-viewer"
     :class="['reader-viewer--theme-' + store.readerTheme, { 'reader-viewer--zen': store.isZenMode }]"
+    :data-theme="store.readerTheme === 'sepia' ? 'sepia' : (store.readerTheme === 'white' ? 'light' : 'dark')"
   >
     <!-- Corpo Principal com Divisão Leitor / Grafo -->
     <div class="reader-viewer__body">
@@ -68,6 +69,7 @@
         <ReaderGraphPanel
           ref="graphPanelRef"
           :is-mobile="false"
+          :theme="store.readerTheme"
           @close="store.setGraphOpen(false)"
           @open-annotation-modal="handleOpenAnnotation"
         />
@@ -77,13 +79,20 @@
     <!-- Grafo de Conhecimento em Tela Cheia no Mobile (Oculto no Modo Zen) -->
     <div
       v-if="store.isMobileGraphOpen && !store.isZenMode"
-      class="fixed inset-0 z-50 flex flex-col bg-bgApp lg:hidden animate-fadeIn"
+      class="fixed inset-0 z-50 flex flex-col lg:hidden animate-fadeIn"
+      :class="{
+        'bg-[#f5eedc] text-[#2a2521]': store.readerTheme === 'sepia',
+        'bg-[#ffffff] text-[#1a1a1a]': store.readerTheme === 'white',
+        'bg-[#121214] text-[#e4e4e7]': store.readerTheme === 'black',
+        'bg-bgApp': !store.readerTheme,
+      }"
       role="dialog"
       aria-modal="true"
     >
       <ReaderGraphPanel
         ref="mobileGraphPanelRef"
         :is-mobile="true"
+        :theme="store.readerTheme"
         @close="store.setMobileGraphOpen(false)"
         @open-annotation-modal="handleOpenAnnotation"
       />
@@ -161,7 +170,20 @@
       :page-number="selectionTooltipPage"
       :is-above="isSelectionTooltipAbove"
       @annotate="handleAnnotateFromTooltip"
+      @open-dictionary="handleOpenDictionaryFromTooltip"
       @close="isSelectionTooltipVisible = false"
+    />
+
+    <!-- Card de Definição do Dicionário Offline -->
+    <ReaderDictionaryCard
+      :visible="isDictionaryCardVisible"
+      :x="dictionaryCardX"
+      :y="dictionaryCardY"
+      :word="dictionaryCardWord"
+      :book-language="bookDetectedLanguage"
+      :page-number="dictionaryCardPage"
+      :is-above="dictionaryCardIsAbove"
+      @close="isDictionaryCardVisible = false"
     />
   </div>
 </template>
@@ -180,6 +202,7 @@ import ReaderAnnotationModal from '~/components/reader/ReaderAnnotationModal.vue
 import ReaderAnnotationDrawer from '~/components/reader/ReaderAnnotationDrawer.vue'
 import ReaderGraphPanel from '~/components/reader/ReaderGraphPanel.vue'
 import ReaderSelectionTooltip from '~/components/reader/ReaderSelectionTooltip.vue'
+import ReaderDictionaryCard from '~/components/reader/ReaderDictionaryCard.vue'
 import ReaderTypographyPopover from '~/components/reader/ReaderTypographyPopover.vue'
 
 const store = useReaderStore()
@@ -209,6 +232,19 @@ const selectionTooltipY = ref(0)
 const selectionTooltipText = ref('')
 const selectionTooltipPage = ref(1)
 const isSelectionTooltipAbove = ref(true)
+
+// Estado do Card de Dicionário Offline
+const isDictionaryCardVisible = ref(false)
+const dictionaryCardX = ref(0)
+const dictionaryCardY = ref(0)
+const dictionaryCardWord = ref('')
+const dictionaryCardPage = ref(1)
+const dictionaryCardIsAbove = ref(true)
+
+const bookDetectedLanguage = computed(() => {
+  const doc: any = store.document
+  return doc?.metadata?.language || 'en'
+})
 
 const graphPanelRef = ref<any>(null)
 const mobileGraphPanelRef = ref<any>(null)
@@ -360,7 +396,18 @@ function handleAnnotateFromTooltip(payload: { text: string; pageNumber?: number 
   capturedSelectionText.value = payload.text || ''
   annotationPage.value = payload.pageNumber || store.currentPage
   isSelectionTooltipVisible.value = false
+  isDictionaryCardVisible.value = false
   isAnnotationModalOpen.value = true
+}
+
+function handleOpenDictionaryFromTooltip(payload: { word: string; pageNumber?: number }) {
+  dictionaryCardWord.value = payload.word
+  dictionaryCardPage.value = payload.pageNumber || store.currentPage
+  dictionaryCardX.value = selectionTooltipX.value
+  dictionaryCardY.value = selectionTooltipY.value
+  dictionaryCardIsAbove.value = isSelectionTooltipAbove.value
+  isSelectionTooltipVisible.value = false
+  isDictionaryCardVisible.value = true
 }
 
 function onDocumentSelectionChange() {
@@ -446,6 +493,7 @@ watch(
   () => store.currentPage,
   () => {
     isSelectionTooltipVisible.value = false
+    isDictionaryCardVisible.value = false
   },
 )
 
@@ -664,19 +712,28 @@ onUnmounted(() => {
    Temas de Leitura (Amarelado / Sépia, Branco, Preto)
    ========================================================================= */
 .reader-viewer--theme-sepia,
+.reader-viewer--theme-sepia .reader-viewer__body,
+.reader-viewer--theme-sepia .reader-viewer__reader-pane,
 .reader-viewer--theme-sepia .reader-viewer__canvas-area,
+.reader-viewer--theme-sepia .reader-viewer__stage-container,
 .reader-viewer--theme-sepia .reader-viewer__book-stage {
   background-color: #f5eedc !important;
 }
 
 .reader-viewer--theme-white,
+.reader-viewer--theme-white .reader-viewer__body,
+.reader-viewer--theme-white .reader-viewer__reader-pane,
 .reader-viewer--theme-white .reader-viewer__canvas-area,
+.reader-viewer--theme-white .reader-viewer__stage-container,
 .reader-viewer--theme-white .reader-viewer__book-stage {
   background-color: #ffffff !important;
 }
 
 .reader-viewer--theme-black,
+.reader-viewer--theme-black .reader-viewer__body,
+.reader-viewer--theme-black .reader-viewer__reader-pane,
 .reader-viewer--theme-black .reader-viewer__canvas-area,
+.reader-viewer--theme-black .reader-viewer__stage-container,
 .reader-viewer--theme-black .reader-viewer__book-stage {
   background-color: #121214 !important;
 }
