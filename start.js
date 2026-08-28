@@ -124,7 +124,14 @@ const frontChild = spawn(isWindows ? 'npm.cmd' : 'npm', ['run', 'dev'], {
   cwd: frontDir,
   stdio: 'inherit',
   detached: !isWindows,
-  shell: isWindows
+  shell: isWindows,
+  env: {
+    ...process.env,
+    NUXT_TELEMETRY_DISABLED: '1',
+    NITRO_HOST: '0.0.0.0',
+    HOST: '0.0.0.0',
+    PORT: '3000'
+  }
 });
 children.push(frontChild);
 

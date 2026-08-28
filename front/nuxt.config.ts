@@ -3,6 +3,11 @@ import { fileURLToPath } from 'node:url'
 import { defineNuxtConfig } from 'nuxt/config'
 
 export default defineNuxtConfig({
+  telemetry: false,
+  devServer: {
+    host: '0.0.0.0',
+    port: 3000,
+  },
   compatibilityDate: '2025-07-26',
   future: {
     compatibilityVersion: 4,
