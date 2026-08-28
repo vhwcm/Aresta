@@ -958,6 +958,7 @@ import HomeKnowledgeGraphDemo from '~/components/HomeKnowledgeGraphDemo.vue'
 import { useAuth } from '~/composables/useAuth'
 import { useSettings } from '~/composables/useSettings'
 import { useUserBooks } from '~/composables/useUserBooks'
+import { useFlashcards } from '~/composables/useFlashcards'
 import { getCoverUrl } from '~/utils/cover'
 
 // Otimização Completa de SEO para a Landing Page e Home do Aresta

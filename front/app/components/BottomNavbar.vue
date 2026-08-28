@@ -96,7 +96,23 @@
               </div>
             </NuxtLink>
 
-            <!-- 3. Loja / Catálogo -->
+            <!-- 3. Quadros & Canvas -->
+            <NuxtLink
+              to="/canvas"
+              @click="isBooksOpen = false"
+              class="flex items-center gap-3 p-2.5 rounded-xl transition-colors group"
+              :class="route.path.startsWith('/canvas') ? 'bg-accent/15 text-accent border border-accent/30' : 'text-textPrimary hover:bg-black/5 dark:hover:bg-white/5'"
+            >
+              <div class="p-2 rounded-lg bg-accent/15 text-accent group-hover:scale-105 transition-transform">
+                <LayoutGridIcon class="w-4 h-4" />
+              </div>
+              <div class="flex flex-col text-left">
+                <span class="font-interface text-xs md:text-sm font-medium text-textPrimary group-hover:text-accent">Quadros & Canvas</span>
+                <span class="font-interface text-[10px] md:text-xs text-textSecondary">Anotações infinitas com IA</span>
+              </div>
+            </NuxtLink>
+
+            <!-- 4. Loja / Catálogo -->
             <NuxtLink
               to="/loja"
               @click="isBooksOpen = false"
@@ -163,6 +179,7 @@ import {
   BookIcon,
   NetworkIcon,
   ShoppingBagIcon,
+  LayoutGridIcon,
   LayersIcon,
   UserIcon,
   ChevronUpIcon,
@@ -180,7 +197,7 @@ const isBooksOpen = ref(false)
 const booksMenuRef = ref<HTMLElement | null>(null)
 
 const isBooksActive = computed(() => {
-  return route.path.startsWith('/library') || route.path.startsWith('/grafo') || route.path.startsWith('/loja')
+  return route.path.startsWith('/library') || route.path.startsWith('/grafo') || route.path.startsWith('/canvas') || route.path.startsWith('/loja')
 })
 
 const toggleCollapse = () => {
