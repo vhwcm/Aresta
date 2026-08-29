@@ -1,0 +1,55 @@
+================================================================================
+                    FLUXO DO MOTOR 3D DE VIRADA DE PÁGINA (KINDLE GRADE)
+================================================================================
+
++------------------------------------------------------------------------------+
+|                             ESTADO ESTACIONÁRIO                              |
+|                          (Modo Leitura Nativo 2D)                            |
++------------------------------------------------------------------------------+
+|  [ Página Esquerda 2D ]                 [ Página Direita 2D ]                |
+|  - Canvas Nítido Base                   - Canvas Nítido Base                 |
+|  - TextLayer DOM Nativo                 - TextLayer DOM Nativo               |
+|  - Seleção de Texto Ativa               - Seleção de Texto Ativa             |
+|  - Menu de Dicionário & Grifos          - Menu de Dicionário & Grifos        |
+|  - Zero uso de GPU 3D                   - Zero uso de GPU 3D                 |
++------------------------------------------------------------------------------+
+                                       |
+                   EVENTO: pointerdown / drag / tap
+                                       v
++------------------------------------------------------------------------------+
+|                     PRÉ-CACHE & TRANSIÇÃO INSTANTÂNEA                        |
++------------------------------------------------------------------------------+
+|  1. Captura Texturas Offscreen (Página Atual + Verso + Próxima)              |
+|  2. Passa Texturas para THREE.Texture (WebGL / GPU VRAM)                     |
+|  3. Oculta camada DOM da folha ativa e Exibe Canvas WebGL Sobreposto         |
++------------------------------------------------------------------------------+
+                                       |
+                                       v
++------------------------------------------------------------------------------+
+|                       MOTOR 3D EM TEMPO REAL (60/120 FPS)                    |
++------------------------------------------------------------------------------+
+|                                                                              |
+|       (x0, y0)                                                               |
+|        +-----\ (Ponto de Contato do Dedo/Mouse)                              |
+|        |      \                                                              |
+|        |       \====== Cresta da Dobra (Curvatura Cônica/Cilíndrica)         |
+|        |        \                                                            |
+|        |         \                                                           |
+|        +----------+                                                          |
+|                                                                              |
+|   - usePagePhysics.ts: Vetor de tração, velocidade angular & Spring Physics  |
+|   - usePageCurl3D.ts: Vertex Shader (Deforma malha 64x64 contínua)           |
+|   - Fragment Shader: Sombras de Contato + Luz Especular Fosca + Translucidez |
++------------------------------------------------------------------------------+
+                                       |
+                   EVENTO: pointerup / finalização da animação
+                                       v
++------------------------------------------------------------------------------+
+|                         FINALIZAÇÃO E RESTAURAÇÃO 2D                         |
++------------------------------------------------------------------------------+
+|  1. Atualiza página atual no Pinia Reader Store (Next / Prev)                |
+|  2. Renderiza novo spread de base 2D nativo                                  |
+|  3. Desativa Canvas WebGL e pausa RequestAnimationFrame                      |
+|  4. Reativa seleção de texto nativa (Zero jitter / Sem piscar)               |
++------------------------------------------------------------------------------+
+================================================================================

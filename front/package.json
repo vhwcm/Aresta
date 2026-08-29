@@ -15,7 +15,11 @@
     "typecheck": "nuxt typecheck",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "tauri:build": "tauri build",
+    "tauri:android:init": "tauri android init",
+    "tauri:android:dev": "tauri android dev",
+    "tauri:android:build": "tauri android build --apk",
+    "tauri:android:open": "tauri android open"
   },
   "dependencies": {
     "@actions/core": "^3.0.1",
@@ -27,6 +31,7 @@
     "@tauri-apps/plugin-fs": "^2.5.1",
     "@tauri-apps/plugin-sql": "^2.4.0",
     "@types/marked": "^5.0.2",
+    "@types/three": "^0.185.4",
     "@types/uuid": "^10.0.0",
     "d3": "^7.9.0",
     "dexie": "^4.4.5",
@@ -36,6 +41,7 @@
     "nuxt": "^4.5.0",
     "pdfjs-dist": "^6.1.200",
     "pinia": "^3.0.0",
+    "three": "^0.185.1",
     "uuid": "^14.0.2",
     "vue": "^3.5.40",
     "vue-router": "^4.5.1"

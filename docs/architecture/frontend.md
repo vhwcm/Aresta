@@ -74,3 +74,14 @@ O sistema de leitura desacopla as bibliotecas de renderização de baixo nível 
   - **Temas**: Conceitos unificadores que conectam múltiplas obras.
   - **Anotações**: Citações e pensamentos específicos vinculados a temas e livros.
 - **Física Interativa**: Suporte a arraste de nós com fixação temporária, zoom semântico e filtragem dinâmica por temas ativos.
+
+---
+
+## 4. Motor 3D de Virada de Página Realista (WebGL / Three.js)
+
+O leitor adota uma engine híbrida de alto desempenho para virada de página física estilo Kindle/Apple Books:
+- **Camada Estacionária (2D Nativo)**: Em repouso, exibe o Canvas 2D e TextLayer DOM nítidos com suporte a seleção de texto, menu de dicionário, grifos e anotações.
+- **Camada 3D em Movimento (WebGL Contínuo)**: Durante gestos de arrasto ou animações de toque, um canvas WebGL gerenciado por `usePageCurl3D.ts` assume a deformação física contínua da malha (`PlaneGeometry` 64x64) via GLSL Vertex Shader cônico/cilíndrico e Fragment Shader PBR (sombras de contato, luz especular de papel e translucidez).
+- **Física Gestual (`usePagePhysics.ts`)**: Suporte a manipulação direta 1:1 por ponto de contato (cantos e laterais), detecção de velocidade/flick e dinâmica de amortecimento por mola elástica (Hooke's Law).
+- Diagrama arquitetural disponível em: `docs/architecture/diagrams/page-curl-3d-flow.txt`.
+
