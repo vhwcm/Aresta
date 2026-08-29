@@ -1,0 +1,64 @@
+================================================================================
+ARQUITETURA LOCAL-FIRST, DESKTOP (TAURI V2) E MOTOR DE SINCRONIZAÇÃO - ARESTA
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          DISPOSITIVO DO CLIENTE                             │
+│                  (Desktop Windows/Linux ou Web Browser PWA)                 │
+│                                                                             │
+│  ┌───────────────────────────────────────────────────────────────────────┐  │
+│  │                     CAMADA DE UI (Nuxt 4 / Vue 3)                     │  │
+│  │                                                                       │  │
+│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌───────────┐  │  │
+│  │  │    Leitor    │  │  Flashcards  │  │    Canvas    │  │ Anotações │  │  │
+│  │  │  (EPUB/PDF)  │  │ (SRS Offline)│  │ (Grafo Notas)│  │  (Leitura)│  │  │
+│  │  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘  └─────┬─────┘  │  │
+│  └─────────┼─────────────────┼─────────────────┼────────────────┼────────┘  │
+│            ▼                 ▼                 ▼                ▼           │
+│  ┌───────────────────────────────────────────────────────────────────────┐  │
+│  │              REPOSITÓRIOS LOCAIS (Local Repository Pattern)           │  │
+│  │    - Salva imediatamente no banco local com timestamp UTC             │  │
+│  │    - Enfileira mutação com status 'pending' na Mutation Queue         │  │
+│  └───────────────────────────────────┬───────────────────────────────────┘  │
+│                                      │                                      │
+│                ┌─────────────────────┴─────────────────────┐                │
+│                │                                           │                │
+│     [Desktop Tauri App]                         [Navegador / Web]           │
+│                ▼                                           ▼                │
+│  ┌───────────────────────────┐               ┌───────────────────────────┐  │
+│  │   SQLite Nativo (Tauri)   │               │    IndexedDB (Dexie.js)   │  │
+│  │   - $APP_DATA/aresta.db   │               │    - Banco 'aresta_db'    │  │
+│  │   - Arquivos em FS local  │               │    - OPFS para EPUBs/PDFs │  │
+│  └─────────────┬─────────────┘               └─────────────┬─────────────┘  │
+│                │                                           │                │
+│                └─────────────────────┬─────────────────────┘                │
+│                                      ▼                                      │
+│  ┌───────────────────────────────────────────────────────────────────────┐  │
+│  │                 MOTOR DE SINCRONIZAÇÃO (Sync Engine)                  │  │
+│  │  1. Monitora rede (online / offline)                                  │  │
+│  │  2. Quando online: agrupa mutações pendentes                          │  │
+│  │  3. Dispara POST /api/sync { last_sync_timestamp, mutations }         │  │
+│  │  4. Aplica deltas remotos e marca mutações locais como 'synced'       │  │
+│  └───────────────────────────────────┬───────────────────────────────────┘  │
+└──────────────────────────────────────┼──────────────────────────────────────┘
+                                       │
+                         HTTPS / JSON  │ POST /api/sync
+                                       │
+┌──────────────────────────────────────▼──────────────────────────────────────┐
+│                       NUVEM / SERVIDOR (Docker Stack)                       │
+│                                                                             │
+│  ┌───────────────────────────────────────────────────────────────────────┐  │
+│  │                     BACKEND EXPRESS (Node.js API)                     │  │
+│  │                                                                       │  │
+│  │  - Validação de Token JWT                                             │  │
+│  │  - Transação Prisma: Resolução Last-Write-Wins (LWW) via updated_at   │  │
+│  │  - Processa exclusões via deleted_at (Soft Delete)                    │  │
+│  │  - Retorna novos registros criados/alterados na nuvem                 │  │
+│  └───────────────┬───────────────────────────────────────┬───────────────┘  │
+│                  │                                       │                  │
+│                  ▼                                       ▼ gRPC (TCP 50051) │
+│  ┌───────────────────────────────┐     ┌─────────────────────────────────┐  │
+│  │     PostgreSQL 16 (db)        │     │  Microsserviço Go (aresta-ocr)  │  │
+│  │  - Fonte da verdade remota    │     │  - IA Gemini / OCR assíncrono   │  │
+│  └───────────────────────────────┘     └─────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────┘
