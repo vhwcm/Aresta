@@ -1,37 +1,37 @@
 #!/usr/bin/env node
 
-const { spawn } = require('node:child_process');
+const { execSync } = require('node:child_process');
 const path = require('node:path');
 const os = require('node:os');
 const fs = require('node:fs');
 
-const isWindows = process.platform === 'win32';
 const mode = process.argv[2] === 'build' ? 'build' : 'dev';
 
-// Assegura que o Cargo esteja no PATH para este processo
+// Assegura que o Cargo (.cargo/bin) esteja presente na variável PATH
 const cargoHome = process.env.CARGO_HOME || path.join(os.homedir(), '.cargo');
 const cargoBin = path.join(cargoHome, 'bin');
-const env = { ...process.env };
 
-if (fs.existsSync(cargoBin) && (!env.PATH || !env.PATH.includes(cargoBin))) {
-  env.PATH = `${cargoBin}${path.delimiter}${env.PATH || ''}`;
+// No Windows, a variável pode ser 'Path' ou 'PATH'
+const pathKey = Object.keys(process.env).find((k) => k.toLowerCase() === 'path') || 'PATH';
+const currentPath = process.env[pathKey] || '';
+
+if (fs.existsSync(cargoBin) && !currentPath.includes(cargoBin)) {
+  process.env[pathKey] = `${cargoBin}${path.delimiter}${currentPath}`;
 }
 
 const frontDir = path.join(__dirname, '..', 'front');
-const npmCmd = isWindows ? 'npm.cmd' : 'npm';
 
-console.log(`[Aresta Desktop] Executando Tauri em modo: ${mode}...`);
+console.log(`\x1b[34m[Aresta Desktop]\x1b[0m Executando Tauri em modo: \x1b[36m${mode}\x1b[0m...`);
 
-const child = spawn(npmCmd, ['run', `tauri:${mode}`], {
-  cwd: frontDir,
-  env,
-  stdio: 'inherit',
-  shell: true
-});
-
-child.on('exit', (code) => {
-  if (code !== 0 && mode === 'build') {
-    console.log('\n\x1b[33m[Dica]\x1b[0m Se o comando falhou por falta do Rust/cargo, execute primeiro: \x1b[36mnpm run setup:desktop\x1b[0m\n');
+try {
+  execSync(`npm run tauri:${mode}`, {
+    cwd: frontDir,
+    stdio: 'inherit',
+    env: process.env
+  });
+} catch (err) {
+  if (mode === 'build') {
+    console.log('\n\x1b[33m[Dica]\x1b[0m Se a compilação falhou por falta do Rust/cargo, execute primeiro: \x1b[36mnpm run setup:desktop\x1b[0m\n');
   }
-  process.exit(code || 0);
-});
+  process.exit(1);
+}

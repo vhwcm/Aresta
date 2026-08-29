@@ -22,8 +22,10 @@ const isMac = process.platform === 'darwin';
 // Adiciona diretório padrão do Cargo ao PATH se já existir no disco
 const cargoHome = process.env.CARGO_HOME || path.join(os.homedir(), '.cargo');
 const cargoBin = path.join(cargoHome, 'bin');
-if (fs.existsSync(cargoBin) && !process.env.PATH.includes(cargoBin)) {
-  process.env.PATH = `${cargoBin}${path.delimiter}${process.env.PATH}`;
+const pathKey = Object.keys(process.env).find((k) => k.toLowerCase() === 'path') || 'PATH';
+const currentPath = process.env[pathKey] || '';
+if (fs.existsSync(cargoBin) && !currentPath.includes(cargoBin)) {
+  process.env[pathKey] = `${cargoBin}${path.delimiter}${currentPath}`;
 }
 
 console.log(`${colors.blue}======================================================${colors.reset}`);
