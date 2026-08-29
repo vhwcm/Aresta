@@ -244,11 +244,9 @@ const castShadowOpacity = computed(() => {
 
 // Posicionamento do Canvas WebGL 3D sobreposto
 const webglCanvasStyle = computed(() => {
-  if (!is3DActive.value) {
-    return { display: 'none' }
-  }
-
   const layout = pageLayout.value
+  const visible = is3DActive.value
+
   if (layout.isTwoPage) {
     const leftEdge = layout.leftPage?.left ?? 0
     const topEdge = layout.leftPage?.top ?? 0
@@ -263,7 +261,9 @@ const webglCanvasStyle = computed(() => {
       width: `${totalW}px`,
       height: `${totalH}px`,
       zIndex: 40,
-      pointerEvents: 'none',
+      opacity: visible ? 1 : 0,
+      visibility: (visible ? 'visible' : 'hidden') as any,
+      pointerEvents: 'none' as const,
     }
   }
 
@@ -276,11 +276,15 @@ const webglCanvasStyle = computed(() => {
       width: `${layout.singlePage.width}px`,
       height: `${layout.singlePage.height}px`,
       zIndex: 40,
-      pointerEvents: 'none',
+      opacity: visible ? 1 : 0,
+      visibility: (visible ? 'visible' : 'hidden') as any,
+      pointerEvents: 'none' as const,
     }
   }
 
-  return { display: 'none' }
+  return {
+    display: 'none',
+  }
 })
 
 function getOrCreateOffscreenCanvas(name: 'front' | 'back'): HTMLCanvasElement {
@@ -550,30 +554,21 @@ function getTurnZone(event: PointerEvent): PageTurnDirection | null {
   const y = event.clientY - bounds.top
   const layout = pageLayout.value
 
-  const EDGE_MAX_PX = 90
-  const EDGE_RATIO = 0.24
-  const CORNER_THRESHOLD_Y = 120
-
   if (layout.isTwoPage) {
-    if (layout.leftPage) {
-      const edgeWidth = Math.min(EDGE_MAX_PX, layout.leftPage.width * EDGE_RATIO)
-      if (x <= layout.leftPage.left + edgeWidth) return 'previous'
-      const isLeftCornerY = y <= layout.leftPage.top + CORNER_THRESHOLD_Y || y >= layout.leftPage.top + layout.leftPage.height - CORNER_THRESHOLD_Y
-      if (x <= layout.leftPage.left + layout.leftPage.width * 0.4 && isLeftCornerY) return 'previous'
-    }
-    if (layout.rightPage) {
-      const edgeWidth = Math.min(EDGE_MAX_PX, layout.rightPage.width * EDGE_RATIO)
-      if (x >= layout.rightPage.left + layout.rightPage.width - edgeWidth) return 'next'
-      const isRightCornerY = y <= layout.rightPage.top + CORNER_THRESHOLD_Y || y >= layout.rightPage.top + layout.rightPage.height - CORNER_THRESHOLD_Y
-      if (x >= layout.rightPage.left + layout.rightPage.width * 0.6 && isRightCornerY) return 'next'
+    if (layout.leftPage && layout.rightPage) {
+      const spineX = layout.leftPage.left + layout.leftPage.width
+      // Clique ou arraste à esquerda da lombada = previous
+      if (x < spineX) return 'previous'
+      // Clique ou arraste à direita da lombada = next
+      if (x >= spineX) return 'next'
     }
   } else if (layout.singlePage) {
-    const edgeWidth = Math.min(EDGE_MAX_PX, layout.singlePage.width * EDGE_RATIO)
-    if (x <= layout.singlePage.left + edgeWidth) return 'previous'
-    if (x >= layout.singlePage.left + layout.singlePage.width - edgeWidth) return 'next'
-    const isCornerY = y <= layout.singlePage.top + CORNER_THRESHOLD_Y || y >= layout.singlePage.top + layout.singlePage.height - CORNER_THRESHOLD_Y
-    if (x <= layout.singlePage.left + layout.singlePage.width * 0.35 && isCornerY) return 'previous'
-    if (x >= layout.singlePage.left + layout.singlePage.width * 0.65 && isCornerY) return 'next'
+    const midX = layout.singlePage.left + layout.singlePage.width * 0.5
+    if (x < midX) return 'previous'
+    if (x >= midX) return 'next'
+  } else {
+    if (x < bounds.width * 0.5) return 'previous'
+    if (x >= bounds.width * 0.5) return 'next'
   }
 
   return null
@@ -598,8 +593,8 @@ async function onPointerDown(event: PointerEvent) {
     ? (direction === 'next' ? layout.rightPage : layout.leftPage)
     : layout.singlePage
 
-  const w = targetPageRect?.width || 500
-  const h = targetPageRect?.height || 700
+  const w = targetPageRect?.width || 400
+  const h = targetPageRect?.height || 600
   const relY = targetPageRect ? (pt.y - targetPageRect.top) / h : 0.5
 
   await prepare3DTextures(direction, relY)
@@ -638,8 +633,8 @@ async function requestTurn(direction: PageTurnDirection) {
     ? (direction === 'next' ? layout.rightPage : layout.leftPage)
     : layout.singlePage
 
-  const w = targetPageRect?.width || 500
-  const h = targetPageRect?.height || 700
+  const w = targetPageRect?.width || 400
+  const h = targetPageRect?.height || 600
 
   await prepare3DTextures(direction, 0.5)
   is3DActive.value = true
@@ -732,13 +727,14 @@ defineExpose({
 
 .book-3d-webgl-canvas {
   position: absolute;
-  display: none;
   pointer-events: none;
   z-index: 40;
+  transition: opacity 0.05s ease-out;
 }
 
 .book-3d-webgl-canvas--active {
-  display: block;
+  opacity: 1 !important;
+  visibility: visible !important;
 }
 
 .page-underlying-shadow {

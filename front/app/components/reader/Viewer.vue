@@ -31,8 +31,6 @@
             ref="canvasAreaRef"
             :style="{ backgroundColor: themeBgColor }"
             @mouseup="handleTextSelectionCheck"
-            @touchend="handleTouchEnd"
-            @touchstart="handleTouchStart"
           >
             <div class="reader-viewer__stage-container" :style="{ backgroundColor: themeBgColor }">
               <button

@@ -10,9 +10,9 @@ export interface Page3DConfig {
 
 const VERTEX_SHADER = `
   uniform float uProgress;
-  uniform float uDirection;     // +1.0 for Next, -1.0 for Previous
+  uniform float uDirection;     // +1.0 for Next (Right-to-Left), -1.0 for Previous (Left-to-Right)
   uniform float uGripY;         // 0.0 (top) to 1.0 (bottom)
-  uniform float uPointerDeltaY; // vertical pull offset
+  uniform float uPointerDeltaY; // vertical displacement
   uniform float uPageWidth;
   uniform float uPageHeight;
   uniform float uRadius;
@@ -20,6 +20,7 @@ const VERTEX_SHADER = `
   varying vec2 vUv;
   varying vec3 vNormalVec;
   varying float vCurlZ;
+  varying float vFacing;
 
   const float PI = 3.14159265358979323846;
 
@@ -31,35 +32,38 @@ const VERTEX_SHADER = `
     if (p <= 0.0001) {
       vNormalVec = vec3(0.0, 0.0, 1.0);
       vCurlZ = 0.0;
+      vFacing = 1.0;
       gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
       return;
     }
 
-    // Inclinação cônica baseada no canto de apoio (topo vs base)
-    float cornerBias = (uGripY - 0.5) * 0.65;
-    float angle = cornerBias * sin(p * PI) + uPointerDeltaY * 0.45;
-    angle = clamp(angle, -0.4, 0.4);
+    // Inclinação cônica baseada na altura de contato (topo vs base)
+    float cornerBias = (uGripY - 0.5) * 0.7;
+    float angle = cornerBias * sin(p * PI) + uPointerDeltaY * 0.5;
+    angle = clamp(angle, -0.42, 0.42);
 
     // Raio dinâmico para deformação cônica
     float normY = (pos.y + (uPageHeight * 0.5)) / max(1.0, uPageHeight);
-    float dynamicRadius = uRadius * (1.0 + (normY - uGripY) * cornerBias * 0.65);
-    dynamicRadius = max(10.0, dynamicRadius);
+    float dynamicRadius = uRadius * (1.0 + (normY - uGripY) * cornerBias * 0.7);
+    dynamicRadius = max(14.0, dynamicRadius);
     float rollCircumference = PI * dynamicRadius;
 
     vec3 deformedPos = pos;
     vec3 computedNormal = vec3(0.0, 0.0, 1.0);
+    float facing = 1.0;
 
     if (uDirection > 0.0) {
-      // NEXT: Página Direita [0, W] dobrando para a Esquerda [-W, 0] ao redor da lombada (x = 0)
+      // NEXT: Folha direita [0, W] dobra em direção à esquerda [-W, 0] ao redor da lombada (x = 0)
       float foldX = uPageWidth * (1.0 - p);
       float dist = (pos.x - foldX) + (pos.y * sin(angle));
 
       if (dist <= 0.0) {
-        // Região plana na direita
+        // Região ainda plana na direita
         deformedPos.z = 0.0;
         computedNormal = vec3(0.0, 0.0, 1.0);
+        facing = 1.0;
       } else if (dist < rollCircumference) {
-        // Região da curva (rolo cilíndrico/cônico)
+        // Na curva do cilindro/cone
         float phi = dist / dynamicRadius;
         float sinPhi = sin(phi);
         float cosPhi = cos(phi);
@@ -67,24 +71,27 @@ const VERTEX_SHADER = `
         deformedPos.x = foldX - (dynamicRadius * sinPhi);
         deformedPos.z = dynamicRadius * (1.0 - cosPhi);
         computedNormal = normalize(vec3(-sinPhi, 0.0, cosPhi));
+        facing = cosPhi >= 0.0 ? 1.0 : -1.0;
       } else {
-        // Região virada sobre a esquerda
+        // Virada sobre a página esquerda
         float flatOffset = dist - rollCircumference;
         deformedPos.x = foldX - flatOffset;
         deformedPos.z = dynamicRadius * 2.0;
         computedNormal = vec3(0.0, 0.0, -1.0);
+        facing = -1.0;
       }
     } else {
-      // PREVIOUS: Página Esquerda [-W, 0] dobrando para a Direita [0, W] ao redor da lombada (x = 0)
+      // PREVIOUS: Folha esquerda [-W, 0] dobra em direção à direita [0, W] ao redor da lombada (x = 0)
       float foldX = -uPageWidth * (1.0 - p);
       float dist = (foldX - pos.x) + (pos.y * sin(angle));
 
       if (dist <= 0.0) {
-        // Região plana na esquerda
+        // Região ainda plana na esquerda
         deformedPos.z = 0.0;
         computedNormal = vec3(0.0, 0.0, 1.0);
+        facing = 1.0;
       } else if (dist < rollCircumference) {
-        // Região da curva
+        // Na curva do cilindro/cone
         float phi = dist / dynamicRadius;
         float sinPhi = sin(phi);
         float cosPhi = cos(phi);
@@ -92,17 +99,20 @@ const VERTEX_SHADER = `
         deformedPos.x = foldX + (dynamicRadius * sinPhi);
         deformedPos.z = dynamicRadius * (1.0 - cosPhi);
         computedNormal = normalize(vec3(sinPhi, 0.0, cosPhi));
+        facing = cosPhi >= 0.0 ? 1.0 : -1.0;
       } else {
-        // Região virada sobre a direita
+        // Virada sobre a página direita
         float flatOffset = dist - rollCircumference;
         deformedPos.x = foldX + flatOffset;
         deformedPos.z = dynamicRadius * 2.0;
         computedNormal = vec3(0.0, 0.0, -1.0);
+        facing = -1.0;
       }
     }
 
     vNormalVec = computedNormal;
     vCurlZ = deformedPos.z;
+    vFacing = facing;
 
     gl_Position = projectionMatrix * modelViewMatrix * vec4(deformedPos, 1.0);
   }
@@ -117,28 +127,29 @@ const FRAGMENT_SHADER = `
   varying vec2 vUv;
   varying vec3 vNormalVec;
   varying float vCurlZ;
+  varying float vFacing;
 
   void main() {
-    vec3 lightDir = normalize(vec3(0.25, 0.35, 0.9));
+    vec3 lightDir = normalize(vec3(0.2, 0.35, 0.92));
     vec3 norm = normalize(vNormalVec);
 
-    if (gl_FrontFacing) {
+    if (gl_FrontFacing || vFacing > 0.0) {
       vec4 frontTex = texture2D(uFrontTexture, vUv);
       
       // Translucidez sutil do verso na folha iluminada
       vec2 backUv = vec2(1.0 - vUv.x, vUv.y);
       vec4 backTex = texture2D(uBackTexture, backUv);
-      vec3 paperBase = mix(frontTex.rgb, backTex.rgb, 0.035) * uPaperTint;
+      vec3 paperBase = mix(frontTex.rgb, backTex.rgb, 0.04) * uPaperTint;
 
       // Iluminação difusa e brilho especular suave na crista
       float diff = max(0.0, dot(norm, lightDir));
       float spec = pow(diff, 14.0) * 0.12;
 
-      // Sombra de contato e auto-oclusão
-      float ambientShadow = clamp(vCurlZ * 0.003, 0.0, 0.25) * uShadowIntensity;
+      // Sombra de contato e curvatura
+      float ambientShadow = clamp(vCurlZ * 0.003, 0.0, 0.28) * uShadowIntensity;
 
       vec3 finalRgb = (paperBase * (0.86 + 0.14 * diff) + vec3(spec)) * (1.0 - ambientShadow);
-      gl_FragColor = vec4(finalRgb, frontTex.a);
+      gl_FragColor = vec4(finalRgb, 1.0);
     } else {
       // Face do Verso da Página
       vec2 backUv = vec2(1.0 - vUv.x, vUv.y);
@@ -149,10 +160,10 @@ const FRAGMENT_SHADER = `
       float diff = max(0.0, dot(revNorm, lightDir));
       float spec = pow(diff, 14.0) * 0.10;
 
-      float ambientShadow = clamp(vCurlZ * 0.002, 0.0, 0.20) * uShadowIntensity;
+      float ambientShadow = clamp(vCurlZ * 0.002, 0.0, 0.22) * uShadowIntensity;
 
       vec3 finalRgb = (paperBase * (0.84 + 0.16 * diff) + vec3(spec)) * (1.0 - ambientShadow);
-      gl_FragColor = vec4(finalRgb, backTex.a);
+      gl_FragColor = vec4(finalRgb, 1.0);
     }
   }
 `
@@ -220,7 +231,6 @@ export function usePageCurl3D(canvasHostRef: Ref<HTMLCanvasElement | null>) {
 
     if (isTwoPageMode) {
       // Câmera ortográfica centrada na lombada (X = 0)
-      // Esquerda: [-currentWidth, 0], Direita: [0, currentWidth]
       camera = new THREE.OrthographicCamera(
         -currentWidth,
         currentWidth,
@@ -230,7 +240,6 @@ export function usePageCurl3D(canvasHostRef: Ref<HTMLCanvasElement | null>) {
         2000,
       )
     } else {
-      // Câmera no modo 1 página [0, currentWidth]
       camera = new THREE.OrthographicCamera(
         0,
         currentWidth,
@@ -247,10 +256,8 @@ export function usePageCurl3D(canvasHostRef: Ref<HTMLCanvasElement | null>) {
 
     if (isTwoPageMode) {
       if (currentDirection === 'next') {
-        // Folha direita: pivô na lombada (X = 0), estendendo-se para +X
         geometry.translate(currentWidth * 0.5, 0, 0)
       } else {
-        // Folha esquerda: pivô na lombada (X = 0), estendendo-se para -X
         geometry.translate(-currentWidth * 0.5, 0, 0)
       }
     } else {
@@ -276,7 +283,9 @@ export function usePageCurl3D(canvasHostRef: Ref<HTMLCanvasElement | null>) {
         vertexShader: VERTEX_SHADER,
         fragmentShader: FRAGMENT_SHADER,
         side: THREE.DoubleSide,
-        transparent: true,
+        transparent: false,
+        depthTest: true,
+        depthWrite: true,
         uniforms: {
           uProgress: { value: 0.0 },
           uDirection: { value: currentDirection === 'next' ? 1.0 : -1.0 },
