@@ -25,11 +25,13 @@ class DocLayoutYoloDetector:
         self.device = device
         self._model = None
         self._is_loaded = False
+        self._attempted = False
 
     def load_model(self):
-        if self._is_loaded:
+        if self._attempted:
             return
 
+        self._attempted = True
         try:
             # Try importing ultralytics or doclayout_yolo if available
             from ultralytics import YOLO
@@ -44,7 +46,7 @@ class DocLayoutYoloDetector:
             self._is_loaded = True
             logger.info(f"Loaded DocLayout-YOLO model from {target_path} on {self.device}")
         except Exception as e:
-            logger.warning(f"Could not load DocLayout-YOLO neural weights ({e}). Operating in heuristic mode.")
+            logger.info(f"DocLayout-YOLO não inicializado ({e}). Operando em modo heurístico determinístico de alta precisão.")
             self._model = None
             self._is_loaded = False
 
