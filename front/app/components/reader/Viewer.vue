@@ -861,6 +861,34 @@ onUnmounted(() => {
   cursor: not-allowed;
 }
 
+@media (max-width: 767px) {
+  .reader-viewer__canvas-area {
+    padding: 0 !important;
+  }
+  .reader-viewer__stage-container {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
+  .reader-viewer__nav-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 1.5rem;
+    opacity: 0.35;
+  }
+  .reader-viewer__nav-btn:hover,
+  .reader-viewer__nav-btn:active {
+    opacity: 0.95;
+  }
+  .reader-viewer__nav-btn--prev {
+    left: 0.35rem;
+  }
+  .reader-viewer__nav-btn--next {
+    right: 0.35rem;
+  }
+}
+
 /* =========================================================================
    Temas de Leitura (Amarelado / Sépia, Branco, Preto)
    ========================================================================= */

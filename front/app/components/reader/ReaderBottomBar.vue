@@ -2,7 +2,7 @@
   <footer
     class="reader-bottom-bar border-t md:border-t-0 md:border-r px-3 py-2 sm:px-4 sm:py-2.5 md:px-2 md:py-3.5 flex flex-row md:flex-col items-center justify-between z-20 shrink-0 gap-2 md:gap-3 order-last md:order-first w-full md:w-16 md:h-full select-none transition-colors duration-200"
     :class="{
-      'bg-[#FAF5E8] border-[#dfd5c0] text-[#2a2521]': store.readerTheme === 'sepia',
+      'bg-[#f5eedc] border-[#dfd5c0] text-[#2a2521]': store.readerTheme === 'sepia',
       'bg-white border-gray-200 text-gray-900': store.readerTheme === 'white',
       'bg-[#121315] border-divider text-textPrimary': store.readerTheme === 'black' || !store.readerTheme,
     }"
@@ -16,7 +16,7 @@
         @click="$emit('close')"
         class="flex items-center justify-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 md:w-11 md:h-11 md:p-0 rounded-xl border text-xs font-semibold transition-all active:scale-95 group"
         :class="store.readerTheme === 'sepia'
-          ? 'bg-[#FAF5E8] border-[#dfd5c0] text-[#5c4d3c] hover:text-[#2a2521] hover:bg-[#EBE2CE]'
+          ? 'bg-[#f5eedc] border-[#dfd5c0] text-[#5c4d3c] hover:text-[#2a2521] hover:bg-[#EBE2CE]'
           : (store.readerTheme === 'white'
             ? 'bg-gray-100 border-gray-200 text-gray-700 hover:text-black hover:bg-gray-200'
             : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary hover:bg-white/10')"
@@ -32,7 +32,7 @@
       <div
         class="flex flex-row md:flex-col items-center justify-center gap-1.5 md:gap-0.5 px-2.5 py-1.5 sm:px-3 sm:py-2 md:w-11 md:py-2 md:px-0.5 rounded-xl border text-xs font-semibold text-center"
         :class="store.readerTheme === 'sepia'
-          ? 'bg-[#FAF5E8] border-[#dfd5c0] text-[#5c4d3c]'
+          ? 'bg-[#f5eedc] border-[#dfd5c0] text-[#5c4d3c]'
           : (store.readerTheme === 'white'
             ? 'bg-gray-100 border-gray-200 text-gray-700'
             : 'bg-white/5 border-divider text-textSecondary')"
@@ -79,7 +79,7 @@
           :class="isAppearancePopoverOpen
             ? 'bg-accent/20 border-accent text-accent shadow-sm'
             : (store.readerTheme === 'sepia'
-              ? 'bg-[#FAF5E8] border-[#dfd5c0] text-[#5c4d3c] hover:text-[#2a2521] hover:bg-[#EBE2CE]'
+              ? 'bg-[#f5eedc] border-[#dfd5c0] text-[#5c4d3c] hover:text-[#2a2521] hover:bg-[#EBE2CE]'
               : (store.readerTheme === 'white'
                 ? 'bg-gray-100 border-gray-200 text-gray-700 hover:text-black hover:bg-gray-200'
                 : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary hover:bg-white/10'))"
@@ -109,7 +109,7 @@
           v-if="isAppearancePopoverOpen"
           class="fixed bottom-16 left-1/2 -translate-x-1/2 w-[92vw] max-w-[320px] md:absolute md:left-full md:top-1/2 md:translate-x-0 md:-translate-y-1/2 md:bottom-auto md:w-72 border rounded-2xl p-4 shadow-2xl z-50 flex flex-col gap-3.5 animate-fadeIn"
           :class="{
-            'bg-[#FAF5E8] border-[#dfd5c0] text-[#2a2521]': store.readerTheme === 'sepia',
+            'bg-[#f5eedc] border-[#dfd5c0] text-[#2a2521]': store.readerTheme === 'sepia',
             'bg-white border-gray-200 text-gray-900': store.readerTheme === 'white',
             'bg-[#18181b] border-white/10 text-[#f2f2f2]': store.readerTheme === 'black' || !store.readerTheme,
           }"
@@ -133,9 +133,7 @@
                   ? 'bg-amber-400/25 border-amber-600 text-amber-950 shadow-sm font-bold'
                   : (store.readerTheme === 'white'
                     ? 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200 hover:text-gray-900'
-                    : (store.readerTheme === 'sepia'
-                      ? 'bg-[#f0e7d3] border-[#dfd5c0] text-[#5c4d3c] hover:bg-[#ebe0c8]'
-                      : 'bg-white/5 border-white/10 hover:bg-white/10 text-textSecondary hover:text-textPrimary'))"
+                    : 'bg-white/5 border-white/10 hover:bg-white/10 text-textSecondary hover:text-textPrimary')"
                 title="Fundo amarelado suave estilo livro físico"
               >
                 <div class="w-5 h-5 rounded-full border border-amber-600/30 bg-[#f5eedc] shadow-inner mb-1 flex items-center justify-center">
@@ -356,7 +354,7 @@
         v-if="store.documentType === 'epub'"
         class="hidden md:flex md:flex-col items-center justify-center rounded-xl border p-0.5"
         :class="store.readerTheme === 'sepia'
-          ? 'bg-[#FAF5E8] border-[#dfd5c0]'
+          ? 'bg-[#f5eedc] border-[#dfd5c0]'
           : (store.readerTheme === 'white'
             ? 'bg-gray-100 border-gray-200'
             : 'bg-white/5 border-divider')"
@@ -398,7 +396,7 @@
         :class="store.isTwoPageMode
           ? 'bg-accent/15 border-accent text-accent shadow-sm'
           : (store.readerTheme === 'sepia'
-            ? 'bg-[#FAF5E8] border-[#dfd5c0] text-[#5c4d3c] hover:text-[#2a2521] hover:bg-[#EBE2CE]'
+            ? 'bg-[#f5eedc] border-[#dfd5c0] text-[#5c4d3c] hover:text-[#2a2521] hover:bg-[#EBE2CE]'
             : (store.readerTheme === 'white'
               ? 'bg-gray-100 border-gray-200 text-gray-700 hover:text-black hover:bg-gray-200'
               : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary hover:bg-white/10'))"
@@ -420,7 +418,7 @@
         :class="store.readerWidthMode === 'wide'
           ? 'bg-accent/15 border-accent text-accent shadow-sm'
           : (store.readerTheme === 'sepia'
-            ? 'bg-[#FAF5E8] border-[#dfd5c0] text-[#5c4d3c] hover:text-[#2a2521] hover:bg-[#EBE2CE]'
+            ? 'bg-[#f5eedc] border-[#dfd5c0] text-[#5c4d3c] hover:text-[#2a2521] hover:bg-[#EBE2CE]'
             : (store.readerTheme === 'white'
               ? 'bg-gray-100 border-gray-200 text-gray-700 hover:text-black hover:bg-gray-200'
               : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary hover:bg-white/10'))"
@@ -451,7 +449,7 @@
         :class="store.isCurrentPageBookmarked
           ? 'bg-amber-500/20 border-amber-500/50 text-amber-300 shadow-sm'
           : (store.readerTheme === 'sepia'
-            ? 'bg-[#FAF5E8] border-[#dfd5c0] text-[#5c4d3c] hover:text-[#2a2521] hover:bg-[#EBE2CE]'
+            ? 'bg-[#f5eedc] border-[#dfd5c0] text-[#5c4d3c] hover:text-[#2a2521] hover:bg-[#EBE2CE]'
             : (store.readerTheme === 'white'
               ? 'bg-gray-100 border-gray-200 text-gray-700 hover:text-black hover:bg-gray-200'
               : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary hover:bg-white/10'))"
@@ -472,7 +470,7 @@
         @click="$emit('openSavedPages')"
         class="flex items-center justify-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 md:w-11 md:h-11 md:p-0 rounded-xl border text-xs font-semibold transition-all relative active:scale-95"
         :class="store.readerTheme === 'sepia'
-          ? 'bg-[#FAF5E8] border-[#dfd5c0] text-[#5c4d3c] hover:text-[#2a2521] hover:bg-[#EBE2CE]'
+          ? 'bg-[#f5eedc] border-[#dfd5c0] text-[#5c4d3c] hover:text-[#2a2521] hover:bg-[#EBE2CE]'
           : (store.readerTheme === 'white'
             ? 'bg-gray-100 border-gray-200 text-gray-700 hover:text-black hover:bg-gray-200'
             : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary hover:bg-white/10')"
@@ -496,7 +494,7 @@
         :class="isGraphActive
           ? 'bg-accent text-white border-accent shadow-sm'
           : (store.readerTheme === 'sepia'
-            ? 'bg-[#FAF5E8] border-[#dfd5c0] text-[#5c4d3c] hover:text-[#2a2521] hover:bg-[#EBE2CE]'
+            ? 'bg-[#f5eedc] border-[#dfd5c0] text-[#5c4d3c] hover:text-[#2a2521] hover:bg-[#EBE2CE]'
             : (store.readerTheme === 'white'
               ? 'bg-gray-100 border-gray-200 text-gray-700 hover:text-black hover:bg-gray-200'
               : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary hover:bg-white/10'))"
@@ -512,7 +510,7 @@
         @click="store.toggleZenMode()"
         class="flex items-center justify-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 md:w-11 md:h-11 md:p-0 rounded-xl border text-xs font-semibold transition-all active:scale-95 group"
         :class="store.readerTheme === 'sepia'
-          ? 'bg-[#FAF5E8] border-[#dfd5c0] text-[#5c4d3c] hover:text-[#2a2521] hover:bg-[#EBE2CE]'
+          ? 'bg-[#f5eedc] border-[#dfd5c0] text-[#5c4d3c] hover:text-[#2a2521] hover:bg-[#EBE2CE]'
           : (store.readerTheme === 'white'
             ? 'bg-gray-100 border-gray-200 text-gray-700 hover:text-black hover:bg-gray-200'
             : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary hover:bg-white/10')"

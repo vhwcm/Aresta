@@ -1092,8 +1092,7 @@ export class EpubDocumentAdapter implements IBookDocument {
 
     ctx.imageSmoothingEnabled = true
     ctx.imageSmoothingQuality = 'high'
-    ctx.fillStyle = '#faf9f7'
-    ctx.fillRect(0, 0, renderW, renderH)
+    ctx.clearRect(0, 0, renderW, renderH)
 
     const mapping = this._pageMap[pageNumber - 1]
     if (!mapping) return canvas
@@ -1143,7 +1142,7 @@ export class EpubDocumentAdapter implements IBookDocument {
           </style>
           <foreignObject width="${width}" height="${height}">
             <div xmlns="http://www.w3.org/1999/xhtml"
-              style="width:${width}px;height:${height}px;overflow:hidden;background:#faf9f7;margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;display:flex;align-items:center;justify-content:center;">
+              style="width:${width}px;height:${height}px;overflow:hidden;background:transparent;margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;display:flex;align-items:center;justify-content:center;">
               <div class="epub-text-layer-content ${isCover ? 'epub-cover-page' : ''} ${bodyClasses}"
                 style="width:${width}px;height:${height}px;box-sizing:border-box;${isCover ? 'display:flex;align-items:center;justify-content:center;padding:12px;margin:0;' : `padding:${paddingY}px ${paddingX}px;column-width:${colWidth}px;column-gap:${colGap}px;column-fill:auto;margin-left:-${colOffset}px;`}font-family:${this._fontFamily};font-size:${this._fontSize}px;line-height:1.7;word-wrap:break-word;">
                 ${safeBodyContent}

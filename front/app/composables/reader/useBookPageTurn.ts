@@ -178,17 +178,29 @@ export function useBookPageTurn(
     } else {
       let targetWidth: number
       let targetHeight: number
+      let startX = 0
+      let startY = 0
 
-      if (isWide) {
-        // Modo Expandido: 1 folha ocupando quase 100% da largura útil
+      const isMobile = hostWidth < 768
+
+      if (isMobile) {
+        // No mobile: sem bordas ou margens externas, 100% de largura e altura uniforme com o fundo
+        targetWidth = hostWidth
+        targetHeight = hostHeight
+        startX = 0
+        startY = 0
+      } else if (isWide) {
+        // Modo Expandido no Desktop/Tablet: 1 folha ocupando quase 100% da largura útil
         targetWidth = Math.max(300, Math.round(hostWidth - 32))
         if (isEpub) {
           targetHeight = Math.max(300, hostHeight - 24)
         } else {
           targetHeight = Math.min(hostHeight - 24, Math.round(targetWidth / aspectRatio))
         }
+        startX = Math.max(0, (hostWidth - targetWidth) / 2)
+        startY = Math.max(0, (hostHeight - targetHeight) / 2)
       } else {
-        // Modo Centralizado: 1 folha centralizada com proporção clássica
+        // Modo Centralizado no Desktop/Tablet: 1 folha centralizada com proporção clássica
         const availableHeight = Math.round(hostHeight * 0.94)
         targetHeight = availableHeight
         targetWidth = Math.round(targetHeight * aspectRatio)
@@ -198,10 +210,9 @@ export function useBookPageTurn(
           targetWidth = maxWidth
           targetHeight = Math.round(targetWidth / aspectRatio)
         }
+        startX = Math.max(0, (hostWidth - targetWidth) / 2)
+        startY = Math.max(0, (hostHeight - targetHeight) / 2)
       }
-
-      const startX = Math.max(0, (hostWidth - targetWidth) / 2)
-      const startY = Math.max(0, (hostHeight - targetHeight) / 2)
 
       const singlePage: PageRect = {
         left: Math.round(startX),

@@ -898,6 +898,19 @@ defineExpose({
   border-right-color: rgba(0, 0, 0, 0.08);
 }
 
+@media (max-width: 767px) {
+  .page-sheet--single,
+  .theme-sepia .page-sheet--single,
+  .theme-white .page-sheet--single,
+  .theme-black .page-sheet--single {
+    box-shadow: none !important;
+    border: none !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-radius: 0 !important;
+  }
+}
+
 .page-pdf-canvas {
   position: absolute;
   inset: 0;
