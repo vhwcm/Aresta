@@ -17,7 +17,7 @@ export class UserSettingsService {
         epubFontSize: 18,
         epubFontFamily: 'newsreader',
         themeMode: 'dark',
-        desktopHomeGraphOpen: true,
+        desktopHomeGraphOpen: false,
         desktopReaderGraphOpen: false,
       };
     }
@@ -31,7 +31,7 @@ export class UserSettingsService {
       epubFontSize: (settings as any).epub_font_size ?? 18,
       epubFontFamily: (settings as any).epub_font_family ?? 'newsreader',
       themeMode: (settings as any).theme_mode ?? 'dark',
-      desktopHomeGraphOpen: (settings as any).desktop_home_graph_open ?? true,
+      desktopHomeGraphOpen: (settings as any).desktop_home_graph_open ?? false,
       desktopReaderGraphOpen: (settings as any).desktop_reader_graph_open ?? false,
     };
   }
@@ -44,7 +44,7 @@ export class UserSettingsService {
     const epubFontSize = input.epubFontSize ?? 18;
     const epubFontFamily = input.epubFontFamily ?? 'newsreader';
     const themeMode = input.themeMode ?? 'dark';
-    const desktopHomeGraphOpen = input.desktopHomeGraphOpen ?? true;
+    const desktopHomeGraphOpen = input.desktopHomeGraphOpen ?? false;
     const desktopReaderGraphOpen = input.desktopReaderGraphOpen ?? false;
 
     const updated = await prisma.userSettings.upsert({
@@ -83,7 +83,7 @@ export class UserSettingsService {
       epubFontSize: (updated as any).epub_font_size ?? 18,
       epubFontFamily: (updated as any).epub_font_family ?? 'newsreader',
       themeMode: (updated as any).theme_mode ?? 'dark',
-      desktopHomeGraphOpen: (updated as any).desktop_home_graph_open ?? true,
+      desktopHomeGraphOpen: (updated as any).desktop_home_graph_open ?? false,
       desktopReaderGraphOpen: (updated as any).desktop_reader_graph_open ?? false,
     };
   }

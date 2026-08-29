@@ -162,10 +162,10 @@ describe('Index Page (Landing Page & Home)', () => {
     expect(flashcardsIndex).toBeLessThan(notesIndex)
 
     expect(wrapper.find('[data-testid="reading-streak"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="sidebar-graph"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="toggle-graph-open-btn"]').exists()).toBe(true)
   })
 
-  it('allows retracting the knowledge graph to center content and expanding it back', async () => {
+  it('allows expanding the knowledge graph from collapsed state and retracting it back', async () => {
     vi.spyOn(authComposable, 'useAuth').mockReturnValue({
       token: ref('valid-jwt-token'),
       user: ref({ id: 1, name: 'viktor', email: 'viktor@aresta.org', role: 'ADMIN', isActive: true }),
@@ -184,26 +184,25 @@ describe('Index Page (Landing Page & Home)', () => {
       }
     })
 
-    // Inicialmente o grafo está expandido (visível)
+    // Inicialmente o grafo está recolhido (foco na leitura centralizada)
+    expect(wrapper.find('[data-testid="home-graph-section"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="toggle-graph-open-btn"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="auth-home"]').classes()).toContain('max-w-3xl')
+
+    // Clicar para expandir o grafo
+    await wrapper.find('[data-testid="toggle-graph-open-btn"]').trigger('click')
+
+    // Grafo expandido: seção visível, layout em grid
     expect(wrapper.find('[data-testid="home-graph-section"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="retract-graph-btn"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="toggle-graph-open-btn"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="auth-home"]').classes()).toContain('grid')
 
-    // Clicar para retrair o grafo
+    // Clicar no botão para retrair novamente
     await wrapper.find('[data-testid="retract-graph-btn"]').trigger('click')
 
-    // Grafo retraído: seção oculta, conteúdo centralizado (max-w-3xl mx-auto) e botão de abrir visível
+    // Grafo volta a ficar oculto
     expect(wrapper.find('[data-testid="home-graph-section"]').exists()).toBe(false)
-    expect(wrapper.find('[data-testid="auth-home"]').classes()).toContain('max-w-3xl')
-    expect(wrapper.find('[data-testid="auth-home"]').classes()).toContain('mx-auto')
     expect(wrapper.find('[data-testid="toggle-graph-open-btn"]').exists()).toBe(true)
-
-    // Clicar no botão para expandir novamente
-    await wrapper.find('[data-testid="toggle-graph-open-btn"]').trigger('click')
-
-    // Grafo volta a ficar visível
-    expect(wrapper.find('[data-testid="home-graph-section"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="toggle-graph-open-btn"]').exists()).toBe(false)
   })
 })

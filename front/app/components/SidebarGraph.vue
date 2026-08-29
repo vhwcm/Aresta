@@ -96,7 +96,7 @@
 
             <!-- Botão de Leitura / Ação -->
             <NuxtLink
-              :to="`/reader/${book.userBookId}`"
+              :to="`/reader?bookId=${book.bookId}`"
               class="p-2.5 rounded-xl bg-accent/10 border border-accent/30 text-accent hover:bg-accent hover:text-white transition-all shrink-0 ml-2"
               title="Ler este livro"
             >

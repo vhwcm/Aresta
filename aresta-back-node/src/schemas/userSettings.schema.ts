@@ -8,7 +8,7 @@ export const updateUserSettingsSchema = z.object({
   epubFontSize: z.number().int().min(10).max(48).default(18).optional(),
   epubFontFamily: z.enum(['newsreader', 'literata', 'lora', 'merriweather', 'inter']).default('newsreader').optional(),
   themeMode: z.enum(['dark', 'light', 'sepia']).default('dark').optional(),
-  desktopHomeGraphOpen: z.boolean().default(true).optional(),
+  desktopHomeGraphOpen: z.boolean().default(false).optional(),
   desktopReaderGraphOpen: z.boolean().default(false).optional(),
 });
 

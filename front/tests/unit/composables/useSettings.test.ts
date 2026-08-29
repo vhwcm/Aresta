@@ -103,12 +103,12 @@ describe('useSettings Composable', () => {
   it('permite alternar a preferência de grafo na tela inicial desktop', () => {
     const { desktopHomeGraphOpen, setDesktopHomeGraphOpen } = useSettings()
 
-    expect(desktopHomeGraphOpen.value).toBe(true)
-
-    setDesktopHomeGraphOpen(false)
     expect(desktopHomeGraphOpen.value).toBe(false)
+
+    setDesktopHomeGraphOpen(true)
+    expect(desktopHomeGraphOpen.value).toBe(true)
     const saved = JSON.parse(localStorage.getItem('aresta_settings') || '{}')
-    expect(saved.desktopHomeGraphOpen).toBe(false)
+    expect(saved.desktopHomeGraphOpen).toBe(true)
   })
 
   it('permite alternar a preferência de grafo no leitor desktop', () => {

@@ -53,7 +53,7 @@ describe('UserSettings Endpoints', () => {
     expect(res.body.epubFontSize).toBe(18);
     expect(res.body.epubFontFamily).toBe('newsreader');
     expect(res.body.themeMode).toBe('dark');
-    expect(res.body.desktopHomeGraphOpen).toBe(true);
+    expect(res.body.desktopHomeGraphOpen).toBe(false);
     expect(res.body.desktopReaderGraphOpen).toBe(false);
   });
 

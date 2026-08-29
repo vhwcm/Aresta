@@ -59,7 +59,7 @@ const settings = reactive<SettingsState>({
   epubFontSize: 18,
   epubFontFamily: 'newsreader',
   themeMode: 'light',
-  desktopHomeGraphOpen: true,
+  desktopHomeGraphOpen: false,
   desktopReaderGraphOpen: false,
   readerTwoPageMode: true,
   readerWidthMode: 'centered',
@@ -76,7 +76,7 @@ export function resetSettingsForTesting() {
   settings.epubFontSize = 18
   settings.epubFontFamily = 'newsreader'
   settings.themeMode = 'light'
-  settings.desktopHomeGraphOpen = true
+  settings.desktopHomeGraphOpen = false
   settings.desktopReaderGraphOpen = false
   settings.readerTwoPageMode = true
   settings.readerWidthMode = 'centered'

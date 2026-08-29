@@ -1014,7 +1014,7 @@ const { userBooks, fetchUserBooks } = useUserBooks()
 const flashcards = useFlashcards()
 
 const coverError = ref(false)
-const isGraphCollapsed = ref(false)
+const isGraphCollapsed = ref(!desktopHomeGraphOpen.value)
 
 const toggleGraph = () => {
   isGraphCollapsed.value = !isGraphCollapsed.value
