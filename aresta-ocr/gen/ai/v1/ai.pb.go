@@ -297,6 +297,22 @@ func (x *GenerateEmbeddingRequest) String() string {
 
 func (*GenerateEmbeddingRequest) ProtoMessage() {}
 
+func (x *GenerateEmbeddingRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_ai_v1_ai_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*GenerateEmbeddingRequest) Descriptor() ([]byte, []int) {
+	return file_ai_v1_ai_proto_rawDescGZIP(), []int{4}
+}
+
 func (x *GenerateEmbeddingRequest) GetText() string {
 	if x != nil {
 		return x.Text
@@ -323,6 +339,22 @@ func (x *GenerateEmbeddingResponse) String() string {
 }
 
 func (*GenerateEmbeddingResponse) ProtoMessage() {}
+
+func (x *GenerateEmbeddingResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_ai_v1_ai_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*GenerateEmbeddingResponse) Descriptor() ([]byte, []int) {
+	return file_ai_v1_ai_proto_rawDescGZIP(), []int{5}
+}
 
 func (x *GenerateEmbeddingResponse) GetEmbedding() []float32 {
 	if x != nil {
@@ -352,6 +384,22 @@ func (x *ContextAnnotation) String() string {
 }
 
 func (*ContextAnnotation) ProtoMessage() {}
+
+func (x *ContextAnnotation) ProtoReflect() protoreflect.Message {
+	mi := &file_ai_v1_ai_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*ContextAnnotation) Descriptor() ([]byte, []int) {
+	return file_ai_v1_ai_proto_rawDescGZIP(), []int{6}
+}
 
 func (x *ContextAnnotation) GetNote() string {
 	if x != nil {
@@ -398,6 +446,22 @@ func (x *GenerateFlashcardRequest) String() string {
 }
 
 func (*GenerateFlashcardRequest) ProtoMessage() {}
+
+func (x *GenerateFlashcardRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_ai_v1_ai_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*GenerateFlashcardRequest) Descriptor() ([]byte, []int) {
+	return file_ai_v1_ai_proto_rawDescGZIP(), []int{7}
+}
 
 func (x *GenerateFlashcardRequest) GetBookTitle() string {
 	if x != nil {
@@ -463,6 +527,22 @@ func (x *GenerateFlashcardResponse) String() string {
 }
 
 func (*GenerateFlashcardResponse) ProtoMessage() {}
+
+func (x *GenerateFlashcardResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_ai_v1_ai_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*GenerateFlashcardResponse) Descriptor() ([]byte, []int) {
+	return file_ai_v1_ai_proto_rawDescGZIP(), []int{8}
+}
 
 func (x *GenerateFlashcardResponse) GetQuestion() string {
 	if x != nil {
@@ -531,12 +611,17 @@ func file_ai_v1_ai_proto_rawDescGZIP() []byte {
 	return file_ai_v1_ai_proto_rawDescData
 }
 
-var file_ai_v1_ai_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_ai_v1_ai_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_ai_v1_ai_proto_goTypes = []any{
-	(*ThemeItem)(nil),           // 0: ai.v1.ThemeItem
-	(*AnalyzeBookRequest)(nil),  // 1: ai.v1.AnalyzeBookRequest
-	(*NewThemeSuggestion)(nil),  // 2: ai.v1.NewThemeSuggestion
-	(*AnalyzeBookResponse)(nil), // 3: ai.v1.AnalyzeBookResponse
+	(*ThemeItem)(nil),                 // 0: ai.v1.ThemeItem
+	(*AnalyzeBookRequest)(nil),        // 1: ai.v1.AnalyzeBookRequest
+	(*NewThemeSuggestion)(nil),        // 2: ai.v1.NewThemeSuggestion
+	(*AnalyzeBookResponse)(nil),       // 3: ai.v1.AnalyzeBookResponse
+	(*GenerateEmbeddingRequest)(nil),  // 4: ai.v1.GenerateEmbeddingRequest
+	(*GenerateEmbeddingResponse)(nil), // 5: ai.v1.GenerateEmbeddingResponse
+	(*ContextAnnotation)(nil),         // 6: ai.v1.ContextAnnotation
+	(*GenerateFlashcardRequest)(nil),  // 7: ai.v1.GenerateFlashcardRequest
+	(*GenerateFlashcardResponse)(nil), // 8: ai.v1.GenerateFlashcardResponse
 }
 var file_ai_v1_ai_proto_depIdxs = []int32{
 	0, // 0: ai.v1.AnalyzeBookRequest.existing_themes:type_name -> ai.v1.ThemeItem
@@ -561,7 +646,7 @@ func file_ai_v1_ai_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_ai_v1_ai_proto_rawDesc), len(file_ai_v1_ai_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
