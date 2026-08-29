@@ -60,6 +60,8 @@ export function useBookPageTurn(
   const isAnimationDisabled = computed(() => !pageAnimationEnabled.value || reducedMotion.value)
 
   const dragOffset = ref(0)
+  const pointerY = ref(0.5)
+  const pointerDeltaY = ref(0)
   const transitionDirection = ref<PageTurnDirection>('next')
   const incomingTargetPage = ref(0)
 
@@ -221,6 +223,9 @@ export function useBookPageTurn(
     transitionDirection.value = direction
     incomingTargetPage.value = targetPage
     isTransitioning.value = true
+    // Em cliques automáticos, simula puxada suave do canto inferior direito / canto do livro
+    pointerY.value = direction === 'next' ? 0.75 : 0.25
+    pointerDeltaY.value = 0
 
     if (options.onBeforeTurn) {
       await options.onBeforeTurn(targetPage)
@@ -253,6 +258,8 @@ export function useBookPageTurn(
     store.goToPage(targetPage)
     pageLayout.value = computeLayout()
     dragOffset.value = 0
+    pointerY.value = 0.5
+    pointerDeltaY.value = 0
     incomingTargetPage.value = 0
     isTransitioning.value = false
   }
@@ -269,6 +276,10 @@ export function useBookPageTurn(
     transitionDirection.value = direction
     incomingTargetPage.value = targetPage
     dragOffset.value = 0
+
+    const hostHeight = hostRef.value?.clientHeight || 600
+    pointerY.value = clamp(point.y / hostHeight, 0, 1)
+    pointerDeltaY.value = 0
   }
 
   function updateDrag(point: Point) {
@@ -276,6 +287,10 @@ export function useBookPageTurn(
 
     const deltaX = point.x - dragStart.x
     dragLast = point
+
+    const hostHeight = hostRef.value.clientHeight || 600
+    pointerY.value = clamp(point.y / hostHeight, 0, 1)
+    pointerDeltaY.value = point.y - dragStart.y
 
     // Restringe o arraste à direção esperada
     if (transitionDirection.value === 'next') {
@@ -415,6 +430,8 @@ export function useBookPageTurn(
     errorMessage: readonly(errorMessage),
     pageLayout: readonly(pageLayout),
     dragOffset: readonly(dragOffset),
+    pointerY: readonly(pointerY),
+    pointerDeltaY: readonly(pointerDeltaY),
     transitionDirection: readonly(transitionDirection),
     incomingTargetPage: readonly(incomingTargetPage),
     requestTurn,

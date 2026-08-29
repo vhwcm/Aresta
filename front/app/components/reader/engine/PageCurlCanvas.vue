@@ -133,7 +133,7 @@
             width: `${pageLayout.rightPage.width}px`,
             height: `${pageLayout.rightPage.height}px`,
             transformOrigin: '0% 50%',
-            transform: isTurningNext ? `perspective(2600px) rotateY(${nextLeafRotation}deg)` : 'rotateY(0deg)',
+            transform: nextLeafTransform,
             zIndex: isTurningNext ? 35 : (isTurningPrev ? 10 : 20),
             pointerEvents: isTurningNext ? 'none' : 'auto',
           }"
@@ -149,7 +149,13 @@
               ref="rightTextLayerRef"
               class="page-text-layer page-text-layer--right"
             />
-            <div class="page-curl-shading" :style="{ opacity: isTurningNext ? curlShadowOpacity : 0 }" />
+            <div
+              class="page-curl-shading"
+              :style="{
+                opacity: isTurningNext ? curlShadowOpacity : 0,
+                background: dynamicCurlShadingGradient,
+              }"
+            />
           </div>
 
           <!-- Face Traseira / Verso: Página Esquerda Entrante -->
@@ -163,7 +169,13 @@
               ref="incomingLeftTextLayerRef"
               class="page-text-layer page-text-layer--left"
             />
-            <div class="page-curl-shading" :style="{ opacity: isTurningNext ? curlShadowOpacity : 0 }" />
+            <div
+              class="page-curl-shading"
+              :style="{
+                opacity: isTurningNext ? curlShadowOpacity : 0,
+                background: dynamicCurlShadingGradient,
+              }"
+            />
           </div>
         </div>
 
@@ -178,7 +190,7 @@
             width: `${pageLayout.leftPage.width}px`,
             height: `${pageLayout.leftPage.height}px`,
             transformOrigin: '100% 50%',
-            transform: isTurningPrev ? `perspective(2600px) rotateY(${prevLeafRotation}deg)` : 'rotateY(0deg)',
+            transform: prevLeafTransform,
             zIndex: isTurningPrev ? 35 : (isTurningNext ? 10 : 20),
             pointerEvents: isTurningPrev ? 'none' : 'auto',
           }"
@@ -194,7 +206,13 @@
               ref="leftTextLayerRef"
               class="page-text-layer page-text-layer--left"
             />
-            <div class="page-curl-shading" :style="{ opacity: isTurningPrev ? curlShadowOpacity : 0 }" />
+            <div
+              class="page-curl-shading"
+              :style="{
+                opacity: isTurningPrev ? curlShadowOpacity : 0,
+                background: dynamicCurlShadingGradient,
+              }"
+            />
           </div>
 
           <!-- Face Traseira / Verso: Página Direita Entrante -->
@@ -208,7 +226,13 @@
               ref="incomingRightTextLayerRef"
               class="page-text-layer page-text-layer--right"
             />
-            <div class="page-curl-shading" :style="{ opacity: isTurningPrev ? curlShadowOpacity : 0 }" />
+            <div
+              class="page-curl-shading"
+              :style="{
+                opacity: isTurningPrev ? curlShadowOpacity : 0,
+                background: dynamicCurlShadingGradient,
+              }"
+            />
           </div>
         </div>
       </template>
@@ -225,8 +249,8 @@
             height: `${pageLayout.singlePage.height}px`,
             transformOrigin: '0% 50%',
             transform: isTurningNext
-              ? `perspective(2200px) rotateY(${nextLeafRotation}deg)`
-              : (isTurningPrev ? `perspective(2200px) rotateY(${-180 * (1 - turnProgress)}deg)` : 'rotateY(0deg)'),
+              ? nextLeafTransform
+              : (isTurningPrev ? prevLeafTransform : 'rotateY(0deg)'),
             zIndex: isAnimating3D ? 35 : 20,
             pointerEvents: isAnimating3D ? 'none' : 'auto',
           }"
@@ -242,12 +266,24 @@
               ref="singleTextLayerRef"
               class="page-text-layer page-text-layer--single"
             />
-            <div class="page-curl-shading" :style="{ opacity: isAnimating3D ? curlShadowOpacity : 0 }" />
+            <div
+              class="page-curl-shading"
+              :style="{
+                opacity: isAnimating3D ? curlShadowOpacity : 0,
+                background: dynamicCurlShadingGradient,
+              }"
+            />
           </div>
 
           <!-- Face Traseira / Verso da Folha -->
           <div class="turning-leaf__face turning-leaf__face--back turning-leaf__face--blank">
-            <div class="page-curl-shading" :style="{ opacity: isAnimating3D ? curlShadowOpacity : 0 }" />
+            <div
+              class="page-curl-shading"
+              :style="{
+                opacity: isAnimating3D ? curlShadowOpacity : 0,
+                background: dynamicCurlShadingGradient,
+              }"
+            />
           </div>
         </div>
       </template>
@@ -319,6 +355,7 @@ const {
   errorMessage,
   pageLayout,
   dragOffset,
+  pointerY,
   transitionDirection,
   incomingTargetPage,
   requestTurn,
@@ -353,27 +390,90 @@ const turnProgress = computed(() => {
   return Math.min(1, Math.max(0, Math.abs(dragOffset.value) / w))
 })
 
-// Rotação 3D da folha em virada para a frente ('next'): 0deg até -180deg
-const nextLeafRotation = computed(() => {
+// Rotação 3D principal no eixo Y (em torno da lombada do livro)
+const baseRotationNextY = computed(() => {
   const p = turnProgress.value
   return -180 * p
 })
 
-// Rotação 3D da folha em virada para trás ('previous'): 180deg até 0deg
-const prevLeafRotation = computed(() => {
+const baseRotationPrevY = computed(() => {
   const p = turnProgress.value
   return 180 * (1 - p)
+})
+
+// Inclinação / Rotação Z e X tridimensional conforme a posição vertical do mouse (pegada no canto)
+const leafTiltAngleZ = computed(() => {
+  const p = turnProgress.value
+  const normY = pointerY.value ?? 0.5
+  const arc = Math.sin(p * Math.PI)
+  // normY < 0.5 (topo) => dobra para baixo (+Z), normY > 0.5 (base) => dobra para cima (-Z)
+  const verticalBias = (0.5 - normY) * 2 // -1 a +1
+  return verticalBias * 26 * arc
+})
+
+const leafTiltAngleX = computed(() => {
+  const p = turnProgress.value
+  const normY = pointerY.value ?? 0.5
+  const arc = Math.sin(p * Math.PI)
+  const verticalBias = (normY - 0.5) * 2
+  return verticalBias * 16 * arc
+})
+
+// Curvatura cilíndrica espacial (elevação no eixo Z e deformação diagonal)
+const leafCurlZ = computed(() => {
+  const p = turnProgress.value
+  return Math.sin(p * Math.PI) * 46
+})
+
+const leafSkewY = computed(() => {
+  const p = turnProgress.value
+  const normY = pointerY.value ?? 0.5
+  const arc = Math.sin(p * Math.PI)
+  const verticalBias = (0.5 - normY) * 2
+  return verticalBias * 9 * arc
+})
+
+// Transformação 3D completa com perspectiva e dobra física para folha DIREITA (Next)
+const nextLeafTransform = computed(() => {
+  if (!isTurningNext.value) return 'rotateY(0deg)'
+  const rotY = baseRotationNextY.value
+  const rotZ = leafTiltAngleZ.value
+  const rotX = leafTiltAngleX.value
+  const z = leafCurlZ.value
+  const skew = leafSkewY.value
+  return `perspective(2600px) rotateY(${rotY}deg) rotateZ(${rotZ}deg) rotateX(${rotX}deg) skewY(${skew}deg) translateZ(${z}px)`
+})
+
+// Transformação 3D completa com perspectiva e dobra física para folha ESQUERDA (Previous)
+const prevLeafTransform = computed(() => {
+  if (!isTurningPrev.value) return 'rotateY(0deg)'
+  const rotY = baseRotationPrevY.value
+  const rotZ = -leafTiltAngleZ.value
+  const rotX = leafTiltAngleX.value
+  const z = leafCurlZ.value
+  const skew = -leafSkewY.value
+  return `perspective(2600px) rotateY(${rotY}deg) rotateZ(${rotZ}deg) rotateX(${rotX}deg) skewY(${skew}deg) translateZ(${z}px)`
+})
+
+// Gradiente de iluminação cilíndrica dinâmico alinhado com o ângulo do arraste do mouse
+const dynamicCurlShadingGradient = computed(() => {
+  const normY = pointerY.value ?? 0.5
+  const angle = Math.round(90 + (normY - 0.5) * 45)
+  if (activeTheme.value === 'black') {
+    return `linear-gradient(${angle}deg, rgba(255, 255, 255, 0.16) 0%, rgba(0, 0, 0, 0.4) 38%, rgba(255, 255, 255, 0.08) 100%)`
+  }
+  return `linear-gradient(${angle}deg, rgba(0, 0, 0, 0.38) 0%, rgba(255, 255, 255, 0.18) 22%, rgba(0, 0, 0, 0.06) 52%, rgba(0, 0, 0, 0.28) 100%)`
 })
 
 // Opacidade das sombras dinâmicas de curvatura do papel 3D
 const curlShadowOpacity = computed(() => {
   const p = turnProgress.value
-  return Math.sin(p * Math.PI) * 0.45
+  return Math.sin(p * Math.PI) * 0.48
 })
 
 const castShadowOpacity = computed(() => {
   const p = turnProgress.value
-  return Math.sin(p * Math.PI) * 0.4
+  return Math.sin(p * Math.PI) * 0.42
 })
 
 let activePointerId: number | null = null
@@ -389,28 +489,42 @@ function pointFrom(event: PointerEvent): ReaderPointer {
 }
 
 /**
- * Detecta se o pointerdown ocorreu na zona de foliação (bordas externas),
- * similar ao comportamento do Google Play Livros / Kindle.
+ * Detecta se o pointerdown ocorreu na zona de foliação (bordas externas e cantos),
+ * permitindo pegar nas pontas do livro onde não tem texto, igual ao Kindle.
  */
 function getTurnZone(event: PointerEvent): PageTurnDirection | null {
   if (!stageRef.value) return null
   const bounds = stageRef.value.getBoundingClientRect()
   const x = event.clientX - bounds.left
+  const y = event.clientY - bounds.top
   const layout = pageLayout.value
 
-  const EDGE_MAX_PX = 56
-  const EDGE_RATIO = 0.16
+  const EDGE_MAX_PX = 80
+  const EDGE_RATIO = 0.22
+  const CORNER_THRESHOLD_Y = 110
 
   if (layout.isTwoPage) {
     if (layout.leftPage) {
       const edgeWidth = Math.min(EDGE_MAX_PX, layout.leftPage.width * EDGE_RATIO)
+      // Borda lateral esquerda
       if (x <= layout.leftPage.left + edgeWidth) {
+        return 'previous'
+      }
+      // Cantos superior e inferior esquerdos
+      const isLeftCornerY = y <= layout.leftPage.top + CORNER_THRESHOLD_Y || y >= layout.leftPage.top + layout.leftPage.height - CORNER_THRESHOLD_Y
+      if (x <= layout.leftPage.left + layout.leftPage.width * 0.38 && isLeftCornerY) {
         return 'previous'
       }
     }
     if (layout.rightPage) {
       const edgeWidth = Math.min(EDGE_MAX_PX, layout.rightPage.width * EDGE_RATIO)
+      // Borda lateral direita
       if (x >= layout.rightPage.left + layout.rightPage.width - edgeWidth) {
+        return 'next'
+      }
+      // Cantos superior e inferior direitos
+      const isRightCornerY = y <= layout.rightPage.top + CORNER_THRESHOLD_Y || y >= layout.rightPage.top + layout.rightPage.height - CORNER_THRESHOLD_Y
+      if (x >= layout.rightPage.left + layout.rightPage.width * 0.62 && isRightCornerY) {
         return 'next'
       }
     }
@@ -420,6 +534,14 @@ function getTurnZone(event: PointerEvent): PageTurnDirection | null {
       return 'previous'
     }
     if (x >= layout.singlePage.left + layout.singlePage.width - edgeWidth) {
+      return 'next'
+    }
+    // Cantos no modo 1 página
+    const isCornerY = y <= layout.singlePage.top + CORNER_THRESHOLD_Y || y >= layout.singlePage.top + layout.singlePage.height - CORNER_THRESHOLD_Y
+    if (x <= layout.singlePage.left + layout.singlePage.width * 0.35 && isCornerY) {
+      return 'previous'
+    }
+    if (x >= layout.singlePage.left + layout.singlePage.width * 0.65 && isCornerY) {
       return 'next'
     }
   } else {
@@ -434,11 +556,8 @@ function getTurnZone(event: PointerEvent): PageTurnDirection | null {
 function onPointerDown(event: PointerEvent) {
   if (event.button !== 0 || !stageRef.value || isTransitioning.value) return
 
-  const target = event.target as HTMLElement | null
-  const isInsideText = !!target?.closest('.page-text-layer')
-
   const direction = getTurnZone(event)
-  if (!direction || isInsideText) {
+  if (!direction) {
     return
   }
 
