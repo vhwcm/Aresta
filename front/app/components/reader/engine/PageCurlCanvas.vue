@@ -2,7 +2,8 @@
   <div
     ref="stageRef"
     class="page-curl-wrapper"
-    :class="['theme-' + store.readerTheme, { 'page-curl-wrapper--dragging': isDragging }]"
+    :class="['theme-' + activeTheme, { 'page-curl-wrapper--dragging': isDragging }]"
+    :style="{ backgroundColor: themeBgColor }"
     role="region"
     aria-label="Página do livro. Arraste as bordas para folhear ou selecione o texto com o mouse."
     @pointerdown="onPointerDown"
@@ -13,12 +14,16 @@
     <div
       class="book-viewport-track"
       :style="{
+        backgroundColor: themeBgColor,
         transform: `translate3d(${dragOffset}px, 0, 0)`,
-        transition: isDragging ? 'none' : (isTransitioning ? `transform ${TURN_DURATION_MS}ms cubic-bezier(0.22, 1, 0.36, 1)` : 'none'),
       }"
     >
       <!-- Spread Atual (Página Ativa) -->
-      <div v-if="store.document" class="spread-container spread-container--current">
+      <div
+        v-if="store.document"
+        class="spread-container spread-container--current"
+        :style="{ backgroundColor: themeBgColor }"
+      >
         <!-- Modo 2 Páginas: Página Esquerda -->
         <div
           v-if="pageLayout.isTwoPage && pageLayout.leftPage && pageLayout.leftPage.pageNumber > 0"
@@ -218,6 +223,13 @@ interface ReaderPointer {
 const store = useReaderStore()
 const stageRef = ref<HTMLElement | null>(null)
 
+const activeTheme = computed(() => store.readerTheme || 'sepia')
+const themeBgColor = computed(() => {
+  if (activeTheme.value === 'white') return '#ffffff'
+  if (activeTheme.value === 'black') return '#121214'
+  return '#f5eedc'
+})
+
 // Refs de elementos do Spread Atual
 const leftCanvasRef = ref<HTMLCanvasElement | null>(null)
 const leftTextLayerRef = ref<HTMLElement | null>(null)
@@ -234,6 +246,46 @@ const incomingRightTextLayerRef = ref<HTMLElement | null>(null)
 const incomingSingleCanvasRef = ref<HTMLCanvasElement | null>(null)
 const incomingSingleTextLayerRef = ref<HTMLElement | null>(null)
 
+function syncIncomingToCurrent() {
+  const layout = pageLayout.value
+  if (layout.isTwoPage) {
+    if (incomingLeftTextLayerRef.value && leftTextLayerRef.value) {
+      leftTextLayerRef.value.innerHTML = incomingLeftTextLayerRef.value.innerHTML
+    }
+    if (incomingRightTextLayerRef.value && rightTextLayerRef.value) {
+      rightTextLayerRef.value.innerHTML = incomingRightTextLayerRef.value.innerHTML
+    }
+    if (incomingLeftCanvasRef.value && leftCanvasRef.value && incomingLeftCanvasRef.value.width > 0) {
+      leftCanvasRef.value.width = incomingLeftCanvasRef.value.width
+      leftCanvasRef.value.height = incomingLeftCanvasRef.value.height
+      leftCanvasRef.value.style.width = incomingLeftCanvasRef.value.style.width
+      leftCanvasRef.value.style.height = incomingLeftCanvasRef.value.style.height
+      const ctx = leftCanvasRef.value.getContext('2d')
+      if (ctx) ctx.drawImage(incomingLeftCanvasRef.value, 0, 0)
+    }
+    if (incomingRightCanvasRef.value && rightCanvasRef.value && incomingRightCanvasRef.value.width > 0) {
+      rightCanvasRef.value.width = incomingRightCanvasRef.value.width
+      rightCanvasRef.value.height = incomingRightCanvasRef.value.height
+      rightCanvasRef.value.style.width = incomingRightCanvasRef.value.style.width
+      rightCanvasRef.value.style.height = incomingRightCanvasRef.value.style.height
+      const ctx = rightCanvasRef.value.getContext('2d')
+      if (ctx) ctx.drawImage(incomingRightCanvasRef.value, 0, 0)
+    }
+  } else {
+    if (incomingSingleTextLayerRef.value && singleTextLayerRef.value) {
+      singleTextLayerRef.value.innerHTML = incomingSingleTextLayerRef.value.innerHTML
+    }
+    if (incomingSingleCanvasRef.value && singleCanvasRef.value && incomingSingleCanvasRef.value.width > 0) {
+      singleCanvasRef.value.width = incomingSingleCanvasRef.value.width
+      singleCanvasRef.value.height = incomingSingleCanvasRef.value.height
+      singleCanvasRef.value.style.width = incomingSingleCanvasRef.value.style.width
+      singleCanvasRef.value.style.height = incomingSingleCanvasRef.value.style.height
+      const ctx = singleCanvasRef.value.getContext('2d')
+      if (ctx) ctx.drawImage(incomingSingleCanvasRef.value, 0, 0)
+    }
+  }
+}
+
 const {
   isTransitioning,
   isDragging,
@@ -248,7 +300,14 @@ const {
   updateDrag,
   endDrag,
   cancelDrag,
-} = useBookPageTurn(stageRef)
+} = useBookPageTurn(stageRef, {
+  onBeforeTurn: async () => {
+    await renderIncomingSpread()
+  },
+  onAfterTurn: async () => {
+    syncIncomingToCurrent()
+  },
+})
 
 const emit = defineEmits<{
   'transition-state': [isTransitioning: boolean]
@@ -377,16 +436,17 @@ async function renderPageToElement(
 
   if (doc.type === 'pdf') {
     if (canvasEl) {
-      canvasEl.width = Math.round(width * dpr)
-      canvasEl.height = Math.round(height * dpr)
+      const renderW = Math.round(width * dpr)
+      const renderH = Math.round(height * dpr)
+      canvasEl.width = renderW
+      canvasEl.height = renderH
       canvasEl.style.width = `${width}px`
       canvasEl.style.height = `${height}px`
 
       const ctx = canvasEl.getContext('2d', { alpha: false })
       if (ctx) {
         ctx.setTransform(1, 0, 0, 1, 0, 0)
-        ctx.scale(dpr, dpr)
-        const pageData = await doc.getPage(pageNumber, Math.round(width * dpr), Math.round(height * dpr))
+        const pageData = await doc.getPage(pageNumber, renderW, renderH)
         await pageData.render(ctx)
       }
     }
@@ -446,7 +506,7 @@ async function renderIncomingSpread() {
 
   if (layout.isTwoPage) {
     if (incomingLeftPageNumber.value > 0 && layout.leftPage) {
-      void renderPageToElement(
+      await renderPageToElement(
         incomingLeftPageNumber.value,
         incomingLeftCanvasRef.value,
         incomingLeftTextLayerRef.value,
@@ -455,7 +515,7 @@ async function renderIncomingSpread() {
       )
     }
     if (incomingRightPageNumber.value > 0 && layout.rightPage) {
-      void renderPageToElement(
+      await renderPageToElement(
         incomingRightPageNumber.value,
         incomingRightCanvasRef.value,
         incomingRightTextLayerRef.value,
@@ -464,7 +524,7 @@ async function renderIncomingSpread() {
       )
     }
   } else if (incomingSinglePageNumber.value > 0 && layout.singlePage) {
-    void renderPageToElement(
+    await renderPageToElement(
       incomingSinglePageNumber.value,
       incomingSingleCanvasRef.value,
       incomingSingleTextLayerRef.value,
@@ -549,14 +609,20 @@ defineExpose({
 }
 
 .theme-sepia.page-curl-wrapper,
+.theme-sepia .book-viewport-track,
+.theme-sepia .spread-container,
 .theme-sepia .page-sheet {
   background-color: #f5eedc;
 }
 .theme-white.page-curl-wrapper,
+.theme-white .book-viewport-track,
+.theme-white .spread-container,
 .theme-white .page-sheet {
   background-color: #ffffff;
 }
 .theme-black.page-curl-wrapper,
+.theme-black .book-viewport-track,
+.theme-black .spread-container,
 .theme-black .page-sheet {
   background-color: #121214;
 }
@@ -602,6 +668,15 @@ defineExpose({
   pointer-events: none;
   width: 100%;
   height: 100%;
+}
+
+.theme-sepia .page-pdf-canvas {
+  mix-blend-mode: multiply;
+  filter: sepia(0.18) brightness(0.98);
+}
+
+.theme-black .page-pdf-canvas {
+  filter: invert(0.92) hue-rotate(180deg) brightness(0.95) contrast(1.05);
 }
 
 .page-text-layer {

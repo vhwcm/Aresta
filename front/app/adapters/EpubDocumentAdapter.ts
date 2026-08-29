@@ -454,8 +454,9 @@ export class EpubDocumentAdapter implements IBookDocument {
 
       const baseWidth = 800
       const baseHeight = 1200
-      const scaleX = targetWidth && targetWidth > 0 ? targetWidth / baseWidth : 1
-      const scaleY = targetHeight && targetHeight > 0 ? targetHeight / baseHeight : 1
+      const scale = targetWidth && targetWidth > 0
+        ? targetWidth / baseWidth
+        : (targetHeight && targetHeight > 0 ? targetHeight / baseHeight : 1)
       const colOffset = mapping.pageIndexInSection * baseWidth
 
       container.innerHTML = ''
@@ -467,7 +468,7 @@ export class EpubDocumentAdapter implements IBookDocument {
       viewportWrapper.style.width = `${baseWidth}px`
       viewportWrapper.style.height = `${baseHeight}px`
       viewportWrapper.style.overflow = 'hidden'
-      viewportWrapper.style.transform = `scale(${scaleX}, ${scaleY})`
+      viewportWrapper.style.transform = `scale(${scale}, ${scale})`
       viewportWrapper.style.transformOrigin = 'top left'
       viewportWrapper.style.pointerEvents = 'auto'
 

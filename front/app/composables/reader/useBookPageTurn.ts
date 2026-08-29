@@ -40,7 +40,15 @@ export function shouldCommitPageTurn(progress: number, velocity: number): boolea
   return clamp(progress) >= TURN_THRESHOLD || velocity > 0.002
 }
 
-export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
+export interface UseBookPageTurnOptions {
+  onBeforeTurn?: (targetPage: number) => Promise<void>
+  onAfterTurn?: (targetPage: number) => Promise<void>
+}
+
+export function useBookPageTurn(
+  hostRef: Ref<HTMLElement | null>,
+  options: UseBookPageTurnOptions = {},
+) {
   const store = useReaderStore()
   const { pageAnimationEnabled } = useSettings()
 
@@ -182,6 +190,10 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
     incomingTargetPage.value = targetPage
     isTransitioning.value = true
 
+    if (options.onBeforeTurn) {
+      await options.onBeforeTurn(targetPage)
+    }
+
     const hostWidth = hostRef.value.clientWidth || 800
     const targetOffset = direction === 'next' ? -hostWidth : hostWidth
 
@@ -201,6 +213,10 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
       }
       requestAnimationFrame(animate)
     })
+
+    if (options.onAfterTurn) {
+      await options.onAfterTurn(targetPage)
+    }
 
     store.goToPage(targetPage)
     pageLayout.value = computeLayout()
@@ -274,6 +290,10 @@ export function useBookPageTurn(hostRef: Ref<HTMLElement | null>) {
         }
         requestAnimationFrame(snapAnim)
       })
+
+      if (options.onAfterTurn) {
+        await options.onAfterTurn(incomingTargetPage.value)
+      }
 
       store.goToPage(incomingTargetPage.value)
       pageLayout.value = computeLayout()
