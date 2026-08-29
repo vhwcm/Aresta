@@ -68,6 +68,10 @@ const EPUB_TYPOGRAPHY_STYLES = `
     margin-top: 0.8em !important;
     margin-bottom: 0.5em !important;
     display: block !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    break-before: auto !important;
+    page-break-before: auto !important;
   }
   .epub-text-layer-content h2, .epub-text-layer-content .chapter-subtitle, .epub-text-layer-content .subtitle, .epub-text-layer-content [class*="subtitle"] {
     font-size: 1.5em !important;
@@ -76,6 +80,8 @@ const EPUB_TYPOGRAPHY_STYLES = `
     margin-top: 0.75em !important;
     margin-bottom: 0.4em !important;
     display: block !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
   .epub-text-layer-content h3 {
     font-size: 1.25em !important;
@@ -84,6 +90,8 @@ const EPUB_TYPOGRAPHY_STYLES = `
     margin-top: 0.7em !important;
     margin-bottom: 0.35em !important;
     display: block !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
   .epub-text-layer-content h4 {
     font-size: 1.1em !important;
@@ -135,6 +143,30 @@ const EPUB_TYPOGRAPHY_STYLES = `
   .epub-text-layer-content li { margin-bottom: 0.35em !important; line-height: 1.6 !important; }
   .epub-text-layer-content sub { font-size: 0.75em !important; vertical-align: sub !important; }
   .epub-text-layer-content sup { font-size: 0.75em !important; vertical-align: super !important; }
+  .epub-text-layer-content figure {
+    margin: 0.6em auto !important;
+    text-align: center !important;
+    max-width: 100% !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+  .epub-text-layer-content img {
+    max-width: 100% !important;
+    max-height: 580px !important;
+    height: auto !important;
+    object-fit: contain !important;
+    display: block !important;
+    margin: 0.4em auto !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+  .epub-text-layer-content table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin: 1em 0 !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
 `
 
 function calculateSectionPages(
@@ -168,7 +200,14 @@ function calculateSectionPages(
     container.style.fontSize = `${fontSize}px`
     container.style.lineHeight = '1.7'
     container.style.wordWrap = 'break-word'
-    container.innerHTML = doc.body.innerHTML
+
+    const styleTag = document.createElement('style')
+    styleTag.innerHTML = EPUB_TYPOGRAPHY_STYLES
+    container.appendChild(styleTag)
+
+    const contentDiv = document.createElement('div')
+    contentDiv.innerHTML = doc.body.innerHTML
+    container.appendChild(contentDiv)
 
     document.body.appendChild(container)
     const scrollW = container.scrollWidth

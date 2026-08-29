@@ -14,26 +14,37 @@ body {
 h1 {
     font-size: 2.0em;
     line-height: 1.25;
-    margin-top: 1.5em;
-    margin-bottom: 0.8em;
+    margin-top: 1.2em;
+    margin-bottom: 0.6em;
     font-weight: 700;
-    page-break-before: always;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    break-after: avoid;
+    page-break-after: avoid;
 }
 
 h2 {
     font-size: 1.5em;
     line-height: 1.3;
-    margin-top: 1.2em;
-    margin-bottom: 0.6em;
+    margin-top: 1.0em;
+    margin-bottom: 0.5em;
     font-weight: 600;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    break-after: avoid;
+    page-break-after: avoid;
 }
 
 h3 {
     font-size: 1.2em;
     line-height: 1.35;
-    margin-top: 1.0em;
-    margin-bottom: 0.5em;
+    margin-top: 0.8em;
+    margin-bottom: 0.4em;
     font-weight: 600;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    break-after: avoid;
+    page-break-after: avoid;
 }
 
 p {
@@ -96,14 +107,18 @@ blockquote {
 }
 
 figure {
-    margin: 1.5em auto;
+    margin: 0.8em auto;
     text-align: center;
+    max-width: 100%;
+    break-inside: avoid;
     page-break-inside: avoid;
 }
 
 figure img {
     max-width: 100%;
+    max-height: 60vh;
     height: auto;
+    object-fit: contain;
     display: block;
     margin: 0 auto;
 }
@@ -119,6 +134,8 @@ table {
     width: 100%;
     border-collapse: collapse;
     margin: 1.2em 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
 }
 
 th, td {

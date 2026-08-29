@@ -67,14 +67,25 @@ class ChapterResolver:
                         current_chapter.page_end = page.number
                     continue
 
-                # Detecta início de um novo capítulo (apenas se não for entrada de índice/sumário)
+                # Detecta início de um novo capítulo estrutural (apenas se for capítulo explícito ou início do documento)
+                # Evita quebrar capítulos a cada subtítulo ou seção interna da página (como 'Globo ocular', etc.)
+                is_explicit_chapter = bool(CHAPTER_PATTERN.match(raw_text))
+                is_top_of_page = region.bbox.y0 <= (page.height * 0.22 if page.height > 0 else 200)
+
                 is_chapter_title = (
                     not is_toc_entry and
                     not (is_toc_page and in_toc_section and not has_explicit_toc_header) and
                     (
-                        region.type == RegionType.TITLE or
-                        (region.type == RegionType.HEADING and region.level == 1) or
-                        bool(CHAPTER_PATTERN.match(raw_text))
+                        is_explicit_chapter or
+                        current_chapter is None or
+                        (
+                            is_top_of_page and
+                            region.type == RegionType.TITLE and
+                            len(raw_text) < 80 and
+                            current_chapter.page_start < page.number and
+                            len(current_chapter.regions) >= 4 and
+                            bool(re.match(r'^(parte\s+|m[óo]dulo\s+|unidade\s+|se[çc][ãa]o\s+\d+|\d+\.\s+[A-Z]|[A-Z\s]{4,}\b)', raw_text, re.IGNORECASE))
+                        )
                     )
                 )
 
