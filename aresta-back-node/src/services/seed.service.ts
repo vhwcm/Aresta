@@ -311,6 +311,17 @@ export async function seedDatabase(prisma: PrismaClient) {
     });
   }
 
+  // 10. Sincronizar sequences do PostgreSQL para evitar erro de PK duplicada em inserções autoincrementais
+  try {
+    await prisma.$executeRawUnsafe(`SELECT setval(pg_get_serial_sequence('themes', 'id'), COALESCE((SELECT MAX(id) FROM themes), 1));`);
+    await prisma.$executeRawUnsafe(`SELECT setval(pg_get_serial_sequence('books', 'id'), COALESCE((SELECT MAX(id) FROM books), 1));`);
+    await prisma.$executeRawUnsafe(`SELECT setval(pg_get_serial_sequence('users', 'id'), COALESCE((SELECT MAX(id) FROM users), 1));`);
+    await prisma.$executeRawUnsafe(`SELECT setval(pg_get_serial_sequence('annotations', 'id'), COALESCE((SELECT MAX(id) FROM annotations), 1));`);
+    await prisma.$executeRawUnsafe(`SELECT setval(pg_get_serial_sequence('flashcards', 'id'), COALESCE((SELECT MAX(id) FROM flashcards), 1));`);
+  } catch {
+    // Ignora se não for PostgreSQL ou driver sem suporte a setval
+  }
+
   console.log(`✅ [SeedService] Acervo sincronizado com sucesso: ${STORE_BOOKS_DATA.length} livros vinculados ao admin viktor (id=${adminUser.id})!`);
 }
 
