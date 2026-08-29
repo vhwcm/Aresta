@@ -25,7 +25,7 @@ interface ReaderState {
 
 export const useReaderStore = defineStore('reader', {
   state: (): ReaderState => {
-    let defaultGraphOpen = false
+    const defaultGraphOpen = false
     let defaultTwoPageMode = true
     let defaultWidthMode: ReaderWidthMode = 'centered'
     let defaultFontSize = 18
@@ -52,9 +52,6 @@ export const useReaderStore = defineStore('reader', {
         const saved = localStorage.getItem('aresta_settings')
         if (saved) {
           const parsed = JSON.parse(saved)
-          if (typeof parsed.desktopReaderGraphOpen === 'boolean') {
-            defaultGraphOpen = parsed.desktopReaderGraphOpen
-          }
           if (typeof parsed.readerTwoPageMode === 'boolean') {
             defaultTwoPageMode = parsed.readerTwoPageMode
           }
@@ -130,9 +127,6 @@ export const useReaderStore = defineStore('reader', {
         const saved = localStorage.getItem('aresta_settings')
         if (saved) {
           const parsed = JSON.parse(saved)
-          if (typeof parsed.desktopReaderGraphOpen === 'boolean') {
-            this.isGraphOpen = parsed.desktopReaderGraphOpen
-          }
           if (typeof parsed.readerTwoPageMode === 'boolean') {
             this.isTwoPageMode = parsed.readerTwoPageMode
           }
@@ -200,6 +194,8 @@ export const useReaderStore = defineStore('reader', {
       this.currentPage = 1
       this.isLoading = false
       this.error = null
+      this.isGraphOpen = false
+      this.isMobileGraphOpen = false
       this.syncSettings()
       if (doc.type === 'epub') {
         if (typeof doc.setFontSize === 'function') {

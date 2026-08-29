@@ -191,6 +191,8 @@ const loadBookFromQuery = async () => {
 }
 
 onMounted(() => {
+  store.setGraphOpen(false)
+  store.setMobileGraphOpen(false)
   if (!store.hasDocument) {
     loadBookFromQuery()
   }

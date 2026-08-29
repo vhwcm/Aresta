@@ -625,6 +625,8 @@ function onKeyDown(event: KeyboardEvent) {
 }
 
 onMounted(() => {
+  store.setGraphOpen(false)
+  store.setMobileGraphOpen(false)
   if (typography.currentFont.value) {
     store.setFontFamily(typography.currentFont.value.fontFamily)
   }
@@ -651,6 +653,8 @@ onUnmounted(() => {
   window.removeEventListener('popstate', onPopState)
   window.removeEventListener('mouseup', handleTextSelectionCheck)
   document.removeEventListener('selectionchange', onDocumentSelectionChange)
+  store.setGraphOpen(false)
+  store.setMobileGraphOpen(false)
   if (store.isZenMode) {
     store.setZenMode(false)
   }
