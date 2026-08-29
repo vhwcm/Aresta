@@ -9,10 +9,10 @@
 - [x] 1.5. Adicionar funcionalidade para transformar anotações/destaques de leitura em flashcards de revisão manuais 100% offline.
 
 ## Fase 2: Configuração e Setup do Tauri v2 (Desktop Windows e Linux)
-- [ ] 2.1. Inicializar estrutura do Tauri v2 em `front/src-tauri` com `tauri.conf.json` e dependências Rust.
-- [ ] 2.2. Adicionar plugins oficiais do Tauri: `@tauri-apps/plugin-sql` (SQLite), `@tauri-apps/plugin-fs` e `@tauri-apps/plugin-dialog`.
-- [ ] 2.3. Implementar driver `TauriSqliteAdapter.ts` que implementa `IDatabaseAdapter` para desktop.
-- [ ] 2.4. Configurar scripts de build no `front/package.json` (`tauri:dev`, `tauri:build`) para Windows (.exe NSIS, .msi) e Linux (.AppImage, .deb).
+- [x] 2.1. Inicializar estrutura do Tauri v2 em `front/src-tauri` com `tauri.conf.json` e dependências Rust.
+- [x] 2.2. Adicionar plugins oficiais do Tauri: `@tauri-apps/plugin-sql` (SQLite), `@tauri-apps/plugin-fs` e `@tauri-apps/plugin-dialog`.
+- [x] 2.3. Implementar driver `TauriSqliteAdapter.ts` que implementa `IDatabaseAdapter` para desktop.
+- [x] 2.4. Configurar scripts de build no `front/package.json` (`tauri:dev`, `tauri:build`) para Windows (.exe NSIS, .msi) e Linux (.AppImage, .deb).
 
 ## Fase 3: Motor de Sincronização Bidirecional (Sync Engine)
 - [ ] 3.1. Criar tabela local `mutation_queue` e serviço `MutationQueueService.ts`.

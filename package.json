@@ -9,7 +9,9 @@
     "start:ps1": "powershell -ExecutionPolicy Bypass -File ./start.ps1",
     "models": "node list-gemini-models.js",
     "list-models": "node list-gemini-models.js",
-    "setup:hooks": "bash scripts/setup-hooks.sh"
+    "setup:hooks": "bash scripts/setup-hooks.sh",
+    "desktop:dev": "npm run tauri:dev --prefix front",
+    "desktop:build": "npm run tauri:build --prefix front"
   },
   "devDependencies": {
     "@types/node": "^26.2.0"

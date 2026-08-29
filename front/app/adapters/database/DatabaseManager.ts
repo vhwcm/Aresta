@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 import type { IDatabaseAdapter } from './IDatabaseAdapter';
 import { DexieAdapter } from './DexieAdapter';
 import { InMemoryAdapter } from './InMemoryAdapter';
+import { TauriSqliteAdapter } from './TauriSqliteAdapter';
 import type { LocalMutation } from './types';
 
 class DatabaseManager {
@@ -9,7 +10,9 @@ class DatabaseManager {
   private adapter: IDatabaseAdapter;
 
   private constructor() {
-    if (typeof window !== 'undefined' && typeof window.indexedDB !== 'undefined') {
+    if (typeof window !== 'undefined' && ((window as any).__TAURI_INTERNALS__ || (window as any).__TAURI__)) {
+      this.adapter = new TauriSqliteAdapter();
+    } else if (typeof window !== 'undefined' && typeof window.indexedDB !== 'undefined') {
       this.adapter = new DexieAdapter();
     } else {
       this.adapter = new InMemoryAdapter();
