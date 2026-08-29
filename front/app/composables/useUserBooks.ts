@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import type { UserBookItem } from '~/interfaces/graph'
 import { useAuth } from '~/composables/useAuth'
+import { bookRepo } from '~/adapters/database/repositories/BookRepository'
 
 const API_BASE = 'http://localhost:7070/api'
 
@@ -18,16 +19,54 @@ export const useUserBooks = () => {
     return headers
   }
 
+  const mapLocalToUserBookItem = (b: any): UserBookItem => ({
+    userBookId: b.id,
+    bookId: b.bookId || b.id,
+    title: b.title,
+    coverPath: b.coverPath,
+    filePath: b.filePath,
+    status: b.status || 'QUERO_LER',
+    currentPage: b.currentPage || 0,
+    lastAccessedAt: b.lastAccessedAt || b.updated_at,
+    themes: b.themes || []
+  })
+
   const fetchUserBooks = async () => {
     loading.value = true
     error.value = null
+
+    // 1. Carrega imediatamente do repositório local (Local-First)
+    try {
+      const localBooks = await bookRepo.getAll()
+      if (localBooks && localBooks.length > 0) {
+        userBooks.value = localBooks.map(mapLocalToUserBookItem)
+      }
+    } catch (e) {
+      console.warn('[useUserBooks] Falha ao carregar do banco local:', e)
+    }
+
+    // 2. Se online / autenticado, sincroniza com o backend em background
     try {
       const data = await $fetch<any[]>(`${API_BASE}/user-books`, {
         headers: getHeaders()
       })
-      userBooks.value = Array.isArray(data)
-        ? data.map(item => ({
-            userBookId: item.id,
+      if (Array.isArray(data)) {
+        userBooks.value = data.map((item) => ({
+          userBookId: item.id,
+          bookId: item.bookId,
+          title: item.title,
+          coverPath: item.coverPath,
+          filePath: item.filePath,
+          status: item.status,
+          currentPage: item.currentPage,
+          lastAccessedAt: item.lastAccessedAt,
+          themes: item.themes || []
+        }))
+
+        // Atualiza banco local com os dados remotos
+        for (const item of data) {
+          await bookRepo.save({
+            id: item.id,
             bookId: item.bookId,
             title: item.title,
             coverPath: item.coverPath,
@@ -36,17 +75,30 @@ export const useUserBooks = () => {
             currentPage: item.currentPage,
             lastAccessedAt: item.lastAccessedAt,
             themes: item.themes || []
-          }))
-        : []
+          })
+        }
+      }
     } catch (e: any) {
-      console.error('Erro ao buscar estante do usuário:', e)
-      error.value = 'Falha ao carregar seus livros.'
+      // Se estiver offline, mantém os dados locais sem travar
+      if (userBooks.value.length === 0) {
+        console.warn('Backend indisponível e sem livros locais:', e)
+      }
     } finally {
       loading.value = false
     }
   }
 
-  const addUserBook = async (bookId: number, status = 'QUERO_LER', currentPage = 0) => {
+  const addUserBook = async (bookId: number, status = 'QUERO_LER', currentPage = 0, title = 'Livro') => {
+    const id = Date.now()
+    // Grava localmente primeiro
+    await bookRepo.save({
+      id,
+      bookId,
+      title,
+      status,
+      currentPage
+    })
+
     try {
       const res = await $fetch<any>(`${API_BASE}/user-books`, {
         method: 'POST',
@@ -56,12 +108,24 @@ export const useUserBooks = () => {
       await fetchUserBooks()
       return res
     } catch (e: any) {
-      console.error('Erro ao adicionar livro à estante:', e)
-      throw e
+      console.warn('Operação salva localmente (offline mode):', e)
+      await fetchUserBooks()
+      return { id, bookId, status, currentPage }
     }
   }
 
   const updateUserBook = async (userBookId: number, status: string, currentPage: number) => {
+    const existing = userBooks.value.find((b) => b.userBookId === userBookId)
+    if (existing) {
+      await bookRepo.save({
+        id: userBookId,
+        bookId: existing.bookId,
+        title: existing.title,
+        status,
+        currentPage
+      })
+    }
+
     try {
       const res = await $fetch<any>(`${API_BASE}/user-books/${userBookId}`, {
         method: 'PATCH',
@@ -71,8 +135,9 @@ export const useUserBooks = () => {
       await fetchUserBooks()
       return res
     } catch (e: any) {
-      console.error('Erro ao atualizar livro da estante:', e)
-      throw e
+      console.warn('Atualização salva localmente (offline):', e)
+      await fetchUserBooks()
+      return { userBookId, status, currentPage }
     }
   }
 
@@ -121,32 +186,39 @@ export const useUserBooks = () => {
   }
 
   const deleteUserBook = async (userBookId: number) => {
+    await bookRepo.delete(userBookId)
     try {
       await $fetch(`${API_BASE}/user-books/${userBookId}`, {
         method: 'DELETE',
         headers: getHeaders()
       })
-      await fetchUserBooks()
     } catch (e: any) {
-      console.error('Erro ao remover livro da estante:', e)
-      throw e
+      console.warn('Exclusão persistida localmente para sincronização:', e)
+    } finally {
+      await fetchUserBooks()
     }
   }
 
   const deleteUserBookByBookId = async (bookId: number) => {
-    try {
-      await $fetch(`${API_BASE}/user-books/book/${bookId}`, {
-        method: 'DELETE',
-        headers: getHeaders()
-      })
-      await fetchUserBooks()
-    } catch (e: any) {
-      console.error('Erro ao remover livro por bookId:', e)
-      throw e
+    const item = userBooks.value.find((b) => b.bookId === bookId)
+    if (item) {
+      await deleteUserBook(item.userBookId)
     }
   }
 
   const recordBookAccess = async (userBookId: number) => {
+    const existing = userBooks.value.find((b) => b.userBookId === userBookId)
+    if (existing) {
+      await bookRepo.save({
+        id: userBookId,
+        bookId: existing.bookId,
+        title: existing.title,
+        status: existing.status,
+        currentPage: existing.currentPage,
+        lastAccessedAt: new Date().toISOString()
+      })
+    }
+
     try {
       const res = await $fetch<any>(`${API_BASE}/user-books/${userBookId}/access`, {
         method: 'PATCH',
@@ -155,17 +227,16 @@ export const useUserBooks = () => {
       await fetchUserBooks()
       return res
     } catch (e: any) {
-      console.error('Erro ao registrar acesso ao livro:', e)
-      throw e
+      console.warn('Acesso registrado localmente:', e)
     }
   }
 
   const isBookInShelf = (bookId: number) => {
-    return userBooks.value.some(b => b.bookId === bookId)
+    return userBooks.value.some((b) => b.bookId === bookId)
   }
 
   const getUserBookByBookId = (bookId: number) => {
-    return userBooks.value.find(b => b.bookId === bookId)
+    return userBooks.value.find((b) => b.bookId === bookId)
   }
 
   return {

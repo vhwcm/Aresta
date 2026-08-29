@@ -1,6 +1,7 @@
 import { ref, computed } from 'vue'
 import { useAuth } from '~/composables/useAuth'
 import { useReadingStreak } from '~/composables/useReadingStreak'
+import { flashcardRepo } from '~/adapters/database/repositories/FlashcardRepository'
 
 export interface FlashcardItem {
   id: number
@@ -60,12 +61,52 @@ export const useFlashcards = () => {
     return headers
   }
 
+  const mapLocalToFlashcardItem = (f: any): FlashcardItem => ({
+    id: Number(f.id),
+    userId: f.userId || 0,
+    annotationId: f.annotationId || 0,
+    bookId: f.bookId || 0,
+    bookTitle: f.bookTitle || 'Sem Título',
+    bookCover: f.bookCover || null,
+    chapterTitle: f.chapterTitle || null,
+    selectedText: f.selectedText || null,
+    note: f.note || null,
+    cardType: f.cardType || 'recall',
+    question: f.question || '',
+    answer: f.answer || '',
+    contextSummary: f.contextSummary || null,
+    repetitionLevel: f.repetitionLevel || 0,
+    nextReviewAt: f.nextReviewAt || new Date().toISOString(),
+    lastReviewedAt: f.lastReviewedAt || null,
+    reviewCount: f.reviewCount || 0,
+    difficulty: f.difficulty || 0,
+    isReviewed: f.isReviewed || false,
+    rating: f.rating || null
+  })
+
   /**
-   * Busca o deck de até 50 flashcards do dia para o usuário logado
+   * Busca o deck de flashcards do dia para o usuário com Local-First
    */
   const fetchDailyDeck = async (dateStr?: string): Promise<DailyDeckResponse | null> => {
     isLoading.value = true
     error.value = null
+
+    // 1. Carrega primeiro do banco local
+    try {
+      const localCards = await flashcardRepo.getAll({ dateStr, onlyDue: false })
+      if (localCards && localCards.length > 0) {
+        dailyDeck.value = localCards.map(mapLocalToFlashcardItem)
+        totalCards.value = dailyDeck.value.length
+        reviewedCount.value = dailyDeck.value.filter((c) => c.isReviewed).length
+        if (dailyDeck.value.length > 0) {
+          firstCard.value = dailyDeck.value[0]
+        }
+      }
+    } catch (e) {
+      console.warn('[useFlashcards] Falha ao carregar flashcards locais:', e)
+    }
+
+    // 2. Se online, sincroniza com o backend
     try {
       const url = dateStr
         ? `${API_BASE}/v1/flashcards/daily?date=${encodeURIComponent(dateStr)}`
@@ -76,19 +117,54 @@ export const useFlashcards = () => {
         headers: getHeaders()
       })
 
-      dailyDeck.value = res.cards || []
-      deckDate.value = res.date
-      totalCards.value = res.totalCards
-      reviewedCount.value = res.reviewedCount
+      if (res && res.cards) {
+        dailyDeck.value = res.cards
+        deckDate.value = res.date
+        totalCards.value = res.totalCards
+        reviewedCount.value = res.reviewedCount
 
-      if (dailyDeck.value.length > 0 && !firstCard.value) {
-        firstCard.value = dailyDeck.value[0]
+        if (dailyDeck.value.length > 0) {
+          firstCard.value = dailyDeck.value[0]
+        }
+
+        // Salva cópia local
+        for (const card of res.cards) {
+          await flashcardRepo.save({
+            id: card.id,
+            userId: card.userId,
+            annotationId: card.annotationId,
+            bookId: card.bookId,
+            bookTitle: card.bookTitle,
+            bookCover: card.bookCover,
+            chapterTitle: card.chapterTitle,
+            selectedText: card.selectedText,
+            note: card.note,
+            cardType: card.cardType,
+            question: card.question,
+            answer: card.answer,
+            contextSummary: card.contextSummary,
+            repetitionLevel: card.repetitionLevel,
+            nextReviewAt: card.nextReviewAt,
+            lastReviewedAt: card.lastReviewedAt,
+            reviewCount: card.reviewCount,
+            difficulty: card.difficulty,
+            isReviewed: card.isReviewed,
+            rating: card.rating
+          })
+        }
       }
 
       return res
     } catch (err: any) {
-      error.value = err?.message || 'Falha ao carregar deck diário de flashcards'
-      return null
+      if (dailyDeck.value.length === 0) {
+        error.value = err?.message || 'Falha ao carregar deck diário de flashcards'
+      }
+      return {
+        date: dateStr || (new Date().toISOString().split('T')[0] ?? ''),
+        totalCards: totalCards.value,
+        reviewedCount: reviewedCount.value,
+        cards: dailyDeck.value
+      }
     } finally {
       isLoading.value = false
     }
@@ -98,24 +174,9 @@ export const useFlashcards = () => {
    * Busca o primeiro flashcard do dia para exibir no feed da Home
    */
   const fetchFirstDailyCard = async (dateStr?: string): Promise<FlashcardItem | null> => {
-    try {
-      const url = dateStr
-        ? `${API_BASE}/v1/flashcards/daily/first?date=${encodeURIComponent(dateStr)}`
-        : `${API_BASE}/v1/flashcards/daily/first`
-
-      const res = await $fetch<{ card: FlashcardItem | null }>(url, {
-        method: 'GET',
-        headers: getHeaders()
-      })
-
-      if (res?.card) {
-        firstCard.value = res.card
-      }
-      return res?.card || null
-    } catch (err: any) {
-      console.warn('[useFlashcards] Falha ao obter 1º card do dia:', err)
-      return null
-    }
+    if (firstCard.value) return firstCard.value
+    await fetchDailyDeck(dateStr)
+    return firstCard.value
   }
 
   /**
@@ -126,6 +187,26 @@ export const useFlashcards = () => {
     rating: 'hard' | 'good' | 'easy'
   ) => {
     isSubmitting.value = true
+
+    // Atualiza localmente
+    const idx = dailyDeck.value.findIndex((c) => c.id === flashcardId)
+    if (idx !== -1) {
+      const card = dailyDeck.value[idx]!
+      card.isReviewed = true
+      card.rating = rating
+      card.reviewCount = (card.reviewCount || 0) + 1
+      card.lastReviewedAt = new Date().toISOString()
+      await flashcardRepo.save({
+        id: card.id,
+        question: card.question,
+        answer: card.answer,
+        isReviewed: true,
+        rating,
+        lastReviewedAt: card.lastReviewedAt
+      })
+    }
+    reviewedCount.value = dailyDeck.value.filter((c) => c.isReviewed).length
+
     try {
       const res = await $fetch<{
         flashcard: FlashcardItem
@@ -137,9 +218,7 @@ export const useFlashcards = () => {
         body: { rating }
       })
 
-      // Atualiza o estado local do card
-      const idx = dailyDeck.value.findIndex((c) => c.id === flashcardId)
-      if (idx !== -1) {
+      if (res && res.flashcard && idx !== -1) {
         dailyDeck.value[idx] = {
           ...dailyDeck.value[idx],
           ...res.flashcard,
@@ -148,23 +227,19 @@ export const useFlashcards = () => {
         }
       }
 
-      // Atualiza contadores
-      reviewedCount.value = dailyDeck.value.filter((c) => c.isReviewed).length
-
-      // Sincroniza streak no composable
       await streak.fetchStatus()
-
       return res
     } catch (err: any) {
-      console.error('[useFlashcards] Erro ao avaliar flashcard:', err)
-      throw err
+      console.warn('Avaliação gravada localmente (offline):', err)
+      await streak.recordActivity(0, 1)
+      return { flashcard: dailyDeck.value[idx]!, streak: null, justCompletedStreakGoal: false }
     } finally {
       isSubmitting.value = false
     }
   }
 
   /**
-   * Dispara geração de flashcards para anotações pendentes
+   * Dispara geração de flashcards para anotações pendentes via IA
    */
   const generateBatch = async (limit = 50) => {
     isLoading.value = true

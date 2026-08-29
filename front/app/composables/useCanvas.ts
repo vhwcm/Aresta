@@ -10,6 +10,7 @@ import type {
   CanvasShapeType,
 } from '~/interfaces/canvas';
 import { useAuth } from '~/composables/useAuth';
+import { canvasRepo } from '~/adapters/database/repositories/CanvasRepository';
 
 const API_BASE = 'http://localhost:7070/api';
 
@@ -257,8 +258,24 @@ export function useCanvas() {
   const saveCanvasNow = async () => {
     if (!currentCanvas.value) return;
     isSaving.value = true;
+    const payloadData = serializeDocument();
     try {
-      const payloadData = serializeDocument();
+      let parsedDoc: any = {};
+      try {
+        parsedDoc = JSON.parse(payloadData);
+      } catch (e) {
+        parsedDoc = { nodes: nodes.value, edges: edges.value, viewport: viewport.value };
+      }
+
+      // 1. Salva localmente primeiro (Local-First)
+      await canvasRepo.save({
+        id: currentCanvas.value.id,
+        name: currentCanvas.value.title,
+        description: currentCanvas.value.description,
+        document: parsedDoc,
+      });
+
+      // 2. Se online, envia para a API
       await $fetch(`${API_BASE}/canvases/${currentCanvas.value.id}`, {
         method: 'PUT',
         headers: getHeaders(),
@@ -272,7 +289,7 @@ export function useCanvas() {
         currentCanvas.value.data = payloadData;
       }
     } catch (err: any) {
-      console.error('Erro ao salvar Canvas:', err);
+      console.warn('Canvas salvo localmente (offline mode):', err);
     } finally {
       isSaving.value = false;
     }
@@ -281,16 +298,38 @@ export function useCanvas() {
   const fetchCanvases = async () => {
     isLoading.value = true;
     error.value = null;
+
+    // 1. Carrega do banco local
+    try {
+      const localCanvases = await canvasRepo.getAll();
+      if (localCanvases && localCanvases.length > 0) {
+        canvasesList.value = localCanvases.map((c) => ({
+          id: c.id,
+          title: c.name,
+          description: c.description || null,
+          nodeCount: c.nodeCount || 0,
+          edgeCount: c.edgeCount || 0,
+          updatedAt: c.updated_at,
+        }));
+      }
+    } catch (e) {
+      console.warn('[useCanvas] Falha ao ler banco local:', e);
+    }
+
+    // 2. Sincroniza se online
     try {
       const list = await $fetch<CanvasSummary[]>(`${API_BASE}/canvases`, {
         headers: getHeaders(),
       });
-      canvasesList.value = list || [];
-      return list;
+      if (Array.isArray(list)) {
+        canvasesList.value = list;
+      }
+      return canvasesList.value;
     } catch (err: any) {
-      console.error('Erro ao carregar lista de quadros:', err);
-      error.value = 'Falha ao carregar lista de quadros.';
-      return [];
+      if (canvasesList.value.length === 0) {
+        error.value = 'Falha ao carregar lista de quadros.';
+      }
+      return canvasesList.value;
     } finally {
       isLoading.value = false;
     }
@@ -299,17 +338,53 @@ export function useCanvas() {
   const loadCanvas = async (id: string) => {
     isLoading.value = true;
     error.value = null;
+
+    // 1. Carrega primeiro do banco local
+    try {
+      const local = await canvasRepo.getById(id);
+      if (local) {
+        const item: CanvasItem = {
+          id: local.id,
+          title: local.name,
+          description: local.description || null,
+          data: JSON.stringify(local.document || { nodes: [], edges: [], viewport: { x: 0, y: 0, zoom: 1 } }),
+          createdAt: local.updated_at,
+          updatedAt: local.updated_at,
+        };
+        currentCanvas.value = item;
+        deserializeDocument(item.data);
+      }
+    } catch (e) {
+      console.warn('[useCanvas] Falha ao carregar canvas local:', e);
+    }
+
+    // 2. Busca da API se online
     try {
       const item = await $fetch<CanvasItem>(`${API_BASE}/canvases/${id}`, {
         headers: getHeaders(),
       });
       currentCanvas.value = item;
       deserializeDocument(item.data);
+
+      let parsedDoc: any = {};
+      try {
+        parsedDoc = JSON.parse(item.data);
+      } catch (e) {
+        parsedDoc = { nodes: [], edges: [], viewport: { x: 0, y: 0, zoom: 1 } };
+      }
+      await canvasRepo.save({
+        id: item.id,
+        name: item.title,
+        description: item.description,
+        document: parsedDoc,
+      });
+
       return item;
     } catch (err: any) {
-      console.error(`Erro ao carregar quadro ${id}:`, err);
-      error.value = 'Quadro não encontrado.';
-      return null;
+      if (!currentCanvas.value) {
+        error.value = 'Quadro não encontrado.';
+      }
+      return currentCanvas.value;
     } finally {
       isLoading.value = false;
     }
@@ -317,43 +392,88 @@ export function useCanvas() {
 
   const createCanvas = async (title = 'Quadro sem título', initialData?: string) => {
     isLoading.value = true;
+    const localId = `canvas_${Date.now()}`;
+    const defaultData = initialData || '{"nodes":[],"edges":[],"viewport":{"x":0,"y":0,"zoom":1}}';
+
+    let parsedDoc: any = {};
+    try {
+      parsedDoc = JSON.parse(defaultData);
+    } catch (e) {
+      parsedDoc = { nodes: [], edges: [], viewport: { x: 0, y: 0, zoom: 1 } };
+    }
+
+    // Salva localmente primeiro
+    await canvasRepo.save({
+      id: localId,
+      name: title,
+      document: parsedDoc,
+    });
+
+    const localItem: CanvasItem = {
+      id: localId,
+      title,
+      description: null,
+      data: defaultData,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    canvasesList.value.unshift({
+      id: localId,
+      title,
+      description: null,
+      nodeCount: parsedDoc.nodes?.length || 0,
+      edgeCount: parsedDoc.edges?.length || 0,
+      updatedAt: localItem.updatedAt,
+    });
+    currentCanvas.value = localItem;
+
     try {
       const created = await $fetch<CanvasItem>(`${API_BASE}/canvases`, {
         method: 'POST',
         headers: getHeaders(),
         body: {
           title,
-          data: initialData || '{"nodes":[],"edges":[],"viewport":{"x":0,"y":0,"zoom":1}}',
+          data: defaultData,
         },
       });
       if (created) {
-        canvasesList.value.unshift(created);
+        await canvasRepo.delete(localId);
+        await canvasRepo.save({
+          id: created.id,
+          name: created.title,
+          description: created.description,
+          document: parsedDoc,
+        });
+        canvasesList.value = canvasesList.value.map((c) => (c.id === localId ? { ...c, id: created.id } : c));
         currentCanvas.value = created;
+        return created;
       }
-      return created;
+      return localItem;
     } catch (err: any) {
-      console.error('Erro ao criar quadro:', err);
-      throw err;
+      console.warn('Quadro criado localmente (offline mode):', err);
+      return localItem;
     } finally {
       isLoading.value = false;
     }
   };
 
   const deleteCanvas = async (id: string) => {
+    await canvasRepo.delete(id);
+    canvasesList.value = canvasesList.value.filter((c) => c.id !== id);
+    if (currentCanvas.value?.id === id) {
+      currentCanvas.value = null;
+      nodes.value = [];
+      edges.value = [];
+    }
+
     try {
       await $fetch(`${API_BASE}/canvases/${id}`, {
         method: 'DELETE',
         headers: getHeaders(),
       });
-      canvasesList.value = canvasesList.value.filter((c) => c.id !== id);
-      if (currentCanvas.value?.id === id) {
-        currentCanvas.value = null;
-        nodes.value = [];
-        edges.value = [];
-      }
     } catch (err: any) {
-      console.error('Erro ao deletar quadro:', err);
-      throw err;
+      console.warn('Exclusão persistida localmente para sincronização:', err);
     }
   };
 

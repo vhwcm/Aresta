@@ -1,6 +1,7 @@
 import { ref, computed } from 'vue'
 import { useAuth } from '~/composables/useAuth'
 import { useStreakCelebration } from '~/composables/useStreakCelebration'
+import { streakRepo } from '~/adapters/database/repositories/StreakRepository'
 
 export interface StreakDay {
   date: string
@@ -98,10 +99,32 @@ export const useReadingStreak = () => {
     if (Array.isArray(data.weeklyActivity)) {
       weeklyActivity.value = data.weeklyActivity
     }
+
+    streakRepo.save({
+      currentStreak: currentStreak.value,
+      longestStreak: longestStreak.value,
+      streakFreezeCount: streakFreezeCount.value,
+      targetStreakDays: targetStreakDays.value,
+      isGoalReachedToday: isGoalReachedToday.value,
+      todayActivity: todayActivity.value,
+      weeklyActivity: weeklyActivity.value
+    }).catch((e) => console.warn('[useReadingStreak] Falha ao persistir streak local:', e))
   }
 
   const fetchStreak = async () => {
     isLoading.value = true
+
+    // 1. Carrega do banco local primeiro
+    try {
+      const localStreak = await streakRepo.get()
+      if (localStreak) {
+        applyStreakPayload(localStreak)
+      }
+    } catch (e) {
+      console.warn('[useReadingStreak] Falha ao ler streak local:', e)
+    }
+
+    // 2. Se online, sincroniza com o backend
     try {
       const data = await $fetch<any>(`${API_BASE}/users/me/streak`, {
         headers: getHeaders()
@@ -109,8 +132,7 @@ export const useReadingStreak = () => {
       applyStreakPayload(data)
       hasFetched.value = true
     } catch (e) {
-      // Fallback local caso servidor não esteja respondendo
-      console.warn('Não foi possível sincronizar ofensiva com o backend:', e)
+      console.warn('Não foi possível sincronizar ofensiva com o backend (mantendo local):', e)
     } finally {
       isLoading.value = false
     }
