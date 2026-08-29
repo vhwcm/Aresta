@@ -111,17 +111,6 @@ describe('useSettings Composable', () => {
     expect(saved.desktopHomeGraphOpen).toBe(true)
   })
 
-  it('permite alternar a preferência de grafo no leitor desktop', () => {
-    const { desktopReaderGraphOpen, setDesktopReaderGraphOpen } = useSettings()
-
-    expect(desktopReaderGraphOpen.value).toBe(false)
-
-    setDesktopReaderGraphOpen(true)
-    expect(desktopReaderGraphOpen.value).toBe(true)
-    const saved = JSON.parse(localStorage.getItem('aresta_settings') || '{}')
-    expect(saved.desktopReaderGraphOpen).toBe(true)
-  })
-
   it('permite alterar e obter a família tipográfica padrão de EPUB', () => {
     const { epubFontFamily, setEpubFontFamily } = useSettings()
 
@@ -143,10 +132,9 @@ describe('useSettings Composable', () => {
       epubFontFamily: 'literata',
       themeMode: 'light',
       desktopHomeGraphOpen: false,
-      desktopReaderGraphOpen: false,
     })
 
-    const { loadFromServer, pageAnimationEnabled, language, themeMode, desktopHomeGraphOpen, desktopReaderGraphOpen, epubFontFamily } = useSettings()
+    const { loadFromServer, pageAnimationEnabled, language, themeMode, desktopHomeGraphOpen, epubFontFamily } = useSettings()
     await loadFromServer()
 
     expect(mockFetch).toHaveBeenCalledWith('http://localhost:7070/api/user-settings', {
@@ -156,7 +144,6 @@ describe('useSettings Composable', () => {
     expect(language.value).toBe('en-US')
     expect(themeMode.value).toBe('light')
     expect(desktopHomeGraphOpen.value).toBe(false)
-    expect(desktopReaderGraphOpen.value).toBe(false)
     expect(epubFontFamily.value).toBe('literata')
   })
 

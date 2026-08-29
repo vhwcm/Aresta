@@ -311,38 +311,7 @@
           </button>
         </div>
 
-        <!-- 3. Grafo ao Abrir Livros no Leitor (Desktop) -->
-        <div class="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div class="flex items-start sm:items-center gap-4 min-w-0">
-            <div class="p-3 rounded-2xl bg-accent/10 border border-accent/20 text-accent shrink-0">
-              <BookOpenIcon class="w-5 h-5" />
-            </div>
-            <div class="flex flex-col gap-0.5">
-              <div class="font-interface text-sm font-medium text-textPrimary">
-                Grafo no Leitor de Livros (Desktop)
-              </div>
-              <p class="font-interface text-xs text-textSecondary">
-                Abrir livros no desktop já com a visualização dividida 50/50 entre texto e grafo conceitual.
-              </p>
-            </div>
-          </div>
 
-          <button
-            type="button"
-            role="switch"
-            :aria-checked="desktopReaderGraphOpen"
-            data-testid="toggle-desktop-reader-graph"
-            @click="setDesktopReaderGraphOpen(!desktopReaderGraphOpen)"
-            class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-accent/50"
-            :class="desktopReaderGraphOpen ? 'bg-accent' : 'bg-black/10 dark:bg-white/10'"
-            title="Alternar início com grafo no leitor desktop"
-          >
-            <span
-              class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
-              :class="desktopReaderGraphOpen ? 'translate-x-5' : 'translate-x-0'"
-            />
-          </button>
-        </div>
 
         <!-- 4. Tamanho Padrão da Fonte (EPUB) -->
         <div class="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -843,7 +812,6 @@ const settings = useSettings()
 const {
   pageAnimationEnabled,
   desktopHomeGraphOpen,
-  desktopReaderGraphOpen,
   themeMode,
   readerTheme,
   nativeLanguage,
@@ -852,7 +820,6 @@ const {
   epubFontFamily,
   setPageAnimationEnabled,
   setDesktopHomeGraphOpen,
-  setDesktopReaderGraphOpen,
   setThemeMode,
   setReaderTheme,
   setNativeLanguage,

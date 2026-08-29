@@ -32,9 +32,8 @@ describe('Conta Page (/conta)', () => {
     if (typeof localStorage !== 'undefined') {
       localStorage.clear()
     }
-    const { setDesktopHomeGraphOpen, setDesktopReaderGraphOpen, setPageAnimationEnabled } = useSettings()
+    const { setDesktopHomeGraphOpen, setPageAnimationEnabled } = useSettings()
     setDesktopHomeGraphOpen(true)
-    setDesktopReaderGraphOpen(false)
     setPageAnimationEnabled(true)
   })
 
@@ -158,24 +157,6 @@ describe('Conta Page (/conta)', () => {
     // Alterna de volta para true
     await homeGraphToggle.trigger('click')
     expect(homeGraphToggle.attributes('aria-checked')).toBe('true')
-  })
-
-  it('permite alternar o switch de Grafo no Leitor Desktop', async () => {
-    const wrapper = mount(ContaPage, {
-      global: {
-        stubs: defaultStubs,
-      },
-    })
-
-    const readerGraphToggle = wrapper.find('[data-testid="toggle-desktop-reader-graph"]')
-    expect(readerGraphToggle.exists()).toBe(true)
-
-    // Inicia como false por padrão
-    expect(readerGraphToggle.attributes('aria-checked')).toBe('false')
-
-    // Alterna para true
-    await readerGraphToggle.trigger('click')
-    expect(readerGraphToggle.attributes('aria-checked')).toBe('true')
   })
 
   it('permite ajustar o tamanho da fonte padrão do EPUB', async () => {

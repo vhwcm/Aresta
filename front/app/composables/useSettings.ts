@@ -272,10 +272,12 @@ export function useSettings() {
       const data = await $fetch<UserSettingsResponse>(`${API_BASE}/user-settings`, {
         headers: { Authorization: `Bearer ${auth.token.value}` },
       })
-      applyServerSettings(data)
-      saveLocally()
+      if (data) {
+        applyServerSettings(data)
+        saveLocally()
+      }
     } catch {
-      // manter valores locais se a API falhar
+      // silencioso se a requisição falhar
     }
   }
 
@@ -291,31 +293,28 @@ export function useSettings() {
     void persistToServer()
   }
 
-  const setNativeLanguage = (lang: string) => {
+  const setNativeLanguage = (lang: DictionaryLanguage | string) => {
     settings.nativeLanguage = lang
     saveLocally()
     void persistToServer()
   }
 
-  const setTargetTranslationLanguage = (lang: string) => {
+  const setTargetTranslationLanguage = (lang: DictionaryLanguage | string) => {
     settings.targetTranslationLanguage = lang
     saveLocally()
     void persistToServer()
   }
 
   const setEpubFontSize = (size: number) => {
-    const clamped = Math.max(12, Math.min(36, Math.round(size)))
-    settings.epubFontSize = clamped
+    settings.epubFontSize = Math.max(12, Math.min(36, Math.round(size)))
     saveLocally()
     void persistToServer()
   }
 
-  const setEpubFontFamily = (familyId: EpubFontFamilyId | string) => {
-    if (['newsreader', 'literata', 'lora', 'merriweather', 'inter'].includes(familyId)) {
-      settings.epubFontFamily = familyId as EpubFontFamilyId
-      saveLocally()
-      void persistToServer()
-    }
+  const setEpubFontFamily = (family: EpubFontFamilyId) => {
+    settings.epubFontFamily = family
+    saveLocally()
+    void persistToServer()
   }
 
   const setThemeMode = (mode: ThemeMode) => {
@@ -327,12 +326,6 @@ export function useSettings() {
 
   const setDesktopHomeGraphOpen = (open: boolean) => {
     settings.desktopHomeGraphOpen = open
-    saveLocally()
-    void persistToServer()
-  }
-
-  const setDesktopReaderGraphOpen = (open: boolean) => {
-    settings.desktopReaderGraphOpen = open
     saveLocally()
     void persistToServer()
   }
@@ -407,11 +400,6 @@ export function useSettings() {
     set: (val: boolean) => setDesktopHomeGraphOpen(val),
   })
 
-  const desktopReaderGraphOpen = computed({
-    get: () => settings.desktopReaderGraphOpen,
-    set: (val: boolean) => setDesktopReaderGraphOpen(val),
-  })
-
   return {
     settings: readonly(settings),
     pageAnimationEnabled,
@@ -423,7 +411,6 @@ export function useSettings() {
     themeMode,
     readerTheme,
     desktopHomeGraphOpen,
-    desktopReaderGraphOpen,
     setPageAnimationEnabled,
     setLanguage,
     setNativeLanguage,
@@ -434,8 +421,6 @@ export function useSettings() {
     setReaderTheme,
     toggleThemeMode,
     setDesktopHomeGraphOpen,
-    setDesktopReaderGraphOpen,
     loadFromServer,
   }
 }
-

@@ -273,38 +273,6 @@
                   </button>
                 </div>
 
-                <!-- Item 6: Grafo no Leitor Desktop -->
-                <div class="p-4 flex items-center justify-between gap-4">
-                  <div class="flex items-center gap-3 min-w-0">
-                    <div class="p-2 rounded-lg bg-accent/10 text-accent">
-                      <BookOpenIcon class="w-4 h-4" />
-                    </div>
-                    <div class="min-w-0">
-                      <div class="font-interface text-sm text-textPrimary font-medium">
-                        Grafo no Leitor de Livros
-                      </div>
-                      <div class="font-interface text-xs text-textSecondary">
-                        Abrir livros com o painel de grafo expandido no desktop
-                      </div>
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    @click="desktopReaderGraphOpen = !desktopReaderGraphOpen"
-                    role="switch"
-                    :aria-checked="desktopReaderGraphOpen"
-                    class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-accent/50"
-                    :class="desktopReaderGraphOpen ? 'bg-accent' : 'bg-black/10 dark:bg-white/10'"
-                    title="Alternar início com grafo no leitor desktop"
-                  >
-                    <span
-                      class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
-                      :class="desktopReaderGraphOpen ? 'translate-x-5' : 'translate-x-0'"
-                    />
-                  </button>
-                </div>
-
                 <!-- Item 7: Animação ao Virar as Páginas -->
                 <div class="p-4 flex items-center justify-between gap-4">
                   <div class="flex items-center gap-3 min-w-0">
@@ -434,7 +402,6 @@ const {
   readerTheme,
   setReaderTheme,
   desktopHomeGraphOpen,
-  desktopReaderGraphOpen,
   loadFromServer,
 } = useSettings()
 const auth = useAuth()
