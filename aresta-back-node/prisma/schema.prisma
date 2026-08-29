@@ -203,7 +203,7 @@ model UserSettings {
   epub_font_family            String   @default("newsreader")
   theme_mode                  String   @default("dark")
   desktop_home_graph_open     Boolean  @default(true)
-  desktop_reader_graph_open   Boolean  @default(true)
+  desktop_reader_graph_open   Boolean  @default(false)
   updated_at                  DateTime @default(now()) @updatedAt
   user                        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 

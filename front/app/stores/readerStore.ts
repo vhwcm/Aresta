@@ -445,6 +445,7 @@ export const useReaderStore = defineStore('reader', {
       this.error = null
       this.fileName = null
       this.bookmarks = []
+      this.isGraphOpen = false
       this.isMobileGraphOpen = false
       this.isZenMode = false
     },

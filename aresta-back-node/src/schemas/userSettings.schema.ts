@@ -9,7 +9,7 @@ export const updateUserSettingsSchema = z.object({
   epubFontFamily: z.enum(['newsreader', 'literata', 'lora', 'merriweather', 'inter']).default('newsreader').optional(),
   themeMode: z.enum(['dark', 'light', 'sepia']).default('dark').optional(),
   desktopHomeGraphOpen: z.boolean().default(true).optional(),
-  desktopReaderGraphOpen: z.boolean().default(true).optional(),
+  desktopReaderGraphOpen: z.boolean().default(false).optional(),
 });
 
 export type UpdateUserSettingsInput = z.infer<typeof updateUserSettingsSchema>;

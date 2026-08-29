@@ -54,7 +54,7 @@ describe('UserSettings Endpoints', () => {
     expect(res.body.epubFontFamily).toBe('newsreader');
     expect(res.body.themeMode).toBe('dark');
     expect(res.body.desktopHomeGraphOpen).toBe(true);
-    expect(res.body.desktopReaderGraphOpen).toBe(true);
+    expect(res.body.desktopReaderGraphOpen).toBe(false);
   });
 
   it('PUT /api/user-settings deve atualizar preferências do usuário', async () => {
