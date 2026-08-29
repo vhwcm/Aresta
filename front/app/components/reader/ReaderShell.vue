@@ -55,6 +55,7 @@ import { createBookDocument } from '~/adapters/BookDocumentFactory'
 
 import { readerProfiler } from '~/utils/readerProfiler'
 import { getCachedBook, saveCachedBook } from '~/utils/bookCache'
+import { getBinaryStorage } from '~/adapters/storage/StorageManager'
 import { detectFileTypeFromArrayBuffer } from '~/utils/fileValidator'
 
 const store = useReaderStore()
@@ -100,18 +101,18 @@ const loadBookFromQuery = async () => {
     let arrayBuffer: ArrayBuffer | null = null
     let type: 'pdf' | 'epub' = 'epub'
 
-    // 1. Tentar carregar instantaneamente do cache local (IndexedDB)
-    const cached = await readerProfiler.measureAsync('1. Buscar no Cache Local (IndexedDB)', async () => {
-      return await getCachedBook(cacheKey)
+    // 1. Tentar carregar instantaneamente do armazenamento local (Tauri FS / OPFS / IndexedDB)
+    const localBytes = await readerProfiler.measureAsync('1. Buscar no Armazenamento Local (FS/OPFS/IndexedDB)', async () => {
+      const storage = getBinaryStorage()
+      const direct = await storage.getFile(cacheKey)
+      if (direct && direct.byteLength > 0) return direct
+      const cached = await getCachedBook(cacheKey)
+      return cached?.arrayBuffer || null
     }, 'io')
 
-    if (cached && cached.arrayBuffer && cached.arrayBuffer.byteLength > 0) {
-      arrayBuffer = cached.arrayBuffer
-      title = cached.title || title
-      type = detectFileTypeFromArrayBuffer(cached.arrayBuffer, cached.type)
-      if (type !== cached.type) {
-        void saveCachedBook(cacheKey, arrayBuffer, title, type)
-      }
+    if (localBytes && localBytes.byteLength > 0) {
+      arrayBuffer = localBytes
+      type = detectFileTypeFromArrayBuffer(localBytes, 'epub')
     } else {
       // 2. Se não estiver no cache, preparar URLs e paralelizar requisições
       const fileUrl = resolveBookFileUrl(bookId, bookPath)
@@ -158,7 +159,8 @@ const loadBookFromQuery = async () => {
 
       type = detectFileTypeFromArrayBuffer(arrayBuffer, fallbackType)
 
-      // Salvar em background no IndexedDB para as próximas aberturas serem instantâneas
+      // Salvar em background no storage manager / IndexedDB para as próximas aberturas serem instantâneas
+      void getBinaryStorage().saveFile(cacheKey, arrayBuffer, contentType || (type === 'pdf' ? 'application/pdf' : 'application/epub+zip'))
       void saveCachedBook(cacheKey, arrayBuffer, title, type)
     }
 

@@ -21,11 +21,11 @@
 - [x] 3.4. Implementar controller e rota `POST /api/sync` no Backend Node.js com resolução Last-Write-Wins (LWW) e envio de deltas.
 
 ## Fase 4: Gestão de Arquivos Binários (EPUBs/PDFs e Capas)
-- [ ] 4.1. Criar `TauriFsStorageAdapter.ts` para salvar e recuperar binários na pasta `$APP_DATA/books/`.
-- [ ] 4.2. Criar `OpfsStorageAdapter.ts` para persistência via OPFS no navegador.
-- [ ] 4.3. Atualizar `readerStore.ts` e leitor digital para abrir arquivos diretamente do caminho local nativo.
+- [x] 4.1. Criar `TauriFsStorageAdapter.ts` para salvar e recuperar binários na pasta `$APP_DATA/books/`.
+- [x] 4.2. Criar `OpfsStorageAdapter.ts` para persistência via OPFS no navegador.
+- [x] 4.3. Atualizar `readerStore.ts` e leitor digital para abrir arquivos diretamente do caminho local nativo.
 
 ## Fase 5: Testes, Validação e Atualização da Documentação
-- [ ] 5.1. Escrever testes unitários para a camada de repositório e resolução de conflitos de sincronização.
-- [ ] 5.2. Testar o fluxo completo offline -> alteração -> reconexão -> sincronização no backend.
-- [ ] 5.3. Atualizar `docs/architecture/` e criar ADR para a arquitetura Tauri + Local-First.
+- [x] 5.1. Escrever testes unitários para a camada de repositório e resolução de conflitos de sincronização.
+- [x] 5.2. Testar o fluxo completo offline -> alteração -> reconexão -> sincronização no backend.
+- [x] 5.3. Atualizar `docs/architecture/` e criar ADR para a arquitetura Tauri + Local-First.
