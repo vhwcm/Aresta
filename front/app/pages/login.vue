@@ -52,7 +52,7 @@
       </div>
 
       <!-- Coluna da Direita: Card de Autenticação com Abas Login / Cadastro -->
-      <div class="lg:col-span-5 w-full bg-bgApp/60 border border-divider backdrop-blur-xl rounded-3xl p-6 sm:p-8 shadow-2xl flex flex-col gap-6 shrink-0">
+      <div class="lg:col-span-5 w-full bg-bgPanel/90 dark:bg-bgApp/60 border border-divider backdrop-blur-xl rounded-3xl p-6 sm:p-8 shadow-2xl flex flex-col gap-6 shrink-0">
         <!-- Alternador de Abas: Login / Cadastro -->
         <div class="flex items-center p-1 rounded-2xl bg-black/5 dark:bg-white/5 border border-divider">
           <button
@@ -81,7 +81,7 @@
           <div class="flex flex-col gap-0.5">
             <span class="font-semibold text-accent uppercase tracking-wider text-[9px]">Acesso Rápido Demo</span>
             <span class="font-technical text-textSecondary text-[11px]">
-              Login: <strong>viktor</strong> · Senha: <strong>orlaweb123123#</strong>
+              Login: <strong class="text-textPrimary">viktor</strong> · Senha: <strong class="text-textPrimary">orlaweb123123#</strong>
             </span>
           </div>
         </div>
@@ -106,7 +106,7 @@
                 required
                 data-testid="login-input"
                 placeholder="viktor"
-                class="w-full bg-black/40 border border-divider rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-textPrimary placeholder:text-textSecondary/40 focus:outline-none focus:border-accent transition-colors"
+                class="w-full bg-black/[0.03] dark:bg-black/40 border border-divider rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-textPrimary placeholder:text-textSecondary/40 focus:outline-none focus:border-accent transition-colors"
               />
             </div>
           </div>
@@ -123,7 +123,7 @@
                 required
                 data-testid="password-input"
                 placeholder="••••••••••••"
-                class="w-full bg-black/40 border border-divider rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-textPrimary placeholder:text-textSecondary/40 focus:outline-none focus:border-accent transition-colors"
+                class="w-full bg-black/[0.03] dark:bg-black/40 border border-divider rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-textPrimary placeholder:text-textSecondary/40 focus:outline-none focus:border-accent transition-colors"
               />
             </div>
           </div>
@@ -132,11 +132,11 @@
             type="submit"
             :disabled="isLoading"
             data-testid="submit-login-btn"
-            class="w-full mt-2 bg-white text-black font-interface font-medium text-xs sm:text-sm py-3 rounded-xl hover:bg-gray-200 transition-all flex items-center justify-center gap-2 shadow-lg disabled:opacity-50 cursor-pointer"
+            class="w-full mt-2 bg-textPrimary text-bgApp font-interface font-medium text-xs sm:text-sm py-3 rounded-xl hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-lg disabled:opacity-50 cursor-pointer"
           >
             <span v-if="!isLoading">Entrar no Aresta</span>
             <span v-else class="flex items-center gap-2">
-              <span class="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></span>
+              <span class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
               Acessando...
             </span>
             <ArrowRightIcon v-if="!isLoading" class="w-4 h-4" />
@@ -157,7 +157,7 @@
                 required
                 data-testid="register-name-input"
                 placeholder="Seu Nome"
-                class="w-full bg-black/40 border border-divider rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-textPrimary placeholder:text-textSecondary/40 focus:outline-none focus:border-accent transition-colors"
+                class="w-full bg-black/[0.03] dark:bg-black/40 border border-divider rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-textPrimary placeholder:text-textSecondary/40 focus:outline-none focus:border-accent transition-colors"
               />
             </div>
           </div>
@@ -174,7 +174,7 @@
                 required
                 data-testid="register-email-input"
                 placeholder="seu.email@exemplo.com"
-                class="w-full bg-black/40 border border-divider rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-textPrimary placeholder:text-textSecondary/40 focus:outline-none focus:border-accent transition-colors"
+                class="w-full bg-black/[0.03] dark:bg-black/40 border border-divider rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-textPrimary placeholder:text-textSecondary/40 focus:outline-none focus:border-accent transition-colors"
               />
             </div>
           </div>
@@ -192,7 +192,7 @@
                 minlength="6"
                 data-testid="register-password-input"
                 placeholder="••••••••••••"
-                class="w-full bg-black/40 border border-divider rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-textPrimary placeholder:text-textSecondary/40 focus:outline-none focus:border-accent transition-colors"
+                class="w-full bg-black/[0.03] dark:bg-black/40 border border-divider rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-textPrimary placeholder:text-textSecondary/40 focus:outline-none focus:border-accent transition-colors"
               />
             </div>
           </div>

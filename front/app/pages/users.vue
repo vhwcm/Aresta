@@ -17,7 +17,7 @@
 
       <button
         @click="openCreateModal"
-        class="bg-white text-black font-interface text-sm font-medium px-5 py-2.5 rounded-full hover:bg-gray-200 transition-all flex items-center gap-2 shadow-lg self-start md:self-auto cursor-pointer"
+        class="bg-textPrimary text-bgApp font-interface text-sm font-medium px-5 py-2.5 rounded-full hover:opacity-90 transition-all flex items-center gap-2 shadow-lg self-start md:self-auto cursor-pointer"
       >
         <UserPlusIcon class="w-4 h-4" />
         Novo Usuário
@@ -25,21 +25,21 @@
     </header>
 
     <!-- Barra de Filtros e Busca -->
-    <section class="flex flex-col sm:flex-row items-center gap-4 bg-white/5 border border-divider p-4 rounded-2xl">
+    <section class="flex flex-col sm:flex-row items-center gap-4 bg-bgPanel/60 dark:bg-white/5 border border-divider p-4 rounded-2xl">
       <div class="relative flex-1 w-full">
         <SearchIcon class="w-4 h-4 text-textSecondary absolute left-4 top-1/2 -translate-y-1/2" />
         <input
           v-model="searchQuery"
           type="text"
           placeholder="Buscar por nome ou email..."
-          class="w-full bg-black/40 border border-divider rounded-xl pl-11 pr-4 py-2.5 text-sm text-textPrimary placeholder:text-textSecondary/50 focus:outline-none focus:border-accent transition-colors"
+          class="w-full bg-black/[0.03] dark:bg-black/40 border border-divider rounded-xl pl-11 pr-4 py-2.5 text-sm text-textPrimary placeholder:text-textSecondary/50 focus:outline-none focus:border-accent transition-colors"
         />
       </div>
 
       <div class="flex items-center gap-3 w-full sm:w-auto">
         <select
           v-model="selectedRole"
-          class="bg-black/40 border border-divider rounded-xl px-4 py-2.5 text-xs text-textPrimary focus:outline-none focus:border-accent transition-colors"
+          class="bg-black/[0.03] dark:bg-black/40 border border-divider rounded-xl px-4 py-2.5 text-xs text-textPrimary focus:outline-none focus:border-accent transition-colors"
         >
           <option value="">Todos os Papéis</option>
           <option value="ADMIN">ADMIN</option>
@@ -48,7 +48,7 @@
 
         <select
           v-model="selectedStatus"
-          class="bg-black/40 border border-divider rounded-xl px-4 py-2.5 text-xs text-textPrimary focus:outline-none focus:border-accent transition-colors"
+          class="bg-black/[0.03] dark:bg-black/40 border border-divider rounded-xl px-4 py-2.5 text-xs text-textPrimary focus:outline-none focus:border-accent transition-colors"
         >
           <option value="">Todos os Status</option>
           <option value="active">Ativos</option>
@@ -58,11 +58,11 @@
     </section>
 
     <!-- Tabela de Usuários -->
-    <div class="bg-white/5 border border-divider rounded-2xl overflow-hidden backdrop-blur-md">
+    <div class="bg-bgPanel/60 dark:bg-white/5 border border-divider rounded-2xl overflow-hidden backdrop-blur-md">
       <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
           <thead>
-            <tr class="border-b border-divider font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary bg-black/30">
+            <tr class="border-b border-divider font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary bg-black/[0.03] dark:bg-black/30">
               <th class="px-6 py-4">ID</th>
               <th class="px-6 py-4">Usuário</th>
               <th class="px-6 py-4">Papel (Role)</th>

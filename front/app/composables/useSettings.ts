@@ -3,11 +3,13 @@ import { useAuth } from '~/composables/useAuth'
 
 export type ThemeMode = 'dark' | 'light' | 'sepia'
 export type EpubFontFamilyId = 'newsreader' | 'literata' | 'lora' | 'merriweather' | 'inter'
-export type ReaderColorTheme = 'sepia' | 'white' | 'black'
+export type DictionaryLanguage = 'pt-BR' | 'pt' | 'en' | 'es'
 
 export interface SettingsState {
   pageAnimationEnabled: boolean
   language: string
+  nativeLanguage: DictionaryLanguage | string
+  targetTranslationLanguage: DictionaryLanguage | string
   epubFontSize: number
   epubFontFamily: EpubFontFamilyId
   themeMode: ThemeMode
@@ -20,6 +22,8 @@ export interface UserSettingsResponse {
   userId: number
   pageAnimationEnabled: boolean
   language: string
+  nativeLanguage?: string
+  targetTranslationLanguage?: string
   epubFontSize?: number
   epubFontFamily?: EpubFontFamilyId
   themeMode?: ThemeMode
@@ -35,6 +39,8 @@ const STORAGE_KEY = 'aresta_settings'
 const settings = reactive<SettingsState>({
   pageAnimationEnabled: true,
   language: 'pt-BR',
+  nativeLanguage: 'pt-BR',
+  targetTranslationLanguage: 'en',
   epubFontSize: 18,
   epubFontFamily: 'newsreader',
   themeMode: 'light',
@@ -48,6 +54,8 @@ let isInitialized = false
 export function resetSettingsForTesting() {
   settings.pageAnimationEnabled = true
   settings.language = 'pt-BR'
+  settings.nativeLanguage = 'pt-BR'
+  settings.targetTranslationLanguage = 'en'
   settings.epubFontSize = 18
   settings.epubFontFamily = 'newsreader'
   settings.themeMode = 'light'
@@ -63,11 +71,17 @@ export function applyTheme(mode: ThemeMode) {
   const body = document.body
 
   root.setAttribute('data-theme', mode)
-  root.classList.remove('light-theme', 'dark-theme', 'sepia-theme')
+  root.classList.remove('light-theme', 'dark-theme', 'sepia-theme', 'dark')
   root.classList.add(`${mode}-theme`)
+  if (mode === 'dark') {
+    root.classList.add('dark')
+  }
   if (body) {
-    body.classList.remove('light-theme', 'dark-theme', 'sepia-theme')
+    body.classList.remove('light-theme', 'dark-theme', 'sepia-theme', 'dark')
     body.classList.add(`${mode}-theme`)
+    if (mode === 'dark') {
+      body.classList.add('dark')
+    }
   }
 }
 
@@ -83,6 +97,12 @@ function initSettings() {
       }
       if (typeof parsed.language === 'string') {
         settings.language = parsed.language
+      }
+      if (typeof parsed.nativeLanguage === 'string') {
+        settings.nativeLanguage = parsed.nativeLanguage
+      }
+      if (typeof parsed.targetTranslationLanguage === 'string') {
+        settings.targetTranslationLanguage = parsed.targetTranslationLanguage
       }
       if (typeof parsed.epubFontSize === 'number') {
         settings.epubFontSize = Math.max(12, Math.min(36, Math.round(parsed.epubFontSize)))
@@ -136,6 +156,12 @@ function applyServerSettings(data: UserSettingsResponse) {
   if (typeof data.language === 'string') {
     settings.language = data.language
   }
+  if (typeof data.nativeLanguage === 'string') {
+    settings.nativeLanguage = data.nativeLanguage
+  }
+  if (typeof data.targetTranslationLanguage === 'string') {
+    settings.targetTranslationLanguage = data.targetTranslationLanguage
+  }
   if (typeof data.epubFontSize === 'number') {
     settings.epubFontSize = Math.max(12, Math.min(36, Math.round(data.epubFontSize)))
   }
@@ -182,6 +208,8 @@ export function useSettings() {
         body: {
           pageAnimationEnabled: settings.pageAnimationEnabled,
           language: settings.language,
+          nativeLanguage: settings.nativeLanguage,
+          targetTranslationLanguage: settings.targetTranslationLanguage,
           epubFontSize: settings.epubFontSize,
           epubFontFamily: settings.epubFontFamily,
           themeMode: settings.themeMode,
@@ -216,6 +244,18 @@ export function useSettings() {
 
   const setLanguage = (lang: string) => {
     settings.language = lang
+    saveLocally()
+    void persistToServer()
+  }
+
+  const setNativeLanguage = (lang: string) => {
+    settings.nativeLanguage = lang
+    saveLocally()
+    void persistToServer()
+  }
+
+  const setTargetTranslationLanguage = (lang: string) => {
+    settings.targetTranslationLanguage = lang
     saveLocally()
     void persistToServer()
   }
@@ -289,6 +329,16 @@ export function useSettings() {
     set: (val: string) => setLanguage(val),
   })
 
+  const nativeLanguage = computed({
+    get: () => settings.nativeLanguage,
+    set: (val: string) => setNativeLanguage(val),
+  })
+
+  const targetTranslationLanguage = computed({
+    get: () => settings.targetTranslationLanguage,
+    set: (val: string) => setTargetTranslationLanguage(val),
+  })
+
   const epubFontSize = computed({
     get: () => settings.epubFontSize,
     set: (val: number) => setEpubFontSize(val),
@@ -323,6 +373,8 @@ export function useSettings() {
     settings: readonly(settings),
     pageAnimationEnabled,
     language,
+    nativeLanguage,
+    targetTranslationLanguage,
     epubFontSize,
     epubFontFamily,
     themeMode,
@@ -331,6 +383,8 @@ export function useSettings() {
     desktopReaderGraphOpen,
     setPageAnimationEnabled,
     setLanguage,
+    setNativeLanguage,
+    setTargetTranslationLanguage,
     setEpubFontSize,
     setEpubFontFamily,
     setThemeMode,
