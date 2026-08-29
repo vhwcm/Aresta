@@ -367,6 +367,21 @@ function prepareSectionDocument(doc: Document | null, sectionPath: string, unzip
 }
 
 const EPUB_TYPOGRAPHY_STYLES = `
+  .epub-text-layer-content {
+    display: block !important;
+    position: relative !important;
+    box-sizing: border-box !important;
+    column-fill: auto !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    overflow: visible !important;
+  }
+  .epub-text-layer-viewport {
+    display: block !important;
+    position: absolute !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+  }
   .epub-text-layer-content h1, .epub-text-layer-content .chapter-title, .epub-text-layer-content .title, .epub-text-layer-content [class*="title"] {
     font-size: 2em !important;
     font-weight: 700 !important;
@@ -859,7 +874,7 @@ export class EpubDocumentAdapter implements IBookDocument {
       viewportWrapper.style.pointerEvents = 'auto'
 
       const styleTag = document.createElement('style')
-      styleTag.innerHTML = `${EPUB_TYPOGRAPHY_STYLES}\n${docStyles}`
+      styleTag.innerHTML = `${docStyles}\n${EPUB_TYPOGRAPHY_STYLES}`
       viewportWrapper.appendChild(styleTag)
 
       const contentWrapper = document.createElement('div')
@@ -878,10 +893,6 @@ export class EpubDocumentAdapter implements IBookDocument {
       contentWrapper.style.marginLeft = `-${colOffset}px`
       contentWrapper.style.userSelect = 'text'
       contentWrapper.style.webkitUserSelect = 'text'
-
-      if (bodyInlineStyles) {
-        contentWrapper.style.cssText += ';' + bodyInlineStyles
-      }
 
       contentWrapper.innerHTML = bodyContent
 
@@ -929,7 +940,6 @@ export class EpubDocumentAdapter implements IBookDocument {
       const bodyEl = doc.body || (typeof doc.querySelector === 'function' ? doc.querySelector('body') : null) || (typeof doc.getElementsByTagName === 'function' ? doc.getElementsByTagName('body')[0] : null) || (doc as any)
       const bodyContent = bodyEl ? (bodyEl.innerHTML || bodyEl.textContent || '') : (doc.documentElement ? doc.documentElement.innerHTML : '')
       const bodyClasses = bodyEl && typeof bodyEl.getAttribute === 'function' ? (bodyEl.getAttribute('class') || '') : ''
-      const bodyInlineStyles = bodyEl && typeof bodyEl.getAttribute === 'function' ? (bodyEl.getAttribute('style') || '') : ''
 
       const paddingX = width > 700 ? 40 : (width > 500 ? 28 : 16)
       const paddingY = height > 700 ? 36 : 24
@@ -940,14 +950,14 @@ export class EpubDocumentAdapter implements IBookDocument {
       const svgContent = `
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${renderW}" height="${renderH}">
           <style>
-            ${EPUB_TYPOGRAPHY_STYLES}
             ${docStyles}
+            ${EPUB_TYPOGRAPHY_STYLES}
           </style>
           <foreignObject width="${width}" height="${height}">
             <div xmlns="http://www.w3.org/1999/xhtml"
               style="width:${width}px;height:${height}px;overflow:hidden;background:#faf9f7;margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;">
               <div class="epub-text-layer-content ${bodyClasses}"
-                style="width:${width}px;height:${height}px;padding:${paddingY}px ${paddingX}px;box-sizing:border-box;column-width:${colWidth}px;column-gap:${colGap}px;column-fill:auto;font-family:${this._fontFamily};font-size:${this._fontSize}px;line-height:1.7;word-wrap:break-word;margin-left:-${colOffset}px;${bodyInlineStyles}">
+                style="width:${width}px;height:${height}px;padding:${paddingY}px ${paddingX}px;box-sizing:border-box;column-width:${colWidth}px;column-gap:${colGap}px;column-fill:auto;font-family:${this._fontFamily};font-size:${this._fontSize}px;line-height:1.7;word-wrap:break-word;margin-left:-${colOffset}px;">
                 ${bodyContent}
               </div>
             </div>

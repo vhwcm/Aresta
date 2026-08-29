@@ -1072,15 +1072,27 @@ defineExpose({
   text-rendering: optimizeLegibility !important;
 }
 
-.theme-sepia .page-text-layer :deep(.epub-text-layer-content) {
+.theme-sepia .page-text-layer :deep(.epub-text-layer-content),
+.theme-sepia .page-text-layer :deep(.epub-text-layer-content *),
+.theme-sepia .page-text-layer :deep(.epub-text-layer-content p),
+.theme-sepia .page-text-layer :deep(.epub-text-layer-content span),
+.theme-sepia .page-text-layer :deep(.epub-text-layer-content div) {
   color: #2a2521;
 }
 
-.theme-white .page-text-layer :deep(.epub-text-layer-content) {
+.theme-white .page-text-layer :deep(.epub-text-layer-content),
+.theme-white .page-text-layer :deep(.epub-text-layer-content *),
+.theme-white .page-text-layer :deep(.epub-text-layer-content p),
+.theme-white .page-text-layer :deep(.epub-text-layer-content span),
+.theme-white .page-text-layer :deep(.epub-text-layer-content div) {
   color: #1a1a1a;
 }
 
-.theme-black .page-text-layer :deep(.epub-text-layer-content) {
+.theme-black .page-text-layer :deep(.epub-text-layer-content),
+.theme-black .page-text-layer :deep(.epub-text-layer-content *),
+.theme-black .page-text-layer :deep(.epub-text-layer-content p),
+.theme-black .page-text-layer :deep(.epub-text-layer-content span),
+.theme-black .page-text-layer :deep(.epub-text-layer-content div) {
   color: #e4e4e7;
 }
 
