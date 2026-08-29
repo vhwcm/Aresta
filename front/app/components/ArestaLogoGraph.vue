@@ -2,16 +2,16 @@
   <NuxtLink
     v-if="to"
     :to="to"
-    class="relative group inline-flex items-center justify-center p-1.5 rounded-xl transition-all duration-300 hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-accent/40"
+    class="relative group inline-flex items-center justify-center p-1.5 rounded-xl transition-all duration-300 hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-white/30"
     :title="title"
     :aria-label="title"
   >
     <!-- Glow de fundo sutil no hover -->
     <div
-      class="absolute inset-0 rounded-xl bg-accent/10 opacity-0 group-hover:opacity-100 blur-md transition-opacity duration-500 pointer-events-none"
+      class="absolute inset-0 rounded-xl bg-white/10 opacity-0 group-hover:opacity-100 blur-md transition-opacity duration-500 pointer-events-none"
     ></div>
 
-    <!-- SVG do Grafo Vivo formando a letra A -->
+    <!-- SVG do Grafo Vivo formando a letra A (Branco Padrão) -->
     <svg
       :width="size"
       :height="size"
@@ -21,10 +21,10 @@
       class="aresta-graph-svg transition-transform duration-300 group-hover:scale-105"
     >
       <defs>
-        <!-- Gradiente linear para arestas principais -->
+        <!-- Gradiente linear para arestas principais (Branco) -->
         <linearGradient id="edgeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#E57B55" stop-opacity="0.9" />
-          <stop offset="100%" stop-color="#FF9E79" stop-opacity="0.6" />
+          <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.95" />
+          <stop offset="100%" stop-color="#EDEDED" stop-opacity="0.8" />
         </linearGradient>
 
         <!-- Filtro de brilho sutil para os nós -->
@@ -50,41 +50,41 @@
         <line x1="20" y1="7" x2="20" y2="23" class="edge-subtle" stroke-dasharray="2 2" />
       </g>
 
-      <!-- Nós (Vértices do Grafo Vivo com oscilação orgânica lenta) -->
+      <!-- Nós (Vértices do Grafo Vivo com oscilação orgânica lenta - Branco) -->
       <g class="nodes-layer" filter="url(#nodeGlow)">
         <!-- Nó 1: Topo / Vértice Superior -->
         <g class="node-wrap node-top">
-          <circle cx="20" cy="7" r="3.2" class="fill-[#0A0A0B] stroke-accent stroke-[1.6]" />
-          <circle cx="20" cy="7" r="1.2" class="fill-accent animate-pulse" />
+          <circle cx="20" cy="7" r="3.2" class="fill-[#0A0A0B] stroke-white stroke-[1.6]" />
+          <circle cx="20" cy="7" r="1.2" class="fill-white animate-pulse" />
         </g>
 
         <!-- Nó 2: Barra Esquerda -->
         <g class="node-wrap node-mid-left">
-          <circle cx="12" cy="23" r="2.8" class="fill-[#0A0A0B] stroke-accent stroke-[1.4]" />
-          <circle cx="12" cy="23" r="1" class="fill-[#FF9E79]" />
+          <circle cx="12" cy="23" r="2.8" class="fill-[#0A0A0B] stroke-white stroke-[1.4]" />
+          <circle cx="12" cy="23" r="1" class="fill-white/90" />
         </g>
 
         <!-- Nó 3: Barra Direita -->
         <g class="node-wrap node-mid-right">
-          <circle cx="28" cy="23" r="2.8" class="fill-[#0A0A0B] stroke-accent stroke-[1.4]" />
-          <circle cx="28" cy="23" r="1" class="fill-[#FF9E79]" />
+          <circle cx="28" cy="23" r="2.8" class="fill-[#0A0A0B] stroke-white stroke-[1.4]" />
+          <circle cx="28" cy="23" r="1" class="fill-white/90" />
         </g>
 
         <!-- Nó 4: Base Esquerda -->
         <g class="node-wrap node-bot-left">
-          <circle cx="7" cy="33" r="2.5" class="fill-[#0A0A0B] stroke-accent stroke-[1.4]" stroke-opacity="0.8" />
-          <circle cx="7" cy="33" r="0.9" class="fill-accent" />
+          <circle cx="7" cy="33" r="2.5" class="fill-[#0A0A0B] stroke-white stroke-[1.4]" stroke-opacity="0.8" />
+          <circle cx="7" cy="33" r="0.9" class="fill-white" />
         </g>
 
         <!-- Nó 5: Base Direita -->
         <g class="node-wrap node-bot-right">
-          <circle cx="33" cy="33" r="2.5" class="fill-[#0A0A0B] stroke-accent stroke-[1.4]" stroke-opacity="0.8" />
-          <circle cx="33" cy="33" r="0.9" class="fill-accent" />
+          <circle cx="33" cy="33" r="2.5" class="fill-[#0A0A0B] stroke-white stroke-[1.4]" stroke-opacity="0.8" />
+          <circle cx="33" cy="33" r="0.9" class="fill-white" />
         </g>
 
         <!-- Nó Central sutil na travessa -->
         <g class="node-wrap node-center">
-          <circle cx="20" cy="23" r="1.8" class="fill-accent" fill-opacity="0.9" />
+          <circle cx="20" cy="23" r="1.8" class="fill-white" fill-opacity="0.9" />
         </g>
       </g>
     </svg>
@@ -98,7 +98,7 @@
   >
     <!-- Glow de fundo sutil no hover -->
     <div
-      class="absolute inset-0 rounded-xl bg-accent/10 opacity-0 group-hover:opacity-100 blur-md transition-opacity duration-500 pointer-events-none"
+      class="absolute inset-0 rounded-xl bg-white/10 opacity-0 group-hover:opacity-100 blur-md transition-opacity duration-500 pointer-events-none"
     ></div>
 
     <!-- SVG do Grafo Vivo formando a letra A -->
@@ -113,8 +113,8 @@
       <defs>
         <!-- Gradiente linear para arestas principais -->
         <linearGradient id="edgeGradDiv" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#E57B55" stop-opacity="0.9" />
-          <stop offset="100%" stop-color="#FF9E79" stop-opacity="0.6" />
+          <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.95" />
+          <stop offset="100%" stop-color="#EDEDED" stop-opacity="0.8" />
         </linearGradient>
 
         <!-- Filtro de brilho sutil para os nós -->
@@ -137,27 +137,27 @@
       <!-- Nós (Vértices do Grafo Vivo com oscilação orgânica lenta) -->
       <g class="nodes-layer" filter="url(#nodeGlowDiv)">
         <g class="node-wrap node-top">
-          <circle cx="20" cy="7" r="3.2" class="fill-[#0A0A0B] stroke-accent stroke-[1.6]" />
-          <circle cx="20" cy="7" r="1.2" class="fill-accent animate-pulse" />
+          <circle cx="20" cy="7" r="3.2" class="fill-[#0A0A0B] stroke-white stroke-[1.6]" />
+          <circle cx="20" cy="7" r="1.2" class="fill-white animate-pulse" />
         </g>
         <g class="node-wrap node-mid-left">
-          <circle cx="12" cy="23" r="2.8" class="fill-[#0A0A0B] stroke-accent stroke-[1.4]" />
-          <circle cx="12" cy="23" r="1" class="fill-[#FF9E79]" />
+          <circle cx="12" cy="23" r="2.8" class="fill-[#0A0A0B] stroke-white stroke-[1.4]" />
+          <circle cx="12" cy="23" r="1" class="fill-white/90" />
         </g>
         <g class="node-wrap node-mid-right">
-          <circle cx="28" cy="23" r="2.8" class="fill-[#0A0A0B] stroke-accent stroke-[1.4]" />
-          <circle cx="28" cy="23" r="1" class="fill-[#FF9E79]" />
+          <circle cx="28" cy="23" r="2.8" class="fill-[#0A0A0B] stroke-white stroke-[1.4]" />
+          <circle cx="28" cy="23" r="1" class="fill-white/90" />
         </g>
         <g class="node-wrap node-bot-left">
-          <circle cx="7" cy="33" r="2.5" class="fill-[#0A0A0B] stroke-accent stroke-[1.4]" stroke-opacity="0.8" />
-          <circle cx="7" cy="33" r="0.9" class="fill-accent" />
+          <circle cx="7" cy="33" r="2.5" class="fill-[#0A0A0B] stroke-white stroke-[1.4]" stroke-opacity="0.8" />
+          <circle cx="7" cy="33" r="0.9" class="fill-white" />
         </g>
         <g class="node-wrap node-bot-right">
-          <circle cx="33" cy="33" r="2.5" class="fill-[#0A0A0B] stroke-accent stroke-[1.4]" stroke-opacity="0.8" />
-          <circle cx="33" cy="33" r="0.9" class="fill-accent" />
+          <circle cx="33" cy="33" r="2.5" class="fill-[#0A0A0B] stroke-white stroke-[1.4]" stroke-opacity="0.8" />
+          <circle cx="33" cy="33" r="0.9" class="fill-white" />
         </g>
         <g class="node-wrap node-center">
-          <circle cx="20" cy="23" r="1.8" class="fill-accent" fill-opacity="0.9" />
+          <circle cx="20" cy="23" r="1.8" class="fill-white" fill-opacity="0.9" />
         </g>
       </g>
     </svg>
@@ -180,17 +180,17 @@ withDefaults(
 </script>
 
 <style scoped>
-/* Arestas sempre visíveis por padrão */
+/* Arestas sempre visíveis por padrão em branco limpo */
 .edge {
-  stroke: var(--accent, #E57B55);
-  stroke-opacity: 0.8;
+  stroke: #FFFFFF;
+  stroke-opacity: 0.85;
   stroke-width: 1.8;
   stroke-linecap: round;
-  transition: stroke 0.3s ease, stroke-width 0.3s ease, stroke-opacity 0.3s ease;
+  transition: stroke 0.3s ease, stroke-width 0.3s ease, stroke-opacity 0.3s ease, filter 0.3s ease;
 }
 
 .edge-subtle {
-  stroke: var(--accent, #E57B55);
+  stroke: #FFFFFF;
   stroke-opacity: 0.35;
   stroke-width: 1;
   stroke-dasharray: 2 2;
@@ -267,13 +267,14 @@ withDefaults(
 
 /* Transição e realce das arestas no hover */
 .group:hover .edge {
-  stroke: #FF9E79;
+  stroke: #FFFFFF;
   stroke-opacity: 1;
   stroke-width: 2.1;
+  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.6));
 }
 
 .group:hover .edge-subtle {
-  stroke: #FF9E79;
+  stroke: #FFFFFF;
   stroke-opacity: 0.6;
 }
 </style>
