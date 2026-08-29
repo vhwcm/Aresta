@@ -104,6 +104,35 @@ describe('Conta Page (/conta)', () => {
     expect(localStorage.getItem('aresta_reader_theme')).toBe('sepia')
   })
 
+  it('permite alternar o switch de Virada de Página 3D (Efeito Folhear)', async () => {
+    const wrapper = mount(ContaPage, {
+      global: {
+        stubs: defaultStubs,
+      },
+    })
+
+    const pageAnimationToggle = wrapper.find('[data-testid="toggle-page-animation"]')
+    expect(pageAnimationToggle.exists()).toBe(true)
+
+    // Inicia como ativado por padrão
+    expect(pageAnimationToggle.attributes('aria-checked')).toBe('true')
+    expect(wrapper.text()).toContain('Ativado (Kindle / 3D)')
+
+    // Alterna para desativado
+    await pageAnimationToggle.trigger('click')
+    expect(pageAnimationToggle.attributes('aria-checked')).toBe('false')
+    expect(wrapper.text()).toContain('Desativado (Instantâneo)')
+    let saved = JSON.parse(localStorage.getItem('aresta_settings') || '{}')
+    expect(saved.pageAnimationEnabled).toBe(false)
+
+    // Alterna de volta para ativado
+    await pageAnimationToggle.trigger('click')
+    expect(pageAnimationToggle.attributes('aria-checked')).toBe('true')
+    expect(wrapper.text()).toContain('Ativado (Kindle / 3D)')
+    saved = JSON.parse(localStorage.getItem('aresta_settings') || '{}')
+    expect(saved.pageAnimationEnabled).toBe(true)
+  })
+
   it('permite alternar o switch de Grafo na Tela Inicial (Desktop)', async () => {
     const wrapper = mount(ContaPage, {
       global: {

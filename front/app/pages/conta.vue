@@ -239,7 +239,46 @@
           </div>
         </div>
 
-        <!-- 2. Grafo na Tela Inicial (Desktop) -->
+        <!-- 2. Virada de Página 3D (Efeito Folhear) -->
+        <div class="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div class="flex items-start sm:items-center gap-4 min-w-0">
+            <div class="p-3 rounded-2xl bg-accent/10 border border-accent/20 text-accent shrink-0">
+              <BookOpenIcon class="w-5 h-5" />
+            </div>
+            <div class="flex flex-col gap-0.5">
+              <div class="font-interface text-sm font-medium text-textPrimary flex items-center gap-2">
+                <span>Virada de Página 3D (Efeito Folhear)</span>
+                <span
+                  class="px-2 py-0.5 rounded-full font-technical text-[10px] font-semibold"
+                  :class="pageAnimationEnabled ? 'bg-accent/15 text-accent border border-accent/30' : 'bg-black/5 dark:bg-white/10 text-textSecondary'"
+                >
+                  {{ pageAnimationEnabled ? 'Ativado (Kindle / 3D)' : 'Desativado (Instantâneo)' }}
+                </span>
+              </div>
+              <p class="font-interface text-xs text-textSecondary">
+                Efeito visual 3D de folhear páginas em livros e PDFs, semelhante à experiência do Kindle e Google Play Livros.
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            role="switch"
+            :aria-checked="pageAnimationEnabled"
+            data-testid="toggle-page-animation"
+            @click="setPageAnimationEnabled(!pageAnimationEnabled)"
+            class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-accent/50"
+            :class="pageAnimationEnabled ? 'bg-accent' : 'bg-black/10 dark:bg-white/10'"
+            title="Alternar animação de virada de página 3D"
+          >
+            <span
+              class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+              :class="pageAnimationEnabled ? 'translate-x-5' : 'translate-x-0'"
+            />
+          </button>
+        </div>
+
+        <!-- 3. Grafo na Tela Inicial (Desktop) -->
         <div class="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div class="flex items-start sm:items-center gap-4 min-w-0">
             <div class="p-3 rounded-2xl bg-accent/10 border border-accent/20 text-accent shrink-0">
@@ -802,6 +841,7 @@ const auth = useAuth()
 const settings = useSettings()
 
 const {
+  pageAnimationEnabled,
   desktopHomeGraphOpen,
   desktopReaderGraphOpen,
   themeMode,
@@ -810,6 +850,7 @@ const {
   targetTranslationLanguage,
   epubFontSize,
   epubFontFamily,
+  setPageAnimationEnabled,
   setDesktopHomeGraphOpen,
   setDesktopReaderGraphOpen,
   setThemeMode,
