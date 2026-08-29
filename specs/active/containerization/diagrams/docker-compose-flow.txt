@@ -1,0 +1,35 @@
+================================================================================
+           ARESTA: FLUXO DE REDE E DEPENDÊNCIAS DO DOCKER COMPOSE
+================================================================================
+
++-------------------------------------------------------------------------------+
+|                            REDE: aresta-network                               |
+|                                                                               |
+|  +---------------------+                                                      |
+|  |     db (Postgres)   |<-------------------------+                           |
+|  |     Port: 5432      |                          |                           |
+|  |  (pg_isready: OK)   |                          |                           |
+|  +----------+----------+                          |                           |
+|             ^                                     |                           |
+|             | depends_on: service_healthy         | Prisma Queries / SQL      |
+|             |                                     |                           |
+|  +----------+----------+                          |                           |
+|  |   backend (Node 20) |--------------------------+                           |
+|  |     Port: 7070      |                                                      |
+|  | (Health: /api/health|--------------------------+                           |
+|  +----------+----------+                          |                           |
+|             ^                                     | gRPC calls (TCP 50051)    |
+|             | depends_on: service_healthy         | /ocr.v1.OcrService        |
+|             |                                     |                           |
+|  +----------+----------+               +----------v----------+                |
+|  |   frontend (Nuxt 4) |               |  ocr-service (Go)   |                |
+|  |     Port: 3000      |               |     Port: 50051     |                |
+|  +----------+----------+               +---------------------+                |
+|             |                                                                 |
++-------------|-----------------------------------------------------------------+
+              |
+              v (Port Forwarding para o Host)
+    http://localhost:3000   --> Interface do Usuário (Web Reader)
+    http://localhost:7070   --> Backend REST API & Swagger UI
+    http://localhost:5432   --> PostgreSQL (Acesso direto para DBeaver/Adminer)
+    http://localhost:50051  --> gRPC OCR Server

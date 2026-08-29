@@ -1,0 +1,57 @@
+================================================================================
+                    ARESTA: ARQUITETURA LOCAL-FIRST & DOCKER STACK
+================================================================================
+
++-------------------------------------------------------------------------------+
+|                      DISPOSITIVO CLIENTE (Web / Mobile)                       |
+|                                                                               |
+|  +---------------------+   +---------------------+   +---------------------+  |
+|  |   Leitor de EPUBs   |   |   Armazenamento     |   |    Banco Local      |  |
+|  |   (100% Offline)    |   |      Local          |   |    (IndexedDB /     |  |
+|  |                     |<--+  (OPFS / FileSys)   |   |   Capacitor SQLite) |  |
+|  | - Virar páginas     |   |  - Livros em cache  |   | - Anotações         |  |
+|  | - Criar anotações   |   |  - Capas            |   | - Progresso         |  |
+|  | - Fazer Flashcards  |   +---------------------+   | - Streaks           |  |
+|  +----------+----------+                             +----------+----------+  |
+|             |                                                   |             |
+|             +------------------------+--------------------------+             |
+|                                      |                                        |
+|                                      v                                        |
+|                     +----------------------------------+                      |
+|                     |        Sync Engine Local         |                      |
+|                     |  - Fila de mutações (outbox)     |                      |
+|                     |  - Timestamps (updated_at)       |                      |
+|                     |  - Detecção online / offline     |                      |
+|                     +----------------+-----------------+                      |
++--------------------------------------|----------------------------------------+
+                                       |
+                   HTTP(S) Sync Events |  POST /api/sync (quando online)
+                                       |
++--------------------------------------v----------------------------------------+
+|                   SERVIDOR / CLOUD (DOCKER COMPOSE STACK)                     |
+|                                                                               |
+|  +-------------------------------------------------------------------------+  |
+|  |                         Container 1: Backend API                        |  |
+|  |                     (Node.js 20 Express + Prisma ORM)                   |  |
+|  |                                                                         |  |
+|  |   - Endpoint /api/sync (Resolução LWW e merge de dados)                 |  |
+|  |   - Autenticação JWT e RBAC                                             |  |
+|  |   - Orquestrador gRPC de chamadas para IA                               |  |
+|  +----------------------+--------------------------+-----------------------+  |
+|                         |                          |                          |
+|       Prisma (Port 5432)|                          | gRPC (Port 50051)        |
+|                         v                          v                          |
+|  +-----------------------------+     +-------------------------------------+  |
+|  |    Container 2: Database    |     |      Container 3: aresta-ocr        |  |
+|  |   (PostgreSQL 16 Alpine)    |     |      (Go 1.23 Microservice)         |  |
+|  |                             |     |                                     |  |
+|  | - Fonte da verdade central  |     | - Inversão de dependência (SOLID D) |  |
+|  | - Volume persistente        |     | - Google Gemini 2.0 / Flash         |  |
+|  | - Backups estruturados      |     | - Transcrição de escrita e imagens  |  |
+|  +-----------------------------+     +-------------------------------------+  |
+|                                                                               |
+|  +-------------------------------------------------------------------------+  |
+|  |                   Container 4: Frontend Web (Nuxt 4)                    |  |
+|  |                       (Acesso via Navegador Web)                        |  |
+|  +-------------------------------------------------------------------------+  |
++-------------------------------------------------------------------------------+
