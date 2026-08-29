@@ -1,10 +1,10 @@
 <template>
   <footer
-    class="reader-bottom-bar backdrop-blur-md border-t md:border-t-0 md:border-r px-3 py-2 sm:px-4 sm:py-2.5 md:px-2 md:py-3.5 flex flex-row md:flex-col items-center justify-between z-20 shrink-0 gap-2 md:gap-3 order-last md:order-first w-full md:w-16 md:h-full select-none transition-colors duration-200"
+    class="reader-bottom-bar border-t md:border-t-0 md:border-r px-3 py-2 sm:px-4 sm:py-2.5 md:px-2 md:py-3.5 flex flex-row md:flex-col items-center justify-between z-20 shrink-0 gap-2 md:gap-3 order-last md:order-first w-full md:w-16 md:h-full select-none transition-colors duration-200"
     :class="{
-      'bg-[#FAF5E8]/98 border-[#dfd5c0] text-[#2a2521]': store.readerTheme === 'sepia',
-      'bg-white/98 border-gray-200 text-gray-900': store.readerTheme === 'white',
-      'bg-bgPanel/95 border-divider text-textPrimary': store.readerTheme === 'black' || !store.readerTheme,
+      'bg-[#FAF5E8] border-[#dfd5c0] text-[#2a2521]': store.readerTheme === 'sepia',
+      'bg-white border-gray-200 text-gray-900': store.readerTheme === 'white',
+      'bg-[#121315] border-divider text-textPrimary': store.readerTheme === 'black' || !store.readerTheme,
     }"
     role="toolbar"
     aria-label="Barra de ferramentas do leitor"
@@ -58,7 +58,7 @@
       :class="store.readerTheme === 'sepia' ? 'bg-[#dfd5c0]' : (store.readerTheme === 'white' ? 'bg-gray-200' : 'bg-divider/60')"
     ></div>
 
-    <!-- Grupo 2: Ação de Anotação, Tamanho de Fonte & Modo 1/2 Páginas (Mobile: Centro | Tablet/Desktop: Centro) -->
+    <!-- Grupo 2: Ação de Anotação, Configurações de Leitura & Modos (Mobile: Centro | Tablet/Desktop: Centro) -->
     <div class="flex flex-row md:flex-col items-center gap-1.5 sm:gap-2 md:gap-2.5">
       <!-- Botão Anotar -->
       <button
@@ -71,7 +71,7 @@
         <span class="text-xs md:hidden">Anotar</span>
       </button>
 
-      <!-- Botão Aparência / Tema de Leitura & Tipografia (PDF e EPUB) -->
+      <!-- Botão Aparência & Configurações de Leitura (Fundo, Tipografia, Folhas e Largura) -->
       <div class="relative" ref="appearanceWrapperRef">
         <button
           @click="isAppearancePopoverOpen = !isAppearancePopoverOpen"
@@ -83,7 +83,7 @@
               : (store.readerTheme === 'white'
                 ? 'bg-gray-100 border-gray-200 text-gray-700 hover:text-black hover:bg-gray-200'
                 : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary hover:bg-white/10'))"
-          title="Aparência de leitura (Cor de fundo, tema e tipografia)"
+          title="Aparência e configurações de leitura (Tema, tipografia, páginas e layout)"
           aria-label="Aparência de leitura"
           id="btn-appearance-toggle"
         >
@@ -104,14 +104,14 @@
           </span>
         </button>
 
-        <!-- Popover Flutuante de Aparência & Fundo de Leitura (Mobile: Abre para cima | Tablet/Desktop: Abre para a direita) -->
+        <!-- Popover Flutuante de Aparência & Configurações de Leitura (Mobile: Centralizado acima da barra | Desktop: Abre para a direita) -->
         <div
           v-if="isAppearancePopoverOpen"
-          class="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 md:bottom-auto md:top-1/2 md:-translate-y-1/2 md:left-full md:ml-3 md:translate-x-0 backdrop-blur-xl border rounded-2xl p-4 shadow-2xl z-50 flex flex-col gap-3.5 min-w-[240px] sm:min-w-[280px] animate-fadeIn"
+          class="fixed bottom-16 left-1/2 -translate-x-1/2 w-[92vw] max-w-[320px] md:absolute md:left-full md:top-1/2 md:translate-x-0 md:-translate-y-1/2 md:bottom-auto md:w-72 border rounded-2xl p-4 shadow-2xl z-50 flex flex-col gap-3.5 animate-fadeIn"
           :class="{
-            'bg-[#FAF5E8]/98 border-[#dfd5c0] text-[#2a2521]': store.readerTheme === 'sepia',
-            'bg-white/98 border-gray-200 text-gray-900': store.readerTheme === 'white',
-            'bg-bgPanel/95 border-divider text-textPrimary': store.readerTheme === 'black' || !store.readerTheme,
+            'bg-[#FAF5E8] border-[#dfd5c0] text-[#2a2521]': store.readerTheme === 'sepia',
+            'bg-white border-gray-200 text-gray-900': store.readerTheme === 'white',
+            'bg-[#18181b] border-white/10 text-[#f2f2f2]': store.readerTheme === 'black' || !store.readerTheme,
           }"
           role="dialog"
           aria-label="Controle de aparência e fundo de leitura"
@@ -130,8 +130,12 @@
                 @click="store.setReaderTheme('sepia')"
                 class="flex flex-col items-center justify-center p-2 rounded-xl border transition-all text-center group"
                 :class="store.readerTheme === 'sepia'
-                  ? 'bg-amber-400/20 border-amber-500 text-amber-950 shadow-sm font-bold'
-                  : 'bg-white/5 border-divider hover:bg-white/10 text-textSecondary hover:text-textPrimary'"
+                  ? 'bg-amber-400/25 border-amber-600 text-amber-950 shadow-sm font-bold'
+                  : (store.readerTheme === 'white'
+                    ? 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200 hover:text-gray-900'
+                    : (store.readerTheme === 'sepia'
+                      ? 'bg-[#f0e7d3] border-[#dfd5c0] text-[#5c4d3c] hover:bg-[#ebe0c8]'
+                      : 'bg-white/5 border-white/10 hover:bg-white/10 text-textSecondary hover:text-textPrimary'))"
                 title="Fundo amarelado suave estilo livro físico"
               >
                 <div class="w-5 h-5 rounded-full border border-amber-600/30 bg-[#f5eedc] shadow-inner mb-1 flex items-center justify-center">
@@ -146,8 +150,10 @@
                 @click="store.setReaderTheme('white')"
                 class="flex flex-col items-center justify-center p-2 rounded-xl border transition-all text-center group"
                 :class="store.readerTheme === 'white'
-                  ? 'bg-gray-100 border-gray-400 text-gray-900 shadow-sm font-bold'
-                  : 'bg-white/5 border-divider hover:bg-white/10 text-textSecondary hover:text-textPrimary'"
+                  ? 'bg-accent/15 border-accent text-accent shadow-sm font-bold'
+                  : (store.readerTheme === 'sepia'
+                    ? 'bg-[#f0e7d3] border-[#dfd5c0] text-[#5c4d3c] hover:bg-[#ebe0c8] hover:text-[#2a2521]'
+                    : 'bg-white/5 border-white/10 hover:bg-white/10 text-textSecondary hover:text-textPrimary')"
                 title="Fundo branco claro"
               >
                 <div class="w-5 h-5 rounded-full border border-slate-300 bg-[#ffffff] shadow-inner mb-1 flex items-center justify-center">
@@ -162,8 +168,12 @@
                 @click="store.setReaderTheme('black')"
                 class="flex flex-col items-center justify-center p-2 rounded-xl border transition-all text-center group"
                 :class="store.readerTheme === 'black'
-                  ? 'bg-white/15 border-accent/80 text-textPrimary shadow-sm'
-                  : 'bg-white/5 border-divider hover:bg-white/10 text-textSecondary hover:text-textPrimary'"
+                  ? 'bg-white/20 border-accent text-white shadow-sm font-bold'
+                  : (store.readerTheme === 'sepia'
+                    ? 'bg-[#f0e7d3] border-[#dfd5c0] text-[#5c4d3c] hover:bg-[#ebe0c8] hover:text-[#2a2521]'
+                    : (store.readerTheme === 'white'
+                      ? 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200 hover:text-gray-900'
+                      : 'bg-white/5 border-white/10 hover:bg-white/10 text-textSecondary hover:text-textPrimary'))"
                 title="Fundo preto noturno"
               >
                 <div class="w-5 h-5 rounded-full border border-white/30 bg-[#121214] shadow-inner mb-1 flex items-center justify-center">
@@ -178,7 +188,7 @@
           <!-- Seção de Diagramação e Largura de Leitura -->
           <div
             class="flex flex-col gap-2 pt-2 border-t"
-            :class="store.readerTheme === 'sepia' ? 'border-[#dfd5c0]' : (store.readerTheme === 'white' ? 'border-gray-200' : 'border-divider')"
+            :class="store.readerTheme === 'sepia' ? 'border-[#dfd5c0]' : (store.readerTheme === 'white' ? 'border-gray-200' : 'border-white/10')"
           >
             <span
               class="text-[11px] font-technical uppercase tracking-wider font-semibold"
@@ -193,7 +203,11 @@
                 class="flex items-center justify-center gap-1.5 p-2 rounded-xl border text-xs font-semibold transition-all"
                 :class="!store.isTwoPageMode
                   ? 'bg-accent/20 border-accent text-accent font-bold shadow-sm'
-                  : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary hover:bg-white/10'"
+                  : (store.readerTheme === 'sepia'
+                    ? 'bg-[#f0e7d3] border-[#dfd5c0] text-[#5c4d3c] hover:bg-[#ebe0c8] hover:text-[#2a2521]'
+                    : (store.readerTheme === 'white'
+                      ? 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200 hover:text-gray-900'
+                      : 'bg-white/5 border-white/10 text-textSecondary hover:text-textPrimary hover:bg-white/10'))"
                 title="Exibir 1 folha (página única)"
               >
                 <FileTextIcon class="w-3.5 h-3.5" />
@@ -205,7 +219,11 @@
                 class="flex items-center justify-center gap-1.5 p-2 rounded-xl border text-xs font-semibold transition-all"
                 :class="store.isTwoPageMode
                   ? 'bg-accent/20 border-accent text-accent font-bold shadow-sm'
-                  : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary hover:bg-white/10'"
+                  : (store.readerTheme === 'sepia'
+                    ? 'bg-[#f0e7d3] border-[#dfd5c0] text-[#5c4d3c] hover:bg-[#ebe0c8] hover:text-[#2a2521]'
+                    : (store.readerTheme === 'white'
+                      ? 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200 hover:text-gray-900'
+                      : 'bg-white/5 border-white/10 text-textSecondary hover:text-textPrimary hover:bg-white/10'))"
                 title="Exibir 2 folhas lado a lado"
               >
                 <BookOpenIcon class="w-3.5 h-3.5" />
@@ -220,7 +238,11 @@
                 class="flex items-center justify-center gap-1.5 p-2 rounded-xl border text-xs font-semibold transition-all"
                 :class="store.readerWidthMode === 'centered'
                   ? 'bg-accent/20 border-accent text-accent font-bold shadow-sm'
-                  : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary hover:bg-white/10'"
+                  : (store.readerTheme === 'sepia'
+                    ? 'bg-[#f0e7d3] border-[#dfd5c0] text-[#5c4d3c] hover:bg-[#ebe0c8] hover:text-[#2a2521]'
+                    : (store.readerTheme === 'white'
+                      ? 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200 hover:text-gray-900'
+                      : 'bg-white/5 border-white/10 text-textSecondary hover:text-textPrimary hover:bg-white/10'))"
                 title="Página centralizada no meio com margens clássicas"
               >
                 <Minimize2Icon class="w-3.5 h-3.5" />
@@ -232,7 +254,11 @@
                 class="flex items-center justify-center gap-1.5 p-2 rounded-xl border text-xs font-semibold transition-all"
                 :class="store.readerWidthMode === 'wide'
                   ? 'bg-accent/20 border-accent text-accent font-bold shadow-sm'
-                  : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary hover:bg-white/10'"
+                  : (store.readerTheme === 'sepia'
+                    ? 'bg-[#f0e7d3] border-[#dfd5c0] text-[#5c4d3c] hover:bg-[#ebe0c8] hover:text-[#2a2521]'
+                    : (store.readerTheme === 'white'
+                      ? 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200 hover:text-gray-900'
+                      : 'bg-white/5 border-white/10 text-textSecondary hover:text-textPrimary hover:bg-white/10'))"
                 title="Páginas ocupam quase 100% do espaço de leitura"
               >
                 <Maximize2Icon class="w-3.5 h-3.5" />
@@ -245,7 +271,7 @@
           <div
             v-if="store.documentType === 'epub'"
             class="flex flex-col gap-2 pt-2 border-t"
-            :class="store.readerTheme === 'sepia' ? 'border-[#dfd5c0]' : (store.readerTheme === 'white' ? 'border-gray-200' : 'border-divider')"
+            :class="store.readerTheme === 'sepia' ? 'border-[#dfd5c0]' : (store.readerTheme === 'white' ? 'border-gray-200' : 'border-white/10')"
           >
             <div class="flex items-center justify-between">
               <span
@@ -256,7 +282,7 @@
               </span>
               <button
                 @click="store.resetFontSize()"
-                class="text-[10px] text-accent hover:underline font-technical"
+                class="text-[10px] text-accent hover:underline font-technical font-bold"
                 title="Redefinir para 18px"
               >
                 Padrão
@@ -267,20 +293,20 @@
             <div
               class="flex items-center justify-between gap-2 rounded-xl p-1.5 border"
               :class="store.readerTheme === 'sepia'
-                ? 'bg-[#F5EEDC] border-[#dfd5c0]'
+                ? 'bg-[#f0e7d3] border-[#dfd5c0]'
                 : (store.readerTheme === 'white'
                   ? 'bg-gray-50 border-gray-200'
-                  : 'bg-white/5 border-divider')"
+                  : 'bg-white/5 border-white/10')"
             >
               <button
                 @click="store.decreaseFontSize(2)"
                 :disabled="store.fontSize <= 12"
                 class="flex items-center justify-center w-8 h-8 rounded-lg disabled:opacity-30 disabled:hover:bg-transparent text-sm font-semibold transition-all active:scale-95"
                 :class="store.readerTheme === 'sepia'
-                  ? 'bg-[#EBE2CE] text-[#2a2521] hover:bg-[#dfd5c0]'
+                  ? 'bg-[#ebe0c8] text-[#2a2521] hover:bg-[#dfd5c0]'
                   : (store.readerTheme === 'white'
                     ? 'bg-gray-200 text-gray-900 hover:bg-gray-300'
-                    : 'bg-white/5 hover:bg-white/15 text-textPrimary')"
+                    : 'bg-white/10 hover:bg-white/20 text-textPrimary')"
                 title="Diminuir tamanho da fonte"
                 aria-label="Diminuir tamanho da fonte"
               >
@@ -297,10 +323,10 @@
                 :disabled="store.fontSize >= 36"
                 class="flex items-center justify-center w-8 h-8 rounded-lg disabled:opacity-30 disabled:hover:bg-transparent text-base font-semibold transition-all active:scale-95"
                 :class="store.readerTheme === 'sepia'
-                  ? 'bg-[#EBE2CE] text-[#2a2521] hover:bg-[#dfd5c0]'
+                  ? 'bg-[#ebe0c8] text-[#2a2521] hover:bg-[#dfd5c0]'
                   : (store.readerTheme === 'white'
                     ? 'bg-gray-200 text-gray-900 hover:bg-gray-300'
-                    : 'bg-white/5 hover:bg-white/15 text-textPrimary')"
+                    : 'bg-white/10 hover:bg-white/20 text-textPrimary')"
                 title="Aumentar tamanho da fonte"
                 aria-label="Aumentar tamanho da fonte"
               >
@@ -311,12 +337,12 @@
             <!-- Botão Mais Tipografia -->
             <button
               @click="$emit('openTypography'); isAppearancePopoverOpen = false"
-              class="w-full py-1.5 px-2 rounded-xl border text-xs flex items-center justify-center gap-1.5 transition-all mt-1"
+              class="w-full py-1.5 px-2 rounded-xl border text-xs flex items-center justify-center gap-1.5 transition-all mt-1 font-medium"
               :class="store.readerTheme === 'sepia'
-                ? 'bg-[#EBE2CE] border-[#dfd5c0] text-[#5c4d3c] hover:text-[#2a2521]'
+                ? 'bg-[#f0e7d3] border-[#dfd5c0] text-[#5c4d3c] hover:text-[#2a2521] hover:bg-[#ebe0c8]'
                 : (store.readerTheme === 'white'
-                  ? 'bg-gray-100 border-gray-200 text-gray-700 hover:text-black'
-                  : 'bg-white/5 hover:bg-white/10 border-divider text-textSecondary hover:text-textPrimary')"
+                  ? 'bg-gray-100 border-gray-200 text-gray-700 hover:text-black hover:bg-gray-200'
+                  : 'bg-white/5 hover:bg-white/10 border-white/10 text-textSecondary hover:text-textPrimary')"
             >
               <TypeIcon class="w-3.5 h-3.5 text-accent" />
               <span>Mais Fontes & Tipografia</span>
@@ -325,10 +351,10 @@
         </div>
       </div>
 
-      <!-- Botão Rápido de Ajuste de Tamanho da Fonte (A- / A+) (EPUB) -->
+      <!-- Botão Rápido de Ajuste de Tamanho da Fonte (A- / A+) (Apenas Desktop/Tablet) -->
       <div
         v-if="store.documentType === 'epub'"
-        class="flex flex-row md:flex-col items-center justify-center rounded-xl border p-0.5"
+        class="hidden md:flex md:flex-col items-center justify-center rounded-xl border p-0.5"
         :class="store.readerTheme === 'sepia'
           ? 'bg-[#FAF5E8] border-[#dfd5c0]'
           : (store.readerTheme === 'white'

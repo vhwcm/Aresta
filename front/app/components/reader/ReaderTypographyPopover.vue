@@ -9,7 +9,7 @@
       aria-labelledby="typography-modal-title"
     >
       <div
-        class="bg-bgPanel/95 backdrop-blur-md border border-divider rounded-2xl w-full max-w-md p-5 shadow-2xl space-y-5 text-textPrimary animate-scaleIn max-h-[90vh] overflow-y-auto"
+        class="bg-[#18181b] border border-white/10 rounded-2xl w-full max-w-md p-5 shadow-2xl space-y-5 text-[#f2f2f2] animate-scaleIn max-h-[90vh] overflow-y-auto"
       >
         <!-- Cabeçalho -->
         <div class="flex items-center justify-between border-b border-divider pb-3">
