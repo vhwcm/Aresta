@@ -119,120 +119,180 @@
         </template>
       </div>
 
-      <!-- ================= FOLHAS 3D EM MOVIMENTO (THE TURNING LEAVES) ================= -->
+      <!-- ================= FOLHAS 3D EM MOVIMENTO (THE 3D CURVED PAPER MESH) ================= -->
       <!-- CASO 1: MODO 2 PÁGINAS -->
       <template v-if="store.document && pageLayout.isTwoPage">
-        <!-- 1.1 Folha Direita (Avançar Página - NEXT) -->
+        <!-- 1.1 Folha Curvada Direita (Avançar Página - NEXT) -->
         <div
           v-if="pageLayout.rightPage && pageLayout.rightPage.pageNumber > 0"
-          class="turning-leaf turning-leaf--right"
-          :class="{ 'turning-leaf--turning': isTurningNext }"
+          class="curved-paper-stage"
+          :class="{ 'curved-paper-stage--active': isTurningNext }"
           :style="{
             left: `${pageLayout.rightPage.left}px`,
             top: `${pageLayout.rightPage.top}px`,
             width: `${pageLayout.rightPage.width}px`,
             height: `${pageLayout.rightPage.height}px`,
-            transformOrigin: '0% 50%',
-            transform: nextLeafTransform,
             zIndex: isTurningNext ? 35 : (isTurningPrev ? 10 : 20),
             pointerEvents: isTurningNext ? 'none' : 'auto',
           }"
         >
-          <!-- Face Frontal: Página Direita Atual -->
-          <div class="turning-leaf__face turning-leaf__face--front">
-            <canvas
-              v-if="store.document?.type === 'pdf'"
-              ref="rightCanvasRef"
-              class="page-pdf-canvas"
-            />
-            <div
-              ref="rightTextLayerRef"
-              class="page-text-layer page-text-layer--right"
-            />
-            <div
-              class="page-curl-shading"
-              :style="{
-                opacity: isTurningNext ? curlShadowOpacity : 0,
-                background: dynamicCurlShadingGradient,
-              }"
-            />
-          </div>
+          <!-- Segmento 0 (25% próximo à lombada) -->
+          <div class="mesh-segment mesh-segment--0" :style="nextSeg0Style">
+            <div class="mesh-segment__face mesh-segment__face--front">
+              <div class="slice-inner" :style="{ transform: 'translateX(0%)', width: `${pageLayout.rightPage.width}px` }">
+                <canvas v-if="store.document?.type === 'pdf'" ref="rightCanvasRef" class="page-pdf-canvas" />
+                <div ref="rightTextLayerRef" class="page-text-layer page-text-layer--right" />
+              </div>
+              <div class="page-curl-shading" :style="{ opacity: isTurningNext ? curlShadowOpacity * 0.5 : 0 }" />
+            </div>
+            <div class="mesh-segment__face mesh-segment__face--back">
+              <div class="slice-inner" :style="{ transform: 'translateX(-75%)', width: `${pageLayout.rightPage.width}px` }">
+                <canvas v-if="store.document?.type === 'pdf'" ref="incomingLeftCanvasRef" class="page-pdf-canvas" />
+                <div ref="incomingLeftTextLayerRef" class="page-text-layer page-text-layer--left" />
+              </div>
+              <div class="page-curl-shading" :style="{ opacity: isTurningNext ? curlShadowOpacity * 0.5 : 0 }" />
+            </div>
 
-          <!-- Face Traseira / Verso: Página Esquerda Entrante -->
-          <div class="turning-leaf__face turning-leaf__face--back">
-            <canvas
-              v-if="store.document?.type === 'pdf'"
-              ref="incomingLeftCanvasRef"
-              class="page-pdf-canvas"
-            />
-            <div
-              ref="incomingLeftTextLayerRef"
-              class="page-text-layer page-text-layer--left"
-            />
-            <div
-              class="page-curl-shading"
-              :style="{
-                opacity: isTurningNext ? curlShadowOpacity : 0,
-                background: dynamicCurlShadingGradient,
-              }"
-            />
+            <!-- Segmento 1 (Filho do Seg 0) -->
+            <div class="mesh-segment mesh-segment--child" :style="nextSeg1Style">
+              <div class="mesh-segment__face mesh-segment__face--front">
+                <div class="slice-inner" :style="{ transform: 'translateX(-25%)', width: `${pageLayout.rightPage.width}px` }">
+                  <canvas v-if="store.document?.type === 'pdf'" ref="seg1FrontCanvasRef" class="page-pdf-canvas" />
+                  <div ref="seg1FrontTextRef" class="page-text-layer page-text-layer--right" />
+                </div>
+                <div class="page-curl-shading" :style="{ opacity: isTurningNext ? curlShadowOpacity * 0.8 : 0 }" />
+              </div>
+              <div class="mesh-segment__face mesh-segment__face--back">
+                <div class="slice-inner" :style="{ transform: 'translateX(-50%)', width: `${pageLayout.rightPage.width}px` }">
+                  <canvas v-if="store.document?.type === 'pdf'" ref="seg1BackCanvasRef" class="page-pdf-canvas" />
+                  <div ref="seg1BackTextRef" class="page-text-layer page-text-layer--left" />
+                </div>
+                <div class="page-curl-shading" :style="{ opacity: isTurningNext ? curlShadowOpacity * 0.8 : 0 }" />
+              </div>
+
+              <!-- Segmento 2 (Filho do Seg 1) -->
+              <div class="mesh-segment mesh-segment--child" :style="nextSeg2Style">
+                <div class="mesh-segment__face mesh-segment__face--front">
+                  <div class="slice-inner" :style="{ transform: 'translateX(-50%)', width: `${pageLayout.rightPage.width}px` }">
+                    <canvas v-if="store.document?.type === 'pdf'" ref="seg2FrontCanvasRef" class="page-pdf-canvas" />
+                    <div ref="seg2FrontTextRef" class="page-text-layer page-text-layer--right" />
+                  </div>
+                  <div class="page-curl-shading" :style="{ opacity: isTurningNext ? curlShadowOpacity : 0 }" />
+                </div>
+                <div class="mesh-segment__face mesh-segment__face--back">
+                  <div class="slice-inner" :style="{ transform: 'translateX(-25%)', width: `${pageLayout.rightPage.width}px` }">
+                    <canvas v-if="store.document?.type === 'pdf'" ref="seg2BackCanvasRef" class="page-pdf-canvas" />
+                    <div ref="seg2BackTextRef" class="page-text-layer page-text-layer--left" />
+                  </div>
+                  <div class="page-curl-shading" :style="{ opacity: isTurningNext ? curlShadowOpacity : 0 }" />
+                </div>
+
+                <!-- Segmento 3 (Filho do Seg 2 - Canto Externo onde o mouse puxa) -->
+                <div class="mesh-segment mesh-segment--child" :style="nextSeg3Style">
+                  <div class="mesh-segment__face mesh-segment__face--front">
+                    <div class="slice-inner" :style="{ transform: 'translateX(-75%)', width: `${pageLayout.rightPage.width}px` }">
+                      <canvas v-if="store.document?.type === 'pdf'" ref="seg3FrontCanvasRef" class="page-pdf-canvas" />
+                      <div ref="seg3FrontTextRef" class="page-text-layer page-text-layer--right" />
+                    </div>
+                    <div class="page-curl-shading" :style="{ opacity: isTurningNext ? curlShadowOpacity * 0.6 : 0 }" />
+                  </div>
+                  <div class="mesh-segment__face mesh-segment__face--back">
+                    <div class="slice-inner" :style="{ transform: 'translateX(0%)', width: `${pageLayout.rightPage.width}px` }">
+                      <canvas v-if="store.document?.type === 'pdf'" ref="seg3BackCanvasRef" class="page-pdf-canvas" />
+                      <div ref="seg3BackTextRef" class="page-text-layer page-text-layer--left" />
+                    </div>
+                    <div class="page-curl-shading" :style="{ opacity: isTurningNext ? curlShadowOpacity * 0.6 : 0 }" />
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <!-- 1.2 Folha Esquerda (Voltar Página - PREVIOUS) -->
+        <!-- 1.2 Folha Curvada Esquerda (Voltar Página - PREVIOUS) -->
         <div
           v-if="pageLayout.leftPage && pageLayout.leftPage.pageNumber > 0"
-          class="turning-leaf turning-leaf--left"
-          :class="{ 'turning-leaf--turning': isTurningPrev }"
+          class="curved-paper-stage curved-paper-stage--prev"
+          :class="{ 'curved-paper-stage--active': isTurningPrev }"
           :style="{
             left: `${pageLayout.leftPage.left}px`,
             top: `${pageLayout.leftPage.top}px`,
             width: `${pageLayout.leftPage.width}px`,
             height: `${pageLayout.leftPage.height}px`,
-            transformOrigin: '100% 50%',
-            transform: prevLeafTransform,
             zIndex: isTurningPrev ? 35 : (isTurningNext ? 10 : 20),
             pointerEvents: isTurningPrev ? 'none' : 'auto',
           }"
         >
-          <!-- Face Frontal: Página Esquerda Atual -->
-          <div class="turning-leaf__face turning-leaf__face--front">
-            <canvas
-              v-if="store.document?.type === 'pdf'"
-              ref="leftCanvasRef"
-              class="page-pdf-canvas"
-            />
-            <div
-              ref="leftTextLayerRef"
-              class="page-text-layer page-text-layer--left"
-            />
-            <div
-              class="page-curl-shading"
-              :style="{
-                opacity: isTurningPrev ? curlShadowOpacity : 0,
-                background: dynamicCurlShadingGradient,
-              }"
-            />
-          </div>
+          <!-- Segmento 0 (25% próximo à lombada) -->
+          <div class="mesh-segment mesh-segment--0 mesh-segment--prev-origin" :style="prevSeg0Style">
+            <div class="mesh-segment__face mesh-segment__face--front">
+              <div class="slice-inner" :style="{ transform: 'translateX(-75%)', width: `${pageLayout.leftPage.width}px` }">
+                <canvas v-if="store.document?.type === 'pdf'" ref="leftCanvasRef" class="page-pdf-canvas" />
+                <div ref="leftTextLayerRef" class="page-text-layer page-text-layer--left" />
+              </div>
+              <div class="page-curl-shading" :style="{ opacity: isTurningPrev ? curlShadowOpacity * 0.5 : 0 }" />
+            </div>
+            <div class="mesh-segment__face mesh-segment__face--back">
+              <div class="slice-inner" :style="{ transform: 'translateX(0%)', width: `${pageLayout.leftPage.width}px` }">
+                <canvas v-if="store.document?.type === 'pdf'" ref="incomingRightCanvasRef" class="page-pdf-canvas" />
+                <div ref="incomingRightTextLayerRef" class="page-text-layer page-text-layer--right" />
+              </div>
+              <div class="page-curl-shading" :style="{ opacity: isTurningPrev ? curlShadowOpacity * 0.5 : 0 }" />
+            </div>
 
-          <!-- Face Traseira / Verso: Página Direita Entrante -->
-          <div class="turning-leaf__face turning-leaf__face--back">
-            <canvas
-              v-if="store.document?.type === 'pdf'"
-              ref="incomingRightCanvasRef"
-              class="page-pdf-canvas"
-            />
-            <div
-              ref="incomingRightTextLayerRef"
-              class="page-text-layer page-text-layer--right"
-            />
-            <div
-              class="page-curl-shading"
-              :style="{
-                opacity: isTurningPrev ? curlShadowOpacity : 0,
-                background: dynamicCurlShadingGradient,
-              }"
-            />
+            <!-- Segmento 1 Esquerda -->
+            <div class="mesh-segment mesh-segment--child-prev" :style="prevSeg1Style">
+              <div class="mesh-segment__face mesh-segment__face--front">
+                <div class="slice-inner" :style="{ transform: 'translateX(-50%)', width: `${pageLayout.leftPage.width}px` }">
+                  <canvas v-if="store.document?.type === 'pdf'" ref="prevSeg1FrontCanvasRef" class="page-pdf-canvas" />
+                  <div ref="prevSeg1FrontTextRef" class="page-text-layer page-text-layer--left" />
+                </div>
+                <div class="page-curl-shading" :style="{ opacity: isTurningPrev ? curlShadowOpacity * 0.8 : 0 }" />
+              </div>
+              <div class="mesh-segment__face mesh-segment__face--back">
+                <div class="slice-inner" :style="{ transform: 'translateX(-25%)', width: `${pageLayout.leftPage.width}px` }">
+                  <canvas v-if="store.document?.type === 'pdf'" ref="prevSeg1BackCanvasRef" class="page-pdf-canvas" />
+                  <div ref="prevSeg1BackTextRef" class="page-text-layer page-text-layer--right" />
+                </div>
+                <div class="page-curl-shading" :style="{ opacity: isTurningPrev ? curlShadowOpacity * 0.8 : 0 }" />
+              </div>
+
+              <!-- Segmento 2 Esquerda -->
+              <div class="mesh-segment mesh-segment--child-prev" :style="prevSeg2Style">
+                <div class="mesh-segment__face mesh-segment__face--front">
+                  <div class="slice-inner" :style="{ transform: 'translateX(-25%)', width: `${pageLayout.leftPage.width}px` }">
+                    <canvas v-if="store.document?.type === 'pdf'" ref="prevSeg2FrontCanvasRef" class="page-pdf-canvas" />
+                    <div ref="prevSeg2FrontTextRef" class="page-text-layer page-text-layer--left" />
+                  </div>
+                  <div class="page-curl-shading" :style="{ opacity: isTurningPrev ? curlShadowOpacity : 0 }" />
+                </div>
+                <div class="mesh-segment__face mesh-segment__face--back">
+                  <div class="slice-inner" :style="{ transform: 'translateX(-50%)', width: `${pageLayout.leftPage.width}px` }">
+                    <canvas v-if="store.document?.type === 'pdf'" ref="prevSeg2BackCanvasRef" class="page-pdf-canvas" />
+                    <div ref="prevSeg2BackTextRef" class="page-text-layer page-text-layer--right" />
+                  </div>
+                  <div class="page-curl-shading" :style="{ opacity: isTurningPrev ? curlShadowOpacity : 0 }" />
+                </div>
+
+                <!-- Segmento 3 Esquerda (Canto Externo onde o mouse puxa) -->
+                <div class="mesh-segment mesh-segment--child-prev" :style="prevSeg3Style">
+                  <div class="mesh-segment__face mesh-segment__face--front">
+                    <div class="slice-inner" :style="{ transform: 'translateX(0%)', width: `${pageLayout.leftPage.width}px` }">
+                      <canvas v-if="store.document?.type === 'pdf'" ref="prevSeg3FrontCanvasRef" class="page-pdf-canvas" />
+                      <div ref="prevSeg3FrontTextRef" class="page-text-layer page-text-layer--left" />
+                    </div>
+                    <div class="page-curl-shading" :style="{ opacity: isTurningPrev ? curlShadowOpacity * 0.6 : 0 }" />
+                  </div>
+                  <div class="mesh-segment__face mesh-segment__face--back">
+                    <div class="slice-inner" :style="{ transform: 'translateX(-75%)', width: `${pageLayout.leftPage.width}px` }">
+                      <canvas v-if="store.document?.type === 'pdf'" ref="prevSeg3BackCanvasRef" class="page-pdf-canvas" />
+                      <div ref="prevSeg3BackTextRef" class="page-text-layer page-text-layer--right" />
+                    </div>
+                    <div class="page-curl-shading" :style="{ opacity: isTurningPrev ? curlShadowOpacity * 0.6 : 0 }" />
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </template>
@@ -240,50 +300,67 @@
       <!-- CASO 2: MODO 1 PÁGINA (MOBILE / CENTRALIZADO) -->
       <template v-else-if="store.document && pageLayout.singlePage && pageLayout.singlePage.pageNumber > 0">
         <div
-          class="turning-leaf turning-leaf--single"
-          :class="{ 'turning-leaf--turning': isAnimating3D }"
+          class="curved-paper-stage"
+          :class="{ 'curved-paper-stage--active': isAnimating3D }"
           :style="{
             left: `${pageLayout.singlePage.left}px`,
             top: `${pageLayout.singlePage.top}px`,
             width: `${pageLayout.singlePage.width}px`,
             height: `${pageLayout.singlePage.height}px`,
-            transformOrigin: '0% 50%',
-            transform: isTurningNext
-              ? nextLeafTransform
-              : (isTurningPrev ? prevLeafTransform : 'rotateY(0deg)'),
             zIndex: isAnimating3D ? 35 : 20,
             pointerEvents: isAnimating3D ? 'none' : 'auto',
           }"
         >
-          <!-- Face Frontal -->
-          <div class="turning-leaf__face turning-leaf__face--front">
-            <canvas
-              v-if="store.document?.type === 'pdf'"
-              ref="singleCanvasRef"
-              class="page-pdf-canvas"
-            />
-            <div
-              ref="singleTextLayerRef"
-              class="page-text-layer page-text-layer--single"
-            />
-            <div
-              class="page-curl-shading"
-              :style="{
-                opacity: isAnimating3D ? curlShadowOpacity : 0,
-                background: dynamicCurlShadingGradient,
-              }"
-            />
-          </div>
+          <div class="mesh-segment mesh-segment--0" :style="nextSeg0Style">
+            <div class="mesh-segment__face mesh-segment__face--front">
+              <div class="slice-inner" :style="{ transform: 'translateX(0%)', width: `${pageLayout.singlePage.width}px` }">
+                <canvas v-if="store.document?.type === 'pdf'" ref="singleCanvasRef" class="page-pdf-canvas" />
+                <div ref="singleTextLayerRef" class="page-text-layer page-text-layer--single" />
+              </div>
+              <div class="page-curl-shading" :style="{ opacity: isAnimating3D ? curlShadowOpacity * 0.5 : 0 }" />
+            </div>
+            <div class="mesh-segment__face mesh-segment__face--back mesh-segment__face--blank">
+              <div class="page-curl-shading" :style="{ opacity: isAnimating3D ? curlShadowOpacity * 0.5 : 0 }" />
+            </div>
 
-          <!-- Face Traseira / Verso da Folha -->
-          <div class="turning-leaf__face turning-leaf__face--back turning-leaf__face--blank">
-            <div
-              class="page-curl-shading"
-              :style="{
-                opacity: isAnimating3D ? curlShadowOpacity : 0,
-                background: dynamicCurlShadingGradient,
-              }"
-            />
+            <div class="mesh-segment mesh-segment--child" :style="nextSeg1Style">
+              <div class="mesh-segment__face mesh-segment__face--front">
+                <div class="slice-inner" :style="{ transform: 'translateX(-25%)', width: `${pageLayout.singlePage.width}px` }">
+                  <canvas v-if="store.document?.type === 'pdf'" ref="seg1FrontCanvasRef" class="page-pdf-canvas" />
+                  <div ref="seg1FrontTextRef" class="page-text-layer page-text-layer--single" />
+                </div>
+                <div class="page-curl-shading" :style="{ opacity: isAnimating3D ? curlShadowOpacity * 0.8 : 0 }" />
+              </div>
+              <div class="mesh-segment__face mesh-segment__face--back mesh-segment__face--blank">
+                <div class="page-curl-shading" :style="{ opacity: isAnimating3D ? curlShadowOpacity * 0.8 : 0 }" />
+              </div>
+
+              <div class="mesh-segment mesh-segment--child" :style="nextSeg2Style">
+                <div class="mesh-segment__face mesh-segment__face--front">
+                  <div class="slice-inner" :style="{ transform: 'translateX(-50%)', width: `${pageLayout.singlePage.width}px` }">
+                    <canvas v-if="store.document?.type === 'pdf'" ref="seg2FrontCanvasRef" class="page-pdf-canvas" />
+                    <div ref="seg2FrontTextRef" class="page-text-layer page-text-layer--single" />
+                  </div>
+                  <div class="page-curl-shading" :style="{ opacity: isAnimating3D ? curlShadowOpacity : 0 }" />
+                </div>
+                <div class="mesh-segment__face mesh-segment__face--back mesh-segment__face--blank">
+                  <div class="page-curl-shading" :style="{ opacity: isAnimating3D ? curlShadowOpacity : 0 }" />
+                </div>
+
+                <div class="mesh-segment mesh-segment--child" :style="nextSeg3Style">
+                  <div class="mesh-segment__face mesh-segment__face--front">
+                    <div class="slice-inner" :style="{ transform: 'translateX(-75%)', width: `${pageLayout.singlePage.width}px` }">
+                      <canvas v-if="store.document?.type === 'pdf'" ref="seg3FrontCanvasRef" class="page-pdf-canvas" />
+                      <div ref="seg3FrontTextRef" class="page-text-layer page-text-layer--single" />
+                    </div>
+                    <div class="page-curl-shading" :style="{ opacity: isAnimating3D ? curlShadowOpacity * 0.6 : 0 }" />
+                  </div>
+                  <div class="mesh-segment__face mesh-segment__face--back mesh-segment__face--blank">
+                    <div class="page-curl-shading" :style="{ opacity: isAnimating3D ? curlShadowOpacity * 0.6 : 0 }" />
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </template>
@@ -333,6 +410,38 @@ const rightCanvasRef = ref<HTMLCanvasElement | null>(null)
 const rightTextLayerRef = ref<HTMLElement | null>(null)
 const singleCanvasRef = ref<HTMLCanvasElement | null>(null)
 const singleTextLayerRef = ref<HTMLElement | null>(null)
+
+// Refs dos Canvases e TextLayers das Fatias da Malha 3D (Curvatura Física)
+const seg1FrontCanvasRef = ref<HTMLCanvasElement | null>(null)
+const seg1FrontTextRef = ref<HTMLElement | null>(null)
+const seg1BackCanvasRef = ref<HTMLCanvasElement | null>(null)
+const seg1BackTextRef = ref<HTMLElement | null>(null)
+
+const seg2FrontCanvasRef = ref<HTMLCanvasElement | null>(null)
+const seg2FrontTextRef = ref<HTMLElement | null>(null)
+const seg2BackCanvasRef = ref<HTMLCanvasElement | null>(null)
+const seg2BackTextRef = ref<HTMLElement | null>(null)
+
+const seg3FrontCanvasRef = ref<HTMLCanvasElement | null>(null)
+const seg3FrontTextRef = ref<HTMLElement | null>(null)
+const seg3BackCanvasRef = ref<HTMLCanvasElement | null>(null)
+const seg3BackTextRef = ref<HTMLElement | null>(null)
+
+// Refs das Fatias do modo Previous
+const prevSeg1FrontCanvasRef = ref<HTMLCanvasElement | null>(null)
+const prevSeg1FrontTextRef = ref<HTMLElement | null>(null)
+const prevSeg1BackCanvasRef = ref<HTMLCanvasElement | null>(null)
+const prevSeg1BackTextRef = ref<HTMLElement | null>(null)
+
+const prevSeg2FrontCanvasRef = ref<HTMLCanvasElement | null>(null)
+const prevSeg2FrontTextRef = ref<HTMLElement | null>(null)
+const prevSeg2BackCanvasRef = ref<HTMLCanvasElement | null>(null)
+const prevSeg2BackTextRef = ref<HTMLElement | null>(null)
+
+const prevSeg3FrontCanvasRef = ref<HTMLCanvasElement | null>(null)
+const prevSeg3FrontTextRef = ref<HTMLElement | null>(null)
+const prevSeg3BackCanvasRef = ref<HTMLCanvasElement | null>(null)
+const prevSeg3BackTextRef = ref<HTMLElement | null>(null)
 
 // Refs dos Canvases e TextLayers Subjacentes (Base / Página Revelada)
 const baseLeftCanvasRef = ref<HTMLCanvasElement | null>(null)
@@ -390,90 +499,149 @@ const turnProgress = computed(() => {
   return Math.min(1, Math.max(0, Math.abs(dragOffset.value) / w))
 })
 
-// Rotação 3D principal no eixo Y (em torno da lombada do livro)
-const baseRotationNextY = computed(() => {
+// Curvatura física por segmentos de malha encadeada (Mesh Curve)
+const nextSegAngles = computed(() => {
   const p = turnProgress.value
-  return -180 * p
-})
-
-const baseRotationPrevY = computed(() => {
-  const p = turnProgress.value
-  return 180 * (1 - p)
-})
-
-// Inclinação / Rotação Z e X tridimensional conforme a posição vertical do mouse (pegada no canto)
-const leafTiltAngleZ = computed(() => {
-  const p = turnProgress.value
-  const normY = pointerY.value ?? 0.5
-  const arc = Math.sin(p * Math.PI)
-  // normY < 0.5 (topo) => dobra para baixo (+Z), normY > 0.5 (base) => dobra para cima (-Z)
-  const verticalBias = (0.5 - normY) * 2 // -1 a +1
-  return verticalBias * 26 * arc
-})
-
-const leafTiltAngleX = computed(() => {
-  const p = turnProgress.value
-  const normY = pointerY.value ?? 0.5
-  const arc = Math.sin(p * Math.PI)
-  const verticalBias = (normY - 0.5) * 2
-  return verticalBias * 16 * arc
-})
-
-// Curvatura cilíndrica espacial (elevação no eixo Z e deformação diagonal)
-const leafCurlZ = computed(() => {
-  const p = turnProgress.value
-  return Math.sin(p * Math.PI) * 46
-})
-
-const leafSkewY = computed(() => {
-  const p = turnProgress.value
-  const normY = pointerY.value ?? 0.5
-  const arc = Math.sin(p * Math.PI)
-  const verticalBias = (0.5 - normY) * 2
-  return verticalBias * 9 * arc
-})
-
-// Transformação 3D completa com perspectiva e dobra física para folha DIREITA (Next)
-const nextLeafTransform = computed(() => {
-  if (!isTurningNext.value) return 'rotateY(0deg)'
-  const rotY = baseRotationNextY.value
-  const rotZ = leafTiltAngleZ.value
-  const rotX = leafTiltAngleX.value
-  const z = leafCurlZ.value
-  const skew = leafSkewY.value
-  return `perspective(2600px) rotateY(${rotY}deg) rotateZ(${rotZ}deg) rotateX(${rotX}deg) skewY(${skew}deg) translateZ(${z}px)`
-})
-
-// Transformação 3D completa com perspectiva e dobra física para folha ESQUERDA (Previous)
-const prevLeafTransform = computed(() => {
-  if (!isTurningPrev.value) return 'rotateY(0deg)'
-  const rotY = baseRotationPrevY.value
-  const rotZ = -leafTiltAngleZ.value
-  const rotX = leafTiltAngleX.value
-  const z = leafCurlZ.value
-  const skew = -leafSkewY.value
-  return `perspective(2600px) rotateY(${rotY}deg) rotateZ(${rotZ}deg) rotateX(${rotX}deg) skewY(${skew}deg) translateZ(${z}px)`
-})
-
-// Gradiente de iluminação cilíndrica dinâmico alinhado com o ângulo do arraste do mouse
-const dynamicCurlShadingGradient = computed(() => {
-  const normY = pointerY.value ?? 0.5
-  const angle = Math.round(90 + (normY - 0.5) * 45)
-  if (activeTheme.value === 'black') {
-    return `linear-gradient(${angle}deg, rgba(255, 255, 255, 0.16) 0%, rgba(0, 0, 0, 0.4) 38%, rgba(255, 255, 255, 0.08) 100%)`
+  if (!isTurningNext.value || p <= 0) {
+    return { a0: 0, a1: 0, a2: 0, a3: 0 }
   }
-  return `linear-gradient(${angle}deg, rgba(0, 0, 0, 0.38) 0%, rgba(255, 255, 255, 0.18) 22%, rgba(0, 0, 0, 0.06) 52%, rgba(0, 0, 0, 0.28) 100%)`
+
+  // Wave de curvatura que começa no canto externo (onde o mouse puxa) e viaja até a lombada
+  const p3 = Math.min(1, Math.max(0, p * 2.2))
+  const p2 = Math.min(1, Math.max(0, (p - 0.08) * 1.9))
+  const p1 = Math.min(1, Math.max(0, (p - 0.18) * 1.7))
+  const p0 = Math.min(1, Math.max(0, (p - 0.28) * 1.5))
+
+  const easeOut = (t: number) => 1 - Math.pow(1 - t, 2.2)
+
+  const a3 = -45 * easeOut(p3)
+  const a2 = -45 * easeOut(p2)
+  const a1 = -45 * easeOut(p1)
+  const a0 = -45 * easeOut(p0)
+
+  return { a0, a1, a2, a3 }
+})
+
+const nextSeg0Style = computed(() => {
+  const { a0 } = nextSegAngles.value
+  const normY = pointerY.value ?? 0.5
+  const arc = Math.sin(turnProgress.value * Math.PI)
+  const tiltZ = (0.5 - normY) * 6 * arc
+  return {
+    transformOrigin: '0% 50%',
+    transform: `perspective(2400px) rotateY(${a0}deg) rotateZ(${tiltZ}deg)`,
+  }
+})
+
+const nextSeg1Style = computed(() => {
+  const { a1 } = nextSegAngles.value
+  const normY = pointerY.value ?? 0.5
+  const arc = Math.sin(turnProgress.value * Math.PI)
+  const tiltZ = (0.5 - normY) * 9 * arc
+  return {
+    transformOrigin: '0% 50%',
+    transform: `rotateY(${a1}deg) rotateZ(${tiltZ}deg)`,
+  }
+})
+
+const nextSeg2Style = computed(() => {
+  const { a2 } = nextSegAngles.value
+  const normY = pointerY.value ?? 0.5
+  const arc = Math.sin(turnProgress.value * Math.PI)
+  const tiltZ = (0.5 - normY) * 14 * arc
+  return {
+    transformOrigin: '0% 50%',
+    transform: `rotateY(${a2}deg) rotateZ(${tiltZ}deg)`,
+  }
+})
+
+const nextSeg3Style = computed(() => {
+  const { a3 } = nextSegAngles.value
+  const normY = pointerY.value ?? 0.5
+  const arc = Math.sin(turnProgress.value * Math.PI)
+  const tiltZ = (0.5 - normY) * 22 * arc
+  const tiltX = (normY - 0.5) * 14 * arc
+  return {
+    transformOrigin: '0% 50%',
+    transform: `rotateY(${a3}deg) rotateZ(${tiltZ}deg) rotateX(${tiltX}deg)`,
+  }
+})
+
+const prevSegAngles = computed(() => {
+  const p = turnProgress.value
+  if (!isTurningPrev.value || p <= 0) {
+    return { a0: 0, a1: 0, a2: 0, a3: 0 }
+  }
+
+  const p3 = Math.min(1, Math.max(0, p * 2.2))
+  const p2 = Math.min(1, Math.max(0, (p - 0.08) * 1.9))
+  const p1 = Math.min(1, Math.max(0, (p - 0.18) * 1.7))
+  const p0 = Math.min(1, Math.max(0, (p - 0.28) * 1.5))
+
+  const easeOut = (t: number) => 1 - Math.pow(1 - t, 2.2)
+
+  const a3 = 45 * easeOut(p3)
+  const a2 = 45 * easeOut(p2)
+  const a1 = 45 * easeOut(p1)
+  const a0 = 45 * easeOut(p0)
+
+  return { a0, a1, a2, a3 }
+})
+
+const prevSeg0Style = computed(() => {
+  const { a0 } = prevSegAngles.value
+  const normY = pointerY.value ?? 0.5
+  const arc = Math.sin(turnProgress.value * Math.PI)
+  const tiltZ = (normY - 0.5) * 6 * arc
+  return {
+    transformOrigin: '100% 50%',
+    transform: `perspective(2400px) rotateY(${a0}deg) rotateZ(${tiltZ}deg)`,
+  }
+})
+
+const prevSeg1Style = computed(() => {
+  const { a1 } = prevSegAngles.value
+  const normY = pointerY.value ?? 0.5
+  const arc = Math.sin(turnProgress.value * Math.PI)
+  const tiltZ = (normY - 0.5) * 9 * arc
+  return {
+    transformOrigin: '100% 50%',
+    transform: `rotateY(${a1}deg) rotateZ(${tiltZ}deg)`,
+  }
+})
+
+const prevSeg2Style = computed(() => {
+  const { a2 } = prevSegAngles.value
+  const normY = pointerY.value ?? 0.5
+  const arc = Math.sin(turnProgress.value * Math.PI)
+  const tiltZ = (normY - 0.5) * 14 * arc
+  return {
+    transformOrigin: '100% 50%',
+    transform: `rotateY(${a2}deg) rotateZ(${tiltZ}deg)`,
+  }
+})
+
+const prevSeg3Style = computed(() => {
+  const { a3 } = prevSegAngles.value
+  const normY = pointerY.value ?? 0.5
+  const arc = Math.sin(turnProgress.value * Math.PI)
+  const tiltZ = (normY - 0.5) * 22 * arc
+  const tiltX = (normY - 0.5) * 14 * arc
+  return {
+    transformOrigin: '100% 50%',
+    transform: `rotateY(${a3}deg) rotateZ(${tiltZ}deg) rotateX(${tiltX}deg)`,
+  }
 })
 
 // Opacidade das sombras dinâmicas de curvatura do papel 3D
 const curlShadowOpacity = computed(() => {
   const p = turnProgress.value
-  return Math.sin(p * Math.PI) * 0.48
+  return Math.sin(p * Math.PI) * 0.5
 })
 
 const castShadowOpacity = computed(() => {
   const p = turnProgress.value
-  return Math.sin(p * Math.PI) * 0.42
+  return Math.sin(p * Math.PI) * 0.44
 })
 
 let activePointerId: number | null = null
@@ -585,6 +753,36 @@ function onPointerCancel(event: PointerEvent) {
   cancelDrag(pointFrom(event))
 }
 
+function copyCanvasToSlices(
+  sourceCanvas: HTMLCanvasElement | null,
+  targetCanvases: (HTMLCanvasElement | null)[],
+  sourceTextLayer?: HTMLElement | null,
+  targetTextLayers?: (HTMLElement | null)[],
+) {
+  if (sourceCanvas && sourceCanvas.width > 0 && sourceCanvas.height > 0) {
+    for (const target of targetCanvases) {
+      if (!target) continue
+      target.width = sourceCanvas.width
+      target.height = sourceCanvas.height
+      target.style.width = sourceCanvas.style.width
+      target.style.height = sourceCanvas.style.height
+      const ctx = target.getContext('2d', { alpha: false })
+      if (ctx) {
+        ctx.setTransform(1, 0, 0, 1, 0, 0)
+        ctx.drawImage(sourceCanvas, 0, 0)
+      }
+    }
+  }
+
+  if (sourceTextLayer && targetTextLayers) {
+    for (const targetText of targetTextLayers) {
+      if (!targetText) continue
+      targetText.innerHTML = sourceTextLayer.innerHTML
+      targetText.className = sourceTextLayer.className
+    }
+  }
+}
+
 async function renderPageToElement(
   pageNumber: number,
   canvasEl: HTMLCanvasElement | null,
@@ -637,30 +835,48 @@ async function renderCurrentSpread(pageOverride?: number) {
     const rightNum = leftNum + 1 <= store.totalPages ? leftNum + 1 : 0
 
     if (leftNum > 0 && layout.leftPage) {
-      void renderPageToElement(
+      await renderPageToElement(
         leftNum,
         leftCanvasRef.value,
         leftTextLayerRef.value,
         layout.leftPage.width,
         layout.leftPage.height,
       )
+      copyCanvasToSlices(
+        leftCanvasRef.value,
+        [prevSeg1FrontCanvasRef.value, prevSeg2FrontCanvasRef.value, prevSeg3FrontCanvasRef.value],
+        leftTextLayerRef.value,
+        [prevSeg1FrontTextRef.value, prevSeg2FrontTextRef.value, prevSeg3FrontTextRef.value],
+      )
     }
     if (rightNum > 0 && layout.rightPage) {
-      void renderPageToElement(
+      await renderPageToElement(
         rightNum,
         rightCanvasRef.value,
         rightTextLayerRef.value,
         layout.rightPage.width,
         layout.rightPage.height,
       )
+      copyCanvasToSlices(
+        rightCanvasRef.value,
+        [seg1FrontCanvasRef.value, seg2FrontCanvasRef.value, seg3FrontCanvasRef.value],
+        rightTextLayerRef.value,
+        [seg1FrontTextRef.value, seg2FrontTextRef.value, seg3FrontTextRef.value],
+      )
     }
   } else if (layout.singlePage && curPage > 0) {
-    void renderPageToElement(
+    await renderPageToElement(
       curPage,
       singleCanvasRef.value,
       singleTextLayerRef.value,
       layout.singlePage.width,
       layout.singlePage.height,
+    )
+    copyCanvasToSlices(
+      singleCanvasRef.value,
+      [seg1FrontCanvasRef.value, seg2FrontCanvasRef.value, seg3FrontCanvasRef.value],
+      singleTextLayerRef.value,
+      [seg1FrontTextRef.value, seg2FrontTextRef.value, seg3FrontTextRef.value],
     )
   }
 }
@@ -696,8 +912,21 @@ async function prepare3DAnimationLayers(targetPage: number) {
           layout.leftPage.width,
           layout.leftPage.height,
         )
+        copyCanvasToSlices(
+          incomingLeftCanvasRef.value,
+          [seg1BackCanvasRef.value, seg2BackCanvasRef.value, seg3BackCanvasRef.value],
+          incomingLeftTextLayerRef.value,
+          [seg1BackTextRef.value, seg2BackTextRef.value, seg3BackTextRef.value],
+        )
       }
-      // 3. Base esquerda mantém a página esquerda atual
+      // 3. Sincroniza frentes da folha direita
+      copyCanvasToSlices(
+        rightCanvasRef.value,
+        [seg1FrontCanvasRef.value, seg2FrontCanvasRef.value, seg3FrontCanvasRef.value],
+        rightTextLayerRef.value,
+        [seg1FrontTextRef.value, seg2FrontTextRef.value, seg3FrontTextRef.value],
+      )
+      // 4. Base esquerda mantém a página esquerda atual
       const curLeftNum = store.currentPage % 2 === 0 ? Math.max(1, store.currentPage - 1) : store.currentPage
       if (curLeftNum > 0 && layout.leftPage) {
         void renderPageToElement(
@@ -729,8 +958,21 @@ async function prepare3DAnimationLayers(targetPage: number) {
           layout.rightPage.width,
           layout.rightPage.height,
         )
+        copyCanvasToSlices(
+          incomingRightCanvasRef.value,
+          [prevSeg1BackCanvasRef.value, prevSeg2BackCanvasRef.value, prevSeg3BackCanvasRef.value],
+          incomingRightTextLayerRef.value,
+          [prevSeg1BackTextRef.value, prevSeg2BackTextRef.value, prevSeg3BackTextRef.value],
+        )
       }
-      // 3. Base direita mantém a página direita atual
+      // 3. Sincroniza frentes da folha esquerda
+      copyCanvasToSlices(
+        leftCanvasRef.value,
+        [prevSeg1FrontCanvasRef.value, prevSeg2FrontCanvasRef.value, prevSeg3FrontCanvasRef.value],
+        leftTextLayerRef.value,
+        [prevSeg1FrontTextRef.value, prevSeg2FrontTextRef.value, prevSeg3FrontTextRef.value],
+      )
+      // 4. Base direita mantém a página direita atual
       const curLeftNum = store.currentPage % 2 === 0 ? Math.max(1, store.currentPage - 1) : store.currentPage
       const curRightNum = curLeftNum + 1 <= store.totalPages ? curLeftNum + 1 : 0
       if (curRightNum > 0 && layout.rightPage) {
@@ -745,7 +987,6 @@ async function prepare3DAnimationLayers(targetPage: number) {
     }
   } else if (layout.singlePage) {
     if (direction === 'next') {
-      // Underneath: Página Alvo
       await renderPageToElement(
         targetPage,
         baseSingleCanvasRef.value,
@@ -753,14 +994,25 @@ async function prepare3DAnimationLayers(targetPage: number) {
         layout.singlePage.width,
         layout.singlePage.height,
       )
+      copyCanvasToSlices(
+        singleCanvasRef.value,
+        [seg1FrontCanvasRef.value, seg2FrontCanvasRef.value, seg3FrontCanvasRef.value],
+        singleTextLayerRef.value,
+        [seg1FrontTextRef.value, seg2FrontTextRef.value, seg3FrontTextRef.value],
+      )
     } else {
-      // PREVIOUS
       await renderPageToElement(
         targetPage,
         baseSingleCanvasRef.value,
         baseSingleTextLayerRef.value,
         layout.singlePage.width,
         layout.singlePage.height,
+      )
+      copyCanvasToSlices(
+        singleCanvasRef.value,
+        [seg1FrontCanvasRef.value, seg2FrontCanvasRef.value, seg3FrontCanvasRef.value],
+        singleTextLayerRef.value,
+        [seg1FrontTextRef.value, seg2FrontTextRef.value, seg3FrontTextRef.value],
       )
     }
   }
@@ -847,20 +1099,43 @@ defineExpose({
   z-index: 10;
 }
 
-.turning-leaf {
+.curved-paper-stage {
   position: absolute;
   transform-style: preserve-3d;
-  will-change: transform;
+  perspective: 2600px;
+  perspective-origin: 50% 50%;
+  pointer-events: none;
+}
+
+.mesh-segment {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  transform-style: preserve-3d;
   box-sizing: border-box;
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
-  transition: transform 0.05s linear;
 }
 
-.turning-leaf--turning {
-  transition: none !important;
+.mesh-segment--0 {
+  left: 0;
+  width: 25%;
 }
 
-.turning-leaf__face {
+.mesh-segment--prev-origin {
+  left: 75%;
+  width: 25%;
+}
+
+.mesh-segment--child {
+  left: 100%;
+  width: 100%;
+}
+
+.mesh-segment--child-prev {
+  right: 100%;
+  width: 100%;
+}
+
+.mesh-segment__face {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -870,18 +1145,27 @@ defineExpose({
   overflow: hidden;
   transform-style: preserve-3d;
   box-sizing: border-box;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
 }
 
-.turning-leaf__face--front {
+.mesh-segment__face--front {
   transform: rotateY(0deg) translateZ(1px);
 }
 
-.turning-leaf__face--back {
+.mesh-segment__face--back {
   transform: rotateY(180deg) translateZ(1px);
 }
 
-.turning-leaf__face--blank {
+.mesh-segment__face--blank {
   background: inherit;
+}
+
+.slice-inner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  pointer-events: none;
 }
 
 .page-curl-shading {
