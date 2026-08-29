@@ -1,6 +1,12 @@
+import re
 from typing import List
 from pdf2epub.domain.models import Region, Word, TextSpan, ImageAsset, BBox
 from pdf2epub.domain.types import RegionType
+
+TOC_LINE_RE = re.compile(
+    r'(\.{2,}|[\.\s_–-]{3,}|\s{2,})\d+$|\b(?:p[áa]g\.?|p\.)\s*\d+$',
+    re.IGNORECASE
+)
 
 class SpatialAssociation:
     """
@@ -108,9 +114,17 @@ class SpatialAssociation:
                     curr_line.sort(key=lambda item: item.x0)
                     lines.append(curr_line)
 
-                # Reconstrói o texto preservando espaços naturais
+                # Reconstrói o texto preservando quebras de linha para listas e sumários
                 line_texts = [" ".join(w.text for w in line) for line in lines]
-                reg.text = " ".join(line_texts).strip()
+                is_toc_or_list = (
+                    reg.type in (RegionType.LIST, RegionType.LIST_ITEM) or
+                    any(TOC_LINE_RE.search(lt) for lt in line_texts) or
+                    any('...' in lt or '…' in lt or '..' in lt for lt in line_texts)
+                )
+                if is_toc_or_list and len(line_texts) > 1:
+                    reg.text = "\n".join(line_texts).strip()
+                else:
+                    reg.text = " ".join(line_texts).strip()
 
             elif reg.spans and not reg.text:
                 reg.text = " ".join(s.text for s in reg.spans).strip()

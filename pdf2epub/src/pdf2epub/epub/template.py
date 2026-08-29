@@ -48,6 +48,45 @@ p.first-after-heading {
     text-indent: 0;
 }
 
+p.toc-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-top: 0.3em;
+    margin-bottom: 0.3em;
+    text-indent: 0;
+    text-align: left;
+    font-size: 0.95em;
+    line-height: 1.45;
+}
+
+p.toc-item .toc-title {
+    flex-shrink: 1;
+}
+
+p.toc-item .toc-leader {
+    flex-grow: 1;
+    border-bottom: 1px dotted #888;
+    margin: 0 0.5em 0.25em 0.5em;
+    min-width: 1em;
+    height: 0;
+}
+
+p.toc-item .toc-page {
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+    text-align: right;
+    min-width: 1.5em;
+}
+
+p.list-item {
+    margin-top: 0.25em;
+    margin-bottom: 0.25em;
+    text-indent: 0;
+    text-align: left;
+}
+
 blockquote {
     margin: 1.2em 2em;
     padding-left: 1em;

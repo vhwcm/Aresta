@@ -71,22 +71,16 @@ class HeuristicLayoutDetector:
         if not body_spans:
             return regions
 
-        # 2. Agrupamento em blocos com base em distância vertical e font_size
+        # 2. Agrupamento em blocos com base em distância vertical, colunas e font_size
         font_sizes = [s.font_size for s in body_spans]
         avg_font_size = sum(font_sizes) / len(font_sizes) if font_sizes else 12.0
-
-        # Ordena spans verticalmente e horizontalmente
-        sorted_spans = sorted(body_spans, key=lambda s: (s.bbox.y0, s.bbox.x0))
-
-        current_block: List[TextSpan] = []
-        last_span: TextSpan | None = None
 
         def create_regions_from_spans(span_list: List[TextSpan]) -> List[Region]:
             if not span_list:
                 return []
 
             full_text = " ".join(s.text for s in span_list).strip()
-            is_toc = bool(TOC_LINE_RE.search(full_text))
+            is_toc = bool(TOC_LINE_RE.search(full_text)) or bool(re.search(r'\.{3,}', full_text))
             is_chapter_title = bool(CHAPTER_START_RE.match(full_text)) and not is_toc
 
             # Se o bloco começou com capítulo mas possui múltiplos spans ou texto longo (parágrafos misturados):
@@ -134,7 +128,10 @@ class HeuristicLayoutDetector:
             max_size = max(s.font_size for s in span_list)
             is_bold = any(s.is_bold for s in span_list)
 
-            if is_chapter_title and len(full_text) < 120:
+            if is_toc:
+                reg_type = RegionType.LIST_ITEM
+                level = 1
+            elif is_chapter_title and len(full_text) < 120:
                 reg_type = RegionType.TITLE
                 level = 1
             elif not is_toc and max_size >= avg_font_size * 1.4:
@@ -156,53 +153,113 @@ class HeuristicLayoutDetector:
                 level=level
             )]
 
-        for s in sorted_spans:
-            clean_text = s.text.strip()
-            is_toc = bool(TOC_LINE_RE.search(clean_text))
-            is_chap_start = bool(CHAPTER_START_RE.match(clean_text)) and not is_toc
+        column_groups = self._partition_by_columns(body_spans, page_width, page_height)
 
-            if not current_block:
-                current_block.append(s)
-                last_span = s
-                continue
+        for col_spans in column_groups:
+            current_block: List[TextSpan] = []
+            last_span: TextSpan | None = None
 
-            # Se o novo span for o início de um capítulo, fecha o bloco anterior imediatamente
-            if is_chap_start:
-                regions.extend(create_regions_from_spans(current_block))
-                current_block = [s]
-                last_span = s
-                continue
+            for s in col_spans:
+                clean_text = s.text.strip()
+                is_toc = bool(TOC_LINE_RE.search(clean_text)) or bool(re.search(r'\.{3,}', clean_text))
+                is_chap_start = bool(CHAPTER_START_RE.match(clean_text)) and not is_toc
 
-            # Se o bloco atual começou com um título de capítulo, verifica se este novo span ainda pode ser parte do título
-            if CHAPTER_START_RE.match(current_block[0].text.strip()) and not TOC_LINE_RE.search(current_block[0].text.strip()):
-                curr_text = " ".join(x.text for x in current_block).strip()
-                is_subheading = (
-                    len(curr_text) < 50 and
-                    len(s.text.strip()) < 50 and
-                    (s.is_bold or s.text.isupper() or abs(s.font_size - current_block[0].font_size) <= 1.5) and
-                    not s.text.strip().endswith('.')
-                )
-                if not is_subheading:
+                if not current_block:
+                    current_block.append(s)
+                    last_span = s
+                    continue
+
+                # Se o novo span for o início de um capítulo, fecha o bloco anterior imediatamente
+                if is_chap_start:
                     regions.extend(create_regions_from_spans(current_block))
                     current_block = [s]
                     last_span = s
                     continue
 
-            v_gap = s.bbox.y0 - last_span.bbox.y1
-            line_height = max(s.font_size, last_span.font_size)
+                # Se a linha atual ou anterior for entrada de sumário (TOC) em linha vertical diferente, separa o item
+                is_last_toc = bool(TOC_LINE_RE.search(last_span.text.strip())) or bool(re.search(r'\.{3,}', last_span.text.strip()))
+                if (is_toc or is_last_toc) and abs(s.bbox.y0 - last_span.bbox.y0) > 4.0:
+                    regions.extend(create_regions_from_spans(current_block))
+                    current_block = [s]
+                    last_span = s
+                    continue
 
-            font_diff = abs(s.font_size - last_span.font_size) > 2.0
-            if v_gap > (line_height * 1.8) or (font_diff and (s.font_size > avg_font_size * 1.2 or last_span.font_size > avg_font_size * 1.2)):
+                # Se o bloco atual começou com um título de capítulo, verifica se este novo span ainda pode ser parte do título
+                if CHAPTER_START_RE.match(current_block[0].text.strip()) and not TOC_LINE_RE.search(current_block[0].text.strip()):
+                    curr_text = " ".join(x.text for x in current_block).strip()
+                    is_subheading = (
+                        len(curr_text) < 50 and
+                        len(s.text.strip()) < 50 and
+                        (s.is_bold or s.text.isupper() or abs(s.font_size - current_block[0].font_size) <= 1.5) and
+                        not s.text.strip().endswith('.')
+                    )
+                    if not is_subheading:
+                        regions.extend(create_regions_from_spans(current_block))
+                        current_block = [s]
+                        last_span = s
+                        continue
+
+                v_gap = s.bbox.y0 - last_span.bbox.y1
+                line_height = max(s.font_size, last_span.font_size)
+
+                font_diff = abs(s.font_size - last_span.font_size) > 2.0
+                if v_gap > (line_height * 1.8) or (font_diff and (s.font_size > avg_font_size * 1.2 or last_span.font_size > avg_font_size * 1.2)):
+                    regions.extend(create_regions_from_spans(current_block))
+                    current_block = [s]
+                else:
+                    current_block.append(s)
+                last_span = s
+
+            if current_block:
                 regions.extend(create_regions_from_spans(current_block))
-                current_block = [s]
-            else:
-                current_block.append(s)
-            last_span = s
-
-        if current_block:
-            regions.extend(create_regions_from_spans(current_block))
 
         return regions
+
+    def _partition_by_columns(
+        self,
+        spans: List[TextSpan],
+        page_width: float,
+        page_height: float
+    ) -> List[List[TextSpan]]:
+        """
+        Divide os spans do corpo em grupos por coluna para evitar fusão incorreta de blocos
+        em layouts de 2 colunas ou sumários dispostos lado a lado.
+        """
+        if len(spans) < 4:
+            return [sorted(spans, key=lambda s: (s.bbox.y0, s.bbox.x0))]
+
+        mid_x = page_width / 2.0
+        left_spans: List[TextSpan] = []
+        right_spans: List[TextSpan] = []
+        spanning_top: List[TextSpan] = []
+        spanning_bottom: List[TextSpan] = []
+
+        for s in spans:
+            # Spans com largura total ou que cruzam o centro da página
+            if s.bbox.x0 < (mid_x - 30) and s.bbox.x1 > (mid_x + 30):
+                if s.bbox.y0 < page_height * 0.35:
+                    spanning_top.append(s)
+                else:
+                    spanning_bottom.append(s)
+            elif s.bbox.center[0] < mid_x:
+                left_spans.append(s)
+            else:
+                right_spans.append(s)
+
+        # Se houver conteúdo relevante em ambas as colunas (>= 2 spans em cada)
+        if len(left_spans) >= 2 and len(right_spans) >= 2:
+            groups: List[List[TextSpan]] = []
+            if spanning_top:
+                groups.append(sorted(spanning_top, key=lambda s: (s.bbox.y0, s.bbox.x0)))
+            if left_spans:
+                groups.append(sorted(left_spans, key=lambda s: (s.bbox.y0, s.bbox.x0)))
+            if right_spans:
+                groups.append(sorted(right_spans, key=lambda s: (s.bbox.y0, s.bbox.x0)))
+            if spanning_bottom:
+                groups.append(sorted(spanning_bottom, key=lambda s: (s.bbox.y0, s.bbox.x0)))
+            return groups
+
+        return [sorted(spans, key=lambda s: (s.bbox.y0, s.bbox.x0))]
 
     def detect(self, page_image: Image.Image, page_width: float, page_height: float) -> List[Region]:
         return []

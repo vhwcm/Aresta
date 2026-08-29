@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 from typing import List, Dict, Optional
 import ebooklib
@@ -6,6 +7,36 @@ from ebooklib import epub
 from pdf2epub.domain.models import Document, Chapter, Region, ImageAsset
 from pdf2epub.domain.types import RegionType
 from pdf2epub.epub.template import DEFAULT_CSS, escape_text
+
+TOC_ENTRY_RE = re.compile(
+    r'^(.*?)(?:[\.\s_–-]{3,}|\s{2,}|\s*(?:\.{2,}|p[áa]g\.?|p\.)\s*)(\d+)$',
+    re.IGNORECASE
+)
+
+def split_multiple_toc_entries(text: str) -> List[str]:
+    """
+    Divide entradas de sumário concatenadas na mesma linha se houver múltiplos itens.
+    Ex: 'EXERCÍCIOS....... 70   9 TRIGONOMETRIA....... 76'
+    """
+    matches = re.findall(r'.*?(?:[\.\s_–-]{2,}|\s{2,})\s*\d+(?:\s+|$)', text)
+    if len(matches) > 1:
+        reconstructed = "".join(matches).strip()
+        if reconstructed == text.strip():
+            return [m.strip() for m in matches if m.strip()]
+    return [text]
+
+def format_toc_item_html(text: str) -> Optional[str]:
+    """
+    Formata uma entrada de sumário em HTML estruturado com título, linha de pontos e número de página.
+    """
+    clean = text.strip()
+    m = TOC_ENTRY_RE.match(clean)
+    if m:
+        title = escape_text(m.group(1).strip())
+        page_num = escape_text(m.group(2).strip())
+        if title:
+            return f'<p class="toc-item"><span class="toc-title">{title}</span><span class="toc-leader"></span><span class="toc-page">{page_num}</span></p>'
+    return None
 
 class EpubGenerator:
     """
@@ -136,45 +167,69 @@ class EpubGenerator:
         is_first_p_after_heading = False
 
         for r in chapter.regions:
-            clean_text = escape_text(r.text)
+            raw_text = r.text.strip() if r.text else ""
+            clean_text = escape_text(raw_text)
             if not clean_text and r.type != RegionType.IMAGE:
                 continue
 
             if r.type == RegionType.TITLE:
-                lines = [line.strip() for line in clean_text.split('\n') if line.strip()]
+                lines = [line.strip() for line in raw_text.split('\n') if line.strip()]
                 if len(lines) > 1 or len(clean_text) > 120:
-                    title_part = lines[0] if lines else clean_text[:80]
-                    body_parts = lines[1:] if len(lines) > 1 else [clean_text[len(title_part):].strip()]
+                    title_part = escape_text(lines[0] if lines else raw_text[:80])
+                    body_parts = lines[1:] if len(lines) > 1 else [raw_text[len(title_part):].strip()]
                     html_parts.append(f'<h1>{title_part}</h1>')
                     is_first_p_after_heading = True
                     for bp in body_parts:
                         if bp:
                             cls_attr = ' class="first-after-heading"' if is_first_p_after_heading else ''
-                            html_parts.append(f'<p{cls_attr}>{bp}</p>')
+                            html_parts.append(f'<p{cls_attr}>{escape_text(bp)}</p>')
                             is_first_p_after_heading = False
                 else:
                     html_parts.append(f'<h1>{clean_text}</h1>')
                     is_first_p_after_heading = True
             elif r.type == RegionType.HEADING:
                 level = min(max(r.level, 2), 6)
-                lines = [line.strip() for line in clean_text.split('\n') if line.strip()]
+                lines = [line.strip() for line in raw_text.split('\n') if line.strip()]
                 if len(lines) > 1 or len(clean_text) > 120:
-                    heading_part = lines[0] if lines else clean_text[:80]
-                    body_parts = lines[1:] if len(lines) > 1 else [clean_text[len(heading_part):].strip()]
+                    heading_part = escape_text(lines[0] if lines else raw_text[:80])
+                    body_parts = lines[1:] if len(lines) > 1 else [raw_text[len(heading_part):].strip()]
                     html_parts.append(f'<h{level}>{heading_part}</h{level}>')
                     is_first_p_after_heading = True
                     for bp in body_parts:
                         if bp:
                             cls_attr = ' class="first-after-heading"' if is_first_p_after_heading else ''
-                            html_parts.append(f'<p{cls_attr}>{bp}</p>')
+                            html_parts.append(f'<p{cls_attr}>{escape_text(bp)}</p>')
                             is_first_p_after_heading = False
                 else:
                     html_parts.append(f'<h{level}>{clean_text}</h{level}>')
                     is_first_p_after_heading = True
-            elif r.type == RegionType.PARAGRAPH:
-                cls_attr = ' class="first-after-heading"' if is_first_p_after_heading else ''
-                html_parts.append(f'<p{cls_attr}>{clean_text}</p>')
-                is_first_p_after_heading = False
+            elif r.type in (RegionType.PARAGRAPH, RegionType.LIST_ITEM, RegionType.LIST):
+                # Detecta se o bloco contém linhas de sumário ou múltiplos itens
+                raw_lines = [l.strip() for l in raw_text.split('\n') if l.strip()]
+                all_sub_entries: List[str] = []
+                for rl in raw_lines:
+                    all_sub_entries.extend(split_multiple_toc_entries(rl))
+
+                has_toc_entries = any(format_toc_item_html(entry) is not None for entry in all_sub_entries)
+
+                if has_toc_entries:
+                    for entry in all_sub_entries:
+                        toc_html = format_toc_item_html(entry)
+                        if toc_html:
+                            html_parts.append(toc_html)
+                        else:
+                            cls_attr = ' class="first-after-heading"' if is_first_p_after_heading else ''
+                            html_parts.append(f'<p{cls_attr}>{escape_text(entry)}</p>')
+                            is_first_p_after_heading = False
+                    is_first_p_after_heading = False
+                elif r.type == RegionType.LIST_ITEM or len(all_sub_entries) > 1:
+                    for entry in all_sub_entries:
+                        html_parts.append(f'<p class="list-item">{escape_text(entry)}</p>')
+                    is_first_p_after_heading = False
+                else:
+                    cls_attr = ' class="first-after-heading"' if is_first_p_after_heading else ''
+                    html_parts.append(f'<p{cls_attr}>{clean_text}</p>')
+                    is_first_p_after_heading = False
             elif r.type == RegionType.QUOTE:
                 html_parts.append(f'<blockquote><p>{clean_text}</p></blockquote>')
                 is_first_p_after_heading = False

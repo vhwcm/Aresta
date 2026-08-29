@@ -29,7 +29,7 @@ class ReadingOrderResolver:
             elif r.bbox.x0 >= mid_x - 20:
                 right_count += 1
 
-        if left_count >= 2 and right_count >= 2 and spanning_count <= 2:
+        if left_count >= 2 and right_count >= 2 and (left_count + right_count) >= spanning_count:
             return ColumnLayout.DOUBLE
 
         return ColumnLayout.SINGLE
