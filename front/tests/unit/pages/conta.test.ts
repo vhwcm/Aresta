@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import ContaPage from '~/pages/conta.vue'
+import { useSettings } from '~/composables/useSettings'
 
 describe('Conta Page (/conta)', () => {
   const defaultStubs = {
@@ -31,6 +32,10 @@ describe('Conta Page (/conta)', () => {
     if (typeof localStorage !== 'undefined') {
       localStorage.clear()
     }
+    const { setDesktopHomeGraphOpen, setDesktopReaderGraphOpen, setPageAnimationEnabled } = useSettings()
+    setDesktopHomeGraphOpen(true)
+    setDesktopReaderGraphOpen(false)
+    setPageAnimationEnabled(true)
   })
 
   it('renders user profile, reading metrics, preferences section, and danger zone', () => {

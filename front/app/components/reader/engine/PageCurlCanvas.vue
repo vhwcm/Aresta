@@ -167,6 +167,12 @@ const themeBgColor = computed(() => {
   return '#f5eedc'
 })
 
+const themeTextColor = computed(() => {
+  if (activeTheme.value === 'black') return '#e4e4e7'
+  if (activeTheme.value === 'sepia') return '#2a2521'
+  return '#1a1a1a'
+})
+
 // Canvases e TextLayers da Camada Nativa Base (Estacionária)
 const baseLeftCanvasRef = ref<HTMLCanvasElement | null>(null)
 const baseLeftTextLayerRef = ref<HTMLElement | null>(null)
@@ -301,6 +307,59 @@ function getOrCreateOffscreenCanvas(name: 'front' | 'back'): HTMLCanvasElement {
   }
 }
 
+async function rasterizeHtmlToCanvas(
+  htmlContent: string,
+  targetCanvas: HTMLCanvasElement,
+  width: number,
+  height: number,
+) {
+  const dpr = typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 2) : 1
+  const renderW = Math.round(width * dpr)
+  const renderH = Math.round(height * dpr)
+  targetCanvas.width = renderW
+  targetCanvas.height = renderH
+  targetCanvas.style.width = `${width}px`
+  targetCanvas.style.height = `${height}px`
+
+  const ctx = targetCanvas.getContext('2d', { alpha: false })
+  if (!ctx) return
+
+  ctx.fillStyle = themeBgColor.value
+  ctx.fillRect(0, 0, renderW, renderH)
+
+  if (!htmlContent || htmlContent.trim().length === 0) return
+
+  const bg = themeBgColor.value
+  const tc = themeTextColor.value
+  const ff = store.fontFamily || "'Newsreader', Georgia, serif"
+  const fs = store.fontSize || 18
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${renderW}" height="${renderH}">
+    <foreignObject width="100%" height="100%">
+      <div xmlns="http://www.w3.org/1999/xhtml" style="background-color:${bg};color:${tc};font-family:${ff};font-size:${fs}px;line-height:1.7;padding:24px;width:${width}px;height:${height}px;box-sizing:border-box;transform:scale(${dpr});transform-origin:0 0;overflow:hidden;">
+        ${htmlContent}
+      </div>
+    </foreignObject>
+  </svg>`
+
+  const img = new Image()
+  const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+
+  await new Promise<void>((resolve) => {
+    img.onload = () => {
+      ctx.drawImage(img, 0, 0, renderW, renderH)
+      URL.revokeObjectURL(url)
+      resolve()
+    }
+    img.onerror = () => {
+      URL.revokeObjectURL(url)
+      resolve()
+    }
+    img.src = url
+  })
+}
+
 async function renderPageToCanvas(pageNumber: number, targetCanvas: HTMLCanvasElement, width: number, height: number) {
   if (pageNumber <= 0 || !store.document || width <= 0 || height <= 0) return
   const doc = store.document
@@ -320,11 +379,31 @@ async function renderPageToCanvas(pageNumber: number, targetCanvas: HTMLCanvasEl
   ctx.fillRect(0, 0, renderW, renderH)
 
   if (doc.type === 'pdf') {
-    const pageData = await doc.getPage(pageNumber, renderW, renderH)
-    await pageData.render(ctx)
+    if (typeof (doc as any).getPage === 'function') {
+      const pageData = await (doc as any).getPage(pageNumber, renderW, renderH)
+      await pageData.render(ctx)
+    }
   } else if (doc.type === 'epub') {
-    const pageData = await doc.getPage(pageNumber, renderW, renderH)
-    await pageData.render(ctx)
+    if (typeof doc.renderTextLayer === 'function') {
+      const tempDiv = document.createElement('div')
+      tempDiv.className = `epub-text-layer-content theme-${activeTheme.value}`
+      tempDiv.style.width = `${width}px`
+      tempDiv.style.height = `${height}px`
+      tempDiv.style.position = 'fixed'
+      tempDiv.style.left = '-99999px'
+      tempDiv.style.top = '-99999px'
+      tempDiv.style.visibility = 'hidden'
+      document.body.appendChild(tempDiv)
+
+      try {
+        await doc.renderTextLayer(pageNumber, tempDiv, width, height)
+        await rasterizeHtmlToCanvas(tempDiv.innerHTML, targetCanvas, width, height)
+      } finally {
+        if (tempDiv.parentNode) {
+          tempDiv.parentNode.removeChild(tempDiv)
+        }
+      }
+    }
   }
 }
 
@@ -338,7 +417,7 @@ async function renderPageToElement(
   if (pageNumber <= 0 || !store.document || width <= 0 || height <= 0) return
   const doc = store.document
 
-  if (canvasEl) {
+  if (canvasEl && doc.type === 'pdf') {
     await renderPageToCanvas(pageNumber, canvasEl, width, height)
   }
 
@@ -415,12 +494,14 @@ async function prepare3DTextures(direction: PageTurnDirection, gripY = 0.5) {
       const nextLeft = curRight + 1 <= total ? curRight + 1 : 0
       const nextRight = nextLeft + 1 <= total ? nextLeft + 1 : 0
 
-      // Copia instantânea da frente a partir do canvas ativo para zero lag
+      // Copia instantânea da frente (Right Page)
       if (baseRightCanvasRef.value && baseRightCanvasRef.value.width > 0) {
         frontCanvas.width = baseRightCanvasRef.value.width
         frontCanvas.height = baseRightCanvasRef.value.height
         const fCtx = frontCanvas.getContext('2d')
         fCtx?.drawImage(baseRightCanvasRef.value, 0, 0)
+      } else if (baseRightTextLayerRef.value && baseRightTextLayerRef.value.innerHTML.trim().length > 0) {
+        await rasterizeHtmlToCanvas(baseRightTextLayerRef.value.innerHTML, frontCanvas, pageW, pageH)
       } else if (curRight > 0) {
         await renderPageToCanvas(curRight, frontCanvas, pageW, pageH)
       }
@@ -447,7 +528,7 @@ async function prepare3DTextures(direction: PageTurnDirection, gripY = 0.5) {
       })
       pageCurl3D.render()
 
-      // Base Direita Revelada: Renderiza em segundo plano a próxima página direita
+      // Base Direita Revelada: Renderiza a próxima página direita por baixo
       if (nextRight > 0 && layout.rightPage) {
         void renderPageToElement(nextRight, baseRightCanvasRef.value, baseRightTextLayerRef.value, pageW, pageH)
       }
@@ -456,12 +537,14 @@ async function prepare3DTextures(direction: PageTurnDirection, gripY = 0.5) {
       const prevLeft = Math.max(1, curLeft - 2)
       const prevRight = prevLeft + 1 <= total ? prevLeft + 1 : 0
 
-      // Copia instantânea da frente a partir da folha esquerda atual
+      // Copia instantânea da frente (Left Page)
       if (baseLeftCanvasRef.value && baseLeftCanvasRef.value.width > 0) {
         frontCanvas.width = baseLeftCanvasRef.value.width
         frontCanvas.height = baseLeftCanvasRef.value.height
         const fCtx = frontCanvas.getContext('2d')
         fCtx?.drawImage(baseLeftCanvasRef.value, 0, 0)
+      } else if (baseLeftTextLayerRef.value && baseLeftTextLayerRef.value.innerHTML.trim().length > 0) {
+        await rasterizeHtmlToCanvas(baseLeftTextLayerRef.value.innerHTML, frontCanvas, pageW, pageH)
       } else if (curLeft > 0) {
         await renderPageToCanvas(curLeft, frontCanvas, pageW, pageH)
       }
@@ -488,7 +571,7 @@ async function prepare3DTextures(direction: PageTurnDirection, gripY = 0.5) {
       })
       pageCurl3D.render()
 
-      // Base Esquerda Revelada: Renderiza a página esquerda anterior
+      // Base Esquerda Revelada: Renderiza a página esquerda anterior por baixo
       if (prevLeft > 0 && layout.leftPage) {
         void renderPageToElement(prevLeft, baseLeftCanvasRef.value, baseLeftTextLayerRef.value, pageW, pageH)
       }
@@ -502,6 +585,8 @@ async function prepare3DTextures(direction: PageTurnDirection, gripY = 0.5) {
       frontCanvas.height = baseSingleCanvasRef.value.height
       const fCtx = frontCanvas.getContext('2d')
       fCtx?.drawImage(baseSingleCanvasRef.value, 0, 0)
+    } else if (baseSingleTextLayerRef.value && baseSingleTextLayerRef.value.innerHTML.trim().length > 0) {
+      await rasterizeHtmlToCanvas(baseSingleTextLayerRef.value.innerHTML, frontCanvas, pageW, pageH)
     } else {
       await renderPageToCanvas(curPage, frontCanvas, pageW, pageH)
     }
@@ -551,15 +636,12 @@ function getTurnZone(event: PointerEvent): PageTurnDirection | null {
   if (!stageRef.value) return null
   const bounds = stageRef.value.getBoundingClientRect()
   const x = event.clientX - bounds.left
-  const y = event.clientY - bounds.top
   const layout = pageLayout.value
 
   if (layout.isTwoPage) {
     if (layout.leftPage && layout.rightPage) {
       const spineX = layout.leftPage.left + layout.leftPage.width
-      // Clique ou arraste à esquerda da lombada = previous
       if (x < spineX) return 'previous'
-      // Clique ou arraste à direita da lombada = next
       if (x >= spineX) return 'next'
     }
   } else if (layout.singlePage) {

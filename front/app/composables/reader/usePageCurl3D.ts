@@ -37,16 +37,15 @@ const VERTEX_SHADER = `
       return;
     }
 
-    // Inclinação cônica baseada na altura de contato (topo vs base)
-    float cornerBias = (uGripY - 0.5) * 0.7;
-    float angle = cornerBias * sin(p * PI) + uPointerDeltaY * 0.5;
-    angle = clamp(angle, -0.42, 0.42);
-
-    // Raio dinâmico para deformação cônica
-    float normY = (pos.y + (uPageHeight * 0.5)) / max(1.0, uPageHeight);
-    float dynamicRadius = uRadius * (1.0 + (normY - uGripY) * cornerBias * 0.7);
-    dynamicRadius = max(14.0, dynamicRadius);
+    // Raio dinâmico que atinge o ápice no meio (p = 0.5) e zera suavemente nas pontas (p=0 e p=1)
+    float arcFactor = sin(p * PI);
+    float dynamicRadius = max(4.0, uRadius * arcFactor);
     float rollCircumference = PI * dynamicRadius;
+
+    // Inclinação cônica diagonal quando puxado pelo canto
+    float cornerBias = (uGripY - 0.5) * 0.55;
+    float angle = cornerBias * arcFactor + uPointerDeltaY * 0.35;
+    angle = clamp(angle, -0.35, 0.35);
 
     vec3 deformedPos = pos;
     vec3 computedNormal = vec3(0.0, 0.0, 1.0);
@@ -62,21 +61,20 @@ const VERTEX_SHADER = `
         deformedPos.z = 0.0;
         computedNormal = vec3(0.0, 0.0, 1.0);
         facing = 1.0;
-      } else if (dist < rollCircumference) {
+      } else if (dist < rollCircumference && dynamicRadius > 4.5) {
         // Na curva do cilindro/cone
         float phi = dist / dynamicRadius;
         float sinPhi = sin(phi);
         float cosPhi = cos(phi);
 
-        deformedPos.x = foldX - (dynamicRadius * sinPhi);
+        deformedPos.x = foldX - (dist - dynamicRadius * sinPhi);
         deformedPos.z = dynamicRadius * (1.0 - cosPhi);
         computedNormal = normalize(vec3(-sinPhi, 0.0, cosPhi));
         facing = cosPhi >= 0.0 ? 1.0 : -1.0;
       } else {
-        // Virada sobre a página esquerda
-        float flatOffset = dist - rollCircumference;
-        deformedPos.x = foldX - flatOffset;
-        deformedPos.z = dynamicRadius * 2.0;
+        // Virada sobre a página esquerda (vai 100% até -W)
+        deformedPos.x = 2.0 * foldX - pos.x;
+        deformedPos.z = dynamicRadius * 2.0 * max(0.0, 1.0 - (dist / max(1.0, uPageWidth)));
         computedNormal = vec3(0.0, 0.0, -1.0);
         facing = -1.0;
       }
@@ -90,21 +88,20 @@ const VERTEX_SHADER = `
         deformedPos.z = 0.0;
         computedNormal = vec3(0.0, 0.0, 1.0);
         facing = 1.0;
-      } else if (dist < rollCircumference) {
+      } else if (dist < rollCircumference && dynamicRadius > 4.5) {
         // Na curva do cilindro/cone
         float phi = dist / dynamicRadius;
         float sinPhi = sin(phi);
         float cosPhi = cos(phi);
 
-        deformedPos.x = foldX + (dynamicRadius * sinPhi);
+        deformedPos.x = foldX + (dist - dynamicRadius * sinPhi);
         deformedPos.z = dynamicRadius * (1.0 - cosPhi);
         computedNormal = normalize(vec3(sinPhi, 0.0, cosPhi));
         facing = cosPhi >= 0.0 ? 1.0 : -1.0;
       } else {
-        // Virada sobre a página direita
-        float flatOffset = dist - rollCircumference;
-        deformedPos.x = foldX + flatOffset;
-        deformedPos.z = dynamicRadius * 2.0;
+        // Virada sobre a página direita (vai 100% até +W)
+        deformedPos.x = 2.0 * foldX - pos.x;
+        deformedPos.z = dynamicRadius * 2.0 * max(0.0, 1.0 - (dist / max(1.0, uPageWidth)));
         computedNormal = vec3(0.0, 0.0, -1.0);
         facing = -1.0;
       }
@@ -135,34 +132,33 @@ const FRAGMENT_SHADER = `
 
     if (gl_FrontFacing || vFacing > 0.0) {
       vec4 frontTex = texture2D(uFrontTexture, vUv);
-      
-      // Translucidez sutil do verso na folha iluminada
       vec2 backUv = vec2(1.0 - vUv.x, vUv.y);
       vec4 backTex = texture2D(uBackTexture, backUv);
-      vec3 paperBase = mix(frontTex.rgb, backTex.rgb, 0.04) * uPaperTint;
 
-      // Iluminação difusa e brilho especular suave na crista
+      vec3 paperBase = (frontTex.a > 0.05 ? frontTex.rgb : uPaperTint);
+      if (backTex.a > 0.05) {
+        paperBase = mix(paperBase, backTex.rgb, 0.035);
+      }
+      paperBase *= uPaperTint;
+
       float diff = max(0.0, dot(norm, lightDir));
-      float spec = pow(diff, 14.0) * 0.12;
+      float spec = pow(diff, 14.0) * 0.10;
+      float ambientShadow = clamp(vCurlZ * 0.003, 0.0, 0.25) * uShadowIntensity;
 
-      // Sombra de contato e curvatura
-      float ambientShadow = clamp(vCurlZ * 0.003, 0.0, 0.28) * uShadowIntensity;
-
-      vec3 finalRgb = (paperBase * (0.86 + 0.14 * diff) + vec3(spec)) * (1.0 - ambientShadow);
+      vec3 finalRgb = (paperBase * (0.88 + 0.12 * diff) + vec3(spec)) * (1.0 - ambientShadow);
       gl_FragColor = vec4(finalRgb, 1.0);
     } else {
-      // Face do Verso da Página
       vec2 backUv = vec2(1.0 - vUv.x, vUv.y);
       vec4 backTex = texture2D(uBackTexture, backUv);
-      vec3 paperBase = backTex.rgb * uPaperTint;
+
+      vec3 paperBase = (backTex.a > 0.05 ? backTex.rgb : uPaperTint) * uPaperTint;
 
       vec3 revNorm = -norm;
       float diff = max(0.0, dot(revNorm, lightDir));
-      float spec = pow(diff, 14.0) * 0.10;
+      float spec = pow(diff, 14.0) * 0.08;
+      float ambientShadow = clamp(vCurlZ * 0.002, 0.0, 0.20) * uShadowIntensity;
 
-      float ambientShadow = clamp(vCurlZ * 0.002, 0.0, 0.22) * uShadowIntensity;
-
-      vec3 finalRgb = (paperBase * (0.84 + 0.16 * diff) + vec3(spec)) * (1.0 - ambientShadow);
+      vec3 finalRgb = (paperBase * (0.86 + 0.14 * diff) + vec3(spec)) * (1.0 - ambientShadow);
       gl_FragColor = vec4(finalRgb, 1.0);
     }
   }
@@ -195,7 +191,9 @@ export function usePageCurl3D(canvasHostRef: Ref<HTMLCanvasElement | null>) {
       ctx.fillRect(0, 0, canvas.width, canvas.height)
       ctx.fillStyle = textColor
       ctx.font = '20px sans-serif'
-      ctx.fillText(text, 40, 60)
+      if (text) {
+        ctx.fillText(text, 40, 60)
+      }
     }
     return canvas
   }
@@ -230,7 +228,6 @@ export function usePageCurl3D(canvasHostRef: Ref<HTMLCanvasElement | null>) {
     scene = new THREE.Scene()
 
     if (isTwoPageMode) {
-      // Câmera ortográfica centrada na lombada (X = 0)
       camera = new THREE.OrthographicCamera(
         -currentWidth,
         currentWidth,
@@ -293,7 +290,7 @@ export function usePageCurl3D(canvasHostRef: Ref<HTMLCanvasElement | null>) {
           uPointerDeltaY: { value: 0.0 },
           uPageWidth: { value: currentWidth },
           uPageHeight: { value: currentHeight },
-          uRadius: { value: Math.max(28, currentWidth * 0.12) },
+          uRadius: { value: Math.max(32, currentWidth * 0.14) },
           uShadowIntensity: { value: 1.0 },
           uPaperTint: { value: new THREE.Vector3(1.0, 1.0, 1.0) },
           uFrontTexture: { value: frontTexture },
@@ -303,7 +300,7 @@ export function usePageCurl3D(canvasHostRef: Ref<HTMLCanvasElement | null>) {
     } else {
       shaderMaterial.uniforms.uPageWidth.value = currentWidth
       shaderMaterial.uniforms.uPageHeight.value = currentHeight
-      shaderMaterial.uniforms.uRadius.value = Math.max(28, currentWidth * 0.12)
+      shaderMaterial.uniforms.uRadius.value = Math.max(32, currentWidth * 0.14)
       shaderMaterial.uniforms.uDirection.value = currentDirection === 'next' ? 1.0 : -1.0
       shaderMaterial.uniforms.uFrontTexture.value = frontTexture
       shaderMaterial.uniforms.uBackTexture.value = backTexture
