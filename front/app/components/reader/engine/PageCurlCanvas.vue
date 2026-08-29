@@ -223,11 +223,11 @@ const physics = usePagePhysics({
     if (direction === 'next') {
       const step = pageLayout.value.isTwoPage ? 2 : 1
       const target = Math.min(store.totalPages, store.currentPage + step)
-      store.setCurrentPage(target)
+      store.goToPage(target)
     } else {
       const step = pageLayout.value.isTwoPage ? 2 : 1
       const target = Math.max(1, store.currentPage - step)
-      store.setCurrentPage(target)
+      store.goToPage(target)
     }
 
     await renderCurrentSpread()

@@ -77,7 +77,9 @@ async function buildEpubLoader(arrayBuffer: ArrayBuffer): Promise<EpubLoaderResu
  * Resolve caminhos relativos de recursos (imagens, estilos) dentro do zip do EPUB.
  */
 function resolvePath(href: string, basePath: string): string {
-  const cleanHref = href.split('#')[0].split('?')[0].trim()
+  const part1 = href.split('#')[0] ?? ''
+  const part2 = part1.split('?')[0] ?? ''
+  const cleanHref = part2.trim()
   if (!cleanHref || cleanHref.startsWith('data:') || cleanHref.startsWith('http:') || cleanHref.startsWith('https:')) {
     return cleanHref
   }
@@ -123,7 +125,9 @@ function getZipFile(unzipped: Record<string, Uint8Array>, path: string): Uint8Ar
   try {
     const decoded = decodeURIComponent(cleanPath)
     if (unzipped[decoded]) return unzipped[decoded]
-  } catch {}
+  } catch {
+    // Ignora erro se não for uma URI válida codificada
+  }
 
   // 4. Busca por sufixo (ex: "Images/cover.jpg" combina com "OEBPS/Images/cover.jpg" ou "OPS/Images/cover.jpg")
   const cleanLower = cleanPath.toLowerCase()
@@ -644,7 +648,7 @@ export class EpubDocumentAdapter implements IBookDocument {
         matchingPages.length - 1,
         Math.max(0, Math.floor(targetFraction * matchingPages.length)),
       )
-      return matchingPages[newIndex].globalPage
+      return matchingPages[newIndex]?.globalPage ?? 1
     }
 
     return Math.max(1, Math.min(currentPage, this._totalPages))
@@ -693,7 +697,7 @@ export class EpubDocumentAdapter implements IBookDocument {
         matchingPages.length - 1,
         Math.max(0, Math.floor(targetFraction * matchingPages.length)),
       )
-      return matchingPages[newIndex].globalPage
+      return matchingPages[newIndex]?.globalPage ?? 1
     }
 
     return Math.max(1, Math.min(currentPage, this._totalPages))

@@ -422,6 +422,10 @@ export const useReaderStore = defineStore('reader', {
       this.currentPage = clamped
     },
 
+    setCurrentPage(page: number) {
+      this.goToPage(page)
+    },
+
     nextPage() {
       this.goToPage(this.currentPage + 1)
     },
