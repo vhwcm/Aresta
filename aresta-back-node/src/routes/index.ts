@@ -15,6 +15,7 @@ import healthRoutes from './health.routes.js';
 import conversionRoutes from './conversion.routes.js';
 import flashcardRoutes from './flashcard.routes.js';
 import canvasRoutes from './canvas.routes.js';
+import syncRoutes from './sync.routes.js';
 
 const router = Router();
 
@@ -42,6 +43,7 @@ router.use(ROUTES.CONVERT, conversionRoutes);
 router.use(ROUTES.FLASHCARDS, flashcardRoutes);
 router.use(ROUTES.FLASHCARDS_V1, flashcardRoutes);
 router.use(ROUTES.CANVASES, canvasRoutes);
+router.use(ROUTES.SYNC, syncRoutes);
 
 export default router;
 

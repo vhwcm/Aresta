@@ -15,10 +15,10 @@
 - [x] 2.4. Configurar scripts de build no `front/package.json` (`tauri:dev`, `tauri:build`) para Windows (.exe NSIS, .msi) e Linux (.AppImage, .deb).
 
 ## Fase 3: Motor de Sincronização Bidirecional (Sync Engine)
-- [ ] 3.1. Criar tabela local `mutation_queue` e serviço `MutationQueueService.ts`.
-- [ ] 3.2. Criar composable `useSyncEngine.ts` com listener de eventos online/offline e agendamento de sincronização em lote.
-- [ ] 3.3. Adicionar campos de auditoria no `schema.prisma` do backend se necessário (`updated_at`, `deleted_at`).
-- [ ] 3.4. Implementar controller e rota `POST /api/sync` no Backend Node.js com resolução Last-Write-Wins (LWW) e envio de deltas.
+- [x] 3.1. Criar tabela local `mutation_queue` e serviço `MutationQueueService.ts`.
+- [x] 3.2. Criar composable `useSyncEngine.ts` com listener de eventos online/offline e agendamento de sincronização em lote.
+- [x] 3.3. Adicionar campos de auditoria no `schema.prisma` do backend se necessário (`updated_at`, `deleted_at`).
+- [x] 3.4. Implementar controller e rota `POST /api/sync` no Backend Node.js com resolução Last-Write-Wins (LWW) e envio de deltas.
 
 ## Fase 4: Gestão de Arquivos Binários (EPUBs/PDFs e Capas)
 - [ ] 4.1. Criar `TauriFsStorageAdapter.ts` para salvar e recuperar binários na pasta `$APP_DATA/books/`.
