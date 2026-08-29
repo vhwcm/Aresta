@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col min-h-screen w-full bg-bgApp relative text-textPrimary selection:bg-accent/30 selection:text-white">
+  <div class="flex flex-col min-h-screen w-full bg-bgApp relative text-textPrimary selection:bg-accent/25 selection:text-inherit">
     <!-- Área Principal de Conteúdo -->
     <div class="flex-1 flex w-full relative">
       <main class="flex-1 min-h-screen" :class="[
