@@ -325,6 +325,45 @@
         </div>
       </div>
 
+      <!-- Botão Rápido de Ajuste de Tamanho da Fonte (A- / A+) (EPUB) -->
+      <div
+        v-if="store.documentType === 'epub'"
+        class="flex flex-row md:flex-col items-center justify-center rounded-xl border p-0.5"
+        :class="store.readerTheme === 'sepia'
+          ? 'bg-[#FAF5E8] border-[#dfd5c0]'
+          : (store.readerTheme === 'white'
+            ? 'bg-gray-100 border-gray-200'
+            : 'bg-white/5 border-divider')"
+        title="Ajustar tamanho da fonte diretamente na leitura"
+      >
+        <button
+          @click="store.increaseFontSize(2)"
+          :disabled="store.fontSize >= 36"
+          class="w-6 h-6 md:w-10 md:h-5 flex items-center justify-center rounded-lg text-xs font-bold hover:bg-accent/20 hover:text-accent transition-all active:scale-95 disabled:opacity-30"
+          title="Aumentar tamanho da fonte (A+)"
+          aria-label="Aumentar fonte"
+          id="btn-quick-font-increase"
+        >
+          A+
+        </button>
+        <span
+          class="text-[10px] md:text-[8px] font-technical font-bold px-1 select-none"
+          :class="store.readerTheme === 'sepia' ? 'text-[#786C5E]' : (store.readerTheme === 'white' ? 'text-gray-500' : 'text-textSecondary')"
+        >
+          {{ store.fontSize }}
+        </span>
+        <button
+          @click="store.decreaseFontSize(2)"
+          :disabled="store.fontSize <= 12"
+          class="w-6 h-6 md:w-10 md:h-5 flex items-center justify-center rounded-lg text-[11px] md:text-[10px] font-bold hover:bg-accent/20 hover:text-accent transition-all active:scale-95 disabled:opacity-30"
+          title="Diminuir tamanho da fonte (A-)"
+          aria-label="Diminuir fonte"
+          id="btn-quick-font-decrease"
+        >
+          A-
+        </button>
+      </div>
+
       <!-- Botão Alternar 1 Folha / 2 Folhas (Desktop/Tablet) -->
       <button
         v-if="store.totalPages > 1"

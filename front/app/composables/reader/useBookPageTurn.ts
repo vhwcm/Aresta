@@ -91,7 +91,8 @@ export function useBookPageTurn(
     const isTwoPage = store.isTwoPageMode && hostWidth >= 768
 
     const currentPage = store.currentPage
-    const defaultAspectRatio = store.document?.type === 'epub' ? 800 / 1200 : 0.72
+    const isEpub = store.document?.type === 'epub'
+    const defaultAspectRatio = isEpub ? 0.72 : 0.72
     const aspectRatio = defaultAspectRatio
     const isWide = store.readerWidthMode === 'wide'
 
@@ -103,12 +104,16 @@ export function useBookPageTurn(
       let targetHeight: number
 
       if (isWide) {
-        // Modo Expandido: Ocupa quase 100% da largura útil da tela
+        // Modo Expandido: Ocupa 100% da área útil disponível
         const availableWidth = Math.max(300, hostWidth - 32)
         targetWidth = Math.floor(availableWidth / 2)
-        targetHeight = Math.min(hostHeight - 16, Math.max(Math.round(hostHeight - 24), Math.round(targetWidth / aspectRatio)))
+        if (isEpub) {
+          targetHeight = Math.max(300, hostHeight - 24)
+        } else {
+          targetHeight = Math.min(hostHeight - 24, Math.round(targetWidth / aspectRatio))
+        }
       } else {
-        // Modo Centralizado: Proporção clássica de livro físico com margens
+        // Modo Centralizado: Proporção clássica de livro físico com margens elegantes
         const availableHeight = Math.round(hostHeight * 0.94)
         targetHeight = availableHeight
         targetWidth = Math.round(targetHeight * aspectRatio)
@@ -153,7 +158,11 @@ export function useBookPageTurn(
       if (isWide) {
         // Modo Expandido: 1 folha ocupando quase 100% da largura útil
         targetWidth = Math.max(300, Math.round(hostWidth - 32))
-        targetHeight = Math.min(hostHeight - 16, Math.max(Math.round(hostHeight - 24), Math.round(targetWidth / aspectRatio)))
+        if (isEpub) {
+          targetHeight = Math.max(300, hostHeight - 24)
+        } else {
+          targetHeight = Math.min(hostHeight - 24, Math.round(targetWidth / aspectRatio))
+        }
       } else {
         // Modo Centralizado: 1 folha centralizada com proporção clássica
         const availableHeight = Math.round(hostHeight * 0.94)

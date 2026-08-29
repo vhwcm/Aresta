@@ -597,6 +597,25 @@ function onKeyDown(event: KeyboardEvent) {
     return
   }
 
+  // Atalhos de teclado para ajustar tamanho da fonte durante a leitura (EPUB)
+  if (store.documentType === 'epub' && !event.altKey) {
+    if (event.key === '+' || event.key === '=') {
+      event.preventDefault()
+      store.increaseFontSize(2)
+      return
+    }
+    if (event.key === '-' || event.key === '_') {
+      event.preventDefault()
+      store.decreaseFontSize(2)
+      return
+    }
+    if (event.key === '0' && (event.ctrlKey || event.metaKey)) {
+      event.preventDefault()
+      store.resetFontSize()
+      return
+    }
+  }
+
   if (event.key === 'ArrowRight') {
     event.preventDefault()
     void pageRenderer.value?.next()
