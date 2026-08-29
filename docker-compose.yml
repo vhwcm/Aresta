@@ -66,6 +66,17 @@ services:
     networks:
       - aresta-network
 
+  converter:
+    build:
+      context: ./pdf2epub
+      dockerfile: Dockerfile
+    container_name: aresta-converter
+    restart: unless-stopped
+    ports:
+      - "${CONVERTER_PORT:-8000}:8000"
+    networks:
+      - aresta-network
+
   frontend:
     build:
       context: ./front
@@ -75,6 +86,8 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+      converter:
+        condition: service_started
     environment:
       PORT: 3000
       NITRO_PORT: 3000

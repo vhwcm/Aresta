@@ -22,7 +22,7 @@ export interface ConversionResult {
   isValid: boolean
 }
 
-const CONVERTER_API_URL = process.env.PDF2EPUB_API_URL || 'http://localhost:8000'
+const CONVERTER_API_URL = (typeof process !== 'undefined' && process.env?.PDF2EPUB_API_URL) ? process.env.PDF2EPUB_API_URL : 'http://localhost:8000'
 
 export const useConverter = () => {
   const selectedFile = ref<File | null>(null)
