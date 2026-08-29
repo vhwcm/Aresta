@@ -25,7 +25,7 @@
           />
 
           <button
-            class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-bgElevated hover:bg-bgSurface text-textPrimary border border-divider text-xs md:text-sm font-medium transition-all shadow-sm"
+            class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-bgPanel hover:bg-black/5 dark:hover:bg-white/5 text-textPrimary border border-divider text-xs md:text-sm font-medium font-interface transition-all shadow-sm cursor-pointer"
             @click="triggerImport"
           >
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -37,7 +37,7 @@
           </button>
 
           <button
-            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primaryHover text-white text-xs md:text-sm font-semibold transition-all shadow-md hover:scale-102 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent hover:bg-accent/90 text-white text-xs md:text-sm font-semibold font-interface transition-all shadow-lg shadow-accent/20 hover:scale-102 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             :disabled="isCreating"
             @click="handleCreateCanvas"
           >
@@ -83,7 +83,7 @@
             v-model="searchQuery"
             type="text"
             placeholder="Pesquisar quadros..."
-            class="w-full pl-9 pr-4 py-2 rounded-xl bg-bgPanel border border-divider text-sm text-textPrimary focus:outline-none focus:border-primary placeholder:text-textSecondary/50 font-interface shadow-sm"
+            class="w-full pl-9 pr-4 py-2 rounded-xl bg-bgPanel border border-divider text-sm text-textPrimary focus:outline-none focus:border-accent placeholder:text-textSecondary/50 font-interface shadow-sm"
           />
           <svg
             class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-textSecondary pointer-events-none"
@@ -121,21 +121,21 @@
         <div
           v-for="item in filteredCanvases"
           :key="item.id"
-          class="group relative flex flex-col justify-between p-5 rounded-2xl bg-bgPanel border border-divider hover:border-primary/50 shadow-md hover:shadow-xl transition-all cursor-pointer overflow-hidden"
+          class="group relative flex flex-col justify-between p-5 rounded-2xl bg-bgPanel border border-divider hover:border-accent/50 shadow-md hover:shadow-xl transition-all cursor-pointer overflow-hidden"
           @click="openCanvas(item.id)"
         >
           <!-- Top Accent / Header -->
           <div>
             <div class="flex items-center justify-between mb-3">
               <div class="flex items-center gap-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-primary animate-pulse"></span>
+                <span class="w-2.5 h-2.5 rounded-full bg-accent animate-pulse"></span>
                 <span class="text-[11px] font-mono text-textSecondary uppercase tracking-wider">JSON Canvas</span>
               </div>
 
               <!-- Context Actions Dropdown / Buttons -->
               <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity" @click.stop>
                 <button
-                  class="p-1.5 rounded-lg hover:bg-bgElevated text-textSecondary hover:text-textPrimary transition-colors cursor-pointer"
+                  class="p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 text-textSecondary hover:text-textPrimary transition-colors cursor-pointer"
                   title="Duplicar Quadro"
                   @click="handleDuplicate(item.id)"
                 >
@@ -156,7 +156,7 @@
               </div>
             </div>
 
-            <h3 class="text-base font-semibold text-textPrimary group-hover:text-primary transition-colors line-clamp-1">
+            <h3 class="text-base font-semibold text-textPrimary group-hover:text-accent transition-colors line-clamp-1">
               {{ item.title }}
             </h3>
             <p v-if="item.description" class="text-xs text-textSecondary mt-1 line-clamp-2">
@@ -187,7 +187,7 @@
         v-else-if="!isLoading"
         class="flex flex-col items-center justify-center py-20 px-4 text-center rounded-3xl border border-dashed border-divider bg-bgPanel/40"
       >
-        <div class="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-2xl mb-4">
+        <div class="w-16 h-16 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center text-2xl mb-4">
           ✨
         </div>
         <h3 class="text-lg font-semibold text-textPrimary">Nenhum quadro encontrado</h3>
@@ -195,7 +195,7 @@
           Crie seu primeiro quadro infinito para estruturar suas ideias, conectar anotações e desenhar livremente com IA.
         </p>
         <button
-          class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary hover:bg-primaryHover text-white text-sm font-medium shadow-md transition-all cursor-pointer hover:scale-102 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+          class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-accent hover:bg-accent/90 text-white text-sm font-medium font-interface shadow-lg shadow-accent/20 transition-all cursor-pointer hover:scale-102 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
           :disabled="isCreating"
           @click="handleCreateCanvas"
         >

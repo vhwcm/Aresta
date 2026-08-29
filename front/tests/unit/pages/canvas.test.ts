@@ -51,7 +51,7 @@ describe('Canvas Index Page (/canvas)', () => {
       },
     });
 
-    const createButton = wrapper.find('button.bg-primary');
+    const createButton = wrapper.find('button.bg-accent');
     expect(createButton.exists()).toBe(true);
 
     await createButton.trigger('click');

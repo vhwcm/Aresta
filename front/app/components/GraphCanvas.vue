@@ -124,7 +124,8 @@ const effectiveTheme = computed(() => {
 })
 
 const isSepiaMode = computed(() => effectiveTheme.value === 'sepia')
-const isLightMode = computed(() => effectiveTheme.value === 'light' || effectiveTheme.value === 'white' || effectiveTheme.value === 'sepia')
+const isLightMode = computed(() => effectiveTheme.value === 'light' || effectiveTheme.value === 'white')
+const isDarkMode = computed(() => effectiveTheme.value === 'dark' || effectiveTheme.value === 'black')
 
 const containerRef = ref<HTMLElement | null>(null)
 const svgRef = ref<SVGSVGElement | null>(null)
@@ -414,7 +415,7 @@ const initGraph = () => {
       'M12 18V5 M15 13a4.17 4.17 0 0 1-3-4 4.17 4.17 0 0 1-3 4 M17.598 6.5A3 3 0 1 0 12 5a3 3 0 1 0-5.598 1.5 M17.997 5.125a4 4 0 0 1 2.526 5.77 M18 18a4 4 0 0 0 2-7.464 M19.967 17.483A4 4 0 1 1 12 18a4 4 0 1 1-7.967-.517 M6 18a4 4 0 0 1-2-7.464 M6.003 5.125a4 4 0 0 0-2.526 5.77'
     )
     .attr('fill', 'none')
-    .attr('stroke', isLightMode.value ? '#C2410C' : '#FFFFFF')
+    .attr('stroke', isSepiaMode.value ? '#8B4513' : (isLightMode.value ? '#C2410C' : '#FFFFFF'))
     .attr('stroke-width', '1.6')
     .attr('stroke-linecap', 'round')
     .attr('stroke-linejoin', 'round')
@@ -433,7 +434,7 @@ const initGraph = () => {
         .append('path')
         .attr('d', 'M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z')
         .attr('fill', 'none')
-        .attr('stroke', isLightMode.value ? 'rgba(30, 41, 59, 0.85)' : 'rgba(255, 255, 255, 0.85)')
+        .attr('stroke', isSepiaMode.value ? 'rgba(44, 38, 33, 0.85)' : (isLightMode.value ? 'rgba(30, 41, 59, 0.85)' : 'rgba(255, 255, 255, 0.85)'))
         .attr('stroke-width', '1.5')
         .attr('stroke-linecap', 'round')
         .attr('stroke-linejoin', 'round')
@@ -446,14 +447,14 @@ const initGraph = () => {
         .attr('font-size', '11.5px')
         .attr('font-weight', '600')
         .attr('font-family', 'ui-monospace, monospace')
-        .attr('fill', isLightMode.value ? '#1E293B' : 'rgba(255, 255, 255, 0.92)')
+        .attr('fill', isSepiaMode.value ? '#2C2621' : (isLightMode.value ? '#1E293B' : 'rgba(255, 255, 255, 0.92)'))
         .text(bookCount)
     } else {
       iconG
         .append('path')
         .attr('d', 'M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20')
         .attr('fill', 'none')
-        .attr('stroke', isLightMode.value ? 'rgba(30, 41, 59, 0.75)' : 'rgba(255, 255, 255, 0.55)')
+        .attr('stroke', isSepiaMode.value ? 'rgba(44, 38, 33, 0.75)' : (isLightMode.value ? 'rgba(30, 41, 59, 0.75)' : 'rgba(255, 255, 255, 0.55)'))
         .attr('stroke-width', '1.5')
         .attr('stroke-linecap', 'round')
         .attr('stroke-linejoin', 'round')

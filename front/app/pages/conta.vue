@@ -410,6 +410,105 @@
             </button>
           </div>
         </div>
+
+        <!-- 6. Idiomas & Dicionário Offline -->
+        <div class="p-6 flex flex-col gap-6" data-testid="dictionary-settings-section">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div class="flex items-start sm:items-center gap-4 min-w-0">
+              <div class="p-3 rounded-2xl bg-accent/10 border border-accent/20 text-accent shrink-0">
+                <LanguagesIcon class="w-5 h-5" />
+              </div>
+              <div class="flex flex-col gap-0.5">
+                <div class="font-interface text-sm font-medium text-textPrimary flex items-center gap-2">
+                  <span>Idiomas & Dicionário Offline</span>
+                  <span class="px-2 py-0.5 rounded-full font-technical text-[10px] font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    100% Offline
+                  </span>
+                </div>
+                <p class="font-interface text-xs text-textSecondary">
+                  Defina seu idioma materno e a língua alvo de leitura para obter traduções e definições instantâneas durante a leitura de EPUBs.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Seletor: Minha Língua Nativa -->
+            <div class="p-5 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] border border-divider flex flex-col gap-3">
+              <div class="flex items-center justify-between">
+                <span class="font-technical text-[11px] uppercase tracking-wider text-accent font-semibold">Minha Língua Nativa</span>
+                <span class="font-interface text-xs text-textSecondary">Idioma das definições</span>
+              </div>
+              <div class="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  @click="setNativeLanguage('pt-BR')"
+                  class="px-3 py-2.5 rounded-xl border text-xs font-interface font-medium transition-all text-center flex flex-col items-center gap-1"
+                  :class="nativeLanguage.startsWith('pt') ? 'bg-accent/15 border-accent text-textPrimary font-semibold shadow-sm' : 'border-divider hover:bg-black/5 dark:hover:bg-white/5 text-textSecondary'"
+                >
+                  <span class="text-base">🇧🇷</span>
+                  <span>Português</span>
+                </button>
+                <button
+                  type="button"
+                  @click="setNativeLanguage('en')"
+                  class="px-3 py-2.5 rounded-xl border text-xs font-interface font-medium transition-all text-center flex flex-col items-center gap-1"
+                  :class="nativeLanguage === 'en' ? 'bg-accent/15 border-accent text-textPrimary font-semibold shadow-sm' : 'border-divider hover:bg-black/5 dark:hover:bg-white/5 text-textSecondary'"
+                >
+                  <span class="text-base">🇺🇸</span>
+                  <span>Inglês</span>
+                </button>
+                <button
+                  type="button"
+                  @click="setNativeLanguage('es')"
+                  class="px-3 py-2.5 rounded-xl border text-xs font-interface font-medium transition-all text-center flex flex-col items-center gap-1"
+                  :class="nativeLanguage === 'es' ? 'bg-accent/15 border-accent text-textPrimary font-semibold shadow-sm' : 'border-divider hover:bg-black/5 dark:hover:bg-white/5 text-textSecondary'"
+                >
+                  <span class="text-base">🇪🇸</span>
+                  <span>Espanhol</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Seletor: Língua Padrão de Tradução / Leitura -->
+            <div class="p-5 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] border border-divider flex flex-col gap-3">
+              <div class="flex items-center justify-between">
+                <span class="font-technical text-[11px] uppercase tracking-wider text-accent font-semibold">Língua de Tradução / Estudo</span>
+                <span class="font-interface text-xs text-textSecondary">Idioma principal do livro</span>
+              </div>
+              <div class="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  @click="setTargetTranslationLanguage('en')"
+                  class="px-3 py-2.5 rounded-xl border text-xs font-interface font-medium transition-all text-center flex flex-col items-center gap-1"
+                  :class="targetTranslationLanguage === 'en' ? 'bg-accent/15 border-accent text-textPrimary font-semibold shadow-sm' : 'border-divider hover:bg-black/5 dark:hover:bg-white/5 text-textSecondary'"
+                >
+                  <span class="text-base">🇺🇸</span>
+                  <span>Inglês</span>
+                </button>
+                <button
+                  type="button"
+                  @click="setTargetTranslationLanguage('es')"
+                  class="px-3 py-2.5 rounded-xl border text-xs font-interface font-medium transition-all text-center flex flex-col items-center gap-1"
+                  :class="targetTranslationLanguage === 'es' ? 'bg-accent/15 border-accent text-textPrimary font-semibold shadow-sm' : 'border-divider hover:bg-black/5 dark:hover:bg-white/5 text-textSecondary'"
+                >
+                  <span class="text-base">🇪🇸</span>
+                  <span>Espanhol</span>
+                </button>
+                <button
+                  type="button"
+                  @click="setTargetTranslationLanguage('pt-BR')"
+                  class="px-3 py-2.5 rounded-xl border text-xs font-interface font-medium transition-all text-center flex flex-col items-center gap-1"
+                  :class="targetTranslationLanguage.startsWith('pt') ? 'bg-accent/15 border-accent text-textPrimary font-semibold shadow-sm' : 'border-divider hover:bg-black/5 dark:hover:bg-white/5 text-textSecondary'"
+                >
+                  <span class="text-base">🇧🇷</span>
+                  <span>Português</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -692,7 +791,8 @@ import {
   PaletteIcon,
   SlidersIcon,
   TypeIcon,
-  CheckIcon
+  CheckIcon,
+  LanguagesIcon
 } from 'lucide-vue-next'
 import { useAuth } from '~/composables/useAuth'
 import { useSettings } from '~/composables/useSettings'
@@ -706,12 +806,16 @@ const {
   desktopReaderGraphOpen,
   themeMode,
   readerTheme,
+  nativeLanguage,
+  targetTranslationLanguage,
   epubFontSize,
   epubFontFamily,
   setDesktopHomeGraphOpen,
   setDesktopReaderGraphOpen,
   setThemeMode,
   setReaderTheme,
+  setNativeLanguage,
+  setTargetTranslationLanguage,
   setEpubFontSize,
   setEpubFontFamily
 } = settings

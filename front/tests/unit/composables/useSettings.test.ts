@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { setActivePinia, createPinia } from 'pinia'
 import { useSettings, resetSettingsForTesting } from '~/composables/useSettings'
 import { useSettingsModal } from '~/composables/useSettingsModal'
+import { useReaderStore } from '~/stores/readerStore'
 
 const mockFetch = vi.fn()
 ;(globalThis as any).$fetch = mockFetch
@@ -15,6 +17,7 @@ vi.mock('~/composables/useAuth', () => ({
 
 describe('useSettings Composable', () => {
   beforeEach(() => {
+    setActivePinia(createPinia())
     vi.clearAllMocks()
     mockToken.mockReturnValue(null)
     if (typeof localStorage !== 'undefined') {
@@ -183,13 +186,16 @@ describe('useSettings Composable', () => {
     })
   })
 
-  it('permite alterar e obter o tamanho da fonte de EPUB com persistência', () => {
+  it('permite alterar e obter o tamanho da fonte de EPUB com persistência e sincronia com readerStore', () => {
+    const readerStore = useReaderStore()
     const { epubFontSize, setEpubFontSize } = useSettings()
 
     expect(epubFontSize.value).toBe(18)
+    expect(readerStore.fontSize).toBe(18)
 
     setEpubFontSize(24)
     expect(epubFontSize.value).toBe(24)
+    expect(readerStore.fontSize).toBe(24)
 
     const saved = JSON.parse(localStorage.getItem('aresta_settings') || '{}')
     expect(saved.epubFontSize).toBe(24)
@@ -197,9 +203,11 @@ describe('useSettings Composable', () => {
     // Clamping entre 12 e 36
     setEpubFontSize(8)
     expect(epubFontSize.value).toBe(12)
+    expect(readerStore.fontSize).toBe(12)
 
     setEpubFontSize(50)
     expect(epubFontSize.value).toBe(36)
+    expect(readerStore.fontSize).toBe(36)
   })
 })
 
