@@ -1,0 +1,169 @@
+{
+  "version": "1.0.0",
+  "sourceLang": "pt",
+  "targetLang": "pt",
+  "entries": {
+    "manuscrito": {
+      "word": "manuscrito",
+      "phonetic": "/mɐ.nuʃˈkɾi.tu/",
+      "pos": [
+        "substantivo",
+        "adjetivo"
+      ],
+      "definitions": [
+        {
+          "meaning": "Texto ou livro escrito à mão, em especial cópias e tratados anteriores à imprensa.",
+          "example": "O manuscrito original foi doado à biblioteca nacional.",
+          "synonyms": [
+            "autógrafo",
+            "original",
+            "texto"
+          ]
+        },
+        {
+          "meaning": "Original de um texto preparado por um autor antes de ser impresso ou publicado."
+        }
+      ]
+    },
+    "revelar": {
+      "word": "revelar",
+      "phonetic": "/ʁe.veˈlaʁ/",
+      "pos": [
+        "verbo"
+      ],
+      "definitions": [
+        {
+          "meaning": "Dar a conhecer o que era secreto, desconhecido ou confidencial; desvendar.",
+          "example": "O documento revelou fatos esquecidos pela historiografia.",
+          "synonyms": [
+            "desvendar",
+            "divulgar",
+            "manifestar",
+            "patentear"
+          ]
+        },
+        {
+          "meaning": "Fazer aparecer a imagem gravada em película fotográfica por processo químico."
+        }
+      ]
+    },
+    "efêmero": {
+      "word": "efêmero",
+      "phonetic": "/eˈfe.me.ɾu/",
+      "pos": [
+        "adjetivo"
+      ],
+      "definitions": [
+        {
+          "meaning": "Que tem curta duração; transitório, passageiro, fugaz.",
+          "example": "A glória mundana muitas vezes se prova efêmera e passageira.",
+          "synonyms": [
+            "fugaz",
+            "passageiro",
+            "transitório",
+            "perecível"
+          ]
+        }
+      ]
+    },
+    "saudade": {
+      "word": "saudade",
+      "phonetic": "/sawˈda.dʒi/",
+      "pos": [
+        "substantivo"
+      ],
+      "definitions": [
+        {
+          "meaning": "Sentimento melancólico e afetuoso causado pela distância ou perda de pessoas, lugares ou momentos queridos.",
+          "example": "Sentia uma profunda saudade das tardes de leitura na casa dos avós.",
+          "synonyms": [
+            "nostalgia",
+            "lembrança",
+            "pesar"
+          ]
+        }
+      ]
+    },
+    "resiliência": {
+      "word": "resiliência",
+      "phonetic": "/ʁe.zi.liˈẽ.si.ɐ/",
+      "pos": [
+        "substantivo"
+      ],
+      "definitions": [
+        {
+          "meaning": "Capacidade de superar adversidades, crises ou pressões, adaptando-se e recuperando o equilíbrio original.",
+          "example": "A resiliência daquele povo permitiu a reconstrução da cidade após o terremoto."
+        }
+      ]
+    },
+    "ler": {
+      "word": "ler",
+      "phonetic": "/ˈlɛʁ/",
+      "pos": [
+        "verbo"
+      ],
+      "definitions": [
+        {
+          "meaning": "Percorrer com a vista caracteres impressos ou manuscritos, decifrando-os e compreendendo o seu sentido.",
+          "example": "Gostava de ler à luz de velas durante as noites de inverno."
+        },
+        {
+          "meaning": "Interpretar o sentido de algo; decifrar olhares, gestos ou sinais."
+        }
+      ]
+    },
+    "livro": {
+      "word": "livro",
+      "phonetic": "/ˈli.vɾu/",
+      "pos": [
+        "substantivo"
+      ],
+      "definitions": [
+        {
+          "meaning": "Conjunto de folhas de papel impressas ou em branco, cosidas ou encadernadas formando um volume.",
+          "example": "Um bom livro é uma conversa com as mentes mais brilhantes dos séculos passados."
+        }
+      ]
+    },
+    "sabedoria": {
+      "word": "sabedoria",
+      "phonetic": "/sa.be.doˈɾi.ɐ/",
+      "pos": [
+        "substantivo"
+      ],
+      "definitions": [
+        {
+          "meaning": "Conhecimento profundo e prudente da vida, fruto de estudo e reflexão constante.",
+          "example": "A verdadeira sabedoria reside em reconhecer a própria ignorância."
+        }
+      ]
+    },
+    "conhecimento": {
+      "word": "conhecimento",
+      "phonetic": "/ko.ɲe.siˈmẽ.tu/",
+      "pos": [
+        "substantivo"
+      ],
+      "definitions": [
+        {
+          "meaning": "Ato ou efeito de conhecer; conjunto de saberes acumulados sobre determinado assunto ou ramo da ciência.",
+          "example": "A busca pelo conhecimento é o motor primordial da civilização."
+        }
+      ]
+    },
+    "eloquente": {
+      "word": "eloquente",
+      "phonetic": "/e.loˈkwẽ.tʃi/",
+      "pos": [
+        "adjetivo"
+      ],
+      "definitions": [
+        {
+          "meaning": "Que se exprime com facilidade, elegância e poder de persuasão; expressivo.",
+          "example": "O silêncio na sala foi mais eloquente do que qualquer discurso."
+        }
+      ]
+    }
+  }
+}

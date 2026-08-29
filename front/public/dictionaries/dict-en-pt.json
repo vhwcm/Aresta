@@ -1,0 +1,510 @@
+{
+  "version": "1.0.0",
+  "sourceLang": "en",
+  "targetLang": "pt",
+  "entries": {
+    "manuscript": {
+      "word": "manuscript",
+      "phonetic": "/ˈmæn.jə.skrɪpt/",
+      "pos": [
+        "substantivo"
+      ],
+      "translations": [
+        "manuscrito",
+        "texto original",
+        "obra autógrafa"
+      ],
+      "definitions": [
+        {
+          "meaning": "Livro, documento ou texto original escrito à mão ou digitado antes de ser impresso ou publicado.",
+          "example": "The author delivered the completed manuscript to the publisher.",
+          "synonyms": [
+            "document",
+            "text",
+            "draft",
+            "autograph"
+          ]
+        },
+        {
+          "meaning": "Documento histórico antigo escrito manualmente antes da invenção da imprensa.",
+          "example": "Ancient manuscripts preserved in the monastic library."
+        }
+      ]
+    },
+    "reveal": {
+      "word": "reveal",
+      "phonetic": "/rɪˈviːl/",
+      "pos": [
+        "verbo"
+      ],
+      "translations": [
+        "revelar",
+        "divulgar",
+        "desvendar",
+        "mostrar"
+      ],
+      "definitions": [
+        {
+          "meaning": "Tornar conhecido algo que era secreto, desconhecido ou oculto.",
+          "example": "The investigation revealed new evidence regarding the incident.",
+          "synonyms": [
+            "disclose",
+            "unveil",
+            "uncover",
+            "expose"
+          ]
+        },
+        {
+          "meaning": "Permitir que algo seja visto; exibir.",
+          "example": "He pulled back the curtain to reveal a magnificent view."
+        }
+      ]
+    },
+    "ephemeral": {
+      "word": "ephemeral",
+      "phonetic": "/ɪˈfem.ər.əl/",
+      "pos": [
+        "adjetivo"
+      ],
+      "translations": [
+        "efêmero",
+        "passageiro",
+        "transitório",
+        "fugaz"
+      ],
+      "definitions": [
+        {
+          "meaning": "Que dura muito pouco tempo; passageiro, transitório.",
+          "example": "Fame in the digital age can be remarkably ephemeral.",
+          "synonyms": [
+            "transient",
+            "fleeting",
+            "momentary",
+            "evanescent"
+          ]
+        }
+      ]
+    },
+    "serendipity": {
+      "word": "serendipity",
+      "phonetic": "/ˌser.ənˈdɪp.ə.ti/",
+      "pos": [
+        "substantivo"
+      ],
+      "translations": [
+        "serendipidade",
+        "acaso afortunado",
+        "descoberta feliz"
+      ],
+      "definitions": [
+        {
+          "meaning": "Ocorrência ou capacidade de encontrar coisas boas ou valiosas por mero acaso ou sorte inesperada.",
+          "example": "Finding this rare edition in a second-hand shop was pure serendipity."
+        }
+      ]
+    },
+    "solitude": {
+      "word": "solitude",
+      "phonetic": "/ˈsɒl.ɪ.tʃuːd/",
+      "pos": [
+        "substantivo"
+      ],
+      "translations": [
+        "solidão",
+        "isolamento",
+        "recolhimento",
+        "quietude"
+      ],
+      "definitions": [
+        {
+          "meaning": "Estado ou situação de estar só, especialmente quando é uma escolha pacífica e agradável.",
+          "example": "He cherished the solitude of his morning walks in the forest.",
+          "synonyms": [
+            "seclusion",
+            "isolation",
+            "loneliness",
+            "privacy"
+          ]
+        }
+      ]
+    },
+    "resilience": {
+      "word": "resilience",
+      "phonetic": "/rɪˈzɪl.jəns/",
+      "pos": [
+        "substantivo"
+      ],
+      "translations": [
+        "resiliência",
+        "capacidade de recuperação",
+        "resistência"
+      ],
+      "definitions": [
+        {
+          "meaning": "Capacidade de se recuperar rapidamente de dificuldades, traumas ou mudanças adversas.",
+          "example": "The resilience of the human spirit in the face of adversity."
+        }
+      ]
+    },
+    "melancholy": {
+      "word": "melancholy",
+      "phonetic": "/ˈmel.əŋ.kɒl.i/",
+      "pos": [
+        "substantivo",
+        "adjetivo"
+      ],
+      "translations": [
+        "melancolia",
+        "tristeza",
+        "melancólico"
+      ],
+      "definitions": [
+        {
+          "meaning": "Sentimento de tristeza profunda e reflexiva, muitas vezes sem uma causa aparente.",
+          "example": "A mood of gentle melancholy settled over the autumn landscape."
+        }
+      ]
+    },
+    "eloquent": {
+      "word": "eloquent",
+      "phonetic": "/ˈel.ə.kwənt/",
+      "pos": [
+        "adjetivo"
+      ],
+      "translations": [
+        "eloquente",
+        "expressivo",
+        "persuasivo"
+      ],
+      "definitions": [
+        {
+          "meaning": "Fluente ou persuasivo ao falar ou escrever; capaz de expressar ideias com clareza e emoção.",
+          "example": "She gave an eloquent speech advocating for educational reform."
+        }
+      ]
+    },
+    "ponder": {
+      "word": "ponder",
+      "phonetic": "/ˈpɒn.dər/",
+      "pos": [
+        "verbo"
+      ],
+      "translations": [
+        "ponderar",
+        "refletir",
+        "meditar",
+        "pensar profundamente"
+      ],
+      "definitions": [
+        {
+          "meaning": "Pensar sobre algo cuidadosa e profundamente, especialmente antes de tomar uma decisão.",
+          "example": "He sat quietly by the window to ponder his next steps."
+        }
+      ]
+    },
+    "ineffable": {
+      "word": "ineffable",
+      "phonetic": "/ɪnˈef.ə.bəl/",
+      "pos": [
+        "adjetivo"
+      ],
+      "translations": [
+        "inefável",
+        "indescritível",
+        "indizível"
+      ],
+      "definitions": [
+        {
+          "meaning": "Tão grandioso, belo ou intenso que não pode ser expresso em palavras.",
+          "example": "An ineffable sense of peace washed over him as he gazed at the stars."
+        }
+      ]
+    },
+    "book": {
+      "word": "book",
+      "phonetic": "/bʊk/",
+      "pos": [
+        "substantivo",
+        "verbo"
+      ],
+      "translations": [
+        "livro",
+        "obra",
+        "reservar",
+        "agendar"
+      ],
+      "definitions": [
+        {
+          "meaning": "Conjunto de folhas de papel escritas ou impressas encadernadas juntas.",
+          "example": "She opened the leather-bound book and began to read."
+        },
+        {
+          "meaning": "Reservar acomodação, transporte ou serviço com antecedência.",
+          "example": "We need to book the tickets early."
+        }
+      ]
+    },
+    "read": {
+      "word": "read",
+      "phonetic": "/riːd/",
+      "pos": [
+        "verbo"
+      ],
+      "translations": [
+        "ler",
+        "interpretar",
+        "compreender"
+      ],
+      "definitions": [
+        {
+          "meaning": "Olhar e compreender o significado de palavras ou símbolos escritos ou impressos.",
+          "example": "He loves to read classic novels in his spare time."
+        }
+      ]
+    },
+    "knowledge": {
+      "word": "knowledge",
+      "phonetic": "/ˈnɒl.ɪdʒ/",
+      "pos": [
+        "substantivo"
+      ],
+      "translations": [
+        "conhecimento",
+        "saber",
+        "compreensão",
+        "ciência"
+      ],
+      "definitions": [
+        {
+          "meaning": "Fatos, informações e habilidades adquiridas através de experiência ou educação.",
+          "example": "Books are the primary vessels of human knowledge."
+        }
+      ]
+    },
+    "lucid": {
+      "word": "lucid",
+      "phonetic": "/ˈluː.sɪd/",
+      "pos": [
+        "adjetivo"
+      ],
+      "translations": [
+        "lúcido",
+        "claro",
+        "inteligível",
+        "transparente"
+      ],
+      "definitions": [
+        {
+          "meaning": "Expresso de forma clara e fácil de entender; dotado de discernimento.",
+          "example": "His explanation of quantum physics was remarkably lucid."
+        }
+      ]
+    },
+    "profound": {
+      "word": "profound",
+      "phonetic": "/prəˈfaʊnd/",
+      "pos": [
+        "adjetivo"
+      ],
+      "translations": [
+        "profundo",
+        "intenso",
+        "significativo"
+      ],
+      "definitions": [
+        {
+          "meaning": "Muito grande ou intenso; que possui profundo significado ou sabedoria.",
+          "example": "The philosopher made a profound observation about human nature."
+        }
+      ]
+    },
+    "ubiquitous": {
+      "word": "ubiquitous",
+      "phonetic": "/juːˈbɪk.wɪ.təs/",
+      "pos": [
+        "adjetivo"
+      ],
+      "translations": [
+        "onipresente",
+        "ubíquo",
+        "onímodo"
+      ],
+      "definitions": [
+        {
+          "meaning": "Presente, aparecendo ou encontrado em toda parte ao mesmo tempo.",
+          "example": "Smartphones have become ubiquitous in modern society."
+        }
+      ]
+    },
+    "nostalgia": {
+      "word": "nostalgia",
+      "phonetic": "/nɒsˈtæl.dʒə/",
+      "pos": [
+        "substantivo"
+      ],
+      "translations": [
+        "nostalgia",
+        "saudade",
+        "lembrança afetuosa"
+      ],
+      "definitions": [
+        {
+          "meaning": "Desejo sentimental ou afeto melancólico por um período no passado.",
+          "example": "Photographs of his childhood evoked a deep sense of nostalgia."
+        }
+      ]
+    },
+    "sanctuary": {
+      "word": "sanctuary",
+      "phonetic": "/ˈsæŋk.tʃu.ər.i/",
+      "pos": [
+        "substantivo"
+      ],
+      "translations": [
+        "santuário",
+        "refúgio",
+        "abrigo"
+      ],
+      "definitions": [
+        {
+          "meaning": "Lugar de refúgio, descanso ou segurança.",
+          "example": "His study served as a sanctuary from the bustling city."
+        }
+      ]
+    },
+    "whisper": {
+      "word": "whisper",
+      "phonetic": "/ˈwɪs.pər/",
+      "pos": [
+        "verbo",
+        "substantivo"
+      ],
+      "translations": [
+        "sussurrar",
+        "murmurar",
+        "sussurro",
+        "murmúrio"
+      ],
+      "definitions": [
+        {
+          "meaning": "Falar muito baixinho usando a respiração em vez da voz normal.",
+          "example": "She leaned over to whisper a secret in his ear."
+        }
+      ]
+    },
+    "wander": {
+      "word": "wander",
+      "phonetic": "/ˈwɒn.dər/",
+      "pos": [
+        "verbo"
+      ],
+      "translations": [
+        "vagar",
+        "deambular",
+        "perambular",
+        "divagar"
+      ],
+      "definitions": [
+        {
+          "meaning": "Caminhar ou mover-se de maneira calma ou sem rumo fixo.",
+          "example": "They spent the afternoon wandering through the cobblestone streets."
+        }
+      ]
+    },
+    "journey": {
+      "word": "journey",
+      "phonetic": "/ˈdʒɜː.ni/",
+      "pos": [
+        "substantivo",
+        "verbo"
+      ],
+      "translations": [
+        "jornada",
+        "viagem",
+        "trajeto",
+        "viajar"
+      ],
+      "definitions": [
+        {
+          "meaning": "Ato de viajar de um lugar para outro, especialmente por uma longa distância.",
+          "example": "The journey through the mountains took three days."
+        }
+      ]
+    },
+    "labyrinth": {
+      "word": "labyrinth",
+      "phonetic": "/ˈlæb.ə.rɪnθ/",
+      "pos": [
+        "substantivo"
+      ],
+      "translations": [
+        "labirinto",
+        "emaranhado",
+        "dédalo"
+      ],
+      "definitions": [
+        {
+          "meaning": "Rede complicada e irregular de caminhos ou passagens difíceis de percorrer.",
+          "example": "The old library was a labyrinth of towering bookshelves and narrow corridors."
+        }
+      ]
+    },
+    "quixotic": {
+      "word": "quixotic",
+      "phonetic": "/kwɪkˈsɒt.ɪk/",
+      "pos": [
+        "adjetivo"
+      ],
+      "translations": [
+        "quixotesco",
+        "idealista",
+        "ingênuo",
+        "utópico"
+      ],
+      "definitions": [
+        {
+          "meaning": "Extremamente idealista, irrealista e impraticável (alusão a Dom Quixote).",
+          "example": "He embarked on a quixotic quest to catalog every forgotten book."
+        }
+      ]
+    },
+    "luminous": {
+      "word": "luminous",
+      "phonetic": "/ˈluː.mɪ.nəs/",
+      "pos": [
+        "adjetivo"
+      ],
+      "translations": [
+        "luminoso",
+        "radiante",
+        "brilhante",
+        "esclarecedor"
+      ],
+      "definitions": [
+        {
+          "meaning": "Que emite luz; brilhante ou resplandecente no escuro.",
+          "example": "The luminous moon guided their path through the night."
+        }
+      ]
+    },
+    "transcend": {
+      "word": "transcend",
+      "phonetic": "/trænˈsend/",
+      "pos": [
+        "verbo"
+      ],
+      "translations": [
+        "transcender",
+        "ultrapassar",
+        "superar",
+        "exceder"
+      ],
+      "definitions": [
+        {
+          "meaning": "Ir além do alcance ou limites usuais de algo; superar.",
+          "example": "Great works of literature transcend their own historical era."
+        }
+      ]
+    }
+  }
+}

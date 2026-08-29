@@ -1,0 +1,93 @@
+{
+  "version": "1.0.0",
+  "sourceLang": "en",
+  "targetLang": "en",
+  "entries": {
+    "manuscript": {
+      "word": "manuscript",
+      "phonetic": "/ˈmæn.jə.skrɪpt/",
+      "pos": [
+        "noun"
+      ],
+      "definitions": [
+        {
+          "meaning": "A book, document, or piece of music written by hand rather than typed or printed.",
+          "example": "An ancient manuscript discovered in the desert caves.",
+          "synonyms": [
+            "document",
+            "original",
+            "text",
+            "autograph"
+          ]
+        },
+        {
+          "meaning": "An author's text that has not yet been published."
+        }
+      ]
+    },
+    "reveal": {
+      "word": "reveal",
+      "phonetic": "/rɪˈviːl/",
+      "pos": [
+        "verb"
+      ],
+      "definitions": [
+        {
+          "meaning": "Make previously unknown or secret information known to others.",
+          "example": "The investigation revealed several irregularities.",
+          "synonyms": [
+            "disclose",
+            "unveil",
+            "uncover",
+            "divulge"
+          ]
+        }
+      ]
+    },
+    "ephemeral": {
+      "word": "ephemeral",
+      "phonetic": "/ɪˈfem.ər.əl/",
+      "pos": [
+        "adjective"
+      ],
+      "definitions": [
+        {
+          "meaning": "Lasting for a very short time.",
+          "example": "Fashions are ephemeral, but classic style endures.",
+          "synonyms": [
+            "transitory",
+            "transient",
+            "fleeting",
+            "short-lived"
+          ]
+        }
+      ]
+    },
+    "serendipity": {
+      "word": "serendipity",
+      "phonetic": "/ˌser.ənˈdɪp.ə.ti/",
+      "pos": [
+        "noun"
+      ],
+      "definitions": [
+        {
+          "meaning": "The occurrence and development of events by chance in a happy or beneficial way.",
+          "example": "A fortunate stroke of serendipity brought the two researchers together."
+        }
+      ]
+    },
+    "solitude": {
+      "word": "solitude",
+      "phonetic": "/ˈsɒl.ɪ.tʃuːd/",
+      "pos": [
+        "noun"
+      ],
+      "definitions": [
+        {
+          "meaning": "The state or situation of being alone, especially in a peaceful, contemplative manner.",
+          "example": "She savored the peace and solitude of the mountains."
+        }
+      ]
+    }
+  }
+}

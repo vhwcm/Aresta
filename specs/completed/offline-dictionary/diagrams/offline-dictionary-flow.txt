@@ -1,0 +1,60 @@
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    FLUXO DO DICIONÁRIO OFFLINE LOCAL (ARESTA)               │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+                                PÁGINA DE CONTA (conta.vue)
+                   ┌──────────────────────────────────────────────────┐
+                   │ • Língua Nativa: [ Português (pt-BR) ▾ ]        │
+                   │ • Língua Tradução: [ Inglês (en) ▾ ]             │
+                   │ • Status Offline: [ ✓ EN→PT Baixado (IndexedDB) ]│
+                   └────────────────────────┬─────────────────────────┘
+                                            │ Salva preferências
+                                            ↓
+                            ┌───────────────────────────────┐
+                            │    UserSettings (Prisma DB)   │
+                            │   native_language: "pt-BR"    │
+                            │   target_trans_lang: "en"     │
+                            └───────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════════
+                              DURANTE A LEITURA DO EPUB
+═══════════════════════════════════════════════════════════════════════════════
+
+   1. Usuário seleciona 1 palavra no EPUB
+      ┌────────────────────────────────────────────────────────────────┐
+      │ "The ancient manuscript revealed secrets of the forgotten city"│
+      │                  ▲▲▲▲▲▲▲▲▲▲                                    │
+      └──────────────────────┬─────────────────────────────────────────┘
+                             │
+                             ↓
+   2. Tooltip de Seleção Flutuante (ReaderSelectionTooltip.vue)
+      ┌────────────────────────────────────────────────────────┐
+      │  [ 📖 Dicionário ]  │  [ 🖋️ Anotar ]  │  [ 📋 Copiar ]  │
+      └──────────────────────┬─────────────────────────────────┘
+                             │ Clica em "Dicionário"
+                             ↓
+   3. useOfflineDictionary (100% Local / Zero Requisições Externas)
+      ┌────────────────────────────────────────────────────────────────┐
+      │ a. Detecta língua do livro (EPUB metadata 'en' ou config)      │
+      │ b. Busca palavra no IndexedDB (aresta_dictionary_db / EN-PT)   │
+      │ c. Se não achar forma exata: executa Lematizador Offline       │
+      │    ("revealed" → "reveal", "manuscripts" → "manuscript")       │
+      └──────────────────────┬─────────────────────────────────────────┘
+                             │ Retorno instantâneo (<5ms)
+                             ↓
+   4. Exibição do Card Flutuante (ReaderDictionaryCard.vue)
+      ┌────────────────────────────────────────────────────────────────┐
+      │ 📖 manuscript  /ˈmæn.jə.skrɪpt/                 [ EN → PT ▾ ]  │
+      │ [substantivo]                                                  │
+      │                                                                │
+      │ ✦ Tradução: Manuscrito, texto original, cópia escrita à mão    │
+      │                                                                │
+      │ 1. Um livro, documento ou peça de música escrito à mão,        │
+      │    antes da invenção da imprensa ou publicação.                │
+      │    "an ancient manuscript found in the library"                │
+      │                                                                │
+      │ 2. Versão preliminar de um texto submetido para publicação.    │
+      │                                                                │
+      │ [ 📋 Copiar Definição ]                        [ ✕ Fechar ]    │
+      └────────────────────────────────────────────────────────────────┘
+

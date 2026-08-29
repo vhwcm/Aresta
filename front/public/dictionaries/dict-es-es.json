@@ -1,0 +1,46 @@
+{
+  "version": "1.0.0",
+  "sourceLang": "es",
+  "targetLang": "es",
+  "entries": {
+    "manuscrito": {
+      "word": "manuscrito",
+      "phonetic": "/ma.nusˈkɾi.to/",
+      "pos": [
+        "sustantivo"
+      ],
+      "definitions": [
+        {
+          "meaning": "Papel o libro escrito a mano, especialmente el que tiene algún valor o antigüedad.",
+          "example": "El manuscrito medieval fue restaurado con sumo cuidado."
+        }
+      ]
+    },
+    "revelar": {
+      "word": "revelar",
+      "phonetic": "/re.βeˈlaɾ/",
+      "pos": [
+        "verbo"
+      ],
+      "definitions": [
+        {
+          "meaning": "Descubrir o hacer saber algo que estaba secreto u oculto.",
+          "example": "La verdad se reveló con el paso de los años."
+        }
+      ]
+    },
+    "soledad": {
+      "word": "soledad",
+      "phonetic": "/so.leˈðað/",
+      "pos": [
+        "sustantivo"
+      ],
+      "definitions": [
+        {
+          "meaning": "Carencia voluntaria o involuntaria de compañía.",
+          "example": "Escribía mejor en la tranquila soledad de la noche."
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,223 @@
+{
+  "version": "1.0.0",
+  "sourceLang": "es",
+  "targetLang": "pt",
+  "entries": {
+    "manuscrito": {
+      "word": "manuscrito",
+      "phonetic": "/ma.nusˈkɾi.to/",
+      "pos": [
+        "substantivo",
+        "adjetivo"
+      ],
+      "translations": [
+        "manuscrito",
+        "escrito à mão"
+      ],
+      "definitions": [
+        {
+          "meaning": "Texto escrito à mão, especialmente livro ou documento de valor histórico antes da imprensa.",
+          "example": "El manuscrito fue hallado en los archivos secretos de la abadía."
+        }
+      ]
+    },
+    "revelar": {
+      "word": "revelar",
+      "phonetic": "/re.βeˈlaɾ/",
+      "pos": [
+        "verbo"
+      ],
+      "translations": [
+        "revelar",
+        "descobrir",
+        "manifestar",
+        "divulgar"
+      ],
+      "definitions": [
+        {
+          "meaning": "Descobrir ou fazer saber algo secreto ou oculto.",
+          "example": "El informe reveló detalles desconocidos sobre el suceso."
+        }
+      ]
+    },
+    "ciudad": {
+      "word": "ciudad",
+      "phonetic": "/θjuˈðað/",
+      "pos": [
+        "substantivo"
+      ],
+      "translations": [
+        "cidade",
+        "urbe",
+        "metrópole"
+      ],
+      "definitions": [
+        {
+          "meaning": "Conjunto de edifícios e ruas, habitado por uma população numerosa e densa.",
+          "example": "Caminaba por las calles empedradas de la antigua ciudad."
+        }
+      ]
+    },
+    "olvido": {
+      "word": "olvido",
+      "phonetic": "/olˈbi.ðo/",
+      "pos": [
+        "substantivo"
+      ],
+      "translations": [
+        "esquecimento",
+        "deslembrança",
+        "oblivio"
+      ],
+      "definitions": [
+        {
+          "meaning": "Perda de memória de algo outrora sabido ou sensação de ter deixado de lembrar.",
+          "example": "El libro rescató del olvido la historia de aquellos poetas."
+        }
+      ]
+    },
+    "soledad": {
+      "word": "soledad",
+      "phonetic": "/so.leˈðað/",
+      "pos": [
+        "substantivo"
+      ],
+      "translations": [
+        "solidão",
+        "isolamento",
+        "recolhimento"
+      ],
+      "definitions": [
+        {
+          "meaning": "Estado ou circunstância de estar só ou sem companhia.",
+          "example": "En la soledad de su biblioteca encontró la paz necesaria para escribir."
+        }
+      ]
+    },
+    "sombra": {
+      "word": "sombra",
+      "phonetic": "/ˈsom.bɾa/",
+      "pos": [
+        "substantivo"
+      ],
+      "translations": [
+        "sombra",
+        "penumbra",
+        "vulto"
+      ],
+      "definitions": [
+        {
+          "meaning": "Escuridão provocada pela interposição de um corpo diante da luz.",
+          "example": "Las sombras de los cipreses se alargaban con el atardecer."
+        }
+      ]
+    },
+    "esperanza": {
+      "word": "esperanza",
+      "phonetic": "/es.peˈɾan.θa/",
+      "pos": [
+        "substantivo"
+      ],
+      "translations": [
+        "esperança",
+        "confiança",
+        "expectativa"
+      ],
+      "definitions": [
+        {
+          "meaning": "Estado de ânimo no qual se espera que aconteça o que se deseja favoravelmente.",
+          "example": "Mantenían la esperanza de encontrar el camino de regreso."
+        }
+      ]
+    },
+    "libro": {
+      "word": "libro",
+      "phonetic": "/ˈli.βɾo/",
+      "pos": [
+        "substantivo"
+      ],
+      "translations": [
+        "livro",
+        "volume",
+        "obra"
+      ],
+      "definitions": [
+        {
+          "meaning": "Conjunto de muitas folhas unidas por um dos lados e protegidas por uma capa.",
+          "example": "Abrió el libro con devoción y pasó las páginas con cuidado."
+        }
+      ]
+    },
+    "escribir": {
+      "word": "escribir",
+      "phonetic": "/es.kɾiˈβiɾ/",
+      "pos": [
+        "verbo"
+      ],
+      "translations": [
+        "escrever",
+        "redigir",
+        "compor"
+      ],
+      "definitions": [
+        {
+          "meaning": "Representar ideias, palavras ou pensamentos por meio de letras e signos.",
+          "example": "Pasó años escribiendo su gran obra maestra."
+        }
+      ]
+    },
+    "sabiduría": {
+      "word": "sabiduría",
+      "phonetic": "/sa.βi.ðuˈɾi.a/",
+      "pos": [
+        "substantivo"
+      ],
+      "translations": [
+        "sabedoria",
+        "conhecimento",
+        "erudição"
+      ],
+      "definitions": [
+        {
+          "meaning": "Grau supremo de conhecimento humano adquirido por estudo e experiência de vida.",
+          "example": "La sabiduría de los ancianos guiaba a toda la comunidad."
+        }
+      ]
+    },
+    "laberinto": {
+      "word": "laberinto",
+      "phonetic": "/la.βeˈɾin.to/",
+      "pos": [
+        "substantivo"
+      ],
+      "translations": [
+        "labirinto",
+        "emaranhado"
+      ],
+      "definitions": [
+        {
+          "meaning": "Lugar formado por caminhos entrecruzados artificiais onde é muito difícil achar a saída.",
+          "example": "El laberinto borgeano de espejos y encruzilhadas infinitas."
+        }
+      ]
+    },
+    "antiguo": {
+      "word": "antiguo",
+      "phonetic": "/anˈti.ɣwo/",
+      "pos": [
+        "adjetivo"
+      ],
+      "translations": [
+        "antigo",
+        "arcaico",
+        "ancestral"
+      ],
+      "definitions": [
+        {
+          "meaning": "Que existe há muito tempo ou pertence a uma época remota.",
+          "example": "Un antiguo pergamino hallado en las ruinas del templo."
+        }
+      ]
+    }
+  }
+}

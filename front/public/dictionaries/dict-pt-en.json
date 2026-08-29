@@ -1,0 +1,81 @@
+{
+  "version": "1.0.0",
+  "sourceLang": "pt",
+  "targetLang": "en",
+  "entries": {
+    "manuscrito": {
+      "word": "manuscrito",
+      "phonetic": "/mɐ.nuʃˈkɾi.tu/",
+      "pos": [
+        "noun"
+      ],
+      "translations": [
+        "manuscript",
+        "handwritten text",
+        "draft"
+      ],
+      "definitions": [
+        {
+          "meaning": "A handwritten or original book or document before being printed.",
+          "example": "The ancient manuscript was preserved in the museum vault."
+        }
+      ]
+    },
+    "revelar": {
+      "word": "revelar",
+      "phonetic": "/ʁe.veˈlaʁ/",
+      "pos": [
+        "verb"
+      ],
+      "translations": [
+        "reveal",
+        "disclose",
+        "unveil",
+        "uncover"
+      ],
+      "definitions": [
+        {
+          "meaning": "To make known something that was previously secret or hidden.",
+          "example": "The investigation revealed crucial evidence."
+        }
+      ]
+    },
+    "saudade": {
+      "word": "saudade",
+      "phonetic": "/sawˈda.dʒi/",
+      "pos": [
+        "noun"
+      ],
+      "translations": [
+        "longing",
+        "yearning",
+        "nostalgia",
+        "homesickness"
+      ],
+      "definitions": [
+        {
+          "meaning": "A deep emotional state of nostalgic or melancholic longing for something or someone that is absent.",
+          "example": "She felt a profound saudade for her childhood home."
+        }
+      ]
+    },
+    "livro": {
+      "word": "livro",
+      "phonetic": "/ˈli.vɾu/",
+      "pos": [
+        "noun"
+      ],
+      "translations": [
+        "book",
+        "volume",
+        "tome"
+      ],
+      "definitions": [
+        {
+          "meaning": "A written or printed work consisting of pages glued or sewn together along one side and bound in covers.",
+          "example": "He spent the rainy afternoon immersed in a good book."
+        }
+      ]
+    }
+  }
+}
