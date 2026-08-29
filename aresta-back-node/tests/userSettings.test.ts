@@ -48,6 +48,8 @@ describe('UserSettings Endpoints', () => {
     expect(res.status).toBe(200);
     expect(res.body.pageAnimationEnabled).toBe(true);
     expect(res.body.language).toBe('pt-BR');
+    expect(res.body.nativeLanguage).toBe('pt-BR');
+    expect(res.body.targetTranslationLanguage).toBe('en');
     expect(res.body.epubFontSize).toBe(18);
     expect(res.body.epubFontFamily).toBe('newsreader');
     expect(res.body.themeMode).toBe('dark');
@@ -62,6 +64,8 @@ describe('UserSettings Endpoints', () => {
       .send({
         pageAnimationEnabled: false,
         language: 'en-US',
+        nativeLanguage: 'es',
+        targetTranslationLanguage: 'pt-BR',
         epubFontSize: 24,
         epubFontFamily: 'merriweather',
         themeMode: 'light',
@@ -72,6 +76,8 @@ describe('UserSettings Endpoints', () => {
     expect(res.status).toBe(200);
     expect(res.body.pageAnimationEnabled).toBe(false);
     expect(res.body.language).toBe('en-US');
+    expect(res.body.nativeLanguage).toBe('es');
+    expect(res.body.targetTranslationLanguage).toBe('pt-BR');
     expect(res.body.epubFontSize).toBe(24);
     expect(res.body.epubFontFamily).toBe('merriweather');
     expect(res.body.themeMode).toBe('light');
@@ -84,6 +90,8 @@ describe('UserSettings Endpoints', () => {
       .set('Authorization', `Bearer ${userToken}`);
 
     expect(getRes.status).toBe(200);
+    expect(getRes.body.nativeLanguage).toBe('es');
+    expect(getRes.body.targetTranslationLanguage).toBe('pt-BR');
     expect(getRes.body.themeMode).toBe('light');
     expect(getRes.body.desktopHomeGraphOpen).toBe(false);
     expect(getRes.body.desktopReaderGraphOpen).toBe(false);

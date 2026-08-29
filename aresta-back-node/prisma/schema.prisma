@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -194,16 +194,18 @@ model DailyDeckCard {
 }
 
 model UserSettings {
-  user_id                   Int      @id
-  page_animation_enabled    Boolean  @default(true)
-  language                  String   @default("pt-BR")
-  epub_font_size            Int      @default(18)
-  epub_font_family          String   @default("newsreader")
-  theme_mode                String   @default("dark")
-  desktop_home_graph_open   Boolean  @default(true)
-  desktop_reader_graph_open Boolean  @default(true)
-  updated_at                DateTime @default(now()) @updatedAt
-  user                      User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id                     Int      @id
+  page_animation_enabled      Boolean  @default(true)
+  language                    String   @default("pt-BR")
+  native_language             String   @default("pt-BR")
+  target_translation_language String   @default("en")
+  epub_font_size              Int      @default(18)
+  epub_font_family            String   @default("newsreader")
+  theme_mode                  String   @default("dark")
+  desktop_home_graph_open     Boolean  @default(true)
+  desktop_reader_graph_open   Boolean  @default(true)
+  updated_at                  DateTime @default(now()) @updatedAt
+  user                        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@map("user_settings")
 }

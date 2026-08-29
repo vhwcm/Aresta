@@ -12,6 +12,8 @@ export class UserSettingsService {
         userId,
         pageAnimationEnabled: true,
         language: 'pt-BR',
+        nativeLanguage: 'pt-BR',
+        targetTranslationLanguage: 'en',
         epubFontSize: 18,
         epubFontFamily: 'newsreader',
         themeMode: 'dark',
@@ -24,6 +26,8 @@ export class UserSettingsService {
       userId: settings.user_id,
       pageAnimationEnabled: settings.page_animation_enabled,
       language: settings.language,
+      nativeLanguage: (settings as any).native_language ?? 'pt-BR',
+      targetTranslationLanguage: (settings as any).target_translation_language ?? 'en',
       epubFontSize: (settings as any).epub_font_size ?? 18,
       epubFontFamily: (settings as any).epub_font_family ?? 'newsreader',
       themeMode: (settings as any).theme_mode ?? 'dark',
@@ -35,6 +39,8 @@ export class UserSettingsService {
   async updateSettings(userId: number, input: UpdateUserSettingsInput) {
     const pageAnimationEnabled = input.pageAnimationEnabled ?? true;
     const language = input.language ?? 'pt-BR';
+    const nativeLanguage = input.nativeLanguage ?? 'pt-BR';
+    const targetTranslationLanguage = input.targetTranslationLanguage ?? 'en';
     const epubFontSize = input.epubFontSize ?? 18;
     const epubFontFamily = input.epubFontFamily ?? 'newsreader';
     const themeMode = input.themeMode ?? 'dark';
@@ -46,6 +52,8 @@ export class UserSettingsService {
       update: {
         page_animation_enabled: pageAnimationEnabled,
         language,
+        native_language: nativeLanguage,
+        target_translation_language: targetTranslationLanguage,
         epub_font_size: epubFontSize,
         epub_font_family: epubFontFamily,
         theme_mode: themeMode,
@@ -56,6 +64,8 @@ export class UserSettingsService {
         user_id: userId,
         page_animation_enabled: pageAnimationEnabled,
         language,
+        native_language: nativeLanguage,
+        target_translation_language: targetTranslationLanguage,
         epub_font_size: epubFontSize,
         epub_font_family: epubFontFamily,
         theme_mode: themeMode,
@@ -68,6 +78,8 @@ export class UserSettingsService {
       userId: updated.user_id,
       pageAnimationEnabled: updated.page_animation_enabled,
       language: updated.language,
+      nativeLanguage: (updated as any).native_language ?? 'pt-BR',
+      targetTranslationLanguage: (updated as any).target_translation_language ?? 'en',
       epubFontSize: (updated as any).epub_font_size ?? 18,
       epubFontFamily: (updated as any).epub_font_family ?? 'newsreader',
       themeMode: (updated as any).theme_mode ?? 'dark',

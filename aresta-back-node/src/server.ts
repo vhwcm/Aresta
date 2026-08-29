@@ -2,6 +2,7 @@ import { app } from './app.js';
 import { env } from './config/env.js';
 import { prisma } from './config/prisma.js';
 import { flashcardSchedulerService } from './services/flashcardScheduler.service.js';
+import { seedDatabase } from './services/seed.service.js';
 
 async function bootstrap() {
   try {
@@ -11,6 +12,19 @@ async function bootstrap() {
     // Conectar ao banco via Prisma
     await prisma.$connect();
     console.log('💾 Conexão com banco de dados SQLite estabelecida.');
+
+    // Auto-seed: verificar se o acervo e o usuário admin viktor precisam ser sincronizados
+    try {
+      const admin = await prisma.user.findUnique({ where: { email: 'viktor@aresta.org' } });
+      const bookCount = await prisma.book.count();
+      const userBookCount = admin ? await prisma.userBook.count({ where: { user_id: admin.id } }) : 0;
+      if (!admin || bookCount < 10 || userBookCount < 10) {
+        console.log('📦 Inicializando/sincronizando acervo e estante do admin viktor...');
+        await seedDatabase(prisma);
+      }
+    } catch (seedErr) {
+      console.warn('⚠ Aviso ao verificar seed inicial:', seedErr);
+    }
 
     // Iniciar scheduler de flashcards
     flashcardSchedulerService.start();
