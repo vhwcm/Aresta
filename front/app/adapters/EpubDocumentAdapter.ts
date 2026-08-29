@@ -26,7 +26,17 @@ interface PageMapping {
   totalPagesInSection: number
 }
 
-async function buildEpubLoader(arrayBuffer: ArrayBuffer) {
+interface EpubLoaderResult {
+  loader: {
+    loadText: (uri: string) => string | null
+    loadBlob: (uri: string) => Blob | null
+    getSize: (uri: string) => number
+    sha1: undefined
+  }
+  unzipped: Record<string, Uint8Array>
+}
+
+async function buildEpubLoader(arrayBuffer: ArrayBuffer): Promise<EpubLoaderResult> {
   const { unzipSync } = await readerProfiler.measureAsync('4.1. Importação Dinâmica fflate', async () => {
     return await import('fflate')
   }, 'parse')
@@ -57,7 +67,250 @@ async function buildEpubLoader(arrayBuffer: ArrayBuffer) {
     return unzipped[normalized]?.byteLength ?? 0
   }
 
-  return { loadText, loadBlob, getSize, sha1: undefined }
+  return {
+    loader: { loadText, loadBlob, getSize, sha1: undefined },
+    unzipped,
+  }
+}
+
+/**
+ * Resolve caminhos relativos de recursos (imagens, estilos) dentro do zip do EPUB.
+ */
+function resolvePath(href: string, basePath: string): string {
+  const cleanHref = href.split('#')[0].split('?')[0].trim()
+  if (!cleanHref || cleanHref.startsWith('data:') || cleanHref.startsWith('http:') || cleanHref.startsWith('https:')) {
+    return cleanHref
+  }
+
+  let decodedHref = cleanHref
+  try {
+    decodedHref = decodeURIComponent(cleanHref)
+  } catch {
+    // fallback se decode falhar
+  }
+
+  const baseDir = basePath.includes('/') ? basePath.slice(0, basePath.lastIndexOf('/') + 1) : ''
+  const fullPath = decodedHref.startsWith('/') ? decodedHref.slice(1) : baseDir + decodedHref
+
+  const parts = fullPath.split('/')
+  const stack: string[] = []
+  for (const part of parts) {
+    if (part === '.' || part === '') continue
+    if (part === '..') {
+      if (stack.length > 0) stack.pop()
+    } else {
+      stack.push(part)
+    }
+  }
+  return stack.join('/')
+}
+
+/**
+ * Busca arquivo dentro do objeto unzipped do EPUB com tolerância a formatações de barra e maiúsculas/minúsculas.
+ */
+function getZipFile(unzipped: Record<string, Uint8Array>, path: string): Uint8Array | null {
+  if (!unzipped) return null
+  if (unzipped[path]) return unzipped[path]
+  const normalized = path.replace(/\\/g, '/').replace(/^\//, '')
+  if (unzipped[normalized]) return unzipped[normalized]
+
+  try {
+    const decoded = decodeURIComponent(normalized)
+    if (unzipped[decoded]) return unzipped[decoded]
+  } catch {}
+
+  const lower = normalized.toLowerCase()
+  for (const key of Object.keys(unzipped)) {
+    const cleanKey = key.replace(/\\/g, '/').replace(/^\//, '')
+    if (cleanKey.toLowerCase() === lower) {
+      return unzipped[key]
+    }
+  }
+  return null
+}
+
+/**
+ * Retorna o MIME type apropriado baseado na extensão do arquivo.
+ */
+function getMimeType(filePath: string): string {
+  const ext = filePath.split('.').pop()?.toLowerCase() || ''
+  switch (ext) {
+    case 'jpg':
+    case 'jpeg':
+      return 'image/jpeg'
+    case 'png':
+      return 'image/png'
+    case 'gif':
+      return 'image/gif'
+    case 'webp':
+      return 'image/webp'
+    case 'svg':
+    case 'svgz':
+      return 'image/svg+xml'
+    case 'css':
+      return 'text/css'
+    case 'woff':
+      return 'font/woff'
+    case 'woff2':
+      return 'font/woff2'
+    case 'ttf':
+      return 'font/ttf'
+    case 'otf':
+      return 'font/otf'
+    default:
+      return 'application/octet-stream'
+  }
+}
+
+/**
+ * Converte Uint8Array para Base64 com suporte a chunks.
+ */
+function uint8ArrayToBase64(bytes: Uint8Array): string {
+  let binary = ''
+  const len = bytes.byteLength
+  const chunkSize = 8192
+  for (let i = 0; i < len; i += chunkSize) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, Math.min(i + chunkSize, len)) as unknown as number[])
+  }
+  return btoa(binary)
+}
+
+/**
+ * Obtém o Data URI correspondente a um recurso interno do EPUB.
+ */
+function getAssetDataUri(unzipped: Record<string, Uint8Array>, assetPath: string, basePath: string): string | null {
+  const resolved = resolvePath(assetPath, basePath)
+  const fileBytes = getZipFile(unzipped, resolved)
+  if (!fileBytes) return null
+  const mime = getMimeType(resolved)
+  if (mime === 'image/svg+xml') {
+    const text = new TextDecoder().decode(fileBytes)
+    return `data:image/svg+xml;utf8,${encodeURIComponent(text)}`
+  }
+  const base64 = uint8ArrayToBase64(fileBytes)
+  return `data:${mime};base64,${base64}`
+}
+
+/**
+ * Processa regras CSS, convertendo referências url(...) relativas em Data URIs.
+ */
+function processCss(cssText: string, cssPath: string, unzipped: Record<string, Uint8Array>): string {
+  if (!cssText) return ''
+  return cssText.replace(/url\(\s*['"]?([^'")]+)['"]?\s*\)/gi, (match, url) => {
+    const cleanUrl = url.trim()
+    if (!cleanUrl || cleanUrl.startsWith('data:') || cleanUrl.startsWith('http:') || cleanUrl.startsWith('https:')) {
+      return match
+    }
+    const dataUri = getAssetDataUri(unzipped, cleanUrl, cssPath)
+    if (dataUri) {
+      return `url("${dataUri}")`
+    }
+    return match
+  })
+}
+
+/**
+ * Prepara o Document da seção do EPUB:
+ * 1. Converte links de CSS externo (<link rel="stylesheet">) em tags <style> com conteúdo embutido.
+ * 2. Resolve todas as imagens (<img src>, <image xlink:href>, <image href>) para Data URIs Base64.
+ * 3. Resolve mídias (<source>, <video>, <audio>, <object>, <embed>) para Data URIs.
+ * 4. Processa URLs em estilos inline e tags de estilo.
+ */
+function prepareSectionDocument(doc: Document | null, sectionPath: string, unzipped: Record<string, Uint8Array>): void {
+  if (!doc || typeof doc.querySelectorAll !== 'function') return
+
+  // 1. Inlining de CSS externo (<link rel="stylesheet">)
+  const linkElements = Array.from(doc.querySelectorAll('link[rel="stylesheet"], link[type="text/css"], link[href$=".css"]'))
+  for (const link of linkElements) {
+    const href = link.getAttribute('href')
+    if (href) {
+      const resolvedPath = resolvePath(href, sectionPath)
+      const cssBytes = getZipFile(unzipped, resolvedPath)
+      if (cssBytes) {
+        const rawCss = new TextDecoder().decode(cssBytes)
+        const processedCss = processCss(rawCss, resolvedPath, unzipped)
+        const styleEl = doc.createElement('style')
+        styleEl.setAttribute('data-origin-href', href)
+        styleEl.innerHTML = processedCss
+        link.parentNode?.replaceChild(styleEl, link)
+      }
+    }
+  }
+
+  // 2. Processa tags <style> existentes
+  const styleElements = Array.from(doc.querySelectorAll('style'))
+  for (const style of styleElements) {
+    if (style.innerHTML) {
+      style.innerHTML = processCss(style.innerHTML, sectionPath, unzipped)
+    }
+  }
+
+  // 3. Imagens <img> (src e srcset)
+  const imgElements = Array.from(doc.querySelectorAll('img'))
+  for (const img of imgElements) {
+    const src = img.getAttribute('src')
+    if (src && !src.startsWith('data:') && !src.startsWith('http:') && !src.startsWith('https:')) {
+      const dataUri = getAssetDataUri(unzipped, src, sectionPath)
+      if (dataUri) {
+        img.setAttribute('src', dataUri)
+      }
+    }
+    const srcset = img.getAttribute('srcset')
+    if (srcset) {
+      const newSrcset = srcset.split(',').map((part) => {
+        const [url, ...rest] = part.trim().split(/\s+/)
+        if (url && !url.startsWith('data:') && !url.startsWith('http:') && !url.startsWith('https:')) {
+          const dataUri = getAssetDataUri(unzipped, url, sectionPath)
+          return dataUri ? [dataUri, ...rest].join(' ') : part
+        }
+        return part
+      }).join(', ')
+      img.setAttribute('srcset', newSrcset)
+    }
+  }
+
+  // 4. SVG <image> (xlink:href e href)
+  const svgImages = Array.from(doc.querySelectorAll('image'))
+  for (const svgImg of svgImages) {
+    const xlinkHref = svgImg.getAttribute('xlink:href') || svgImg.getAttributeNS('http://www.w3.org/1999/xlink', 'href')
+    if (xlinkHref && !xlinkHref.startsWith('data:') && !xlinkHref.startsWith('http:') && !xlinkHref.startsWith('https:')) {
+      const dataUri = getAssetDataUri(unzipped, xlinkHref, sectionPath)
+      if (dataUri) {
+        svgImg.setAttribute('xlink:href', dataUri)
+        svgImg.setAttribute('href', dataUri)
+      }
+    }
+    const href = svgImg.getAttribute('href')
+    if (href && !href.startsWith('data:') && !href.startsWith('http:') && !href.startsWith('https:')) {
+      const dataUri = getAssetDataUri(unzipped, href, sectionPath)
+      if (dataUri) {
+        svgImg.setAttribute('href', dataUri)
+        svgImg.setAttribute('xlink:href', dataUri)
+      }
+    }
+  }
+
+  // 5. Mídias e objetos (<source>, <video>, <audio>, <object>, <embed>)
+  const mediaElements = Array.from(doc.querySelectorAll('source[src], object[data], embed[src], video[poster]'))
+  for (const el of mediaElements) {
+    const src = el.getAttribute('src') || el.getAttribute('data') || el.getAttribute('poster')
+    const attr = el.hasAttribute('src') ? 'src' : (el.hasAttribute('data') ? 'data' : 'poster')
+    if (src && !src.startsWith('data:') && !src.startsWith('http:') && !src.startsWith('https:')) {
+      const dataUri = getAssetDataUri(unzipped, src, sectionPath)
+      if (dataUri) {
+        el.setAttribute(attr, dataUri)
+      }
+    }
+  }
+
+  // 6. Atributos de estilo inline com url(...)
+  const elementsWithStyle = Array.from(doc.querySelectorAll('[style]'))
+  for (const el of elementsWithStyle) {
+    const styleAttr = el.getAttribute('style')
+    if (styleAttr && /url\(/i.test(styleAttr)) {
+      el.setAttribute('style', processCss(styleAttr, sectionPath, unzipped))
+    }
+  }
 }
 
 const EPUB_TYPOGRAPHY_STYLES = `
@@ -247,6 +500,7 @@ export class EpubDocumentAdapter implements IBookDocument {
   private _sections: FoliateSection[] = []
   private _sectionDocs: Map<number, Document> = new Map()
   private _pageMap: PageMapping[] = []
+  private _unzipped: Record<string, Uint8Array> | null = null
 
   get metadata(): BookMetadata {
     return this._metadata
@@ -394,7 +648,8 @@ export class EpubDocumentAdapter implements IBookDocument {
 
     defaultTitle = defaultTitle.replace(/\.epub$/i, '')
 
-    const loader = await buildEpubLoader(arrayBuffer)
+    const { loader, unzipped } = await buildEpubLoader(arrayBuffer)
+    this._unzipped = unzipped
 
     const epub = new EPUB(loader) as FoliateEpub
     await readerProfiler.measureAsync('4.4. foliate-js epub.init()', async () => {
@@ -425,6 +680,9 @@ export class EpubDocumentAdapter implements IBookDocument {
       if (section) {
         try {
           doc = await section.createDocument()
+          if (doc && this._unzipped) {
+            prepareSectionDocument(doc, section.id || '', this._unzipped)
+          }
           this._sectionDocs.set(sIdx, doc)
         } catch (err) {
           logWarn(`[EpubAdapter] Erro ao carregar documento da seção ${sIdx}:`, err)
@@ -469,6 +727,9 @@ export class EpubDocumentAdapter implements IBookDocument {
       let doc = this._sectionDocs.get(mapping.sectionIndex)
       if (!doc) {
         doc = await section.createDocument()
+        if (doc && this._unzipped) {
+          prepareSectionDocument(doc, section.id || '', this._unzipped)
+        }
         this._sectionDocs.set(mapping.sectionIndex, doc)
       }
       const body = doc.body ?? doc
@@ -497,6 +758,9 @@ export class EpubDocumentAdapter implements IBookDocument {
       let doc = this._sectionDocs.get(mapping.sectionIndex)
       if (!doc) {
         doc = await section.createDocument()
+        if (doc && this._unzipped) {
+          prepareSectionDocument(doc, section.id || '', this._unzipped)
+        }
         this._sectionDocs.set(mapping.sectionIndex, doc)
       }
 
@@ -544,7 +808,6 @@ export class EpubDocumentAdapter implements IBookDocument {
       contentWrapper.style.lineHeight = '1.7'
       contentWrapper.style.wordWrap = 'break-word'
       contentWrapper.style.marginLeft = `-${colOffset}px`
-      contentWrapper.style.color = '#1a1a1a'
       contentWrapper.style.userSelect = 'text'
       contentWrapper.style.webkitUserSelect = 'text'
       contentWrapper.innerHTML = doc.body ? doc.body.innerHTML : ''
@@ -584,6 +847,9 @@ export class EpubDocumentAdapter implements IBookDocument {
       let doc = this._sectionDocs.get(mapping.sectionIndex)
       if (!doc) {
         doc = await section.createDocument()
+        if (doc && this._unzipped) {
+          prepareSectionDocument(doc, section.id || '', this._unzipped)
+        }
         this._sectionDocs.set(mapping.sectionIndex, doc)
       }
       const docStyles = doc && typeof doc.querySelectorAll === 'function' ? Array.from(doc.querySelectorAll('style')).map((s) => s.innerHTML).join('\n') : ''
@@ -605,7 +871,7 @@ export class EpubDocumentAdapter implements IBookDocument {
             <div xmlns="http://www.w3.org/1999/xhtml"
               style="width:${width}px;height:${height}px;overflow:hidden;background:#faf9f7;margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;">
               <div class="epub-text-layer-content"
-                style="width:${width}px;height:${height}px;padding:${paddingY}px ${paddingX}px;box-sizing:border-box;column-width:${colWidth}px;column-gap:${colGap}px;column-fill:auto;font-family:${this._fontFamily};font-size:${this._fontSize}px;color:#1a1a1a;line-height:1.7;word-wrap:break-word;margin-left:-${colOffset}px;">
+                style="width:${width}px;height:${height}px;padding:${paddingY}px ${paddingX}px;box-sizing:border-box;column-width:${colWidth}px;column-gap:${colGap}px;column-fill:auto;font-family:${this._fontFamily};font-size:${this._fontSize}px;line-height:1.7;word-wrap:break-word;margin-left:-${colOffset}px;">
                 ${bodyContent}
               </div>
             </div>
@@ -662,5 +928,6 @@ export class EpubDocumentAdapter implements IBookDocument {
     this._sections = []
     this._totalPages = 0
     this._isLoaded = false
+    this._unzipped = null
   }
 }

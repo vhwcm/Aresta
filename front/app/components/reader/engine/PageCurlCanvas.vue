@@ -981,7 +981,7 @@ defineExpose({
 }
 
 .page-text-layer :deep(.epub-text-layer-content) {
-  color: #1a1a1a !important;
+  color: #1a1a1a;
   user-select: text !important;
   -webkit-user-select: text !important;
   line-height: 1.7 !important;
@@ -990,19 +990,16 @@ defineExpose({
   text-rendering: optimizeLegibility !important;
 }
 
-.theme-sepia .page-text-layer :deep(.epub-text-layer-content),
-.theme-sepia .page-text-layer :deep(.epub-text-layer-content *) {
-  color: #2a2521 !important;
+.theme-sepia .page-text-layer :deep(.epub-text-layer-content) {
+  color: #2a2521;
 }
 
-.theme-white .page-text-layer :deep(.epub-text-layer-content),
-.theme-white .page-text-layer :deep(.epub-text-layer-content *) {
-  color: #1a1a1a !important;
+.theme-white .page-text-layer :deep(.epub-text-layer-content) {
+  color: #1a1a1a;
 }
 
-.theme-black .page-text-layer :deep(.epub-text-layer-content),
-.theme-black .page-text-layer :deep(.epub-text-layer-content *) {
-  color: #e4e4e7 !important;
+.theme-black .page-text-layer :deep(.epub-text-layer-content) {
+  color: #e4e4e7;
 }
 
 .page-text-layer :deep(.epub-text-layer-content h1),

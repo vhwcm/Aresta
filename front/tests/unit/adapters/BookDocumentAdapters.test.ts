@@ -307,5 +307,69 @@ describe('Book Document Adapters and Factory', () => {
 
       adapter.destroy()
     })
+
+    it('inlines external CSS stylesheets and resolves image URLs to Base64 Data URIs', async () => {
+      const adapter = new EpubDocumentAdapter()
+      const mockCssText = '.colored-heading { color: #2980b9; font-weight: bold; } .tag { color: #e74c3c; background: #fff3cd; }'
+      const mockCssBytes = new TextEncoder().encode(mockCssText)
+      const mockPngBytes = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x01])
+
+      const { unzipSync } = await import('fflate')
+      vi.mocked(unzipSync).mockReturnValueOnce({
+        'OEBPS/Styles/style.css': mockCssBytes,
+        'OEBPS/Images/diagram.png': mockPngBytes,
+      } as any)
+
+      // Cria um Document DOM real para a seção
+      const sectionDoc = document.implementation.createHTMLDocument('Capítulo com Imagens e Cores')
+      sectionDoc.head.innerHTML = '<link rel="stylesheet" href="../Styles/style.css" />'
+      sectionDoc.body.innerHTML = `
+        <h1 class="colored-heading">Seção Ilustrada</h1>
+        <p>Texto com <span class="tag">destaque colorido</span>.</p>
+        <img src="../Images/diagram.png" alt="Diagrama" />
+      `
+
+      const mockEpubInstance = {
+        metadata: { title: 'Livro Cores e Imagens', creator: 'Autor' },
+        sections: [
+          {
+            id: 'OEBPS/Text/chapter1.xhtml',
+            linear: true,
+            createDocument: () => Promise.resolve(sectionDoc)
+          }
+        ],
+        init: () => Promise.resolve()
+      }
+
+      const foliateMod: any = await import('foliate-js/epub.js')
+      const EPUB = foliateMod.EPUB || foliateMod.default || foliateMod.Book
+      const origEPUB = (EPUB as any)
+      vi.spyOn(origEPUB.prototype, 'init').mockImplementation(function (this: any) {
+        this.metadata = mockEpubInstance.metadata
+        this.sections = mockEpubInstance.sections
+        return Promise.resolve()
+      })
+
+      const buffer = new ArrayBuffer(16)
+      await adapter.load(buffer, 'ilustrado.epub')
+
+      const container = document.createElement('div')
+      await adapter.renderTextLayer(1, container, 800, 1200)
+
+      // Verifica se o CSS externo foi inlinado e as cores preservadas
+      const styleTag = container.querySelector('style')
+      expect(styleTag).not.toBeNull()
+      expect(styleTag?.innerHTML).toContain('.colored-heading')
+      expect(styleTag?.innerHTML).toContain('#2980b9')
+      expect(styleTag?.innerHTML).toContain('.tag')
+      expect(styleTag?.innerHTML).toContain('#e74c3c')
+
+      // Verifica se a imagem relativa foi resolvida para Data URI base64
+      const img = container.querySelector('img')
+      expect(img).not.toBeNull()
+      expect(img?.getAttribute('src')).toMatch(/^data:image\/png;base64,/)
+
+      adapter.destroy()
+    })
   })
 })

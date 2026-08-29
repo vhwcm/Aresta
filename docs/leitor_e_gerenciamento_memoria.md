@@ -78,8 +78,9 @@ const [fetchedMeta, response] = await Promise.all([
 #### B. EPUB (`EpubDocumentAdapter.ts`)
 * Utiliza a biblioteca `fflate` (`unzipSync`) para descompactar o contêiner ZIP do EPUB na memória do navegador.
 * O parser do `foliate-js` mapeia os capítulos e seções lineares (`spine`).
-* As seções XHTML são convertidas em canvas/SVG e texturas apenas quando o usuário navega até elas.
-* **Ajuste Dinâmico de Tipografia e Repaginação (`setFontSize`)**: Permite alterar o tamanho da fonte (12px a 36px) durante a leitura com repaginação proporcional por coluna e preservação exata da posição de leitura na seção ativa.
+* **Resolução de Imagens e Recursos**: Todas as imagens (`<img src>`, `<image xlink:href>`, `<image href>`, `<source>`) são resolvidas em relação ao caminho da seção e convertidas para Data URIs Base64 em memória, permitindo renderização imediata tanto na camada de texto DOM quanto nas texturas WebGL/Canvas do efeito 3D sem bloqueio de segurança SVG.
+* **Inlining de Estilos e Preservação de Cores**: As folhas de estilo externas (`<link rel="stylesheet">`) e regras CSS são inlinadas em tags `<style>` com resolução de `url(...)`, permitindo que cores de títulos, destaques, spans e classes originais do EPUB sejam fielmente exibidas e se adaptem harmoniosamente aos temas (sepia, white, dark) do leitor.
+* **Ajuste Dinâmico de Tipografia e Repaginação (`setFontSize` / `setFontFamily`)**: Permite alterar o tamanho da fonte (12px a 36px) e tipografia durante a leitura com repaginação proporcional por coluna e preservação exata da posição de leitura na seção ativa.
 
 ---
 
