@@ -10,8 +10,10 @@
     "models": "node list-gemini-models.js",
     "list-models": "node list-gemini-models.js",
     "setup:hooks": "bash scripts/setup-hooks.sh",
-    "desktop:dev": "npm run tauri:dev --prefix front",
-    "desktop:build": "npm run tauri:build --prefix front"
+    "setup:desktop": "node scripts/setup-desktop.js",
+    "desktop:setup": "node scripts/setup-desktop.js",
+    "desktop:dev": "node scripts/desktop-run.js dev",
+    "desktop:build": "node scripts/desktop-run.js build"
   },
   "devDependencies": {
     "@types/node": "^26.2.0"

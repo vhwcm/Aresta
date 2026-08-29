@@ -94,30 +94,23 @@ O Aresta adota a filosofia **Local-First**: os dados residem prioritariamente no
 
 ## 3. Como Executar e Empacotar o Aplicativo Desktop
 
-### 3.1. Pré-requisitos
-- **Node.js** v20+ e **npm** instalados.
-- **Rust & Cargo** (necessários apenas para compilar o executável desktop):
-  - No Windows: Instalar via [rustup.rs](https://rustup.rs/) com a toolchain C++ Build Tools (MSVC).
-  - No Linux: `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh` e dependências:
-    ```bash
-    sudo apt update && sudo apt install -y libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
-    ```
+### 3.1. Instalação Automática de Dependências Desktop (1 Comando)
+Para baixar e configurar automaticamente o Rust, Cargo e as dependências nativas:
+
+```bash
+npm run setup:desktop
+```
+*O script detecta o sistema operacional (Windows, Linux ou macOS), executa a instalação do Rustup e configura as bibliotecas necessárias.*
+
+---
 
 ### 3.2. Comandos de Execução
 
-#### Executar Desktop em Modo Desenvolvimento (Hot-Reload):
-```bash
-npm run desktop:dev
-# ou na pasta front:
-cd front && npm run tauri:dev
-```
-
-#### Compilar Instaladores para Produção:
-```bash
-npm run desktop:build
-# ou na pasta front:
-cd front && npm run tauri:build
-```
+| Comando | Descrição |
+| :--- | :--- |
+| `npm run setup:desktop` | Instala automaticamente o Rust, Cargo e dependências nativas no SO |
+| `npm run desktop:dev` | Inicia o Nuxt + Tauri Desktop em modo desenvolvimento local (Hot-Reload) |
+| `npm run desktop:build` | Compila os instaladores para Windows (`.exe`/`.msi`) e Linux (`.AppImage`/`.deb`) |
 
 Os instaladores gerados ficam disponíveis em:
 - **Windows**: `front/src-tauri/target/release/bundle/nsis/` (`.exe`) e `bundle/msi/` (`.msi`).
