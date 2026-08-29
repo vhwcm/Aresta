@@ -12,7 +12,7 @@
   >
     <!-- Dot Grid Background (Infinite Pattern scaled with Zoom) -->
     <div
-      class="canvas-dot-grid absolute inset-0 pointer-events-none opacity-25 dark:opacity-20"
+      class="canvas-dot-grid absolute inset-0 pointer-events-none opacity-40 dark:opacity-30 text-textSecondary"
       :style="gridStyle"
     ></div>
 
@@ -199,7 +199,7 @@ const gridStyle = computed(() => {
   const offsetX = viewport.value.x % size;
   const offsetY = viewport.value.y % size;
   return {
-    backgroundImage: `radial-gradient(circle, currentColor 1px, transparent 1px)`,
+    backgroundImage: `radial-gradient(circle, currentColor 1.25px, transparent 1.25px)`,
     backgroundSize: `${size}px ${size}px`,
     backgroundPosition: `${offsetX}px ${offsetY}px`,
   };

@@ -3,10 +3,10 @@
     <!-- Área Principal de Conteúdo -->
     <div class="flex-1 flex w-full relative">
       <main class="flex-1 min-h-screen" :class="[
-        route.path.startsWith('/grafo') ? 'overflow-hidden p-0' : 'overflow-y-auto',
-        auth.isLoggedIn.value ? 'pb-28' : 'pb-12'
+        route.path.startsWith('/grafo') || route.path.startsWith('/canvas/') ? 'overflow-hidden p-0' : 'overflow-y-auto',
+        auth.isLoggedIn.value ? (route.path.startsWith('/canvas/') ? 'pb-0' : 'pb-28') : 'pb-12'
       ]">
-        <div v-if="!route.path.startsWith('/grafo')" class="w-full px-4 sm:px-8 md:px-10 lg:px-12 xl:px-14 2xl:px-16 py-6 md:py-8 transition-all duration-300">
+        <div v-if="!route.path.startsWith('/grafo') && !route.path.startsWith('/canvas/')" class="w-full px-4 sm:px-8 md:px-10 lg:px-12 xl:px-14 2xl:px-16 py-6 md:py-8 transition-all duration-300">
           <slot />
         </div>
         <div v-else class="w-full h-full">
@@ -15,8 +15,8 @@
       </main>
     </div>
 
-    <!-- Barra de Navegação Inferior Colapsável Flutuante (Apenas para Usuários Autenticados e fora do leitor) -->
-    <BottomNavbar v-if="auth.isLoggedIn.value && !route.path.startsWith('/reader')" />
+    <!-- Barra de Navegação Inferior Colapsável Flutuante (Apenas para Usuários Autenticados e fora do leitor e do canvas ativo) -->
+    <BottomNavbar v-if="auth.isLoggedIn.value && !route.path.startsWith('/reader') && !route.path.startsWith('/canvas/')" />
 
     <!-- Modais Globais -->
     <CommandPalette v-if="auth.isLoggedIn.value" />
