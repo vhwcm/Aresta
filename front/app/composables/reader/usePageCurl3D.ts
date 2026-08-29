@@ -43,8 +43,10 @@ const VERTEX_SHADER = `
     float rollCircumference = PI * dynamicRadius;
 
     // Inclinação cônica diagonal quando puxado pelo canto
-    float cornerBias = (uGripY - 0.5) * 0.55;
-    float angle = cornerBias * arcFactor + uPointerDeltaY * 0.35;
+    // No espaço de tela, uGripY vai de 0.0 (topo) a 1.0 (base).
+    // No Three.js (WebGL), pos.y é positivo no topo (+H/2) e negativo na base (-H/2).
+    float cornerBias = (0.5 - uGripY) * 0.55;
+    float angle = cornerBias * arcFactor - uPointerDeltaY * 0.35;
     angle = clamp(angle, -0.35, 0.35);
 
     vec3 deformedPos = pos;
@@ -298,12 +300,13 @@ export function usePageCurl3D(canvasHostRef: Ref<HTMLCanvasElement | null>) {
         },
       })
     } else {
-      shaderMaterial.uniforms.uPageWidth.value = currentWidth
-      shaderMaterial.uniforms.uPageHeight.value = currentHeight
-      shaderMaterial.uniforms.uRadius.value = Math.max(32, currentWidth * 0.14)
-      shaderMaterial.uniforms.uDirection.value = currentDirection === 'next' ? 1.0 : -1.0
-      shaderMaterial.uniforms.uFrontTexture.value = frontTexture
-      shaderMaterial.uniforms.uBackTexture.value = backTexture
+      const u = shaderMaterial.uniforms as any
+      u.uPageWidth.value = currentWidth
+      u.uPageHeight.value = currentHeight
+      u.uRadius.value = Math.max(32, currentWidth * 0.14)
+      u.uDirection.value = currentDirection === 'next' ? 1.0 : -1.0
+      u.uFrontTexture.value = frontTexture
+      u.uBackTexture.value = backTexture
     }
 
     mesh = new THREE.Mesh(geometry, shaderMaterial)
@@ -316,6 +319,7 @@ export function usePageCurl3D(canvasHostRef: Ref<HTMLCanvasElement | null>) {
 
   function setTextures(frontCanvas: HTMLCanvasElement | null, backCanvas: HTMLCanvasElement | null) {
     if (!shaderMaterial) return
+    const u = shaderMaterial.uniforms as any
 
     if (frontCanvas && frontCanvas.width > 0 && frontCanvas.height > 0) {
       if (frontTexture) frontTexture.dispose()
@@ -324,7 +328,7 @@ export function usePageCurl3D(canvasHostRef: Ref<HTMLCanvasElement | null>) {
       frontTexture.magFilter = THREE.LinearFilter
       frontTexture.generateMipmaps = false
       frontTexture.needsUpdate = true
-      shaderMaterial.uniforms.uFrontTexture.value = frontTexture
+      u.uFrontTexture.value = frontTexture
     }
 
     if (backCanvas && backCanvas.width > 0 && backCanvas.height > 0) {
@@ -334,7 +338,7 @@ export function usePageCurl3D(canvasHostRef: Ref<HTMLCanvasElement | null>) {
       backTexture.magFilter = THREE.LinearFilter
       backTexture.generateMipmaps = false
       backTexture.needsUpdate = true
-      shaderMaterial.uniforms.uBackTexture.value = backTexture
+      u.uBackTexture.value = backTexture
     }
 
     render()
@@ -348,23 +352,24 @@ export function usePageCurl3D(canvasHostRef: Ref<HTMLCanvasElement | null>) {
     theme?: 'sepia' | 'white' | 'black'
   }) {
     if (!shaderMaterial) return
+    const u = shaderMaterial.uniforms as any
 
-    shaderMaterial.uniforms.uProgress.value = params.progress
-    shaderMaterial.uniforms.uDirection.value = params.direction === 'next' ? 1.0 : -1.0
+    u.uProgress.value = params.progress
+    u.uDirection.value = params.direction === 'next' ? 1.0 : -1.0
 
     if (typeof params.gripY === 'number') {
-      shaderMaterial.uniforms.uGripY.value = params.gripY
+      u.uGripY.value = params.gripY
     }
     if (typeof params.pointerDeltaY === 'number') {
-      shaderMaterial.uniforms.uPointerDeltaY.value = params.pointerDeltaY
+      u.uPointerDeltaY.value = params.pointerDeltaY
     }
 
     if (params.theme === 'sepia') {
-      shaderMaterial.uniforms.uPaperTint.value.set(0.99, 0.96, 0.91)
+      u.uPaperTint.value.set(0.99, 0.96, 0.91)
     } else if (params.theme === 'black') {
-      shaderMaterial.uniforms.uPaperTint.value.set(0.92, 0.92, 0.92)
+      u.uPaperTint.value.set(0.92, 0.92, 0.92)
     } else {
-      shaderMaterial.uniforms.uPaperTint.value.set(1.0, 1.0, 1.0)
+      u.uPaperTint.value.set(1.0, 1.0, 1.0)
     }
   }
 
