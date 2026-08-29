@@ -13,109 +13,20 @@
   >
     <div
       class="book-3d-stage"
-      :style="{
-        backgroundColor: themeBgColor,
-      }"
+      :style="{ backgroundColor: themeBgColor }"
     >
-      <!-- ================= MODO ESTÁTICO (LEITURA NORMAL) ================= -->
+      <!-- ================= SPREAD DE BASE (PÁGINAS SUBJACENTES FIXAS) ================= -->
       <div
-        v-if="store.document && !isAnimating3D"
-        class="spread-container spread-container--static"
+        v-if="store.document"
+        class="spread-container spread-container--base"
         :style="{ backgroundColor: themeBgColor }"
       >
-        <!-- 2 Páginas: Página Esquerda -->
-        <div
-          v-if="pageLayout.isTwoPage && pageLayout.leftPage && pageLayout.leftPage.pageNumber > 0"
-          class="page-sheet page-sheet--left"
-          :style="{
-            left: `${pageLayout.leftPage.left}px`,
-            top: `${pageLayout.leftPage.top}px`,
-            width: `${pageLayout.leftPage.width}px`,
-            height: `${pageLayout.leftPage.height}px`,
-          }"
-        >
-          <canvas
-            v-if="store.document?.type === 'pdf'"
-            ref="leftCanvasRef"
-            class="page-pdf-canvas"
-          />
-          <div
-            ref="leftTextLayerRef"
-            class="page-text-layer page-text-layer--left"
-          />
-        </div>
-
-        <!-- 2 Páginas: Lombada Central -->
-        <div
-          v-if="pageLayout.isTwoPage && pageLayout.leftPage && pageLayout.rightPage && pageLayout.leftPage.pageNumber > 0 && pageLayout.rightPage.pageNumber > 0"
-          class="book-spine-divider"
-          :style="{
-            left: `${pageLayout.leftPage.left + pageLayout.leftPage.width - 16}px`,
-            top: `${pageLayout.leftPage.top}px`,
-            width: '32px',
-            height: `${pageLayout.leftPage.height}px`,
-          }"
-          aria-hidden="true"
-        />
-
-        <!-- 2 Páginas: Página Direita -->
-        <div
-          v-if="pageLayout.isTwoPage && pageLayout.rightPage && pageLayout.rightPage.pageNumber > 0"
-          class="page-sheet page-sheet--right"
-          :style="{
-            left: `${pageLayout.rightPage.left}px`,
-            top: `${pageLayout.rightPage.top}px`,
-            width: `${pageLayout.rightPage.width}px`,
-            height: `${pageLayout.rightPage.height}px`,
-          }"
-        >
-          <canvas
-            v-if="store.document?.type === 'pdf'"
-            ref="rightCanvasRef"
-            class="page-pdf-canvas"
-          />
-          <div
-            ref="rightTextLayerRef"
-            class="page-text-layer page-text-layer--right"
-          />
-        </div>
-
-        <!-- 1 Página: Central -->
-        <div
-          v-if="!pageLayout.isTwoPage && pageLayout.singlePage && pageLayout.singlePage.pageNumber > 0"
-          class="page-sheet page-sheet--single"
-          :style="{
-            left: `${pageLayout.singlePage.left}px`,
-            top: `${pageLayout.singlePage.top}px`,
-            width: `${pageLayout.singlePage.width}px`,
-            height: `${pageLayout.singlePage.height}px`,
-          }"
-        >
-          <canvas
-            v-if="store.document?.type === 'pdf'"
-            ref="singleCanvasRef"
-            class="page-pdf-canvas"
-          />
-          <div
-            ref="singleTextLayerRef"
-            class="page-text-layer page-text-layer--single"
-          />
-        </div>
-      </div>
-
-      <!-- ================= MODO 3D ATIVO (DURANTE A VIRADA DE PÁGINA) ================= -->
-      <div
-        v-else-if="store.document && isAnimating3D"
-        class="spread-container spread-container--3d"
-        :style="{ backgroundColor: themeBgColor }"
-      >
-        <!-- CASO 1: MODO 2 PÁGINAS -->
+        <!-- MODO 2 PÁGINAS: BASE -->
         <template v-if="pageLayout.isTwoPage">
-          <!-- 1.1 Base Sob a Folha (Páginas Estáticas que ficam visíveis ou se revelam) -->
-          <!-- Página Esquerda Base -->
+          <!-- Página Esquerda Base (Subjacente / Revelada no Previous) -->
           <div
-            v-if="pageLayout.leftPage"
-            class="page-sheet page-sheet--left page-sheet--underlying"
+            v-if="pageLayout.leftPage && pageLayout.leftPage.pageNumber > 0"
+            class="page-sheet page-sheet--left page-sheet--base"
             :style="{
               left: `${pageLayout.leftPage.left}px`,
               top: `${pageLayout.leftPage.top}px`,
@@ -123,27 +34,25 @@
               height: `${pageLayout.leftPage.height}px`,
             }"
           >
-            <!-- Quando vai para 'next', o lado esquerdo é o left original. Quando vai para 'prev', o lado esquerdo revela o incomingLeft! -->
             <canvas
               v-if="store.document?.type === 'pdf'"
-              ref="underlyingLeftCanvasRef"
+              ref="baseLeftCanvasRef"
               class="page-pdf-canvas"
             />
             <div
-              ref="underlyingLeftTextLayerRef"
+              ref="baseLeftTextLayerRef"
               class="page-text-layer page-text-layer--left"
             />
-            <!-- Sombra projetada se a folha estiver vindo da esquerda -->
+            <!-- Sombra de sobreposição quando a folha gira sobre a esquerda -->
             <div
-              v-if="transitionDirection === 'previous'"
               class="page-underlying-shadow page-underlying-shadow--left"
-              :style="{ opacity: castShadowOpacity }"
+              :style="{ opacity: isTurningPrev ? castShadowOpacity : 0 }"
             />
           </div>
 
-          <!-- Lombada Central -->
+          <!-- Lombada Central Fixa -->
           <div
-            v-if="pageLayout.leftPage && pageLayout.rightPage"
+            v-if="pageLayout.leftPage && pageLayout.rightPage && pageLayout.leftPage.pageNumber > 0 && pageLayout.rightPage.pageNumber > 0"
             class="book-spine-divider"
             :style="{
               left: `${pageLayout.leftPage.left + pageLayout.leftPage.width - 16}px`,
@@ -154,10 +63,10 @@
             aria-hidden="true"
           />
 
-          <!-- Página Direita Base -->
+          <!-- Página Direita Base (Subjacente / Revelada no Next) -->
           <div
-            v-if="pageLayout.rightPage"
-            class="page-sheet page-sheet--right page-sheet--underlying"
+            v-if="pageLayout.rightPage && pageLayout.rightPage.pageNumber > 0"
+            class="page-sheet page-sheet--right page-sheet--base"
             :style="{
               left: `${pageLayout.rightPage.left}px`,
               top: `${pageLayout.rightPage.top}px`,
@@ -165,115 +74,27 @@
               height: `${pageLayout.rightPage.height}px`,
             }"
           >
-            <!-- Quando vai para 'next', o lado direito revela o incomingRight! Quando vai para 'prev', o lado direito é o right original. -->
             <canvas
               v-if="store.document?.type === 'pdf'"
-              ref="underlyingRightCanvasRef"
+              ref="baseRightCanvasRef"
               class="page-pdf-canvas"
             />
             <div
-              ref="underlyingRightTextLayerRef"
+              ref="baseRightTextLayerRef"
               class="page-text-layer page-text-layer--right"
             />
-            <!-- Sombra projetada da folha caindo sobre a página direita -->
+            <!-- Sombra de sobreposição quando a folha gira sobre a direita -->
             <div
-              v-if="transitionDirection === 'next'"
               class="page-underlying-shadow page-underlying-shadow--right"
-              :style="{ opacity: castShadowOpacity }"
+              :style="{ opacity: isTurningNext ? castShadowOpacity : 0 }"
             />
-          </div>
-
-          <!-- 1.2 Folha 3D em Movimento (The Turning Leaf) -->
-          <!-- Se for NEXT: Folha parte da direita e gira para a esquerda em torno da lombada -->
-          <div
-            v-if="transitionDirection === 'next' && pageLayout.rightPage"
-            class="turning-leaf turning-leaf--next"
-            :style="{
-              left: `${pageLayout.rightPage.left}px`,
-              top: `${pageLayout.rightPage.top}px`,
-              width: `${pageLayout.rightPage.width}px`,
-              height: `${pageLayout.rightPage.height}px`,
-              transformOrigin: '0% 50%',
-              transform: `perspective(2400px) rotateY(${nextLeafRotation}deg)`,
-            }"
-          >
-            <!-- Frente da Folha (Página Direita Atual) -->
-            <div class="turning-leaf__face turning-leaf__face--front">
-              <canvas
-                v-if="store.document?.type === 'pdf'"
-                ref="leafFrontCanvasRef"
-                class="page-pdf-canvas"
-              />
-              <div
-                ref="leafFrontTextLayerRef"
-                class="page-text-layer page-text-layer--right"
-              />
-              <div class="page-curl-shading" :style="{ opacity: curlShadowOpacity }" />
-            </div>
-
-            <!-- Verso da Folha (Página Esquerda Entrante) -->
-            <div class="turning-leaf__face turning-leaf__face--back">
-              <canvas
-                v-if="store.document?.type === 'pdf'"
-                ref="leafBackCanvasRef"
-                class="page-pdf-canvas"
-              />
-              <div
-                ref="leafBackTextLayerRef"
-                class="page-text-layer page-text-layer--left"
-              />
-              <div class="page-curl-shading" :style="{ opacity: curlShadowOpacity }" />
-            </div>
-          </div>
-
-          <!-- Se for PREVIOUS: Folha parte da esquerda e gira para a direita em torno da lombada -->
-          <div
-            v-else-if="transitionDirection === 'previous' && pageLayout.leftPage"
-            class="turning-leaf turning-leaf--prev"
-            :style="{
-              left: `${pageLayout.leftPage.left}px`,
-              top: `${pageLayout.leftPage.top}px`,
-              width: `${pageLayout.leftPage.width}px`,
-              height: `${pageLayout.leftPage.height}px`,
-              transformOrigin: '100% 50%',
-              transform: `perspective(2400px) rotateY(${prevLeafRotation}deg)`,
-            }"
-          >
-            <!-- Frente da Folha (Página Direita Entrante) -->
-            <div class="turning-leaf__face turning-leaf__face--front">
-              <canvas
-                v-if="store.document?.type === 'pdf'"
-                ref="leafFrontCanvasRef"
-                class="page-pdf-canvas"
-              />
-              <div
-                ref="leafFrontTextLayerRef"
-                class="page-text-layer page-text-layer--right"
-              />
-              <div class="page-curl-shading" :style="{ opacity: curlShadowOpacity }" />
-            </div>
-
-            <!-- Verso da Folha (Página Esquerda Atual) -->
-            <div class="turning-leaf__face turning-leaf__face--back">
-              <canvas
-                v-if="store.document?.type === 'pdf'"
-                ref="leafBackCanvasRef"
-                class="page-pdf-canvas"
-              />
-              <div
-                ref="leafBackTextLayerRef"
-                class="page-text-layer page-text-layer--left"
-              />
-              <div class="page-curl-shading" :style="{ opacity: curlShadowOpacity }" />
-            </div>
           </div>
         </template>
 
-        <!-- CASO 2: MODO 1 PÁGINA (MOBILE / TELA COMPACTA) -->
-        <template v-else-if="pageLayout.singlePage">
-          <!-- 2.1 Página Base Sob a Folha -->
+        <!-- MODO 1 PÁGINA: BASE -->
+        <template v-else-if="pageLayout.singlePage && pageLayout.singlePage.pageNumber > 0">
           <div
-            class="page-sheet page-sheet--single page-sheet--underlying"
+            class="page-sheet page-sheet--single page-sheet--base"
             :style="{
               left: `${pageLayout.singlePage.left}px`,
               top: `${pageLayout.singlePage.top}px`,
@@ -283,78 +104,153 @@
           >
             <canvas
               v-if="store.document?.type === 'pdf'"
-              ref="underlyingSingleCanvasRef"
+              ref="baseSingleCanvasRef"
               class="page-pdf-canvas"
             />
             <div
-              ref="underlyingSingleTextLayerRef"
+              ref="baseSingleTextLayerRef"
               class="page-text-layer page-text-layer--single"
             />
-            <div class="page-underlying-shadow" :style="{ opacity: castShadowOpacity }" />
-          </div>
-
-          <!-- 2.2 Folha 3D em Movimento (Single Page Flip) -->
-          <!-- Se for NEXT: A página atual vira em 3D para a esquerda -->
-          <div
-            v-if="transitionDirection === 'next'"
-            class="turning-leaf turning-leaf--single"
-            :style="{
-              left: `${pageLayout.singlePage.left}px`,
-              top: `${pageLayout.singlePage.top}px`,
-              width: `${pageLayout.singlePage.width}px`,
-              height: `${pageLayout.singlePage.height}px`,
-              transformOrigin: '0% 50%',
-              transform: `perspective(2000px) rotateY(${nextLeafRotation}deg)`,
-            }"
-          >
-            <div class="turning-leaf__face turning-leaf__face--front">
-              <canvas
-                v-if="store.document?.type === 'pdf'"
-                ref="leafFrontCanvasRef"
-                class="page-pdf-canvas"
-              />
-              <div
-                ref="leafFrontTextLayerRef"
-                class="page-text-layer page-text-layer--single"
-              />
-              <div class="page-curl-shading" :style="{ opacity: curlShadowOpacity }" />
-            </div>
-            <div class="turning-leaf__face turning-leaf__face--back turning-leaf__face--blank">
-              <div class="page-curl-shading" :style="{ opacity: curlShadowOpacity }" />
-            </div>
-          </div>
-
-          <!-- Se for PREVIOUS: A página anterior entra virando em 3D da esquerda -->
-          <div
-            v-else-if="transitionDirection === 'previous'"
-            class="turning-leaf turning-leaf--single"
-            :style="{
-              left: `${pageLayout.singlePage.left}px`,
-              top: `${pageLayout.singlePage.top}px`,
-              width: `${pageLayout.singlePage.width}px`,
-              height: `${pageLayout.singlePage.height}px`,
-              transformOrigin: '0% 50%',
-              transform: `perspective(2000px) rotateY(${-180 * (1 - turnProgress)}deg)`,
-            }"
-          >
-            <div class="turning-leaf__face turning-leaf__face--front">
-              <canvas
-                v-if="store.document?.type === 'pdf'"
-                ref="leafFrontCanvasRef"
-                class="page-pdf-canvas"
-              />
-              <div
-                ref="leafFrontTextLayerRef"
-                class="page-text-layer page-text-layer--single"
-              />
-              <div class="page-curl-shading" :style="{ opacity: curlShadowOpacity }" />
-            </div>
-            <div class="turning-leaf__face turning-leaf__face--back turning-leaf__face--blank">
-              <div class="page-curl-shading" :style="{ opacity: curlShadowOpacity }" />
-            </div>
+            <div
+              class="page-underlying-shadow"
+              :style="{ opacity: isAnimating3D ? castShadowOpacity : 0 }"
+            />
           </div>
         </template>
       </div>
+
+      <!-- ================= FOLHAS 3D EM MOVIMENTO (THE TURNING LEAVES) ================= -->
+      <!-- CASO 1: MODO 2 PÁGINAS -->
+      <template v-if="store.document && pageLayout.isTwoPage">
+        <!-- 1.1 Folha Direita (Avançar Página - NEXT) -->
+        <div
+          v-if="pageLayout.rightPage && pageLayout.rightPage.pageNumber > 0"
+          class="turning-leaf turning-leaf--right"
+          :class="{ 'turning-leaf--turning': isTurningNext }"
+          :style="{
+            left: `${pageLayout.rightPage.left}px`,
+            top: `${pageLayout.rightPage.top}px`,
+            width: `${pageLayout.rightPage.width}px`,
+            height: `${pageLayout.rightPage.height}px`,
+            transformOrigin: '0% 50%',
+            transform: isTurningNext ? `perspective(2600px) rotateY(${nextLeafRotation}deg)` : 'rotateY(0deg)',
+            zIndex: isTurningNext ? 35 : (isTurningPrev ? 10 : 20),
+            pointerEvents: isTurningNext ? 'none' : 'auto',
+          }"
+        >
+          <!-- Face Frontal: Página Direita Atual -->
+          <div class="turning-leaf__face turning-leaf__face--front">
+            <canvas
+              v-if="store.document?.type === 'pdf'"
+              ref="rightCanvasRef"
+              class="page-pdf-canvas"
+            />
+            <div
+              ref="rightTextLayerRef"
+              class="page-text-layer page-text-layer--right"
+            />
+            <div class="page-curl-shading" :style="{ opacity: isTurningNext ? curlShadowOpacity : 0 }" />
+          </div>
+
+          <!-- Face Traseira / Verso: Página Esquerda Entrante -->
+          <div class="turning-leaf__face turning-leaf__face--back">
+            <canvas
+              v-if="store.document?.type === 'pdf'"
+              ref="incomingLeftCanvasRef"
+              class="page-pdf-canvas"
+            />
+            <div
+              ref="incomingLeftTextLayerRef"
+              class="page-text-layer page-text-layer--left"
+            />
+            <div class="page-curl-shading" :style="{ opacity: isTurningNext ? curlShadowOpacity : 0 }" />
+          </div>
+        </div>
+
+        <!-- 1.2 Folha Esquerda (Voltar Página - PREVIOUS) -->
+        <div
+          v-if="pageLayout.leftPage && pageLayout.leftPage.pageNumber > 0"
+          class="turning-leaf turning-leaf--left"
+          :class="{ 'turning-leaf--turning': isTurningPrev }"
+          :style="{
+            left: `${pageLayout.leftPage.left}px`,
+            top: `${pageLayout.leftPage.top}px`,
+            width: `${pageLayout.leftPage.width}px`,
+            height: `${pageLayout.leftPage.height}px`,
+            transformOrigin: '100% 50%',
+            transform: isTurningPrev ? `perspective(2600px) rotateY(${prevLeafRotation}deg)` : 'rotateY(0deg)',
+            zIndex: isTurningPrev ? 35 : (isTurningNext ? 10 : 20),
+            pointerEvents: isTurningPrev ? 'none' : 'auto',
+          }"
+        >
+          <!-- Face Frontal: Página Esquerda Atual -->
+          <div class="turning-leaf__face turning-leaf__face--front">
+            <canvas
+              v-if="store.document?.type === 'pdf'"
+              ref="leftCanvasRef"
+              class="page-pdf-canvas"
+            />
+            <div
+              ref="leftTextLayerRef"
+              class="page-text-layer page-text-layer--left"
+            />
+            <div class="page-curl-shading" :style="{ opacity: isTurningPrev ? curlShadowOpacity : 0 }" />
+          </div>
+
+          <!-- Face Traseira / Verso: Página Direita Entrante -->
+          <div class="turning-leaf__face turning-leaf__face--back">
+            <canvas
+              v-if="store.document?.type === 'pdf'"
+              ref="incomingRightCanvasRef"
+              class="page-pdf-canvas"
+            />
+            <div
+              ref="incomingRightTextLayerRef"
+              class="page-text-layer page-text-layer--right"
+            />
+            <div class="page-curl-shading" :style="{ opacity: isTurningPrev ? curlShadowOpacity : 0 }" />
+          </div>
+        </div>
+      </template>
+
+      <!-- CASO 2: MODO 1 PÁGINA (MOBILE / CENTRALIZADO) -->
+      <template v-else-if="store.document && pageLayout.singlePage && pageLayout.singlePage.pageNumber > 0">
+        <div
+          class="turning-leaf turning-leaf--single"
+          :class="{ 'turning-leaf--turning': isAnimating3D }"
+          :style="{
+            left: `${pageLayout.singlePage.left}px`,
+            top: `${pageLayout.singlePage.top}px`,
+            width: `${pageLayout.singlePage.width}px`,
+            height: `${pageLayout.singlePage.height}px`,
+            transformOrigin: '0% 50%',
+            transform: isTurningNext
+              ? `perspective(2200px) rotateY(${nextLeafRotation}deg)`
+              : (isTurningPrev ? `perspective(2200px) rotateY(${-180 * (1 - turnProgress)}deg)` : 'rotateY(0deg)'),
+            zIndex: isAnimating3D ? 35 : 20,
+            pointerEvents: isAnimating3D ? 'none' : 'auto',
+          }"
+        >
+          <!-- Face Frontal -->
+          <div class="turning-leaf__face turning-leaf__face--front">
+            <canvas
+              v-if="store.document?.type === 'pdf'"
+              ref="singleCanvasRef"
+              class="page-pdf-canvas"
+            />
+            <div
+              ref="singleTextLayerRef"
+              class="page-text-layer page-text-layer--single"
+            />
+            <div class="page-curl-shading" :style="{ opacity: isAnimating3D ? curlShadowOpacity : 0 }" />
+          </div>
+
+          <!-- Face Traseira / Verso da Folha -->
+          <div class="turning-leaf__face turning-leaf__face--back turning-leaf__face--blank">
+            <div class="page-curl-shading" :style="{ opacity: isAnimating3D ? curlShadowOpacity : 0 }" />
+          </div>
+        </div>
+      </template>
     </div>
 
     <!-- Indicador de Carregamento -->
@@ -394,7 +290,7 @@ const themeBgColor = computed(() => {
   return '#f5eedc'
 })
 
-// Refs de elementos do Spread Estático (Leitura Normal)
+// Refs dos Canvases e TextLayers da Folha Principal (Spread Ativo)
 const leftCanvasRef = ref<HTMLCanvasElement | null>(null)
 const leftTextLayerRef = ref<HTMLElement | null>(null)
 const rightCanvasRef = ref<HTMLCanvasElement | null>(null)
@@ -402,17 +298,19 @@ const rightTextLayerRef = ref<HTMLElement | null>(null)
 const singleCanvasRef = ref<HTMLCanvasElement | null>(null)
 const singleTextLayerRef = ref<HTMLElement | null>(null)
 
-// Refs de elementos durante Transição 3D (Underlying Base & Turning Leaf)
-const underlyingLeftCanvasRef = ref<HTMLCanvasElement | null>(null)
-const underlyingLeftTextLayerRef = ref<HTMLElement | null>(null)
-const underlyingRightCanvasRef = ref<HTMLCanvasElement | null>(null)
-const underlyingRightTextLayerRef = ref<HTMLElement | null>(null)
-const underlyingSingleCanvasRef = ref<HTMLCanvasElement | null>(null)
-const underlyingSingleTextLayerRef = ref<HTMLElement | null>(null)
-const leafFrontCanvasRef = ref<HTMLCanvasElement | null>(null)
-const leafFrontTextLayerRef = ref<HTMLElement | null>(null)
-const leafBackCanvasRef = ref<HTMLCanvasElement | null>(null)
-const leafBackTextLayerRef = ref<HTMLElement | null>(null)
+// Refs dos Canvases e TextLayers Subjacentes (Base / Página Revelada)
+const baseLeftCanvasRef = ref<HTMLCanvasElement | null>(null)
+const baseLeftTextLayerRef = ref<HTMLElement | null>(null)
+const baseRightCanvasRef = ref<HTMLCanvasElement | null>(null)
+const baseRightTextLayerRef = ref<HTMLElement | null>(null)
+const baseSingleCanvasRef = ref<HTMLCanvasElement | null>(null)
+const baseSingleTextLayerRef = ref<HTMLElement | null>(null)
+
+// Refs dos Canvases e TextLayers do Verso da Folha 3D
+const incomingLeftCanvasRef = ref<HTMLCanvasElement | null>(null)
+const incomingLeftTextLayerRef = ref<HTMLElement | null>(null)
+const incomingRightCanvasRef = ref<HTMLCanvasElement | null>(null)
+const incomingRightTextLayerRef = ref<HTMLElement | null>(null)
 
 const {
   isTransitioning,
@@ -429,11 +327,11 @@ const {
   endDrag,
   cancelDrag,
 } = useBookPageTurn(stageRef, {
-  onBeforeTurn: async () => {
-    await prepareAndRender3DSpread()
+  onBeforeTurn: async (targetPage) => {
+    await prepare3DAnimationLayers(targetPage)
   },
-  onAfterTurn: async () => {
-    await renderCurrentSpread()
+  onAfterTurn: async (targetPage) => {
+    await renderCurrentSpread(targetPage)
   },
 })
 
@@ -442,6 +340,8 @@ const emit = defineEmits<{
 }>()
 
 const isAnimating3D = computed(() => isTransitioning.value || isDragging.value)
+const isTurningNext = computed(() => isAnimating3D.value && transitionDirection.value === 'next')
+const isTurningPrev = computed(() => isAnimating3D.value && transitionDirection.value === 'previous')
 
 const hostWidth = computed(() => stageRef.value?.clientWidth || 800)
 
@@ -468,33 +368,16 @@ const prevLeafRotation = computed(() => {
 // Opacidade das sombras dinâmicas de curvatura do papel 3D
 const curlShadowOpacity = computed(() => {
   const p = turnProgress.value
-  return Math.sin(p * Math.PI) * 0.42
+  return Math.sin(p * Math.PI) * 0.45
 })
 
 const castShadowOpacity = computed(() => {
   const p = turnProgress.value
-  return Math.sin(p * Math.PI) * 0.38
+  return Math.sin(p * Math.PI) * 0.4
 })
 
 let activePointerId: number | null = null
 let currentRenderVersion = 0
-
-const incomingLeftPageNumber = computed(() => {
-  if (incomingTargetPage.value <= 0) return 0
-  return incomingTargetPage.value % 2 === 0
-    ? Math.max(1, incomingTargetPage.value - 1)
-    : incomingTargetPage.value
-})
-
-const incomingRightPageNumber = computed(() => {
-  if (incomingTargetPage.value <= 0) return 0
-  const left = incomingLeftPageNumber.value
-  return left + 1 <= store.totalPages ? left + 1 : 0
-})
-
-const incomingSinglePageNumber = computed(() => {
-  return incomingTargetPage.value > 0 ? incomingTargetPage.value : 0
-})
 
 function pointFrom(event: PointerEvent): ReaderPointer {
   const bounds = stageRef.value?.getBoundingClientRect()
@@ -620,7 +503,7 @@ async function renderPageToElement(
   }
 }
 
-async function renderCurrentSpread() {
+async function renderCurrentSpread(pageOverride?: number) {
   const version = ++currentRenderVersion
   if (!store.document) return
 
@@ -628,28 +511,33 @@ async function renderCurrentSpread() {
   if (version !== currentRenderVersion) return
 
   const layout = pageLayout.value
+  const curPage = pageOverride ?? store.currentPage
+
   if (layout.isTwoPage) {
-    if (layout.leftPage && layout.leftPage.pageNumber > 0) {
+    const leftNum = curPage % 2 === 0 ? Math.max(1, curPage - 1) : curPage
+    const rightNum = leftNum + 1 <= store.totalPages ? leftNum + 1 : 0
+
+    if (leftNum > 0 && layout.leftPage) {
       void renderPageToElement(
-        layout.leftPage.pageNumber,
+        leftNum,
         leftCanvasRef.value,
         leftTextLayerRef.value,
         layout.leftPage.width,
         layout.leftPage.height,
       )
     }
-    if (layout.rightPage && layout.rightPage.pageNumber > 0) {
+    if (rightNum > 0 && layout.rightPage) {
       void renderPageToElement(
-        layout.rightPage.pageNumber,
+        rightNum,
         rightCanvasRef.value,
         rightTextLayerRef.value,
         layout.rightPage.width,
         layout.rightPage.height,
       )
     }
-  } else if (layout.singlePage && layout.singlePage.pageNumber > 0) {
+  } else if (layout.singlePage && curPage > 0) {
     void renderPageToElement(
-      layout.singlePage.pageNumber,
+      curPage,
       singleCanvasRef.value,
       singleTextLayerRef.value,
       layout.singlePage.width,
@@ -658,128 +546,103 @@ async function renderCurrentSpread() {
   }
 }
 
-async function prepareAndRender3DSpread() {
-  if (!store.document || incomingTargetPage.value <= 0) return
+async function prepare3DAnimationLayers(targetPage: number) {
+  if (!store.document || targetPage <= 0) return
 
   await nextTick()
   const layout = pageLayout.value
   const direction = transitionDirection.value
 
   if (layout.isTwoPage) {
+    const nextLeftNum = targetPage % 2 === 0 ? Math.max(1, targetPage - 1) : targetPage
+    const nextRightNum = nextLeftNum + 1 <= store.totalPages ? nextLeftNum + 1 : 0
+
     if (direction === 'next') {
-      if (layout.leftPage && layout.leftPage.pageNumber > 0) {
-        void renderPageToElement(
-          layout.leftPage.pageNumber,
-          underlyingLeftCanvasRef.value,
-          underlyingLeftTextLayerRef.value,
+      // 1. Revelado sob a folha direita: Próxima Página Direita
+      if (nextRightNum > 0 && layout.rightPage) {
+        await renderPageToElement(
+          nextRightNum,
+          baseRightCanvasRef.value,
+          baseRightTextLayerRef.value,
+          layout.rightPage.width,
+          layout.rightPage.height,
+        )
+      }
+      // 2. Verso da folha direita que vira para a esquerda: Próxima Página Esquerda
+      if (nextLeftNum > 0 && layout.leftPage) {
+        await renderPageToElement(
+          nextLeftNum,
+          incomingLeftCanvasRef.value,
+          incomingLeftTextLayerRef.value,
           layout.leftPage.width,
           layout.leftPage.height,
         )
       }
-      if (incomingRightPageNumber.value > 0 && layout.rightPage) {
+      // 3. Base esquerda mantém a página esquerda atual
+      const curLeftNum = store.currentPage % 2 === 0 ? Math.max(1, store.currentPage - 1) : store.currentPage
+      if (curLeftNum > 0 && layout.leftPage) {
         void renderPageToElement(
-          incomingRightPageNumber.value,
-          underlyingRightCanvasRef.value,
-          underlyingRightTextLayerRef.value,
-          layout.rightPage.width,
-          layout.rightPage.height,
-        )
-      }
-      if (layout.rightPage && layout.rightPage.pageNumber > 0) {
-        void renderPageToElement(
-          layout.rightPage.pageNumber,
-          leafFrontCanvasRef.value,
-          leafFrontTextLayerRef.value,
-          layout.rightPage.width,
-          layout.rightPage.height,
-        )
-      }
-      if (incomingLeftPageNumber.value > 0 && layout.leftPage) {
-        void renderPageToElement(
-          incomingLeftPageNumber.value,
-          leafBackCanvasRef.value,
-          leafBackTextLayerRef.value,
+          curLeftNum,
+          baseLeftCanvasRef.value,
+          baseLeftTextLayerRef.value,
           layout.leftPage.width,
           layout.leftPage.height,
         )
       }
     } else {
-      if (incomingLeftPageNumber.value > 0 && layout.leftPage) {
-        void renderPageToElement(
-          incomingLeftPageNumber.value,
-          underlyingLeftCanvasRef.value,
-          underlyingLeftTextLayerRef.value,
+      // PREVIOUS
+      // 1. Revelado sob a folha esquerda: Próxima Página Esquerda (anterior)
+      if (nextLeftNum > 0 && layout.leftPage) {
+        await renderPageToElement(
+          nextLeftNum,
+          baseLeftCanvasRef.value,
+          baseLeftTextLayerRef.value,
           layout.leftPage.width,
           layout.leftPage.height,
         )
       }
-      if (layout.rightPage && layout.rightPage.pageNumber > 0) {
-        void renderPageToElement(
-          layout.rightPage.pageNumber,
-          underlyingRightCanvasRef.value,
-          underlyingRightTextLayerRef.value,
+      // 2. Verso da folha esquerda que vira para a direita: Próxima Página Direita (anterior)
+      if (nextRightNum > 0 && layout.rightPage) {
+        await renderPageToElement(
+          nextRightNum,
+          incomingRightCanvasRef.value,
+          incomingRightTextLayerRef.value,
           layout.rightPage.width,
           layout.rightPage.height,
         )
       }
-      if (incomingRightPageNumber.value > 0 && layout.rightPage) {
+      // 3. Base direita mantém a página direita atual
+      const curLeftNum = store.currentPage % 2 === 0 ? Math.max(1, store.currentPage - 1) : store.currentPage
+      const curRightNum = curLeftNum + 1 <= store.totalPages ? curLeftNum + 1 : 0
+      if (curRightNum > 0 && layout.rightPage) {
         void renderPageToElement(
-          incomingRightPageNumber.value,
-          leafFrontCanvasRef.value,
-          leafFrontTextLayerRef.value,
+          curRightNum,
+          baseRightCanvasRef.value,
+          baseRightTextLayerRef.value,
           layout.rightPage.width,
           layout.rightPage.height,
-        )
-      }
-      if (layout.leftPage && layout.leftPage.pageNumber > 0) {
-        void renderPageToElement(
-          layout.leftPage.pageNumber,
-          leafBackCanvasRef.value,
-          leafBackTextLayerRef.value,
-          layout.leftPage.width,
-          layout.leftPage.height,
         )
       }
     }
   } else if (layout.singlePage) {
     if (direction === 'next') {
-      if (incomingSinglePageNumber.value > 0) {
-        void renderPageToElement(
-          incomingSinglePageNumber.value,
-          underlyingSingleCanvasRef.value,
-          underlyingSingleTextLayerRef.value,
-          layout.singlePage.width,
-          layout.singlePage.height,
-        )
-      }
-      if (layout.singlePage.pageNumber > 0) {
-        void renderPageToElement(
-          layout.singlePage.pageNumber,
-          leafFrontCanvasRef.value,
-          leafFrontTextLayerRef.value,
-          layout.singlePage.width,
-          layout.singlePage.height,
-        )
-      }
+      // Underneath: Página Alvo
+      await renderPageToElement(
+        targetPage,
+        baseSingleCanvasRef.value,
+        baseSingleTextLayerRef.value,
+        layout.singlePage.width,
+        layout.singlePage.height,
+      )
     } else {
-      if (layout.singlePage.pageNumber > 0) {
-        void renderPageToElement(
-          layout.singlePage.pageNumber,
-          underlyingSingleCanvasRef.value,
-          underlyingSingleTextLayerRef.value,
-          layout.singlePage.width,
-          layout.singlePage.height,
-        )
-      }
-      if (incomingSinglePageNumber.value > 0) {
-        void renderPageToElement(
-          incomingSinglePageNumber.value,
-          leafFrontCanvasRef.value,
-          leafFrontTextLayerRef.value,
-          layout.singlePage.width,
-          layout.singlePage.height,
-        )
-      }
+      // PREVIOUS
+      await renderPageToElement(
+        targetPage,
+        baseSingleCanvasRef.value,
+        baseSingleTextLayerRef.value,
+        layout.singlePage.width,
+        layout.singlePage.height,
+      )
     }
   }
 }
@@ -798,7 +661,7 @@ watch(
   incomingTargetPage,
   (val) => {
     if (val > 0) {
-      void prepareAndRender3DSpread()
+      void prepare3DAnimationLayers(val)
     }
   },
   { flush: 'post' },
@@ -861,13 +724,21 @@ defineExpose({
   box-sizing: border-box;
 }
 
+.page-sheet--base {
+  z-index: 10;
+}
+
 .turning-leaf {
   position: absolute;
   transform-style: preserve-3d;
   will-change: transform;
-  z-index: 30;
-  pointer-events: none;
+  box-sizing: border-box;
   box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
+  transition: transform 0.05s linear;
+}
+
+.turning-leaf--turning {
+  transition: none !important;
 }
 
 .turning-leaf__face {
@@ -907,7 +778,6 @@ defineExpose({
     rgba(0, 0, 0, 0.25) 100%
   );
   mix-blend-mode: multiply;
-  transition: opacity 0.05s ease-out;
 }
 
 .theme-black .page-curl-shading {
@@ -941,7 +811,7 @@ defineExpose({
   background: linear-gradient(to left, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.3) 35%, transparent 100%);
 }
 
-.theme-sepia.page-curl-wrapper,
+.theme-sepia .page-curl-wrapper,
 .theme-sepia .book-3d-stage,
 .theme-sepia .spread-container,
 .theme-sepia .page-sheet,
@@ -949,7 +819,7 @@ defineExpose({
 .theme-sepia .turning-leaf__face {
   background-color: #f5eedc !important;
 }
-.theme-white.page-curl-wrapper,
+.theme-white .page-curl-wrapper,
 .theme-white .book-3d-stage,
 .theme-white .spread-container,
 .theme-white .page-sheet,
@@ -957,7 +827,7 @@ defineExpose({
 .theme-white .turning-leaf__face {
   background-color: #ffffff !important;
 }
-.theme-black.page-curl-wrapper,
+.theme-black .page-curl-wrapper,
 .theme-black .book-3d-stage,
 .theme-black .spread-container,
 .theme-black .page-sheet,
@@ -1089,7 +959,6 @@ defineExpose({
 }
 
 /* Seleção de Texto nos Documentos */
-/* PDF.js Text Layer (transparente para exibir o canvas sob a seleção) */
 .page-text-layer.textLayer ::selection,
 .page-text-layer.textLayer *::selection,
 .page-text-layer :deep(.textLayer span::selection),
@@ -1099,7 +968,7 @@ defineExpose({
   color: transparent !important;
 }
 
-/* EPUB Native Typography Layer (seleção nítida com texto visível e legível) */
+/* EPUB Native Typography Layer */
 .page-text-layer :deep(.epub-text-layer-content),
 .page-text-layer :deep(.epub-text-layer-content *),
 .page-text-layer :deep(.epub-text-layer-viewport),
@@ -1150,7 +1019,6 @@ defineExpose({
   background: transparent !important;
 }
 
-/* EPUB Native Typography Layer (Texto HTML 100% Vetorial e Nítido) */
 .page-text-layer :deep(.epub-text-layer-viewport) {
   background: transparent;
   border-radius: 1px;
