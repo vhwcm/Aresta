@@ -1,0 +1,95 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: aresta-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-aresta}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aresta_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-aresta_db}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aresta -d aresta_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - aresta-network
+
+  ocr-service:
+    build:
+      context: ./aresta-ocr
+      dockerfile: Dockerfile
+    container_name: aresta-ocr
+    restart: unless-stopped
+    environment:
+      GRPC_PORT: 50051
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-flash-latest}
+      USE_MOCK: ${USE_MOCK:-true}
+    ports:
+      - "${OCR_GRPC_PORT:-50051}:50051"
+    networks:
+      - aresta-network
+
+  backend:
+    build:
+      context: ./aresta-back-node
+      dockerfile: Dockerfile
+    container_name: aresta-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      ocr-service:
+        condition: service_started
+    environment:
+      PORT: 7070
+      DATABASE_URL: ${DATABASE_URL:-postgresql://aresta:aresta_secret@db:5432/aresta_db?schema=public}
+      OCR_GRPC_URL: ocr-service:50051
+      JWT_SECRET: ${JWT_SECRET:-aresta_jwt_super_secret_key_2026}
+      DEBUG: ${DEBUG:-true}
+    ports:
+      - "${BACKEND_PORT:-7070}:7070"
+    volumes:
+      - ./aresta-back-node/storage:/app/storage
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:7070/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - aresta-network
+
+  frontend:
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+    container_name: aresta-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      PORT: 3000
+      NITRO_PORT: 3000
+      NITRO_HOST: 0.0.0.0
+      NUXT_PUBLIC_API_BASE: ${NUXT_PUBLIC_API_BASE:-http://localhost:7070}
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    networks:
+      - aresta-network
+
+volumes:
+  pgdata:
+    name: aresta_pgdata
+
+networks:
+  aresta-network:
+    name: aresta_network
+    driver: bridge
