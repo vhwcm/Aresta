@@ -157,6 +157,19 @@
           <span class="hidden md:inline font-interface text-xs md:text-sm font-medium tracking-tight">Conta</span>
         </NuxtLink>
 
+        <!-- Item 6: Alternar Tema (Escuro / Claro / Livro) -->
+        <button
+          @click="toggleThemeMode"
+          data-testid="bottom-nav-theme-toggle"
+          class="p-2 rounded-xl text-textSecondary hover:text-textPrimary hover:bg-black/5 dark:hover:bg-white/5 transition-colors focus:outline-none flex items-center justify-center"
+          :title="themeMode === 'dark' ? 'Tema: Escuro (clique para Claro)' : (themeMode === 'light' ? 'Tema: Claro (clique para Livro)' : 'Tema: Livro / Amarelado (clique para Escuro)')"
+          aria-label="Alternar tema da interface"
+        >
+          <SunIcon v-if="themeMode === 'light'" class="w-4 h-4 text-amber-500 hover:rotate-45 transition-transform" />
+          <PaletteIcon v-else-if="themeMode === 'sepia'" class="w-4 h-4 text-amber-600 dark:text-amber-300 hover:scale-110 transition-transform" />
+          <MoonIcon v-else class="w-4 h-4 text-accent hover:-rotate-12 transition-transform" />
+        </button>
+
         <!-- Botão de Colapso / Minimizar -->
         <button
           @click="toggleCollapse"
@@ -183,9 +196,15 @@ import {
   LayersIcon,
   UserIcon,
   ChevronUpIcon,
-  Minimize2Icon
+  Minimize2Icon,
+  SunIcon,
+  MoonIcon,
+  PaletteIcon
 } from 'lucide-vue-next'
 import ArestaLogoGraph from '~/components/ArestaLogoGraph.vue'
+import { useSettings } from '~/composables/useSettings'
+
+const { themeMode, toggleThemeMode } = useSettings()
 
 const route = useRoute()
 

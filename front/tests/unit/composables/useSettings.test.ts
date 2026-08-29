@@ -47,6 +47,22 @@ describe('useSettings Composable', () => {
     expect(saved.pageAnimationEnabled).toBe(false)
   })
 
+  it('inicia com valores padrão e permite alterar a preferência de vinco central (duas páginas)', () => {
+    const { pageCreaseEnabled, setPageCreaseEnabled } = useSettings()
+
+    expect(pageCreaseEnabled.value).toBe(true)
+
+    setPageCreaseEnabled(false)
+    expect(pageCreaseEnabled.value).toBe(false)
+
+    const saved = JSON.parse(localStorage.getItem('aresta_settings') || '{}')
+    expect(saved.pageCreaseEnabled).toBe(false)
+    expect(localStorage.getItem('aresta_reader_page_crease')).toBe('false')
+
+    setPageCreaseEnabled(true)
+    expect(pageCreaseEnabled.value).toBe(true)
+  })
+
   it('permite alterar e obter o idioma', () => {
     const { language, setLanguage } = useSettings()
 
@@ -127,6 +143,7 @@ describe('useSettings Composable', () => {
     mockFetch.mockResolvedValueOnce({
       userId: 1,
       pageAnimationEnabled: false,
+      pageCreaseEnabled: false,
       language: 'en-US',
       epubFontSize: 22,
       epubFontFamily: 'literata',
@@ -134,13 +151,14 @@ describe('useSettings Composable', () => {
       desktopHomeGraphOpen: false,
     })
 
-    const { loadFromServer, pageAnimationEnabled, language, themeMode, desktopHomeGraphOpen, epubFontFamily } = useSettings()
+    const { loadFromServer, pageAnimationEnabled, pageCreaseEnabled, language, themeMode, desktopHomeGraphOpen, epubFontFamily } = useSettings()
     await loadFromServer()
 
     expect(mockFetch).toHaveBeenCalledWith('http://localhost:7070/api/user-settings', {
       headers: { Authorization: 'Bearer token-abc' },
     })
     expect(pageAnimationEnabled.value).toBe(false)
+    expect(pageCreaseEnabled.value).toBe(false)
     expect(language.value).toBe('en-US')
     expect(themeMode.value).toBe('light')
     expect(desktopHomeGraphOpen.value).toBe(false)
@@ -152,12 +170,14 @@ describe('useSettings Composable', () => {
     mockFetch.mockResolvedValueOnce({
       userId: 1,
       pageAnimationEnabled: false,
+      pageCreaseEnabled: false,
       language: 'pt-BR',
     })
 
-    const { setPageAnimationEnabled, setLanguage } = useSettings()
+    const { setPageAnimationEnabled, setPageCreaseEnabled, setLanguage } = useSettings()
     setLanguage('pt-BR')
     setPageAnimationEnabled(false)
+    setPageCreaseEnabled(false)
 
     await vi.waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith('http://localhost:7070/api/user-settings', {
@@ -165,6 +185,7 @@ describe('useSettings Composable', () => {
         headers: { Authorization: 'Bearer token-abc' },
         body: expect.objectContaining({
           pageAnimationEnabled: false,
+          pageCreaseEnabled: false,
           language: 'pt-BR',
           epubFontSize: 18,
           epubFontFamily: 'newsreader',

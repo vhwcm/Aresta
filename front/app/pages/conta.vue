@@ -278,6 +278,45 @@
           </button>
         </div>
 
+        <!-- 2.5. Vinco Central (Modo 2 Páginas) -->
+        <div class="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div class="flex items-start sm:items-center gap-4 min-w-0">
+            <div class="p-3 rounded-2xl bg-accent/10 border border-accent/20 text-accent shrink-0">
+              <BookOpenIcon class="w-5 h-5" />
+            </div>
+            <div class="flex flex-col gap-0.5">
+              <div class="font-interface text-sm font-medium text-textPrimary flex items-center gap-2">
+                <span>Vinco Central (Modo 2 Páginas)</span>
+                <span
+                  class="px-2 py-0.5 rounded-full font-technical text-[10px] font-semibold"
+                  :class="pageCreaseEnabled ? 'bg-accent/15 text-accent border border-accent/30' : 'bg-black/5 dark:bg-white/10 text-textSecondary'"
+                >
+                  {{ pageCreaseEnabled ? 'Ativado (Visível)' : 'Desativado (Oculto)' }}
+                </span>
+              </div>
+              <p class="font-interface text-xs text-textSecondary">
+                Exibe a sombra de vinco e lombada no centro da tela durante a leitura de duas páginas lado a lado.
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            role="switch"
+            :aria-checked="pageCreaseEnabled"
+            data-testid="toggle-page-crease"
+            @click="setPageCreaseEnabled(!pageCreaseEnabled)"
+            class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-accent/50"
+            :class="pageCreaseEnabled ? 'bg-accent' : 'bg-black/10 dark:bg-white/10'"
+            title="Alternar vinco central no modo de 2 páginas"
+          >
+            <span
+              class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+              :class="pageCreaseEnabled ? 'translate-x-5' : 'translate-x-0'"
+            />
+          </button>
+        </div>
+
         <!-- 3. Grafo na Tela Inicial (Desktop) -->
         <div class="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div class="flex items-start sm:items-center gap-4 min-w-0">
@@ -811,6 +850,7 @@ const settings = useSettings()
 
 const {
   pageAnimationEnabled,
+  pageCreaseEnabled,
   desktopHomeGraphOpen,
   themeMode,
   readerTheme,
@@ -819,6 +859,7 @@ const {
   epubFontSize,
   epubFontFamily,
   setPageAnimationEnabled,
+  setPageCreaseEnabled,
   setDesktopHomeGraphOpen,
   setThemeMode,
   setReaderTheme,

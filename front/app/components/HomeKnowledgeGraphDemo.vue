@@ -221,6 +221,7 @@ import {
 import { useSettings } from '~/composables/useSettings'
 
 const { themeMode } = useSettings()
+const isSepiaMode = computed(() => themeMode.value === 'sepia')
 const isLightMode = computed(() => themeMode.value === 'light')
 
 interface DemoBook {
@@ -362,13 +363,13 @@ const sampleEdges: DemoEdge[] = [
 ]
 
 const getPastelFill = (colorHex: string, isRoot = false) => {
-  const neutral = isLightMode.value ? '#FFFFFF' : '#121316'
-  return d3.interpolateRgb(neutral, colorHex)(isRoot ? 0.45 : (isLightMode.value ? 0.35 : 0.3))
+  const neutral = isSepiaMode.value ? '#F5EEDC' : (isLightMode.value ? '#FFFFFF' : '#121316')
+  return d3.interpolateRgb(neutral, colorHex)(isRoot ? 0.45 : (isLightMode.value || isSepiaMode.value ? 0.35 : 0.3))
 }
 
 const getPastelStroke = (colorHex: string, isRoot = false) => {
-  const neutral = isLightMode.value ? '#CBD5E1' : '#121316'
-  return d3.interpolateRgb(neutral, colorHex)(isRoot ? 0.95 : (isLightMode.value ? 0.85 : 0.75))
+  const neutral = isSepiaMode.value ? '#D8CCB0' : (isLightMode.value ? '#CBD5E1' : '#121316')
+  return d3.interpolateRgb(neutral, colorHex)(isRoot ? 0.95 : (isLightMode.value || isSepiaMode.value ? 0.85 : 0.75))
 }
 
 const initGraphSimulation = () => {
@@ -419,7 +420,7 @@ const initGraphSimulation = () => {
   const links = linkGroup.selectAll<SVGLineElement, any>('line')
     .data(visibleEdges, (d: any) => d.id)
     .join('line')
-    .attr('stroke', (d: any) => (d.source?.isRoot || d.target?.isRoot) ? (isLightMode.value ? 'rgba(229, 123, 85, 0.45)' : 'rgba(229, 123, 85, 0.35)') : (isLightMode.value ? 'rgba(0, 0, 0, 0.15)' : 'rgba(255, 255, 255, 0.16)'))
+    .attr('stroke', (d: any) => (d.source?.isRoot || d.target?.isRoot) ? (isLightMode.value || isSepiaMode.value ? 'rgba(229, 123, 85, 0.45)' : 'rgba(229, 123, 85, 0.35)') : (isSepiaMode.value ? 'rgba(80, 60, 30, 0.18)' : (isLightMode.value ? 'rgba(0, 0, 0, 0.15)' : 'rgba(255, 255, 255, 0.16)')))
     .attr('stroke-width', (d: any) => (d.source?.isRoot || d.target?.isRoot) ? 1.6 : 1.2)
     .attr('stroke-opacity', 0.8)
 
@@ -469,7 +470,7 @@ const initGraphSimulation = () => {
     .attr('font-size', (d: any) => d.isRoot ? '12px' : '11px')
     .attr('font-weight', '600')
     .attr('font-family', 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace')
-    .attr('fill', (d: any) => isLightMode.value ? (d.isRoot ? '#9A3412' : '#1E293B') : '#FFFFFF')
+    .attr('fill', (d: any) => isSepiaMode.value ? (d.isRoot ? '#8B4513' : '#2C2621') : (isLightMode.value ? (d.isRoot ? '#9A3412' : '#1E293B') : '#FFFFFF'))
     .attr('pointer-events', 'none')
     .text((d: any) => d.isRoot ? '★' : d.books.length)
 
@@ -477,7 +478,7 @@ const initGraphSimulation = () => {
   nodes.append('text')
     .attr('text-anchor', 'middle')
     .attr('dy', (d: any) => (d.isRoot ? 30 : 22) + 16)
-    .attr('fill', (d: any) => d.isRoot ? (isLightMode.value ? '#9A3412' : '#F59E0B') : (isLightMode.value ? '#1E293B' : '#E2E8F0'))
+    .attr('fill', (d: any) => d.isRoot ? (isSepiaMode.value ? '#8B4513' : (isLightMode.value ? '#9A3412' : '#F59E0B')) : (isSepiaMode.value ? '#2C2621' : (isLightMode.value ? '#1E293B' : '#E2E8F0')))
     .attr('font-size', (d: any) => d.isRoot ? '12.5px' : '11px')
     .attr('font-weight', '600')
     .attr('font-family', 'system-ui, -apple-system, sans-serif')
@@ -493,12 +494,12 @@ const initGraphSimulation = () => {
   // Destaque nas arestas ao passar o cursor
   nodes.on('mouseenter', (event, d) => {
     links
-      .attr('stroke', (l: any) => (l.source?.id === d.id || l.target?.id === d.id) ? (d.color || '#E57B55') : 'rgba(255, 255, 255, 0.05)')
+      .attr('stroke', (l: any) => (l.source?.id === d.id || l.target?.id === d.id) ? (d.color || '#E57B55') : (isSepiaMode.value ? 'rgba(80, 60, 30, 0.08)' : 'rgba(255, 255, 255, 0.05)'))
       .attr('stroke-width', (l: any) => (l.source?.id === d.id || l.target?.id === d.id) ? 2.2 : 1)
       .attr('stroke-opacity', (l: any) => (l.source?.id === d.id || l.target?.id === d.id) ? 1 : 0.2)
   }).on('mouseleave', () => {
     links
-      .attr('stroke', (d: any) => (d.source?.isRoot || d.target?.isRoot) ? 'rgba(229, 123, 85, 0.35)' : 'rgba(255, 255, 255, 0.16)')
+      .attr('stroke', (d: any) => (d.source?.isRoot || d.target?.isRoot) ? (isLightMode.value || isSepiaMode.value ? 'rgba(229, 123, 85, 0.45)' : 'rgba(229, 123, 85, 0.35)') : (isSepiaMode.value ? 'rgba(80, 60, 30, 0.18)' : (isLightMode.value ? 'rgba(0, 0, 0, 0.15)' : 'rgba(255, 255, 255, 0.16)')))
       .attr('stroke-width', (d: any) => (d.source?.isRoot || d.target?.isRoot) ? 1.6 : 1.2)
       .attr('stroke-opacity', 0.8)
   })

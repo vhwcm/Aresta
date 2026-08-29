@@ -94,13 +94,13 @@ export class PdfDocumentAdapter implements IBookDocument {
     let scale: number
 
     if (targetWidth && targetWidth > 0 && targetHeight && targetHeight > 0) {
-      const scaleX = targetWidth / baseWidth
-      const scaleY = targetHeight / baseHeight
+      const scaleX = (targetWidth * dpr) / baseWidth
+      const scaleY = (targetHeight * dpr) / baseHeight
       scale = Math.min(scaleX, scaleY)
     } else if (targetWidth && targetWidth > 0) {
-      scale = targetWidth / baseWidth
+      scale = (targetWidth * dpr) / baseWidth
     } else if (targetHeight && targetHeight > 0) {
-      scale = targetHeight / baseHeight
+      scale = (targetHeight * dpr) / baseHeight
     } else {
       scale = Math.max(2.0, dpr * 2.0)
     }

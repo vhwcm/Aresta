@@ -36,6 +36,7 @@ model User {
 model UserSettings {
   user_id                   Int      @id
   page_animation_enabled    Boolean  @default(true)
+  page_crease_enabled       Boolean  @default(true)
   language                  String   @default("pt-BR")
   epub_font_size            Int      @default(18)
   epub_font_family          String   @default("newsreader")
@@ -64,6 +65,7 @@ model UserSettings {
    - **Tema Visual da Interface**: `theme_mode` (`dark` | `light`) alterna instantaneamente entre Modo Escuro editorial e Modo Claro suave.
    - **Grafo no Leitor Desktop**: `desktop_reader_graph_open` define se ao abrir livros no desktop o leitor inicia com visualização dividida com o grafo (`true`) ou 100% leitura (`false`).
    - **Tipografia Padrão do EPUB**: `epub_font_size` (12px a 36px) e `epub_font_family` (*newsreader*, *literata*, *lora*, *merriweather*, *inter*) definem a renderização inicial dos e-books.
+   - **Vinco Central (Modo 2 Páginas)**: `page_crease_enabled` controla a exibição da sombra central de lombada e vinco entre as páginas em visualização spread.
    - Controle de animações de transição de página (`page_animation_enabled`) e idioma (`language`).
 
 ---

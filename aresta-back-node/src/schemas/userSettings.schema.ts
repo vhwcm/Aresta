@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 export const updateUserSettingsSchema = z.object({
   pageAnimationEnabled: z.boolean().default(true).optional(),
+  pageCreaseEnabled: z.boolean().default(true).optional(),
   language: z.string().default('pt-BR').optional(),
   nativeLanguage: z.enum(['pt-BR', 'pt', 'en', 'es']).default('pt-BR').optional(),
   targetTranslationLanguage: z.enum(['pt-BR', 'pt', 'en', 'es']).default('en').optional(),

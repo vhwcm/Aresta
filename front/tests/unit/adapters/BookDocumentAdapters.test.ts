@@ -139,6 +139,21 @@ describe('Book Document Adapters and Factory', () => {
       const text = await adapter.getTextContent(1)
       expect(typeof text).toBe('string')
 
+      const pageData = await adapter.getPage(1, 600, 900)
+      expect(pageData.width).toBeGreaterThan(0)
+      expect(pageData.height).toBeGreaterThan(0)
+      const canvas = document.createElement('canvas')
+      canvas.width = 600
+      canvas.height = 900
+      const mockCtx = {
+        canvas,
+        drawImage: vi.fn(),
+        fillStyle: '',
+        fillRect: vi.fn(),
+      } as any
+      await expect(pageData.render(mockCtx)).resolves.not.toThrow()
+      expect(mockCtx.drawImage).toHaveBeenCalled()
+
       const container = document.createElement('div')
       await adapter.renderTextLayer(1, container, 600, 900)
       expect(container.children.length).toBeGreaterThan(0)

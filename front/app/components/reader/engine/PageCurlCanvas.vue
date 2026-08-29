@@ -50,9 +50,9 @@
             />
           </div>
 
-          <!-- Lombada Central -->
+          <!-- Lombada Central (Vinco) -->
           <div
-            v-if="pageLayout.leftPage && pageLayout.rightPage && pageLayout.leftPage.pageNumber > 0 && pageLayout.rightPage.pageNumber > 0"
+            v-if="pageCreaseEnabled && pageLayout.leftPage && pageLayout.rightPage && pageLayout.leftPage.pageNumber > 0 && pageLayout.rightPage.pageNumber > 0"
             class="book-spine-divider"
             :style="{
               left: `${pageLayout.leftPage.left + pageLayout.leftPage.width - 16}px`,
@@ -148,6 +148,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useReaderStore } from '~/stores/readerStore'
+import { useSettings } from '~/composables/useSettings'
 import { useBookPageTurn, type PageTurnDirection, type PageLayoutInfo } from '~/composables/reader/useBookPageTurn'
 import { usePagePhysics, type DragPoint } from '~/composables/reader/usePagePhysics'
 import { usePageCurl3D } from '~/composables/reader/usePageCurl3D'
@@ -157,6 +158,7 @@ const emit = defineEmits<{
 }>()
 
 const store = useReaderStore()
+const { pageCreaseEnabled } = useSettings()
 const stageRef = ref<HTMLElement | null>(null)
 const webglCanvasRef = ref<HTMLCanvasElement | null>(null)
 
@@ -393,7 +395,7 @@ async function renderPageToCanvas(pageNumber: number, targetCanvas: HTMLCanvasEl
 
   if (typeof (doc as any).getPage === 'function') {
     try {
-      const pageData = await (doc as any).getPage(pageNumber, renderW, renderH)
+      const pageData = await (doc as any).getPage(pageNumber, width, height)
       await pageData.render(ctx)
     } catch {
       // fallback gracioso se render falhar

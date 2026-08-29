@@ -18,6 +18,7 @@ export type DictionaryLanguage = 'pt-BR' | 'pt' | 'en' | 'es'
 
 export interface SettingsState {
   pageAnimationEnabled: boolean
+  pageCreaseEnabled: boolean
   language: string
   nativeLanguage: DictionaryLanguage | string
   targetTranslationLanguage: DictionaryLanguage | string
@@ -34,6 +35,7 @@ export interface SettingsState {
 export interface UserSettingsResponse {
   userId: number
   pageAnimationEnabled: boolean
+  pageCreaseEnabled?: boolean
   language: string
   nativeLanguage?: string
   targetTranslationLanguage?: string
@@ -53,6 +55,7 @@ const STORAGE_KEY = 'aresta_settings'
 
 const settings = reactive<SettingsState>({
   pageAnimationEnabled: true,
+  pageCreaseEnabled: true,
   language: 'pt-BR',
   nativeLanguage: 'pt-BR',
   targetTranslationLanguage: 'en',
@@ -70,6 +73,7 @@ let isInitialized = false
 
 export function resetSettingsForTesting() {
   settings.pageAnimationEnabled = true
+  settings.pageCreaseEnabled = true
   settings.language = 'pt-BR'
   settings.nativeLanguage = 'pt-BR'
   settings.targetTranslationLanguage = 'en'
@@ -113,6 +117,9 @@ function initSettings() {
       const parsed = JSON.parse(saved)
       if (typeof parsed.pageAnimationEnabled === 'boolean') {
         settings.pageAnimationEnabled = parsed.pageAnimationEnabled
+      }
+      if (typeof parsed.pageCreaseEnabled === 'boolean') {
+        settings.pageCreaseEnabled = parsed.pageCreaseEnabled
       }
       if (typeof parsed.language === 'string') {
         settings.language = parsed.language
@@ -188,6 +195,9 @@ function applyServerSettings(data: UserSettingsResponse) {
   if (typeof data.pageAnimationEnabled === 'boolean') {
     settings.pageAnimationEnabled = data.pageAnimationEnabled
   }
+  if (typeof data.pageCreaseEnabled === 'boolean') {
+    settings.pageCreaseEnabled = data.pageCreaseEnabled
+  }
   if (typeof data.language === 'string') {
     settings.language = data.language
   }
@@ -234,6 +244,7 @@ export function useSettings() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
       // Sincronizar chave legada para compatibilidade de leitor
       localStorage.setItem('aresta_reader_font', settings.epubFontFamily)
+      localStorage.setItem('aresta_reader_page_crease', String(settings.pageCreaseEnabled))
       localStorage.setItem('aresta_home_graph_collapsed', String(!settings.desktopHomeGraphOpen))
       trySyncReaderStore()
     } catch {
@@ -250,6 +261,7 @@ export function useSettings() {
         headers: { Authorization: `Bearer ${auth.token.value}` },
         body: {
           pageAnimationEnabled: settings.pageAnimationEnabled,
+          pageCreaseEnabled: settings.pageCreaseEnabled,
           language: settings.language,
           nativeLanguage: settings.nativeLanguage,
           targetTranslationLanguage: settings.targetTranslationLanguage,
@@ -283,6 +295,12 @@ export function useSettings() {
 
   const setPageAnimationEnabled = (enabled: boolean) => {
     settings.pageAnimationEnabled = enabled
+    saveLocally()
+    void persistToServer()
+  }
+
+  const setPageCreaseEnabled = (enabled: boolean) => {
+    settings.pageCreaseEnabled = enabled
     saveLocally()
     void persistToServer()
   }
@@ -360,6 +378,11 @@ export function useSettings() {
     set: (val: boolean) => setPageAnimationEnabled(val),
   })
 
+  const pageCreaseEnabled = computed({
+    get: () => settings.pageCreaseEnabled,
+    set: (val: boolean) => setPageCreaseEnabled(val),
+  })
+
   const language = computed({
     get: () => settings.language,
     set: (val: string) => setLanguage(val),
@@ -403,6 +426,7 @@ export function useSettings() {
   return {
     settings: readonly(settings),
     pageAnimationEnabled,
+    pageCreaseEnabled,
     language,
     nativeLanguage,
     targetTranslationLanguage,
@@ -412,6 +436,7 @@ export function useSettings() {
     readerTheme,
     desktopHomeGraphOpen,
     setPageAnimationEnabled,
+    setPageCreaseEnabled,
     setLanguage,
     setNativeLanguage,
     setTargetTranslationLanguage,

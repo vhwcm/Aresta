@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { ref } from 'vue'
 import LoginPage from '~/pages/login.vue'
@@ -9,6 +9,10 @@ describe('Login & Register Dedicated Page Component', () => {
   let loginMock: any
   let registerMock: any
   let loadFromServerMock: any
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
 
   const commonStubs = {
     NuxtLink: { template: '<a><slot /></a>' },

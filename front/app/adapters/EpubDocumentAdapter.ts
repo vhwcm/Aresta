@@ -1112,7 +1112,6 @@ export class EpubDocumentAdapter implements IBookDocument {
       const isCover = isCoverSection(section, doc)
       const docStyles = doc && typeof doc.querySelectorAll === 'function' ? Array.from(doc.querySelectorAll('style')).map((s) => s.innerHTML).join('\n') : ''
       const bodyEl = doc.body || (typeof doc.querySelector === 'function' ? doc.querySelector('body') : null) || (typeof doc.getElementsByTagName === 'function' ? doc.getElementsByTagName('body')[0] : null) || (doc as any)
-      const bodyContent = bodyEl ? (bodyEl.innerHTML || bodyEl.textContent || '') : (doc.documentElement ? doc.documentElement.innerHTML : '')
       const bodyClasses = bodyEl && typeof bodyEl.getAttribute === 'function' ? (bodyEl.getAttribute('class') || '') : ''
 
       const paddingX = width > 700 ? 40 : (width > 500 ? 28 : 16)
@@ -1121,7 +1120,23 @@ export class EpubDocumentAdapter implements IBookDocument {
       const colGap = paddingX * 2
       const colOffset = mapping.pageIndexInSection * width
 
-      const safeBodyContent = (bodyContent || '')
+      // Serializa nós DOM para XHTML estritamente válido
+      let serializedContent = ''
+      if (bodyEl && typeof XMLSerializer !== 'undefined') {
+        const serializer = new XMLSerializer()
+        if (bodyEl.childNodes && bodyEl.childNodes.length > 0) {
+          serializedContent = Array.from(bodyEl.childNodes)
+            .map((node) => serializer.serializeToString(node as Node))
+            .join('')
+        } else {
+          serializedContent = serializer.serializeToString(bodyEl as Node)
+        }
+      } else if (bodyEl) {
+        serializedContent = bodyEl.innerHTML || bodyEl.textContent || ''
+      }
+
+      // Sanitização de entidades HTML e tags órfãs para conformidade com XML/SVG
+      serializedContent = (serializedContent || '')
         .replace(/&nbsp;/g, '&#160;')
         .replace(/&mdash;/g, '&#8212;')
         .replace(/&ndash;/g, '&#8211;')
@@ -1133,25 +1148,33 @@ export class EpubDocumentAdapter implements IBookDocument {
         .replace(/&copy;/g, '&#169;')
         .replace(/&trade;/g, '&#8482;')
         .replace(/&reg;/g, '&#174;')
+        .replace(/&bull;/g, '&#8226;')
+        .replace(/&prime;/g, '&#8242;')
+        .replace(/&Prime;/g, '&#8243;')
+        .replace(/&larr;/g, '&#8592;')
+        .replace(/&rarr;/g, '&#8594;')
+        .replace(/&uarr;/g, '&#8593;')
+        .replace(/&darr;/g, '&#8595;')
+
+      const safeStyles = `/* <![CDATA[ */\n${docStyles}\n${EPUB_TYPOGRAPHY_STYLES}\n/* ]]> */`
 
       const svgContent = `
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${renderW}" height="${renderH}">
-          <style>
-            ${docStyles}
-            ${EPUB_TYPOGRAPHY_STYLES}
+          <style type="text/css">
+            ${safeStyles}
           </style>
           <foreignObject width="${width}" height="${height}">
             <div xmlns="http://www.w3.org/1999/xhtml"
               style="width:${width}px;height:${height}px;overflow:hidden;background:transparent;margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;display:flex;align-items:center;justify-content:center;">
               <div class="epub-text-layer-content ${isCover ? 'epub-cover-page' : ''} ${bodyClasses}"
                 style="width:${width}px;height:${height}px;box-sizing:border-box;${isCover ? 'display:flex;align-items:center;justify-content:center;padding:12px;margin:0;' : `padding:${paddingY}px ${paddingX}px;column-width:${colWidth}px;column-gap:${colGap}px;column-fill:auto;margin-left:-${colOffset}px;`}font-family:${this._fontFamily};font-size:${this._fontSize}px;line-height:1.7;word-wrap:break-word;">
-                ${safeBodyContent}
+                ${serializedContent}
               </div>
             </div>
           </foreignObject>
         </svg>
       `
-      const blob = new Blob([svgContent], { type: 'image/svg+xml' })
+      const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' })
       const url = URL.createObjectURL(blob)
       await new Promise<void>((resolve, reject) => {
         const img = new Image()
@@ -1160,17 +1183,46 @@ export class EpubDocumentAdapter implements IBookDocument {
           URL.revokeObjectURL(url)
           resolve()
         }
-        img.onerror = () => {
+        img.onerror = (e) => {
           URL.revokeObjectURL(url)
-          reject(new Error('Falha ao renderizar página EPUB'))
+          reject(e)
         }
         img.src = url
       })
     } catch (err) {
-      ctx.fillStyle = '#555'
-      ctx.font = '24px Georgia, serif'
-      ctx.fillText(`Página ${pageNumber} — erro ao renderizar`, 40, 80)
       logWarn('[EpubAdapter] render error:', err)
+      // Fallback seguro: se a rasterização de SVG falhar, desenha o texto da página diretamente no canvas
+      try {
+        const text = await this.getTextContent(pageNumber)
+        if (text) {
+          ctx.fillStyle = '#2a2521'
+          ctx.font = `${this._fontSize * dpr}px ${this._fontFamily}`
+          ctx.textBaseline = 'top'
+          const padding = 24 * dpr
+          const maxW = renderW - 2 * padding
+          const lineHeight = this._fontSize * 1.7 * dpr
+          const words = text.split(' ')
+          let line = ''
+          let y = padding
+          for (const word of words) {
+            const testLine = line + (line ? ' ' : '') + word
+            const metrics = ctx.measureText(testLine)
+            if (metrics.width > maxW && line) {
+              ctx.fillText(line, padding, y)
+              line = word
+              y += lineHeight
+              if (y > renderH - padding) break
+            } else {
+              line = testLine
+            }
+          }
+          if (line && y <= renderH - padding) {
+            ctx.fillText(line, padding, y)
+          }
+        }
+      } catch {
+        // Fallback silencioso
+      }
     }
 
     return canvas
@@ -1180,9 +1232,14 @@ export class EpubDocumentAdapter implements IBookDocument {
     return {
       width: canvas.width,
       height: canvas.height,
-      aspectRatio: canvas.width / canvas.height,
+      aspectRatio: canvas.height > 0 ? canvas.width / canvas.height : 1,
       render: async (ctx: CanvasRenderingContext2D): Promise<void> => {
-        ctx.drawImage(canvas, 0, 0, ctx.canvas.width, ctx.canvas.height)
+        if (!ctx) return
+        const targetW = ctx.canvas?.width ?? canvas.width
+        const targetH = ctx.canvas?.height ?? canvas.height
+        if (typeof ctx.drawImage === 'function') {
+          ctx.drawImage(canvas, 0, 0, targetW, targetH)
+        }
       },
     }
   }

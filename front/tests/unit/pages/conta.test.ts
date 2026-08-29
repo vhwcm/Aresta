@@ -32,9 +32,10 @@ describe('Conta Page (/conta)', () => {
     if (typeof localStorage !== 'undefined') {
       localStorage.clear()
     }
-    const { setDesktopHomeGraphOpen, setPageAnimationEnabled } = useSettings()
+    const { setDesktopHomeGraphOpen, setPageAnimationEnabled, setPageCreaseEnabled } = useSettings()
     setDesktopHomeGraphOpen(true)
     setPageAnimationEnabled(true)
+    setPageCreaseEnabled(true)
   })
 
   it('renders user profile, reading metrics, preferences section, and danger zone', () => {
@@ -135,6 +136,36 @@ describe('Conta Page (/conta)', () => {
     expect(wrapper.text()).toContain('Ativado (Kindle / 3D)')
     saved = JSON.parse(localStorage.getItem('aresta_settings') || '{}')
     expect(saved.pageAnimationEnabled).toBe(true)
+  })
+
+  it('permite alternar o switch de Vinco Central (Modo 2 Páginas)', async () => {
+    const wrapper = mount(ContaPage, {
+      global: {
+        stubs: defaultStubs,
+      },
+    })
+
+    const pageCreaseToggle = wrapper.find('[data-testid="toggle-page-crease"]')
+    expect(pageCreaseToggle.exists()).toBe(true)
+
+    // Inicia como ativado por padrão
+    expect(pageCreaseToggle.attributes('aria-checked')).toBe('true')
+    expect(wrapper.text()).toContain('Ativado (Visível)')
+
+    // Alterna para desativado
+    await pageCreaseToggle.trigger('click')
+    expect(pageCreaseToggle.attributes('aria-checked')).toBe('false')
+    expect(wrapper.text()).toContain('Desativado (Oculto)')
+    let saved = JSON.parse(localStorage.getItem('aresta_settings') || '{}')
+    expect(saved.pageCreaseEnabled).toBe(false)
+    expect(localStorage.getItem('aresta_reader_page_crease')).toBe('false')
+
+    // Alterna de volta para ativado
+    await pageCreaseToggle.trigger('click')
+    expect(pageCreaseToggle.attributes('aria-checked')).toBe('true')
+    expect(wrapper.text()).toContain('Ativado (Visível)')
+    saved = JSON.parse(localStorage.getItem('aresta_settings') || '{}')
+    expect(saved.pageCreaseEnabled).toBe(true)
   })
 
   it('permite alternar o switch de Grafo na Tela Inicial (Desktop)', async () => {

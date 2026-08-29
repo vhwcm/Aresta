@@ -11,6 +11,7 @@ export class UserSettingsService {
       return {
         userId,
         pageAnimationEnabled: true,
+        pageCreaseEnabled: true,
         language: 'pt-BR',
         nativeLanguage: 'pt-BR',
         targetTranslationLanguage: 'en',
@@ -25,6 +26,7 @@ export class UserSettingsService {
     return {
       userId: settings.user_id,
       pageAnimationEnabled: settings.page_animation_enabled,
+      pageCreaseEnabled: (settings as any).page_crease_enabled ?? true,
       language: settings.language,
       nativeLanguage: (settings as any).native_language ?? 'pt-BR',
       targetTranslationLanguage: (settings as any).target_translation_language ?? 'en',
@@ -38,6 +40,7 @@ export class UserSettingsService {
 
   async updateSettings(userId: number, input: UpdateUserSettingsInput) {
     const pageAnimationEnabled = input.pageAnimationEnabled ?? true;
+    const pageCreaseEnabled = input.pageCreaseEnabled ?? true;
     const language = input.language ?? 'pt-BR';
     const nativeLanguage = input.nativeLanguage ?? 'pt-BR';
     const targetTranslationLanguage = input.targetTranslationLanguage ?? 'en';
@@ -51,6 +54,7 @@ export class UserSettingsService {
       where: { user_id: userId },
       update: {
         page_animation_enabled: pageAnimationEnabled,
+        page_crease_enabled: pageCreaseEnabled,
         language,
         native_language: nativeLanguage,
         target_translation_language: targetTranslationLanguage,
@@ -63,6 +67,7 @@ export class UserSettingsService {
       create: {
         user_id: userId,
         page_animation_enabled: pageAnimationEnabled,
+        page_crease_enabled: pageCreaseEnabled,
         language,
         native_language: nativeLanguage,
         target_translation_language: targetTranslationLanguage,
@@ -77,6 +82,7 @@ export class UserSettingsService {
     return {
       userId: updated.user_id,
       pageAnimationEnabled: updated.page_animation_enabled,
+      pageCreaseEnabled: (updated as any).page_crease_enabled ?? true,
       language: updated.language,
       nativeLanguage: (updated as any).native_language ?? 'pt-BR',
       targetTranslationLanguage: (updated as any).target_translation_language ?? 'en',

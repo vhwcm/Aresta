@@ -196,6 +196,7 @@ model DailyDeckCard {
 model UserSettings {
   user_id                     Int      @id
   page_animation_enabled      Boolean  @default(true)
+  page_crease_enabled         Boolean  @default(true)
   language                    String   @default("pt-BR")
   native_language             String   @default("pt-BR")
   target_translation_language String   @default("en")

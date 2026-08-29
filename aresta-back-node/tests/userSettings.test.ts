@@ -47,6 +47,7 @@ describe('UserSettings Endpoints', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.pageAnimationEnabled).toBe(true);
+    expect(res.body.pageCreaseEnabled).toBe(true);
     expect(res.body.language).toBe('pt-BR');
     expect(res.body.nativeLanguage).toBe('pt-BR');
     expect(res.body.targetTranslationLanguage).toBe('en');
@@ -63,6 +64,7 @@ describe('UserSettings Endpoints', () => {
       .set('Authorization', `Bearer ${userToken}`)
       .send({
         pageAnimationEnabled: false,
+        pageCreaseEnabled: false,
         language: 'en-US',
         nativeLanguage: 'es',
         targetTranslationLanguage: 'pt-BR',
@@ -75,6 +77,7 @@ describe('UserSettings Endpoints', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.pageAnimationEnabled).toBe(false);
+    expect(res.body.pageCreaseEnabled).toBe(false);
     expect(res.body.language).toBe('en-US');
     expect(res.body.nativeLanguage).toBe('es');
     expect(res.body.targetTranslationLanguage).toBe('pt-BR');
@@ -90,6 +93,7 @@ describe('UserSettings Endpoints', () => {
       .set('Authorization', `Bearer ${userToken}`);
 
     expect(getRes.status).toBe(200);
+    expect(getRes.body.pageCreaseEnabled).toBe(false);
     expect(getRes.body.nativeLanguage).toBe('es');
     expect(getRes.body.targetTranslationLanguage).toBe('pt-BR');
     expect(getRes.body.themeMode).toBe('light');
