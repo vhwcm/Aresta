@@ -24,21 +24,24 @@ export interface ConversionResult {
 
 const CONVERTER_API_URL = (typeof process !== 'undefined' && process.env?.PDF2EPUB_API_URL) ? process.env.PDF2EPUB_API_URL : 'http://localhost:8000'
 
-export const useConverter = () => {
-  const selectedFile = ref<File | null>(null)
-  const status = ref<ConversionStatus>('idle')
-  const progress = ref(0)
-  const currentStep = ref('')
-  const errorMessage = ref('')
-  const result = ref<ConversionResult | null>(null)
+const defaultOptions: ConversionOptions = {
+  ocrEnabled: true,
+  extractImages: true,
+  chapterDetection: 'auto',
+  cleanFootnotes: true,
+  dpi: 150
+}
 
-  const options = ref<ConversionOptions>({
-    ocrEnabled: true,
-    extractImages: true,
-    chapterDetection: 'auto',
-    cleanFootnotes: true,
-    dpi: 150
-  })
+// Module-level reactive singleton state to persist across page navigations
+const selectedFile = ref<File | null>(null)
+const status = ref<ConversionStatus>('idle')
+const progress = ref(0)
+const currentStep = ref('')
+const errorMessage = ref('')
+const result = ref<ConversionResult | null>(null)
+const options = ref<ConversionOptions>({ ...defaultOptions })
+
+export const useConverter = () => {
 
   const setFile = (file: File) => {
     if (!file.name.toLowerCase().endsWith('.pdf') && file.type !== 'application/pdf') {

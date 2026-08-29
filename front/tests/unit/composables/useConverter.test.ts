@@ -4,6 +4,8 @@ import { useConverter } from '../../../app/composables/useConverter'
 describe('useConverter', () => {
   beforeEach(() => {
     vi.restoreAllMocks()
+    const { reset } = useConverter()
+    reset()
   })
 
   it('inicializa com estado idle e opções padrão', () => {
@@ -48,6 +50,18 @@ describe('useConverter', () => {
     expect(status.value).toBe('idle')
     expect(progress.value).toBe(0)
     expect(errorMessage.value).toBe('')
+  })
+
+  it('persiste o estado entre múltiplas chamadas/navegações de páginas', () => {
+    const page1 = useConverter()
+    const pdfFile = new File(['%PDF-1.4'], 'meu-livro.pdf', { type: 'application/pdf' })
+    page1.setFile(pdfFile)
+
+    // Simulando navegação saindo da página e entrando novamente
+    const page2 = useConverter()
+    expect(page2.selectedFile.value).not.toBeNull()
+    expect(page2.selectedFile.value?.name).toBe('meu-livro.pdf')
+    expect(page2.status.value).toBe('idle')
   })
 })
 
