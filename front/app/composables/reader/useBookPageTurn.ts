@@ -25,7 +25,7 @@ interface Point {
   time: number
 }
 
-export const TURN_DURATION_MS = 280
+export const TURN_DURATION_MS = 380
 export const TURN_THRESHOLD = 0.22
 
 export function clamp(value: number, min = 0, max = 1): number {
