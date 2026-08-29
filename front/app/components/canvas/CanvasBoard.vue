@@ -125,11 +125,6 @@ import type {
 } from '~/interfaces/canvas';
 import { useCanvas } from '~/composables/useCanvas';
 import { getClosestAnchorSide } from '~/utils/canvasGeometry';
-import CanvasNode from './CanvasNode.vue';
-import CanvasEdgeLayer from './CanvasEdgeLayer.vue';
-import CanvasInkingOverlay from './CanvasInkingOverlay.vue';
-import CanvasToolbar from './CanvasToolbar.vue';
-import CanvasInsertDrawer from './CanvasInsertDrawer.vue';
 
 const props = defineProps<{
   canvasId?: string;
