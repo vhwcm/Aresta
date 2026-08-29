@@ -199,7 +199,6 @@ let currentRenderVersion = 0
 // Layout de Páginas
 const {
   pageLayout,
-  isTwoPageMode,
   updateLayout,
 } = useBookPageTurn(stageRef)
 
@@ -221,13 +220,27 @@ const physics = usePagePhysics({
     emit('transition-state', false)
 
     if (direction === 'next') {
-      const step = pageLayout.value.isTwoPage ? 2 : 1
-      const target = Math.min(store.totalPages, store.currentPage + step)
-      store.goToPage(target)
+      if (pageLayout.value.isTwoPage) {
+        if (store.currentPage === 1) {
+          store.goToPage(Math.min(2, store.totalPages))
+        } else {
+          const curLeft = store.currentPage % 2 === 0 ? store.currentPage : store.currentPage - 1
+          store.goToPage(Math.min(store.totalPages, curLeft + 2))
+        }
+      } else {
+        store.goToPage(Math.min(store.totalPages, store.currentPage + 1))
+      }
     } else {
-      const step = pageLayout.value.isTwoPage ? 2 : 1
-      const target = Math.max(1, store.currentPage - step)
-      store.goToPage(target)
+      if (pageLayout.value.isTwoPage) {
+        if (store.currentPage <= 3) {
+          store.goToPage(1)
+        } else {
+          const curLeft = store.currentPage % 2 === 0 ? store.currentPage : store.currentPage - 1
+          store.goToPage(Math.max(1, curLeft - 2))
+        }
+      } else {
+        store.goToPage(Math.max(1, store.currentPage - 1))
+      }
     }
 
     await renderCurrentSpread()
@@ -261,7 +274,7 @@ const webglCanvasStyle = computed(() => {
 
     return {
       display: 'block',
-      position: 'absolute',
+      position: 'absolute' as const,
       left: `${leftEdge}px`,
       top: `${topEdge}px`,
       width: `${totalW}px`,
@@ -276,7 +289,7 @@ const webglCanvasStyle = computed(() => {
   if (layout.singlePage) {
     return {
       display: 'block',
-      position: 'absolute',
+      position: 'absolute' as const,
       left: `${layout.singlePage.left}px`,
       top: `${layout.singlePage.top}px`,
       width: `${layout.singlePage.width}px`,
@@ -378,31 +391,12 @@ async function renderPageToCanvas(pageNumber: number, targetCanvas: HTMLCanvasEl
   ctx.fillStyle = themeBgColor.value
   ctx.fillRect(0, 0, renderW, renderH)
 
-  if (doc.type === 'pdf') {
-    if (typeof (doc as any).getPage === 'function') {
+  if (typeof (doc as any).getPage === 'function') {
+    try {
       const pageData = await (doc as any).getPage(pageNumber, renderW, renderH)
       await pageData.render(ctx)
-    }
-  } else if (doc.type === 'epub') {
-    if (typeof doc.renderTextLayer === 'function') {
-      const tempDiv = document.createElement('div')
-      tempDiv.className = `epub-text-layer-content theme-${activeTheme.value}`
-      tempDiv.style.width = `${width}px`
-      tempDiv.style.height = `${height}px`
-      tempDiv.style.position = 'fixed'
-      tempDiv.style.left = '-99999px'
-      tempDiv.style.top = '-99999px'
-      tempDiv.style.visibility = 'hidden'
-      document.body.appendChild(tempDiv)
-
-      try {
-        await doc.renderTextLayer(pageNumber, tempDiv, width, height)
-        await rasterizeHtmlToCanvas(tempDiv.innerHTML, targetCanvas, width, height)
-      } finally {
-        if (tempDiv.parentNode) {
-          tempDiv.parentNode.removeChild(tempDiv)
-        }
-      }
+    } catch {
+      // fallback gracioso se render falhar
     }
   }
 }
@@ -437,7 +431,20 @@ async function renderCurrentSpread(pageOverride?: number) {
   const curPage = pageOverride ?? store.currentPage
 
   if (layout.isTwoPage) {
-    const leftNum = curPage % 2 === 0 ? Math.max(1, curPage - 1) : curPage
+    if (curPage === 1) {
+      if (layout.rightPage) {
+        await renderPageToElement(
+          1,
+          baseRightCanvasRef.value,
+          baseRightTextLayerRef.value,
+          layout.rightPage.width,
+          layout.rightPage.height,
+        )
+      }
+      return
+    }
+
+    const leftNum = curPage % 2 === 0 ? curPage : curPage - 1
     const rightNum = leftNum + 1 <= store.totalPages ? leftNum + 1 : 0
 
     if (leftNum > 0 && layout.leftPage) {
@@ -484,29 +491,28 @@ async function prepare3DTextures(direction: PageTurnDirection, gripY = 0.5) {
   const backCanvas = getOrCreateOffscreenCanvas('back')
 
   if (layout.isTwoPage) {
-    const curLeft = curPage % 2 === 0 ? Math.max(1, curPage - 1) : curPage
-    const curRight = curLeft + 1 <= total ? curLeft + 1 : 0
+    const isCover = curPage === 1
+    const curLeft = isCover ? 0 : (curPage % 2 === 0 ? curPage : curPage - 1)
+    const curRight = isCover ? 1 : (curLeft + 1 <= total ? curLeft + 1 : 0)
 
-    const pageW = layout.rightPage?.width ?? 400
-    const pageH = layout.rightPage?.height ?? 600
+    const pageW = layout.rightPage?.width ?? layout.leftPage?.width ?? 400
+    const pageH = layout.rightPage?.height ?? layout.leftPage?.height ?? 600
 
     if (direction === 'next') {
-      const nextLeft = curRight + 1 <= total ? curRight + 1 : 0
-      const nextRight = nextLeft + 1 <= total ? nextLeft + 1 : 0
+      const nextLeft = isCover ? (total >= 2 ? 2 : 0) : (curRight + 1 <= total ? curRight + 1 : 0)
+      const nextRight = isCover ? (total >= 3 ? 3 : 0) : (nextLeft + 1 <= total ? nextLeft + 1 : 0)
 
-      // Copia instantânea da frente (Right Page)
-      if (baseRightCanvasRef.value && baseRightCanvasRef.value.width > 0) {
+      // Frente da folha girando: Página Direita atual (curRight)
+      if (baseRightCanvasRef.value && baseRightCanvasRef.value.width > 0 && store.document?.type === 'pdf') {
         frontCanvas.width = baseRightCanvasRef.value.width
         frontCanvas.height = baseRightCanvasRef.value.height
         const fCtx = frontCanvas.getContext('2d')
         fCtx?.drawImage(baseRightCanvasRef.value, 0, 0)
-      } else if (baseRightTextLayerRef.value && baseRightTextLayerRef.value.innerHTML.trim().length > 0) {
-        await rasterizeHtmlToCanvas(baseRightTextLayerRef.value.innerHTML, frontCanvas, pageW, pageH)
       } else if (curRight > 0) {
         await renderPageToCanvas(curRight, frontCanvas, pageW, pageH)
       }
 
-      // Verso: Próxima Página Esquerda
+      // Verso da folha girando: Próxima Página Esquerda (nextLeft)
       if (nextLeft > 0) {
         await renderPageToCanvas(nextLeft, backCanvas, pageW, pageH)
       }
@@ -534,22 +540,20 @@ async function prepare3DTextures(direction: PageTurnDirection, gripY = 0.5) {
       }
     } else {
       // PREVIOUS
-      const prevLeft = Math.max(1, curLeft - 2)
-      const prevRight = prevLeft + 1 <= total ? prevLeft + 1 : 0
+      const prevLeft = curLeft <= 3 ? 0 : curLeft - 2
+      const prevRight = curLeft <= 3 ? 1 : prevLeft + 1
 
-      // Copia instantânea da frente (Left Page)
-      if (baseLeftCanvasRef.value && baseLeftCanvasRef.value.width > 0) {
+      // Frente da folha girando: Página Esquerda atual (curLeft)
+      if (baseLeftCanvasRef.value && baseLeftCanvasRef.value.width > 0 && store.document?.type === 'pdf') {
         frontCanvas.width = baseLeftCanvasRef.value.width
         frontCanvas.height = baseLeftCanvasRef.value.height
         const fCtx = frontCanvas.getContext('2d')
         fCtx?.drawImage(baseLeftCanvasRef.value, 0, 0)
-      } else if (baseLeftTextLayerRef.value && baseLeftTextLayerRef.value.innerHTML.trim().length > 0) {
-        await rasterizeHtmlToCanvas(baseLeftTextLayerRef.value.innerHTML, frontCanvas, pageW, pageH)
       } else if (curLeft > 0) {
         await renderPageToCanvas(curLeft, frontCanvas, pageW, pageH)
       }
 
-      // Verso: Página Direita Anterior
+      // Verso da folha girando: Página Direita Anterior (ou Capa se voltando para página 1)
       if (prevRight > 0) {
         await renderPageToCanvas(prevRight, backCanvas, pageW, pageH)
       }
@@ -580,13 +584,11 @@ async function prepare3DTextures(direction: PageTurnDirection, gripY = 0.5) {
     const pageW = layout.singlePage.width
     const pageH = layout.singlePage.height
 
-    if (baseSingleCanvasRef.value && baseSingleCanvasRef.value.width > 0) {
+    if (baseSingleCanvasRef.value && baseSingleCanvasRef.value.width > 0 && store.document?.type === 'pdf') {
       frontCanvas.width = baseSingleCanvasRef.value.width
       frontCanvas.height = baseSingleCanvasRef.value.height
       const fCtx = frontCanvas.getContext('2d')
       fCtx?.drawImage(baseSingleCanvasRef.value, 0, 0)
-    } else if (baseSingleTextLayerRef.value && baseSingleTextLayerRef.value.innerHTML.trim().length > 0) {
-      await rasterizeHtmlToCanvas(baseSingleTextLayerRef.value.innerHTML, frontCanvas, pageW, pageH)
     } else {
       await renderPageToCanvas(curPage, frontCanvas, pageW, pageH)
     }

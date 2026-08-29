@@ -166,13 +166,16 @@ const loadBookFromQuery = async () => {
 
     store.syncSettings()
     const doc = createBookDocument(type)
+    const numericBookId = bookId ? parseInt(bookId, 10) : null
+    const validBookId = numericBookId !== null && !isNaN(numericBookId) ? numericBookId : null
+    const coverUrl = validBookId ? `http://localhost:7070/api/books/${validBookId}/cover` : undefined
+
     await readerProfiler.measureAsync('4. Parsing e Inicialização do Documento', async () => {
-      await doc.load(arrayBuffer!, title, store.fontSize, store.fontFamily)
+      await doc.load(arrayBuffer!, title, store.fontSize, store.fontFamily, coverUrl)
     }, 'parse', { type, sizeMB: (arrayBuffer!.byteLength / (1024 * 1024)).toFixed(2) })
 
     readerProfiler.measureSync('5. Atualizar ReaderStore', () => {
-      const numericBookId = bookId ? parseInt(bookId, 10) : null
-      store.setDocument(doc, title, !isNaN(Number(numericBookId)) ? numericBookId : null)
+      store.setDocument(doc, title, validBookId)
 
       if (pageParam) {
         const pageNum = parseInt(pageParam, 10)

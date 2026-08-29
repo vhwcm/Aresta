@@ -99,9 +99,6 @@ export function useBookPageTurn(
     const isWide = store.readerWidthMode === 'wide'
 
     if (isTwoPage) {
-      const leftNum = currentPage % 2 === 0 ? Math.max(1, currentPage - 1) : currentPage
-      const rightNum = leftNum + 1 <= store.totalPages ? leftNum + 1 : 0
-
       let targetWidth: number
       let targetHeight: number
 
@@ -126,6 +123,31 @@ export function useBookPageTurn(
           targetHeight = Math.round(targetWidth / aspectRatio)
         }
       }
+
+      if (currentPage === 1) {
+        // PÁGINA 1: CAPA DO LIVRO (Capa isolada e centralizada no modo 2 páginas)
+        const startX = Math.max(0, (hostWidth - targetWidth) / 2)
+        const startY = Math.max(0, (hostHeight - targetHeight) / 2)
+
+        const rightPage: PageRect = {
+          left: Math.round(startX),
+          top: Math.round(startY),
+          width: Math.round(targetWidth),
+          height: Math.round(targetHeight),
+          pageNumber: 1,
+        }
+
+        return {
+          isTwoPage: true,
+          leftPage: null,
+          rightPage,
+          singlePage: null,
+        }
+      }
+
+      // PÁGINAS >= 2: SPREAD DUPLO CLÁSSICO (Página Par à Esquerda, Página Ímpar à Direita)
+      const leftNum = currentPage % 2 === 0 ? currentPage : currentPage - 1
+      const rightNum = leftNum + 1 <= store.totalPages ? leftNum + 1 : 0
 
       const totalBookWidth = targetWidth * 2
       const startX = Math.max(0, (hostWidth - totalBookWidth) / 2)
@@ -200,11 +222,26 @@ export function useBookPageTurn(
 
   function getTargetPage(direction: PageTurnDirection): number {
     const layout = pageLayout.value
-    const step = layout.isTwoPage ? 2 : 1
+    if (!layout.isTwoPage) {
+      if (direction === 'next') {
+        return Math.min(store.currentPage + 1, store.totalPages)
+      } else {
+        return Math.max(1, store.currentPage - 1)
+      }
+    }
+
     if (direction === 'next') {
-      return Math.min(store.currentPage + step, store.totalPages)
+      if (store.currentPage === 1) {
+        return Math.min(2, store.totalPages)
+      }
+      const curLeft = store.currentPage % 2 === 0 ? store.currentPage : store.currentPage - 1
+      return Math.min(curLeft + 2, store.totalPages)
     } else {
-      return Math.max(1, store.currentPage - step)
+      if (store.currentPage <= 3) {
+        return 1
+      }
+      const curLeft = store.currentPage % 2 === 0 ? store.currentPage : store.currentPage - 1
+      return Math.max(1, curLeft - 2)
     }
   }
 

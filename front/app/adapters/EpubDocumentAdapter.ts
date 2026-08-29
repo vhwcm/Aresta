@@ -503,7 +503,134 @@ const EPUB_TYPOGRAPHY_STYLES = `
     break-inside: avoid !important;
     page-break-inside: avoid !important;
   }
+  .epub-cover-page {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 12px !important;
+    box-sizing: border-box !important;
+  }
+  .epub-cover-page img, .epub-cover-wrapper img, .cover-container img {
+    max-width: 100% !important;
+    max-height: 100% !important;
+    width: auto !important;
+    height: auto !important;
+    object-fit: contain !important;
+    margin: auto !important;
+    display: block !important;
+    border-radius: 4px !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+  }
 `
+
+/**
+ * Verifica se uma seção do EPUB representa uma página de capa.
+ */
+function isCoverSection(section: FoliateSection | null, doc: Document | null): boolean {
+  if (section) {
+    const idLower = (section.id || '').toLowerCase()
+    if (idLower.includes('cover') || idLower.includes('capa') || idLower.includes('titlepage')) {
+      return true
+    }
+  }
+  if (!doc) return false
+  const bodyEl = doc.body || (typeof doc.querySelector === 'function' ? doc.querySelector('body') : null) || (doc as any)
+  if (!bodyEl) return false
+  if (typeof bodyEl.querySelectorAll === 'function') {
+    const images = Array.from(bodyEl.querySelectorAll('img, image, svg'))
+    const textContent = (bodyEl.textContent || '').trim()
+    if (images.length === 1 && textContent.length < 100) {
+      return true
+    }
+    const wrapper = bodyEl.querySelector('.epub-cover-wrapper, .cover-container, .cover')
+    if (wrapper) return true
+  }
+  return false
+}
+
+/**
+ * Cria uma seção sintética de capa a partir de um Data URI ou URL de imagem.
+ */
+function createSyntheticCoverSection(coverSrc: string, title?: string): FoliateSection {
+  return {
+    id: 'synthetic-cover-page.xhtml',
+    linear: true,
+    load: async () => {},
+    unload: () => {},
+    createDocument: async () => {
+      const parser = typeof DOMParser !== 'undefined' ? new DOMParser() : null
+      const html = `<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><title>${title || 'Capa'}</title><style>html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background-color:#faf9f7;}.epub-cover-wrapper{width:100%;height:100%;display:flex;align-items:center;justify-content:center;box-sizing:border-box;padding:12px;margin:0;}.epub-cover-wrapper img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;display:block;margin:auto;box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:4px;}</style></head><body><div class="epub-cover-wrapper"><img src="${coverSrc}" alt="Capa" /></div></body></html>`
+      if (parser) {
+        return parser.parseFromString(html, 'application/xhtml+xml')
+      }
+      return {
+        body: {
+          innerHTML: `<div class="epub-cover-wrapper"><img src="${coverSrc}" alt="Capa" /></div>`,
+          textContent: '',
+        },
+      } as any
+    },
+  }
+}
+
+/**
+ * Tenta localizar a imagem da capa do EPUB (via getCover(), manifest, zip ou URL fallback).
+ */
+async function findEpubCoverDataUri(
+  epub: FoliateEpub,
+  unzipped: Record<string, Uint8Array> | null,
+  fallbackCoverUrl?: string,
+): Promise<string | null> {
+  // 1. Tenta epub.getCover()
+  try {
+    if (typeof epub.getCover === 'function') {
+      const coverBlob = await epub.getCover()
+      if (coverBlob && coverBlob.size > 0) {
+        const arrayBuf = await coverBlob.arrayBuffer()
+        const bytes = new Uint8Array(arrayBuf)
+        const mime = coverBlob.type || 'image/jpeg'
+        return `data:${mime};base64,${uint8ArrayToBase64(bytes)}`
+      }
+    }
+  } catch (err) {
+    logWarn('[EpubAdapter] Erro ao obter cover via epub.getCover():', err)
+  }
+
+  // 2. Tenta resources.cover
+  try {
+    const resCover = (epub as any).resources?.cover
+    if (resCover?.href && unzipped) {
+      const dataUri = getAssetDataUri(unzipped, resCover.href, '')
+      if (dataUri) return dataUri
+    }
+  } catch (err) {
+    logWarn('[EpubAdapter] Erro ao obter cover via resources.cover:', err)
+  }
+
+  // 3. Procura no unzipped por arquivos de imagem com 'cover' ou 'capa' no nome
+  if (unzipped) {
+    for (const [key, bytes] of Object.entries(unzipped)) {
+      const keyLower = key.toLowerCase()
+      if (
+        (keyLower.includes('cover') || keyLower.includes('capa')) &&
+        (keyLower.endsWith('.jpg') || keyLower.endsWith('.jpeg') || keyLower.endsWith('.png') || keyLower.endsWith('.webp'))
+      ) {
+        const mime = getMimeType(key)
+        return `data:${mime};base64,${uint8ArrayToBase64(bytes)}`
+      }
+    }
+  }
+
+  // 4. Fallback para URL externa de capa passada como parâmetro
+  if (fallbackCoverUrl) {
+    return fallbackCoverUrl
+  }
+
+  return null
+}
 
 function calculateSectionPages(
   doc: Document | null,
@@ -513,6 +640,8 @@ function calculateSectionPages(
   pageHeight: number = 900,
 ): number {
   if (!doc) return 1
+  if (isCoverSection(null, doc)) return 1
+
   const bodyEl = doc.body || (typeof doc.querySelector === 'function' ? doc.querySelector('body') : null) || (typeof doc.getElementsByTagName === 'function' ? doc.getElementsByTagName('body')[0] : null) || (doc as any)
   const textLen = (bodyEl?.textContent || '').trim().length
   if (typeof document === 'undefined' || !document.createElement) {
@@ -708,6 +837,7 @@ export class EpubDocumentAdapter implements IBookDocument {
     fileName?: string,
     initialFontSize?: number,
     initialFontFamily?: string,
+    coverUrl?: string,
   ): Promise<void> {
     if (typeof initialFontSize === 'number' && !isNaN(initialFontSize)) {
       this._fontSize = Math.max(12, Math.min(36, Math.round(initialFontSize)))
@@ -749,19 +879,51 @@ export class EpubDocumentAdapter implements IBookDocument {
       description: meta['description'] ? String(meta['description']) : undefined,
     }
 
+    // Inclui todas as seções válidas da spine (não descarta seções auxiliares ou marcadas como non-linear)
     this._sections = (epub.sections ?? []).filter(
-      (s): s is FoliateSection => s !== null && s.linear !== false,
+      (s): s is FoliateSection => s !== null,
     )
-    this._totalPages = this._sections.length
+
+    this._sectionDocs.clear()
+
+    // Verifica se a primeira seção já é uma página de capa
+    let firstDoc: Document | null = null
+    const firstSection = this._sections[0]
+    if (firstSection) {
+      try {
+        firstDoc = await firstSection.createDocument()
+        if (firstDoc && this._unzipped) {
+          prepareSectionDocument(firstDoc, firstSection.id || '', this._unzipped)
+        }
+      } catch (err) {
+        logWarn('[EpubAdapter] Erro ao inspecionar seção 0 para capa:', err)
+      }
+    }
+
+    const firstIsCover = isCoverSection(this._sections[0] || null, firstDoc)
+
+    // Se a primeira seção não for a capa, tenta extrair e injetar a capa no início
+    if (!firstIsCover) {
+      const coverDataUri = await findEpubCoverDataUri(epub, this._unzipped, coverUrl)
+      if (coverDataUri) {
+        const syntheticCover = createSyntheticCoverSection(coverDataUri, this._metadata.title)
+        this._sections.unshift(syntheticCover)
+        firstDoc = await syntheticCover.createDocument()
+        this._metadata.coverUrl = coverDataUri
+      }
+    }
+
+    if (firstDoc && this._sections.length > 0) {
+      this._sectionDocs.set(0, firstDoc)
+    }
 
     this._pageMap = []
-    this._sectionDocs.clear()
     let globalPageCounter = 1
 
     for (let sIdx = 0; sIdx < this._sections.length; sIdx++) {
       const section = this._sections[sIdx]
-      let doc: Document | null = null
-      if (section) {
+      let doc = this._sectionDocs.get(sIdx) || null
+      if (!doc && section) {
         try {
           doc = await section.createDocument()
           if (doc && this._unzipped) {
@@ -848,12 +1010,12 @@ export class EpubDocumentAdapter implements IBookDocument {
         this._sectionDocs.set(mapping.sectionIndex, doc)
       }
 
+      const isCover = isCoverSection(section, doc)
       const docStyles = doc && typeof doc.querySelectorAll === 'function' ? Array.from(doc.querySelectorAll('style')).map((s) => s.innerHTML).join('\n') : ''
 
       const bodyEl = doc.body || (typeof doc.querySelector === 'function' ? doc.querySelector('body') : null) || (typeof doc.getElementsByTagName === 'function' ? doc.getElementsByTagName('body')[0] : null) || (doc as any)
       const bodyContent = bodyEl ? (bodyEl.innerHTML || bodyEl.textContent || '') : (doc.documentElement ? doc.documentElement.innerHTML : '')
       const bodyClasses = bodyEl && typeof bodyEl.getAttribute === 'function' ? (bodyEl.getAttribute('class') || '') : ''
-      const bodyInlineStyles = bodyEl && typeof bodyEl.getAttribute === 'function' ? (bodyEl.getAttribute('style') || '') : ''
 
       const width = targetWidth && targetWidth > 0 ? targetWidth : this._pageWidth
       const height = targetHeight && targetHeight > 0 ? targetHeight : this._pageHeight
@@ -882,19 +1044,27 @@ export class EpubDocumentAdapter implements IBookDocument {
       viewportWrapper.appendChild(styleTag)
 
       const contentWrapper = document.createElement('div')
-      contentWrapper.className = `epub-text-layer-content ${bodyClasses}`.trim()
+      contentWrapper.className = `epub-text-layer-content ${isCover ? 'epub-cover-page' : ''} ${bodyClasses}`.trim()
       contentWrapper.style.width = `${width}px`
       contentWrapper.style.height = `${height}px`
-      contentWrapper.style.padding = `${paddingY}px ${paddingX}px`
+      if (isCover) {
+        contentWrapper.style.padding = '12px'
+        contentWrapper.style.display = 'flex'
+        contentWrapper.style.alignItems = 'center'
+        contentWrapper.style.justifyContent = 'center'
+        contentWrapper.style.marginLeft = '0'
+      } else {
+        contentWrapper.style.padding = `${paddingY}px ${paddingX}px`
+        contentWrapper.style.columnWidth = `${colWidth}px`
+        contentWrapper.style.columnGap = `${colGap}px`
+        contentWrapper.style.columnFill = 'auto'
+        contentWrapper.style.marginLeft = `-${colOffset}px`
+      }
       contentWrapper.style.boxSizing = 'border-box'
-      contentWrapper.style.columnWidth = `${colWidth}px`
-      contentWrapper.style.columnGap = `${colGap}px`
-      contentWrapper.style.columnFill = 'auto'
       contentWrapper.style.fontFamily = this._fontFamily
       contentWrapper.style.fontSize = `${this._fontSize}px`
       contentWrapper.style.lineHeight = '1.7'
       contentWrapper.style.wordWrap = 'break-word'
-      contentWrapper.style.marginLeft = `-${colOffset}px`
       contentWrapper.style.userSelect = 'text'
       contentWrapper.style.webkitUserSelect = 'text'
 
@@ -940,6 +1110,7 @@ export class EpubDocumentAdapter implements IBookDocument {
         }
         this._sectionDocs.set(mapping.sectionIndex, doc)
       }
+      const isCover = isCoverSection(section, doc)
       const docStyles = doc && typeof doc.querySelectorAll === 'function' ? Array.from(doc.querySelectorAll('style')).map((s) => s.innerHTML).join('\n') : ''
       const bodyEl = doc.body || (typeof doc.querySelector === 'function' ? doc.querySelector('body') : null) || (typeof doc.getElementsByTagName === 'function' ? doc.getElementsByTagName('body')[0] : null) || (doc as any)
       const bodyContent = bodyEl ? (bodyEl.innerHTML || bodyEl.textContent || '') : (doc.documentElement ? doc.documentElement.innerHTML : '')
@@ -951,6 +1122,19 @@ export class EpubDocumentAdapter implements IBookDocument {
       const colGap = paddingX * 2
       const colOffset = mapping.pageIndexInSection * width
 
+      const safeBodyContent = (bodyContent || '')
+        .replace(/&nbsp;/g, '&#160;')
+        .replace(/&mdash;/g, '&#8212;')
+        .replace(/&ndash;/g, '&#8211;')
+        .replace(/&ldquo;/g, '&#8220;')
+        .replace(/&rdquo;/g, '&#8221;')
+        .replace(/&lsquo;/g, '&#8216;')
+        .replace(/&rsquo;/g, '&#8217;')
+        .replace(/&hellip;/g, '&#8230;')
+        .replace(/&copy;/g, '&#169;')
+        .replace(/&trade;/g, '&#8482;')
+        .replace(/&reg;/g, '&#174;')
+
       const svgContent = `
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${renderW}" height="${renderH}">
           <style>
@@ -959,10 +1143,10 @@ export class EpubDocumentAdapter implements IBookDocument {
           </style>
           <foreignObject width="${width}" height="${height}">
             <div xmlns="http://www.w3.org/1999/xhtml"
-              style="width:${width}px;height:${height}px;overflow:hidden;background:#faf9f7;margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;">
-              <div class="epub-text-layer-content ${bodyClasses}"
-                style="width:${width}px;height:${height}px;padding:${paddingY}px ${paddingX}px;box-sizing:border-box;column-width:${colWidth}px;column-gap:${colGap}px;column-fill:auto;font-family:${this._fontFamily};font-size:${this._fontSize}px;line-height:1.7;word-wrap:break-word;margin-left:-${colOffset}px;">
-                ${bodyContent}
+              style="width:${width}px;height:${height}px;overflow:hidden;background:#faf9f7;margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;display:flex;align-items:center;justify-content:center;">
+              <div class="epub-text-layer-content ${isCover ? 'epub-cover-page' : ''} ${bodyClasses}"
+                style="width:${width}px;height:${height}px;box-sizing:border-box;${isCover ? 'display:flex;align-items:center;justify-content:center;padding:12px;margin:0;' : `padding:${paddingY}px ${paddingX}px;column-width:${colWidth}px;column-gap:${colGap}px;column-fill:auto;margin-left:-${colOffset}px;`}font-family:${this._fontFamily};font-size:${this._fontSize}px;line-height:1.7;word-wrap:break-word;">
+                ${safeBodyContent}
               </div>
             </div>
           </foreignObject>

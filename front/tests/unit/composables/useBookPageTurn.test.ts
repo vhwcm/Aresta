@@ -1,5 +1,8 @@
-import { describe, it, expect } from 'vitest'
-import { shouldCommitPageTurn } from '~/composables/reader/useBookPageTurn'
+import { describe, it, expect, beforeEach } from 'vitest'
+import { ref } from 'vue'
+import { setActivePinia, createPinia } from 'pinia'
+import { useBookPageTurn, shouldCommitPageTurn } from '~/composables/reader/useBookPageTurn'
+import { useReaderStore } from '~/stores/readerStore'
 
 describe('shouldCommitPageTurn', () => {
   it('confirma virada exatamente no limiar de arraste', () => {
@@ -32,5 +35,66 @@ describe('shouldCommitPageTurn', () => {
 
   it('confirma gesto mais rápido que o limiar', () => {
     expect(shouldCommitPageTurn(0.0, 0.005)).toBe(true)
+  })
+})
+
+describe('useBookPageTurn Layout e Navegação', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
+  it('posiciona a página 1 (Capa) centralizada/isolada no modo 2 páginas', () => {
+    const store = useReaderStore()
+    store.setTwoPageMode(true)
+    store.setDocument({
+      type: 'epub',
+      totalPages: 10,
+      metadata: { title: 'Livro Teste' },
+      isLoaded: true,
+      load: vi.fn(),
+      getPage: vi.fn(),
+      destroy: vi.fn(),
+    } as any, 'livro.epub')
+
+    const host = document.createElement('div')
+    Object.defineProperty(host, 'clientWidth', { value: 1200, configurable: true })
+    Object.defineProperty(host, 'clientHeight', { value: 800, configurable: true })
+    const hostRef = ref(host)
+
+    const turn = useBookPageTurn(hostRef)
+    turn.updateLayout()
+
+    expect(turn.pageLayout.value.isTwoPage).toBe(true)
+    expect(turn.pageLayout.value.leftPage).toBeNull()
+    expect(turn.pageLayout.value.rightPage).not.toBeNull()
+    expect(turn.pageLayout.value.rightPage?.pageNumber).toBe(1)
+  })
+
+  it('posiciona spread com página par à esquerda e ímpar à direita a partir da página 2', () => {
+    const store = useReaderStore()
+    store.setTwoPageMode(true)
+    store.setDocument({
+      type: 'epub',
+      totalPages: 10,
+      metadata: { title: 'Livro Teste' },
+      isLoaded: true,
+      load: vi.fn(),
+      getPage: vi.fn(),
+      destroy: vi.fn(),
+    } as any, 'livro.epub')
+
+    const host = document.createElement('div')
+    Object.defineProperty(host, 'clientWidth', { value: 1200, configurable: true })
+    Object.defineProperty(host, 'clientHeight', { value: 800, configurable: true })
+    const hostRef = ref(host)
+
+    const turn = useBookPageTurn(hostRef)
+
+    store.goToPage(2)
+    turn.updateLayout()
+
+    expect(turn.pageLayout.value.isTwoPage).toBe(true)
+    expect(turn.pageLayout.value.leftPage?.pageNumber).toBe(2)
+    expect(turn.pageLayout.value.rightPage?.pageNumber).toBe(3)
   })
 })

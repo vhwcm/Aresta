@@ -24,7 +24,7 @@ export class PdfDocumentAdapter implements IBookDocument {
     return currentPage
   }
 
-  async load(source: File | ArrayBuffer, fileName?: string, _initialFontSize?: number, _initialFontFamily?: string): Promise<void> {
+  async load(source: File | ArrayBuffer, fileName?: string, _initialFontSize?: number, _initialFontFamily?: string, _coverUrl?: string): Promise<void> {
     const pdfjsLib = await readerProfiler.measureAsync('4.1. Importação Dinâmica do PDF.js', async () => {
       return await import('pdfjs-dist')
     }, 'parse')
@@ -120,8 +120,9 @@ export class PdfDocumentAdapter implements IBookDocument {
         ctx.imageSmoothingEnabled = true
         ctx.imageSmoothingQuality = 'high'
 
-        await pdfPage.render({
-          canvasContext: ctx as unknown as CanvasRenderingContext2D,
+        await (pdfPage.render as any)({
+          canvasContext: ctx,
+          canvas,
           viewport,
           intent: 'display',
         }).promise

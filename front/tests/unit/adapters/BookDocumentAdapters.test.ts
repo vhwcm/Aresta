@@ -371,5 +371,143 @@ describe('Book Document Adapters and Factory', () => {
 
       adapter.destroy()
     })
+
+    it('identifies existing cover section and keeps it as page 1', async () => {
+      const adapter = new EpubDocumentAdapter()
+      const coverDoc = document.implementation.createHTMLDocument('Capa')
+      coverDoc.body.innerHTML = '<div class="cover"><img src="cover.jpg" alt="Cover" /></div>'
+      const chapDoc = document.implementation.createHTMLDocument('Capítulo 1')
+      chapDoc.body.innerHTML = '<h1>Capítulo 1</h1><p>Início da história.</p>'
+
+      const mockEpubInstance = {
+        metadata: { title: 'Livro Com Capa Nativa', creator: 'Autor' },
+        sections: [
+          {
+            id: 'cover.xhtml',
+            linear: 'no',
+            createDocument: () => Promise.resolve(coverDoc),
+          },
+          {
+            id: 'chapter1.xhtml',
+            linear: true,
+            createDocument: () => Promise.resolve(chapDoc),
+          },
+        ],
+        init: () => Promise.resolve(),
+      }
+
+      const foliateMod: any = await import('foliate-js/epub.js')
+      const EPUB = foliateMod.EPUB || foliateMod.default || foliateMod.Book
+      const origEPUB = (EPUB as any)
+      vi.spyOn(origEPUB.prototype, 'init').mockImplementation(function (this: any) {
+        this.metadata = mockEpubInstance.metadata
+        this.sections = mockEpubInstance.sections
+        return Promise.resolve()
+      })
+
+      const buffer = new ArrayBuffer(16)
+      await adapter.load(buffer, 'com-capa.epub')
+
+      expect(adapter.totalPages).toBeGreaterThanOrEqual(2)
+
+      const container = document.createElement('div')
+      await adapter.renderTextLayer(1, container, 800, 1200)
+
+      const content = container.querySelector('.epub-text-layer-content') as HTMLElement
+      expect(content).not.toBeNull()
+      expect(content.classList.contains('epub-cover-page')).toBe(true)
+
+      adapter.destroy()
+    })
+
+    it('injects synthetic cover page as page 1 when cover image is available', async () => {
+      const adapter = new EpubDocumentAdapter()
+      const chapDoc = document.implementation.createHTMLDocument('Capítulo 1')
+      chapDoc.body.innerHTML = '<h1>Capítulo 1</h1><p>Era uma vez.</p>'
+
+      const fakeCoverBlob = new Blob([new Uint8Array([1, 2, 3, 4])], { type: 'image/jpeg' })
+
+      const mockEpubInstance = {
+        metadata: { title: 'Livro Sem Secao Capa', creator: 'Autor' },
+        sections: [
+          {
+            id: 'chap1.xhtml',
+            linear: true,
+            createDocument: () => Promise.resolve(chapDoc),
+          },
+        ],
+        getCover: () => Promise.resolve(fakeCoverBlob),
+        init: () => Promise.resolve(),
+      }
+
+      const foliateMod: any = await import('foliate-js/epub.js')
+      const EPUB = foliateMod.EPUB || foliateMod.default || foliateMod.Book
+      const origEPUB = (EPUB as any)
+      vi.spyOn(origEPUB.prototype, 'init').mockImplementation(function (this: any) {
+        this.metadata = mockEpubInstance.metadata
+        this.sections = mockEpubInstance.sections
+        this.getCover = mockEpubInstance.getCover
+        return Promise.resolve()
+      })
+
+      const buffer = new ArrayBuffer(16)
+      await adapter.load(buffer, 'sem-secao-capa.epub')
+
+      expect(adapter.metadata.coverUrl).toBeTruthy()
+      expect(adapter.totalPages).toBeGreaterThanOrEqual(2)
+
+      const container = document.createElement('div')
+      await adapter.renderTextLayer(1, container, 800, 1200)
+
+      const coverImg = container.querySelector('img')
+      expect(coverImg).not.toBeNull()
+      expect(coverImg?.getAttribute('src')).toMatch(/^data:image\/jpeg;base64,/)
+
+      adapter.destroy()
+    })
+
+    it('injects synthetic cover page from passed fallback coverUrl parameter', async () => {
+      const adapter = new EpubDocumentAdapter()
+      const chapDoc = document.implementation.createHTMLDocument('Capítulo 1')
+      chapDoc.body.innerHTML = '<h1>Capítulo 1</h1><p>Sem capa interna.</p>'
+
+      const mockEpubInstance = {
+        metadata: { title: 'Livro URL Capa', creator: 'Autor' },
+        sections: [
+          {
+            id: 'chap1.xhtml',
+            linear: true,
+            createDocument: () => Promise.resolve(chapDoc),
+          },
+        ],
+        getCover: () => Promise.resolve(null),
+        init: () => Promise.resolve(),
+      }
+
+      const foliateMod: any = await import('foliate-js/epub.js')
+      const EPUB = foliateMod.EPUB || foliateMod.default || foliateMod.Book
+      const origEPUB = (EPUB as any)
+      vi.spyOn(origEPUB.prototype, 'init').mockImplementation(function (this: any) {
+        this.metadata = mockEpubInstance.metadata
+        this.sections = mockEpubInstance.sections
+        this.getCover = mockEpubInstance.getCover
+        return Promise.resolve()
+      })
+
+      const buffer = new ArrayBuffer(16)
+      await adapter.load(buffer, 'url-capa.epub', 18, undefined, 'http://localhost:7070/api/books/42/cover')
+
+      expect(adapter.metadata.coverUrl).toBe('http://localhost:7070/api/books/42/cover')
+      expect(adapter.totalPages).toBeGreaterThanOrEqual(2)
+
+      const container = document.createElement('div')
+      await adapter.renderTextLayer(1, container, 800, 1200)
+
+      const coverImg = container.querySelector('img')
+      expect(coverImg).not.toBeNull()
+      expect(coverImg?.getAttribute('src')).toBe('http://localhost:7070/api/books/42/cover')
+
+      adapter.destroy()
+    })
   })
 })
