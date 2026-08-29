@@ -12,10 +12,13 @@ Instruções e diretrizes para versionamento e commits de alterações no reposi
 
 ## Diretrizes Principais
 
-1. **Commit Imediato ao Concluir Tarefas**:
-   - Sempre que uma tarefa (ou subtarefa bem definida) for finalizada e validada, faça o stage dos arquivos modificados/criados (`git add`) e crie o commit correspondente (`git commit`).
+1. **Validação Prévia de Quality Gates (Obrigatório)**:
+   - **NUNCA** faça commit se qualquer Quality Gate estiver falhando. Antes de commitar, execute a skill `run-quality-gates` para assegurar que ESLint, Typecheck e Testes do Frontend e Backend estão 100% aprovados.
 
-2. **Divisão em Commits Menores (Commits Atômicos)**:
+2. **Commit Imediato ao Concluir Tarefas**:
+   - Sempre que uma tarefa (ou subtarefa bem definida) for finalizada e validada pelos Quality Gates, faça o stage dos arquivos modificados/criados (`git add`) e crie o commit correspondente (`git commit`).
+
+3. **Divisão em Commits Menores (Commits Atômicos)**:
    - Em tarefas grandes, complexas ou com múltiplos componentes/escopos, **divida as alterações em commits menores e lógicos**.
    - Não acumule refatorações, novas features, correções e alterações de documentação em um único commit gigante.
    - Cada commit deve representar uma unidade coerente de trabalho (ex: `feat(api): ...`, `fix(ui): ...`, `refactor(db): ...`, `docs: ...`).
