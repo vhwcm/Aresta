@@ -293,6 +293,29 @@ describe('useReaderStore', () => {
       store.resetFontSize()
       expect(store.fontSize).toBe(18)
     })
+
+    it('sincroniza tamanho da fonte configurado nas preferências da conta ao carregar documento', () => {
+      localStorage.setItem('aresta_settings', JSON.stringify({ epubFontSize: 26 }))
+      const store = useReaderStore()
+      const mockDoc = createMockDocument({
+        type: 'epub',
+        setFontSize: vi.fn((size: number, currPage?: number) => currPage || 1),
+      })
+
+      store.setDocument(mockDoc, 'livro.epub')
+
+      expect(store.fontSize).toBe(26)
+      expect(mockDoc.setFontSize).toHaveBeenCalledWith(26, 1)
+    })
+
+    it('redefine para o tamanho padrão 18 com resetFontSize', () => {
+      const store = useReaderStore()
+      store.setFontSize(30)
+      expect(store.fontSize).toBe(30)
+
+      store.resetFontSize()
+      expect(store.fontSize).toBe(18)
+    })
   })
 
   describe('Modo Zen (isZenMode)', () => {

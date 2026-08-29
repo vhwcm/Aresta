@@ -383,8 +383,8 @@ function handleTextSelectionCheck() {
   if (canvasAreaRef.value) {
     const anchor = selection.anchorNode
     const focus = selection.focusNode
-    const isAnchorInside = anchor && canvasAreaRef.value.contains(anchor)
-    const isFocusInside = focus && canvasAreaRef.value.contains(focus)
+    const isAnchorInside = anchor && (canvasAreaRef.value === anchor || (typeof canvasAreaRef.value.contains === 'function' && canvasAreaRef.value.contains(anchor)))
+    const isFocusInside = focus && (canvasAreaRef.value === focus || (typeof canvasAreaRef.value.contains === 'function' && canvasAreaRef.value.contains(focus)))
     if (!isAnchorInside && !isFocusInside) {
       isSelectionTooltipVisible.value = false
       return

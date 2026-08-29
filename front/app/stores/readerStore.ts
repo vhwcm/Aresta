@@ -237,20 +237,6 @@ export const useReaderStore = defineStore('reader', {
     },
 
     resetFontSize() {
-      if (typeof window !== 'undefined') {
-        try {
-          const saved = localStorage.getItem('aresta_settings')
-          if (saved) {
-            const parsed = JSON.parse(saved)
-            if (typeof parsed.epubFontSize === 'number') {
-              this.setFontSize(parsed.epubFontSize)
-              return
-            }
-          }
-        } catch {
-          // ignorar
-        }
-      }
       this.setFontSize(18)
     },
 

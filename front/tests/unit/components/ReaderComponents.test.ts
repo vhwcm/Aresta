@@ -640,12 +640,14 @@ describe('Reader Components', () => {
             ReaderBottomBar: true,
             ReaderSavedPagesModal: true,
             ReaderAnnotationModal: {
+              name: 'ReaderAnnotationModal',
               template: '<div v-if="isOpen" class="modal-stub" :data-initial="initialText">{{ initialText }}</div>',
               props: ['isOpen', 'initialText'],
             },
             ReaderAnnotationDrawer: true,
             ReaderTypographyPopover: true,
             ReaderSelectionTooltip: {
+              name: 'ReaderSelectionTooltip',
               template: '<div v-if="visible" class="tooltip-stub"><button @click="$emit(\'annotate\', { text: selectedText, pageNumber })">Anotar</button></div>',
               props: ['visible', 'selectedText', 'pageNumber'],
               emits: ['annotate'],
