@@ -342,6 +342,8 @@ async function handleOpenAnnotation() {
     if (selection) {
       annotationPage.value = getTargetPageFromSelection(selection)
     }
+  } else if (capturedSelectionText.value && capturedSelectionText.value.trim().length > 0) {
+    // Preserva o trecho previamente selecionado se o clique no botão tiver desfocado o texto
   } else if (store.document && typeof store.document.getTextContent === 'function') {
     annotationPage.value = store.currentPage
     try {
@@ -372,7 +374,7 @@ function handleTextSelectionCheck() {
   }
 
   const selectedText = selection.toString().trim()
-  if (!selectedText || selectedText.length < 2) {
+  if (!selectedText) {
     isSelectionTooltipVisible.value = false
     return
   }
@@ -589,6 +591,7 @@ onMounted(() => {
   window.addEventListener('resize', updateDeviceType)
   window.addEventListener('keydown', onKeyDown)
   window.addEventListener('popstate', onPopState)
+  window.addEventListener('mouseup', handleTextSelectionCheck)
   document.addEventListener('selectionchange', onDocumentSelectionChange)
   if (canvasAreaRef.value && typeof ResizeObserver !== 'undefined') {
     resizeObserver = new ResizeObserver(() => {
@@ -600,10 +603,12 @@ onMounted(() => {
 
 onUnmounted(() => {
   if (zenToastTimeout) clearTimeout(zenToastTimeout)
+  if (touchTimer) clearTimeout(touchTimer)
   resizeObserver?.disconnect()
   window.removeEventListener('resize', updateDeviceType)
   window.removeEventListener('keydown', onKeyDown)
   window.removeEventListener('popstate', onPopState)
+  window.removeEventListener('mouseup', handleTextSelectionCheck)
   document.removeEventListener('selectionchange', onDocumentSelectionChange)
   if (store.isZenMode) {
     store.setZenMode(false)

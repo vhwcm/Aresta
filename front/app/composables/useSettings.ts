@@ -1,5 +1,16 @@
 import { reactive, computed, readonly } from 'vue'
 import { useAuth } from '~/composables/useAuth'
+import { useReaderStore } from '~/stores/readerStore'
+
+function trySyncReaderStore() {
+  if (typeof window === 'undefined') return
+  try {
+    const store = useReaderStore()
+    store.syncSettings()
+  } catch {
+    // pinia não inicializado ou SSR
+  }
+}
 
 export type ThemeMode = 'dark' | 'light' | 'sepia'
 export type EpubFontFamilyId = 'newsreader' | 'literata' | 'lora' | 'merriweather' | 'inter'
@@ -179,6 +190,7 @@ function applyServerSettings(data: UserSettingsResponse) {
   }
 
   applyTheme(settings.themeMode)
+  trySyncReaderStore()
 }
 
 export function useSettings() {
@@ -193,6 +205,7 @@ export function useSettings() {
       // Sincronizar chave legada para compatibilidade de leitor
       localStorage.setItem('aresta_reader_font', settings.epubFontFamily)
       localStorage.setItem('aresta_home_graph_collapsed', String(!settings.desktopHomeGraphOpen))
+      trySyncReaderStore()
     } catch {
       // ignorar quota error
     }

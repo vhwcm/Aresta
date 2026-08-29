@@ -24,7 +24,7 @@ export class PdfDocumentAdapter implements IBookDocument {
     return currentPage
   }
 
-  async load(source: File | ArrayBuffer, fileName?: string): Promise<void> {
+  async load(source: File | ArrayBuffer, fileName?: string, _initialFontSize?: number, _initialFontFamily?: string): Promise<void> {
     const pdfjsLib = await readerProfiler.measureAsync('4.1. Importação Dinâmica do PDF.js', async () => {
       return await import('pdfjs-dist')
     }, 'parse')

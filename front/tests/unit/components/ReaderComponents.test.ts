@@ -620,6 +620,83 @@ describe('Reader Components', () => {
       const titleBar = wrapper.find('.reader-viewer__book-title-bar')
       expect(titleBar.exists()).toBe(false)
     })
+
+    it('exibe o tooltip de seleção e abre o modal de anotação com o texto selecionado', async () => {
+      const store = useReaderStore()
+      store.setDocument({
+        type: 'epub',
+        metadata: { title: 'Memórias Póstumas' },
+        totalPages: 80,
+        isLoaded: true,
+        load: vi.fn(),
+        destroy: vi.fn(),
+      } as any, 'memorias.epub')
+
+      const wrapper = mount(ReaderViewer, {
+        global: {
+          stubs: {
+            ReaderEnginePageCurlCanvas: true,
+            ReaderGraphPanel: true,
+            ReaderBottomBar: true,
+            ReaderSavedPagesModal: true,
+            ReaderAnnotationModal: {
+              template: '<div v-if="isOpen" class="modal-stub" :data-initial="initialText">{{ initialText }}</div>',
+              props: ['isOpen', 'initialText'],
+            },
+            ReaderAnnotationDrawer: true,
+            ReaderTypographyPopover: true,
+            ReaderSelectionTooltip: {
+              template: '<div v-if="visible" class="tooltip-stub"><button @click="$emit(\'annotate\', { text: selectedText, pageNumber })">Anotar</button></div>',
+              props: ['visible', 'selectedText', 'pageNumber'],
+              emits: ['annotate'],
+            },
+            ReaderDictionaryCard: true,
+          },
+        },
+      })
+
+      // Simula seleção de texto
+      const canvasArea = wrapper.find('.reader-viewer__canvas-area')
+      expect(canvasArea.exists()).toBe(true)
+
+      const mockSelection = {
+        isCollapsed: false,
+        toString: () => 'Ao verme que primeiro roeu as frias carnes',
+        rangeCount: 1,
+        anchorNode: canvasArea.element,
+        focusNode: canvasArea.element,
+        getRangeAt: () => ({
+          getBoundingClientRect: () => ({
+            top: 200,
+            bottom: 220,
+            left: 300,
+            right: 500,
+            width: 200,
+            height: 20,
+          }),
+        }),
+      }
+
+      vi.spyOn(window, 'getSelection').mockReturnValue(mockSelection as any)
+
+      await canvasArea.trigger('mouseup')
+
+      const tooltip = wrapper.findComponent({ name: 'ReaderSelectionTooltip' })
+      expect(tooltip.exists()).toBe(true)
+      expect(tooltip.props('visible')).toBe(true)
+      expect(tooltip.props('selectedText')).toBe('Ao verme que primeiro roeu as frias carnes')
+
+      // Clica em Anotar a partir do tooltip
+      await tooltip.vm.$emit('annotate', {
+        text: 'Ao verme que primeiro roeu as frias carnes',
+        pageNumber: 1,
+      })
+
+      const modal = wrapper.findComponent({ name: 'ReaderAnnotationModal' })
+      expect(modal.exists()).toBe(true)
+      expect(modal.props('isOpen')).toBe(true)
+      expect(modal.props('initialText')).toBe('Ao verme que primeiro roeu as frias carnes')
+    })
   })
 })
 

@@ -1,5 +1,10 @@
 <template>
-  <div class="reader-shell">
+  <div
+    class="reader-shell"
+    :class="'reader-shell--' + activeTheme"
+    :data-theme="activeTheme === 'sepia' ? 'sepia' : (activeTheme === 'white' ? 'light' : 'dark')"
+    :style="{ backgroundColor: themeBgColor }"
+  >
     <transition name="fade" mode="out-in">
       <ReaderViewer v-if="store.hasDocument" key="reader" />
       <div v-else key="empty" class="reader-shell__empty">
@@ -54,6 +59,13 @@ import { detectFileTypeFromArrayBuffer } from '~/utils/fileValidator'
 
 const store = useReaderStore()
 const route = useRoute()
+
+const activeTheme = computed(() => store.readerTheme || 'sepia')
+const themeBgColor = computed(() => {
+  if (activeTheme.value === 'white') return '#ffffff'
+  if (activeTheme.value === 'black') return '#121214'
+  return '#f5eedc'
+})
 
 const loadingLabel = computed(() =>
   store.documentType === 'epub' ? 'EPUB' : 'PDF',
@@ -150,9 +162,10 @@ const loadBookFromQuery = async () => {
       void saveCachedBook(cacheKey, arrayBuffer, title, type)
     }
 
+    store.syncSettings()
     const doc = createBookDocument(type)
     await readerProfiler.measureAsync('4. Parsing e Inicialização do Documento', async () => {
-      await doc.load(arrayBuffer!, title)
+      await doc.load(arrayBuffer!, title, store.fontSize, store.fontFamily)
     }, 'parse', { type, sizeMB: (arrayBuffer!.byteLength / (1024 * 1024)).toFixed(2) })
 
     readerProfiler.measureSync('5. Atualizar ReaderStore', () => {
@@ -190,6 +203,19 @@ onMounted(() => {
   background: var(--color-bg);
   display: flex;
   flex-direction: column;
+  transition: background-color 0.2s ease;
+}
+
+.reader-shell--sepia {
+  background-color: #f5eedc;
+}
+
+.reader-shell--white {
+  background-color: #ffffff;
+}
+
+.reader-shell--black {
+  background-color: #121214;
 }
 
 .reader-shell__empty {

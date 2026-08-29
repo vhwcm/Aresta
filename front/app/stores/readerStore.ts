@@ -103,6 +103,51 @@ export const useReaderStore = defineStore('reader', {
   },
 
   actions: {
+    syncSettings() {
+      if (typeof window === 'undefined') return
+      try {
+        const saved = localStorage.getItem('aresta_settings')
+        if (saved) {
+          const parsed = JSON.parse(saved)
+          if (typeof parsed.desktopReaderGraphOpen === 'boolean') {
+            this.isGraphOpen = parsed.desktopReaderGraphOpen
+          }
+          if (typeof parsed.epubFontSize === 'number') {
+            const parsedSize = Math.max(12, Math.min(36, Math.round(parsed.epubFontSize)))
+            this.fontSize = parsedSize
+            if (this.document && typeof this.document.setFontSize === 'function') {
+              this.document.setFontSize(parsedSize, this.currentPage)
+            }
+          }
+          if (parsed.readerTheme === 'white' || parsed.readerTheme === 'sepia' || parsed.readerTheme === 'black') {
+            this.readerTheme = parsed.readerTheme
+          }
+          if (parsed.epubFontFamily) {
+            const fontMap: Record<string, string> = {
+              newsreader: "'Newsreader', Georgia, serif",
+              literata: "'Literata', Georgia, serif",
+              lora: "'Lora', Georgia, serif",
+              merriweather: "'Merriweather', Georgia, serif",
+              inter: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+            }
+            if (fontMap[parsed.epubFontFamily]) {
+              const fontFam = fontMap[parsed.epubFontFamily]!
+              this.fontFamily = fontFam
+              if (this.document && typeof this.document.setFontFamily === 'function') {
+                this.document.setFontFamily(fontFam, this.currentPage)
+              }
+            }
+          }
+        }
+        const savedTheme = localStorage.getItem('aresta_reader_theme')
+        if (savedTheme === 'white' || savedTheme === 'sepia' || savedTheme === 'black') {
+          this.readerTheme = savedTheme
+        }
+      } catch {
+        // ignorar falha de parse
+      }
+    },
+
     setBookId(id: number | null) {
       this.bookId = id
       this.loadBookmarks()
@@ -120,6 +165,7 @@ export const useReaderStore = defineStore('reader', {
       this.currentPage = 1
       this.isLoading = false
       this.error = null
+      this.syncSettings()
       if (doc.type === 'epub') {
         if (typeof doc.setFontSize === 'function') {
           const preferredSize = this.fontSize || 18
@@ -136,6 +182,27 @@ export const useReaderStore = defineStore('reader', {
     setFontFamily(family: string) {
       if (!family) return
       this.fontFamily = family
+      if (typeof window !== 'undefined') {
+        try {
+          const fontMapRev: Record<string, string> = {
+            "'Newsreader', Georgia, serif": 'newsreader',
+            "'Literata', Georgia, serif": 'literata',
+            "'Lora', Georgia, serif": 'lora',
+            "'Merriweather', Georgia, serif": 'merriweather',
+            "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif": 'inter',
+          }
+          const fontId = fontMapRev[family]
+          const saved = localStorage.getItem('aresta_settings')
+          const settings = saved ? JSON.parse(saved) : {}
+          if (fontId) {
+            settings.epubFontFamily = fontId
+            localStorage.setItem('aresta_reader_font', fontId)
+          }
+          localStorage.setItem('aresta_settings', JSON.stringify(settings))
+        } catch {
+          // ignorar erro
+        }
+      }
       if (this.document && typeof this.document.setFontFamily === 'function') {
         const newPage = this.document.setFontFamily(family, this.currentPage)
         this.currentPage = Math.max(1, Math.min(newPage, this.document.totalPages))
@@ -145,6 +212,16 @@ export const useReaderStore = defineStore('reader', {
     setFontSize(size: number) {
       const clamped = Math.max(12, Math.min(36, Math.round(size)))
       this.fontSize = clamped
+      if (typeof window !== 'undefined') {
+        try {
+          const saved = localStorage.getItem('aresta_settings')
+          const settings = saved ? JSON.parse(saved) : {}
+          settings.epubFontSize = clamped
+          localStorage.setItem('aresta_settings', JSON.stringify(settings))
+        } catch {
+          // ignorar erro
+        }
+      }
       if (this.document && typeof this.document.setFontSize === 'function') {
         const newPage = this.document.setFontSize(clamped, this.currentPage)
         this.currentPage = Math.max(1, Math.min(newPage, this.document.totalPages))
@@ -160,6 +237,20 @@ export const useReaderStore = defineStore('reader', {
     },
 
     resetFontSize() {
+      if (typeof window !== 'undefined') {
+        try {
+          const saved = localStorage.getItem('aresta_settings')
+          if (saved) {
+            const parsed = JSON.parse(saved)
+            if (typeof parsed.epubFontSize === 'number') {
+              this.setFontSize(parsed.epubFontSize)
+              return
+            }
+          }
+        } catch {
+          // ignorar
+        }
+      }
       this.setFontSize(18)
     },
 

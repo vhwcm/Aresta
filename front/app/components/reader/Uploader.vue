@@ -29,8 +29,9 @@ async function onFileValidated({ file, type }: { file: File; type: 'pdf' | 'epub
   store.setLoading(true)
 
   try {
+    store.syncSettings()
     const doc = createBookDocument(type)
-    await doc.load(file)
+    await doc.load(file, file.name, store.fontSize, store.fontFamily)
     store.setDocument(doc, file.name)
   } catch (error) {
     logError('[Uploader Error]', error)

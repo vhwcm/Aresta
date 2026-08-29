@@ -393,9 +393,13 @@ function getTurnZone(event: PointerEvent): PageTurnDirection | null {
 function onPointerDown(event: PointerEvent) {
   if (event.button !== 0 || !stageRef.value || isTransitioning.value) return
 
+  // Se o clique ocorreu sobre a camada de texto (EPUB ou PDF), permite a seleção nativa de texto
+  const target = event.target as HTMLElement | null
+  const isInsideText = !!target?.closest('.page-text-layer')
+
   const direction = getTurnZone(event)
-  if (!direction) {
-    // Clique/arrasto na área central de leitura -> permite seleção de texto livremente
+  if (!direction || isInsideText) {
+    // Clique/arrasto sobre o texto ou na área central de leitura -> permite seleção de texto livremente
     return
   }
 
@@ -750,21 +754,48 @@ defineExpose({
 }
 
 /* Seleção de Texto nos Documentos */
-.page-text-layer :deep(::selection),
-.page-text-layer ::selection,
+/* PDF.js Text Layer (transparente para exibir o canvas sob a seleção) */
+.page-text-layer :deep(.textLayer span::selection),
 .page-text-layer :deep(.textLayer ::selection),
 .page-text-layer.textLayer ::selection {
   background: rgba(229, 123, 85, 0.35) !important;
   color: transparent !important;
 }
 
+/* EPUB Native Typography Layer (seleção nítida com texto visível e legível) */
+.page-text-layer :deep(.epub-text-layer-content),
+.page-text-layer :deep(.epub-text-layer-content *),
+.page-text-layer :deep(.epub-text-layer-viewport) {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  pointer-events: auto !important;
+  cursor: text !important;
+}
+
+.page-text-layer :deep(.epub-text-layer-content ::selection),
 .page-text-layer :deep(.epub-text-layer-content *::selection),
 .page-text-layer :deep(.epub-text-layer-content::selection) {
   background: rgba(229, 123, 85, 0.35) !important;
-  color: inherit !important;
+  color: #1a1a1a !important;
 }
 
-.theme-black .page-text-layer :deep(.epub-text-layer-content *::selection) {
+.theme-sepia .page-text-layer :deep(.epub-text-layer-content ::selection),
+.theme-sepia .page-text-layer :deep(.epub-text-layer-content *::selection),
+.theme-sepia .page-text-layer :deep(.epub-text-layer-content::selection) {
+  background: rgba(229, 123, 85, 0.35) !important;
+  color: #2a2521 !important;
+}
+
+.theme-white .page-text-layer :deep(.epub-text-layer-content ::selection),
+.theme-white .page-text-layer :deep(.epub-text-layer-content *::selection),
+.theme-white .page-text-layer :deep(.epub-text-layer-content::selection) {
+  background: rgba(229, 123, 85, 0.35) !important;
+  color: #1a1a1a !important;
+}
+
+.theme-black .page-text-layer :deep(.epub-text-layer-content ::selection),
+.theme-black .page-text-layer :deep(.epub-text-layer-content *::selection),
+.theme-black .page-text-layer :deep(.epub-text-layer-content::selection) {
   background: rgba(229, 123, 85, 0.5) !important;
   color: #ffffff !important;
 }
