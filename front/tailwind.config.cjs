@@ -28,6 +28,7 @@ module.exports = {
         interface: ['Inter', 'sans-serif'],
         editorial: ['Newsreader', 'serif'],
         technical: ['"JetBrains Mono"', 'monospace'],
+        medieval: ['MedievalSharp', 'Almendra', '"Cinzel Decorative"', 'Georgia', 'serif'],
       },
       backgroundImage: {
         'grid-pattern': 'radial-gradient(circle, #333 1px, transparent 1px)',

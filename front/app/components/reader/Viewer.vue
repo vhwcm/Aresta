@@ -1,15 +1,17 @@
 <template>
   <div
     class="reader-viewer"
-    :class="['reader-viewer--theme-' + store.readerTheme, { 'reader-viewer--zen': store.isZenMode }]"
-    :data-theme="store.readerTheme === 'sepia' ? 'sepia' : (store.readerTheme === 'white' ? 'light' : 'dark')"
+    :class="['reader-viewer--theme-' + activeTheme, { 'reader-viewer--zen': store.isZenMode }]"
+    :data-theme="activeTheme === 'sepia' ? 'sepia' : (activeTheme === 'white' ? 'light' : 'dark')"
+    :style="{ backgroundColor: themeBgColor }"
   >
     <!-- Corpo Principal com Divisão Leitor / Grafo -->
-    <div class="reader-viewer__body">
+    <div class="reader-viewer__body" :style="{ backgroundColor: themeBgColor }">
       <!-- Seção do Leitor (Mobile: 100% / Desktop: 50% ou 100%) -->
       <section
         class="reader-viewer__reader-pane"
         :class="(store.isGraphOpen && !store.isZenMode) ? 'reader-viewer__reader-pane--half' : 'reader-viewer__reader-pane--full'"
+        :style="{ backgroundColor: themeBgColor }"
       >
         <!-- Barra de Ferramentas de Leitura (Esquerda no Desktop/Tablet, Inferior no Mobile) (Oculta no Modo Zen) -->
         <ReaderBottomBar
@@ -22,43 +24,64 @@
           @open-typography="isTypographyOpen = true"
         />
 
-        <!-- Área do Livro / Stage -->
-        <main
-          class="reader-viewer__canvas-area"
-          ref="canvasAreaRef"
-          @mouseup="handleTextSelectionCheck"
-          @touchend="handleTouchEnd"
-          @touchstart="handleTouchStart"
-        >
-          <div class="reader-viewer__stage-container">
-            <button
-              class="reader-viewer__nav-btn reader-viewer__nav-btn--prev"
-              :disabled="store.isFirstPage || isTransitioning"
-              @click="pageRenderer?.previous()"
-              aria-label="Página anterior"
-              id="btn-prev-page"
-            >
-              ‹
-            </button>
+        <!-- Coluna de Leitura e Título do Livro -->
+        <div class="reader-viewer__content-column" :style="{ backgroundColor: themeBgColor }">
+          <!-- Área do Livro / Stage -->
+          <main
+            class="reader-viewer__canvas-area"
+            ref="canvasAreaRef"
+            :style="{ backgroundColor: themeBgColor }"
+            @mouseup="handleTextSelectionCheck"
+            @touchend="handleTouchEnd"
+            @touchstart="handleTouchStart"
+          >
+            <div class="reader-viewer__stage-container" :style="{ backgroundColor: themeBgColor }">
+              <button
+                class="reader-viewer__nav-btn reader-viewer__nav-btn--prev"
+                :disabled="store.isFirstPage || isTransitioning"
+                @click="pageRenderer?.previous()"
+                aria-label="Página anterior"
+                id="btn-prev-page"
+              >
+                ‹
+              </button>
 
-            <div class="reader-viewer__book-stage" id="book-stage">
-              <ReaderEnginePageCurlCanvas
-                ref="pageRenderer"
-                @transition-state="isTransitioning = $event"
-              />
+              <div class="reader-viewer__book-stage" id="book-stage" :style="{ backgroundColor: themeBgColor }">
+                <ReaderEnginePageCurlCanvas
+                  ref="pageRenderer"
+                  @transition-state="isTransitioning = $event"
+                />
+              </div>
+
+              <button
+                class="reader-viewer__nav-btn reader-viewer__nav-btn--next"
+                :disabled="store.isLastPage || isTransitioning"
+                @click="pageRenderer?.next()"
+                aria-label="Próxima página"
+                id="btn-next-page"
+              >
+                ›
+              </button>
             </div>
+          </main>
 
-            <button
-              class="reader-viewer__nav-btn reader-viewer__nav-btn--next"
-              :disabled="store.isLastPage || isTransitioning"
-              @click="pageRenderer?.next()"
-              aria-label="Próxima página"
-              id="btn-next-page"
-            >
-              ›
-            </button>
-          </div>
-        </main>
+          <!-- Título do Livro em Fonte Medieval (Mobile: entre as anotações/página e a barra inferior | Desktop: abaixo sem sobrepor anotações) -->
+          <footer
+            v-if="store.title && !store.isZenMode"
+            class="reader-viewer__book-title-bar"
+            :class="{
+              'reader-viewer__book-title-bar--sepia': activeTheme === 'sepia',
+              'reader-viewer__book-title-bar--white': activeTheme === 'white',
+              'reader-viewer__book-title-bar--black': activeTheme === 'black'
+            }"
+            :title="store.title"
+            aria-label="Título do livro"
+          >
+            <h2 class="reader-viewer__book-title-text font-medieval">
+              {{ store.title }}
+            </h2>
+          </footer>
+        </div>
       </section>
 
       <!-- Seção do Grafo de Conhecimento no Desktop (Oculta no Modo Zen) -->
@@ -69,7 +92,7 @@
         <ReaderGraphPanel
           ref="graphPanelRef"
           :is-mobile="false"
-          :theme="store.readerTheme"
+          :theme="activeTheme"
           @close="store.setGraphOpen(false)"
           @open-annotation-modal="handleOpenAnnotation"
         />
@@ -81,10 +104,9 @@
       v-if="store.isMobileGraphOpen && !store.isZenMode"
       class="fixed inset-0 z-50 flex flex-col lg:hidden animate-fadeIn"
       :class="{
-        'bg-[#f5eedc] text-[#2a2521]': store.readerTheme === 'sepia',
-        'bg-[#ffffff] text-[#1a1a1a]': store.readerTheme === 'white',
-        'bg-[#121214] text-[#e4e4e7]': store.readerTheme === 'black',
-        'bg-bgApp': !store.readerTheme,
+        'bg-[#f5eedc] text-[#2a2521]': activeTheme === 'sepia',
+        'bg-[#ffffff] text-[#1a1a1a]': activeTheme === 'white',
+        'bg-[#121214] text-[#e4e4e7]': activeTheme === 'black',
       }"
       role="dialog"
       aria-modal="true"
@@ -92,7 +114,7 @@
       <ReaderGraphPanel
         ref="mobileGraphPanelRef"
         :is-mobile="true"
-        :theme="store.readerTheme"
+        :theme="activeTheme"
         @close="store.setMobileGraphOpen(false)"
         @open-annotation-modal="handleOpenAnnotation"
       />
@@ -189,7 +211,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Minimize2Icon } from 'lucide-vue-next'
 import { useReaderStore } from '~/stores/readerStore'
@@ -208,6 +230,13 @@ import ReaderTypographyPopover from '~/components/reader/ReaderTypographyPopover
 const store = useReaderStore()
 const router = useRouter()
 const typography = useReaderTypography()
+
+const activeTheme = computed(() => store.readerTheme || 'sepia')
+const themeBgColor = computed(() => {
+  if (activeTheme.value === 'white') return '#ffffff'
+  if (activeTheme.value === 'black') return '#121214'
+  return '#f5eedc'
+})
 
 const isTypographyOpen = ref(false)
 
@@ -589,8 +618,8 @@ onUnmounted(() => {
   height: 100dvh;
   width: 100%;
   overflow: hidden;
-  background: var(--color-bg);
   position: relative;
+  transition: background-color 0.2s ease;
 }
 
 .reader-viewer__body {
@@ -631,6 +660,18 @@ onUnmounted(() => {
   width: 100%;
 }
 
+.reader-viewer__content-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+
 .reader-viewer__canvas-area {
   flex: 1;
   display: flex;
@@ -641,6 +682,68 @@ onUnmounted(() => {
   position: relative;
   width: 100%;
   min-height: 0;
+}
+
+.reader-viewer__book-title-bar {
+  flex-shrink: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0.35rem 1rem 0.5rem 1rem;
+  user-select: none;
+  z-index: 10;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.reader-viewer__book-title-text {
+  font-family: 'MedievalSharp', 'Almendra', '"Cinzel Decorative"', Georgia, serif;
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: 0.04em;
+  max-width: 92%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (min-width: 768px) {
+  .reader-viewer__book-title-bar {
+    padding: 0.5rem 1.5rem 0.65rem 1.5rem;
+  }
+  .reader-viewer__book-title-text {
+    font-size: 1.5rem;
+    letter-spacing: 0.05em;
+  }
+}
+
+.reader-viewer__book-title-bar--sepia {
+  background-color: #f5eedc;
+  color: #3e3328;
+}
+
+.reader-viewer__book-title-bar--white {
+  background-color: #ffffff;
+  color: #1a1a1a;
+}
+
+.reader-viewer__book-title-bar--black {
+  background-color: #121214;
+  color: #e4e4e7;
+}
+
+.reader-viewer--theme-sepia .reader-viewer__content-column {
+  background-color: #f5eedc !important;
+}
+
+.reader-viewer--theme-white .reader-viewer__content-column {
+  background-color: #ffffff !important;
+}
+
+.reader-viewer--theme-black .reader-viewer__content-column {
+  background-color: #121214 !important;
 }
 
 .reader-viewer__stage-container {
@@ -716,7 +819,10 @@ onUnmounted(() => {
 .reader-viewer--theme-sepia .reader-viewer__reader-pane,
 .reader-viewer--theme-sepia .reader-viewer__canvas-area,
 .reader-viewer--theme-sepia .reader-viewer__stage-container,
-.reader-viewer--theme-sepia .reader-viewer__book-stage {
+.reader-viewer--theme-sepia .reader-viewer__book-stage,
+.reader-viewer--theme-sepia :deep(.page-curl-wrapper),
+.reader-viewer--theme-sepia :deep(.book-viewport-track),
+.reader-viewer--theme-sepia :deep(.spread-container) {
   background-color: #f5eedc !important;
 }
 
@@ -725,7 +831,10 @@ onUnmounted(() => {
 .reader-viewer--theme-white .reader-viewer__reader-pane,
 .reader-viewer--theme-white .reader-viewer__canvas-area,
 .reader-viewer--theme-white .reader-viewer__stage-container,
-.reader-viewer--theme-white .reader-viewer__book-stage {
+.reader-viewer--theme-white .reader-viewer__book-stage,
+.reader-viewer--theme-white :deep(.page-curl-wrapper),
+.reader-viewer--theme-white :deep(.book-viewport-track),
+.reader-viewer--theme-white :deep(.spread-container) {
   background-color: #ffffff !important;
 }
 
@@ -734,7 +843,10 @@ onUnmounted(() => {
 .reader-viewer--theme-black .reader-viewer__reader-pane,
 .reader-viewer--theme-black .reader-viewer__canvas-area,
 .reader-viewer--theme-black .reader-viewer__stage-container,
-.reader-viewer--theme-black .reader-viewer__book-stage {
+.reader-viewer--theme-black .reader-viewer__book-stage,
+.reader-viewer--theme-black :deep(.page-curl-wrapper),
+.reader-viewer--theme-black :deep(.book-viewport-track),
+.reader-viewer--theme-black :deep(.spread-container) {
   background-color: #121214 !important;
 }
 
@@ -772,16 +884,19 @@ onUnmounted(() => {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
 }
 
-/* =========================================================================
-   Estilos do Modo Zen (Imersão Total)
-   ========================================================================= */
-.reader-viewer--zen {
+.reader-viewer--zen.reader-viewer--theme-sepia {
+  background: #f5eedc !important;
+}
+
+.reader-viewer--zen.reader-viewer--theme-white {
+  background: #ffffff !important;
+}
+
+.reader-viewer--zen.reader-viewer--theme-black {
   background: #0a0a0e !important;
 }
 
 .reader-viewer--zen .reader-viewer__nav-btn {
-  background: rgba(15, 15, 22, 0.4);
-  border-color: rgba(255, 255, 255, 0.08);
   opacity: 0.25;
 }
 

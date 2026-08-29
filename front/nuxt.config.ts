@@ -36,8 +36,11 @@ export default defineNuxtConfig({
       Inter: [300, 400, 500, 600],
       Newsreader: [300, 400],
       'JetBrains+Mono': [400, 600],
+      MedievalSharp: [400],
+      Almendra: [400, 700],
     },
     display: 'swap',
+    download: false,
   },
 
   ssr: true,

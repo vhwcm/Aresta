@@ -8,6 +8,7 @@ import ReaderAnnotationDrawer from '../../../app/components/reader/ReaderAnnotat
 import HandwritingCanvas from '../../../app/components/reader/HandwritingCanvas.vue'
 import ReaderSelectionTooltip from '../../../app/components/reader/ReaderSelectionTooltip.vue'
 import ReaderTypographyPopover from '../../../app/components/reader/ReaderTypographyPopover.vue'
+import ReaderViewer from '../../../app/components/reader/Viewer.vue'
 import { useReaderStore } from '../../../app/stores/readerStore'
 
 vi.mock('~/composables/useGraph', () => ({
@@ -546,6 +547,78 @@ describe('Reader Components', () => {
 
       const dictBtn = wrapper.find('button[title="Consultar no Dicionário Offline"]')
       expect(dictBtn.exists()).toBe(false)
+    })
+  })
+
+  describe('ReaderViewer', () => {
+    it('renderiza o título do livro com fonte medieval quando houver documento carregado', async () => {
+      const store = useReaderStore()
+      store.setDocument({
+        type: 'pdf',
+        metadata: { title: 'Dom Casmurro' },
+        totalPages: 100,
+        isLoaded: true,
+        load: vi.fn(),
+        getPage: vi.fn(),
+        destroy: vi.fn(),
+      } as any, 'dom-casmurro.pdf')
+
+      const wrapper = mount(ReaderViewer, {
+        global: {
+          stubs: {
+            ReaderEnginePageCurlCanvas: true,
+            ReaderGraphPanel: true,
+            ReaderBottomBar: true,
+            ReaderSavedPagesModal: true,
+            ReaderAnnotationModal: true,
+            ReaderAnnotationDrawer: true,
+            ReaderTypographyPopover: true,
+            ReaderSelectionTooltip: true,
+            ReaderDictionaryCard: true,
+          },
+        },
+      })
+
+      const titleBar = wrapper.find('.reader-viewer__book-title-bar')
+      expect(titleBar.exists()).toBe(true)
+      expect(titleBar.text()).toContain('Dom Casmurro')
+
+      const titleText = wrapper.find('.reader-viewer__book-title-text')
+      expect(titleText.exists()).toBe(true)
+      expect(titleText.classes()).toContain('font-medieval')
+    })
+
+    it('oculta a barra de título no modo Zen', async () => {
+      const store = useReaderStore()
+      store.setDocument({
+        type: 'pdf',
+        metadata: { title: 'O Alienista' },
+        totalPages: 50,
+        isLoaded: true,
+        load: vi.fn(),
+        getPage: vi.fn(),
+        destroy: vi.fn(),
+      } as any, 'alienista.pdf')
+      store.isZenMode = true
+
+      const wrapper = mount(ReaderViewer, {
+        global: {
+          stubs: {
+            ReaderEnginePageCurlCanvas: true,
+            ReaderGraphPanel: true,
+            ReaderBottomBar: true,
+            ReaderSavedPagesModal: true,
+            ReaderAnnotationModal: true,
+            ReaderAnnotationDrawer: true,
+            ReaderTypographyPopover: true,
+            ReaderSelectionTooltip: true,
+            ReaderDictionaryCard: true,
+          },
+        },
+      })
+
+      const titleBar = wrapper.find('.reader-viewer__book-title-bar')
+      expect(titleBar.exists()).toBe(false)
     })
   })
 })
