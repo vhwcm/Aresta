@@ -1,17 +1,16 @@
 import { ref, onUnmounted, type Ref } from 'vue'
 import * as THREE from 'three'
 
-export type CurlMode = 'two-page-next' | 'two-page-prev' | 'single-page-next' | 'single-page-prev'
-
-export interface Page3DDimensions {
-  width: number
-  height: number
-  dpr?: number
+export interface Page3DConfig {
+  isTwoPage: boolean
+  pageWidth: number
+  pageHeight: number
+  direction: 'next' | 'previous'
 }
 
 const VERTEX_SHADER = `
   uniform float uProgress;
-  uniform float uDirection;     // +1.0 for right-to-left (Next), -1.0 for left-to-right (Prev)
+  uniform float uDirection;     // +1.0 for Next, -1.0 for Previous
   uniform float uGripY;         // 0.0 (top) to 1.0 (bottom)
   uniform float uPointerDeltaY; // vertical pull offset
   uniform float uPageWidth;
@@ -21,83 +20,89 @@ const VERTEX_SHADER = `
   varying vec2 vUv;
   varying vec3 vNormalVec;
   varying float vCurlZ;
-  varying float vDistToFold;
 
   const float PI = 3.14159265358979323846;
 
   void main() {
     vUv = uv;
     vec3 pos = position;
-
-    // Normalização no espaço da página [0, width]
     float p = clamp(uProgress, 0.0, 1.0);
-    
+
     if (p <= 0.0001) {
       vNormalVec = vec3(0.0, 0.0, 1.0);
       vCurlZ = 0.0;
-      vDistToFold = 0.0;
       gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
       return;
     }
 
-    // Ponto de desdobramento (fold origin) no eixo X
-    float foldX = uPageWidth * (1.0 - p);
-    
-    // Inclinação da linha de dobra cônica (conical curl angle)
-    float cornerBias = (uGripY - 0.5) * 0.75;
-    float angle = cornerBias * sin(p * PI) + uPointerDeltaY * 0.6;
-    angle = clamp(angle, -0.45, 0.45);
+    // Inclinação cônica baseada no canto de apoio (topo vs base)
+    float cornerBias = (uGripY - 0.5) * 0.65;
+    float angle = cornerBias * sin(p * PI) + uPointerDeltaY * 0.45;
+    angle = clamp(angle, -0.4, 0.4);
 
-    // Ajuste do raio dinâmico de acordo com a posição Y (deformação cônica)
+    // Raio dinâmico para deformação cônica
     float normY = (pos.y + (uPageHeight * 0.5)) / max(1.0, uPageHeight);
-    float dynamicRadius = uRadius * (1.0 + (normY - uGripY) * cornerBias * 0.8);
-    dynamicRadius = max(12.0, dynamicRadius);
-
-    // Distância perpendicular ao eixo de rotação/dobra
-    float relX = (uDirection > 0.0) ? (pos.x - foldX) : ((uPageWidth - pos.x) - foldX);
-    float dist = relX + (pos.y * sin(angle));
+    float dynamicRadius = uRadius * (1.0 + (normY - uGripY) * cornerBias * 0.65);
+    dynamicRadius = max(10.0, dynamicRadius);
+    float rollCircumference = PI * dynamicRadius;
 
     vec3 deformedPos = pos;
     vec3 computedNormal = vec3(0.0, 0.0, 1.0);
 
-    float rollCircumference = PI * dynamicRadius;
+    if (uDirection > 0.0) {
+      // NEXT: Página Direita [0, W] dobrando para a Esquerda [-W, 0] ao redor da lombada (x = 0)
+      float foldX = uPageWidth * (1.0 - p);
+      float dist = (pos.x - foldX) + (pos.y * sin(angle));
 
-    if (dist <= 0.0) {
-      // Região ainda plana
-      deformedPos.z = 0.0;
-      computedNormal = vec3(0.0, 0.0, 1.0);
-    } else if (dist < rollCircumference) {
-      // Região da curva (rolo cilíndrico/cônico)
-      float phi = dist / dynamicRadius;
-      float sinPhi = sin(phi);
-      float cosPhi = cos(phi);
+      if (dist <= 0.0) {
+        // Região plana na direita
+        deformedPos.z = 0.0;
+        computedNormal = vec3(0.0, 0.0, 1.0);
+      } else if (dist < rollCircumference) {
+        // Região da curva (rolo cilíndrico/cônico)
+        float phi = dist / dynamicRadius;
+        float sinPhi = sin(phi);
+        float cosPhi = cos(phi);
 
-      float deltaX = dynamicRadius * sinPhi;
-      float deltaZ = dynamicRadius * (1.0 - cosPhi);
-
-      if (uDirection > 0.0) {
-        deformedPos.x = foldX - deltaX;
+        deformedPos.x = foldX - (dynamicRadius * sinPhi);
+        deformedPos.z = dynamicRadius * (1.0 - cosPhi);
+        computedNormal = normalize(vec3(-sinPhi, 0.0, cosPhi));
       } else {
-        deformedPos.x = (uPageWidth - foldX) + deltaX;
+        // Região virada sobre a esquerda
+        float flatOffset = dist - rollCircumference;
+        deformedPos.x = foldX - flatOffset;
+        deformedPos.z = dynamicRadius * 2.0;
+        computedNormal = vec3(0.0, 0.0, -1.0);
       }
-      
-      deformedPos.z = deltaZ;
-      computedNormal = normalize(vec3(-sinPhi * uDirection, 0.0, cosPhi));
     } else {
-      // Região virada (verso plano)
-      float flatOffset = dist - rollCircumference;
-      if (uDirection > 0.0) {
-        deformedPos.x = foldX - (flatOffset);
+      // PREVIOUS: Página Esquerda [-W, 0] dobrando para a Direita [0, W] ao redor da lombada (x = 0)
+      float foldX = -uPageWidth * (1.0 - p);
+      float dist = (foldX - pos.x) + (pos.y * sin(angle));
+
+      if (dist <= 0.0) {
+        // Região plana na esquerda
+        deformedPos.z = 0.0;
+        computedNormal = vec3(0.0, 0.0, 1.0);
+      } else if (dist < rollCircumference) {
+        // Região da curva
+        float phi = dist / dynamicRadius;
+        float sinPhi = sin(phi);
+        float cosPhi = cos(phi);
+
+        deformedPos.x = foldX + (dynamicRadius * sinPhi);
+        deformedPos.z = dynamicRadius * (1.0 - cosPhi);
+        computedNormal = normalize(vec3(sinPhi, 0.0, cosPhi));
       } else {
-        deformedPos.x = (uPageWidth - foldX) + (flatOffset);
+        // Região virada sobre a direita
+        float flatOffset = dist - rollCircumference;
+        deformedPos.x = foldX + flatOffset;
+        deformedPos.z = dynamicRadius * 2.0;
+        computedNormal = vec3(0.0, 0.0, -1.0);
       }
-      deformedPos.z = dynamicRadius * 2.0;
-      computedNormal = vec3(0.0, 0.0, -1.0);
     }
 
     vNormalVec = computedNormal;
     vCurlZ = deformedPos.z;
-    vDistToFold = dist;
 
     gl_Position = projectionMatrix * modelViewMatrix * vec4(deformedPos, 1.0);
   }
@@ -112,10 +117,9 @@ const FRAGMENT_SHADER = `
   varying vec2 vUv;
   varying vec3 vNormalVec;
   varying float vCurlZ;
-  varying float vDistToFold;
 
   void main() {
-    vec3 lightDir = normalize(vec3(0.3, 0.4, 0.9));
+    vec3 lightDir = normalize(vec3(0.25, 0.35, 0.9));
     vec3 norm = normalize(vNormalVec);
 
     if (gl_FrontFacing) {
@@ -124,16 +128,16 @@ const FRAGMENT_SHADER = `
       // Translucidez sutil do verso na folha iluminada
       vec2 backUv = vec2(1.0 - vUv.x, vUv.y);
       vec4 backTex = texture2D(uBackTexture, backUv);
-      vec3 paperBase = mix(frontTex.rgb, backTex.rgb, 0.04) * uPaperTint;
+      vec3 paperBase = mix(frontTex.rgb, backTex.rgb, 0.035) * uPaperTint;
 
       // Iluminação difusa e brilho especular suave na crista
       float diff = max(0.0, dot(norm, lightDir));
-      float spec = pow(diff, 12.0) * 0.12;
+      float spec = pow(diff, 14.0) * 0.12;
 
       // Sombra de contato e auto-oclusão
-      float ambientShadow = clamp(vCurlZ * 0.003, 0.0, 0.28) * uShadowIntensity;
+      float ambientShadow = clamp(vCurlZ * 0.003, 0.0, 0.25) * uShadowIntensity;
 
-      vec3 finalRgb = (paperBase * (0.85 + 0.15 * diff) + vec3(spec)) * (1.0 - ambientShadow);
+      vec3 finalRgb = (paperBase * (0.86 + 0.14 * diff) + vec3(spec)) * (1.0 - ambientShadow);
       gl_FragColor = vec4(finalRgb, frontTex.a);
     } else {
       // Face do Verso da Página
@@ -143,11 +147,11 @@ const FRAGMENT_SHADER = `
 
       vec3 revNorm = -norm;
       float diff = max(0.0, dot(revNorm, lightDir));
-      float spec = pow(diff, 12.0) * 0.10;
+      float spec = pow(diff, 14.0) * 0.10;
 
-      float ambientShadow = clamp(vCurlZ * 0.002, 0.0, 0.22) * uShadowIntensity;
+      float ambientShadow = clamp(vCurlZ * 0.002, 0.0, 0.20) * uShadowIntensity;
 
-      vec3 finalRgb = (paperBase * (0.82 + 0.18 * diff) + vec3(spec)) * (1.0 - ambientShadow);
+      vec3 finalRgb = (paperBase * (0.84 + 0.16 * diff) + vec3(spec)) * (1.0 - ambientShadow);
       gl_FragColor = vec4(finalRgb, backTex.a);
     }
   }
@@ -165,8 +169,10 @@ export function usePageCurl3D(canvasHostRef: Ref<HTMLCanvasElement | null>) {
   let backTexture: THREE.CanvasTexture | null = null
 
   const isReady = ref(false)
-  let currentWidth = 600
-  let currentHeight = 800
+  let currentWidth = 400
+  let currentHeight = 600
+  let isTwoPageMode = true
+  let currentDirection: 'next' | 'previous' = 'next'
 
   function createFallbackCanvas(text: string, bgColor = '#f5eedc', textColor = '#333333'): HTMLCanvasElement {
     const canvas = document.createElement('canvas')
@@ -183,76 +189,116 @@ export function usePageCurl3D(canvasHostRef: Ref<HTMLCanvasElement | null>) {
     return canvas
   }
 
-  function init(dimensions: Page3DDimensions) {
+  function setupScene(config: Page3DConfig) {
     const canvas = canvasHostRef.value
     if (!canvas) return
 
-    currentWidth = dimensions.width
-    currentHeight = dimensions.height
+    currentWidth = config.pageWidth
+    currentHeight = config.pageHeight
+    isTwoPageMode = config.isTwoPage
+    currentDirection = config.direction
+
+    const totalCanvasWidth = isTwoPageMode ? currentWidth * 2 : currentWidth
+    const totalCanvasHeight = currentHeight
     const dpr = Math.min(window.devicePixelRatio || 1, 2)
 
-    // Renderer com WebGL 2.0 e preservação de buffer
-    renderer = new THREE.WebGLRenderer({
-      canvas,
-      alpha: true,
-      antialias: true,
-      powerPreference: 'high-performance',
-      preserveDrawingBuffer: false,
-    })
+    if (!renderer) {
+      renderer = new THREE.WebGLRenderer({
+        canvas,
+        alpha: true,
+        antialias: true,
+        powerPreference: 'high-performance',
+        preserveDrawingBuffer: false,
+      })
+    }
+
     renderer.setPixelRatio(dpr)
-    renderer.setSize(currentWidth, currentHeight, false)
+    renderer.setSize(totalCanvasWidth, totalCanvasHeight, false)
     renderer.toneMapping = THREE.NoToneMapping
 
     scene = new THREE.Scene()
 
-    // Câmera ortográfica 1:1 pixel-perfect mapeando o canvas 2D para 3D
-    camera = new THREE.OrthographicCamera(
-      0,
-      currentWidth,
-      currentHeight * 0.5,
-      -currentHeight * 0.5,
-      -2000,
-      2000,
-    )
+    if (isTwoPageMode) {
+      // Câmera ortográfica centrada na lombada (X = 0)
+      // Esquerda: [-currentWidth, 0], Direita: [0, currentWidth]
+      camera = new THREE.OrthographicCamera(
+        -currentWidth,
+        currentWidth,
+        currentHeight * 0.5,
+        -currentHeight * 0.5,
+        -2000,
+        2000,
+      )
+    } else {
+      // Câmera no modo 1 página [0, currentWidth]
+      camera = new THREE.OrthographicCamera(
+        0,
+        currentWidth,
+        currentHeight * 0.5,
+        -currentHeight * 0.5,
+        -2000,
+        2000,
+      )
+    }
     camera.position.z = 800
 
-    // Malha densa contínua (64x64) sem cortes
+    if (geometry) geometry.dispose()
     geometry = new THREE.PlaneGeometry(currentWidth, currentHeight, 64, 64)
-    // Desloca o pivô da geometria para a borda da lombada (X = 0)
-    geometry.translate(currentWidth * 0.5, 0, 0)
 
-    const defaultFront = createFallbackCanvas('')
-    const defaultBack = createFallbackCanvas('')
+    if (isTwoPageMode) {
+      if (currentDirection === 'next') {
+        // Folha direita: pivô na lombada (X = 0), estendendo-se para +X
+        geometry.translate(currentWidth * 0.5, 0, 0)
+      } else {
+        // Folha esquerda: pivô na lombada (X = 0), estendendo-se para -X
+        geometry.translate(-currentWidth * 0.5, 0, 0)
+      }
+    } else {
+      geometry.translate(currentWidth * 0.5, 0, 0)
+    }
 
-    frontTexture = new THREE.CanvasTexture(defaultFront)
-    frontTexture.generateMipmaps = true
-    frontTexture.minFilter = THREE.LinearMipmapLinearFilter
-    frontTexture.magFilter = THREE.LinearFilter
+    if (!frontTexture) {
+      frontTexture = new THREE.CanvasTexture(createFallbackCanvas(''))
+      frontTexture.minFilter = THREE.LinearFilter
+      frontTexture.magFilter = THREE.LinearFilter
+      frontTexture.generateMipmaps = false
+    }
 
-    backTexture = new THREE.CanvasTexture(defaultBack)
-    backTexture.generateMipmaps = true
-    backTexture.minFilter = THREE.LinearMipmapLinearFilter
-    backTexture.magFilter = THREE.LinearFilter
+    if (!backTexture) {
+      backTexture = new THREE.CanvasTexture(createFallbackCanvas(''))
+      backTexture.minFilter = THREE.LinearFilter
+      backTexture.magFilter = THREE.LinearFilter
+      backTexture.generateMipmaps = false
+    }
 
-    shaderMaterial = new THREE.ShaderMaterial({
-      vertexShader: VERTEX_SHADER,
-      fragmentShader: FRAGMENT_SHADER,
-      side: THREE.DoubleSide,
-      transparent: true,
-      uniforms: {
-        uProgress: { value: 0.0 },
-        uDirection: { value: 1.0 },
-        uGripY: { value: 0.5 },
-        uPointerDeltaY: { value: 0.0 },
-        uPageWidth: { value: currentWidth },
-        uPageHeight: { value: currentHeight },
-        uRadius: { value: Math.max(30, currentWidth * 0.12) },
-        uShadowIntensity: { value: 1.0 },
-        uPaperTint: { value: new THREE.Vector3(1.0, 1.0, 1.0) },
-        uFrontTexture: { value: frontTexture },
-        uBackTexture: { value: backTexture },
-      },
-    })
+    if (!shaderMaterial) {
+      shaderMaterial = new THREE.ShaderMaterial({
+        vertexShader: VERTEX_SHADER,
+        fragmentShader: FRAGMENT_SHADER,
+        side: THREE.DoubleSide,
+        transparent: true,
+        uniforms: {
+          uProgress: { value: 0.0 },
+          uDirection: { value: currentDirection === 'next' ? 1.0 : -1.0 },
+          uGripY: { value: 0.5 },
+          uPointerDeltaY: { value: 0.0 },
+          uPageWidth: { value: currentWidth },
+          uPageHeight: { value: currentHeight },
+          uRadius: { value: Math.max(28, currentWidth * 0.12) },
+          uShadowIntensity: { value: 1.0 },
+          uPaperTint: { value: new THREE.Vector3(1.0, 1.0, 1.0) },
+          uFrontTexture: { value: frontTexture },
+          uBackTexture: { value: backTexture },
+        },
+      })
+    } else {
+      shaderMaterial.uniforms.uPageWidth.value = currentWidth
+      shaderMaterial.uniforms.uPageHeight.value = currentHeight
+      shaderMaterial.uniforms.uRadius.value = Math.max(28, currentWidth * 0.12)
+      shaderMaterial.uniforms.uDirection.value = currentDirection === 'next' ? 1.0 : -1.0
+      shaderMaterial.uniforms.uFrontTexture.value = frontTexture
+      shaderMaterial.uniforms.uBackTexture.value = backTexture
+    }
 
     mesh = new THREE.Mesh(geometry, shaderMaterial)
     mesh.position.set(0, 0, 0)
@@ -262,57 +308,30 @@ export function usePageCurl3D(canvasHostRef: Ref<HTMLCanvasElement | null>) {
     render()
   }
 
-  function resize(dimensions: Page3DDimensions) {
-    if (!renderer || !camera || !geometry || !shaderMaterial) return
-
-    currentWidth = dimensions.width
-    currentHeight = dimensions.height
-    const dpr = Math.min(window.devicePixelRatio || 1, 2)
-
-    renderer.setPixelRatio(dpr)
-    renderer.setSize(currentWidth, currentHeight, false)
-
-    camera.left = 0
-    camera.right = currentWidth
-    camera.top = currentHeight * 0.5
-    camera.bottom = -currentHeight * 0.5
-    camera.updateProjectionMatrix()
-
-    geometry.dispose()
-    geometry = new THREE.PlaneGeometry(currentWidth, currentHeight, 64, 64)
-    geometry.translate(currentWidth * 0.5, 0, 0)
-
-    if (mesh) {
-      mesh.geometry = geometry
-    }
-
-    shaderMaterial.uniforms.uPageWidth.value = currentWidth
-    shaderMaterial.uniforms.uPageHeight.value = currentHeight
-    shaderMaterial.uniforms.uRadius.value = Math.max(30, currentWidth * 0.12)
-
-    render()
-  }
-
   function setTextures(frontCanvas: HTMLCanvasElement | null, backCanvas: HTMLCanvasElement | null) {
     if (!shaderMaterial) return
 
     if (frontCanvas && frontCanvas.width > 0 && frontCanvas.height > 0) {
       if (frontTexture) frontTexture.dispose()
       frontTexture = new THREE.CanvasTexture(frontCanvas)
-      frontTexture.generateMipmaps = true
-      frontTexture.minFilter = THREE.LinearMipmapLinearFilter
+      frontTexture.minFilter = THREE.LinearFilter
       frontTexture.magFilter = THREE.LinearFilter
+      frontTexture.generateMipmaps = false
+      frontTexture.needsUpdate = true
       shaderMaterial.uniforms.uFrontTexture.value = frontTexture
     }
 
     if (backCanvas && backCanvas.width > 0 && backCanvas.height > 0) {
       if (backTexture) backTexture.dispose()
       backTexture = new THREE.CanvasTexture(backCanvas)
-      backTexture.generateMipmaps = true
-      backTexture.minFilter = THREE.LinearMipmapLinearFilter
+      backTexture.minFilter = THREE.LinearFilter
       backTexture.magFilter = THREE.LinearFilter
+      backTexture.generateMipmaps = false
+      backTexture.needsUpdate = true
       shaderMaterial.uniforms.uBackTexture.value = backTexture
     }
+
+    render()
   }
 
   function updateUniforms(params: {
@@ -383,8 +402,7 @@ export function usePageCurl3D(canvasHostRef: Ref<HTMLCanvasElement | null>) {
 
   return {
     isReady,
-    init,
-    resize,
+    setupScene,
     setTextures,
     updateUniforms,
     render,

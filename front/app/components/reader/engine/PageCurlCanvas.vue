@@ -32,7 +32,6 @@
               top: `${pageLayout.leftPage.top}px`,
               width: `${pageLayout.leftPage.width}px`,
               height: `${pageLayout.leftPage.height}px`,
-              opacity: isTurningPrev && is3DActive ? 0 : 1,
             }"
           >
             <canvas
@@ -73,7 +72,6 @@
               top: `${pageLayout.rightPage.top}px`,
               width: `${pageLayout.rightPage.width}px`,
               height: `${pageLayout.rightPage.height}px`,
-              opacity: isTurningNext && is3DActive ? 0 : 1,
             }"
           >
             <canvas
@@ -228,9 +226,10 @@ const physics = usePagePhysics({
 
     await renderCurrentSpread()
   },
-  onCancel: () => {
+  onCancel: async () => {
     is3DActive.value = false
     emit('transition-state', false)
+    await renderCurrentSpread()
   },
 })
 
@@ -251,8 +250,6 @@ const webglCanvasStyle = computed(() => {
 
   const layout = pageLayout.value
   if (layout.isTwoPage) {
-    // No modo 2 páginas, a folha vira sobre o centro (lombada).
-    // O WebGL Canvas se estende sobre todo o livro para permitir que a folha dobre suavemente da direita para a esquerda (e vice-versa).
     const leftEdge = layout.leftPage?.left ?? 0
     const topEdge = layout.leftPage?.top ?? 0
     const totalW = (layout.leftPage?.width ?? 400) + (layout.rightPage?.width ?? 400)
@@ -390,9 +387,9 @@ async function renderCurrentSpread(pageOverride?: number) {
 }
 
 /**
- * Prepara as texturas da página que está virando (Frente e Verso) e a página revelada embaixo
+ * Prepara as texturas e o setup Three.js de forma instantânea
  */
-async function prepare3DTextures(direction: PageTurnDirection) {
+async function prepare3DTextures(direction: PageTurnDirection, gripY = 0.5) {
   if (!store.document) return
   currentDirection.value = direction
 
@@ -414,15 +411,39 @@ async function prepare3DTextures(direction: PageTurnDirection) {
       const nextLeft = curRight + 1 <= total ? curRight + 1 : 0
       const nextRight = nextLeft + 1 <= total ? nextLeft + 1 : 0
 
-      // Frente: Página Direita Atual
-      if (curRight > 0) {
+      // Copia instantânea da frente a partir do canvas ativo para zero lag
+      if (baseRightCanvasRef.value && baseRightCanvasRef.value.width > 0) {
+        frontCanvas.width = baseRightCanvasRef.value.width
+        frontCanvas.height = baseRightCanvasRef.value.height
+        const fCtx = frontCanvas.getContext('2d')
+        fCtx?.drawImage(baseRightCanvasRef.value, 0, 0)
+      } else if (curRight > 0) {
         await renderPageToCanvas(curRight, frontCanvas, pageW, pageH)
       }
+
       // Verso: Próxima Página Esquerda
       if (nextLeft > 0) {
         await renderPageToCanvas(nextLeft, backCanvas, pageW, pageH)
       }
-      // Base Revelada: Próxima Página Direita
+
+      // Inicializa a cena 3D e texturas
+      pageCurl3D.setupScene({
+        isTwoPage: true,
+        pageWidth: pageW,
+        pageHeight: pageH,
+        direction: 'next',
+      })
+      pageCurl3D.setTextures(frontCanvas, backCanvas)
+      pageCurl3D.updateUniforms({
+        progress: 0.001,
+        direction: 'next',
+        gripY,
+        pointerDeltaY: 0,
+        theme: activeTheme.value as any,
+      })
+      pageCurl3D.render()
+
+      // Base Direita Revelada: Renderiza em segundo plano a próxima página direita
       if (nextRight > 0 && layout.rightPage) {
         void renderPageToElement(nextRight, baseRightCanvasRef.value, baseRightTextLayerRef.value, pageW, pageH)
       }
@@ -431,44 +452,85 @@ async function prepare3DTextures(direction: PageTurnDirection) {
       const prevLeft = Math.max(1, curLeft - 2)
       const prevRight = prevLeft + 1 <= total ? prevLeft + 1 : 0
 
-      // Frente: Página Esquerda Atual
-      if (curLeft > 0) {
+      // Copia instantânea da frente a partir da folha esquerda atual
+      if (baseLeftCanvasRef.value && baseLeftCanvasRef.value.width > 0) {
+        frontCanvas.width = baseLeftCanvasRef.value.width
+        frontCanvas.height = baseLeftCanvasRef.value.height
+        const fCtx = frontCanvas.getContext('2d')
+        fCtx?.drawImage(baseLeftCanvasRef.value, 0, 0)
+      } else if (curLeft > 0) {
         await renderPageToCanvas(curLeft, frontCanvas, pageW, pageH)
       }
+
       // Verso: Página Direita Anterior
       if (prevRight > 0) {
         await renderPageToCanvas(prevRight, backCanvas, pageW, pageH)
       }
-      // Base Revelada: Página Esquerda Anterior
+
+      // Inicializa a cena 3D e texturas
+      pageCurl3D.setupScene({
+        isTwoPage: true,
+        pageWidth: pageW,
+        pageHeight: pageH,
+        direction: 'previous',
+      })
+      pageCurl3D.setTextures(frontCanvas, backCanvas)
+      pageCurl3D.updateUniforms({
+        progress: 0.001,
+        direction: 'previous',
+        gripY,
+        pointerDeltaY: 0,
+        theme: activeTheme.value as any,
+      })
+      pageCurl3D.render()
+
+      // Base Esquerda Revelada: Renderiza a página esquerda anterior
       if (prevLeft > 0 && layout.leftPage) {
         void renderPageToElement(prevLeft, baseLeftCanvasRef.value, baseLeftTextLayerRef.value, pageW, pageH)
       }
     }
-
-    pageCurl3D.resize({ width: pageW, height: pageH })
-    pageCurl3D.setTextures(frontCanvas, backCanvas)
   } else if (layout.singlePage) {
     const pageW = layout.singlePage.width
     const pageH = layout.singlePage.height
 
+    if (baseSingleCanvasRef.value && baseSingleCanvasRef.value.width > 0) {
+      frontCanvas.width = baseSingleCanvasRef.value.width
+      frontCanvas.height = baseSingleCanvasRef.value.height
+      const fCtx = frontCanvas.getContext('2d')
+      fCtx?.drawImage(baseSingleCanvasRef.value, 0, 0)
+    } else {
+      await renderPageToCanvas(curPage, frontCanvas, pageW, pageH)
+    }
+
     if (direction === 'next') {
       const nextPage = Math.min(total, curPage + 1)
-      await renderPageToCanvas(curPage, frontCanvas, pageW, pageH)
       if (nextPage > 0) {
         await renderPageToCanvas(nextPage, backCanvas, pageW, pageH)
         void renderPageToElement(nextPage, baseSingleCanvasRef.value, baseSingleTextLayerRef.value, pageW, pageH)
       }
     } else {
       const prevPage = Math.max(1, curPage - 1)
-      await renderPageToCanvas(curPage, frontCanvas, pageW, pageH)
       if (prevPage > 0) {
         await renderPageToCanvas(prevPage, backCanvas, pageW, pageH)
         void renderPageToElement(prevPage, baseSingleCanvasRef.value, baseSingleTextLayerRef.value, pageW, pageH)
       }
     }
 
-    pageCurl3D.resize({ width: pageW, height: pageH })
+    pageCurl3D.setupScene({
+      isTwoPage: false,
+      pageWidth: pageW,
+      pageHeight: pageH,
+      direction,
+    })
     pageCurl3D.setTextures(frontCanvas, backCanvas)
+    pageCurl3D.updateUniforms({
+      progress: 0.001,
+      direction,
+      gripY,
+      pointerDeltaY: 0,
+      theme: activeTheme.value as any,
+    })
+    pageCurl3D.render()
   }
 }
 
@@ -540,7 +602,7 @@ async function onPointerDown(event: PointerEvent) {
   const h = targetPageRect?.height || 700
   const relY = targetPageRect ? (pt.y - targetPageRect.top) / h : 0.5
 
-  await prepare3DTextures(direction)
+  await prepare3DTextures(direction, relY)
   is3DActive.value = true
   emit('transition-state', true)
 
@@ -579,7 +641,7 @@ async function requestTurn(direction: PageTurnDirection) {
   const w = targetPageRect?.width || 500
   const h = targetPageRect?.height || 700
 
-  await prepare3DTextures(direction)
+  await prepare3DTextures(direction, 0.5)
   is3DActive.value = true
   emit('transition-state', true)
 
@@ -588,9 +650,14 @@ async function requestTurn(direction: PageTurnDirection) {
 
 onMounted(() => {
   const layout = pageLayout.value
-  const w = layout.rightPage?.width || layout.singlePage?.width || 500
-  const h = layout.rightPage?.height || layout.singlePage?.height || 700
-  pageCurl3D.init({ width: w, height: h })
+  const w = layout.rightPage?.width || layout.singlePage?.width || 400
+  const h = layout.rightPage?.height || layout.singlePage?.height || 600
+  pageCurl3D.setupScene({
+    isTwoPage: layout.isTwoPage,
+    pageWidth: w,
+    pageHeight: h,
+    direction: 'next',
+  })
 })
 
 onUnmounted(() => {
