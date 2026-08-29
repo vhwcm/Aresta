@@ -49,6 +49,36 @@
       />
     </div>
 
+    <!-- Empty State Guide Overlay (Only when no nodes exist and not drawing) -->
+    <div
+      v-if="nodes.length === 0 && activeTool !== 'pen'"
+      class="absolute inset-0 flex items-center justify-center pointer-events-none z-10 animate-in fade-in duration-300"
+    >
+      <div class="p-6 rounded-2xl bg-bgPanel/85 border border-divider/80 backdrop-blur-md shadow-2xl text-center max-w-sm pointer-events-auto select-none">
+        <div class="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto mb-3 text-xl font-bold">
+          ✨
+        </div>
+        <h3 class="text-sm md:text-base font-semibold text-textPrimary font-interface">Quadro em branco</h3>
+        <p class="text-xs text-textSecondary mt-1.5 mb-5 leading-relaxed">
+          Dê <strong>dois cliques</strong> em qualquer lugar para criar uma nota, ou use as ações rápidas abaixo:
+        </p>
+        <div class="flex items-center justify-center gap-2">
+          <button
+            class="px-3.5 py-2 rounded-xl bg-primary hover:bg-primaryHover text-white text-xs font-semibold transition-all shadow-md hover:scale-102 cursor-pointer"
+            @click="createInitialNote"
+          >
+            + Adicionar Nota
+          </button>
+          <button
+            class="px-3.5 py-2 rounded-xl bg-bgElevated hover:bg-bgSurface text-textPrimary border border-divider text-xs font-medium transition-all hover:scale-102 cursor-pointer"
+            @click="showInsertDrawer = true"
+          >
+            📖 Inserir Livro
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Inking Overlay for Handwriting & AI OCR -->
     <CanvasInkingOverlay
       :active-tool="activeTool"
@@ -95,7 +125,7 @@ import type {
 } from '~/interfaces/canvas';
 import { useCanvas } from '~/composables/useCanvas';
 import { getClosestAnchorSide } from '~/utils/canvasGeometry';
-import CanvasNodeComponent from './CanvasNode.vue';
+import CanvasNode from './CanvasNode.vue';
 import CanvasEdgeLayer from './CanvasEdgeLayer.vue';
 import CanvasInkingOverlay from './CanvasInkingOverlay.vue';
 import CanvasToolbar from './CanvasToolbar.vue';
@@ -185,6 +215,22 @@ const screenToCanvas = (screenX: number, screenY: number) => {
     x: (relX - viewport.value.x) / viewport.value.zoom,
     y: (relY - viewport.value.y) / viewport.value.zoom,
   };
+};
+
+// Create Initial Note
+const createInitialNote = () => {
+  const centerCoords = screenToCanvas(centerScreen.value.x, centerScreen.value.y);
+  const newNode: CanvasNode = {
+    id: `node-${Date.now()}`,
+    type: 'text',
+    x: Math.round(centerCoords.x - 130),
+    y: Math.round(centerCoords.y - 80),
+    width: 260,
+    height: 160,
+    text: '',
+    color: '#E57B55',
+  };
+  addNode(newNode);
 };
 
 // Double Click / Tap to Create Note

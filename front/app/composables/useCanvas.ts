@@ -13,37 +13,38 @@ import { useAuth } from '~/composables/useAuth';
 
 const API_BASE = 'http://localhost:7070/api';
 
+// Shared module-level reactive state across components for current active canvas session
+const canvasesList = ref<CanvasSummary[]>([]);
+const currentCanvas = ref<CanvasItem | null>(null);
+const nodes = ref<CanvasNode[]>([]);
+const edges = ref<CanvasEdge[]>([]);
+const viewport = ref<CanvasViewport>({ x: 0, y: 0, zoom: 1.0 });
+
+const selectedNodeIds = ref<string[]>([]);
+const selectedEdgeId = ref<string | null>(null);
+const activeTool = ref<'select' | 'note' | 'shape' | 'loose_text' | 'pen'>('select');
+const selectedShapeType = ref<CanvasShapeType>('rectangle');
+
+const connectingState = ref<{
+  fromNodeId: string;
+  fromSide: CanvasSide;
+  currentX: number;
+  currentY: number;
+} | null>(null);
+
+const isLoading = ref(false);
+const isSaving = ref(false);
+const error = ref<string | null>(null);
+
+// Histórico para Undo / Redo
+const undoStack = ref<Array<{ nodes: CanvasNode[]; edges: CanvasEdge[] }>>([]);
+const redoStack = ref<Array<{ nodes: CanvasNode[]; edges: CanvasEdge[] }>>([]);
+const maxHistory = 40;
+
+let autosaveTimeout: any = null;
+
 export function useCanvas() {
   const { token } = useAuth();
-
-  const canvasesList = ref<CanvasSummary[]>([]);
-  const currentCanvas = ref<CanvasItem | null>(null);
-  const nodes = ref<CanvasNode[]>([]);
-  const edges = ref<CanvasEdge[]>([]);
-  const viewport = ref<CanvasViewport>({ x: 0, y: 0, zoom: 1.0 });
-
-  const selectedNodeIds = ref<string[]>([]);
-  const selectedEdgeId = ref<string | null>(null);
-  const activeTool = ref<'select' | 'note' | 'shape' | 'loose_text' | 'pen'>('select');
-  const selectedShapeType = ref<CanvasShapeType>('rectangle');
-
-  const connectingState = ref<{
-    fromNodeId: string;
-    fromSide: CanvasSide;
-    currentX: number;
-    currentY: number;
-  } | null>(null);
-
-  const isLoading = ref(false);
-  const isSaving = ref(false);
-  const error = ref<string | null>(null);
-
-  // Histórico para Undo / Redo
-  const undoStack = ref<Array<{ nodes: CanvasNode[]; edges: CanvasEdge[] }>>([]);
-  const redoStack = ref<Array<{ nodes: CanvasNode[]; edges: CanvasEdge[] }>>([]);
-  const maxHistory = 40;
-
-  let autosaveTimeout: any = null;
 
   const getHeaders = () => {
     const headers: Record<string, string> = {
@@ -197,6 +198,22 @@ export function useCanvas() {
   const resetViewport = () => {
     viewport.value = { x: 0, y: 0, zoom: 1.0 };
     triggerAutosave();
+  };
+
+  const resetCanvasState = () => {
+    nodes.value = [];
+    edges.value = [];
+    selectedNodeIds.value = [];
+    selectedEdgeId.value = null;
+    activeTool.value = 'select';
+    viewport.value = { x: 0, y: 0, zoom: 1.0 };
+    undoStack.value = [];
+    redoStack.value = [];
+    currentCanvas.value = null;
+    if (autosaveTimeout) {
+      clearTimeout(autosaveTimeout);
+      autosaveTimeout = null;
+    }
   };
 
   // Serialização e Persistência
@@ -403,6 +420,7 @@ export function useCanvas() {
     panBy,
     zoomAt,
     resetViewport,
+    resetCanvasState,
     serializeDocument,
     deserializeDocument,
     triggerAutosave,

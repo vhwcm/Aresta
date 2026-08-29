@@ -1,5 +1,5 @@
 <template>
-  <div class="h-full w-full flex flex-col relative overflow-hidden bg-bgRoot text-textPrimary select-none">
+  <div class="fixed inset-0 h-screen w-screen flex flex-col overflow-hidden bg-bgRoot text-textPrimary select-none z-10">
     <!-- Top Nav / Canvas Header -->
     <header class="shrink-0 px-4 py-3 border-b border-divider bg-bgPanel/90 backdrop-blur-md flex items-center justify-between z-30">
       <div class="flex items-center gap-3">
@@ -62,6 +62,10 @@ import { ref, computed, nextTick, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useCanvas } from '~/composables/useCanvas';
 import CanvasBoard from '~/components/canvas/CanvasBoard.vue';
+
+definePageMeta({
+  layout: false,
+});
 
 const route = useRoute();
 const canvasId = computed(() => route.params.id as string);

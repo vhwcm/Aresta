@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useCanvas } from '../../../app/composables/useCanvas';
 import type { CanvasNode, CanvasEdge } from '../../../app/interfaces/canvas';
 
@@ -11,6 +11,10 @@ vi.mock('../../../app/composables/useAuth', () => ({
 }));
 
 describe('useCanvas composable', () => {
+  beforeEach(() => {
+    const canvas = useCanvas();
+    canvas.resetCanvasState();
+  });
   it('adiciona nós e atualiza a seleção', () => {
     const canvas = useCanvas();
     const node: CanvasNode = {
