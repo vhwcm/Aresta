@@ -175,6 +175,72 @@
             </div>
           </div>
 
+          <!-- Seção de Diagramação e Largura de Leitura -->
+          <div
+            class="flex flex-col gap-2 pt-2 border-t"
+            :class="store.readerTheme === 'sepia' ? 'border-[#dfd5c0]' : (store.readerTheme === 'white' ? 'border-gray-200' : 'border-divider')"
+          >
+            <span
+              class="text-[11px] font-technical uppercase tracking-wider font-semibold"
+              :class="store.readerTheme === 'sepia' ? 'text-[#786C5E]' : (store.readerTheme === 'white' ? 'text-gray-500' : 'text-textSecondary')"
+            >
+              Distribuição e Largura
+            </span>
+            <div class="grid grid-cols-2 gap-1.5">
+              <!-- 1 Folha vs 2 Folhas -->
+              <button
+                @click="store.setTwoPageMode(false)"
+                class="flex items-center justify-center gap-1.5 p-2 rounded-xl border text-xs font-semibold transition-all"
+                :class="!store.isTwoPageMode
+                  ? 'bg-accent/20 border-accent text-accent font-bold shadow-sm'
+                  : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary hover:bg-white/10'"
+                title="Exibir 1 folha (página única)"
+              >
+                <FileTextIcon class="w-3.5 h-3.5" />
+                <span>1 Folha</span>
+              </button>
+
+              <button
+                @click="store.setTwoPageMode(true)"
+                class="flex items-center justify-center gap-1.5 p-2 rounded-xl border text-xs font-semibold transition-all"
+                :class="store.isTwoPageMode
+                  ? 'bg-accent/20 border-accent text-accent font-bold shadow-sm'
+                  : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary hover:bg-white/10'"
+                title="Exibir 2 folhas lado a lado"
+              >
+                <BookOpenIcon class="w-3.5 h-3.5" />
+                <span>2 Folhas</span>
+              </button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-1.5">
+              <!-- Centralizado vs 100% Largo -->
+              <button
+                @click="store.setReaderWidthMode('centered')"
+                class="flex items-center justify-center gap-1.5 p-2 rounded-xl border text-xs font-semibold transition-all"
+                :class="store.readerWidthMode === 'centered'
+                  ? 'bg-accent/20 border-accent text-accent font-bold shadow-sm'
+                  : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary hover:bg-white/10'"
+                title="Página centralizada no meio com margens clássicas"
+              >
+                <Minimize2Icon class="w-3.5 h-3.5" />
+                <span>Centralizado</span>
+              </button>
+
+              <button
+                @click="store.setReaderWidthMode('wide')"
+                class="flex items-center justify-center gap-1.5 p-2 rounded-xl border text-xs font-semibold transition-all"
+                :class="store.readerWidthMode === 'wide'
+                  ? 'bg-accent/20 border-accent text-accent font-bold shadow-sm'
+                  : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary hover:bg-white/10'"
+                title="Páginas ocupam quase 100% do espaço de leitura"
+              >
+                <Maximize2Icon class="w-3.5 h-3.5" />
+                <span>100% Largo</span>
+              </button>
+            </div>
+          </div>
+
           <!-- Seção de Tamanho de Texto e Fonte (Apenas EPUB) -->
           <div
             v-if="store.documentType === 'epub'"
@@ -259,21 +325,49 @@
         </div>
       </div>
 
-      <!-- Botão Alternar 1 Página / 2 Páginas (Desktop/Tablet quando Grafo Fechado) -->
+      <!-- Botão Alternar 1 Folha / 2 Folhas (Desktop/Tablet) -->
       <button
-        v-if="!isGraphActive && store.totalPages > 1"
-        @click="store.setTwoPageMode(!store.isTwoPageMode)"
-        class="hidden md:flex items-center justify-center md:w-11 md:h-11 rounded-xl border text-xs font-semibold transition-all active:scale-95"
-        :class="store.readerTheme === 'sepia'
-          ? 'bg-[#FAF5E8] border-[#dfd5c0] text-[#5c4d3c] hover:text-[#2a2521] hover:bg-[#EBE2CE]'
-          : (store.readerTheme === 'white'
-            ? 'bg-gray-100 border-gray-200 text-gray-700 hover:text-black hover:bg-gray-200'
-            : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary hover:bg-white/10')"
-        :title="store.isTwoPageMode ? 'Alternar para 1 página' : 'Alternar para 2 páginas lado a lado'"
+        v-if="store.totalPages > 1"
+        @click="store.toggleTwoPageMode()"
+        class="hidden md:flex flex-col items-center justify-center md:w-11 md:h-11 rounded-xl border text-xs font-semibold transition-all active:scale-95 group"
+        :class="store.isTwoPageMode
+          ? 'bg-accent/15 border-accent text-accent shadow-sm'
+          : (store.readerTheme === 'sepia'
+            ? 'bg-[#FAF5E8] border-[#dfd5c0] text-[#5c4d3c] hover:text-[#2a2521] hover:bg-[#EBE2CE]'
+            : (store.readerTheme === 'white'
+              ? 'bg-gray-100 border-gray-200 text-gray-700 hover:text-black hover:bg-gray-200'
+              : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary hover:bg-white/10'))"
+        :title="store.isTwoPageMode ? 'Modo 2 Folhas ativo (Clique para 1 Folha)' : 'Modo 1 Folha ativo (Clique para 2 Folhas)'"
         aria-label="Alternar modo de páginas"
+        id="btn-toggle-two-page"
       >
         <BookOpenIcon v-if="store.isTwoPageMode" class="w-4 h-4 text-accent" />
-        <FileTextIcon v-else class="w-4 h-4 text-textSecondary" />
+        <FileTextIcon v-else class="w-4 h-4 text-textSecondary group-hover:text-textPrimary" />
+        <span class="text-[8px] font-technical font-medium leading-none mt-0.5">
+          {{ store.isTwoPageMode ? '2 Folhas' : '1 Folha' }}
+        </span>
+      </button>
+
+      <!-- Botão Alternar Largura: Centralizado vs 100% Largo (Desktop/Tablet) -->
+      <button
+        @click="store.toggleReaderWidthMode()"
+        class="hidden md:flex flex-col items-center justify-center md:w-11 md:h-11 rounded-xl border text-xs font-semibold transition-all active:scale-95 group"
+        :class="store.readerWidthMode === 'wide'
+          ? 'bg-accent/15 border-accent text-accent shadow-sm'
+          : (store.readerTheme === 'sepia'
+            ? 'bg-[#FAF5E8] border-[#dfd5c0] text-[#5c4d3c] hover:text-[#2a2521] hover:bg-[#EBE2CE]'
+            : (store.readerTheme === 'white'
+              ? 'bg-gray-100 border-gray-200 text-gray-700 hover:text-black hover:bg-gray-200'
+              : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary hover:bg-white/10'))"
+        :title="store.readerWidthMode === 'wide' ? 'Modo 100% Largo ativo (Clique para Modo Centralizado)' : 'Modo Centralizado ativo (Clique para 100% Largo)'"
+        aria-label="Alternar largura de leitura"
+        id="btn-toggle-width-mode"
+      >
+        <Maximize2Icon v-if="store.readerWidthMode === 'wide'" class="w-4 h-4 text-accent" />
+        <Minimize2Icon v-else class="w-4 h-4 text-textSecondary group-hover:text-textPrimary" />
+        <span class="text-[8px] font-technical font-medium leading-none mt-0.5">
+          {{ store.readerWidthMode === 'wide' ? '100% Largo' : 'Centro' }}
+        </span>
       </button>
     </div>
 
@@ -379,6 +473,7 @@ import {
   FileTextIcon,
   HighlighterIcon,
   Maximize2Icon,
+  Minimize2Icon,
   NetworkIcon,
   PaletteIcon,
   TypeIcon,

@@ -454,17 +454,22 @@ export class EpubDocumentAdapter implements IBookDocument {
 
       const baseWidth = 800
       const baseHeight = 1200
-      const scale = targetWidth && targetWidth > 0
-        ? targetWidth / baseWidth
-        : (targetHeight && targetHeight > 0 ? targetHeight / baseHeight : 1)
+      const scale = (targetWidth && targetWidth > 0 && targetHeight && targetHeight > 0)
+        ? Math.min(targetWidth / baseWidth, targetHeight / baseHeight)
+        : (targetWidth && targetWidth > 0 ? targetWidth / baseWidth : (targetHeight && targetHeight > 0 ? targetHeight / baseHeight : 1))
       const colOffset = mapping.pageIndexInSection * baseWidth
+
+      const scaledW = baseWidth * scale
+      const scaledH = baseHeight * scale
+      const offsetX = targetWidth && targetWidth > 0 ? Math.max(0, (targetWidth - scaledW) / 2) : 0
+      const offsetY = targetHeight && targetHeight > 0 ? Math.max(0, (targetHeight - scaledH) / 2) : 0
 
       container.innerHTML = ''
       const viewportWrapper = document.createElement('div')
       viewportWrapper.className = 'epub-text-layer-viewport'
       viewportWrapper.style.position = 'absolute'
-      viewportWrapper.style.top = '0'
-      viewportWrapper.style.left = '0'
+      viewportWrapper.style.top = `${offsetY}px`
+      viewportWrapper.style.left = `${offsetX}px`
       viewportWrapper.style.width = `${baseWidth}px`
       viewportWrapper.style.height = `${baseHeight}px`
       viewportWrapper.style.overflow = 'hidden'
@@ -510,10 +515,12 @@ export class EpubDocumentAdapter implements IBookDocument {
     const dpr = typeof window !== 'undefined' ? (window.devicePixelRatio || 1) : 1
 
     let renderScale = dpr * 1.25
-    if (targetWidth && targetWidth > 0) {
-      renderScale = targetWidth / baseWidth
+    if (targetWidth && targetWidth > 0 && targetHeight && targetHeight > 0) {
+      renderScale = Math.max(1.0, Math.min(targetWidth / baseWidth, targetHeight / baseHeight) * dpr)
+    } else if (targetWidth && targetWidth > 0) {
+      renderScale = Math.max(1.0, (targetWidth / baseWidth) * dpr)
     } else if (targetHeight && targetHeight > 0) {
-      renderScale = targetHeight / baseHeight
+      renderScale = Math.max(1.0, (targetHeight / baseHeight) * dpr)
     }
     renderScale = Math.max(1.0, renderScale)
 

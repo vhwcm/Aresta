@@ -1,6 +1,6 @@
 import { reactive, computed, readonly } from 'vue'
 import { useAuth } from '~/composables/useAuth'
-import { useReaderStore } from '~/stores/readerStore'
+import { useReaderStore, type ReaderColorTheme, type ReaderWidthMode } from '~/stores/readerStore'
 
 function trySyncReaderStore() {
   if (typeof window === 'undefined') return
@@ -26,6 +26,8 @@ export interface SettingsState {
   themeMode: ThemeMode
   desktopHomeGraphOpen: boolean
   desktopReaderGraphOpen: boolean
+  readerTwoPageMode: boolean
+  readerWidthMode: ReaderWidthMode
   readerTheme: ReaderColorTheme
 }
 
@@ -40,6 +42,8 @@ export interface UserSettingsResponse {
   themeMode?: ThemeMode
   desktopHomeGraphOpen?: boolean
   desktopReaderGraphOpen?: boolean
+  readerTwoPageMode?: boolean
+  readerWidthMode?: ReaderWidthMode
   readerTheme?: ReaderColorTheme
   updatedAt?: string | null
 }
@@ -56,7 +60,9 @@ const settings = reactive<SettingsState>({
   epubFontFamily: 'newsreader',
   themeMode: 'light',
   desktopHomeGraphOpen: true,
-  desktopReaderGraphOpen: true,
+  desktopReaderGraphOpen: false,
+  readerTwoPageMode: true,
+  readerWidthMode: 'centered',
   readerTheme: 'sepia',
 })
 
@@ -71,7 +77,9 @@ export function resetSettingsForTesting() {
   settings.epubFontFamily = 'newsreader'
   settings.themeMode = 'light'
   settings.desktopHomeGraphOpen = true
-  settings.desktopReaderGraphOpen = true
+  settings.desktopReaderGraphOpen = false
+  settings.readerTwoPageMode = true
+  settings.readerWidthMode = 'centered'
   settings.readerTheme = 'sepia'
   isInitialized = false
 }
@@ -133,11 +141,27 @@ function initSettings() {
       if (typeof parsed.desktopReaderGraphOpen === 'boolean') {
         settings.desktopReaderGraphOpen = parsed.desktopReaderGraphOpen
       }
+      if (typeof parsed.readerTwoPageMode === 'boolean') {
+        settings.readerTwoPageMode = parsed.readerTwoPageMode
+      }
+      if (parsed.readerWidthMode === 'centered' || parsed.readerWidthMode === 'wide') {
+        settings.readerWidthMode = parsed.readerWidthMode
+      }
     }
 
     const legacyReaderTheme = localStorage.getItem('aresta_reader_theme')
     if (legacyReaderTheme === 'white' || legacyReaderTheme === 'sepia' || legacyReaderTheme === 'black') {
       settings.readerTheme = legacyReaderTheme as ReaderColorTheme
+    }
+
+    const legacyTwoPage = localStorage.getItem('aresta_reader_two_page')
+    if (legacyTwoPage !== null) {
+      settings.readerTwoPageMode = legacyTwoPage === 'true'
+    }
+
+    const legacyWidthMode = localStorage.getItem('aresta_reader_width_mode')
+    if (legacyWidthMode === 'centered' || legacyWidthMode === 'wide') {
+      settings.readerWidthMode = legacyWidthMode
     }
 
     // Compatibilidade retroativa com chave antiga do grafo home
@@ -187,6 +211,12 @@ function applyServerSettings(data: UserSettingsResponse) {
   }
   if (typeof data.desktopReaderGraphOpen === 'boolean') {
     settings.desktopReaderGraphOpen = data.desktopReaderGraphOpen
+  }
+  if (typeof data.readerTwoPageMode === 'boolean') {
+    settings.readerTwoPageMode = data.readerTwoPageMode
+  }
+  if (data.readerWidthMode === 'centered' || data.readerWidthMode === 'wide') {
+    settings.readerWidthMode = data.readerWidthMode
   }
 
   applyTheme(settings.themeMode)

@@ -7,10 +7,9 @@
   >
     <!-- Corpo Principal com Divisão Leitor / Grafo -->
     <div class="reader-viewer__body" :style="{ backgroundColor: themeBgColor }">
-      <!-- Seção do Leitor (Mobile: 100% / Desktop: 50% ou 100%) -->
+      <!-- Seção do Leitor (Sempre 100% de largura útil para foco na leitura) -->
       <section
-        class="reader-viewer__reader-pane"
-        :class="(store.isGraphOpen && !store.isZenMode) ? 'reader-viewer__reader-pane--half' : 'reader-viewer__reader-pane--full'"
+        class="reader-viewer__reader-pane reader-viewer__reader-pane--full"
         :style="{ backgroundColor: themeBgColor }"
       >
         <!-- Barra de Ferramentas de Leitura (Esquerda no Desktop/Tablet, Inferior no Mobile) (Oculta no Modo Zen) -->
@@ -65,7 +64,7 @@
             </div>
           </main>
 
-          <!-- Título do Livro em Fonte Medieval (Mobile: entre as anotações/página e a barra inferior | Desktop: abaixo sem sobrepor anotações) -->
+          <!-- Título do Livro em Fonte Medieval -->
           <footer
             v-if="store.title && !store.isZenMode"
             class="reader-viewer__book-title-bar"
@@ -84,19 +83,36 @@
         </div>
       </section>
 
-      <!-- Seção do Grafo de Conhecimento no Desktop (Oculta no Modo Zen) -->
-      <aside
-        v-if="store.isGraphOpen && !store.isZenMode"
-        class="hidden lg:flex lg:w-1/2 h-full flex-col shrink-0 transition-all duration-300"
-      >
-        <ReaderGraphPanel
-          ref="graphPanelRef"
-          :is-mobile="false"
-          :theme="activeTheme"
-          @close="store.setGraphOpen(false)"
-          @open-annotation-modal="handleOpenAnnotation"
+      <!-- Painel do Grafo de Conhecimento no Desktop (Gaveta Lateral / Slide-over Drawer) -->
+      <transition name="slide-left">
+        <aside
+          v-if="store.isGraphOpen && !store.isZenMode"
+          class="hidden lg:flex fixed inset-y-0 right-0 z-40 w-[520px] max-w-[85vw] h-full shadow-2xl flex-col border-l transition-all duration-300"
+          :class="{
+            'bg-[#FAF5E8] text-[#2a2521] border-[#dfd5c0]': activeTheme === 'sepia',
+            'bg-white text-gray-900 border-gray-200': activeTheme === 'white',
+            'bg-[#121214] text-[#e4e4e7] border-white/10': activeTheme === 'black',
+          }"
+        >
+          <ReaderGraphPanel
+            ref="graphPanelRef"
+            :is-mobile="false"
+            :theme="activeTheme"
+            @close="store.setGraphOpen(false)"
+            @open-annotation-modal="handleOpenAnnotation"
+          />
+        </aside>
+      </transition>
+
+      <!-- Backdrop sutil para fechar o grafo ao clicar fora no desktop -->
+      <transition name="fade">
+        <div
+          v-if="store.isGraphOpen && !store.isZenMode"
+          class="hidden lg:block fixed inset-0 bg-black/25 z-30 backdrop-blur-[1px] transition-opacity"
+          @click="store.setGraphOpen(false)"
+          aria-hidden="true"
         />
-      </aside>
+      </transition>
     </div>
 
     <!-- Grafo de Conhecimento em Tela Cheia no Mobile (Oculto no Modo Zen) -->
@@ -553,6 +569,14 @@ function onKeyDown(event: KeyboardEvent) {
     }
     if (isTypographyOpen.value) {
       isTypographyOpen.value = false
+      return
+    }
+    if (store.isGraphOpen) {
+      store.setGraphOpen(false)
+      return
+    }
+    if (store.isMobileGraphOpen) {
+      store.setMobileGraphOpen(false)
       return
     }
     if (store.isZenMode) {

@@ -209,11 +209,29 @@ describe('useReaderStore', () => {
 
     it('alterna visualização do grafo', () => {
       const store = useReaderStore()
-      expect(store.isGraphOpen).toBe(true)
-      store.toggleGraph()
       expect(store.isGraphOpen).toBe(false)
       store.toggleGraph()
       expect(store.isGraphOpen).toBe(true)
+      store.toggleGraph()
+      expect(store.isGraphOpen).toBe(false)
+    })
+
+    it('alterna modo de duas folhas (isTwoPageMode)', () => {
+      const store = useReaderStore()
+      expect(store.isTwoPageMode).toBe(true)
+      store.toggleTwoPageMode()
+      expect(store.isTwoPageMode).toBe(false)
+      store.setTwoPageMode(true)
+      expect(store.isTwoPageMode).toBe(true)
+    })
+
+    it('alterna modo de largura de leitura (readerWidthMode)', () => {
+      const store = useReaderStore()
+      expect(store.readerWidthMode).toBe('centered')
+      store.toggleReaderWidthMode()
+      expect(store.readerWidthMode).toBe('wide')
+      store.setReaderWidthMode('centered')
+      expect(store.readerWidthMode).toBe('centered')
     })
 
     it('alterna grafo mobile', () => {

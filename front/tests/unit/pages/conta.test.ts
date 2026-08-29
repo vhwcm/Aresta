@@ -165,12 +165,12 @@ describe('Conta Page (/conta)', () => {
     const readerGraphToggle = wrapper.find('[data-testid="toggle-desktop-reader-graph"]')
     expect(readerGraphToggle.exists()).toBe(true)
 
-    // Inicia como true
-    expect(readerGraphToggle.attributes('aria-checked')).toBe('true')
-
-    // Alterna para false
-    await readerGraphToggle.trigger('click')
+    // Inicia como false por padrão
     expect(readerGraphToggle.attributes('aria-checked')).toBe('false')
+
+    // Alterna para true
+    await readerGraphToggle.trigger('click')
+    expect(readerGraphToggle.attributes('aria-checked')).toBe('true')
   })
 
   it('permite ajustar o tamanho da fonte padrão do EPUB', async () => {

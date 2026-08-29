@@ -88,24 +88,36 @@ export function useBookPageTurn(
 
     const hostWidth = host.clientWidth || 800
     const hostHeight = host.clientHeight || 600
-    const isTwoPage = store.isTwoPageMode && hostWidth >= 1024 && !store.isGraphOpen
+    const isTwoPage = store.isTwoPageMode && hostWidth >= 768
 
     const currentPage = store.currentPage
     const defaultAspectRatio = store.document?.type === 'epub' ? 800 / 1200 : 0.72
     const aspectRatio = defaultAspectRatio
+    const isWide = store.readerWidthMode === 'wide'
 
     if (isTwoPage) {
       const leftNum = currentPage % 2 === 0 ? Math.max(1, currentPage - 1) : currentPage
       const rightNum = leftNum + 1 <= store.totalPages ? leftNum + 1 : 0
 
-      const availableHeight = hostHeight
-      let targetHeight = availableHeight
-      let targetWidth = targetHeight * aspectRatio
+      let targetWidth: number
+      let targetHeight: number
 
-      const maxHalfWidth = hostWidth / 2
-      if (targetWidth > maxHalfWidth) {
-        targetWidth = maxHalfWidth
-        targetHeight = targetWidth / aspectRatio
+      if (isWide) {
+        // Modo Expandido: Ocupa quase 100% da largura útil da tela
+        const availableWidth = Math.max(300, hostWidth - 32)
+        targetWidth = Math.floor(availableWidth / 2)
+        targetHeight = Math.min(hostHeight - 16, Math.max(Math.round(hostHeight - 24), Math.round(targetWidth / aspectRatio)))
+      } else {
+        // Modo Centralizado: Proporção clássica de livro físico com margens
+        const availableHeight = Math.round(hostHeight * 0.94)
+        targetHeight = availableHeight
+        targetWidth = Math.round(targetHeight * aspectRatio)
+
+        const maxHalfWidth = Math.floor((hostWidth - 48) / 2)
+        if (targetWidth > maxHalfWidth) {
+          targetWidth = maxHalfWidth
+          targetHeight = Math.round(targetWidth / aspectRatio)
+        }
       }
 
       const totalBookWidth = targetWidth * 2
@@ -135,13 +147,24 @@ export function useBookPageTurn(
         singlePage: null,
       }
     } else {
-      const availableHeight = hostHeight
-      let targetHeight = availableHeight
-      let targetWidth = targetHeight * aspectRatio
+      let targetWidth: number
+      let targetHeight: number
 
-      if (targetWidth > hostWidth) {
-        targetWidth = hostWidth
-        targetHeight = targetWidth / aspectRatio
+      if (isWide) {
+        // Modo Expandido: 1 folha ocupando quase 100% da largura útil
+        targetWidth = Math.max(300, Math.round(hostWidth - 32))
+        targetHeight = Math.min(hostHeight - 16, Math.max(Math.round(hostHeight - 24), Math.round(targetWidth / aspectRatio)))
+      } else {
+        // Modo Centralizado: 1 folha centralizada com proporção clássica
+        const availableHeight = Math.round(hostHeight * 0.94)
+        targetHeight = availableHeight
+        targetWidth = Math.round(targetHeight * aspectRatio)
+
+        const maxWidth = Math.round(Math.min(hostWidth - 32, hostWidth * 0.85))
+        if (targetWidth > maxWidth) {
+          targetWidth = maxWidth
+          targetHeight = Math.round(targetWidth / aspectRatio)
+        }
       }
 
       const startX = Math.max(0, (hostWidth - targetWidth) / 2)
@@ -369,7 +392,7 @@ export function useBookPageTurn(
   })
 
   watch(
-    [() => store.currentPage, () => store.document, () => store.isTwoPageMode, () => store.isGraphOpen],
+    [() => store.currentPage, () => store.document, () => store.isTwoPageMode, () => store.readerWidthMode, () => store.isGraphOpen],
     () => {
       updateLayout()
     },

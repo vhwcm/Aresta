@@ -114,12 +114,12 @@ describe('useSettings Composable', () => {
   it('permite alternar a preferência de grafo no leitor desktop', () => {
     const { desktopReaderGraphOpen, setDesktopReaderGraphOpen } = useSettings()
 
-    expect(desktopReaderGraphOpen.value).toBe(true)
-
-    setDesktopReaderGraphOpen(false)
     expect(desktopReaderGraphOpen.value).toBe(false)
+
+    setDesktopReaderGraphOpen(true)
+    expect(desktopReaderGraphOpen.value).toBe(true)
     const saved = JSON.parse(localStorage.getItem('aresta_settings') || '{}')
-    expect(saved.desktopReaderGraphOpen).toBe(false)
+    expect(saved.desktopReaderGraphOpen).toBe(true)
   })
 
   it('permite alterar e obter a família tipográfica padrão de EPUB', () => {

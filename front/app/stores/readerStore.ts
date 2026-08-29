@@ -3,6 +3,7 @@ import { markRaw } from 'vue'
 import type { IBookDocument } from '~/interfaces/reader/IBookDocument'
 
 export type ReaderColorTheme = 'sepia' | 'white' | 'black'
+export type ReaderWidthMode = 'centered' | 'wide'
 
 interface ReaderState {
   document: IBookDocument | null
@@ -15,6 +16,7 @@ interface ReaderState {
   isGraphOpen: boolean
   isMobileGraphOpen: boolean
   isTwoPageMode: boolean
+  readerWidthMode: ReaderWidthMode
   isZenMode: boolean
   fontSize: number
   fontFamily: string
@@ -23,7 +25,9 @@ interface ReaderState {
 
 export const useReaderStore = defineStore('reader', {
   state: (): ReaderState => {
-    let defaultGraphOpen = true
+    let defaultGraphOpen = false
+    let defaultTwoPageMode = true
+    let defaultWidthMode: ReaderWidthMode = 'centered'
     let defaultFontSize = 18
     let defaultFontFamily = "'Newsreader', Georgia, serif"
     let defaultReaderTheme: ReaderColorTheme = 'sepia'
@@ -35,11 +39,27 @@ export const useReaderStore = defineStore('reader', {
           defaultReaderTheme = savedTheme
         }
 
+        const savedWidthMode = localStorage.getItem('aresta_reader_width_mode')
+        if (savedWidthMode === 'centered' || savedWidthMode === 'wide') {
+          defaultWidthMode = savedWidthMode
+        }
+
+        const savedTwoPage = localStorage.getItem('aresta_reader_two_page')
+        if (savedTwoPage !== null) {
+          defaultTwoPageMode = savedTwoPage === 'true'
+        }
+
         const saved = localStorage.getItem('aresta_settings')
         if (saved) {
           const parsed = JSON.parse(saved)
           if (typeof parsed.desktopReaderGraphOpen === 'boolean') {
             defaultGraphOpen = parsed.desktopReaderGraphOpen
+          }
+          if (typeof parsed.readerTwoPageMode === 'boolean') {
+            defaultTwoPageMode = parsed.readerTwoPageMode
+          }
+          if (parsed.readerWidthMode === 'centered' || parsed.readerWidthMode === 'wide') {
+            defaultWidthMode = parsed.readerWidthMode
           }
           if (typeof parsed.epubFontSize === 'number') {
             defaultFontSize = Math.max(12, Math.min(36, Math.round(parsed.epubFontSize)))
@@ -75,7 +95,8 @@ export const useReaderStore = defineStore('reader', {
       bookmarks: [],
       isGraphOpen: defaultGraphOpen,
       isMobileGraphOpen: false,
-      isTwoPageMode: false,
+      isTwoPageMode: defaultTwoPageMode,
+      readerWidthMode: defaultWidthMode,
       isZenMode: false,
       fontSize: defaultFontSize,
       fontFamily: defaultFontFamily,
@@ -112,6 +133,12 @@ export const useReaderStore = defineStore('reader', {
           if (typeof parsed.desktopReaderGraphOpen === 'boolean') {
             this.isGraphOpen = parsed.desktopReaderGraphOpen
           }
+          if (typeof parsed.readerTwoPageMode === 'boolean') {
+            this.isTwoPageMode = parsed.readerTwoPageMode
+          }
+          if (parsed.readerWidthMode === 'centered' || parsed.readerWidthMode === 'wide') {
+            this.readerWidthMode = parsed.readerWidthMode
+          }
           if (typeof parsed.epubFontSize === 'number') {
             const parsedSize = Math.max(12, Math.min(36, Math.round(parsed.epubFontSize)))
             this.fontSize = parsedSize
@@ -142,6 +169,14 @@ export const useReaderStore = defineStore('reader', {
         const savedTheme = localStorage.getItem('aresta_reader_theme')
         if (savedTheme === 'white' || savedTheme === 'sepia' || savedTheme === 'black') {
           this.readerTheme = savedTheme
+        }
+        const savedWidthMode = localStorage.getItem('aresta_reader_width_mode')
+        if (savedWidthMode === 'centered' || savedWidthMode === 'wide') {
+          this.readerWidthMode = savedWidthMode
+        }
+        const savedTwoPage = localStorage.getItem('aresta_reader_two_page')
+        if (savedTwoPage !== null) {
+          this.isTwoPageMode = savedTwoPage === 'true'
         }
       } catch {
         // ignorar falha de parse
@@ -315,6 +350,41 @@ export const useReaderStore = defineStore('reader', {
 
     setTwoPageMode(isTwoPage: boolean) {
       this.isTwoPageMode = isTwoPage
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('aresta_reader_two_page', String(isTwoPage))
+          const saved = localStorage.getItem('aresta_settings')
+          const settings = saved ? JSON.parse(saved) : {}
+          settings.readerTwoPageMode = isTwoPage
+          localStorage.setItem('aresta_settings', JSON.stringify(settings))
+        } catch {
+          // ignorar erro
+        }
+      }
+    },
+
+    toggleTwoPageMode() {
+      this.setTwoPageMode(!this.isTwoPageMode)
+    },
+
+    setReaderWidthMode(mode: ReaderWidthMode) {
+      if (mode !== 'centered' && mode !== 'wide') return
+      this.readerWidthMode = mode
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('aresta_reader_width_mode', mode)
+          const saved = localStorage.getItem('aresta_settings')
+          const settings = saved ? JSON.parse(saved) : {}
+          settings.readerWidthMode = mode
+          localStorage.setItem('aresta_settings', JSON.stringify(settings))
+        } catch {
+          // ignorar erro
+        }
+      }
+    },
+
+    toggleReaderWidthMode() {
+      this.setReaderWidthMode(this.readerWidthMode === 'centered' ? 'wide' : 'centered')
     },
 
     setReaderTheme(theme: ReaderColorTheme) {
