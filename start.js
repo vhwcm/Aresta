@@ -53,11 +53,6 @@ function cleanup() {
 
 process.on('SIGINT', cleanup);
 process.on('SIGTERM', cleanup);
-process.on('exit', () => {
-  for (const child of children) {
-    killProcess(child);
-  }
-});
 
 // 1. Conversor PDF -> EPUB
 const pdf2epubDir = path.join(ROOT_DIR, 'pdf2epub');
@@ -141,5 +136,15 @@ console.log(`${colors.yellow}Acesse:${colors.reset}`);
 console.log(`  • ${colors.blue}Frontend:${colors.reset}     http://localhost:3000`);
 console.log(`  • ${colors.blue}Conversor:${colors.reset}    http://localhost:8000/docs`);
 console.log(`  • ${colors.blue}Backend API:${colors.reset}  http://localhost:7070/api/health`);
-console.log(`  • ${colors.blue}Swagger UI:${colors.reset}   http://localhost:7070/api-docs`);
 console.log(`${colors.yellow}Pressione Ctrl+C a qualquer momento para interromper todos.${colors.reset}\n`);
+
+// Manter o processo pai vivo aguardando os filhos
+const keepAlive = setInterval(() => {}, 10000);
+process.on('SIGINT', () => {
+  clearInterval(keepAlive);
+  cleanup();
+});
+process.on('SIGTERM', () => {
+  clearInterval(keepAlive);
+  cleanup();
+});

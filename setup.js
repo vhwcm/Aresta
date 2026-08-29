@@ -75,7 +75,7 @@ try {
   });
   console.log(`  ${colors.green}✓ Dependências do Backend instaladas com sucesso.${colors.reset}`);
 
-  // Gerar cliente Prisma se existir
+  // Gerar cliente Prisma, sincronizar schema e popular acervo
   if (fs.existsSync(path.join(backDir, 'prisma'))) {
     console.log(`  ${colors.cyan}→ Gerando Prisma Client...${colors.reset}`);
     try {
@@ -86,6 +86,28 @@ try {
       console.log(`  ${colors.green}✓ Prisma Client gerado com sucesso.${colors.reset}`);
     } catch {
       console.log(`  ${colors.yellow}⚠ Não foi possível regenerar o Prisma Client agora (provavelmente o servidor backend já está rodando e bloqueando o arquivo).${colors.reset}`);
+    }
+
+    console.log(`  ${colors.cyan}→ Sincronizando schema do banco de dados (Prisma DB Push)...${colors.reset}`);
+    try {
+      execSync(`${npmCmd} run prisma:push`, {
+        cwd: backDir,
+        stdio: 'inherit'
+      });
+      console.log(`  ${colors.green}✓ Schema sincronizado com o banco de dados.${colors.reset}`);
+    } catch (pushErr) {
+      console.log(`  ${colors.yellow}⚠ Falha ao executar prisma:push: ${pushErr.message || pushErr}${colors.reset}`);
+    }
+
+    console.log(`  ${colors.cyan}→ Populando acervo de livros e usuário admin viktor (Prisma Seed)...${colors.reset}`);
+    try {
+      execSync(`${npmCmd} run prisma:seed`, {
+        cwd: backDir,
+        stdio: 'inherit'
+      });
+      console.log(`  ${colors.green}✓ Livros da store com covers vinculados ao admin viktor com sucesso.${colors.reset}`);
+    } catch (seedErr) {
+      console.log(`  ${colors.yellow}⚠ Falha ao executar prisma:seed: ${seedErr.message || seedErr}${colors.reset}`);
     }
   }
 } catch (err) {

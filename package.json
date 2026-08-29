@@ -4,6 +4,7 @@
   "scripts": {
     "start": "node start.js",
     "dev": "node start.js",
+    "setup": "node setup.js",
     "start:sh": "./start.sh",
     "start:ps1": "powershell -ExecutionPolicy Bypass -File ./start.ps1",
     "models": "node list-gemini-models.js",
