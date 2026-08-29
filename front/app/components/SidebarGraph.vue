@@ -186,7 +186,7 @@ const displayedBooks = computed<UserBookItem[]>(() => {
     return userBooks.value
   }
   // Caso contrário, livros vinculados a este tema específico
-  return selectedNode.value.books || []
+  return (selectedNode.value.books || []) as any
 })
 
 const handleCreateNode = async (payload: { name: string, color: string, description: string }) => {

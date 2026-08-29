@@ -608,12 +608,14 @@ const spreads: DemoSpread[] = [
 
 const totalSpreads = computed(() => spreads.length)
 
+const fallbackPage = { bookTitle: '', chapterNum: '', chapterTitle: '', pageNumber: 1, paragraphs: [] }
+
 const currentLeftPage = computed(() => {
-  return spreads[currentSpreadIndex.value]?.leftPage || spreads[0].leftPage
+  return spreads[currentSpreadIndex.value]?.leftPage || spreads[0]?.leftPage || fallbackPage
 })
 
 const currentRightPage = computed(() => {
-  return spreads[currentSpreadIndex.value]?.rightPage || spreads[0].rightPage
+  return spreads[currentSpreadIndex.value]?.rightPage || spreads[0]?.rightPage || fallbackPage
 })
 
 const currentProgressPercent = computed(() => {

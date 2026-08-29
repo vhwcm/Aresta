@@ -131,9 +131,14 @@ const redraw = () => {
     ctx.strokeStyle = stroke.color || '#E57B55';
     ctx.lineWidth = stroke.width || 3;
     ctx.beginPath();
-    ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
+    const firstPt = stroke.points[0];
+    if (!firstPt) continue;
+    ctx.moveTo(firstPt.x, firstPt.y);
     for (let i = 1; i < stroke.points.length; i++) {
-      ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
+      const pt = stroke.points[i];
+      if (pt) {
+        ctx.lineTo(pt.x, pt.y);
+      }
     }
     ctx.stroke();
   }

@@ -242,7 +242,7 @@ const displayWord = computed(() => props.word.trim())
 
 function normalizeLang(langCode?: string): string {
   if (!langCode) return 'pt'
-  const clean = langCode.split('-')[0].toLowerCase()
+  const clean = (langCode.split('-')[0] ?? '').toLowerCase()
   if (clean === 'pt' || clean === 'en' || clean === 'es') return clean
   return 'pt'
 }

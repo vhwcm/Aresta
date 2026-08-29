@@ -40,7 +40,7 @@ describe('useGraph Composable', () => {
 
     expect(mockFetch).toHaveBeenCalledWith('http://localhost:7070/api/graph/themes/7/books', expect.any(Object))
     expect(books).toHaveLength(1)
-    expect(books[0].title).toBe('O Programador Pragmático')
+    expect(books[0]?.title).toBe('O Programador Pragmático')
   })
 
   it('fetchThemeAnnotations busca anotações do tema', async () => {
@@ -54,7 +54,7 @@ describe('useGraph Composable', () => {
 
     expect(mockFetch).toHaveBeenCalledWith('http://localhost:7070/api/graph/themes/7/annotations', expect.any(Object))
     expect(annotations).toHaveLength(1)
-    expect(annotations[0].note).toBe('Automação é chave')
+    expect(annotations[0]?.note).toBe('Automação é chave')
   })
 
   it('createLooseAnnotation cria anotação solta vinculada aos temas do livro', async () => {

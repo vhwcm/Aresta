@@ -385,7 +385,7 @@
               :key="font.id"
               type="button"
               :data-testid="`font-option-${font.id}`"
-              @click="setEpubFontFamily(font.id)"
+              @click="setEpubFontFamily(font.id as any)"
               class="flex flex-col justify-between p-4 rounded-2xl border text-left transition-all relative overflow-hidden group"
               :class="epubFontFamily === font.id
                 ? 'bg-accent/10 border-accent text-textPrimary shadow-lg shadow-accent/5'

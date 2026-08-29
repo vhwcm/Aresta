@@ -178,10 +178,10 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'close'): void
-  (e: 'updateNode', payload: { id: number, name: string, color: string, description: string }): void
-  (e: 'deleteNode', id: number): void
-  (e: 'linkBook', payload: { nodeId: number, userBookId: number }): void
-  (e: 'unlinkBook', payload: { nodeId: number, userBookId: number }): void
+  (e: 'updateNode', payload: { id: string | number, name: string, color: string, description: string }): void
+  (e: 'deleteNode', id: string | number): void
+  (e: 'linkBook', payload: { nodeId: string | number, userBookId: number }): void
+  (e: 'unlinkBook', payload: { nodeId: string | number, userBookId: number }): void
 }>()
 
 const isEditing = ref(false)
@@ -209,8 +209,8 @@ watch(() => props.node, (newNode) => {
 
 const availableUserBooks = computed(() => {
   if (!props.node) return props.allUserBooks
-  const linkedBookIds = new Set(props.node.books?.map(b => b.userBookId) || [])
-  return props.allUserBooks.filter(b => !linkedBookIds.has(b.userBookId))
+  const linkedBookIds = new Set((props.node.books || []).map((b: any) => b.userBookId || b.id))
+  return props.allUserBooks.filter((b: UserBookItem) => !linkedBookIds.has(b.userBookId))
 })
 
 const saveNodeDetails = () => {

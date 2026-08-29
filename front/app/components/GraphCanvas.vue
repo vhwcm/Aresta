@@ -246,7 +246,7 @@ const initGraph = () => {
     .force(
       'link',
       d3
-        .forceLink(simulationLinks)
+        .forceLink(simulationLinks as any)
         .id((d: any) => String(d.id))
         .distance((d: any) => (d.isRootEdge ? 180 : d.type === 'book-theme' ? 95 : 140))
     )

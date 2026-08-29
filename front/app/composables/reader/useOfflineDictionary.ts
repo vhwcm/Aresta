@@ -35,8 +35,8 @@ const installedPairs = ref<string[]>([])
 const isDownloading = ref(false)
 
 function getPairKey(sourceLang: string, targetLang: string): string {
-  const s = sourceLang.split('-')[0].toLowerCase()
-  const t = targetLang.split('-')[0].toLowerCase()
+  const s = (sourceLang.split('-')[0] ?? sourceLang).toLowerCase()
+  const t = (targetLang.split('-')[0] ?? targetLang).toLowerCase()
   return `${s}-${t}`
 }
 

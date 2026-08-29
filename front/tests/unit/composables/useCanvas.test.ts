@@ -110,7 +110,7 @@ describe('useCanvas composable', () => {
     const newCanvas = useCanvas();
     newCanvas.deserializeDocument(serialized);
     expect(newCanvas.nodes.value).toHaveLength(1);
-    expect(newCanvas.nodes.value[0].shape).toBe('diamond');
+    expect(newCanvas.nodes.value[0]?.shape).toBe('diamond');
     expect(newCanvas.viewport.value.zoom).toBe(1.5);
   });
 });

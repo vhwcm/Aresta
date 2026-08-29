@@ -99,7 +99,7 @@ export const useFlashcards = () => {
         totalCards.value = dailyDeck.value.length
         reviewedCount.value = dailyDeck.value.filter((c) => c.isReviewed).length
         if (dailyDeck.value.length > 0) {
-          firstCard.value = dailyDeck.value[0]
+          firstCard.value = dailyDeck.value[0] || null
         }
       }
     } catch (e) {
@@ -124,7 +124,7 @@ export const useFlashcards = () => {
         reviewedCount.value = res.reviewedCount
 
         if (dailyDeck.value.length > 0) {
-          firstCard.value = dailyDeck.value[0]
+          firstCard.value = dailyDeck.value[0] || null
         }
 
         // Salva cópia local
@@ -227,11 +227,11 @@ export const useFlashcards = () => {
         }
       }
 
-      await streak.fetchStatus()
+      await streak.fetchStreak()
       return res
     } catch (err: any) {
       console.warn('Avaliação gravada localmente (offline):', err)
-      await streak.recordActivity(0, 1)
+      await streak.recordFlashcardReview(1)
       return { flashcard: dailyDeck.value[idx]!, streak: null, justCompletedStreakGoal: false }
     } finally {
       isSubmitting.value = false

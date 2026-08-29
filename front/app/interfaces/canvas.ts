@@ -48,12 +48,12 @@ export interface CanvasDocument {
 
 export interface CanvasSummary {
   id: string;
-  userId: number;
+  userId?: number;
   title: string;
   description?: string | null;
-  nodeCount: number;
-  edgeCount: number;
-  createdAt: string;
+  nodeCount?: number;
+  edgeCount?: number;
+  createdAt?: string;
   updatedAt: string;
 }
 

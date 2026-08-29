@@ -382,7 +382,7 @@
               :key="theme.id"
               @click="toggleModalTheme(theme.id)"
               class="flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all duration-200"
-              :class="selectedThemeIdsForModal.includes(theme.id)
+              :class="selectedThemeIdsForModal.includes(Number(theme.id))
                 ? 'border-accent bg-accent/15 shadow-sm'
                 : 'border-divider bg-white/5 hover:border-divider/80 hover:bg-white/10'"
             >
@@ -392,7 +392,7 @@
               </div>
               <CheckIcon
                 class="w-4 h-4 shrink-0 transition-opacity"
-                :class="selectedThemeIdsForModal.includes(theme.id) ? 'text-accent opacity-100' : 'opacity-0'"
+                :class="selectedThemeIdsForModal.includes(Number(theme.id)) ? 'text-accent opacity-100' : 'opacity-0'"
               />
             </div>
           </div>
@@ -510,7 +510,7 @@ import { getCoverUrl, getBookFormat } from '~/utils/cover'
 
 const activeTab = ref<'catalog' | 'my-books'>('catalog')
 const statusFilter = ref('TODOS')
-const selectedThemeId = ref<number | null>(null)
+const selectedThemeId = ref<number | string | null>(null)
 const isLoginModalOpen = ref(false)
 
 const tagModalBook = ref<UserBookItem | null>(null)
@@ -574,17 +574,17 @@ const handlePageChange = async (userBookId: number, status: string, page: number
 }
 
 const countByStatus = (status: string) => {
-  return userBooks.value.filter(b => b.status === status).length
+  return userBooks.value.filter((b: UserBookItem) => b.status === status).length
 }
 
-const countByTheme = (themeId: number) => {
-  return userBooks.value.filter(b => b.themes?.some(t => t.id === themeId)).length
+const countByTheme = (themeId: number | string) => {
+  return userBooks.value.filter((b: UserBookItem) => b.themes?.some(t => String(t.id) === String(themeId))).length
 }
 
 const filteredUserBooks = computed(() => {
-  return userBooks.value.filter((b) => {
+  return userBooks.value.filter((b: UserBookItem) => {
     const matchesStatus = statusFilter.value === 'TODOS' || b.status === statusFilter.value
-    const matchesTheme = selectedThemeId.value === null || (b.themes && b.themes.some(t => t.id === selectedThemeId.value))
+    const matchesTheme = selectedThemeId.value === null || (b.themes && b.themes.some(t => String(t.id) === String(selectedThemeId.value)))
     return matchesStatus && matchesTheme
   })
 })
@@ -607,12 +607,14 @@ const openTagModal = (book: UserBookItem) => {
   newThemeName.value = ''
 }
 
-const toggleModalTheme = (themeId: number) => {
-  const idx = selectedThemeIdsForModal.value.indexOf(themeId)
+const toggleModalTheme = (themeId: number | string) => {
+  const numId = Number(themeId)
+  if (isNaN(numId)) return
+  const idx = selectedThemeIdsForModal.value.indexOf(numId)
   if (idx > -1) {
     selectedThemeIdsForModal.value.splice(idx, 1)
   } else {
-    selectedThemeIdsForModal.value.push(themeId)
+    selectedThemeIdsForModal.value.push(numId)
   }
 }
 
@@ -622,7 +624,10 @@ const handleCreateThemeInline = async () => {
   try {
     const created = await createNode(newThemeName.value.trim(), newThemeColor.value)
     if (created && created.id) {
-      selectedThemeIdsForModal.value.push(created.id)
+      const numId = Number(created.id)
+      if (!isNaN(numId)) {
+        selectedThemeIdsForModal.value.push(numId)
+      }
     }
     newThemeName.value = ''
     showCreateThemeInline.value = false

@@ -60,7 +60,9 @@ export class OpfsStorageAdapter implements IBinaryStorageAdapter {
       try {
         await this.opfsRoot.removeEntry(key);
         return true;
-      } catch (e) {}
+      } catch {
+        // Arquivo pode não existir no OPFS
+      }
     }
 
     return await deleteCachedBook(key);

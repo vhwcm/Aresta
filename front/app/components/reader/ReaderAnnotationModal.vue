@@ -103,7 +103,7 @@
               type="button"
               @click="toggleThemeSelection(theme.id)"
               class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium border transition-all cursor-pointer"
-              :class="selectedThemeIds.includes(theme.id)
+              :class="selectedThemeIds.includes(Number(theme.id))
                 ? 'bg-accent/20 border-accent text-white shadow-sm'
                 : 'bg-white/5 border-divider text-textSecondary hover:border-textSecondary/40 hover:text-textPrimary'"
             >
@@ -112,7 +112,7 @@
                 :style="{ backgroundColor: theme.color || '#E57B55' }"
               ></span>
               <span>{{ theme.name }}</span>
-              <CheckIcon v-if="selectedThemeIds.includes(theme.id)" class="w-3 h-3 text-accent ml-0.5" />
+              <CheckIcon v-if="selectedThemeIds.includes(Number(theme.id))" class="w-3 h-3 text-accent ml-0.5" />
             </button>
           </div>
           <p v-else class="text-xs text-textSecondary italic">
@@ -210,11 +210,13 @@ watch(
   { immediate: true },
 )
 
-const toggleThemeSelection = (themeId: number) => {
-  if (selectedThemeIds.value.includes(themeId)) {
-    selectedThemeIds.value = selectedThemeIds.value.filter((id) => id !== themeId)
+const toggleThemeSelection = (themeId: number | string) => {
+  const numId = Number(themeId)
+  if (isNaN(numId)) return
+  if (selectedThemeIds.value.includes(numId)) {
+    selectedThemeIds.value = selectedThemeIds.value.filter((id) => id !== numId)
   } else {
-    selectedThemeIds.value = [...selectedThemeIds.value, themeId]
+    selectedThemeIds.value = [...selectedThemeIds.value, numId]
   }
 }
 
@@ -224,7 +226,10 @@ const handleCreateQuickTheme = async () => {
   try {
     const node = await createNode(newThemeName.value.trim())
     if (node && node.id) {
-      selectedThemeIds.value.push(node.id)
+      const numId = Number(node.id)
+      if (!isNaN(numId)) {
+        selectedThemeIds.value.push(numId)
+      }
     }
     newThemeName.value = ''
     showNewThemeInput.value = false

@@ -153,12 +153,12 @@
             <!-- Botão de Envio -->
             <button
               type="submit"
-              :disabled="adminStore.loading || !selectedFile"
+              :disabled="adminStore.loading.value || !selectedFile"
               class="mt-2 w-full py-3.5 px-6 rounded-2xl bg-accent text-white font-interface font-semibold text-sm hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg flex items-center justify-center gap-2"
             >
-              <SparklesIcon v-if="!adminStore.loading" class="w-4 h-4" />
+              <SparklesIcon v-if="!adminStore.loading.value" class="w-4 h-4" />
               <RotateCwIcon v-else class="w-4 h-4 animate-spin" />
-              <span>{{ adminStore.loading ? 'Processando & Enriquecendo com IA...' : 'Cadastrar Livro & Mapear Temas' }}</span>
+              <span>{{ adminStore.loading.value ? 'Processando & Enriquecendo com IA...' : 'Cadastrar Livro & Mapear Temas' }}</span>
             </button>
           </form>
         </div>
@@ -267,9 +267,9 @@ const fileToBase64 = (file: File): Promise<string> =>
   new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = () => {
-      const result = reader.result as string
+      const result = (reader.result as string) || ''
       // Extrair apenas o base64 puro após a vírgula
-      const base64 = result.includes(',') ? result.split(',')[1] : result
+      const base64 = result.includes(',') ? result.split(',')[1] || '' : result
       resolve(base64)
     }
     reader.onerror = (e) => reject(e)

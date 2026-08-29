@@ -138,9 +138,14 @@ export function useCanvasInking() {
       const offsetX = bbox.minX - padding;
       const offsetY = bbox.minY - padding;
 
-      ctx.moveTo(stroke.points[0].x - offsetX, stroke.points[0].y - offsetY);
+      const firstPoint = stroke.points[0];
+      if (!firstPoint) continue;
+      ctx.moveTo(firstPoint.x - offsetX, firstPoint.y - offsetY);
       for (let i = 1; i < stroke.points.length; i++) {
-        ctx.lineTo(stroke.points[i].x - offsetX, stroke.points[i].y - offsetY);
+        const pt = stroke.points[i];
+        if (pt) {
+          ctx.lineTo(pt.x - offsetX, pt.y - offsetY);
+        }
       }
       ctx.stroke();
     }

@@ -109,7 +109,8 @@ export function useCanvas() {
     if (saveHistory) pushHistory();
     const index = nodes.value.findIndex((n) => n.id === id);
     if (index !== -1) {
-      nodes.value[index] = { ...nodes.value[index], ...updates };
+      const current = nodes.value[index]!;
+      nodes.value[index] = { ...current, ...updates } as CanvasNode;
       triggerAutosave();
     }
   };

@@ -235,8 +235,8 @@ export function cleanWord(rawText: string): string {
   // Remove pontuação de bordas, aspas, apóstrofos, colchetes, números
   return rawText
     .trim()
-    .replace(/^[\s"'“‘«‹(\[\{—–\-_.,:;!?]+/, '')
-    .replace(/[\s"'”’»›)\]\}—–\-_.,:;!?]+$/, '')
+    .replace(/^[\s"'“‘«‹([{—–\-_.,:;!?]+/, '')
+    .replace(/[\s"'”’»›)}—–\-_.,:;!?]+$/, '')
     .toLowerCase()
 }
 
@@ -254,12 +254,15 @@ export function useLemmatizer() {
     candidates.add(normalized)
 
     // Normaliza código do idioma (ex: 'pt-BR' -> 'pt')
-    const primaryLang = lang.split('-')[0].toLowerCase()
+    const primaryLang = (lang.split('-')[0] ?? 'en').toLowerCase()
 
     // 2. Verifica mapeamento de formas irregulares conhecidas
     const langIrregulars = IRREGULAR_FORMS[primaryLang]
-    if (langIrregulars && langIrregulars[normalized]) {
-      candidates.add(langIrregulars[normalized])
+    if (langIrregulars) {
+      const mapped = langIrregulars[normalized]
+      if (mapped) {
+        candidates.add(mapped)
+      }
     }
 
     // 3. Regras morfológicas por idioma

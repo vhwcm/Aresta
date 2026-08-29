@@ -133,7 +133,9 @@ export function useSyncEngine() {
             let doc = { nodes: [], edges: [], viewport: { x: 0, y: 0, zoom: 1 } };
             try {
               doc = typeof c.data === 'string' ? JSON.parse(c.data) : c.data;
-            } catch (e) {}
+            } catch {
+              // fallback para objeto vazio
+            }
             await canvasRepo.save({
               id: c.id,
               name: c.title,

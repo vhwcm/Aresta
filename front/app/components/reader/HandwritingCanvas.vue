@@ -444,7 +444,7 @@ const exportForOcr = (): { base64: string; isEmpty: boolean } => {
     for (let i = 0; i < srcData.length; i += 4) {
       const alpha = srcData[i + 3]
 
-      if (alpha > 20) {
+      if ((alpha ?? 0) > 20) {
         // Traço desenhado pelo usuário -> preto sólido com fundo branco
         outData[i] = 0
         outData[i + 1] = 0

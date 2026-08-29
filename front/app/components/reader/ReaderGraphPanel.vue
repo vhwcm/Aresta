@@ -374,8 +374,9 @@ const isSavingNote = ref(false)
 const handleSelectNode = async (node: GraphNode) => {
   selectedTheme.value = node
   editingAnnotationId.value = null
-  if (node.id && node.id !== -999) {
-    await fetchAnnotations({ themeId: node.id })
+  const numId = Number(node.id)
+  if (!isNaN(numId) && numId !== -999) {
+    await fetchAnnotations({ themeId: numId })
   } else {
     await fetchAnnotations(store.bookId ? { bookId: store.bookId } : undefined)
   }
@@ -451,8 +452,11 @@ onMounted(() => {
 defineExpose({
   refresh: () => {
     fetchGraph()
-    if (selectedTheme.value && selectedTheme.value.id !== -999) {
-      fetchAnnotations({ themeId: selectedTheme.value.id })
+    if (selectedTheme.value) {
+      const numId = Number(selectedTheme.value.id)
+      if (!isNaN(numId) && numId !== -999) {
+        fetchAnnotations({ themeId: numId })
+      }
     }
   },
 })

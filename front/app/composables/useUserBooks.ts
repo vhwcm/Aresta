@@ -115,7 +115,7 @@ export const useUserBooks = () => {
   }
 
   const updateUserBook = async (userBookId: number, status: string, currentPage: number) => {
-    const existing = userBooks.value.find((b) => b.userBookId === userBookId)
+    const existing = userBooks.value.find((b: UserBookItem) => b.userBookId === userBookId)
     if (existing) {
       await bookRepo.save({
         id: userBookId,
@@ -200,14 +200,14 @@ export const useUserBooks = () => {
   }
 
   const deleteUserBookByBookId = async (bookId: number) => {
-    const item = userBooks.value.find((b) => b.bookId === bookId)
+    const item = userBooks.value.find((b: UserBookItem) => b.bookId === bookId)
     if (item) {
       await deleteUserBook(item.userBookId)
     }
   }
 
   const recordBookAccess = async (userBookId: number) => {
-    const existing = userBooks.value.find((b) => b.userBookId === userBookId)
+    const existing = userBooks.value.find((b: UserBookItem) => b.userBookId === userBookId)
     if (existing) {
       await bookRepo.save({
         id: userBookId,
@@ -232,11 +232,11 @@ export const useUserBooks = () => {
   }
 
   const isBookInShelf = (bookId: number) => {
-    return userBooks.value.some((b) => b.bookId === bookId)
+    return userBooks.value.some((b: UserBookItem) => b.bookId === bookId)
   }
 
   const getUserBookByBookId = (bookId: number) => {
-    return userBooks.value.find((b) => b.bookId === bookId)
+    return userBooks.value.find((b: UserBookItem) => b.bookId === bookId)
   }
 
   return {

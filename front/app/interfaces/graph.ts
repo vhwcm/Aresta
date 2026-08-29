@@ -15,6 +15,20 @@ export interface BookItem {
   themes?: BookThemeItem[]
 }
 
+export interface UserBookItem {
+  userBookId: number
+  bookId: number
+  title: string
+  author?: string
+  summary?: string | null
+  coverPath?: string | null
+  filePath?: string
+  status: string
+  currentPage: number
+  lastAccessedAt?: string | null
+  themes?: BookThemeItem[]
+}
+
 export interface AnnotationThemeItem {
   id: number
   userId: number
@@ -35,6 +49,7 @@ export interface GraphNode {
   rawId?: number
   type?: 'theme' | 'book'
   name: string
+  title?: string
   fullTitle?: string
   author?: string
   summary?: string | null
@@ -43,6 +58,7 @@ export interface GraphNode {
   coverPath?: string | null
   filePath?: string
   bookCount?: number
+  books?: any[]
   isRoot?: boolean
   // D3 force fields
   x?: number
