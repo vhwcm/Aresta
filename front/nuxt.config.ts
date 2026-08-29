@@ -43,9 +43,7 @@ export default defineNuxtConfig({
     download: false,
   },
 
-  ssr: true,
-
-
+  ssr: false,
 
   vite: {
     optimizeDeps: {
@@ -57,6 +55,10 @@ export default defineNuxtConfig({
   },
 
   nitro: {
+    prerender: {
+      crawlLinks: false,
+      failOnError: false,
+    },
     publicAssets: [
       {
         dir: 'public',
