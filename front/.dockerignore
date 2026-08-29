@@ -2,6 +2,14 @@ node_modules
 .nuxt
 .output
 .dist
+dist
 .env
 .env.*
 coverage
+src-tauri/target
+src-tauri/gen
+.git
+.github
+tests
+*.log
+

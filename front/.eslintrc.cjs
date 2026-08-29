@@ -1,5 +1,14 @@
 module.exports = {
   root: true,
+  ignorePatterns: [
+    '.nuxt',
+    '.output',
+    'dist',
+    'src-tauri/**',
+    'playwright-report/**',
+    'test-results/**',
+    'node_modules/**'
+  ],
   env: {
     browser: true,
     node: true,
@@ -49,11 +58,28 @@ module.exports = {
       }
     },
     {
-      // Composables complexos e motores de renderização
-      files: ['app/composables/**/*.ts', 'app/composables/**/*.js'],
+      // Composables, stores, adaptadores e utilitários
+      files: [
+        'app/composables/**/*.ts',
+        'app/composables/**/*.js',
+        'app/stores/**/*.ts',
+        'app/stores/**/*.js',
+        'app/utils/**/*.ts',
+        'app/utils/**/*.js',
+        'app/adapters/**/*.ts',
+        'app/adapters/**/*.js'
+      ],
       rules: {
         'max-lines-per-function': ['warn', { max: 800, skipBlankLines: true, skipComments: true }],
-        'max-lines': ['warn', { max: 800, skipBlankLines: true, skipComments: true }]
+        'max-lines': ['warn', { max: 800, skipBlankLines: true, skipComments: true }],
+        'max-depth': ['warn', 6]
+      }
+    },
+    {
+      // Interfaces e arquivos de definição
+      files: ['app/interfaces/**/*.ts', 'app/**/*.d.ts'],
+      rules: {
+        'no-unused-vars': 'off'
       }
     },
     {
@@ -61,7 +87,8 @@ module.exports = {
       files: ['tests/**/*.ts', 'tests/**/*.js', 'scripts/**/*.js'],
       rules: {
         'max-lines-per-function': 'off',
-        'max-lines': 'off'
+        'max-lines': 'off',
+        'no-unused-vars': 'off'
       }
     }
   ]
