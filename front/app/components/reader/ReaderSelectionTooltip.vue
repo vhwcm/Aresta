@@ -12,6 +12,21 @@
       aria-label="Ações de seleção de texto"
     >
       <div class="reader-selection-tooltip__inner">
+        <!-- Botão Dicionário (quando for palavra única) -->
+        <button
+          v-if="isSingleWord"
+          type="button"
+          class="reader-selection-tooltip__btn reader-selection-tooltip__btn--dictionary"
+          @click="handleOpenDictionary"
+          title="Consultar no Dicionário Offline"
+          aria-label="Consultar no Dicionário"
+        >
+          <BookOpenIcon class="w-4 h-4 text-accent" />
+          <span>Dicionário</span>
+        </button>
+
+        <div v-if="isSingleWord" class="reader-selection-tooltip__divider" role="separator" />
+
         <!-- Botão Criar Anotação -->
         <button
           type="button"
@@ -22,23 +37,6 @@
         >
           <HighlighterIcon class="w-4 h-4 text-accent" />
           <span>Anotar</span>
-        </button>
-
-        <div class="reader-selection-tooltip__divider" role="separator" />
-
-        <!-- Botão Copiar -->
-        <button
-          type="button"
-          class="reader-selection-tooltip__btn"
-          @click="handleCopy"
-          :title="copied ? 'Copiado!' : 'Copiar texto'"
-          :aria-label="copied ? 'Copiado para a área de transferência' : 'Copiar texto'"
-        >
-          <CheckIcon v-if="copied" class="w-4 h-4 text-emerald-400" />
-          <CopyIcon v-else class="w-4 h-4 text-textSecondary" />
-          <span :class="{ 'text-emerald-400': copied }">
-            {{ copied ? 'Copiado!' : 'Copiar' }}
-          </span>
         </button>
       </div>
 
@@ -52,8 +50,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onUnmounted } from 'vue'
-import { HighlighterIcon, CopyIcon, CheckIcon } from 'lucide-vue-next'
+import { ref, computed } from 'vue'
+import { HighlighterIcon, BookOpenIcon } from 'lucide-vue-next'
 
 const props = withDefaults(
   defineProps<{
@@ -76,12 +74,23 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   (e: 'annotate', payload: { text: string; pageNumber?: number }): void
+  (e: 'open-dictionary', payload: { word: string; pageNumber?: number }): void
   (e: 'close'): void
 }>()
 
 const tooltipRef = ref<HTMLElement | null>(null)
-const copied = ref(false)
-let copyTimer: ReturnType<typeof setTimeout> | null = null
+
+const isSingleWord = computed(() => {
+  const text = props.selectedText.trim()
+  return text.length > 0 && text.split(/\s+/).length === 1
+})
+
+function handleOpenDictionary() {
+  emit('open-dictionary', {
+    word: props.selectedText.trim(),
+    pageNumber: props.pageNumber,
+  })
+}
 
 function handleAnnotate() {
   emit('annotate', {
@@ -89,35 +98,6 @@ function handleAnnotate() {
     pageNumber: props.pageNumber,
   })
 }
-
-async function handleCopy() {
-  if (!props.selectedText) return
-  try {
-    if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      await navigator.clipboard.writeText(props.selectedText)
-    } else {
-      const textarea = document.createElement('textarea')
-      textarea.value = props.selectedText
-      textarea.style.position = 'fixed'
-      textarea.style.opacity = '0'
-      document.body.appendChild(textarea)
-      textarea.select()
-      document.execCommand('copy')
-      document.body.removeChild(textarea)
-    }
-    copied.value = true
-    if (copyTimer) clearTimeout(copyTimer)
-    copyTimer = setTimeout(() => {
-      copied.value = false
-    }, 2000)
-  } catch (err) {
-    console.error('Falha ao copiar texto selecionado:', err)
-  }
-}
-
-onUnmounted(() => {
-  if (copyTimer) clearTimeout(copyTimer)
-})
 </script>
 
 <style scoped>
@@ -187,6 +167,16 @@ onUnmounted(() => {
 
 .reader-selection-tooltip__btn--primary:hover {
   background: rgba(229, 123, 85, 0.22);
+}
+
+.reader-selection-tooltip__btn--dictionary {
+  background: rgba(229, 123, 85, 0.18);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.reader-selection-tooltip__btn--dictionary:hover {
+  background: rgba(229, 123, 85, 0.28);
 }
 
 .reader-selection-tooltip__divider {

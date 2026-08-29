@@ -343,7 +343,7 @@ describe('Reader Components', () => {
   })
 
   describe('ReaderSelectionTooltip', () => {
-    it('renderiza botões de anotação e cópia quando visible é true', () => {
+    it('renderiza botão de anotação quando visible é true', () => {
       const wrapper = mount(ReaderSelectionTooltip, {
         props: {
           visible: true,
@@ -356,7 +356,7 @@ describe('Reader Components', () => {
       })
 
       expect(wrapper.text()).toContain('Anotar')
-      expect(wrapper.text()).toContain('Copiar')
+      expect(wrapper.text()).not.toContain('Copiar')
       expect(wrapper.find('.reader-selection-tooltip').exists()).toBe(true)
     })
 
@@ -394,32 +394,19 @@ describe('Reader Components', () => {
       ])
     })
 
-    it('copia o texto selecionado e altera o estado do botão para Copiado!', async () => {
-      const writeTextMock = vi.fn().mockResolvedValue(undefined)
-      Object.defineProperty(navigator, 'clipboard', {
-        value: {
-          writeText: writeTextMock,
-        },
-        configurable: true,
-        writable: true,
-      })
-
+    it('renderiza o botão de dicionário quando selecionada uma única palavra', () => {
       const wrapper = mount(ReaderSelectionTooltip, {
         props: {
           visible: true,
           x: 250,
           y: 300,
-          selectedText: 'Texto a ser copiado',
-          pageNumber: 2,
+          selectedText: 'Arquitetura',
+          pageNumber: 1,
         },
       })
 
-      const copyBtn = wrapper.findAll('button').find((b) => b.text().includes('Copiar'))
-      expect(copyBtn?.exists()).toBe(true)
-      await copyBtn?.trigger('click')
-
-      expect(writeTextMock).toHaveBeenCalledWith('Texto a ser copiado')
-      expect(wrapper.text()).toContain('Copiado!')
+      expect(wrapper.text()).toContain('Dicionário')
+      expect(wrapper.text()).toContain('Anotar')
     })
   })
 
@@ -521,6 +508,44 @@ describe('Reader Components', () => {
       expect(amareladoBtn.exists()).toBe(true)
       await amareladoBtn.trigger('click')
       expect(store.readerTheme).toBe('sepia')
+    })
+  })
+
+  describe('ReaderSelectionTooltip', () => {
+    it('exibe o botão Dicionário quando o texto selecionado for uma única palavra', async () => {
+      const wrapper = mount(ReaderSelectionTooltip, {
+        props: {
+          visible: true,
+          x: 100,
+          y: 200,
+          selectedText: 'manuscript',
+        },
+      })
+
+      const dictBtn = wrapper.find('button[title="Consultar no Dicionário Offline"]')
+      expect(dictBtn.exists()).toBe(true)
+      expect(dictBtn.text()).toContain('Dicionário')
+
+      await dictBtn.trigger('click')
+      expect(wrapper.emitted('open-dictionary')).toBeTruthy()
+      expect(wrapper.emitted('open-dictionary')![0]).toEqual([{
+        word: 'manuscript',
+        pageNumber: 1,
+      }])
+    })
+
+    it('não exibe o botão Dicionário quando a seleção tiver múltiplas palavras', async () => {
+      const wrapper = mount(ReaderSelectionTooltip, {
+        props: {
+          visible: true,
+          x: 100,
+          y: 200,
+          selectedText: 'an ancient manuscript',
+        },
+      })
+
+      const dictBtn = wrapper.find('button[title="Consultar no Dicionário Offline"]')
+      expect(dictBtn.exists()).toBe(false)
     })
   })
 })

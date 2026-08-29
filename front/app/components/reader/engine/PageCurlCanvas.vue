@@ -612,19 +612,19 @@ defineExpose({
 .theme-sepia .book-viewport-track,
 .theme-sepia .spread-container,
 .theme-sepia .page-sheet {
-  background-color: #f5eedc;
+  background-color: #f5eedc !important;
 }
 .theme-white.page-curl-wrapper,
 .theme-white .book-viewport-track,
 .theme-white .spread-container,
 .theme-white .page-sheet {
-  background-color: #ffffff;
+  background-color: #ffffff !important;
 }
 .theme-black.page-curl-wrapper,
 .theme-black .book-viewport-track,
 .theme-black .spread-container,
 .theme-black .page-sheet {
-  background-color: #121214;
+  background-color: #121214 !important;
 }
 
 .page-sheet--left {
@@ -703,6 +703,7 @@ defineExpose({
 }
 
 /* PDF.js Text Layer (Camada invisível sobre o Canvas PDF) */
+.page-text-layer.textLayer,
 .page-text-layer :deep(.textLayer) {
   position: absolute;
   overflow: hidden;
@@ -714,9 +715,15 @@ defineExpose({
   user-select: text;
   -webkit-user-select: text;
   cursor: text;
+  mix-blend-mode: multiply;
   --min-font-size: 1;
   --text-scale-factor: calc(var(--total-scale-factor, var(--scale-factor, 1)) * var(--min-font-size));
   --min-font-size-inv: calc(1 / var(--min-font-size));
+}
+
+.theme-black .page-text-layer.textLayer,
+.theme-black .page-text-layer :deep(.textLayer) {
+  mix-blend-mode: screen;
 }
 
 .page-text-layer :deep(.textLayer span),
@@ -745,14 +752,21 @@ defineExpose({
 /* Seleção de Texto nos Documentos */
 .page-text-layer :deep(::selection),
 .page-text-layer ::selection,
-.page-text-layer :deep(.textLayer ::selection) {
-  background: rgba(229, 123, 85, 0.38) !important;
+.page-text-layer :deep(.textLayer ::selection),
+.page-text-layer.textLayer ::selection {
+  background: rgba(229, 123, 85, 0.35) !important;
   color: transparent !important;
 }
 
-.page-text-layer :deep(.epub-text-layer-content *::selection) {
-  background: rgba(229, 123, 85, 0.38) !important;
+.page-text-layer :deep(.epub-text-layer-content *::selection),
+.page-text-layer :deep(.epub-text-layer-content::selection) {
+  background: rgba(229, 123, 85, 0.35) !important;
   color: inherit !important;
+}
+
+.theme-black .page-text-layer :deep(.epub-text-layer-content *::selection) {
+  background: rgba(229, 123, 85, 0.5) !important;
+  color: #ffffff !important;
 }
 
 .page-text-layer :deep(br::selection) {
