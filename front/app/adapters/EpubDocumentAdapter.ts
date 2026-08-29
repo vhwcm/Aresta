@@ -106,26 +106,46 @@ function resolvePath(href: string, basePath: string): string {
 }
 
 /**
- * Busca arquivo dentro do objeto unzipped do EPUB com tolerância a formatações de barra e maiúsculas/minúsculas.
+ * Busca arquivo dentro do objeto unzipped do EPUB com tolerância a formatações de barra, maiúsculas/minúsculas,
+ * correspondência por sufixo de pasta e correspondência de nome de arquivo (basename).
  */
 function getZipFile(unzipped: Record<string, Uint8Array>, path: string): Uint8Array | null {
   if (!unzipped) return null
-  if (unzipped[path]) return unzipped[path]
-  const normalized = path.replace(/\\/g, '/').replace(/^\//, '')
-  if (unzipped[normalized]) return unzipped[normalized]
 
+  // 1. Caminho exato
+  if (unzipped[path]) return unzipped[path]
+
+  // 2. Normalização de barras e remoção de barra inicial
+  const cleanPath = path.replace(/\\/g, '/').replace(/^\//, '')
+  if (unzipped[cleanPath]) return unzipped[cleanPath]
+
+  // 3. Decodificação de URI (ex: %20 -> espaço)
   try {
-    const decoded = decodeURIComponent(normalized)
+    const decoded = decodeURIComponent(cleanPath)
     if (unzipped[decoded]) return unzipped[decoded]
   } catch {}
 
-  const lower = normalized.toLowerCase()
-  for (const key of Object.keys(unzipped)) {
-    const cleanKey = key.replace(/\\/g, '/').replace(/^\//, '')
-    if (cleanKey.toLowerCase() === lower) {
-      return unzipped[key]
+  // 4. Busca por sufixo (ex: "Images/cover.jpg" combina com "OEBPS/Images/cover.jpg" ou "OPS/Images/cover.jpg")
+  const cleanLower = cleanPath.toLowerCase()
+  for (const [key, val] of Object.entries(unzipped)) {
+    const keyClean = key.replace(/\\/g, '/').replace(/^\//, '').toLowerCase()
+    if (keyClean === cleanLower) return val
+    if (keyClean.endsWith('/' + cleanLower) || keyClean.endsWith(cleanLower)) {
+      return val
     }
   }
+
+  // 5. Busca por nome do arquivo (basename)
+  const basename = cleanPath.split('/').pop()?.toLowerCase()
+  if (basename) {
+    for (const [key, val] of Object.entries(unzipped)) {
+      const keyBasename = key.replace(/\\/g, '/').split('/').pop()?.toLowerCase()
+      if (keyBasename === basename) {
+        return val
+      }
+    }
+  }
+
   return null
 }
 
@@ -180,9 +200,9 @@ function uint8ArrayToBase64(bytes: Uint8Array): string {
  */
 function getAssetDataUri(unzipped: Record<string, Uint8Array>, assetPath: string, basePath: string): string | null {
   const resolved = resolvePath(assetPath, basePath)
-  const fileBytes = getZipFile(unzipped, resolved)
+  const fileBytes = getZipFile(unzipped, resolved) || getZipFile(unzipped, assetPath)
   if (!fileBytes) return null
-  const mime = getMimeType(resolved)
+  const mime = getMimeType(resolved) || getMimeType(assetPath)
   if (mime === 'image/svg+xml') {
     const text = new TextDecoder().decode(fileBytes)
     return `data:image/svg+xml;utf8,${encodeURIComponent(text)}`
@@ -192,11 +212,21 @@ function getAssetDataUri(unzipped: Record<string, Uint8Array>, assetPath: string
 }
 
 /**
- * Processa regras CSS, convertendo referências url(...) relativas em Data URIs.
+ * Reescreve seletores CSS como 'body' e 'html' para apontarem para o container '.epub-text-layer-content'.
+ */
+function rewriteCssBodySelectors(css: string): string {
+  if (!css) return ''
+  return css
+    .replace(/(^|[\s,;{}])body([\s,.:#{[>~+]|$)/gi, '$1.epub-text-layer-content$2')
+    .replace(/(^|[\s,;{}])html([\s,.:#{[>~+]|$)/gi, '$1.epub-text-layer-viewport$2')
+}
+
+/**
+ * Processa regras CSS, convertendo referências url(...) relativas em Data URIs e adaptando seletores body.
  */
 function processCss(cssText: string, cssPath: string, unzipped: Record<string, Uint8Array>): string {
   if (!cssText) return ''
-  return cssText.replace(/url\(\s*['"]?([^'")]+)['"]?\s*\)/gi, (match, url) => {
+  let processed = cssText.replace(/url\(\s*['"]?([^'")]+)['"]?\s*\)/gi, (match, url) => {
     const cleanUrl = url.trim()
     if (!cleanUrl || cleanUrl.startsWith('data:') || cleanUrl.startsWith('http:') || cleanUrl.startsWith('https:')) {
       return match
@@ -207,6 +237,7 @@ function processCss(cssText: string, cssPath: string, unzipped: Record<string, U
     }
     return match
   })
+  return rewriteCssBodySelectors(processed)
 }
 
 /**
@@ -217,19 +248,23 @@ function processCss(cssText: string, cssPath: string, unzipped: Record<string, U
  * 4. Processa URLs em estilos inline e tags de estilo.
  */
 function prepareSectionDocument(doc: Document | null, sectionPath: string, unzipped: Record<string, Uint8Array>): void {
-  if (!doc || typeof doc.querySelectorAll !== 'function') return
+  if (!doc) return
 
   // 1. Inlining de CSS externo (<link rel="stylesheet">)
-  const linkElements = Array.from(doc.querySelectorAll('link[rel="stylesheet"], link[type="text/css"], link[href$=".css"]'))
+  const linkElements = Array.from(
+    typeof doc.querySelectorAll === 'function'
+      ? doc.querySelectorAll('link[rel="stylesheet"], link[type="text/css"], link[href$=".css"]')
+      : []
+  )
   for (const link of linkElements) {
     const href = link.getAttribute('href')
     if (href) {
       const resolvedPath = resolvePath(href, sectionPath)
-      const cssBytes = getZipFile(unzipped, resolvedPath)
+      const cssBytes = getZipFile(unzipped, resolvedPath) || getZipFile(unzipped, href)
       if (cssBytes) {
         const rawCss = new TextDecoder().decode(cssBytes)
         const processedCss = processCss(rawCss, resolvedPath, unzipped)
-        const styleEl = doc.createElement('style')
+        const styleEl = document.createElement('style')
         styleEl.setAttribute('data-origin-href', href)
         styleEl.innerHTML = processedCss
         link.parentNode?.replaceChild(styleEl, link)
@@ -238,7 +273,9 @@ function prepareSectionDocument(doc: Document | null, sectionPath: string, unzip
   }
 
   // 2. Processa tags <style> existentes
-  const styleElements = Array.from(doc.querySelectorAll('style'))
+  const styleElements = Array.from(
+    typeof doc.querySelectorAll === 'function' ? doc.querySelectorAll('style') : []
+  )
   for (const style of styleElements) {
     if (style.innerHTML) {
       style.innerHTML = processCss(style.innerHTML, sectionPath, unzipped)
@@ -246,7 +283,9 @@ function prepareSectionDocument(doc: Document | null, sectionPath: string, unzip
   }
 
   // 3. Imagens <img> (src e srcset)
-  const imgElements = Array.from(doc.querySelectorAll('img'))
+  const imgElements = Array.from(
+    typeof doc.querySelectorAll === 'function' ? doc.querySelectorAll('img') : []
+  )
   for (const img of imgElements) {
     const src = img.getAttribute('src')
     if (src && !src.startsWith('data:') && !src.startsWith('http:') && !src.startsWith('https:')) {
@@ -270,14 +309,19 @@ function prepareSectionDocument(doc: Document | null, sectionPath: string, unzip
   }
 
   // 4. SVG <image> (xlink:href e href)
-  const svgImages = Array.from(doc.querySelectorAll('image'))
+  const svgImages = Array.from(
+    typeof doc.querySelectorAll === 'function' ? doc.querySelectorAll('image') : []
+  )
   for (const svgImg of svgImages) {
-    const xlinkHref = svgImg.getAttribute('xlink:href') || svgImg.getAttributeNS('http://www.w3.org/1999/xlink', 'href')
+    const xlinkHref = svgImg.getAttribute('xlink:href') || (typeof svgImg.getAttributeNS === 'function' ? svgImg.getAttributeNS('http://www.w3.org/1999/xlink', 'href') : null)
     if (xlinkHref && !xlinkHref.startsWith('data:') && !xlinkHref.startsWith('http:') && !xlinkHref.startsWith('https:')) {
       const dataUri = getAssetDataUri(unzipped, xlinkHref, sectionPath)
       if (dataUri) {
         svgImg.setAttribute('xlink:href', dataUri)
         svgImg.setAttribute('href', dataUri)
+        if (typeof svgImg.setAttributeNS === 'function') {
+          svgImg.setAttributeNS('http://www.w3.org/1999/xlink', 'href', dataUri)
+        }
       }
     }
     const href = svgImg.getAttribute('href')
@@ -286,12 +330,19 @@ function prepareSectionDocument(doc: Document | null, sectionPath: string, unzip
       if (dataUri) {
         svgImg.setAttribute('href', dataUri)
         svgImg.setAttribute('xlink:href', dataUri)
+        if (typeof svgImg.setAttributeNS === 'function') {
+          svgImg.setAttributeNS('http://www.w3.org/1999/xlink', 'href', dataUri)
+        }
       }
     }
   }
 
   // 5. Mídias e objetos (<source>, <video>, <audio>, <object>, <embed>)
-  const mediaElements = Array.from(doc.querySelectorAll('source[src], object[data], embed[src], video[poster]'))
+  const mediaElements = Array.from(
+    typeof doc.querySelectorAll === 'function'
+      ? doc.querySelectorAll('source[src], object[data], embed[src], video[poster]')
+      : []
+  )
   for (const el of mediaElements) {
     const src = el.getAttribute('src') || el.getAttribute('data') || el.getAttribute('poster')
     const attr = el.hasAttribute('src') ? 'src' : (el.hasAttribute('data') ? 'data' : 'poster')
@@ -304,7 +355,9 @@ function prepareSectionDocument(doc: Document | null, sectionPath: string, unzip
   }
 
   // 6. Atributos de estilo inline com url(...)
-  const elementsWithStyle = Array.from(doc.querySelectorAll('[style]'))
+  const elementsWithStyle = Array.from(
+    typeof doc.querySelectorAll === 'function' ? doc.querySelectorAll('[style]') : []
+  )
   for (const el of elementsWithStyle) {
     const styleAttr = el.getAttribute('style')
     if (styleAttr && /url\(/i.test(styleAttr)) {
@@ -405,13 +458,24 @@ const EPUB_TYPOGRAPHY_STYLES = `
   }
   .epub-text-layer-content img {
     max-width: 100% !important;
-    max-height: 580px !important;
+    max-height: 85vh !important;
     height: auto !important;
     object-fit: contain !important;
-    display: block !important;
+    display: inline-block !important;
     margin: 0.4em auto !important;
     break-inside: avoid !important;
     page-break-inside: avoid !important;
+  }
+  .epub-text-layer-content svg {
+    max-width: 100% !important;
+    max-height: 100% !important;
+    height: auto !important;
+    display: block !important;
+    margin: 0.4em auto !important;
+  }
+  .epub-text-layer-content svg image {
+    max-width: 100% !important;
+    max-height: 100% !important;
   }
   .epub-text-layer-content table {
     width: 100% !important;
@@ -429,8 +493,9 @@ function calculateSectionPages(
   pageWidth: number = 700,
   pageHeight: number = 900,
 ): number {
-  if (!doc || !doc.body) return 1
-  const textLen = (doc.body.textContent || '').trim().length
+  if (!doc) return 1
+  const bodyEl = doc.body || (typeof doc.querySelector === 'function' ? doc.querySelector('body') : null) || (typeof doc.getElementsByTagName === 'function' ? doc.getElementsByTagName('body')[0] : null) || (doc as any)
+  const textLen = (bodyEl?.textContent || '').trim().length
   if (typeof document === 'undefined' || !document.createElement) {
     const baseCharsPerPage = Math.max(300, Math.round(1200 * (18 / Math.max(12, fontSize))))
     return Math.max(1, Math.ceil(textLen / baseCharsPerPage))
@@ -468,7 +533,7 @@ function calculateSectionPages(
     container.appendChild(styleTag)
 
     const contentDiv = document.createElement('div')
-    contentDiv.innerHTML = doc.body.innerHTML
+    contentDiv.innerHTML = bodyEl ? (bodyEl.innerHTML || bodyEl.textContent || '') : (doc.documentElement ? doc.documentElement.innerHTML : '')
     container.appendChild(contentDiv)
 
     document.body.appendChild(container)
@@ -732,8 +797,8 @@ export class EpubDocumentAdapter implements IBookDocument {
         }
         this._sectionDocs.set(mapping.sectionIndex, doc)
       }
-      const body = doc.body ?? doc
-      const fullText = (body.innerText || body.textContent || '').replace(/\s+/g, ' ').trim()
+      const bodyEl = doc.body || (typeof doc.querySelector === 'function' ? doc.querySelector('body') : null) || (typeof doc.getElementsByTagName === 'function' ? doc.getElementsByTagName('body')[0] : null) || (doc as any)
+      const fullText = (bodyEl?.innerText || bodyEl?.textContent || '').replace(/\s+/g, ' ').trim()
       if (mapping.totalPagesInSection <= 1) {
         return fullText
       }
@@ -766,6 +831,11 @@ export class EpubDocumentAdapter implements IBookDocument {
 
       const docStyles = doc && typeof doc.querySelectorAll === 'function' ? Array.from(doc.querySelectorAll('style')).map((s) => s.innerHTML).join('\n') : ''
 
+      const bodyEl = doc.body || (typeof doc.querySelector === 'function' ? doc.querySelector('body') : null) || (typeof doc.getElementsByTagName === 'function' ? doc.getElementsByTagName('body')[0] : null) || (doc as any)
+      const bodyContent = bodyEl ? (bodyEl.innerHTML || bodyEl.textContent || '') : (doc.documentElement ? doc.documentElement.innerHTML : '')
+      const bodyClasses = bodyEl && typeof bodyEl.getAttribute === 'function' ? (bodyEl.getAttribute('class') || '') : ''
+      const bodyInlineStyles = bodyEl && typeof bodyEl.getAttribute === 'function' ? (bodyEl.getAttribute('style') || '') : ''
+
       const width = targetWidth && targetWidth > 0 ? targetWidth : this._pageWidth
       const height = targetHeight && targetHeight > 0 ? targetHeight : this._pageHeight
       this._pageWidth = width
@@ -788,14 +858,12 @@ export class EpubDocumentAdapter implements IBookDocument {
       viewportWrapper.style.overflow = 'hidden'
       viewportWrapper.style.pointerEvents = 'auto'
 
-      if (docStyles) {
-        const styleTag = document.createElement('style')
-        styleTag.innerHTML = docStyles
-        viewportWrapper.appendChild(styleTag)
-      }
+      const styleTag = document.createElement('style')
+      styleTag.innerHTML = `${EPUB_TYPOGRAPHY_STYLES}\n${docStyles}`
+      viewportWrapper.appendChild(styleTag)
 
       const contentWrapper = document.createElement('div')
-      contentWrapper.className = 'epub-text-layer-content'
+      contentWrapper.className = `epub-text-layer-content ${bodyClasses}`.trim()
       contentWrapper.style.width = `${width}px`
       contentWrapper.style.height = `${height}px`
       contentWrapper.style.padding = `${paddingY}px ${paddingX}px`
@@ -810,7 +878,12 @@ export class EpubDocumentAdapter implements IBookDocument {
       contentWrapper.style.marginLeft = `-${colOffset}px`
       contentWrapper.style.userSelect = 'text'
       contentWrapper.style.webkitUserSelect = 'text'
-      contentWrapper.innerHTML = doc.body ? doc.body.innerHTML : ''
+
+      if (bodyInlineStyles) {
+        contentWrapper.style.cssText += ';' + bodyInlineStyles
+      }
+
+      contentWrapper.innerHTML = bodyContent
 
       viewportWrapper.appendChild(contentWrapper)
       container.appendChild(viewportWrapper)
@@ -853,7 +926,10 @@ export class EpubDocumentAdapter implements IBookDocument {
         this._sectionDocs.set(mapping.sectionIndex, doc)
       }
       const docStyles = doc && typeof doc.querySelectorAll === 'function' ? Array.from(doc.querySelectorAll('style')).map((s) => s.innerHTML).join('\n') : ''
-      const bodyContent = doc.body ? doc.body.innerHTML : ''
+      const bodyEl = doc.body || (typeof doc.querySelector === 'function' ? doc.querySelector('body') : null) || (typeof doc.getElementsByTagName === 'function' ? doc.getElementsByTagName('body')[0] : null) || (doc as any)
+      const bodyContent = bodyEl ? (bodyEl.innerHTML || bodyEl.textContent || '') : (doc.documentElement ? doc.documentElement.innerHTML : '')
+      const bodyClasses = bodyEl && typeof bodyEl.getAttribute === 'function' ? (bodyEl.getAttribute('class') || '') : ''
+      const bodyInlineStyles = bodyEl && typeof bodyEl.getAttribute === 'function' ? (bodyEl.getAttribute('style') || '') : ''
 
       const paddingX = width > 700 ? 40 : (width > 500 ? 28 : 16)
       const paddingY = height > 700 ? 36 : 24
@@ -870,8 +946,8 @@ export class EpubDocumentAdapter implements IBookDocument {
           <foreignObject width="${width}" height="${height}">
             <div xmlns="http://www.w3.org/1999/xhtml"
               style="width:${width}px;height:${height}px;overflow:hidden;background:#faf9f7;margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;">
-              <div class="epub-text-layer-content"
-                style="width:${width}px;height:${height}px;padding:${paddingY}px ${paddingX}px;box-sizing:border-box;column-width:${colWidth}px;column-gap:${colGap}px;column-fill:auto;font-family:${this._fontFamily};font-size:${this._fontSize}px;line-height:1.7;word-wrap:break-word;margin-left:-${colOffset}px;">
+              <div class="epub-text-layer-content ${bodyClasses}"
+                style="width:${width}px;height:${height}px;padding:${paddingY}px ${paddingX}px;box-sizing:border-box;column-width:${colWidth}px;column-gap:${colGap}px;column-fill:auto;font-family:${this._fontFamily};font-size:${this._fontSize}px;line-height:1.7;word-wrap:break-word;margin-left:-${colOffset}px;${bodyInlineStyles}">
                 ${bodyContent}
               </div>
             </div>
