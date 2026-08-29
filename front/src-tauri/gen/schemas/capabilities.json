@@ -1,0 +1,1 @@
+{"default":{"identifier":"default","description":"Permissões padrão para recursos locais do Aresta Desktop","local":true,"windows":["main"],"permissions":["core:default","sql:default","fs:default","dialog:default","shell:default"]}}

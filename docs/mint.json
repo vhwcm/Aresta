@@ -70,7 +70,9 @@
       "group": "Guias & Qualidade",
       "pages": [
         "guides/testing",
-        "guides/troubleshooting"
+        "guides/troubleshooting",
+        "guides/local-first-desktop-manual",
+        "guides/android-apk-guide"
       ]
     }
   ],

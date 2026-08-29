@@ -13,7 +13,13 @@
     "setup:desktop": "node scripts/setup-desktop.js",
     "desktop:setup": "node scripts/setup-desktop.js",
     "desktop:dev": "node scripts/desktop-run.js dev",
-    "desktop:build": "node scripts/desktop-run.js build"
+    "desktop:build": "node scripts/desktop-run.js build",
+    "setup:android": "node scripts/setup-android.js",
+    "android:setup": "node scripts/setup-android.js",
+    "android:dev": "node scripts/android-run.js dev",
+    "android:build": "node scripts/android-run.js build",
+    "android:apk": "node scripts/android-run.js apk",
+    "android:open": "node scripts/android-run.js open"
   },
   "devDependencies": {
     "@types/node": "^26.2.0"
