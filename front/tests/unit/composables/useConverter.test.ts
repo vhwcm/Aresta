@@ -35,4 +35,19 @@ describe('useConverter', () => {
     expect(errorMessage.value).toBe('')
     expect(selectedFile.value?.name).toBe('livro.pdf')
   })
+
+  it('gerencia reset de estado corretamente', () => {
+    const { setFile, reset, selectedFile, status, progress, errorMessage } = useConverter()
+    const pdfFile = new File(['%PDF-1.4'], 'livro.pdf', { type: 'application/pdf' })
+
+    setFile(pdfFile)
+    expect(selectedFile.value).not.toBeNull()
+
+    reset()
+    expect(selectedFile.value).toBeNull()
+    expect(status.value).toBe('idle')
+    expect(progress.value).toBe(0)
+    expect(errorMessage.value).toBe('')
+  })
 })
+

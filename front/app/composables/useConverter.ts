@@ -134,10 +134,11 @@ export const useConverter = () => {
       }
     } catch (err: any) {
       status.value = 'error'
-      if (err.message && err.message.includes('Failed to fetch')) {
-        errorMessage.value = `Não foi possível conectar ao serviço de conversão em ${CONVERTER_API_URL}. Certifique-se de que o serviço Python está em execução.`
+      const msg = err?.message || ''
+      if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('fetch failed') || err?.name === 'TypeError') {
+        errorMessage.value = `Não foi possível conectar ao serviço de conversão em ${CONVERTER_API_URL}. Certifique-se de que o backend Python (pdf2epub) está em execução.`
       } else {
-        errorMessage.value = err?.message || 'Ocorreu um erro ao converter o PDF para EPUB.'
+        errorMessage.value = msg || 'Ocorreu um erro ao converter o PDF para EPUB.'
       }
     }
   }

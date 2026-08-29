@@ -123,7 +123,7 @@
     </section>
 
     <!-- Estado de Processamento em Andamento -->
-    <section v-if="['analyzing', 'extracting', 'formatting', 'packaging'].includes(status)" class="flex flex-col items-center justify-center p-12 bg-white/[0.02] border border-divider rounded-3xl gap-6 text-center">
+    <section v-if="['uploading', 'analyzing', 'extracting', 'formatting', 'packaging'].includes(status)" class="flex flex-col items-center justify-center p-12 bg-white/[0.02] border border-divider rounded-3xl gap-6 text-center">
       <div class="relative w-20 h-20 flex items-center justify-center">
         <div class="absolute inset-0 rounded-full border-2 border-accent/20 animate-ping"></div>
         <div class="w-16 h-16 rounded-2xl bg-accent/15 border border-accent/40 flex items-center justify-center text-accent">
@@ -146,6 +146,41 @@
           <span>{{ currentStep }}</span>
           <span>{{ progress }}%</span>
         </div>
+      </div>
+    </section>
+
+    <!-- Estado de Erro / Falha no Processamento -->
+    <section v-if="status === 'error'" class="flex flex-col gap-6 bg-white/[0.02] border border-rose-500/30 p-8 md:p-12 rounded-3xl">
+      <div class="flex items-start gap-4">
+        <div class="p-3 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-400">
+          <AlertTriangleIcon class="w-8 h-8" />
+        </div>
+        <div class="flex flex-col gap-1">
+          <span class="font-technical text-xs uppercase tracking-widest text-rose-400 font-semibold">Falha na Conversão</span>
+          <h2 class="font-editorial text-2xl md:text-3xl font-light text-textPrimary">Não foi possível converter o documento</h2>
+          <p class="font-interface text-xs text-textSecondary leading-relaxed">
+            {{ errorMessage || 'Ocorreu um erro inesperado durante o processamento do arquivo PDF.' }}
+          </p>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-xl bg-white/5 border border-divider/50 text-xs font-interface text-textSecondary flex flex-col gap-2">
+        <span class="font-technical text-[10px] uppercase tracking-wider text-textPrimary font-semibold">Dicas para resolução:</span>
+        <ul class="list-disc list-inside space-y-1 text-textSecondary text-xs">
+          <li>Certifique-se de que o serviço de conversão (backend Python na porta 8000) está em execução.</li>
+          <li>Verifique se o arquivo PDF não está protegido por senha ou corrompido.</li>
+          <li>Experimente ajustar os parâmetros de conversão (desativar OCR ou simplificar detecção de capítulos).</li>
+        </ul>
+      </div>
+
+      <div class="flex items-center justify-between gap-4 pt-4 border-t border-divider">
+        <button
+          @click="reset"
+          class="px-6 py-2.5 rounded-xl bg-accent hover:bg-accent/90 text-white text-xs font-medium font-interface transition-all shadow-lg shadow-accent/20 flex items-center gap-2"
+        >
+          <RotateCcwIcon class="w-4 h-4" />
+          Tentar Novamente
+        </button>
       </div>
     </section>
 
@@ -220,7 +255,9 @@ import {
   CheckCircle2Icon,
   DownloadIcon,
   BookOpenIcon,
-  AlertCircleIcon
+  AlertCircleIcon,
+  AlertTriangleIcon,
+  RotateCcwIcon
 } from 'lucide-vue-next'
 import { useConverter } from '~/composables/useConverter'
 
