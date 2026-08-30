@@ -1100,6 +1100,11 @@ export class EpubDocumentAdapter implements IBookDocument {
     const section = this._sections[mapping.sectionIndex]
     if (!section) return canvas
 
+    const paddingX = Math.round((width > 700 ? 44 : (width > 500 ? 32 : 20)) * dpr)
+    const paddingY = Math.round((height > 700 ? 40 : 28) * dpr)
+    const contentWidth = renderW - (2 * paddingX)
+    const textColor = '#2a2521' // Tom carvão / sépia refinado
+
     try {
       let doc = this._sectionDocs.get(mapping.sectionIndex)
       if (!doc) {
@@ -1109,119 +1114,318 @@ export class EpubDocumentAdapter implements IBookDocument {
         }
         this._sectionDocs.set(mapping.sectionIndex, doc)
       }
+
       const isCover = isCoverSection(section, doc)
-      const docStyles = doc && typeof doc.querySelectorAll === 'function' ? Array.from(doc.querySelectorAll('style')).map((s) => s.innerHTML).join('\n') : ''
-      const bodyEl = doc.body || (typeof doc.querySelector === 'function' ? doc.querySelector('body') : null) || (typeof doc.getElementsByTagName === 'function' ? doc.getElementsByTagName('body')[0] : null) || (doc as any)
-      const bodyClasses = bodyEl && typeof bodyEl.getAttribute === 'function' ? (bodyEl.getAttribute('class') || '') : ''
+      const bodyEl = doc.body || (typeof doc.querySelector === 'function' ? doc.querySelector('body') : null) || (doc as any)
 
-      const paddingX = width > 700 ? 40 : (width > 500 ? 28 : 16)
-      const paddingY = height > 700 ? 36 : 24
-      const colWidth = width - (2 * paddingX)
-      const colGap = paddingX * 2
-      const colOffset = mapping.pageIndexInSection * width
+      if (isCover) {
+        // Renderizar capa
+        const imgEl = bodyEl?.querySelector ? bodyEl.querySelector('img, image') : null
+        const imgSrc = imgEl?.getAttribute('src') || imgEl?.getAttribute('xlink:href') || this._metadata.coverUrl
 
-      // Serializa nós DOM para XHTML estritamente válido
-      let serializedContent = ''
-      if (bodyEl && typeof XMLSerializer !== 'undefined') {
-        const serializer = new XMLSerializer()
-        if (bodyEl.childNodes && bodyEl.childNodes.length > 0) {
-          serializedContent = Array.from(bodyEl.childNodes)
-            .map((node) => serializer.serializeToString(node as Node))
-            .join('')
+        if (imgSrc) {
+          await new Promise<void>((resolve) => {
+            const img = new Image()
+            img.onload = () => {
+              const scale = Math.min((renderW - 40 * dpr) / img.width, (renderH - 40 * dpr) / img.height)
+              const dw = img.width * scale
+              const dh = img.height * scale
+              const dx = (renderW - dw) / 2
+              const dy = (renderH - dh) / 2
+              ctx.drawImage(img, dx, dy, dw, dh)
+              resolve()
+            }
+            img.onerror = () => resolve()
+            img.src = imgSrc
+          })
         } else {
-          serializedContent = serializer.serializeToString(bodyEl as Node)
+          // Fallback de capa tipográfica
+          ctx.fillStyle = textColor
+          ctx.font = `bold ${Math.round(26 * dpr)}px ${this._fontFamily}`
+          ctx.textAlign = 'center'
+          ctx.textBaseline = 'middle'
+          if (this._metadata.title) {
+            ctx.fillText(this._metadata.title, renderW / 2, renderH * 0.4)
+          }
+          const authorText = this._metadata.author || (this._metadata as any).creator
+          if (authorText) {
+            ctx.font = `italic ${Math.round(18 * dpr)}px ${this._fontFamily}`
+            ctx.fillText(authorText, renderW / 2, renderH * 0.5)
+          }
+          ctx.textAlign = 'left'
         }
-      } else if (bodyEl) {
-        serializedContent = bodyEl.innerHTML || bodyEl.textContent || ''
+        return canvas
       }
 
-      // Sanitização de entidades HTML e tags órfãs para conformidade com XML/SVG
-      serializedContent = (serializedContent || '')
-        .replace(/&nbsp;/g, '&#160;')
-        .replace(/&mdash;/g, '&#8212;')
-        .replace(/&ndash;/g, '&#8211;')
-        .replace(/&ldquo;/g, '&#8220;')
-        .replace(/&rdquo;/g, '&#8221;')
-        .replace(/&lsquo;/g, '&#8216;')
-        .replace(/&rsquo;/g, '&#8217;')
-        .replace(/&hellip;/g, '&#8230;')
-        .replace(/&copy;/g, '&#169;')
-        .replace(/&trade;/g, '&#8482;')
-        .replace(/&reg;/g, '&#174;')
-        .replace(/&bull;/g, '&#8226;')
-        .replace(/&prime;/g, '&#8242;')
-        .replace(/&Prime;/g, '&#8243;')
-        .replace(/&larr;/g, '&#8592;')
-        .replace(/&rarr;/g, '&#8594;')
-        .replace(/&uarr;/g, '&#8593;')
-        .replace(/&darr;/g, '&#8595;')
+      // Extração de blocos para paginação precisa em Canvas 2D
+      interface Block {
+        type: 'heading' | 'p' | 'blockquote' | 'hr' | 'img'
+        text?: string
+        level?: number
+        imgSrc?: string
+      }
 
-      const safeStyles = `/* <![CDATA[ */\n${docStyles}\n${EPUB_TYPOGRAPHY_STYLES}\n/* ]]> */`
+      const blocks: Block[] = []
+      const collect = (node: Node) => {
+        if (!node) return
+        if (node.nodeType === 3) {
+          const t = node.textContent?.replace(/\s+/g, ' ').trim()
+          if (t) blocks.push({ type: 'p', text: t })
+          return
+        }
+        if (node.nodeType !== 1) return
+        const el = node as HTMLElement
+        const tag = el.tagName ? el.tagName.toLowerCase() : ''
+        if (['style', 'script', 'head'].includes(tag)) return
 
-      const svgContent = `
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${renderW}" height="${renderH}">
-          <style type="text/css">
-            ${safeStyles}
-          </style>
-          <foreignObject width="${width}" height="${height}">
-            <div xmlns="http://www.w3.org/1999/xhtml"
-              style="width:${width}px;height:${height}px;overflow:hidden;background:transparent;margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;display:flex;align-items:center;justify-content:center;">
-              <div class="epub-text-layer-content ${isCover ? 'epub-cover-page' : ''} ${bodyClasses}"
-                style="width:${width}px;height:${height}px;box-sizing:border-box;${isCover ? 'display:flex;align-items:center;justify-content:center;padding:12px;margin:0;' : `padding:${paddingY}px ${paddingX}px;column-width:${colWidth}px;column-gap:${colGap}px;column-fill:auto;margin-left:-${colOffset}px;`}font-family:${this._fontFamily};font-size:${this._fontSize}px;line-height:1.7;word-wrap:break-word;">
-                ${serializedContent}
-              </div>
-            </div>
-          </foreignObject>
-        </svg>
-      `
-      const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' })
-      const url = URL.createObjectURL(blob)
-      await new Promise<void>((resolve, reject) => {
-        const img = new Image()
-        img.onload = () => {
-          ctx.drawImage(img, 0, 0, renderW, renderH)
-          URL.revokeObjectURL(url)
-          resolve()
+        if (tag === 'img' || tag === 'image') {
+          const src = el.getAttribute('src') || el.getAttribute('xlink:href') || el.getAttribute('href')
+          if (src) blocks.push({ type: 'img', imgSrc: src })
+          return
         }
-        img.onerror = (e) => {
-          URL.revokeObjectURL(url)
-          reject(e)
+        if (tag === 'hr') {
+          blocks.push({ type: 'hr' })
+          return
         }
-        img.src = url
-      })
+        if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tag)) {
+          const t = el.textContent?.replace(/\s+/g, ' ').trim()
+          if (t) blocks.push({ type: 'heading', text: t, level: parseInt(tag.slice(1), 10) })
+          return
+        }
+        if (tag === 'blockquote') {
+          const t = el.textContent?.replace(/\s+/g, ' ').trim()
+          if (t) blocks.push({ type: 'blockquote', text: t })
+          return
+        }
+        if (['p', 'li', 'dt', 'dd'].includes(tag)) {
+          const t = el.textContent?.replace(/\s+/g, ' ').trim()
+          if (t) blocks.push({ type: 'p', text: t })
+          return
+        }
+        if (el.childNodes && el.childNodes.length > 0) {
+          for (let i = 0; i < el.childNodes.length; i++) {
+            const child = el.childNodes[i]
+            if (child) collect(child)
+          }
+        } else {
+          const t = el.textContent?.replace(/\s+/g, ' ').trim()
+          if (t) blocks.push({ type: 'p', text: t })
+        }
+      }
+
+      if (bodyEl && bodyEl.childNodes) {
+        for (let i = 0; i < bodyEl.childNodes.length; i++) {
+          const child = bodyEl.childNodes[i]
+          if (child) collect(child)
+        }
+      }
+
+      const wrap = (text: string, fontStr: string, maxW: number): string[] => {
+        ctx.font = fontStr
+        const words = text.split(' ')
+        const res: string[] = []
+        let current = ''
+        for (const w of words) {
+          if (!w) continue
+          const candidate = current ? `${current} ${w}` : w
+          if (ctx.measureText(candidate).width > maxW && current) {
+            res.push(current)
+            current = w
+          } else {
+            current = candidate
+          }
+        }
+        if (current) res.push(current)
+        return res
+      }
+
+      interface PageItem {
+        type: 'text' | 'hr'
+        font?: string
+        color?: string
+        text?: string
+        x: number
+        y: number
+      }
+
+      const pages: Array<{ items: PageItem[] }> = [{ items: [] }]
+      let curPageIdx = 0
+      let curY = paddingY
+      const pageBottom = renderH - paddingY
+
+      const ensurePage = (idx: number) => {
+        if (!pages[idx]) {
+          pages[idx] = { items: [] }
+        }
+        return pages[idx]
+      }
+
+      for (const b of blocks) {
+        if (b.type === 'heading') {
+          const level = b.level || 1
+          const sizeMul = level === 1 ? 1.6 : (level === 2 ? 1.35 : 1.18)
+          const fontSize = Math.round(this._fontSize * sizeMul * dpr)
+          const font = `bold ${fontSize}px ${this._fontFamily}`
+          const lineHeight = Math.round(fontSize * 1.35)
+          const marginTop = Math.round(fontSize * 0.7)
+          const marginBottom = Math.round(fontSize * 0.4)
+
+          const lines = wrap(b.text || '', font, contentWidth)
+          const totalHeadingH = marginTop + (lines.length * lineHeight) + marginBottom
+
+          if (curY + totalHeadingH > pageBottom && curY > paddingY) {
+            curPageIdx++
+            ensurePage(curPageIdx)
+            curY = paddingY
+          }
+
+          curY += marginTop
+          for (const line of lines) {
+            if (curY + lineHeight > pageBottom) {
+              curPageIdx++
+              ensurePage(curPageIdx)
+              curY = paddingY
+            }
+            ensurePage(curPageIdx).items.push({
+              type: 'text',
+              font,
+              color: textColor,
+              text: line,
+              x: paddingX,
+              y: curY,
+            })
+            curY += lineHeight
+          }
+          curY += marginBottom
+        } else if (b.type === 'p') {
+          const fontSize = Math.round(this._fontSize * dpr)
+          const font = `normal ${fontSize}px ${this._fontFamily}`
+          const lineHeight = Math.round(fontSize * 1.7)
+          const marginBottom = Math.round(fontSize * 0.75)
+
+          const lines = wrap(b.text || '', font, contentWidth)
+          for (const line of lines) {
+            if (curY + lineHeight > pageBottom) {
+              curPageIdx++
+              ensurePage(curPageIdx)
+              curY = paddingY
+            }
+            ensurePage(curPageIdx).items.push({
+              type: 'text',
+              font,
+              color: textColor,
+              text: line,
+              x: paddingX,
+              y: curY,
+            })
+            curY += lineHeight
+          }
+          curY += marginBottom
+        } else if (b.type === 'blockquote') {
+          const fontSize = Math.round(this._fontSize * 0.95 * dpr)
+          const font = `italic ${fontSize}px ${this._fontFamily}`
+          const lineHeight = Math.round(fontSize * 1.6)
+          const marginBottom = Math.round(fontSize * 0.75)
+          const indent = Math.round(20 * dpr)
+
+          const lines = wrap(b.text || '', font, contentWidth - indent)
+          for (const line of lines) {
+            if (curY + lineHeight > pageBottom) {
+              curPageIdx++
+              ensurePage(curPageIdx)
+              curY = paddingY
+            }
+            ensurePage(curPageIdx).items.push({
+              type: 'text',
+              font,
+              color: textColor,
+              text: line,
+              x: paddingX + indent,
+              y: curY,
+            })
+            curY += lineHeight
+          }
+          curY += marginBottom
+        } else if (b.type === 'hr') {
+          if (curY + 24 * dpr > pageBottom) {
+            curPageIdx++
+            ensurePage(curPageIdx)
+            curY = paddingY
+          }
+          ensurePage(curPageIdx).items.push({
+            type: 'hr',
+            x: paddingX,
+            y: curY + 12 * dpr,
+          })
+          curY += 24 * dpr
+        }
+      }
+
+      const targetPageIndex = Math.max(0, Math.min(mapping.pageIndexInSection, pages.length - 1))
+      const targetPage = pages[targetPageIndex]
+
+      if (targetPage && targetPage.items.length > 0) {
+        ctx.textBaseline = 'top'
+        for (const item of targetPage.items) {
+          if (item.type === 'text' && item.text) {
+            ctx.font = item.font || `normal ${Math.round(this._fontSize * dpr)}px ${this._fontFamily}`
+            ctx.fillStyle = item.color || textColor
+            ctx.fillText(item.text, item.x, item.y)
+          } else if (item.type === 'hr') {
+            ctx.strokeStyle = '#c8bba8'
+            ctx.lineWidth = 1 * dpr
+            ctx.beginPath()
+            ctx.moveTo(renderW * 0.25, item.y)
+            ctx.lineTo(renderW * 0.75, item.y)
+            ctx.stroke()
+          }
+        }
+      } else {
+        // Fallback de texto puro se a extração de blocos não gerar itens
+        const text = await this.getTextContent(pageNumber)
+        if (text) {
+          ctx.fillStyle = textColor
+          ctx.font = `normal ${Math.round(this._fontSize * dpr)}px ${this._fontFamily}`
+          ctx.textBaseline = 'top'
+          const lines = wrap(text, ctx.font, contentWidth)
+          let y = paddingY
+          const lineHeight = Math.round(this._fontSize * 1.7 * dpr)
+          for (const line of lines) {
+            if (y + lineHeight > pageBottom) break
+            ctx.fillText(line, paddingX, y)
+            y += lineHeight
+          }
+        }
+      }
     } catch (err) {
-      logWarn('[EpubAdapter] render error:', err)
-      // Fallback seguro: se a rasterização de SVG falhar, desenha o texto da página diretamente no canvas
+      logWarn('[EpubAdapter] canvas render fallback:', err)
       try {
         const text = await this.getTextContent(pageNumber)
         if (text) {
-          ctx.fillStyle = '#2a2521'
-          ctx.font = `${this._fontSize * dpr}px ${this._fontFamily}`
+          ctx.fillStyle = textColor
+          ctx.font = `normal ${Math.round(this._fontSize * dpr)}px ${this._fontFamily}`
           ctx.textBaseline = 'top'
-          const padding = 24 * dpr
-          const maxW = renderW - 2 * padding
-          const lineHeight = this._fontSize * 1.7 * dpr
           const words = text.split(' ')
           let line = ''
-          let y = padding
+          let y = paddingY
+          const lineHeight = Math.round(this._fontSize * 1.7 * dpr)
           for (const word of words) {
-            const testLine = line + (line ? ' ' : '') + word
-            const metrics = ctx.measureText(testLine)
-            if (metrics.width > maxW && line) {
-              ctx.fillText(line, padding, y)
+            const testLine = line ? `${line} ${word}` : word
+            if (ctx.measureText(testLine).width > contentWidth && line) {
+              ctx.fillText(line, paddingX, y)
               line = word
               y += lineHeight
-              if (y > renderH - padding) break
+              if (y > renderH - paddingY) break
             } else {
               line = testLine
             }
           }
-          if (line && y <= renderH - padding) {
-            ctx.fillText(line, padding, y)
+          if (line && y <= renderH - paddingY) {
+            ctx.fillText(line, paddingX, y)
           }
         }
       } catch {
-        // Fallback silencioso
+        // Silencioso
       }
     }
 

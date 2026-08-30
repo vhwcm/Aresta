@@ -367,10 +367,15 @@ const webglCanvasStyle = computed(() => {
   const visible = is3DActive.value
 
   if (layout.isTwoPage) {
-    const leftEdge = layout.leftPage?.left ?? 0
-    const topEdge = layout.leftPage?.top ?? 0
-    const totalW = (layout.leftPage?.width ?? 400) + (layout.rightPage?.width ?? 400)
-    const totalH = layout.leftPage?.height ?? 600
+    const isCover = (store.currentPage === 1)
+    const pageW = layout.rightPage?.width ?? layout.leftPage?.width ?? 400
+    const pageH = layout.rightPage?.height ?? layout.leftPage?.height ?? 600
+    const leftEdge = isCover
+      ? ((layout.rightPage?.left ?? 0) - pageW)
+      : (layout.leftPage?.left ?? 0)
+    const topEdge = layout.leftPage?.top ?? layout.rightPage?.top ?? 0
+    const totalW = pageW * 2
+    const totalH = pageH
 
     return {
       display: 'block',
