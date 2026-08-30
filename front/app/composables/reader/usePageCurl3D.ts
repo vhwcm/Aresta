@@ -224,7 +224,16 @@ export function usePageCurl3D(canvasHostRef: Ref<HTMLCanvasElement | null>) {
     renderer.setSize(totalCanvasWidth, totalCanvasHeight, false)
     renderer.toneMapping = THREE.NoToneMapping
 
-    scene = new THREE.Scene()
+    // Reutiliza a cena existente em vez de criar uma nova a cada virada (P2: evita vazamento de memória)
+    if (!scene) {
+      scene = new THREE.Scene()
+    }
+
+    // Remove a mesh anterior da cena antes de recriar (P2: evita acúmulo de objetos)
+    if (mesh) {
+      scene.remove(mesh)
+      mesh = null
+    }
 
     if (isTwoPageMode) {
       camera = new THREE.OrthographicCamera(
