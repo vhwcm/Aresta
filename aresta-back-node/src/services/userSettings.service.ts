@@ -39,16 +39,26 @@ export class UserSettingsService {
   }
 
   async updateSettings(userId: number, input: UpdateUserSettingsInput) {
-    const pageAnimationEnabled = input.pageAnimationEnabled ?? true;
-    const pageCreaseEnabled = input.pageCreaseEnabled ?? true;
-    const language = input.language ?? 'pt-BR';
-    const nativeLanguage = input.nativeLanguage ?? 'pt-BR';
-    const targetTranslationLanguage = input.targetTranslationLanguage ?? 'en';
-    const epubFontSize = input.epubFontSize ?? 18;
-    const epubFontFamily = input.epubFontFamily ?? 'newsreader';
-    const themeMode = input.themeMode ?? 'dark';
-    const desktopHomeGraphOpen = input.desktopHomeGraphOpen ?? false;
-    const desktopReaderGraphOpen = input.desktopReaderGraphOpen ?? false;
+    const current = await prisma.userSettings.findUnique({
+      where: { user_id: userId },
+    });
+
+    const pageAnimationEnabled = input.pageAnimationEnabled ?? current?.page_animation_enabled ?? true;
+    let pageCreaseEnabled = input.pageCreaseEnabled ?? (current as any)?.page_crease_enabled ?? true;
+
+    // Se a animação 3D de páginas estiver desligada, os efeitos de livro não podem estar ativos
+    if (pageAnimationEnabled === false) {
+      pageCreaseEnabled = false;
+    }
+
+    const language = input.language ?? current?.language ?? 'pt-BR';
+    const nativeLanguage = input.nativeLanguage ?? (current as any)?.native_language ?? 'pt-BR';
+    const targetTranslationLanguage = input.targetTranslationLanguage ?? (current as any)?.target_translation_language ?? 'en';
+    const epubFontSize = input.epubFontSize ?? (current as any)?.epub_font_size ?? 18;
+    const epubFontFamily = input.epubFontFamily ?? (current as any)?.epub_font_family ?? 'newsreader';
+    const themeMode = input.themeMode ?? (current as any)?.theme_mode ?? 'dark';
+    const desktopHomeGraphOpen = input.desktopHomeGraphOpen ?? (current as any)?.desktop_home_graph_open ?? false;
+    const desktopReaderGraphOpen = input.desktopReaderGraphOpen ?? (current as any)?.desktop_reader_graph_open ?? false;
 
     const updated = await prisma.userSettings.upsert({
       where: { user_id: userId },
@@ -82,7 +92,7 @@ export class UserSettingsService {
     return {
       userId: updated.user_id,
       pageAnimationEnabled: updated.page_animation_enabled,
-      pageCreaseEnabled: (updated as any).page_crease_enabled ?? true,
+      pageCreaseEnabled: (updated as any).page_crease_enabled ?? false,
       language: updated.language,
       nativeLanguage: (updated as any).native_language ?? 'pt-BR',
       targetTranslationLanguage: (updated as any).target_translation_language ?? 'en',

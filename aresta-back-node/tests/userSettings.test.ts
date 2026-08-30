@@ -101,4 +101,41 @@ describe('UserSettings Endpoints', () => {
     expect(getRes.body.desktopReaderGraphOpen).toBe(false);
     expect(getRes.body.epubFontFamily).toBe('merriweather');
   });
+
+  it('PUT /api/user-settings deve retornar 400 se pageAnimationEnabled for false e pageCreaseEnabled for true', async () => {
+    const res = await request(app)
+      .put('/api/user-settings')
+      .set('Authorization', `Bearer ${userToken}`)
+      .send({
+        pageAnimationEnabled: false,
+        pageCreaseEnabled: true,
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toContain('efeitos de livro');
+  });
+
+  it('PUT /api/user-settings deve normalizar pageCreaseEnabled para false se pageAnimationEnabled for desativado', async () => {
+    // Primeiro ativa animação e vinco
+    await request(app)
+      .put('/api/user-settings')
+      .set('Authorization', `Bearer ${userToken}`)
+      .send({
+        pageAnimationEnabled: true,
+        pageCreaseEnabled: true,
+      });
+
+    // Depois desativa animação sem explicitar crease
+    const res = await request(app)
+      .put('/api/user-settings')
+      .set('Authorization', `Bearer ${userToken}`)
+      .send({
+        pageAnimationEnabled: false,
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.pageAnimationEnabled).toBe(false);
+    expect(res.body.pageCreaseEnabled).toBe(false);
+  });
 });
+
