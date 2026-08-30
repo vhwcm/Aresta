@@ -123,15 +123,9 @@ const FRAGMENT_SHADER = `
     vec3 lightDir = normalize(vec3(0.15, 0.25, 0.95));
     vec3 norm = normalize(vNormalVec);
 
-    if (gl_FrontFacing || vFacing > 0.0) {
+    if (vFacing > 0.0) {
       vec4 frontTex = texture2D(uFrontTexture, vUv);
-      vec2 backUv = vec2(1.0 - vUv.x, vUv.y);
-      vec4 backTex = texture2D(uBackTexture, backUv);
-
       vec3 paperBase = frontTex.rgb;
-      if (backTex.a > 0.05) {
-        paperBase = mix(paperBase, backTex.rgb, 0.02);
-      }
 
       // Iluminação e sombreamento 3D apenas na curvatura
       float diff = max(0.0, dot(norm, lightDir));
@@ -144,12 +138,7 @@ const FRAGMENT_SHADER = `
     } else {
       vec2 backUv = vec2(1.0 - vUv.x, vUv.y);
       vec4 backTex = texture2D(uBackTexture, backUv);
-      vec4 frontTex = texture2D(uFrontTexture, vUv);
-
       vec3 paperBase = backTex.rgb;
-      if (frontTex.a > 0.05) {
-        paperBase = mix(paperBase, frontTex.rgb, 0.02);
-      }
 
       vec3 revNorm = -norm;
       float diff = max(0.0, dot(revNorm, lightDir));

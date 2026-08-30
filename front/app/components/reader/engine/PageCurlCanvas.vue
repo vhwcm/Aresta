@@ -574,7 +574,7 @@ async function prepare3DTextures(direction: PageTurnDirection, gripY = 0.5) {
   const backCanvas = getOrCreateOffscreenCanvas('back')
 
   if (layout.isTwoPage) {
-    const curLeft = curPage % 2 !== 0 ? curPage : curPage - 1
+    const curLeft = curPage % 2 !== 0 ? curPage : Math.max(1, curPage - 1)
     const curRight = curLeft + 1 <= total ? curLeft + 1 : 0
 
     const pageW = layout.rightPage?.width ?? layout.leftPage?.width ?? 400
@@ -590,7 +590,6 @@ async function prepare3DTextures(direction: PageTurnDirection, gripY = 0.5) {
         frontCanvas.height = baseRightCanvasRef.value.height
         const fCtx = frontCanvas.getContext('2d')
         fCtx?.drawImage(baseRightCanvasRef.value, 0, 0)
-        if (fCtx) applyThemeToCanvas(fCtx, frontCanvas.width, frontCanvas.height)
       } else if (curRight > 0) {
         await renderPageToCanvas(curRight, frontCanvas, pageW, pageH)
       }
@@ -632,7 +631,6 @@ async function prepare3DTextures(direction: PageTurnDirection, gripY = 0.5) {
         frontCanvas.height = baseLeftCanvasRef.value.height
         const fCtx = frontCanvas.getContext('2d')
         fCtx?.drawImage(baseLeftCanvasRef.value, 0, 0)
-        if (fCtx) applyThemeToCanvas(fCtx, frontCanvas.width, frontCanvas.height)
       } else if (curLeft > 0) {
         await renderPageToCanvas(curLeft, frontCanvas, pageW, pageH)
       }
@@ -673,7 +671,6 @@ async function prepare3DTextures(direction: PageTurnDirection, gripY = 0.5) {
       frontCanvas.height = baseSingleCanvasRef.value.height
       const fCtx = frontCanvas.getContext('2d')
       fCtx?.drawImage(baseSingleCanvasRef.value, 0, 0)
-      if (fCtx) applyThemeToCanvas(fCtx, frontCanvas.width, frontCanvas.height)
     } else {
       await renderPageToCanvas(curPage, frontCanvas, pageW, pageH)
     }
