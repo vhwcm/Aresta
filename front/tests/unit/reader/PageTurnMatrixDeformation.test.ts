@@ -74,27 +74,32 @@ function evaluate3DPagePoint(
       deformedPos = { x, y, z: 0 }
       computedNormal = { x: 0, y: 0, z: 1 }
       facing = 1.0
-    } else if (dist < rollCircumference && dynamicRadius > 1.0) {
-      const t = Math.max(0, Math.min(1, dist / rollCircumference))
-      deformedPos = {
-        x: 2.0 * foldX - x - y * Math.sin(angle),
-        y,
-        z: dynamicRadius * Math.sin(t * PI),
-      }
-      computedNormal = {
-        x: Math.sin(t * PI),
-        y: 0,
-        z: Math.cos(t * PI),
-      }
-      facing = t <= 0.5 ? 1.0 : -1.0
     } else {
-      deformedPos = {
-        x: 2.0 * foldX - x - y * Math.sin(angle),
-        y,
-        z: 0.0,
+      const rotX = 2.0 * foldX - x - y * Math.sin(angle)
+      const rotY = y - (x - foldX) * Math.sin(2.0 * angle)
+
+      if (dist < rollCircumference && dynamicRadius > 1.0) {
+        const t = Math.max(0, Math.min(1, dist / rollCircumference))
+        deformedPos = {
+          x: rotX,
+          y: rotY,
+          z: dynamicRadius * Math.sin(t * PI),
+        }
+        computedNormal = {
+          x: Math.sin(t * PI),
+          y: 0,
+          z: Math.cos(t * PI),
+        }
+        facing = t <= 0.5 ? 1.0 : -1.0
+      } else {
+        deformedPos = {
+          x: rotX,
+          y: rotY,
+          z: 0.0,
+        }
+        computedNormal = { x: 0, y: 0, z: -1 }
+        facing = -1.0
       }
-      computedNormal = { x: 0, y: 0, z: -1 }
-      facing = -1.0
     }
   } else {
     // PREVIOUS: Folha esquerda [-W, 0] dobra em direção à direita [0, W]
@@ -105,27 +110,32 @@ function evaluate3DPagePoint(
       deformedPos = { x, y, z: 0 }
       computedNormal = { x: 0, y: 0, z: 1 }
       facing = 1.0
-    } else if (dist < rollCircumference && dynamicRadius > 1.0) {
-      const t = Math.max(0, Math.min(1, dist / rollCircumference))
-      deformedPos = {
-        x: 2.0 * foldX - x + y * Math.sin(angle),
-        y,
-        z: dynamicRadius * Math.sin(t * PI),
-      }
-      computedNormal = {
-        x: -Math.sin(t * PI),
-        y: 0,
-        z: Math.cos(t * PI),
-      }
-      facing = t <= 0.5 ? 1.0 : -1.0
     } else {
-      deformedPos = {
-        x: 2.0 * foldX - x + y * Math.sin(angle),
-        y,
-        z: 0.0,
+      const rotX = 2.0 * foldX - x + y * Math.sin(angle)
+      const rotY = y - (foldX - x) * Math.sin(2.0 * angle)
+
+      if (dist < rollCircumference && dynamicRadius > 1.0) {
+        const t = Math.max(0, Math.min(1, dist / rollCircumference))
+        deformedPos = {
+          x: rotX,
+          y: rotY,
+          z: dynamicRadius * Math.sin(t * PI),
+        }
+        computedNormal = {
+          x: -Math.sin(t * PI),
+          y: 0,
+          z: Math.cos(t * PI),
+        }
+        facing = t <= 0.5 ? 1.0 : -1.0
+      } else {
+        deformedPos = {
+          x: rotX,
+          y: rotY,
+          z: 0.0,
+        }
+        computedNormal = { x: 0, y: 0, z: -1 }
+        facing = -1.0
       }
-      computedNormal = { x: 0, y: 0, z: -1 }
-      facing = -1.0
     }
   }
 

@@ -61,19 +61,26 @@ const VERTEX_SHADER = `
         deformedPos.z = 0.0;
         computedNormal = vec3(0.0, 0.0, 1.0);
         facing = 1.0;
-      } else if (dist < rollCircumference && dynamicRadius > 1.0) {
-        // Na curva do arco 3D: progressão linear 1:1 no eixo X (sem zoom) e elevação senoidal no eixo Z
-        float t = clamp(dist / rollCircumference, 0.0, 1.0);
-        deformedPos.x = 2.0 * foldX - pos.x - pos.y * sin(angle);
-        deformedPos.z = dynamicRadius * sin(t * PI);
-        computedNormal = normalize(vec3(sin(t * PI), 0.0, cos(t * PI)));
-        facing = t <= 0.5 ? 1.0 : -1.0;
       } else {
-        // Virada sobre a página esquerda (vai 100% até -W)
-        deformedPos.x = 2.0 * foldX - pos.x - pos.y * sin(angle);
-        deformedPos.z = 0.0;
-        computedNormal = vec3(0.0, 0.0, -1.0);
-        facing = -1.0;
+        float rotX = 2.0 * foldX - pos.x - pos.y * sin(angle);
+        float rotY = pos.y - (pos.x - foldX) * sin(2.0 * angle);
+
+        if (dist < rollCircumference && dynamicRadius > 1.0) {
+          // Na curva do arco 3D: progressão linear 1:1 no eixo X e elevação senoidal no eixo Z
+          float t = clamp(dist / rollCircumference, 0.0, 1.0);
+          deformedPos.x = rotX;
+          deformedPos.y = rotY;
+          deformedPos.z = dynamicRadius * sin(t * PI);
+          computedNormal = normalize(vec3(sin(t * PI), 0.0, cos(t * PI)));
+          facing = t <= 0.5 ? 1.0 : -1.0;
+        } else {
+          // Virada sobre a página esquerda (vai 100% até -W)
+          deformedPos.x = rotX;
+          deformedPos.y = rotY;
+          deformedPos.z = 0.0;
+          computedNormal = vec3(0.0, 0.0, -1.0);
+          facing = -1.0;
+        }
       }
     } else {
       // PREVIOUS: Folha esquerda [-W, 0] dobra em direção à direita [0, W] ao redor da lombada (x = 0)
@@ -85,19 +92,26 @@ const VERTEX_SHADER = `
         deformedPos.z = 0.0;
         computedNormal = vec3(0.0, 0.0, 1.0);
         facing = 1.0;
-      } else if (dist < rollCircumference && dynamicRadius > 1.0) {
-        // Na curva do arco 3D: progressão linear 1:1 no eixo X (sem zoom) e elevação senoidal no eixo Z
-        float t = clamp(dist / rollCircumference, 0.0, 1.0);
-        deformedPos.x = 2.0 * foldX - pos.x + pos.y * sin(angle);
-        deformedPos.z = dynamicRadius * sin(t * PI);
-        computedNormal = normalize(vec3(-sin(t * PI), 0.0, cos(t * PI)));
-        facing = t <= 0.5 ? 1.0 : -1.0;
       } else {
-        // Virada sobre a página direita (vai 100% até +W)
-        deformedPos.x = 2.0 * foldX - pos.x + pos.y * sin(angle);
-        deformedPos.z = 0.0;
-        computedNormal = vec3(0.0, 0.0, -1.0);
-        facing = -1.0;
+        float rotX = 2.0 * foldX - pos.x + pos.y * sin(angle);
+        float rotY = pos.y - (foldX - pos.x) * sin(2.0 * angle);
+
+        if (dist < rollCircumference && dynamicRadius > 1.0) {
+          // Na curva do arco 3D: progressão linear 1:1 no eixo X e elevação senoidal no eixo Z
+          float t = clamp(dist / rollCircumference, 0.0, 1.0);
+          deformedPos.x = rotX;
+          deformedPos.y = rotY;
+          deformedPos.z = dynamicRadius * sin(t * PI);
+          computedNormal = normalize(vec3(-sin(t * PI), 0.0, cos(t * PI)));
+          facing = t <= 0.5 ? 1.0 : -1.0;
+        } else {
+          // Virada sobre a página direita (vai 100% até +W)
+          deformedPos.x = rotX;
+          deformedPos.y = rotY;
+          deformedPos.z = 0.0;
+          computedNormal = vec3(0.0, 0.0, -1.0);
+          facing = -1.0;
+        }
       }
     }
 

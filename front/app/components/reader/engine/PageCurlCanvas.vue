@@ -562,7 +562,7 @@ async function renderCurrentSpread(pageOverride?: number) {
 /**
  * Prepara as texturas e o setup Three.js de forma instantânea
  */
-async function prepare3DTextures(direction: PageTurnDirection, gripY = 0.5) {
+function prepare3DTextures(direction: PageTurnDirection, gripY = 0.5) {
   if (!store.document) return
   currentDirection.value = direction
 
@@ -591,15 +591,10 @@ async function prepare3DTextures(direction: PageTurnDirection, gripY = 0.5) {
         const fCtx = frontCanvas.getContext('2d')
         fCtx?.drawImage(baseRightCanvasRef.value, 0, 0)
       } else if (curRight > 0) {
-        await renderPageToCanvas(curRight, frontCanvas, pageW, pageH)
+        void renderPageToCanvas(curRight, frontCanvas, pageW, pageH)
       }
 
-      // Verso da folha girando: Próxima Página Esquerda (nextLeft)
-      if (nextLeft > 0) {
-        await renderPageToCanvas(nextLeft, backCanvas, pageW, pageH)
-      }
-
-      // Inicializa a cena 3D e texturas
+      // Inicializa a cena 3D e texturas instantaneamente
       pageCurl3D.setupScene({
         isTwoPage: true,
         pageWidth: pageW,
@@ -616,7 +611,15 @@ async function prepare3DTextures(direction: PageTurnDirection, gripY = 0.5) {
       })
       pageCurl3D.render()
 
-      // Base Direita Revelada: Renderiza a próxima página direita por baixo
+      // Verso da folha girando: Próxima Página Esquerda (nextLeft) em background
+      if (nextLeft > 0) {
+        void renderPageToCanvas(nextLeft, backCanvas, pageW, pageH).then(() => {
+          pageCurl3D.setTextures(frontCanvas, backCanvas)
+          pageCurl3D.render()
+        })
+      }
+
+      // Base Direita Revelada: Renderiza a próxima página direita por baixo em background
       if (nextRight > 0 && layout.rightPage) {
         void renderPageToElement(nextRight, baseRightCanvasRef.value, baseRightTextLayerRef.value, pageW, pageH)
       }
@@ -632,15 +635,10 @@ async function prepare3DTextures(direction: PageTurnDirection, gripY = 0.5) {
         const fCtx = frontCanvas.getContext('2d')
         fCtx?.drawImage(baseLeftCanvasRef.value, 0, 0)
       } else if (curLeft > 0) {
-        await renderPageToCanvas(curLeft, frontCanvas, pageW, pageH)
+        void renderPageToCanvas(curLeft, frontCanvas, pageW, pageH)
       }
 
-      // Verso da folha girando: Página Direita Anterior (prevRight)
-      if (prevRight > 0) {
-        await renderPageToCanvas(prevRight, backCanvas, pageW, pageH)
-      }
-
-      // Inicializa a cena 3D e texturas
+      // Inicializa a cena 3D e texturas instantaneamente
       pageCurl3D.setupScene({
         isTwoPage: true,
         pageWidth: pageW,
@@ -657,7 +655,15 @@ async function prepare3DTextures(direction: PageTurnDirection, gripY = 0.5) {
       })
       pageCurl3D.render()
 
-      // Base Esquerda Revelada: Renderiza a página esquerda anterior por baixo
+      // Verso da folha girando: Página Direita Anterior (prevRight) em background
+      if (prevRight > 0) {
+        void renderPageToCanvas(prevRight, backCanvas, pageW, pageH).then(() => {
+          pageCurl3D.setTextures(frontCanvas, backCanvas)
+          pageCurl3D.render()
+        })
+      }
+
+      // Base Esquerda Revelada: Renderiza a página esquerda anterior por baixo em background
       if (prevLeft > 0 && layout.leftPage) {
         void renderPageToElement(prevLeft, baseLeftCanvasRef.value, baseLeftTextLayerRef.value, pageW, pageH)
       }
@@ -672,21 +678,7 @@ async function prepare3DTextures(direction: PageTurnDirection, gripY = 0.5) {
       const fCtx = frontCanvas.getContext('2d')
       fCtx?.drawImage(baseSingleCanvasRef.value, 0, 0)
     } else {
-      await renderPageToCanvas(curPage, frontCanvas, pageW, pageH)
-    }
-
-    if (direction === 'next') {
-      const nextPage = Math.min(total, curPage + 1)
-      if (nextPage > 0) {
-        await renderPageToCanvas(nextPage, backCanvas, pageW, pageH)
-        void renderPageToElement(nextPage, baseSingleCanvasRef.value, baseSingleTextLayerRef.value, pageW, pageH)
-      }
-    } else {
-      const prevPage = Math.max(1, curPage - 1)
-      if (prevPage > 0) {
-        await renderPageToCanvas(prevPage, backCanvas, pageW, pageH)
-        void renderPageToElement(prevPage, baseSingleCanvasRef.value, baseSingleTextLayerRef.value, pageW, pageH)
-      }
+      void renderPageToCanvas(curPage, frontCanvas, pageW, pageH)
     }
 
     pageCurl3D.setupScene({
@@ -704,6 +696,26 @@ async function prepare3DTextures(direction: PageTurnDirection, gripY = 0.5) {
       theme: activeTheme.value as any,
     })
     pageCurl3D.render()
+
+    if (direction === 'next') {
+      const nextPage = Math.min(total, curPage + 1)
+      if (nextPage > 0) {
+        void renderPageToCanvas(nextPage, backCanvas, pageW, pageH).then(() => {
+          pageCurl3D.setTextures(frontCanvas, backCanvas)
+          pageCurl3D.render()
+        })
+        void renderPageToElement(nextPage, baseSingleCanvasRef.value, baseSingleTextLayerRef.value, pageW, pageH)
+      }
+    } else {
+      const prevPage = Math.max(1, curPage - 1)
+      if (prevPage > 0) {
+        void renderPageToCanvas(prevPage, backCanvas, pageW, pageH).then(() => {
+          pageCurl3D.setTextures(frontCanvas, backCanvas)
+          pageCurl3D.render()
+        })
+        void renderPageToElement(prevPage, baseSingleCanvasRef.value, baseSingleTextLayerRef.value, pageW, pageH)
+      }
+    }
   }
 }
 
@@ -813,21 +825,23 @@ function onPointerMove(event: PointerEvent) {
 
     stageRef.value?.setPointerCapture(event.pointerId)
 
-    // P4: Inicia animação 3D de forma assíncrona sem bloquear o gesto
-    void activateDrag(direction, startPoint, relY, pageWidth, pageHeight, pt)
+    // Ativação síncrona e instantânea do 3D
+    activateDrag(direction, startPoint, relY, pageWidth, pageHeight, pt)
     return
   }
 
   // Arraste já ativo — atualiza a física normalmente
-  event.preventDefault()
-  physics.updateDrag(pointFrom(event))
+  if (physics.isDragging.value) {
+    event.preventDefault()
+    physics.updateDrag(pointFrom(event))
+  }
 }
 
 /**
  * P1/P4: Ativa o arraste 3D após o limiar de deslocamento ser atingido.
- * Prepara as texturas e inicia a física de arraste.
+ * Prepara as texturas e inicia a física de arraste instantaneamente.
  */
-async function activateDrag(
+function activateDrag(
   direction: PageTurnDirection,
   startPoint: DragPoint,
   relY: number,
@@ -835,11 +849,12 @@ async function activateDrag(
   pageHeight: number,
   currentPoint: DragPoint,
 ) {
-  await prepare3DTextures(direction, relY)
+  prepare3DTextures(direction, relY)
   is3DActive.value = true
   emit('transition-state', true)
 
-  physics.startDrag(startPoint, direction, pageWidth, pageHeight, relY)
+  const travelWidth = pageLayout.value.isTwoPage ? pageWidth * 2 : pageWidth
+  physics.startDrag(startPoint, direction, travelWidth, pageHeight, relY)
   physics.updateDrag(currentPoint)
 }
 
@@ -910,12 +925,13 @@ async function requestTurn(direction: PageTurnDirection) {
 
   const w = targetPageRect?.width || 400
   const h = targetPageRect?.height || 600
+  const travelWidth = layout.isTwoPage ? w * 2 : w
 
-  await prepare3DTextures(direction, 0.5)
+  prepare3DTextures(direction, 0.5)
   is3DActive.value = true
   emit('transition-state', true)
 
-  physics.triggerTurn(direction, w, h, 0.5)
+  physics.triggerTurn(direction, travelWidth, h, 0.5)
 }
 
 onMounted(() => {
