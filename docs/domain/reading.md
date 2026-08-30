@@ -59,8 +59,15 @@ model UserBook {
    - A consulta é 100% offline, operando sobre o `IndexedDB` (`aresta_dictionary_db`) com pacotes baixados em segundo plano.
    - Suporta pares de idiomas entre Português (`pt`), Inglês (`en`) e Espanhol (`es`), com lematização morfológica offline para formas flexionadas e verbos conjugados.
    - Permite alternância rápida de par de línguas e exibe fonética IPA, classe gramatical, traduções para a língua nativa, significados numerados e exemplos.
-6. **Transição de Páginas 2D Fluida (GPU 60/120 FPS)**:
-   - A virada e arraste de páginas são executados com aceleração de hardware via CSS Transforms (`translate3d`), preservando 100% da tipografia, proporção e nitidez dos glifos sem distorção ou redimensionamento de palavras durante a transição.
+6. **Transição de Páginas 2D Fluida & Virada 3D Realista**:
+   - A virada e arraste de páginas são executados com aceleração de hardware via CSS Transforms (`translate3d`) e shaders Three.js para o efeito realista de folhear.
+7. **Efeitos de Livro Físico (Vinco Central e Pilhas Laterais de Páginas)**:
+   - Quando a virada 3D está ativa (`pageAnimationEnabled === true`), o usuário pode habilitar os efeitos de livro físico (`pageCreaseEnabled`).
+   - Renderiza a sombra de vinco/lombada central no modo de 2 páginas e as camadas laterais escalonadas de folhas (*page stack edges*):
+     - **Borda Esquerda**: volume proporcional de páginas já lidas (`currentPage / totalPages`).
+     - **Borda Direita**: volume proporcional de páginas restantes (`(totalPages - currentPage) / totalPages`).
+   - As pilhas laterais são interativas (clique para voltar ou avançar página) e adaptam suas linhas e cores aos temas **Sépia**, **Branco** e **Preto**.
+   - Em telas pequenas móveis (< 768px), o efeito é automaticamente ocultado para priorizar a área útil de leitura.
 
 
 
