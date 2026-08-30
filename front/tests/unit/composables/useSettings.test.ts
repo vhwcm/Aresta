@@ -63,6 +63,29 @@ describe('useSettings Composable', () => {
     expect(pageCreaseEnabled.value).toBe(true)
   })
 
+  it('desativa pageCreaseEnabled e impede ativação se pageAnimationEnabled for falso', () => {
+    const { pageAnimationEnabled, pageCreaseEnabled, canEnablePageCrease, setPageAnimationEnabled, setPageCreaseEnabled } = useSettings()
+
+    expect(canEnablePageCrease.value).toBe(true)
+    expect(pageCreaseEnabled.value).toBe(true)
+
+    // Desativa animação 3D
+    setPageAnimationEnabled(false)
+    expect(pageAnimationEnabled.value).toBe(false)
+    expect(pageCreaseEnabled.value).toBe(false)
+    expect(canEnablePageCrease.value).toBe(false)
+
+    // Tenta ativar vinco com animação desligada
+    setPageCreaseEnabled(true)
+    expect(pageCreaseEnabled.value).toBe(false)
+
+    // Reativa animação 3D
+    setPageAnimationEnabled(true)
+    expect(canEnablePageCrease.value).toBe(true)
+    setPageCreaseEnabled(true)
+    expect(pageCreaseEnabled.value).toBe(true)
+  })
+
   it('permite alterar e obter o idioma', () => {
     const { language, setLanguage } = useSettings()
 

@@ -23,6 +23,23 @@
       >
         <!-- MODO 2 PÁGINAS -->
         <template v-if="pageLayout.isTwoPage">
+          <!-- Pilha de Páginas Lidas (Borda Esquerda) -->
+          <div
+            v-if="pageCreaseEnabled && pageAnimationEnabled && pageStackDepth.leftWidth > 0 && pageLayout.leftPage && pageLayout.leftPage.pageNumber > 0"
+            class="book-page-stack book-page-stack--left"
+            :style="{
+              left: `${pageLayout.leftPage.left - pageStackDepth.leftWidth}px`,
+              top: `${pageLayout.leftPage.top}px`,
+              width: `${pageStackDepth.leftWidth}px`,
+              height: `${pageLayout.leftPage.height}px`,
+            }"
+            @click.stop="requestTurn('previous')"
+            :title="`Páginas lidas (${store.currentPage - 1} de ${store.totalPages} páginas - Voltar)`"
+            role="button"
+            tabindex="0"
+            aria-label="Páginas já lidas. Clique para voltar página"
+          />
+
           <!-- Página Esquerda Base -->
           <div
             v-if="pageLayout.leftPage && pageLayout.leftPage.pageNumber > 0"
@@ -52,7 +69,7 @@
 
           <!-- Lombada Central (Vinco) -->
           <div
-            v-if="pageCreaseEnabled && pageLayout.leftPage && pageLayout.rightPage && pageLayout.leftPage.pageNumber > 0 && pageLayout.rightPage.pageNumber > 0"
+            v-if="pageCreaseEnabled && pageAnimationEnabled && pageLayout.leftPage && pageLayout.rightPage && pageLayout.leftPage.pageNumber > 0 && pageLayout.rightPage.pageNumber > 0"
             class="book-spine-divider"
             :style="{
               left: `${pageLayout.leftPage.left + pageLayout.leftPage.width - 16}px`,
@@ -89,10 +106,44 @@
               :style="{ opacity: isTurningNext && is3DActive ? castShadowOpacity : 0 }"
             />
           </div>
+
+          <!-- Pilha de Páginas Restantes (Borda Direita) -->
+          <div
+            v-if="pageCreaseEnabled && pageAnimationEnabled && pageStackDepth.rightWidth > 0 && pageLayout.rightPage && pageLayout.rightPage.pageNumber > 0"
+            class="book-page-stack book-page-stack--right"
+            :style="{
+              left: `${pageLayout.rightPage.left + pageLayout.rightPage.width}px`,
+              top: `${pageLayout.rightPage.top}px`,
+              width: `${pageStackDepth.rightWidth}px`,
+              height: `${pageLayout.rightPage.height}px`,
+            }"
+            @click.stop="requestTurn('next')"
+            :title="`Páginas restantes (${store.totalPages - store.currentPage} de ${store.totalPages} páginas - Avançar)`"
+            role="button"
+            tabindex="0"
+            aria-label="Páginas restantes a ler. Clique para avançar página"
+          />
         </template>
 
-        <!-- MODO 1 PÁGINA (MOBILE) -->
+        <!-- MODO 1 PÁGINA (DESKTOP/TABLET / MOBILE) -->
         <template v-else-if="pageLayout.singlePage && pageLayout.singlePage.pageNumber > 0">
+          <!-- Pilha de Páginas Lidas (Borda Esquerda no Modo 1 Página) -->
+          <div
+            v-if="pageCreaseEnabled && pageAnimationEnabled && pageStackDepth.leftWidth > 0"
+            class="book-page-stack book-page-stack--left"
+            :style="{
+              left: `${pageLayout.singlePage.left - pageStackDepth.leftWidth}px`,
+              top: `${pageLayout.singlePage.top}px`,
+              width: `${pageStackDepth.leftWidth}px`,
+              height: `${pageLayout.singlePage.height}px`,
+            }"
+            @click.stop="requestTurn('previous')"
+            :title="`Páginas lidas (${store.currentPage - 1} de ${store.totalPages} páginas - Voltar)`"
+            role="button"
+            tabindex="0"
+            aria-label="Páginas já lidas. Clique para voltar página"
+          />
+
           <div
             class="page-sheet page-sheet--single page-sheet--base"
             :style="{
@@ -116,6 +167,23 @@
               :style="{ opacity: is3DActive ? castShadowOpacity : 0 }"
             />
           </div>
+
+          <!-- Pilha de Páginas Restantes (Borda Direita no Modo 1 Página) -->
+          <div
+            v-if="pageCreaseEnabled && pageAnimationEnabled && pageStackDepth.rightWidth > 0"
+            class="book-page-stack book-page-stack--right"
+            :style="{
+              left: `${pageLayout.singlePage.left + pageLayout.singlePage.width}px`,
+              top: `${pageLayout.singlePage.top}px`,
+              width: `${pageStackDepth.rightWidth}px`,
+              height: `${pageLayout.singlePage.height}px`,
+            }"
+            @click.stop="requestTurn('next')"
+            :title="`Páginas restantes (${store.totalPages - store.currentPage} de ${store.totalPages} páginas - Avançar)`"
+            role="button"
+            tabindex="0"
+            aria-label="Páginas restantes a ler. Clique para avançar página"
+          />
         </template>
       </div>
 
@@ -158,9 +226,39 @@ const emit = defineEmits<{
 }>()
 
 const store = useReaderStore()
-const { pageCreaseEnabled } = useSettings()
+const { pageCreaseEnabled, pageAnimationEnabled } = useSettings()
 const stageRef = ref<HTMLElement | null>(null)
 const webglCanvasRef = ref<HTMLCanvasElement | null>(null)
+
+const MAX_STACK_PX = 14
+
+const pageStackDepth = computed(() => {
+  if (
+    !store.document ||
+    store.totalPages <= 1 ||
+    !pageCreaseEnabled.value ||
+    !pageAnimationEnabled.value
+  ) {
+    return { leftWidth: 0, rightWidth: 0, leftLines: 0, rightLines: 0 }
+  }
+
+  const total = store.totalPages
+  const current = store.currentPage
+
+  // Fator de escala suave para documentos com poucas páginas
+  const maxAllowed = Math.min(MAX_STACK_PX, Math.max(4, Math.round((total / 25) * MAX_STACK_PX)))
+
+  const progress = Math.max(0, Math.min(1, (current - 1) / Math.max(1, total - 1)))
+  const remaining = 1 - progress
+
+  const leftWidth = Math.round(progress * maxAllowed)
+  const rightWidth = Math.round(remaining * maxAllowed)
+
+  const leftLines = Math.min(6, Math.round(progress * 6))
+  const rightLines = Math.min(6, Math.round(remaining * 6))
+
+  return { leftWidth, rightWidth, leftLines, rightLines }
+})
 
 const activeTheme = computed(() => store.readerTheme || 'sepia')
 const themeBgColor = computed(() => {
@@ -661,7 +759,7 @@ function getTurnZone(event: PointerEvent): PageTurnDirection | null {
 }
 
 async function onPointerDown(event: PointerEvent) {
-  if (event.button !== 0 || !stageRef.value || physics.isAnimating.value) return
+  if (!pageAnimationEnabled.value || event.button !== 0 || !stageRef.value || physics.isAnimating.value) return
 
   const direction = getTurnZone(event)
   if (!direction) return
@@ -713,6 +811,34 @@ async function requestTurn(direction: PageTurnDirection) {
   if (physics.isAnimating.value || !store.document) return
   if (direction === 'next' && store.currentPage >= store.totalPages) return
   if (direction === 'previous' && store.currentPage <= 1) return
+
+  // Navegação instantânea quando a viragem 3D estiver desativada
+  if (!pageAnimationEnabled.value) {
+    if (direction === 'next') {
+      if (pageLayout.value.isTwoPage) {
+        if (store.currentPage === 1) {
+          store.goToPage(Math.min(2, store.totalPages))
+        } else {
+          const curLeft = store.currentPage % 2 === 0 ? store.currentPage : store.currentPage - 1
+          store.goToPage(Math.min(store.totalPages, curLeft + 2))
+        }
+      } else {
+        store.nextPage()
+      }
+    } else {
+      if (pageLayout.value.isTwoPage) {
+        if (store.currentPage <= 3) {
+          store.goToPage(1)
+        } else {
+          const curLeft = store.currentPage % 2 === 0 ? store.currentPage : store.currentPage - 1
+          store.goToPage(Math.max(1, curLeft - 2))
+        }
+      } else {
+        store.prevPage()
+      }
+    }
+    return
+  }
 
   const layout = pageLayout.value
   const targetPageRect = layout.isTwoPage
@@ -952,6 +1078,100 @@ defineExpose({
     rgba(0, 0, 0, 0.06) 65%,
     rgba(0, 0, 0, 0) 100%
   );
+}
+
+/* ================= PILHAS LATERAIS DE PÁGINAS (PAGE STACK EDGES) ================= */
+.book-page-stack {
+  position: absolute;
+  pointer-events: auto;
+  cursor: pointer;
+  z-index: 10;
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
+  overflow: hidden;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+.book-page-stack--left {
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+}
+
+.book-page-stack--right {
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+
+/* Tema Sépia */
+.theme-sepia .book-page-stack {
+  background-color: #ede2cd;
+  background-image: repeating-linear-gradient(
+    to right,
+    rgba(140, 105, 65, 0.3) 0px,
+    rgba(140, 105, 65, 0.3) 1px,
+    rgba(237, 226, 205, 0.95) 1px,
+    rgba(237, 226, 205, 0.95) 2.5px
+  );
+}
+
+.theme-sepia .book-page-stack--left {
+  box-shadow: inset 2px 0 3px rgba(0, 0, 0, 0.15), -2px 0 6px rgba(60, 45, 20, 0.2);
+  border-left: 1px solid rgba(140, 110, 70, 0.4);
+}
+
+.theme-sepia .book-page-stack--right {
+  box-shadow: inset -2px 0 3px rgba(0, 0, 0, 0.15), 2px 0 6px rgba(60, 45, 20, 0.2);
+  border-right: 1px solid rgba(140, 110, 70, 0.4);
+}
+
+/* Tema Branco */
+.theme-white .book-page-stack {
+  background-color: #f3f3f3;
+  background-image: repeating-linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0.18) 0px,
+    rgba(0, 0, 0, 0.18) 1px,
+    rgba(243, 243, 243, 0.95) 1px,
+    rgba(243, 243, 243, 0.95) 2.5px
+  );
+}
+
+.theme-white .book-page-stack--left {
+  box-shadow: inset 2px 0 3px rgba(0, 0, 0, 0.1), -2px 0 6px rgba(0, 0, 0, 0.1);
+  border-left: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.theme-white .book-page-stack--right {
+  box-shadow: inset -2px 0 3px rgba(0, 0, 0, 0.1), 2px 0 6px rgba(0, 0, 0, 0.1);
+  border-right: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+/* Tema Preto */
+.theme-black .book-page-stack {
+  background-color: #1e1e22;
+  background-image: repeating-linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0.1) 0px,
+    rgba(255, 255, 255, 0.1) 1px,
+    rgba(30, 30, 34, 0.95) 1px,
+    rgba(30, 30, 34, 0.95) 2.5px
+  );
+}
+
+.theme-black .book-page-stack--left {
+  box-shadow: inset 2px 0 4px rgba(0, 0, 0, 0.8), -3px 0 8px rgba(0, 0, 0, 0.6);
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.theme-black .book-page-stack--right {
+  box-shadow: inset -2px 0 4px rgba(0, 0, 0, 0.8), 3px 0 8px rgba(0, 0, 0, 0.6);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+@media (max-width: 767px) {
+  .book-page-stack {
+    display: none !important;
+  }
 }
 
 /* PDF.js Text Layer */

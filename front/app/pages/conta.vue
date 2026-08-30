@@ -278,16 +278,26 @@
           </button>
         </div>
 
-        <!-- 2.5. Vinco Central (Modo 2 Páginas) -->
-        <div class="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <!-- 2.5. Efeitos de Livro Físico: Vinco e Pilha de Páginas -->
+        <div
+          class="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-opacity duration-200"
+          :class="{ 'opacity-60': !canEnablePageCrease }"
+        >
           <div class="flex items-start sm:items-center gap-4 min-w-0">
             <div class="p-3 rounded-2xl bg-accent/10 border border-accent/20 text-accent shrink-0">
               <BookOpenIcon class="w-5 h-5" />
             </div>
             <div class="flex flex-col gap-0.5">
-              <div class="font-interface text-sm font-medium text-textPrimary flex items-center gap-2">
-                <span>Vinco Central (Modo 2 Páginas)</span>
+              <div class="font-interface text-sm font-medium text-textPrimary flex flex-wrap items-center gap-2">
+                <span>Efeitos de Livro Físico (Vinco e Pilha de Páginas)</span>
                 <span
+                  v-if="!canEnablePageCrease"
+                  class="px-2 py-0.5 rounded-full font-technical text-[10px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                >
+                  Requer Virada 3D Ativada
+                </span>
+                <span
+                  v-else
                   class="px-2 py-0.5 rounded-full font-technical text-[10px] font-semibold"
                   :class="pageCreaseEnabled ? 'bg-accent/15 text-accent border border-accent/30' : 'bg-black/5 dark:bg-white/10 text-textSecondary'"
                 >
@@ -295,7 +305,7 @@
                 </span>
               </div>
               <p class="font-interface text-xs text-textSecondary">
-                Exibe a sombra de vinco e lombada no centro da tela durante a leitura de duas páginas lado a lado.
+                Exibe a sombra de vinco central e as camadas de páginas nas laterais indicando o progresso do livro lido e restante.
               </p>
             </div>
           </div>
@@ -303,16 +313,20 @@
           <button
             type="button"
             role="switch"
+            :disabled="!canEnablePageCrease"
             :aria-checked="pageCreaseEnabled"
             data-testid="toggle-page-crease"
-            @click="setPageCreaseEnabled(!pageCreaseEnabled)"
-            class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-accent/50"
-            :class="pageCreaseEnabled ? 'bg-accent' : 'bg-black/10 dark:bg-white/10'"
-            title="Alternar vinco central no modo de 2 páginas"
+            @click="canEnablePageCrease && setPageCreaseEnabled(!pageCreaseEnabled)"
+            class="relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-accent/50"
+            :class="[
+              pageCreaseEnabled && canEnablePageCrease ? 'bg-accent' : 'bg-black/10 dark:bg-white/10',
+              canEnablePageCrease ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'
+            ]"
+            :title="canEnablePageCrease ? 'Alternar efeitos de livro físico' : 'Ative a Virada de Página 3D para habilitar os efeitos de livro físico'"
           >
             <span
               class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
-              :class="pageCreaseEnabled ? 'translate-x-5' : 'translate-x-0'"
+              :class="pageCreaseEnabled && canEnablePageCrease ? 'translate-x-5' : 'translate-x-0'"
             />
           </button>
         </div>
@@ -851,6 +865,7 @@ const settings = useSettings()
 const {
   pageAnimationEnabled,
   pageCreaseEnabled,
+  canEnablePageCrease,
   desktopHomeGraphOpen,
   themeMode,
   readerTheme,

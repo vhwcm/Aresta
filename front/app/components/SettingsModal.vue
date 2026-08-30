@@ -305,35 +305,48 @@
                   </button>
                 </div>
 
-                <!-- Item 7.5: Vinco Central (Modo 2 Páginas) -->
-                <div class="p-4 flex items-center justify-between gap-4">
+                <!-- Item 7: Efeitos de Livro Físico -->
+                <div
+                  class="p-4 flex items-center justify-between gap-4 transition-opacity duration-200"
+                  :class="{ 'opacity-50': !canEnablePageCrease }"
+                >
                   <div class="flex items-center gap-3 min-w-0">
                     <div class="p-2 rounded-lg bg-accent/10 text-accent">
                       <BookOpenIcon class="w-4 h-4" />
                     </div>
                     <div class="min-w-0">
-                      <div class="font-interface text-sm text-textPrimary font-medium">
-                        Vinco central (Modo 2 páginas)
+                      <div class="font-interface text-sm text-textPrimary font-medium flex items-center gap-2">
+                        <span>Efeitos de Livro Físico</span>
+                        <span
+                          v-if="!canEnablePageCrease"
+                          class="px-1.5 py-0.2 rounded text-[10px] font-technical bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                        >
+                          Requer 3D
+                        </span>
                       </div>
                       <div class="font-interface text-xs text-textSecondary">
-                        Sombra de lombada/vinco no meio das duas páginas
+                        Vinco central e pilhas de páginas lidas/restantes
                       </div>
                     </div>
                   </div>
 
                   <button
                     type="button"
-                    @click="pageCreaseEnabled = !pageCreaseEnabled"
+                    :disabled="!canEnablePageCrease"
+                    @click="canEnablePageCrease && (pageCreaseEnabled = !pageCreaseEnabled)"
                     role="switch"
                     :aria-checked="pageCreaseEnabled"
                     data-testid="modal-toggle-page-crease"
-                    class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-accent/50"
-                    :class="pageCreaseEnabled ? 'bg-accent' : 'bg-black/10 dark:bg-white/10'"
-                    title="Alternar vinco central no modo de 2 páginas"
+                    class="relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-accent/50"
+                    :class="[
+                      pageCreaseEnabled && canEnablePageCrease ? 'bg-accent' : 'bg-black/10 dark:bg-white/10',
+                      canEnablePageCrease ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'
+                    ]"
+                    :title="canEnablePageCrease ? 'Alternar efeitos de livro físico' : 'Requer Virada 3D ativada'"
                   >
                     <span
                       class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
-                      :class="pageCreaseEnabled ? 'translate-x-5' : 'translate-x-0'"
+                      :class="pageCreaseEnabled && canEnablePageCrease ? 'translate-x-5' : 'translate-x-0'"
                     />
                   </button>
                 </div>
@@ -429,6 +442,7 @@ const modal = useSettingsModal()
 const {
   pageAnimationEnabled,
   pageCreaseEnabled,
+  canEnablePageCrease,
   epubFontSize,
   setEpubFontSize,
   themeMode,

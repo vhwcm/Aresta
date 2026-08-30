@@ -121,6 +121,9 @@ function initSettings() {
       if (typeof parsed.pageCreaseEnabled === 'boolean') {
         settings.pageCreaseEnabled = parsed.pageCreaseEnabled
       }
+      if (!settings.pageAnimationEnabled) {
+        settings.pageCreaseEnabled = false
+      }
       if (typeof parsed.language === 'string') {
         settings.language = parsed.language
       }
@@ -198,6 +201,9 @@ function applyServerSettings(data: UserSettingsResponse) {
   if (typeof data.pageCreaseEnabled === 'boolean') {
     settings.pageCreaseEnabled = data.pageCreaseEnabled
   }
+  if (!settings.pageAnimationEnabled) {
+    settings.pageCreaseEnabled = false
+  }
   if (typeof data.language === 'string') {
     settings.language = data.language
   }
@@ -248,15 +254,14 @@ export function useSettings() {
       localStorage.setItem('aresta_home_graph_collapsed', String(!settings.desktopHomeGraphOpen))
       trySyncReaderStore()
     } catch {
-      // ignorar quota error
+      // localStorage indisponível
     }
   }
 
   const persistToServer = async () => {
-    if (!auth.token.value) return
-
+    if (!auth.token?.value) return
     try {
-      await $fetch<UserSettingsResponse>(`${API_BASE}/user-settings`, {
+      await $fetch(`${API_BASE}/user-settings`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${auth.token.value}` },
         body: {
@@ -273,13 +278,12 @@ export function useSettings() {
         },
       })
     } catch {
-      // manter valor local se a API falhar
+      // silencioso se a requisição falhar
     }
   }
 
   const loadFromServer = async () => {
-    if (!auth.token.value) return
-
+    if (!auth.token?.value) return
     try {
       const data = await $fetch<UserSettingsResponse>(`${API_BASE}/user-settings`, {
         headers: { Authorization: `Bearer ${auth.token.value}` },
@@ -295,11 +299,17 @@ export function useSettings() {
 
   const setPageAnimationEnabled = (enabled: boolean) => {
     settings.pageAnimationEnabled = enabled
+    if (!enabled) {
+      settings.pageCreaseEnabled = false
+    }
     saveLocally()
     void persistToServer()
   }
 
   const setPageCreaseEnabled = (enabled: boolean) => {
+    if (enabled && !settings.pageAnimationEnabled) {
+      return
+    }
     settings.pageCreaseEnabled = enabled
     saveLocally()
     void persistToServer()
@@ -379,9 +389,11 @@ export function useSettings() {
   })
 
   const pageCreaseEnabled = computed({
-    get: () => settings.pageCreaseEnabled,
+    get: () => settings.pageAnimationEnabled && settings.pageCreaseEnabled,
     set: (val: boolean) => setPageCreaseEnabled(val),
   })
+
+  const canEnablePageCrease = computed(() => settings.pageAnimationEnabled)
 
   const language = computed({
     get: () => settings.language,
@@ -427,6 +439,7 @@ export function useSettings() {
     settings: readonly(settings),
     pageAnimationEnabled,
     pageCreaseEnabled,
+    canEnablePageCrease,
     language,
     nativeLanguage,
     targetTranslationLanguage,
