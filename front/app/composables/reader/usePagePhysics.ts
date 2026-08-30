@@ -1,28 +1,24 @@
 import { ref, computed } from 'vue'
+import type { PageTurnDirection, GripRegion, DragPoint } from '~/interfaces/reader/types'
 
-export type PageTurnDirection = 'next' | 'previous'
-export type GripRegion = 'top-corner' | 'edge-center' | 'bottom-corner'
-
-export interface DragPoint {
-  x: number
-  y: number
-  time: number
-}
+export type { PageTurnDirection, GripRegion, DragPoint }
 
 export interface PagePhysicsOptions {
   snapThreshold?: number
   flickVelocityThreshold?: number
   springStiffness?: number
   springDamping?: number
-  onProgress?: (progress: number, gripY: number, deltaY: number) => void
-  onComplete?: (direction: PageTurnDirection) => void
+  onProgress?: (_progress: number, _gripY: number, _deltaY: number) => void
+  onComplete?: (_direction: PageTurnDirection) => void
   onCancel?: () => void
 }
 
-const DEFAULT_SNAP_THRESHOLD = 0.32
-const DEFAULT_FLICK_VELOCITY = 0.45
-const DEFAULT_SPRING_STIFFNESS = 180
-const DEFAULT_SPRING_DAMPING = 22
+import {
+  SNAP_THRESHOLD as DEFAULT_SNAP_THRESHOLD,
+  FLICK_VELOCITY_THRESHOLD as DEFAULT_FLICK_VELOCITY,
+  SPRING_STIFFNESS as DEFAULT_SPRING_STIFFNESS,
+  SPRING_DAMPING as DEFAULT_SPRING_DAMPING,
+} from '~/composables/reader/constants'
 
 export function usePagePhysics(options: PagePhysicsOptions = {}) {
   const snapThreshold = options.snapThreshold ?? DEFAULT_SNAP_THRESHOLD

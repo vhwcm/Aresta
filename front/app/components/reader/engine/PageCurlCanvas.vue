@@ -217,12 +217,14 @@
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useReaderStore } from '~/stores/readerStore'
 import { useSettings } from '~/composables/useSettings'
-import { useBookPageTurn, type PageTurnDirection, type PageLayoutInfo } from '~/composables/reader/useBookPageTurn'
-import { usePagePhysics, type DragPoint } from '~/composables/reader/usePagePhysics'
+import { useBookPageTurn } from '~/composables/reader/useBookPageTurn'
+import { usePagePhysics } from '~/composables/reader/usePagePhysics'
 import { usePageCurl3D } from '~/composables/reader/usePageCurl3D'
+import { DRAG_ACTIVATION_THRESHOLD_PX } from '~/composables/reader/constants'
+import type { PageTurnDirection, DragPoint } from '~/interfaces/reader/types'
 
 const emit = defineEmits<{
-  (e: 'transition-state', isTransitioning: boolean): void
+  (_e: 'transition-state', _isTransitioning: boolean): void
 }>()
 
 const store = useReaderStore()
@@ -267,12 +269,6 @@ const themeBgColor = computed(() => {
   return '#f5eedc'
 })
 
-const themeTextColor = computed(() => {
-  if (activeTheme.value === 'black') return '#e4e4e7'
-  if (activeTheme.value === 'sepia') return '#2a2521'
-  return '#1a1a1a'
-})
-
 // Canvases e TextLayers da Camada Nativa Base (Estacionária)
 const baseLeftCanvasRef = ref<HTMLCanvasElement | null>(null)
 const baseLeftTextLayerRef = ref<HTMLElement | null>(null)
@@ -296,11 +292,36 @@ const currentDirection = ref<PageTurnDirection>('next')
 let activePointerId: number | null = null
 let currentRenderVersion = 0
 
+// P1: Estado de arraste pendente — ativa virada 3D somente após limiar de deslocamento
+interface PendingDrag {
+  pointerId: number
+  direction: PageTurnDirection
+  startPoint: DragPoint
+  relY: number
+  pageWidth: number
+  pageHeight: number
+}
+let pendingDrag: PendingDrag | null = null
+
+// P3: Fila de virada pendente (máx. 1) para cliques rápidos em sequência
+let pendingTurnDirection: PageTurnDirection | null = null
+
 // Layout de Páginas
-const {
-  pageLayout,
-  updateLayout,
-} = useBookPageTurn(stageRef)
+const { pageLayout } = useBookPageTurn(stageRef)
+
+// P5: Calcula a página de destino real considerando modo 1 ou 2 páginas
+function getTargetPage(direction: PageTurnDirection): number {
+  const layout = pageLayout.value
+  if (!layout.isTwoPage) {
+    return direction === 'next'
+      ? Math.min(store.currentPage + 1, store.totalPages)
+      : Math.max(1, store.currentPage - 1)
+  }
+  const curLeft = store.currentPage % 2 !== 0 ? store.currentPage : store.currentPage - 1
+  return direction === 'next'
+    ? Math.min(curLeft + 2, store.totalPages)
+    : Math.max(1, curLeft - 2)
+}
 
 // Física de Gestos
 const physics = usePagePhysics({
@@ -316,20 +337,9 @@ const physics = usePagePhysics({
     pageCurl3D.render()
   },
   onComplete: async (direction) => {
-    if (direction === 'next') {
-      if (pageLayout.value.isTwoPage) {
-        const curLeft = store.currentPage % 2 !== 0 ? store.currentPage : store.currentPage - 1
-        store.goToPage(Math.min(store.totalPages, curLeft + 2))
-      } else {
-        store.goToPage(Math.min(store.totalPages, store.currentPage + 1))
-      }
-    } else {
-      if (pageLayout.value.isTwoPage) {
-        const curLeft = store.currentPage % 2 !== 0 ? store.currentPage : store.currentPage - 1
-        store.goToPage(Math.max(1, curLeft - 2))
-      } else {
-        store.goToPage(Math.max(1, store.currentPage - 1))
-      }
+    const targetPage = getTargetPage(direction)
+    if (targetPage !== store.currentPage) {
+      store.goToPage(targetPage)
     }
 
     // 1. Renderiza a página 2D definitiva por baixo PRIMEIRO
@@ -339,12 +349,26 @@ const physics = usePagePhysics({
     // 2. Só agora oculta a folha 3D, garantindo continuidade perfeita sem flash de cor
     is3DActive.value = false
     emit('transition-state', false)
+
+    // P3: Processa virada pendente da fila (cliques rápidos em sequência)
+    if (pendingTurnDirection !== null) {
+      const queued = pendingTurnDirection
+      pendingTurnDirection = null
+      void requestTurn(queued)
+    }
   },
   onCancel: async () => {
     await renderCurrentSpread()
     await nextTick()
     is3DActive.value = false
     emit('transition-state', false)
+
+    // P3: Processa virada pendente da fila mesmo após cancelamento
+    if (pendingTurnDirection !== null) {
+      const queued = pendingTurnDirection
+      pendingTurnDirection = null
+      void requestTurn(queued)
+    }
   },
 })
 
@@ -429,9 +453,9 @@ function applyThemeToCanvas(ctx: CanvasRenderingContext2D, width: number, height
     const imgData = ctx.getImageData(0, 0, width, height)
     const d = imgData.data
     for (let i = 0; i < d.length; i += 4) {
-      const invR = 255 - d[i]
-      const invG = 255 - d[i + 1]
-      const invB = 255 - d[i + 2]
+      const invR = 255 - (d[i] ?? 0)
+      const invG = 255 - (d[i + 1] ?? 0)
+      const invB = 255 - (d[i + 2] ?? 0)
       d[i] = Math.round(18 + (invR / 255) * (228 - 18))
       d[i + 1] = Math.round(18 + (invG / 255) * (228 - 18))
       d[i + 2] = Math.round(20 + (invB / 255) * (231 - 20))
@@ -440,58 +464,7 @@ function applyThemeToCanvas(ctx: CanvasRenderingContext2D, width: number, height
   }
 }
 
-async function rasterizeHtmlToCanvas(
-  htmlContent: string,
-  targetCanvas: HTMLCanvasElement,
-  width: number,
-  height: number,
-) {
-  const dpr = typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 2) : 1
-  const renderW = Math.round(width * dpr)
-  const renderH = Math.round(height * dpr)
-  targetCanvas.width = renderW
-  targetCanvas.height = renderH
-  targetCanvas.style.width = `${width}px`
-  targetCanvas.style.height = `${height}px`
-
-  const ctx = targetCanvas.getContext('2d', { alpha: false })
-  if (!ctx) return
-
-  ctx.fillStyle = themeBgColor.value
-  ctx.fillRect(0, 0, renderW, renderH)
-
-  if (!htmlContent || htmlContent.trim().length === 0) return
-
-  const bg = themeBgColor.value
-  const tc = themeTextColor.value
-  const ff = store.fontFamily || "'Newsreader', Georgia, serif"
-  const fs = store.fontSize || 18
-
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${renderW}" height="${renderH}">
-    <foreignObject width="100%" height="100%">
-      <div xmlns="http://www.w3.org/1999/xhtml" style="background-color:${bg};color:${tc};font-family:${ff};font-size:${fs}px;line-height:1.7;padding:24px;width:${width}px;height:${height}px;box-sizing:border-box;transform:scale(${dpr});transform-origin:0 0;overflow:hidden;">
-        ${htmlContent}
-      </div>
-    </foreignObject>
-  </svg>`
-
-  const img = new Image()
-  const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
-
-  await new Promise<void>((resolve) => {
-    img.onload = () => {
-      ctx.drawImage(img, 0, 0, renderW, renderH)
-      URL.revokeObjectURL(url)
-      resolve()
-    }
-    img.onerror = () => {
-      URL.revokeObjectURL(url)
-      resolve()
-    }
-    img.src = url
-  })
-}
+// rasterizeHtmlToCanvas removida (P7: código morto — EPUBs rasterizados pelo EpubDocumentAdapter)
 
 async function renderPageToCanvas(pageNumber: number, targetCanvas: HTMLCanvasElement, width: number, height: number) {
   if (pageNumber <= 0 || !store.document || width <= 0 || height <= 0) return
@@ -776,12 +749,9 @@ async function onPointerDown(event: PointerEvent) {
   const direction = getTurnZone(event)
   if (!direction) return
 
-  // Validação de limites
-  if (direction === 'next' && store.currentPage >= store.totalPages) return
-  if (direction === 'previous' && store.currentPage <= 1) return
-
-  activePointerId = event.pointerId
-  stageRef.value.setPointerCapture(event.pointerId)
+  // P5/P6: Validação de limites usando getTargetPage para evitar viradas fantasma
+  const targetPage = getTargetPage(direction)
+  if (targetPage === store.currentPage) return
 
   const pt = pointFrom(event)
   const layout = pageLayout.value
@@ -793,21 +763,83 @@ async function onPointerDown(event: PointerEvent) {
   const h = targetPageRect?.height || 600
   const relY = targetPageRect ? (pt.y - targetPageRect.top) / h : 0.5
 
-  await prepare3DTextures(direction, relY)
-  is3DActive.value = true
-  emit('transition-state', true)
-
-  physics.startDrag(pt, direction, w, h, relY)
+  // P1: Armazena arraste pendente — NÃO captura o pointer imediatamente.
+  // Isso permite que o navegador processe seleção de texto nativa até que
+  // o deslocamento mínimo (DRAG_ACTIVATION_THRESHOLD_PX) seja atingido.
+  activePointerId = event.pointerId
+  pendingDrag = {
+    pointerId: event.pointerId,
+    direction,
+    startPoint: pt,
+    relY,
+    pageWidth: w,
+    pageHeight: h,
+  }
 }
 
 function onPointerMove(event: PointerEvent) {
   if (event.pointerId !== activePointerId) return
+
+  // P1: Se há um arraste pendente, verifica se o limiar de deslocamento foi atingido
+  if (pendingDrag) {
+    const pt = pointFrom(event)
+    const dx = pt.x - pendingDrag.startPoint.x
+    const dy = pt.y - pendingDrag.startPoint.y
+    const dist = Math.sqrt(dx * dx + dy * dy)
+
+    if (dist < DRAG_ACTIVATION_THRESHOLD_PX) {
+      // Ainda abaixo do limiar — não interfere na seleção de texto nativa
+      return
+    }
+
+    // Limiar atingido: ativa virada 3D
+    event.preventDefault()
+    const { direction, startPoint, relY, pageWidth, pageHeight } = pendingDrag
+    pendingDrag = null
+
+    stageRef.value?.setPointerCapture(event.pointerId)
+
+    // P4: Inicia animação 3D de forma assíncrona sem bloquear o gesto
+    void activateDrag(direction, startPoint, relY, pageWidth, pageHeight, pt)
+    return
+  }
+
+  // Arraste já ativo — atualiza a física normalmente
   event.preventDefault()
   physics.updateDrag(pointFrom(event))
 }
 
+/**
+ * P1/P4: Ativa o arraste 3D após o limiar de deslocamento ser atingido.
+ * Prepara as texturas e inicia a física de arraste.
+ */
+async function activateDrag(
+  direction: PageTurnDirection,
+  startPoint: DragPoint,
+  relY: number,
+  pageWidth: number,
+  pageHeight: number,
+  currentPoint: DragPoint,
+) {
+  await prepare3DTextures(direction, relY)
+  is3DActive.value = true
+  emit('transition-state', true)
+
+  physics.startDrag(startPoint, direction, pageWidth, pageHeight, relY)
+  physics.updateDrag(currentPoint)
+}
+
 function onPointerUp(event: PointerEvent) {
   if (event.pointerId !== activePointerId) return
+
+  // P1: Se o arraste pendente nunca foi ativado (deslocamento < limiar),
+  // apenas limpa o estado. O browser já processou a seleção de texto.
+  if (pendingDrag) {
+    pendingDrag = null
+    activePointerId = null
+    return
+  }
+
   stageRef.value?.releasePointerCapture(event.pointerId)
   activePointerId = null
   physics.endDrag(pointFrom(event))
@@ -815,32 +847,27 @@ function onPointerUp(event: PointerEvent) {
 
 function onPointerCancel(event: PointerEvent) {
   if (event.pointerId !== activePointerId) return
+  pendingDrag = null
   activePointerId = null
   physics.cancelDrag()
 }
 
 async function requestTurn(direction: PageTurnDirection) {
-  if (physics.isAnimating.value || !store.document) return
-  if (direction === 'next' && store.currentPage >= store.totalPages) return
-  if (direction === 'previous' && store.currentPage <= 1) return
+  if (!store.document) return
+
+  // P5/P6: Validação de limites usando getTargetPage
+  const targetPage = getTargetPage(direction)
+  if (targetPage === store.currentPage) return
+
+  // P3: Se uma animação está em andamento, enfileira a virada
+  if (physics.isAnimating.value) {
+    pendingTurnDirection = direction
+    return
+  }
 
   // Navegação instantânea quando a viragem 3D estiver desativada
   if (!pageAnimationEnabled.value) {
-    if (direction === 'next') {
-      if (pageLayout.value.isTwoPage) {
-        const curLeft = store.currentPage % 2 !== 0 ? store.currentPage : store.currentPage - 1
-        store.goToPage(Math.min(store.totalPages, curLeft + 2))
-      } else {
-        store.nextPage()
-      }
-    } else {
-      if (pageLayout.value.isTwoPage) {
-        const curLeft = store.currentPage % 2 !== 0 ? store.currentPage : store.currentPage - 1
-        store.goToPage(Math.max(1, curLeft - 2))
-      } else {
-        store.prevPage()
-      }
-    }
+    store.goToPage(targetPage)
     return
   }
 

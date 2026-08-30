@@ -1,20 +1,20 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { ref } from 'vue'
 import { setActivePinia, createPinia } from 'pinia'
-import { useBookPageTurn, shouldCommitPageTurn } from '~/composables/reader/useBookPageTurn'
+import { useBookPageTurn, shouldCommitPageTurn, TURN_THRESHOLD } from '~/composables/reader/useBookPageTurn'
 import { useReaderStore } from '~/stores/readerStore'
 
 describe('shouldCommitPageTurn', () => {
   it('confirma virada exatamente no limiar de arraste', () => {
-    expect(shouldCommitPageTurn(0.22, 0)).toBe(true)
+    expect(shouldCommitPageTurn(TURN_THRESHOLD, 0)).toBe(true)
   })
 
   it('cancela virada logo abaixo do limiar sem velocidade', () => {
-    expect(shouldCommitPageTurn(0.21, 0)).toBe(false)
+    expect(shouldCommitPageTurn(TURN_THRESHOLD - 0.01, 0)).toBe(false)
   })
 
   it('cancela virada curta e lenta (velocidade exatamente no limite)', () => {
-    expect(shouldCommitPageTurn(0.21, 0.002)).toBe(false)
+    expect(shouldCommitPageTurn(TURN_THRESHOLD - 0.01, 0.002)).toBe(false)
   })
 
   it('confirma gesto rápido abaixo do limiar de distância', () => {

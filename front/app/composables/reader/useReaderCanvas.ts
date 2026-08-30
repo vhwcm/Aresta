@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
   ref,
   shallowRef,
@@ -10,10 +9,9 @@ import {
 } from 'vue'
 import { useReaderStore } from '~/stores/readerStore'
 import { usePageCurlEngine } from '~/composables/reader/usePageCurlEngine'
+import { SNAP_THRESHOLD } from '~/composables/reader/constants'
 import type { IBookDocument, PageData } from '~/interfaces/reader/IBookDocument'
 import type { Point2D, CurlDirection } from '~/interfaces/reader/IPageCurlState'
-
-const FLIP_THRESHOLD_PX = 60
 
 export function useReaderCanvas(canvasRef: Ref<HTMLCanvasElement | null>) {
   const store = useReaderStore()
@@ -72,9 +70,9 @@ export function useReaderCanvas(canvasRef: Ref<HTMLCanvasElement | null>) {
   watch(
     () => store.currentPage,
     async (newPage) => {
-      if (store.document) {
+      if (store.document && canvasRef.value) {
         await syncPages(store.document, newPage)
-        engine.bindCanvas(canvasRef.value!, renderCurrentToCtx, renderNextToCtx)
+        engine.bindCanvas(canvasRef.value, renderCurrentToCtx, renderNextToCtx)
       }
     },
   )
@@ -87,12 +85,14 @@ export function useReaderCanvas(canvasRef: Ref<HTMLCanvasElement | null>) {
   )
 
   function getPointerPoint(event: MouseEvent | TouchEvent): Point2D {
-    const canvas = canvasRef.value!
+    const canvas = canvasRef.value
+    if (!canvas) return { x: 0, y: 0 }
     const rect = canvas.getBoundingClientRect()
-    const clientX = 'touches' in event ? event.touches[0].clientX : event.clientX
-    const clientY = 'touches' in event ? event.touches[0].clientY : event.clientY
-    const scaleX = canvas.width / rect.width
-    const scaleY = canvas.height / rect.height
+    const touch = 'touches' in event ? event.touches[0] : null
+    const clientX = touch ? touch.clientX : ('clientX' in event ? event.clientX : 0)
+    const clientY = touch ? touch.clientY : ('clientY' in event ? event.clientY : 0)
+    const scaleX = rect.width > 0 ? canvas.width / rect.width : 1
+    const scaleY = rect.height > 0 ? canvas.height / rect.height : 1
     return {
       x: (clientX - rect.left) * scaleX,
       y: (clientY - rect.top) * scaleY,
@@ -127,7 +127,7 @@ export function useReaderCanvas(canvasRef: Ref<HTMLCanvasElement | null>) {
   async function onPointerUp() {
     if (!engine.state.value.isDragging) return
     const direction = engine.state.value.curlDirection
-    const shouldFlip = engine.state.value.progress >= 0.35
+    const shouldFlip = engine.state.value.progress >= SNAP_THRESHOLD
 
     await engine.endDrag()
 
@@ -145,7 +145,7 @@ export function useReaderCanvas(canvasRef: Ref<HTMLCanvasElement | null>) {
     if (!canvas) return
 
     canvas.addEventListener('mousedown', onPointerDown)
-    canvas.addEventListener('touchstart', onPointerDown, { passive: true })
+    canvas.addEventListener('touchstart', onPointerDown, { passive: false })
     window.addEventListener('mousemove', onPointerMove)
     window.addEventListener('touchmove', onPointerMove, { passive: false })
     window.addEventListener('mouseup', onPointerUp)

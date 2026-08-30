@@ -2,7 +2,8 @@ import { computed, onMounted, onUnmounted, readonly, ref, watch, type Ref } from
 import { useReaderStore } from '~/stores/readerStore'
 import { useSettings } from '~/composables/useSettings'
 
-export type PageTurnDirection = 'next' | 'previous'
+import type { PageTurnDirection } from '~/interfaces/reader/types'
+export type { PageTurnDirection }
 
 export interface PageRect {
   left: number
@@ -25,8 +26,8 @@ interface Point {
   time: number
 }
 
-export const TURN_DURATION_MS = 380
-export const TURN_THRESHOLD = 0.22
+import { TURN_DURATION_MS, SNAP_THRESHOLD as TURN_THRESHOLD } from '~/composables/reader/constants'
+export { TURN_DURATION_MS, TURN_THRESHOLD }
 
 export function clamp(value: number, min = 0, max = 1): number {
   return Math.max(min, Math.min(max, value))
@@ -41,8 +42,8 @@ export function shouldCommitPageTurn(progress: number, velocity: number): boolea
 }
 
 export interface UseBookPageTurnOptions {
-  onBeforeTurn?: (targetPage: number) => Promise<void>
-  onAfterTurn?: (targetPage: number) => Promise<void>
+  onBeforeTurn?: (_targetPage: number) => Promise<void>
+  onAfterTurn?: (_targetPage: number) => Promise<void>
 }
 
 export function useBookPageTurn(
