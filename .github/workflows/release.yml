@@ -61,7 +61,11 @@ jobs:
 
       - name: Build Android APK
         working-directory: ./front
-        run: npx tauri android build --apk
+        run: |
+          if [ -f "src-tauri/gen/android/gradlew" ]; then
+            chmod +x src-tauri/gen/android/gradlew
+          fi
+          npx tauri android build --apk
 
       - name: Rename APKs for Release
         run: |
