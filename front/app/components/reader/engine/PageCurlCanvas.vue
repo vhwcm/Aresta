@@ -753,11 +753,6 @@ function isTextElement(target: EventTarget | null): boolean {
 async function onPointerDown(event: PointerEvent) {
   if (!pageAnimationEnabled.value || event.button !== 0 || !stageRef.value || physics.isAnimating.value) return
 
-  // Se o clique for com mouse sobre a camada de texto, permite seleção nativa para anotação/dicionário
-  if (event.pointerType === 'mouse' && isTextElement(event.target)) {
-    return
-  }
-
   const direction = getTurnZone(event)
   if (!direction) return
 
@@ -804,6 +799,13 @@ function onPointerMove(event: PointerEvent) {
       return
     }
 
+    // Se o usuário já selecionou texto na janela, cancela o arraste para priorizar o menu de contexto/anotação
+    const selection = typeof window !== 'undefined' ? window.getSelection() : null
+    if (selection && selection.toString().trim().length > 0) {
+      pendingDrag = null
+      return
+    }
+
     // Limiar atingido: ativa virada 3D
     event.preventDefault()
     const { direction, startPoint, relY, pageWidth, pageHeight } = pendingDrag
@@ -844,11 +846,29 @@ async function activateDrag(
 function onPointerUp(event: PointerEvent) {
   if (event.pointerId !== activePointerId) return
 
-  // P1: Se o arraste pendente nunca foi ativado (deslocamento < limiar),
-  // apenas limpa o estado. O browser já processou a seleção de texto.
+  // P1: Se o arraste pendente nunca foi ativado (clique simples sem arrastar)
   if (pendingDrag) {
+    const { direction, startPoint } = pendingDrag
     pendingDrag = null
     activePointerId = null
+
+    const pt = pointFrom(event)
+    const dx = Math.abs(pt.x - startPoint.x)
+    const dy = Math.abs(pt.y - startPoint.y)
+    const selection = typeof window !== 'undefined' ? window.getSelection() : null
+    const hasSelection = selection && selection.toString().trim().length > 0
+
+    // Se foi um clique direto nas bordas laterais externas sem seleção de texto, vira a página
+    if (dx < 6 && dy < 6 && !hasSelection) {
+      const bounds = stageRef.value?.getBoundingClientRect()
+      if (bounds) {
+        const isLeftMargin = pt.x < bounds.width * 0.22
+        const isRightMargin = pt.x > bounds.width * 0.78
+        if ((direction === 'previous' && isLeftMargin) || (direction === 'next' && isRightMargin)) {
+          void requestTurn(direction)
+        }
+      }
+    }
     return
   }
 
