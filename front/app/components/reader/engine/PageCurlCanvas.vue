@@ -740,8 +740,23 @@ function getTurnZone(event: PointerEvent): PageTurnDirection | null {
   return null
 }
 
+function isTextElement(target: EventTarget | null): boolean {
+  if (!target || !(target instanceof Element)) return false
+  return Boolean(
+    target.closest('.page-text-layer') ||
+    target.closest('.textLayer') ||
+    target.closest('.epub-text-layer-content') ||
+    target.closest('.epub-text-layer-viewport')
+  )
+}
+
 async function onPointerDown(event: PointerEvent) {
   if (!pageAnimationEnabled.value || event.button !== 0 || !stageRef.value || physics.isAnimating.value) return
+
+  // Se o clique for com mouse sobre a camada de texto, permite seleção nativa para anotação/dicionário
+  if (event.pointerType === 'mouse' && isTextElement(event.target)) {
+    return
+  }
 
   const direction = getTurnZone(event)
   if (!direction) return
