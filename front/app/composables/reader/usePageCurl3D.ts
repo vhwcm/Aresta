@@ -39,15 +39,13 @@ const VERTEX_SHADER = `
 
     // Raio dinâmico que atinge o ápice no meio (p = 0.5) e zera suavemente nas pontas (p=0 e p=1)
     float arcFactor = sin(p * PI);
-    float dynamicRadius = max(4.0, uRadius * arcFactor);
-    float rollCircumference = PI * dynamicRadius;
+    float dynamicRadius = max(0.0, uRadius * arcFactor);
+    float rollCircumference = max(1.0, PI * dynamicRadius);
 
     // Inclinação cônica diagonal quando puxado pelo canto
-    // No espaço de tela, uGripY vai de 0.0 (topo) a 1.0 (base).
-    // No Three.js (WebGL), pos.y é positivo no topo (+H/2) e negativo na base (-H/2).
-    float cornerBias = (0.5 - uGripY) * 0.55;
-    float angle = cornerBias * arcFactor - uPointerDeltaY * 0.35;
-    angle = clamp(angle, -0.35, 0.35);
+    float cornerBias = (0.5 - uGripY) * 0.45;
+    float angle = cornerBias * arcFactor - uPointerDeltaY * 0.25;
+    angle = clamp(angle, -0.30, 0.30);
 
     vec3 deformedPos = pos;
     vec3 computedNormal = vec3(0.0, 0.0, 1.0);
@@ -63,20 +61,17 @@ const VERTEX_SHADER = `
         deformedPos.z = 0.0;
         computedNormal = vec3(0.0, 0.0, 1.0);
         facing = 1.0;
-      } else if (dist < rollCircumference && dynamicRadius > 4.5) {
-        // Na curva do cilindro/cone
-        float phi = dist / dynamicRadius;
-        float sinPhi = sin(phi);
-        float cosPhi = cos(phi);
-
-        deformedPos.x = foldX - (dist - dynamicRadius * sinPhi);
-        deformedPos.z = dynamicRadius * (1.0 - cosPhi);
-        computedNormal = normalize(vec3(-sinPhi, 0.0, cosPhi));
-        facing = cosPhi >= 0.0 ? 1.0 : -1.0;
+      } else if (dist < rollCircumference && dynamicRadius > 1.0) {
+        // Na curva do arco 3D: progressão linear 1:1 no eixo X (sem zoom) e elevação senoidal no eixo Z
+        float t = clamp(dist / rollCircumference, 0.0, 1.0);
+        deformedPos.x = 2.0 * foldX - pos.x - pos.y * sin(angle);
+        deformedPos.z = dynamicRadius * sin(t * PI);
+        computedNormal = normalize(vec3(sin(t * PI), 0.0, cos(t * PI)));
+        facing = t <= 0.5 ? 1.0 : -1.0;
       } else {
         // Virada sobre a página esquerda (vai 100% até -W)
-        deformedPos.x = 2.0 * foldX - pos.x;
-        deformedPos.z = dynamicRadius * 2.0 * max(0.0, 1.0 - (dist / max(1.0, uPageWidth)));
+        deformedPos.x = 2.0 * foldX - pos.x - pos.y * sin(angle);
+        deformedPos.z = 0.0;
         computedNormal = vec3(0.0, 0.0, -1.0);
         facing = -1.0;
       }
@@ -90,20 +85,17 @@ const VERTEX_SHADER = `
         deformedPos.z = 0.0;
         computedNormal = vec3(0.0, 0.0, 1.0);
         facing = 1.0;
-      } else if (dist < rollCircumference && dynamicRadius > 4.5) {
-        // Na curva do cilindro/cone
-        float phi = dist / dynamicRadius;
-        float sinPhi = sin(phi);
-        float cosPhi = cos(phi);
-
-        deformedPos.x = foldX + (dist - dynamicRadius * sinPhi);
-        deformedPos.z = dynamicRadius * (1.0 - cosPhi);
-        computedNormal = normalize(vec3(sinPhi, 0.0, cosPhi));
-        facing = cosPhi >= 0.0 ? 1.0 : -1.0;
+      } else if (dist < rollCircumference && dynamicRadius > 1.0) {
+        // Na curva do arco 3D: progressão linear 1:1 no eixo X (sem zoom) e elevação senoidal no eixo Z
+        float t = clamp(dist / rollCircumference, 0.0, 1.0);
+        deformedPos.x = 2.0 * foldX - pos.x + pos.y * sin(angle);
+        deformedPos.z = dynamicRadius * sin(t * PI);
+        computedNormal = normalize(vec3(-sin(t * PI), 0.0, cos(t * PI)));
+        facing = t <= 0.5 ? 1.0 : -1.0;
       } else {
         // Virada sobre a página direita (vai 100% até +W)
-        deformedPos.x = 2.0 * foldX - pos.x;
-        deformedPos.z = dynamicRadius * 2.0 * max(0.0, 1.0 - (dist / max(1.0, uPageWidth)));
+        deformedPos.x = 2.0 * foldX - pos.x + pos.y * sin(angle);
+        deformedPos.z = 0.0;
         computedNormal = vec3(0.0, 0.0, -1.0);
         facing = -1.0;
       }
@@ -121,7 +113,6 @@ const FRAGMENT_SHADER = `
   uniform sampler2D uFrontTexture;
   uniform sampler2D uBackTexture;
   uniform float uShadowIntensity;
-  uniform vec3 uPaperTint;
 
   varying vec2 vUv;
   varying vec3 vNormalVec;
@@ -129,7 +120,7 @@ const FRAGMENT_SHADER = `
   varying float vFacing;
 
   void main() {
-    vec3 lightDir = normalize(vec3(0.2, 0.35, 0.92));
+    vec3 lightDir = normalize(vec3(0.15, 0.25, 0.95));
     vec3 norm = normalize(vNormalVec);
 
     if (gl_FrontFacing || vFacing > 0.0) {
@@ -137,31 +128,37 @@ const FRAGMENT_SHADER = `
       vec2 backUv = vec2(1.0 - vUv.x, vUv.y);
       vec4 backTex = texture2D(uBackTexture, backUv);
 
-      vec3 paperBase = (frontTex.a > 0.05 ? frontTex.rgb : uPaperTint);
+      vec3 paperBase = frontTex.rgb;
       if (backTex.a > 0.05) {
-        paperBase = mix(paperBase, backTex.rgb, 0.035);
+        paperBase = mix(paperBase, backTex.rgb, 0.02);
       }
-      paperBase *= uPaperTint;
 
+      // Iluminação e sombreamento 3D apenas na curvatura
       float diff = max(0.0, dot(norm, lightDir));
-      float spec = pow(diff, 14.0) * 0.10;
-      float ambientShadow = clamp(vCurlZ * 0.003, 0.0, 0.25) * uShadowIntensity;
+      float curveFactor = clamp(vCurlZ / 25.0, 0.0, 1.0);
+      float lightFactor = mix(1.0, 0.85 + 0.15 * diff, curveFactor);
+      float ambientShadow = clamp(vCurlZ * 0.0015, 0.0, 0.12) * uShadowIntensity;
 
-      vec3 finalRgb = (paperBase * (0.88 + 0.12 * diff) + vec3(spec)) * (1.0 - ambientShadow);
-      gl_FragColor = vec4(finalRgb, 1.0);
+      vec3 finalRgb = paperBase * lightFactor * (1.0 - ambientShadow);
+      gl_FragColor = vec4(finalRgb, frontTex.a);
     } else {
       vec2 backUv = vec2(1.0 - vUv.x, vUv.y);
       vec4 backTex = texture2D(uBackTexture, backUv);
+      vec4 frontTex = texture2D(uFrontTexture, vUv);
 
-      vec3 paperBase = (backTex.a > 0.05 ? backTex.rgb : uPaperTint) * uPaperTint;
+      vec3 paperBase = backTex.rgb;
+      if (frontTex.a > 0.05) {
+        paperBase = mix(paperBase, frontTex.rgb, 0.02);
+      }
 
       vec3 revNorm = -norm;
       float diff = max(0.0, dot(revNorm, lightDir));
-      float spec = pow(diff, 14.0) * 0.08;
-      float ambientShadow = clamp(vCurlZ * 0.002, 0.0, 0.20) * uShadowIntensity;
+      float curveFactor = clamp(vCurlZ / 25.0, 0.0, 1.0);
+      float lightFactor = mix(1.0, 0.85 + 0.15 * diff, curveFactor);
+      float ambientShadow = clamp(vCurlZ * 0.0015, 0.0, 0.12) * uShadowIntensity;
 
-      vec3 finalRgb = (paperBase * (0.86 + 0.14 * diff) + vec3(spec)) * (1.0 - ambientShadow);
-      gl_FragColor = vec4(finalRgb, 1.0);
+      vec3 finalRgb = paperBase * lightFactor * (1.0 - ambientShadow);
+      gl_FragColor = vec4(finalRgb, backTex.a);
     }
   }
 `
@@ -294,7 +291,6 @@ export function usePageCurl3D(canvasHostRef: Ref<HTMLCanvasElement | null>) {
           uPageHeight: { value: currentHeight },
           uRadius: { value: Math.max(32, currentWidth * 0.14) },
           uShadowIntensity: { value: 1.0 },
-          uPaperTint: { value: new THREE.Vector3(1.0, 1.0, 1.0) },
           uFrontTexture: { value: frontTexture },
           uBackTexture: { value: backTexture },
         },
@@ -362,14 +358,6 @@ export function usePageCurl3D(canvasHostRef: Ref<HTMLCanvasElement | null>) {
     }
     if (typeof params.pointerDeltaY === 'number') {
       u.uPointerDeltaY.value = params.pointerDeltaY
-    }
-
-    if (params.theme === 'sepia') {
-      u.uPaperTint.value.set(0.99, 0.96, 0.91)
-    } else if (params.theme === 'black') {
-      u.uPaperTint.value.set(0.92, 0.92, 0.92)
-    } else {
-      u.uPaperTint.value.set(1.0, 1.0, 1.0)
     }
   }
 

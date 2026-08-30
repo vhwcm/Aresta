@@ -54,12 +54,12 @@ function evaluate3DPagePoint(
 
   const uRadius = Math.max(32, pageWidth * 0.14)
   const arcFactor = Math.sin(p * PI)
-  const dynamicRadius = Math.max(4.0, uRadius * arcFactor)
-  const rollCircumference = PI * dynamicRadius
+  const dynamicRadius = Math.max(0.0, uRadius * arcFactor)
+  const rollCircumference = Math.max(1.0, PI * dynamicRadius)
 
-  const cornerBias = (0.5 - gripY) * 0.55
-  let angle = cornerBias * arcFactor - deltaY * 0.35
-  angle = Math.max(-0.35, Math.min(0.35, angle))
+  const cornerBias = (0.5 - gripY) * 0.45
+  let angle = cornerBias * arcFactor - deltaY * 0.25
+  angle = Math.max(-0.30, Math.min(0.30, angle))
 
   let deformedPos = { x, y, z: 0 }
   let computedNormal = { x: 0, y: 0, z: 1 }
@@ -74,27 +74,24 @@ function evaluate3DPagePoint(
       deformedPos = { x, y, z: 0 }
       computedNormal = { x: 0, y: 0, z: 1 }
       facing = 1.0
-    } else if (dist < rollCircumference && dynamicRadius > 4.5) {
-      const phi = dist / dynamicRadius
-      const sinPhi = Math.sin(phi)
-      const cosPhi = Math.cos(phi)
-
+    } else if (dist < rollCircumference && dynamicRadius > 1.0) {
+      const t = Math.max(0, Math.min(1, dist / rollCircumference))
       deformedPos = {
-        x: foldX - (dist - dynamicRadius * sinPhi),
+        x: 2.0 * foldX - x - y * Math.sin(angle),
         y,
-        z: dynamicRadius * (1.0 - cosPhi),
+        z: dynamicRadius * Math.sin(t * PI),
       }
       computedNormal = {
-        x: -sinPhi,
+        x: Math.sin(t * PI),
         y: 0,
-        z: cosPhi,
+        z: Math.cos(t * PI),
       }
-      facing = cosPhi >= 0.0 ? 1.0 : -1.0
+      facing = t <= 0.5 ? 1.0 : -1.0
     } else {
       deformedPos = {
-        x: 2.0 * foldX - x,
+        x: 2.0 * foldX - x - y * Math.sin(angle),
         y,
-        z: dynamicRadius * 2.0 * Math.max(0, 1.0 - (dist / Math.max(1, pageWidth))),
+        z: 0.0,
       }
       computedNormal = { x: 0, y: 0, z: -1 }
       facing = -1.0
@@ -108,27 +105,24 @@ function evaluate3DPagePoint(
       deformedPos = { x, y, z: 0 }
       computedNormal = { x: 0, y: 0, z: 1 }
       facing = 1.0
-    } else if (dist < rollCircumference && dynamicRadius > 4.5) {
-      const phi = dist / dynamicRadius
-      const sinPhi = Math.sin(phi)
-      const cosPhi = Math.cos(phi)
-
+    } else if (dist < rollCircumference && dynamicRadius > 1.0) {
+      const t = Math.max(0, Math.min(1, dist / rollCircumference))
       deformedPos = {
-        x: foldX + (dist - dynamicRadius * sinPhi),
+        x: 2.0 * foldX - x + y * Math.sin(angle),
         y,
-        z: dynamicRadius * (1.0 - cosPhi),
+        z: dynamicRadius * Math.sin(t * PI),
       }
       computedNormal = {
-        x: sinPhi,
+        x: -Math.sin(t * PI),
         y: 0,
-        z: cosPhi,
+        z: Math.cos(t * PI),
       }
-      facing = cosPhi >= 0.0 ? 1.0 : -1.0
+      facing = t <= 0.5 ? 1.0 : -1.0
     } else {
       deformedPos = {
-        x: 2.0 * foldX - x,
+        x: 2.0 * foldX - x + y * Math.sin(angle),
         y,
-        z: dynamicRadius * 2.0 * Math.max(0, 1.0 - (dist / Math.max(1, pageWidth))),
+        z: 0.0,
       }
       computedNormal = { x: 0, y: 0, z: -1 }
       facing = -1.0

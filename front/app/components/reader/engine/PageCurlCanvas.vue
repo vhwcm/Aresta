@@ -316,9 +316,6 @@ const physics = usePagePhysics({
     pageCurl3D.render()
   },
   onComplete: async (direction) => {
-    is3DActive.value = false
-    emit('transition-state', false)
-
     if (direction === 'next') {
       if (pageLayout.value.isTwoPage) {
         if (store.currentPage === 1) {
@@ -343,12 +340,19 @@ const physics = usePagePhysics({
       }
     }
 
+    // 1. Renderiza a página 2D definitiva por baixo PRIMEIRO
     await renderCurrentSpread()
-  },
-  onCancel: async () => {
+    await nextTick()
+
+    // 2. Só agora oculta a folha 3D, garantindo continuidade perfeita sem flash de cor
     is3DActive.value = false
     emit('transition-state', false)
+  },
+  onCancel: async () => {
     await renderCurrentSpread()
+    await nextTick()
+    is3DActive.value = false
+    emit('transition-state', false)
   },
 })
 
@@ -422,6 +426,28 @@ function getOrCreateOffscreenCanvas(name: 'front' | 'back'): HTMLCanvasElement {
       backOffscreenCanvas = document.createElement('canvas')
     }
     return backOffscreenCanvas
+  }
+}
+
+function applyThemeToCanvas(ctx: CanvasRenderingContext2D, width: number, height: number) {
+  if (activeTheme.value === 'sepia') {
+    ctx.save()
+    ctx.globalCompositeOperation = 'multiply'
+    ctx.fillStyle = '#f5eedc'
+    ctx.fillRect(0, 0, width, height)
+    ctx.restore()
+  } else if (activeTheme.value === 'black') {
+    const imgData = ctx.getImageData(0, 0, width, height)
+    const d = imgData.data
+    for (let i = 0; i < d.length; i += 4) {
+      const invR = 255 - d[i]
+      const invG = 255 - d[i + 1]
+      const invB = 255 - d[i + 2]
+      d[i] = Math.round(18 + (invR / 255) * (228 - 18))
+      d[i + 1] = Math.round(18 + (invG / 255) * (228 - 18))
+      d[i + 2] = Math.round(20 + (invB / 255) * (231 - 20))
+    }
+    ctx.putImageData(imgData, 0, 0)
   }
 }
 
@@ -500,6 +526,9 @@ async function renderPageToCanvas(pageNumber: number, targetCanvas: HTMLCanvasEl
     try {
       const pageData = await (doc as any).getPage(pageNumber, width, height)
       await pageData.render(ctx)
+      if (doc.type === 'pdf') {
+        applyThemeToCanvas(ctx, renderW, renderH)
+      }
     } catch {
       // fallback gracioso se render falhar
     }
@@ -613,6 +642,7 @@ async function prepare3DTextures(direction: PageTurnDirection, gripY = 0.5) {
         frontCanvas.height = baseRightCanvasRef.value.height
         const fCtx = frontCanvas.getContext('2d')
         fCtx?.drawImage(baseRightCanvasRef.value, 0, 0)
+        if (fCtx) applyThemeToCanvas(fCtx, frontCanvas.width, frontCanvas.height)
       } else if (curRight > 0) {
         await renderPageToCanvas(curRight, frontCanvas, pageW, pageH)
       }
@@ -654,6 +684,7 @@ async function prepare3DTextures(direction: PageTurnDirection, gripY = 0.5) {
         frontCanvas.height = baseLeftCanvasRef.value.height
         const fCtx = frontCanvas.getContext('2d')
         fCtx?.drawImage(baseLeftCanvasRef.value, 0, 0)
+        if (fCtx) applyThemeToCanvas(fCtx, frontCanvas.width, frontCanvas.height)
       } else if (curLeft > 0) {
         await renderPageToCanvas(curLeft, frontCanvas, pageW, pageH)
       }
@@ -694,6 +725,7 @@ async function prepare3DTextures(direction: PageTurnDirection, gripY = 0.5) {
       frontCanvas.height = baseSingleCanvasRef.value.height
       const fCtx = frontCanvas.getContext('2d')
       fCtx?.drawImage(baseSingleCanvasRef.value, 0, 0)
+      if (fCtx) applyThemeToCanvas(fCtx, frontCanvas.width, frontCanvas.height)
     } else {
       await renderPageToCanvas(curPage, frontCanvas, pageW, pageH)
     }
