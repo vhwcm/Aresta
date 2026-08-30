@@ -43,7 +43,7 @@ describe('useBookPageTurn Layout e Navegação', () => {
     setActivePinia(createPinia())
   })
 
-  it('posiciona a página 1 (Capa) centralizada/isolada no modo 2 páginas', () => {
+  it('posiciona a página 1 (Capa) à esquerda e a página 2 à direita no modo 2 páginas', () => {
     const store = useReaderStore()
     store.setTwoPageMode(true)
     store.setDocument({
@@ -65,12 +65,13 @@ describe('useBookPageTurn Layout e Navegação', () => {
     turn.updateLayout()
 
     expect(turn.pageLayout.value.isTwoPage).toBe(true)
-    expect(turn.pageLayout.value.leftPage).toBeNull()
+    expect(turn.pageLayout.value.leftPage).not.toBeNull()
+    expect(turn.pageLayout.value.leftPage?.pageNumber).toBe(1)
     expect(turn.pageLayout.value.rightPage).not.toBeNull()
-    expect(turn.pageLayout.value.rightPage?.pageNumber).toBe(1)
+    expect(turn.pageLayout.value.rightPage?.pageNumber).toBe(2)
   })
 
-  it('posiciona spread com página par à esquerda e ímpar à direita a partir da página 2', () => {
+  it('posiciona spread com página ímpar à esquerda e par à direita a partir da página 3', () => {
     const store = useReaderStore()
     store.setTwoPageMode(true)
     store.setDocument({
@@ -90,11 +91,11 @@ describe('useBookPageTurn Layout e Navegação', () => {
 
     const turn = useBookPageTurn(hostRef)
 
-    store.goToPage(2)
+    store.goToPage(3)
     turn.updateLayout()
 
     expect(turn.pageLayout.value.isTwoPage).toBe(true)
-    expect(turn.pageLayout.value.leftPage?.pageNumber).toBe(2)
-    expect(turn.pageLayout.value.rightPage?.pageNumber).toBe(3)
+    expect(turn.pageLayout.value.leftPage?.pageNumber).toBe(3)
+    expect(turn.pageLayout.value.rightPage?.pageNumber).toBe(4)
   })
 })

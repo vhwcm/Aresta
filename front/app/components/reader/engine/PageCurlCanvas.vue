@@ -318,23 +318,15 @@ const physics = usePagePhysics({
   onComplete: async (direction) => {
     if (direction === 'next') {
       if (pageLayout.value.isTwoPage) {
-        if (store.currentPage === 1) {
-          store.goToPage(Math.min(2, store.totalPages))
-        } else {
-          const curLeft = store.currentPage % 2 === 0 ? store.currentPage : store.currentPage - 1
-          store.goToPage(Math.min(store.totalPages, curLeft + 2))
-        }
+        const curLeft = store.currentPage % 2 !== 0 ? store.currentPage : store.currentPage - 1
+        store.goToPage(Math.min(store.totalPages, curLeft + 2))
       } else {
         store.goToPage(Math.min(store.totalPages, store.currentPage + 1))
       }
     } else {
       if (pageLayout.value.isTwoPage) {
-        if (store.currentPage <= 3) {
-          store.goToPage(1)
-        } else {
-          const curLeft = store.currentPage % 2 === 0 ? store.currentPage : store.currentPage - 1
-          store.goToPage(Math.max(1, curLeft - 2))
-        }
+        const curLeft = store.currentPage % 2 !== 0 ? store.currentPage : store.currentPage - 1
+        store.goToPage(Math.max(1, curLeft - 2))
       } else {
         store.goToPage(Math.max(1, store.currentPage - 1))
       }
@@ -371,12 +363,9 @@ const webglCanvasStyle = computed(() => {
   const visible = is3DActive.value
 
   if (layout.isTwoPage) {
-    const isCover = (store.currentPage === 1)
     const pageW = layout.rightPage?.width ?? layout.leftPage?.width ?? 400
     const pageH = layout.rightPage?.height ?? layout.leftPage?.height ?? 600
-    const leftEdge = isCover
-      ? ((layout.rightPage?.left ?? 0) - pageW)
-      : (layout.leftPage?.left ?? 0)
+    const leftEdge = layout.leftPage?.left ?? ((layout.rightPage?.left ?? 0) - pageW)
     const topEdge = layout.leftPage?.top ?? layout.rightPage?.top ?? 0
     const totalW = pageW * 2
     const totalH = pageH
@@ -565,20 +554,7 @@ async function renderCurrentSpread(pageOverride?: number) {
   const curPage = pageOverride ?? store.currentPage
 
   if (layout.isTwoPage) {
-    if (curPage === 1) {
-      if (layout.rightPage) {
-        await renderPageToElement(
-          1,
-          baseRightCanvasRef.value,
-          baseRightTextLayerRef.value,
-          layout.rightPage.width,
-          layout.rightPage.height,
-        )
-      }
-      return
-    }
-
-    const leftNum = curPage % 2 === 0 ? curPage : curPage - 1
+    const leftNum = curPage % 2 !== 0 ? curPage : curPage - 1
     const rightNum = leftNum + 1 <= store.totalPages ? leftNum + 1 : 0
 
     if (leftNum > 0 && layout.leftPage) {
@@ -625,16 +601,15 @@ async function prepare3DTextures(direction: PageTurnDirection, gripY = 0.5) {
   const backCanvas = getOrCreateOffscreenCanvas('back')
 
   if (layout.isTwoPage) {
-    const isCover = curPage === 1
-    const curLeft = isCover ? 0 : (curPage % 2 === 0 ? curPage : curPage - 1)
-    const curRight = isCover ? 1 : (curLeft + 1 <= total ? curLeft + 1 : 0)
+    const curLeft = curPage % 2 !== 0 ? curPage : curPage - 1
+    const curRight = curLeft + 1 <= total ? curLeft + 1 : 0
 
     const pageW = layout.rightPage?.width ?? layout.leftPage?.width ?? 400
     const pageH = layout.rightPage?.height ?? layout.leftPage?.height ?? 600
 
     if (direction === 'next') {
-      const nextLeft = isCover ? (total >= 2 ? 2 : 0) : (curRight + 1 <= total ? curRight + 1 : 0)
-      const nextRight = isCover ? (total >= 3 ? 3 : 0) : (nextLeft + 1 <= total ? nextLeft + 1 : 0)
+      const nextLeft = curLeft + 2 <= total ? curLeft + 2 : 0
+      const nextRight = curLeft + 3 <= total ? curLeft + 3 : 0
 
       // Frente da folha girando: Página Direita atual (curRight)
       if (baseRightCanvasRef.value && baseRightCanvasRef.value.width > 0 && store.document?.type === 'pdf') {
@@ -675,8 +650,8 @@ async function prepare3DTextures(direction: PageTurnDirection, gripY = 0.5) {
       }
     } else {
       // PREVIOUS
-      const prevLeft = curLeft <= 3 ? 0 : curLeft - 2
-      const prevRight = curLeft <= 3 ? 1 : prevLeft + 1
+      const prevLeft = curLeft - 2 >= 1 ? curLeft - 2 : 0
+      const prevRight = curLeft - 1 >= 1 ? curLeft - 1 : 0
 
       // Frente da folha girando: Página Esquerda atual (curLeft)
       if (baseLeftCanvasRef.value && baseLeftCanvasRef.value.width > 0 && store.document?.type === 'pdf') {
@@ -689,7 +664,7 @@ async function prepare3DTextures(direction: PageTurnDirection, gripY = 0.5) {
         await renderPageToCanvas(curLeft, frontCanvas, pageW, pageH)
       }
 
-      // Verso da folha girando: Página Direita Anterior (ou Capa se voltando para página 1)
+      // Verso da folha girando: Página Direita Anterior (prevRight)
       if (prevRight > 0) {
         await renderPageToCanvas(prevRight, backCanvas, pageW, pageH)
       }
@@ -853,23 +828,15 @@ async function requestTurn(direction: PageTurnDirection) {
   if (!pageAnimationEnabled.value) {
     if (direction === 'next') {
       if (pageLayout.value.isTwoPage) {
-        if (store.currentPage === 1) {
-          store.goToPage(Math.min(2, store.totalPages))
-        } else {
-          const curLeft = store.currentPage % 2 === 0 ? store.currentPage : store.currentPage - 1
-          store.goToPage(Math.min(store.totalPages, curLeft + 2))
-        }
+        const curLeft = store.currentPage % 2 !== 0 ? store.currentPage : store.currentPage - 1
+        store.goToPage(Math.min(store.totalPages, curLeft + 2))
       } else {
         store.nextPage()
       }
     } else {
       if (pageLayout.value.isTwoPage) {
-        if (store.currentPage <= 3) {
-          store.goToPage(1)
-        } else {
-          const curLeft = store.currentPage % 2 === 0 ? store.currentPage : store.currentPage - 1
-          store.goToPage(Math.max(1, curLeft - 2))
-        }
+        const curLeft = store.currentPage % 2 !== 0 ? store.currentPage : store.currentPage - 1
+        store.goToPage(Math.max(1, curLeft - 2))
       } else {
         store.prevPage()
       }

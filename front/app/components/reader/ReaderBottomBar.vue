@@ -561,16 +561,20 @@ const appearanceWrapperRef = ref<HTMLElement | null>(null)
 
 const pageDisplay = computed(() => {
   if (store.isTwoPageMode && store.totalPages > 1) {
-    const second = Math.min(store.currentPage + 1, store.totalPages)
-    return `${store.currentPage}-${second}/${store.totalPages}`
+    const leftNum = store.currentPage % 2 !== 0 ? store.currentPage : Math.max(1, store.currentPage - 1)
+    const rightNum = Math.min(leftNum + 1, store.totalPages)
+    return leftNum === rightNum
+      ? `${leftNum}/${store.totalPages}`
+      : `${leftNum}-${rightNum}/${store.totalPages}`
   }
   return `${store.currentPage}/${store.totalPages}`
 })
 
 const pageDisplayShort = computed(() => {
   if (store.isTwoPageMode && store.totalPages > 1) {
-    const second = Math.min(store.currentPage + 1, store.totalPages)
-    return `${store.currentPage}-${second}`
+    const leftNum = store.currentPage % 2 !== 0 ? store.currentPage : Math.max(1, store.currentPage - 1)
+    const rightNum = Math.min(leftNum + 1, store.totalPages)
+    return leftNum === rightNum ? `${leftNum}` : `${leftNum}-${rightNum}`
   }
   return `${store.currentPage}/${store.totalPages}`
 })

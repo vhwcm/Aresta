@@ -336,11 +336,11 @@ function getTargetPageFromSelection(selection: Selection): number {
     : selection.anchorNode.parentElement
   const pageLayer = element?.closest('.page-text-layer')
   if (pageLayer && pageLayer.classList.contains('page-text-layer--right')) {
-    const leftNum = store.currentPage % 2 === 0 ? store.currentPage : Math.max(1, store.currentPage - 1)
+    const leftNum = store.currentPage % 2 !== 0 ? store.currentPage : Math.max(1, store.currentPage - 1)
     const rightNum = leftNum + 1
     return rightNum <= store.totalPages ? rightNum : store.currentPage
   } else if (pageLayer && pageLayer.classList.contains('page-text-layer--left')) {
-    const leftNum = store.currentPage % 2 === 0 ? store.currentPage : Math.max(1, store.currentPage - 1)
+    const leftNum = store.currentPage % 2 !== 0 ? store.currentPage : Math.max(1, store.currentPage - 1)
     return leftNum
   }
   return store.currentPage
