@@ -50,7 +50,9 @@
         "decisions/ADR-002-sqlite-prisma-orm",
         "decisions/ADR-003-reader-adapter-pattern",
         "decisions/ADR-004-ascii-diagram-standard",
-        "decisions/ADR-005-spec-driven-development"
+        "decisions/ADR-005-spec-driven-development",
+        "decisions/ADR-006-global-themes-and-ai-graph",
+        "decisions/ADR-007-hybrid-sync-storage"
       ]
     },
     {

@@ -1,0 +1,54 @@
+================================================================================
+           ARESTA: FLUXO DE SINCRONIZAÇÃO HÍBRIDA (DADOS VS BINÁRIOS)
+================================================================================
+
+  "Dados no Aresta, Binários no Usuário"
+
+  ┌────────────────────────────────────────────────────────────────────────────┐
+  │                           DISPOSITIVO CLIENTE                              │
+  │                    (Desktop Tauri / Web PWA / Mobile)                      │
+  │                                                                            │
+  │   ┌──────────────┐       ┌────────────────┐       ┌────────────────────┐   │
+  │   │  SQLite/IDB  │       │   OPFS / FS    │       │    Sync Engine     │   │
+  │   │ (metadados)  │       │  (binários)    │       │  (mutation_queue)  │   │
+  │   └──────┬───────┘       └───────┬────────┘       └─────────┬──────────┘   │
+  │          │                       │                          │              │
+  └──────────┼───────────────────────┼──────────────────────────┼──────────────┘
+             │                       │                          │
+             │                  ┌────▼────────────────┐         │
+             │                  │   Google Drive API  │         │
+             │                  │ (apenas EPUBs/PDFs) │         │
+             │                  │  - AppDataFolder    │         │
+             │                  └─────────────────────┘         │
+             │                                                  │
+             └──────────────────────────────────────────────────►
+                         POST /api/sync (deltas JSON)
+                         ┌─────────────────────────────┐
+                         │   Backend Node.js Express   │
+                         │   - JWT Auth & RBAC         │
+                         │   - Sync de Metadados (LWW) │
+                         │   - IA (OCR, Gemini)        │
+                         └──────────────┬──────────────┘
+                                        │
+                         ┌──────────────▼──────────────┐
+                         │      PostgreSQL Central     │
+                         │  (sem storage de binários)  │
+                         │  - Notas, Grifos, Progresso │
+                         │  - Flashcards, Streaks      │
+                         │  - Grafo e Nós              │
+                         └─────────────────────────────┘
+
+================================================================================
+                      DISTRIBUIÇÃO DE RESPONSABILIDADE
+================================================================================
+
+  Dado                     │ Destino                     │ Motivo
+  ─────────────────────────┼─────────────────────────────┼──────────────────────
+  EPUBs / PDFs             │ Google Drive (AppDataFolder)│ Grandes, custo zero
+  Capas                    │ Google Drive (AppDataFolder)│ Binários estáticos
+  Anotações / Highlights   │ Backend Aresta (/api/sync)  │ Resolução LWW, CFI
+  Flashcards / SRS         │ Backend Aresta (/api/sync)  │ Algoritmo SM-2 exato
+  Streaks / Ofensivas      │ Backend Aresta (/api/sync)  │ Fuso-horário e dias
+  Graph nodes / edges      │ Backend Aresta (/api/sync)  │ Relacionamento grafo
+  Progresso de leitura     │ Backend Aresta (/api/sync)  │ Range CFI e timestamp
+================================================================================

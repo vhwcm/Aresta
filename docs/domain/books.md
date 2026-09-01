@@ -40,6 +40,9 @@ model Book {
    - Livros na estante do usuário (`UserBook`) podem ser associados a múltiplos nós do Grafo de Conhecimento (`Theme`).
    - Os endpoints `PUT /api/user-books/:id/themes`, `POST /api/user-books/:id/themes` e `DELETE /api/user-books/:id/themes/:themeId` gerenciam esses vínculos.
    - Na interface de estante (`/library`), as tags de temas são exibidas com as cores configuradas nos nós e permitem filtragem instantânea combinada com o status de leitura.
+5. **Estratégia de Sincronização Híbrida (ADR-007)**:
+   - Para usuários com múltiplos dispositivos, os metadados (posição, destaques, notas) são sincronizados via `/api/sync` com o PostgreSQL central.
+   - Os arquivos binários (`.epub` e `.pdf`) são sincronizados diretamente com o Google Drive privado do usuário (`AppDataFolder`), com cache local em OPFS/FS. Ver `docs/decisions/ADR-007-hybrid-sync-storage.md`.
 
 ---
 
