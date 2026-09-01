@@ -1,0 +1,158 @@
+# Orquestração raiz — sobe todo o ecossistema Aresta em desenvolvimento
+# Rode a partir de qualquer pasta pai que tenha acesso a ../aresta-*
+#
+# Portas:
+#   aresta-auth:   3001  (auth-db:    5431)
+#   aresta-ai:     3002  (sem banco)
+#   aresta-reader: 3003  (reader-db:  5433)
+#   aresta-canvas: 3004  (SQLite — sem container de banco)
+#   aresta-memory: 3005  (memory-db:  5435 pgvector)
+#
+# Frontends em dev:
+#   aresta-reader front: npm run dev --prefix ../aresta-reader/front  (3010)
+#   aresta-canvas front: npm run dev --prefix ../aresta-canvas/front  (3011)
+
+services:
+  # ── aresta-auth ──────────────────────────────────────────────
+  auth-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: aresta_auth_db
+      POSTGRES_USER: aresta
+      POSTGRES_PASSWORD: "${DB_PASSWORD:-password}"
+    ports:
+      - "5431:5432"
+    volumes:
+      - auth-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aresta -d aresta_auth_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  aresta-auth:
+    build: ../aresta-auth
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://aresta:${DB_PASSWORD:-password}@auth-db:5432/aresta_auth_db
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+    depends_on:
+      auth-db:
+        condition: service_healthy
+
+  # ── aresta-ai (stateless, sem banco) ─────────────────────────
+  aresta-ai:
+    build: ../aresta-ai
+    ports:
+      - "3002:3002"
+    environment:
+      NODE_ENV: production
+      GEMINI_API_KEY: "${GEMINI_API_KEY}"
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-1.5-flash}
+      GEMINI_EMBED_MODEL: ${GEMINI_EMBED_MODEL:-text-embedding-004}
+
+  # ── aresta-reader ─────────────────────────────────────────────
+  reader-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: aresta_reader_db
+      POSTGRES_USER: aresta
+      POSTGRES_PASSWORD: "${DB_PASSWORD:-password}"
+    ports:
+      - "5433:5432"
+    volumes:
+      - reader-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aresta -d aresta_reader_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  aresta-reader:
+    build: ../aresta-reader/backend
+    ports:
+      - "3003:3003"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://aresta:${DB_PASSWORD:-password}@reader-db:5432/aresta_reader_db
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      AUTH_SERVICE_URL: http://aresta-auth:3001
+      MEMORY_SERVICE_URL: http://aresta-memory:3005
+      AI_SERVICE_URL: http://aresta-ai:3002
+      STORAGE_PATH: /app/storage
+    volumes:
+      - reader-storage:/app/storage
+    depends_on:
+      reader-db:
+        condition: service_healthy
+      aresta-auth:
+        condition: service_started
+      aresta-memory:
+        condition: service_started
+      aresta-ai:
+        condition: service_started
+
+  # ── aresta-canvas (SQLite — SEM container de banco) ───────────
+  aresta-canvas:
+    build: ../aresta-canvas/backend
+    ports:
+      - "3004:3004"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: "file:/app/data/aresta_canvas.db"
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      AUTH_SERVICE_URL: http://aresta-auth:3001
+      MEMORY_SERVICE_URL: http://aresta-memory:3005
+      AI_SERVICE_URL: http://aresta-ai:3002
+    volumes:
+      - canvas-data:/app/data
+    depends_on:
+      aresta-auth:
+        condition: service_started
+      aresta-memory:
+        condition: service_started
+      aresta-ai:
+        condition: service_started
+
+  # ── aresta-memory (PostgreSQL 16 + pgvector) ──────────────────
+  memory-db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: aresta_memory_db
+      POSTGRES_USER: aresta
+      POSTGRES_PASSWORD: "${DB_PASSWORD:-password}"
+    ports:
+      - "5435:5432"
+    volumes:
+      - memory-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aresta -d aresta_memory_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  aresta-memory:
+    build: ../aresta-memory
+    ports:
+      - "3005:3005"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://aresta:${DB_PASSWORD:-password}@memory-db:5432/aresta_memory_db
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      AI_SERVICE_URL: http://aresta-ai:3002
+    depends_on:
+      memory-db:
+        condition: service_healthy
+      aresta-ai:
+        condition: service_started
+
+volumes:
+  auth-db-data:
+  reader-db-data:
+  canvas-data:
+  memory-db-data:
+  reader-storage:
