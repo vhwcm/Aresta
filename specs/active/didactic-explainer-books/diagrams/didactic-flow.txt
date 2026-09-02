@@ -1,0 +1,56 @@
+====================================================================================================
+ARESTA DIDACTIC EXPLAINER BOOKLETS & STRATEGY ADAPTER FLOW
+Fluxo Completo de Geração, Composição Restrita (Livreto em Livreto) e Leitura com Anotações
+====================================================================================================
+
+                     [ Ponto de Entrada / Solicitação ]
+                                     │
+           ┌─────────────────────────┴─────────────────────────┐
+           │                                                   │
+           ▼                                                   ▼
+[ Modo 1: Criar Novo Livreto ]                     [ Modo 2: Appendar em Livreto Existente ]
+(Livro autônomo na biblioteca)                     (Anexa novo capítulo sequencial)
+           │                                                   │
+           └─────────────────────────┬─────────────────────────┘
+                                     │
+                                     ▼
+        ┌─────────────────────────────────────────────────────────┐
+        │      Backend: DidacticBookletService & Validação        │
+        │   Se Modo 2:                                            │
+        │   ┌─────────────────────────────────────────────────┐   │
+        │   │ REGRA: targetBook.format_type === 'DIDACTIC'    │   │
+        │   │ E targetBook.is_ai_generated === true ?         │   │
+        │   └───────────────┬─────────────────┬───────────────┘   │
+        │                  SIM               NÃO                  │
+        │                   │                 │                   │
+        │                   │                 ▼                   │
+        │                   │        [ ERRO 422: REJEITADO ]      │
+        │                   │        CANNOT_APPEND_TO_NON_BOOKLET │
+        │                   ▼                                     │
+        │   1. Executa Prompt Pedagógico com Gemini AI            │
+        │   2. Gera Markdown com Diagramas Mermaid e Callouts     │
+        │   3. Salva/Atualiza `didactic_booklets` e `chapters`    │
+        │   4. Atualiza registro em `books` e `user_books`        │
+        └───────────────────────────┬─────────────────────────────┘
+                                    │
+                                    │ Retorna bookId
+                                    ▼
+        ┌─────────────────────────────────────────────────────────┐
+        │           Leitor Aresta (/reader/:bookId)               │
+        │      BookDocumentFactory.createBookDocument()           │
+        └───────────────────────────┬─────────────────────────────┘
+                                    │
+                                    ▼
+        ┌─────────────────────────────────────────────────────────┐
+        │       Strategy Pattern: DidacticDocumentAdapter         │
+        │   - Implementa interface IBookDocument                  │
+        │   - Paginação Dinâmica Responsiva (Mobile & Desktop)    │
+        │   - Virada de Páginas 2D CSS e 3D Three.js Page Curl    │
+        │   - Vinco Central e Efeito de Livro Físico              │
+        │   - Renderização Reativa Mermaid.js (SVG adaptável)     │
+        ├─────────────────────────────────────────────────────────┤
+        │   SISTEMA INTEGRAL DE ANOTAÇÕES & GRIFOS:               │
+        │   - renderTextLayer() com spans posicionados            │
+        │   - Âncoras Canônicas: didactic://c1/p2#b3:10-45        │
+        │   - Destaques coloridos e criação de Flashcards RAG     │
+        └─────────────────────────────────────────────────────────┘

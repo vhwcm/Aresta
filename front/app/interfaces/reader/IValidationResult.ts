@@ -1,5 +1,5 @@
-export type SupportedMimeType = 'application/pdf' | 'application/epub+zip'
-export type SupportedFileType = 'pdf' | 'epub'
+export type SupportedMimeType = 'application/pdf' | 'application/epub+zip' | 'application/json'
+export type SupportedFileType = 'pdf' | 'epub' | 'didactic'
 
 export interface ValidationSuccess {
   valid: true

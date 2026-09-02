@@ -11,6 +11,7 @@ const BYTE_SIGNATURES: Record<SupportedFileType, Uint8Array[]> = {
     new Uint8Array([0x50, 0x4b, 0x05, 0x06]),
     new Uint8Array([0x50, 0x4b, 0x07, 0x08]),
   ],
+  didactic: [],
 }
 
 const MIME_TYPE_MAP: Record<string, SupportedFileType> = {

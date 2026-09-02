@@ -1,0 +1,4 @@
+Vamos melhorar bastante o módulo de anotações. a notação vai ser com base em composite. Onde teremos Notas com suporte a markdown e o canvas, tal como o obsidian. só que a diferença é que podemos colocar um canvas dentro da anotação da nota padrão. permitindo que a gente interaja com o canvas no preview já, ou abra o canvas mesmo. o canvas vai ter que permitir a gente colocar notas também. vamos ter que achar um jeito de não renderizar de mais para não ficar muito pesado. temos que evitar ciclos: nota -> canvas -> mesma nota -> mesmo canvas ....
+A gente vai ter que poder anexar livros também, do outro sistema. vai aparecer a capa. quando a gente clicar, vamos ser redirecionados para a leitura do livro. 
+
+/grill-me

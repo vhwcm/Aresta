@@ -1,0 +1,5 @@
+Vamos adicionar algumas coisas no módulo de flashcard/Anotações. Quero que tenha uma IA que seja especializada 
+em explicar/ensinar de forma de didática. O principio vai ser que ela tenha um préprompt explicando como ela deve
+explicar. E ela vai gerar um artigo explicando. Esse artigo tem que ser formatado em markdown ou um formato próprio que o nosso próprio sistema vai renderizar.
+Eu gostaria que ele não se poupasse em diagramas explicativos e coloridos, com bons icones de repressantação. acho que md não tem suporte a isso. talvez pensar em modelo que já exista que permita essas coisas.
+é de extrema importancia que seja bom de ler no celular. o output da IA vai ter que ser divido em páginas. Para ficar mais consistente visualmente e para pessoa ter a opção de fazer dessa explicação um livro, ou anexar em um livro desses. 

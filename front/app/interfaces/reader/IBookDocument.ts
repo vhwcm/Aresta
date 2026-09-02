@@ -22,7 +22,7 @@ export interface BookMetadata {
 }
 
 export interface IBookDocument {
-  readonly type: 'pdf' | 'epub'
+  readonly type: 'pdf' | 'epub' | 'didactic'
   readonly metadata: BookMetadata
   readonly totalPages: number
   readonly isLoaded: boolean
