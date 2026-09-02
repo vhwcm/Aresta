@@ -19,7 +19,10 @@ export const ROUTES = {
   CONVERT: '/api/convert',
   FLASHCARDS: '/api/flashcards',
   FLASHCARDS_V1: '/api/v1/flashcards',
+  DIDACTIC: '/api/didactic',
+  DIDACTIC_V1: '/api/v1/didactic',
   CANVASES: '/api/canvases',
+  NOTES: '/api/notes',
   SYNC: '/api/sync',
 
   // Rotas de arquivos estáticos

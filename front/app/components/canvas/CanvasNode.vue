@@ -30,6 +30,12 @@
       :is-selected="isSelected"
     />
 
+    <CanvasNodeNote
+      v-else-if="node.type === 'note_embed'"
+      :node="node"
+      :is-selected="isSelected"
+    />
+
     <!-- 4 Connection Anchors (Obsidian Style: Top, Right, Bottom, Left) -->
     <div
       v-for="side in anchorSides"
@@ -112,6 +118,7 @@ import type { CanvasNode, CanvasSide } from '~/interfaces/canvas';
 import CanvasNodeText from './CanvasNodeText.vue';
 import CanvasNodeShape from './CanvasNodeShape.vue';
 import CanvasNodeBook from './CanvasNodeBook.vue';
+import CanvasNodeNote from './CanvasNodeNote.vue';
 
 const props = defineProps<{
   node: CanvasNode;

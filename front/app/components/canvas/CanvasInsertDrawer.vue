@@ -29,10 +29,17 @@
       </button>
       <button
         class="flex-1 py-2.5 text-xs font-semibold border-b-2 transition-colors text-center"
+        :class="activeTab === 'notes' ? 'border-primary text-primary' : 'border-transparent text-textSecondary hover:text-textPrimary'"
+        @click="activeTab = 'notes'"
+      >
+        Notas
+      </button>
+      <button
+        class="flex-1 py-2.5 text-xs font-semibold border-b-2 transition-colors text-center"
         :class="activeTab === 'quotes' ? 'border-primary text-primary' : 'border-transparent text-textSecondary hover:text-textPrimary'"
         @click="activeTab = 'quotes'"
       >
-        Anotações & Citações
+        Citações
       </button>
     </div>
 
@@ -99,6 +106,35 @@
         </div>
       </template>
 
+      <!-- Notes Tab -->
+      <template v-else-if="activeTab === 'notes'">
+        <div
+          v-for="note in filteredNotes"
+          :key="note.id"
+          class="flex items-center gap-3 p-2.5 rounded-xl border border-divider hover:border-primary/50 bg-bgSurface hover:bg-bgElevated cursor-pointer transition-all group"
+          @click="$emit('insert-note', note)"
+        >
+          <div class="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-sm flex-shrink-0">
+            📝
+          </div>
+          <div class="flex-1 min-w-0">
+            <h4 class="text-xs font-medium text-textPrimary line-clamp-1 group-hover:text-primary transition-colors">
+              {{ note.title }}
+            </h4>
+            <span v-if="note.folder" class="text-[10px] text-textSecondary uppercase tracking-wider line-clamp-1">
+              📁 {{ note.folder }}
+            </span>
+          </div>
+          <button class="p-1 rounded bg-primary/10 text-primary opacity-0 group-hover:opacity-100 transition-opacity text-xs">
+            + Inserir
+          </button>
+        </div>
+
+        <div v-if="filteredNotes.length === 0" class="text-center py-8 text-xs text-textSecondary">
+          Nenhuma nota encontrada.
+        </div>
+      </template>
+
       <!-- Quotes Tab -->
       <template v-else>
         <div
@@ -131,21 +167,24 @@
 import { ref, computed, onMounted } from 'vue';
 import { useUserBooks } from '~/composables/useUserBooks';
 import { useAnnotations } from '~/composables/useAnnotations';
+import { useNotes } from '~/composables/useNotes';
 
 defineEmits<{
   (e: 'close'): void;
   (e: 'insert-book', book: any): void;
+  (e: 'insert-note', note: any): void;
   (e: 'insert-annotation', annotation: any): void;
 }>();
 
-const activeTab = ref<'books' | 'quotes'>('books');
+const activeTab = ref<'books' | 'notes' | 'quotes'>('books');
 const searchQuery = ref('');
 
 const { userBooks, fetchUserBooks } = useUserBooks();
 const { annotations, fetchAnnotations } = useAnnotations();
+const { notesList, fetchNotes } = useNotes();
 
 onMounted(async () => {
-  await Promise.all([fetchUserBooks(), fetchAnnotations()]);
+  await Promise.all([fetchUserBooks(), fetchNotes(), fetchAnnotations()]);
 });
 
 const getCoverUrl = (path: string) => {
@@ -158,6 +197,17 @@ const filteredBooks = computed(() => {
   if (!searchQuery.value) return userBooks.value;
   const q = searchQuery.value.toLowerCase();
   return userBooks.value.filter((b) => b.title?.toLowerCase().includes(q));
+});
+
+const filteredNotes = computed(() => {
+  if (!searchQuery.value) return notesList.value;
+  const q = searchQuery.value.toLowerCase();
+  return notesList.value.filter(
+    (n) =>
+      n.title?.toLowerCase().includes(q) ||
+      n.content?.toLowerCase().includes(q) ||
+      n.folder?.toLowerCase().includes(q)
+  );
 });
 
 const filteredAnnotations = computed(() => {

@@ -32,6 +32,14 @@
           <p v-if="node.bookAuthor" class="text-xs text-textSecondary line-clamp-1 mt-0.5">
             {{ node.bookAuthor }}
           </p>
+
+          <!-- Progresso -->
+          <div v-if="typeof node.bookProgress === 'number' && node.bookProgress > 0" class="mt-1.5 flex items-center gap-1.5">
+            <div class="flex-1 h-1.5 bg-bgElevated rounded-full overflow-hidden border border-divider">
+              <div class="h-full bg-primary rounded-full transition-all" :style="{ width: `${Math.min(100, Math.max(0, node.bookProgress))}%` }" />
+            </div>
+            <span class="text-[10px] font-mono text-textSecondary">{{ Math.round(node.bookProgress) }}%</span>
+          </div>
         </div>
 
         <NuxtLink

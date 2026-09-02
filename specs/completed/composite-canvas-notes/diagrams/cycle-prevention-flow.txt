@@ -1,0 +1,55 @@
+====================================================================================================
+                        ALGORITMO DE DETECÇÃO DE CICLOS E LIMITE DE PROFUNDIDADE
+====================================================================================================
+
+      Cenário de Risco:
+      [Nota A] ──(contém)──> [Canvas B] ──(contém)──> [Nota A] ──(contém)──> [Canvas B] ... (LOOP INFINITO)
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                      FLUXO DE DECISÃO DO RENDERIZADOR
+────────────────────────────────────────────────────────────────────────────────────────────────────
+
+                                   ┌─────────────────────────┐
+                                   │ Renderizar Elemento     │
+                                   │ (Type: Note | Canvas,   │
+                                   │  Id: "UUID-123")        │
+                                   └────────────┬────────────┘
+                                                │
+                                                ▼
+                                   ┌─────────────────────────┐
+                                   │ Obter ancestorStack     │
+                                   │ do Contexto Atual       │
+                                   └────────────┬────────────┘
+                                                │
+                                                ▼
+                                    /───────────────────────\
+                                   /  Profundidade atual     \   SIM
+                                  <   >= MAX_DEPTH (ex: 3)?   >───────────┐
+                                   \                         /            │
+                                    \───────────────────────/             │
+                                                │ NÃO                     │
+                                                ▼                         ▼
+                                    /───────────────────────\  ┌─────────────────────────┐
+                                   /  (type, id) já existe   \ │ RENDERIZAR FALLBACK:    │
+                                  <   em ancestorStack?       >│ "Profundidade Máxima    │
+                                   \                         / │  Atingida"              │
+                                    \───────────────────────/  │ [Botão Abrir em Janela] │
+                                                │              └─────────────────────────┘
+                                       SIM      │      NÃO
+                    ┌───────────────────────────┘       │
+                    │                                   │
+                    ▼                                   ▼
+      ┌──────────────────────────┐        ┌──────────────────────────┐
+      │ RENDERIZAR PLACEHOLDER:  │        │ Adicionar (type, id) ao  │
+      │ ⚠️ Referência Cíclica    │        │ ancestorStack e          │
+      │ Prevenida                │        │ incrementar depth        │
+      │ "Loop detectado com      │        └─────────────┬────────────┘
+      │  entidade UUID-123"      │                      │
+      │ [Botão Visualizar Grafo] │                      ▼
+      └──────────────────────────┘        ┌──────────────────────────┐
+                                          │ Renderizar Componente    │
+                                          │ (NoteRenderer /          │
+                                          │  CanvasEmbedPreview)     │
+                                          └──────────────────────────┘
+
+====================================================================================================

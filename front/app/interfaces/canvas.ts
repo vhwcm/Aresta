@@ -2,7 +2,7 @@ export type CanvasSide = 'top' | 'right' | 'bottom' | 'left';
 
 export type CanvasShapeType = 'rectangle' | 'rounded' | 'ellipse' | 'diamond' | 'triangle';
 
-export type CanvasNodeType = 'text' | 'shape' | 'loose_text' | 'book' | 'highlight';
+export type CanvasNodeType = 'text' | 'shape' | 'loose_text' | 'book' | 'highlight' | 'note_embed';
 
 export interface CanvasNode {
   id: string;
@@ -18,8 +18,12 @@ export interface CanvasNode {
   bookTitle?: string;
   bookAuthor?: string;
   bookCover?: string;
+  bookProgress?: number;
   quote?: string;
   chapter?: string;
+  noteId?: string;
+  noteTitle?: string;
+  noteContent?: string;
 }
 
 export interface CanvasEdge {

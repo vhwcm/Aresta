@@ -28,21 +28,26 @@ model User {
   flashcards          Flashcard[]
   dailyDeckCards      DailyDeckCard[]
   canvases            Canvas[]
+  notes               Note[]
+  didacticBooklets    DidacticBooklet[]
 
   @@map("users")
 }
 
 model Book {
-  id          Int             @id @default(autoincrement())
-  title       String
-  file_path   String
-  cover_path  String?
-  created_at  DateTime        @default(now())
-  publicInfo  BookPublicInfo?
-  userBooks   UserBook[]
-  bookThemes  BookTheme[]
-  annotations Annotation[]
-  flashcards  Flashcard[]
+  id              Int             @id @default(autoincrement())
+  title           String
+  file_path       String
+  cover_path      String?
+  format_type     String          @default("EPUB") // "EPUB" | "PDF" | "DIDACTIC"
+  is_ai_generated Boolean         @default(false)
+  created_at      DateTime        @default(now())
+  publicInfo      BookPublicInfo?
+  userBooks       UserBook[]
+  bookThemes      BookTheme[]
+  annotations     Annotation[]
+  flashcards      Flashcard[]
+  didacticBooklet DidacticBooklet?
 
   @@map("books")
 }
@@ -76,16 +81,17 @@ model UserBook {
 }
 
 model Theme {
-  id                Int               @id @default(autoincrement())
-  name              String            @unique
-  color             String?           @default("#E57B55")
+  id                Int                      @id @default(autoincrement())
+  name              String                   @unique
+  color             String?                  @default("#E57B55")
   description       String?
   embedding         String?
-  created_at        DateTime          @default(now())
-  parentHierarchies ThemeHierarchy[]  @relation("ParentTheme")
-  childHierarchies  ThemeHierarchy[]  @relation("ChildTheme")
+  created_at        DateTime                 @default(now())
+  parentHierarchies ThemeHierarchy[]         @relation("ParentTheme")
+  childHierarchies  ThemeHierarchy[]         @relation("ChildTheme")
   bookThemes        BookTheme[]
   annotationThemes  AnnotationTheme[]
+  didacticChapters  DidacticBookletChapter[]
 
   @@map("themes")
 }
@@ -115,21 +121,22 @@ model BookTheme {
 }
 
 model Annotation {
-  id               Int               @id @default(autoincrement())
+  id               Int                      @id @default(autoincrement())
   user_id          Int
   book_id          Int
   cfi              String?
   selected_text    String?
   note             String?
   chapter_title    String?
-  progress         Float?            @default(0.0)
-  embedding        String?           // JSON array string com vetor float[]
-  created_at       DateTime          @default(now())
-  updated_at       DateTime          @default(now()) @updatedAt
-  user             User              @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  book             Book              @relation(fields: [book_id], references: [id], onDelete: Cascade)
+  progress         Float?                   @default(0.0)
+  embedding        String?                  // JSON array string com vetor float[]
+  created_at       DateTime                 @default(now())
+  updated_at       DateTime                 @default(now()) @updatedAt
+  user             User                     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  book             Book                     @relation(fields: [book_id], references: [id], onDelete: Cascade)
   annotationThemes AnnotationTheme[]
   flashcard        Flashcard?
+  didacticChapters DidacticBookletChapter[]
 
   @@index([user_id, book_id])
   @@map("annotations")
@@ -148,26 +155,27 @@ model AnnotationTheme {
 }
 
 model Flashcard {
-  id                Int             @id @default(autoincrement())
+  id                Int                      @id @default(autoincrement())
   user_id           Int
-  annotation_id     Int             @unique
+  annotation_id     Int                      @unique
   book_id           Int
-  card_type         String          @default("CONCEPT_RECALL") // REAL_SITUATION | CONCEPT_RECALL | CONCEPT_UNION
+  card_type         String                   @default("CONCEPT_RECALL") // REAL_SITUATION | CONCEPT_RECALL | CONCEPT_UNION
   question          String
   answer            String
   context_summary   String?
-  repetition_level  Int             @default(1)
-  next_review_at    DateTime        @default(now())
+  repetition_level  Int                      @default(1)
+  next_review_at    DateTime                 @default(now())
   last_reviewed_at  DateTime?
-  review_count      Int             @default(0)
-  difficulty        Float           @default(2.5)
-  created_at        DateTime        @default(now())
-  updated_at        DateTime        @default(now()) @updatedAt
+  review_count      Int                      @default(0)
+  difficulty        Float                    @default(2.5)
+  created_at        DateTime                 @default(now())
+  updated_at        DateTime                 @default(now()) @updatedAt
 
-  user              User            @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  annotation        Annotation      @relation(fields: [annotation_id], references: [id], onDelete: Cascade)
-  book              Book            @relation(fields: [book_id], references: [id], onDelete: Cascade)
+  user              User                     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  annotation        Annotation               @relation(fields: [annotation_id], references: [id], onDelete: Cascade)
+  book              Book                     @relation(fields: [book_id], references: [id], onDelete: Cascade)
   dailyDeckCards    DailyDeckCard[]
+  didacticChapters  DidacticBookletChapter[]
 
   @@index([user_id, next_review_at])
   @@map("flashcards")
@@ -248,3 +256,74 @@ model Canvas {
   @@index([user_id, updated_at])
   @@map("canvases")
 }
+
+model Note {
+  id          String     @id @default(uuid())
+  user_id     Int
+  title       String     @default("Nota sem título")
+  content     String     @default("")
+  folder      String?
+  tags        String[]
+  created_at  DateTime   @default(now())
+  updated_at  DateTime   @default(now()) @updatedAt
+
+  user        User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  noteLinks   NoteLink[] @relation("SourceNote")
+
+  @@index([user_id, updated_at])
+  @@map("notes")
+}
+
+model NoteLink {
+  id             Int      @id @default(autoincrement())
+  source_note_id String
+  target_type    String   // 'NOTE' | 'CANVAS' | 'BOOK'
+  target_id      String   // UUID de Note/Canvas ou ID numérico de Livro
+  created_at     DateTime @default(now())
+
+  sourceNote     Note     @relation("SourceNote", fields: [source_note_id], references: [id], onDelete: Cascade)
+
+  @@index([source_note_id, target_type, target_id])
+  @@map("note_links")
+}
+
+model DidacticBooklet {
+  id          String                   @id @default(uuid())
+  user_id     Int
+  book_id     Int                      @unique
+  title       String
+  description String?
+  created_at  DateTime                 @default(now())
+  updated_at  DateTime                 @default(now()) @updatedAt
+
+  user        User                     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  book        Book                     @relation(fields: [book_id], references: [id], onDelete: Cascade)
+  chapters    DidacticBookletChapter[]
+
+  @@index([user_id, updated_at])
+  @@map("didactic_booklets")
+}
+
+model DidacticBookletChapter {
+  id            String          @id @default(uuid())
+  booklet_id    String
+  order_index   Int
+  title         String
+  topic         String
+  raw_markdown  String
+  flashcard_id  Int?
+  annotation_id Int?
+  theme_id      Int?
+  diagram_count Int             @default(0)
+  created_at    DateTime        @default(now())
+
+  booklet       DidacticBooklet @relation(fields: [booklet_id], references: [id], onDelete: Cascade)
+  flashcard     Flashcard?      @relation(fields: [flashcard_id], references: [id], onDelete: SetNull)
+  annotation    Annotation?     @relation(fields: [annotation_id], references: [id], onDelete: SetNull)
+  theme         Theme?          @relation(fields: [theme_id], references: [id], onDelete: SetNull)
+
+  @@unique([booklet_id, order_index])
+  @@map("didactic_booklet_chapters")
+}
+
+

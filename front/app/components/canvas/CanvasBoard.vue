@@ -105,11 +105,12 @@
       @export="exportAsJsonCanvas"
     />
 
-    <!-- Insert Books & Quotes Drawer -->
+    <!-- Insert Books, Notes & Quotes Drawer -->
     <CanvasInsertDrawer
       v-if="showInsertDrawer"
       @close="showInsertDrawer = false"
       @insert-book="handleInsertBook"
+      @insert-note="handleInsertNote"
       @insert-annotation="handleInsertAnnotation"
     />
   </div>
@@ -505,6 +506,24 @@ const handleInsertAnnotation = (annotation: any) => {
     height: 160,
     text: `> "${annotation.selectedText || ''}"\n\n${annotation.note || ''}`,
     color: '#10B981',
+  };
+  addNode(newNode);
+  showInsertDrawer.value = false;
+};
+
+const handleInsertNote = (note: any) => {
+  const centerCoords = screenToCanvas(centerScreen.value.x, centerScreen.value.y);
+  const newNode: CanvasNode = {
+    id: `node-${Date.now()}`,
+    type: 'note_embed',
+    x: Math.round(centerCoords.x - 140),
+    y: Math.round(centerCoords.y - 100),
+    width: 300,
+    height: 200,
+    noteId: note.id,
+    noteTitle: note.title,
+    noteContent: note.content,
+    color: '#8B5CF6',
   };
   addNode(newNode);
   showInsertDrawer.value = false;
