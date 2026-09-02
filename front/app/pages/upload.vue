@@ -109,12 +109,13 @@ import { UploadIcon, BookOpenIcon, AlertTriangleIcon, FileCheckIcon } from 'luci
 import { useRouter } from 'vue-router'
 import { useReaderStore } from '~/stores/readerStore'
 import { createBookDocument } from '~/adapters/BookDocumentFactory'
+import type { SupportedFileType } from '~/interfaces/reader/IValidationResult'
 import { isProductionMode, logError } from '~/utils/logger'
 
 const store = useReaderStore()
 const router = useRouter()
 
-async function onFileValidated({ file, type }: { file: File; type: 'pdf' | 'epub' }) {
+async function onFileValidated({ file, type }: { file: File; type: SupportedFileType }) {
   store.setLoading(true)
 
   try {

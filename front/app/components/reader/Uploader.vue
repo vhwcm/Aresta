@@ -21,11 +21,12 @@
 <script setup lang="ts">
 import { useReaderStore } from '~/stores/readerStore'
 import { createBookDocument } from '~/adapters/BookDocumentFactory'
+import type { SupportedFileType } from '~/interfaces/reader/IValidationResult'
 import { isProductionMode, logError } from '~/utils/logger'
 
 const store = useReaderStore()
 
-async function onFileValidated({ file, type }: { file: File; type: 'pdf' | 'epub' }) {
+async function onFileValidated({ file, type }: { file: File; type: SupportedFileType }) {
   store.setLoading(true)
 
   try {

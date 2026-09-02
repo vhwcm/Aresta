@@ -91,9 +91,10 @@ O fluxo de trabalho depende do tamanho e impacto da alteração:
 
 ---
 
-## 5. Git & Versionamento & Quality Gates
+## 5. Git & Versionamento & Quality Gates (Skill `validate-and-push`)
 
 - **Bloqueio Inegociável de Commits**: **NUNCA** realize `git commit` ou `git push` com Quality Gates falhando. Execute a skill `run-quality-gates` para validar Frontend (`lint`, `typecheck`, `test`) e Backend (`build`, `test`).
-- **Commits ao Concluir Tarefas**: Sempre que uma tarefa ou subtarefa for concluída e validada por todos os quality gates, realize o `git add` dos arquivos pertinentes e faça um `git commit`.
+- **Sincronização Estrita de Lockfiles**: Ao alterar dependências ou scripts em `package.json`, execute sempre `npm install` para atualizar `package-lock.json` e garanta que `npm ci` execute sem erros de sincronização (`EUSAGE`).
+- **Commits e Push Obrigatórios ao Concluir Tarefas**: Sempre que uma tarefa ou subtarefa for concluída e validada por todos os quality gates, realize o `git add` dos arquivos pertinentes, faça commits atômicos descritivos e realize o `git push` para sincronizar com o repositório remoto.
 - **Mensagens Descritivas**: Utilize mensagens claras e descritivas seguindo Conventional Commits (`feat:`, `fix:`, `refactor:`, `docs:`, `test:`, `chore:`).
 - **Commits Atômicos/Menores**: Em tarefas grandes, divida as alterações em commits menores e lógicos em vez de acumular tudo em um único commit gigante.
