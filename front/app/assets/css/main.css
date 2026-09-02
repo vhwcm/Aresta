@@ -85,3 +85,90 @@ body.sepia-theme {
   }
 }
 
+/* Didactic Booklet Rich Content Styles */
+.didactic-page-wrapper {
+  padding: 1.5rem 1rem;
+  max-width: 680px;
+  margin: 0 auto;
+  line-height: 1.7;
+}
+
+.didactic-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--divider);
+  font-size: 0.825rem;
+  color: var(--text-secondary);
+}
+
+.chapter-badge {
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.didactic-callout {
+  margin: 1.25rem 0;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  border-left: 4px solid;
+  font-size: 0.95rem;
+}
+
+.didactic-callout .callout-header {
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+}
+
+.callout-analogy {
+  background: rgba(59, 130, 246, 0.08);
+  border-color: #3B82F6;
+  color: inherit;
+}
+.callout-analogy .callout-header { color: #3B82F6; }
+
+.callout-key-concept {
+  background: rgba(168, 85, 247, 0.08);
+  border-color: #A855F7;
+  color: inherit;
+}
+.callout-key-concept .callout-header { color: #A855F7; }
+
+.callout-tip {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: #10B981;
+  color: inherit;
+}
+.callout-tip .callout-header { color: #10B981; }
+
+.callout-warning {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: #F59E0B;
+  color: inherit;
+}
+.callout-warning .callout-header { color: #F59E0B; }
+
+.callout-note {
+  background: rgba(107, 114, 128, 0.08);
+  border-color: #6B7280;
+  color: inherit;
+}
+
+.didactic-mermaid-container {
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.didactic-paragraph {
+  margin-bottom: 1rem;
+}
+
+

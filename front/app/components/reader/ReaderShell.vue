@@ -57,6 +57,7 @@ import { readerProfiler } from '~/utils/readerProfiler'
 import { getCachedBook, saveCachedBook } from '~/utils/bookCache'
 import { getBinaryStorage } from '~/adapters/storage/StorageManager'
 import { detectFileTypeFromArrayBuffer } from '~/utils/fileValidator'
+import type { SupportedFileType } from '~/interfaces/reader/IValidationResult'
 
 const store = useReaderStore()
 const route = useRoute()
@@ -99,7 +100,7 @@ const loadBookFromQuery = async () => {
   try {
     let title = (route.query.title as string) || 'Livro'
     let arrayBuffer: ArrayBuffer | null = null
-    let type: 'pdf' | 'epub' = 'epub'
+    let type: SupportedFileType = 'epub'
 
     // 1. Tentar carregar instantaneamente do armazenamento local (Tauri FS / OPFS / IndexedDB)
     const localBytes = await readerProfiler.measureAsync('1. Buscar no Armazenamento Local (FS/OPFS/IndexedDB)', async () => {
@@ -144,24 +145,36 @@ const loadBookFromQuery = async () => {
         return await response.arrayBuffer()
       }, 'io', { byteLength: response.headers.get('content-length') })
 
-      // Detectar formato com prioridade: Content-Type -> filePath -> magic bytes
+      // Detectar formato com prioridade: formatType -> Content-Type -> filePath -> magic bytes
       const contentType = response.headers.get('content-type') || ''
-      let fallbackType: 'pdf' | 'epub' = 'epub'
-      if (contentType.includes('application/pdf')) {
+      let fallbackType: 'pdf' | 'epub' | 'didactic' = 'epub'
+      
+      const metaAny = fetchedMeta as any
+      if (metaAny?.format_type === 'DIDACTIC' || metaAny?.formatType === 'DIDACTIC' || metaAny?.is_ai_generated || metaAny?.isAiGenerated) {
+        fallbackType = 'didactic'
+        type = 'didactic'
+      } else if (contentType.includes('application/pdf')) {
         fallbackType = 'pdf'
+        type = detectFileTypeFromArrayBuffer(arrayBuffer, fallbackType)
       } else if (contentType.includes('application/epub+zip')) {
         fallbackType = 'epub'
+        type = detectFileTypeFromArrayBuffer(arrayBuffer, fallbackType)
+      } else if (contentType.includes('application/json')) {
+        fallbackType = 'didactic'
+        type = 'didactic'
       } else if (fetchedMeta?.filePath) {
-        fallbackType = fetchedMeta.filePath.toLowerCase().endsWith('.pdf') ? 'pdf' : 'epub'
+        fallbackType = fetchedMeta.filePath.toLowerCase().endsWith('.pdf') ? 'pdf' : (fetchedMeta.filePath.includes('didactic') ? 'didactic' : 'epub')
+        type = fallbackType === 'didactic' ? 'didactic' : detectFileTypeFromArrayBuffer(arrayBuffer, fallbackType)
       } else if (bookPath) {
-        fallbackType = bookPath.toLowerCase().endsWith('.pdf') ? 'pdf' : 'epub'
+        fallbackType = bookPath.toLowerCase().endsWith('.pdf') ? 'pdf' : (bookPath.includes('didactic') ? 'didactic' : 'epub')
+        type = fallbackType === 'didactic' ? 'didactic' : detectFileTypeFromArrayBuffer(arrayBuffer, fallbackType)
+      } else {
+        type = detectFileTypeFromArrayBuffer(arrayBuffer, fallbackType)
       }
-
-      type = detectFileTypeFromArrayBuffer(arrayBuffer, fallbackType)
 
       // Salvar em background no storage manager / IndexedDB para as próximas aberturas serem instantâneas
       void getBinaryStorage().saveFile(cacheKey, arrayBuffer, contentType || (type === 'pdf' ? 'application/pdf' : 'application/epub+zip'))
-      void saveCachedBook(cacheKey, arrayBuffer, title, type)
+      void saveCachedBook(cacheKey, arrayBuffer, title, type as 'pdf' | 'epub')
     }
 
     store.syncSettings()

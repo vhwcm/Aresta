@@ -72,9 +72,10 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useFileValidator } from '~/composables/reader/useFileValidator'
+import type { SupportedFileType } from '~/interfaces/reader/IValidationResult'
 
 const emit = defineEmits<{
-  (e: 'file-validated', result: { file: File; type: 'pdf' | 'epub' }): void
+  (e: 'file-validated', result: { file: File; type: SupportedFileType }): void
 }>()
 
 const { validate, isValidating } = useFileValidator()

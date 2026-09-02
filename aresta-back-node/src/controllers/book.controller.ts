@@ -1,6 +1,7 @@
 import { Response, NextFunction } from 'express';
 import { BookService } from '../services/book.service.js';
 import { AuthenticatedRequest } from '../types/index.js';
+import { prisma } from '../config/prisma.js';
 
 export class BookController {
   constructor(private bookService = new BookService()) {}
@@ -102,6 +103,21 @@ export class BookController {
   getFile = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const id = parseInt(req.params.id, 10);
+      const book = await this.bookService.getById(id);
+      
+      if (book.formatType === 'DIDACTIC' || book.isAiGenerated || book.filePath.startsWith('virtual://')) {
+        const booklet = await prisma.didacticBooklet.findFirst({
+          where: { book_id: id },
+          include: {
+            chapters: { orderBy: { order_index: 'asc' } },
+          },
+        });
+        if (booklet) {
+          res.type('application/json');
+          return res.json(booklet);
+        }
+      }
+
       const filePath = await this.bookService.getFilePath(id);
       if (filePath.toLowerCase().endsWith('.epub')) {
         res.type('application/epub+zip');

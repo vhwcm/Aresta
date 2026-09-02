@@ -27,6 +27,8 @@ export class BookService {
       summary: b.publicInfo?.summary || null,
       filePath: b.file_path,
       coverPath: b.cover_path,
+      formatType: b.format_type,
+      isAiGenerated: b.is_ai_generated,
       createdAt: b.created_at,
       themes: b.bookThemes.map((bt) => ({
         id: bt.theme.id,
@@ -61,6 +63,8 @@ export class BookService {
       summary: book.publicInfo?.summary || null,
       filePath: book.file_path,
       coverPath: book.cover_path,
+      formatType: book.format_type,
+      isAiGenerated: book.is_ai_generated,
       createdAt: book.created_at,
       themes: book.bookThemes.map((bt) => ({
         id: bt.theme.id,

@@ -33,16 +33,25 @@
           </button>
         </div>
 
-        <NuxtLink
-          to="/upload"
-          class="px-5 py-2.5 rounded-full bg-accent/20 hover:bg-accent text-accent hover:text-white border border-accent/40 text-xs font-interface font-semibold transition-all flex items-center gap-2"
-          title="Fazer Upload de Livro"
-        >
-          <UploadIcon class="w-4 h-4" />
-          <span>Enviar Arquivo</span>
-        </NuxtLink>
-      </div>
-    </header>
+          <button
+            @click="isCreateDidacticModalOpen = true"
+            class="px-5 py-2.5 rounded-full bg-purple-500/20 hover:bg-purple-500 text-purple-300 hover:text-white border border-purple-500/40 text-xs font-interface font-semibold transition-all flex items-center gap-2"
+            title="Criar Novo Livreto Didático com IA"
+          >
+            <SparklesIcon class="w-4 h-4" />
+            <span>Novo Livreto IA</span>
+          </button>
+
+          <NuxtLink
+            to="/upload"
+            class="px-5 py-2.5 rounded-full bg-accent/20 hover:bg-accent text-accent hover:text-white border border-accent/40 text-xs font-interface font-semibold transition-all flex items-center gap-2"
+            title="Fazer Upload de Livro"
+          >
+            <UploadIcon class="w-4 h-4" />
+            <span>Enviar Arquivo</span>
+          </NuxtLink>
+        </div>
+      </header>
 
     <div class="h-px bg-divider w-full"></div>
 
@@ -84,13 +93,17 @@
               <span class="font-editorial text-lg text-white/60 line-clamp-3">{{ book.title }}</span>
             </div>
 
-            <!-- Badge de Formato (EPUB / PDF) -->
+            <!-- Badge de Formato (EPUB / PDF / DIDACTIC) -->
             <div class="absolute top-2.5 right-2.5 z-10">
               <span
                 class="px-2 py-0.5 rounded-full text-[10px] font-technical uppercase font-bold tracking-wider shadow backdrop-blur-md"
-                :class="getBookFormat(book.filePath) === 'EPUB' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' : 'bg-sky-500/20 text-sky-300 border border-sky-500/40'"
+                :class="{
+                  'bg-amber-500/20 text-amber-300 border border-amber-500/40': getBookFormat(book.filePath) === 'EPUB',
+                  'bg-sky-500/20 text-sky-300 border border-sky-500/40': getBookFormat(book.filePath) === 'PDF',
+                  'bg-purple-500/20 text-purple-300 border border-purple-500/40': getBookFormat(book.filePath) === 'DIDACTIC'
+                }"
               >
-                {{ getBookFormat(book.filePath) }}
+                {{ getBookFormat(book.filePath) === 'DIDACTIC' ? 'IA DIDÁTICO' : getBookFormat(book.filePath) }}
               </span>
             </div>
 
@@ -241,12 +254,16 @@
               <div class="flex flex-col gap-2">
                 <div class="flex items-center gap-2.5 flex-wrap">
                   <h3 class="font-editorial text-2xl font-light text-textPrimary group-hover:text-accent transition-colors">{{ item.title }}</h3>
-                  <!-- Badge do Formato (EPUB / PDF) -->
+                  <!-- Badge do Formato (EPUB / PDF / DIDACTIC) -->
                   <span
                     class="px-2.5 py-0.5 rounded-full text-[10px] font-technical uppercase font-bold tracking-wider shrink-0 shadow-sm"
-                    :class="getBookFormat(item.filePath) === 'EPUB' ? 'text-amber-400 bg-amber-500/10 border border-amber-500/30' : 'text-sky-400 bg-sky-500/10 border border-sky-500/30'"
+                    :class="{
+                      'text-amber-400 bg-amber-500/10 border border-amber-500/30': getBookFormat(item.filePath) === 'EPUB',
+                      'text-sky-400 bg-sky-500/10 border border-sky-500/30': getBookFormat(item.filePath) === 'PDF',
+                      'text-purple-400 bg-purple-500/10 border border-purple-500/30': getBookFormat(item.filePath) === 'DIDACTIC'
+                    }"
                   >
-                    {{ getBookFormat(item.filePath) }}
+                    {{ getBookFormat(item.filePath) === 'DIDACTIC' ? 'IA DIDÁTICO' : getBookFormat(item.filePath) }}
                   </span>
                 </div>
 
@@ -478,11 +495,95 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal de Criação de Livreto Didático com IA -->
+    <div v-if="isCreateDidacticModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
+      <div class="bg-bgPanel border border-divider rounded-3xl w-full max-w-lg p-6 md:p-8 shadow-2xl flex flex-col gap-6 text-textPrimary">
+        <div class="flex items-center justify-between border-b border-divider pb-4">
+          <div class="flex items-center gap-2 text-purple-400">
+            <SparklesIcon class="w-5 h-5" />
+            <h3 class="text-xl font-editorial text-textPrimary">Novo Livreto Didático com IA</h3>
+          </div>
+          <button @click="isCreateDidacticModalOpen = false" class="text-textSecondary hover:text-textPrimary text-sm font-technical">
+            ✕ Fechar
+          </button>
+        </div>
+
+        <div class="flex flex-col gap-4">
+          <p class="text-xs text-textSecondary font-interface leading-relaxed">
+            A IA didática vai estruturar um livro completo, paginado para celular, com diagramas visuais Mermaid, analogias intuitivas e callouts pedagógicos.
+          </p>
+
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-technical text-textSecondary uppercase">Título do Livreto (Opcional):</label>
+            <input
+              v-model="newBookletTitle"
+              type="text"
+              placeholder="Ex: Caderno de Algoritmos & Grafos"
+              class="w-full bg-bgApp border border-divider rounded-xl px-3.5 py-2.5 text-xs text-textPrimary focus:outline-none focus:border-accent"
+            />
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-technical text-textSecondary uppercase">Tópico / Pergunta Central (*):</label>
+            <textarea
+              v-model="newBookletTopic"
+              rows="3"
+              placeholder="Ex: Como funciona a curva de esquecimento de Ebbinghaus e como otimizar a repetição espaçada?"
+              class="w-full bg-bgApp border border-divider rounded-xl p-3.5 text-xs text-textPrimary focus:outline-none focus:border-accent resize-none"
+            ></textarea>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div class="flex flex-col gap-1.5">
+              <label class="text-xs font-technical text-textSecondary uppercase">Vincular Tema do Grafo:</label>
+              <select
+                v-model="newBookletThemeId"
+                class="bg-bgApp border border-divider rounded-xl p-2.5 text-xs text-textPrimary focus:outline-none focus:border-accent"
+              >
+                <option :value="null">Sem Tema Específico</option>
+                <option v-for="node in availableThemes" :key="node.id" :value="Number(node.id)">
+                  {{ node.name }}
+                </option>
+              </select>
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+              <label class="text-xs font-technical text-textSecondary uppercase">Profundidade:</label>
+              <select
+                v-model="newBookletDepth"
+                class="bg-bgApp border border-divider rounded-xl p-2.5 text-xs text-textPrimary focus:outline-none focus:border-accent"
+              >
+                <option value="standard">Padrão (~4 págs, 1 Mermaid)</option>
+                <option value="quick_summary">Resumo (~2 págs)</option>
+                <option value="deep_dive">Aprofundado (~6 págs, 2 Mermaids)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-2 border-t border-divider">
+          <button @click="isCreateDidacticModalOpen = false" class="px-5 py-2.5 rounded-xl border border-divider text-xs text-textSecondary hover:text-textPrimary transition-all">
+            Cancelar
+          </button>
+          <button
+            @click="handleCreateDidacticBooklet"
+            :disabled="!newBookletTopic.trim() || didactic.isGenerating.value"
+            class="px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs transition-all shadow-lg flex items-center gap-2 disabled:opacity-50"
+          >
+            <SparklesIcon v-if="!didactic.isGenerating.value" class="w-4 h-4" />
+            <span v-else class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+            <span>{{ didactic.isGenerating.value ? 'Gerando Livreto...' : 'Criar e Abrir no Leitor' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import {
   BookIcon,
   CompassIcon,
@@ -498,8 +599,10 @@ import {
   UploadIcon,
   TagIcon,
   XIcon,
-  CheckIcon
+  CheckIcon,
+  SparklesIcon
 } from 'lucide-vue-next'
+import { useDidacticBooklet } from '~/composables/useDidacticBooklet'
 
 import type { UserBookItem } from '~/interfaces/graph'
 import { useCatalog } from '~/composables/useCatalog'
@@ -512,6 +615,39 @@ const activeTab = ref<'catalog' | 'my-books'>('catalog')
 const statusFilter = ref('TODOS')
 const selectedThemeId = ref<number | string | null>(null)
 const isLoginModalOpen = ref(false)
+
+const router = useRouter()
+const didactic = useDidacticBooklet()
+const isCreateDidacticModalOpen = ref(false)
+const newBookletTitle = ref('')
+const newBookletTopic = ref('')
+const newBookletThemeId = ref<number | null>(null)
+const newBookletDepth = ref<'quick_summary' | 'standard' | 'deep_dive'>('standard')
+
+const handleCreateDidacticBooklet = async () => {
+  if (!newBookletTopic.value.trim()) return
+  try {
+    const result = await didactic.createBooklet({
+      title: newBookletTitle.value.trim() || undefined,
+      topic: newBookletTopic.value.trim(),
+      theme_id: newBookletThemeId.value || undefined,
+      depth_level: newBookletDepth.value,
+    })
+    isCreateDidacticModalOpen.value = false
+    newBookletTitle.value = ''
+    newBookletTopic.value = ''
+    newBookletThemeId.value = null
+    await fetchCatalog()
+    if (auth.isLoggedIn.value) {
+      await fetchUserBooks()
+    }
+    if (result.book?.id) {
+      await router.push(`/reader?bookId=${result.book.id}`)
+    }
+  } catch (err) {
+    console.error('Erro ao criar livreto didático:', err)
+  }
+}
 
 const tagModalBook = ref<UserBookItem | null>(null)
 const selectedThemeIdsForModal = ref<number[]>([])

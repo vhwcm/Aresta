@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { ref } from 'vue'
+import { ref, type Ref } from 'vue'
 import * as THREE from 'three'
 import { usePageCurl3D, evaluate3DPagePoint } from '~/composables/reader/usePageCurl3D'
 
@@ -29,13 +29,13 @@ vi.mock('three', async () => {
 
 describe('PageCurl3DEngine - Three.js WebGL Page Turn Engine', () => {
   let canvas: HTMLCanvasElement
-  let canvasRef: ReturnType<typeof ref<HTMLCanvasElement | null>>
+  let canvasRef: Ref<HTMLCanvasElement | null>
 
   beforeEach(() => {
     canvas = document.createElement('canvas')
     canvas.width = 800
     canvas.height = 600
-    canvasRef = ref(canvas)
+    canvasRef = ref<HTMLCanvasElement | null>(canvas)
   })
 
   it('inicializa a cena 3D e o ShaderMaterial com uniformes corretos para Modo 2 Páginas', () => {

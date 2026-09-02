@@ -174,6 +174,15 @@
           >
             Fácil (7 dias)
           </button>
+          
+          <button
+            @click="openDidacticModal"
+            class="px-4 py-2 rounded-xl bg-accent/15 hover:bg-accent/25 border border-accent/40 text-accent font-interface text-xs font-semibold transition-all flex items-center gap-1.5 shadow-sm"
+            title="Gerar ou anexar livro didático explicativo"
+          >
+            <SparklesIcon class="w-4 h-4" />
+            Explicar com IA (Livreto)
+          </button>
         </div>
 
         <!-- Controles de Navegação Anterior/Próximo -->
@@ -259,11 +268,115 @@
         </div>
       </div>
     </section>
+
+    <!-- MODAL DE EXPLICAÇÃO DIDÁTICA COM IA (LIVRETO / CADERNO) -->
+    <div
+      v-if="isDidacticModalOpen"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200"
+    >
+      <div class="bg-bgPanel border border-divider rounded-3xl p-6 md:p-8 max-w-lg w-full shadow-2xl flex flex-col gap-6">
+        <div class="flex items-center justify-between border-b border-divider pb-4">
+          <div class="flex items-center gap-2 text-accent">
+            <SparklesIcon class="w-5 h-5" />
+            <h3 class="font-editorial text-xl text-textPrimary">Didactic AI Tutor</h3>
+          </div>
+          <button
+            @click="isDidacticModalOpen = false"
+            class="text-textSecondary hover:text-textPrimary text-sm font-technical"
+          >
+            ✕ Fechar
+          </button>
+        </div>
+
+        <div class="flex flex-col gap-4">
+          <p class="font-interface text-xs text-textSecondary leading-relaxed">
+            A IA didática vai estruturar uma explicação visual paginada com analogias, diagramas Mermaid e callouts sobre o conceito deste flashcard:
+          </p>
+
+          <div class="p-3.5 rounded-xl bg-black/5 dark:bg-white/5 border border-divider text-xs font-interface text-textPrimary">
+            <strong>Tópico:</strong> {{ currentCard?.question }}
+          </div>
+
+          <!-- Seleção de Modo: Novo Livreto vs Appendar em Livreto Existente -->
+          <div class="flex flex-col gap-2">
+            <label class="font-technical text-xs text-textSecondary uppercase">Destino da Explicação:</label>
+            <div class="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                @click="selectedBookletMode = 'new'"
+                class="px-3 py-2.5 rounded-xl border text-xs font-interface font-medium transition-all text-center"
+                :class="selectedBookletMode === 'new' ? 'border-accent bg-accent/15 text-accent' : 'border-divider text-textSecondary hover:border-textSecondary'"
+              >
+                📖 Novo Livreto Avulso
+              </button>
+              <button
+                type="button"
+                @click="selectedBookletMode = 'append'"
+                :disabled="didactic.booklets.value.length === 0"
+                class="px-3 py-2.5 rounded-xl border text-xs font-interface font-medium transition-all text-center disabled:opacity-40"
+                :class="selectedBookletMode === 'append' ? 'border-accent bg-accent/15 text-accent' : 'border-divider text-textSecondary hover:border-textSecondary'"
+              >
+                📎 Anexar a Caderno ({{ didactic.booklets.value.length }})
+              </button>
+            </div>
+          </div>
+
+          <!-- Seletor de Livreto Existente quando Modo = 'append' -->
+          <div v-if="selectedBookletMode === 'append'" class="flex flex-col gap-1.5">
+            <label class="font-technical text-xs text-textSecondary">Selecione o Livreto Didático:</label>
+            <select
+              v-model="selectedTargetBookletId"
+              class="bg-bgPanel text-textPrimary text-xs rounded-xl p-2.5 border border-divider focus:outline-none focus:border-accent"
+            >
+              <option
+                v-for="b in didactic.booklets.value"
+                :key="b.id"
+                :value="b.book_id"
+              >
+                {{ b.title }} ({{ b.chapters?.length || 1 }} capítulos)
+              </option>
+            </select>
+          </div>
+
+          <!-- Seletor de Profundidade -->
+          <div class="flex flex-col gap-1.5">
+            <label class="font-technical text-xs text-textSecondary">Profundidade Didática:</label>
+            <select
+              v-model="selectedDepth"
+              class="bg-bgPanel text-textPrimary text-xs rounded-xl p-2.5 border border-divider focus:outline-none focus:border-accent"
+            >
+              <option value="standard">Padrão Equilibrado (~4 páginas, 1 Mermaid)</option>
+              <option value="quick_summary">Resumo Rápido (~2 páginas)</option>
+              <option value="deep_dive">Aprofundamento Completo (~6 páginas, 2 Mermaids)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-2 border-t border-divider">
+          <button
+            @click="isDidacticModalOpen = false"
+            class="px-4 py-2 rounded-xl text-xs font-interface text-textSecondary hover:text-textPrimary"
+          >
+            Cancelar
+          </button>
+          <button
+            @click="generateDidacticBooklet"
+            :disabled="didactic.isGenerating.value"
+            class="px-5 py-2.5 rounded-xl bg-accent text-white font-interface text-xs font-semibold hover:bg-accent/90 transition-all flex items-center gap-2 shadow-lg disabled:opacity-50"
+          >
+            <SparklesIcon v-if="!didactic.isGenerating.value" class="w-4 h-4" />
+            <span v-else class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+            {{ didactic.isGenerating.value ? 'Gerando Livreto...' : 'Gerar e Abrir no Leitor' }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import {
   LayersIcon,
   FileTextIcon,
@@ -271,10 +384,12 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   PlusIcon,
-  BrainIcon
+  BrainIcon,
+  SparklesIcon
 } from 'lucide-vue-next'
 import { useReadingStreak } from '~/composables/useReadingStreak'
 import { useFlashcards, type FlashcardItem } from '~/composables/useFlashcards'
+import { useDidacticBooklet } from '~/composables/useDidacticBooklet'
 
 interface AnnotationSummary {
   id: string
@@ -470,6 +585,54 @@ const createCardFromSummary = (summary: AnnotationSummary) => {
   })
   activeTab.value = 'flashcards'
   currentCardIndex.value = fallbackCards.value.length - 1
+}
+
+const router = useRouter()
+const didactic = useDidacticBooklet()
+const isDidacticModalOpen = ref(false)
+const selectedBookletMode = ref<'new' | 'append'>('new')
+const selectedTargetBookletId = ref<number | null>(null)
+const selectedDepth = ref<'quick_summary' | 'standard' | 'deep_dive'>('standard')
+
+const openDidacticModal = async () => {
+  isDidacticModalOpen.value = true
+  await didactic.fetchBooklets()
+  if (didactic.booklets.value.length > 0 && !selectedTargetBookletId.value) {
+    selectedTargetBookletId.value = didactic.booklets.value[0]?.book_id ?? null
+  }
+}
+
+const generateDidacticBooklet = async () => {
+  if (!currentCard.value) return
+
+  const topic = currentCard.value.question
+  const title = `Didático: ${currentCard.value.question.slice(0, 45)}...`
+
+  try {
+    if (selectedBookletMode.value === 'append' && selectedTargetBookletId.value) {
+      const result = await didactic.appendChapter(selectedTargetBookletId.value, {
+        topic,
+        flashcard_id: currentCard.value.id,
+        depth_level: selectedDepth.value,
+      })
+      isDidacticModalOpen.value = false
+      const bookId = result.book?.id || selectedTargetBookletId.value
+      await router.push(`/reader?bookId=${bookId}`)
+    } else {
+      const result = await didactic.createBooklet({
+        title,
+        topic,
+        flashcard_id: currentCard.value.id,
+        depth_level: selectedDepth.value,
+      })
+      isDidacticModalOpen.value = false
+      if (result.book?.id) {
+        await router.push(`/reader?bookId=${result.book.id}`)
+      }
+    }
+  } catch (err) {
+    console.error('Erro ao gerar livro didático com IA:', err)
+  }
 }
 </script>
 

@@ -64,6 +64,18 @@
             Salvar Alterações
           </button>
         </form>
+      <!-- Seção: Livreto Didático com IA -->
+      <div class="p-3.5 rounded-2xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <SparklesIcon class="w-4 h-4 text-purple-400" />
+          <span class="text-xs font-interface font-medium text-purple-200">Gerar Livreto sobre {{ node.name }}</span>
+        </div>
+        <NuxtLink
+          to="/library"
+          class="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-interface text-xs font-semibold transition-all shadow-sm"
+        >
+          Criar IA
+        </NuxtLink>
       </div>
 
       <!-- Seção: Livros Vinculados a este Tema -->
@@ -168,7 +180,7 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 import type { GraphNode, UserBookItem } from '~/interfaces/graph'
-import { XIcon, BookOpenIcon, BookIcon, PlusIcon, TrashIcon, Trash2Icon, BrainIcon } from 'lucide-vue-next'
+import { XIcon, BookOpenIcon, BookIcon, PlusIcon, TrashIcon, Trash2Icon, BrainIcon, SparklesIcon } from 'lucide-vue-next'
 import { getCoverUrl, getBookFormat } from '~/utils/cover'
 
 const props = defineProps<{
