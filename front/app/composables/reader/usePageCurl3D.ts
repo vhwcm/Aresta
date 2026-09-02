@@ -8,9 +8,235 @@ export interface Page3DConfig {
   direction: 'next' | 'previous'
 }
 
+export interface VertexPoint {
+  x: number
+  y: number
+  z: number
+}
+
+export interface MatrixSampleResult {
+  pos: VertexPoint
+  normal: VertexPoint
+  facing: number // +1.0 = frente (uFrontTexture), -1.0 = verso (uBackTexture)
+  sampledTexture: 'front' | 'back'
+  uvFront: { u: number; v: number }
+  uvBack: { u: number; v: number }
+}
+
+/**
+ * Avaliação analítica determinística da matriz de vértices 3D,
+ * replicando com precisão matemática o cálculo do VERTEX_SHADER.
+ */
+export function evaluate3DPagePoint(
+  x: number,
+  y: number,
+  pageWidth: number,
+  pageHeight: number,
+  progress: number,
+  direction: 'next' | 'previous' = 'next',
+  isTwoPage = true,
+  gripY = 0.5,
+  deltaY = 0,
+): MatrixSampleResult {
+  const PI = Math.PI
+  const p = Math.max(0, Math.min(1, progress))
+
+  const uvFront = {
+    u: (x - (isTwoPage ? (direction === 'next' ? 0 : -pageWidth) : 0)) / pageWidth,
+    v: 1.0 - (y + pageHeight / 2) / pageHeight,
+  }
+  const uvBack = {
+    u: 1.0 - uvFront.u,
+    v: uvFront.v,
+  }
+
+  if (p <= 0.0001) {
+    return {
+      pos: { x, y, z: 0 },
+      normal: { x: 0, y: 0, z: 1 },
+      facing: 1.0,
+      sampledTexture: 'front',
+      uvFront,
+      uvBack,
+    }
+  }
+
+  const uRadius = Math.max(32, pageWidth * 0.14)
+  const arcFactor = Math.sin(p * PI)
+  const dynamicRadius = Math.max(0.0, uRadius * arcFactor)
+  const rollCircumference = Math.max(1.0, PI * dynamicRadius)
+
+  const cornerBias = (0.5 - gripY) * 0.45
+  let angle = cornerBias * arcFactor - deltaY * 0.25
+  angle = Math.max(-0.30, Math.min(0.30, angle))
+
+  let deformedPos = { x, y, z: 0 }
+  let computedNormal = { x: 0, y: 0, z: 1 }
+  let facing = 1.0
+
+  if (isTwoPage) {
+    if (direction === 'next') {
+      const foldX = pageWidth * (1.0 - p)
+      const dist = (x - foldX) + (y * Math.sin(angle))
+
+      if (dist <= 0.0) {
+        deformedPos = { x, y, z: 0 }
+        computedNormal = { x: 0, y: 0, z: 1 }
+        facing = 1.0
+      } else {
+        const rotX = 2.0 * foldX - x - y * Math.sin(angle)
+        const rotY = y - (x - foldX) * Math.sin(2.0 * angle)
+
+        if (dist < rollCircumference && dynamicRadius > 1.0) {
+          const t = Math.max(0, Math.min(1, dist / rollCircumference))
+          deformedPos = {
+            x: rotX,
+            y: rotY,
+            z: dynamicRadius * Math.sin(t * PI),
+          }
+          computedNormal = {
+            x: Math.sin(t * PI),
+            y: 0,
+            z: Math.cos(t * PI),
+          }
+          facing = t <= 0.5 ? 1.0 : -1.0
+        } else {
+          deformedPos = {
+            x: rotX,
+            y: rotY,
+            z: 0.0,
+          }
+          computedNormal = { x: 0, y: 0, z: -1 }
+          facing = -1.0
+        }
+      }
+    } else {
+      // PREVIOUS (Two-Page)
+      const foldX = -pageWidth * (1.0 - p)
+      const dist = (foldX - x) + (y * Math.sin(angle))
+
+      if (dist <= 0.0) {
+        deformedPos = { x, y, z: 0 }
+        computedNormal = { x: 0, y: 0, z: 1 }
+        facing = 1.0
+      } else {
+        const rotX = 2.0 * foldX - x + y * Math.sin(angle)
+        const rotY = y - (foldX - x) * Math.sin(2.0 * angle)
+
+        if (dist < rollCircumference && dynamicRadius > 1.0) {
+          const t = Math.max(0, Math.min(1, dist / rollCircumference))
+          deformedPos = {
+            x: rotX,
+            y: rotY,
+            z: dynamicRadius * Math.sin(t * PI),
+          }
+          computedNormal = {
+            x: -Math.sin(t * PI),
+            y: 0,
+            z: Math.cos(t * PI),
+          }
+          facing = t <= 0.5 ? 1.0 : -1.0
+        } else {
+          deformedPos = {
+            x: rotX,
+            y: rotY,
+            z: 0.0,
+          }
+          computedNormal = { x: 0, y: 0, z: -1 }
+          facing = -1.0
+        }
+      }
+    }
+  } else {
+    // SINGLE-PAGE MODE
+    if (direction === 'next') {
+      const foldX = pageWidth * (1.0 - p)
+      const dist = (x - foldX) + (y * Math.sin(angle))
+
+      if (dist <= 0.0) {
+        deformedPos = { x, y, z: 0 }
+        computedNormal = { x: 0, y: 0, z: 1 }
+        facing = 1.0
+      } else {
+        const rotX = 2.0 * foldX - x - y * Math.sin(angle)
+        const rotY = y - (x - foldX) * Math.sin(2.0 * angle)
+
+        if (dist < rollCircumference && dynamicRadius > 1.0) {
+          const t = Math.max(0, Math.min(1, dist / rollCircumference))
+          deformedPos = {
+            x: rotX,
+            y: rotY,
+            z: dynamicRadius * Math.sin(t * PI),
+          }
+          computedNormal = {
+            x: Math.sin(t * PI),
+            y: 0,
+            z: Math.cos(t * PI),
+          }
+          facing = t <= 0.5 ? 1.0 : -1.0
+        } else {
+          deformedPos = {
+            x: rotX,
+            y: rotY,
+            z: Math.max(0.0, (1.0 - p) * 12.0),
+          }
+          computedNormal = { x: 0, y: 0, z: -1 }
+          facing = -1.0
+        }
+      }
+    } else {
+      // PREVIOUS (Single-Page)
+      const foldX = pageWidth * p
+      const dist = (foldX - x) + (y * Math.sin(angle))
+
+      if (dist <= 0.0) {
+        deformedPos = { x, y, z: 0 }
+        computedNormal = { x: 0, y: 0, z: 1 }
+        facing = 1.0
+      } else {
+        const rotX = 2.0 * foldX - x + y * Math.sin(angle)
+        const rotY = y - (foldX - x) * Math.sin(2.0 * angle)
+
+        if (dist < rollCircumference && dynamicRadius > 1.0) {
+          const t = Math.max(0, Math.min(1, dist / rollCircumference))
+          deformedPos = {
+            x: rotX,
+            y: rotY,
+            z: dynamicRadius * Math.sin(t * PI),
+          }
+          computedNormal = {
+            x: -Math.sin(t * PI),
+            y: 0,
+            z: Math.cos(t * PI),
+          }
+          facing = t <= 0.5 ? 1.0 : -1.0
+        } else {
+          deformedPos = {
+            x: rotX,
+            y: rotY,
+            z: Math.max(0.0, (1.0 - p) * 12.0),
+          }
+          computedNormal = { x: 0, y: 0, z: -1 }
+          facing = -1.0
+        }
+      }
+    }
+  }
+
+  return {
+    pos: deformedPos,
+    normal: computedNormal,
+    facing,
+    sampledTexture: facing > 0 ? 'front' : 'back',
+    uvFront,
+    uvBack,
+  }
+}
+
 const VERTEX_SHADER = `
   uniform float uProgress;
   uniform float uDirection;     // +1.0 for Next (Right-to-Left), -1.0 for Previous (Left-to-Right)
+  uniform float uIsTwoPage;     // 1.0 for Two-Page mode, 0.0 for Single-Page mode
   uniform float uGripY;         // 0.0 (top) to 1.0 (bottom)
   uniform float uPointerDeltaY; // vertical displacement
   uniform float uPageWidth;
@@ -51,66 +277,123 @@ const VERTEX_SHADER = `
     vec3 computedNormal = vec3(0.0, 0.0, 1.0);
     float facing = 1.0;
 
-    if (uDirection > 0.0) {
-      // NEXT: Folha direita [0, W] dobra em direção à esquerda [-W, 0] ao redor da lombada (x = 0)
-      float foldX = uPageWidth * (1.0 - p);
-      float dist = (pos.x - foldX) + (pos.y * sin(angle));
+    if (uIsTwoPage > 0.5) {
+      if (uDirection > 0.0) {
+        // NEXT (Two-Page): Folha direita [0, W] dobra em direção à esquerda [-W, 0] ao redor da lombada (x = 0)
+        float foldX = uPageWidth * (1.0 - p);
+        float dist = (pos.x - foldX) + (pos.y * sin(angle));
 
-      if (dist <= 0.0) {
-        // Região ainda plana na direita
-        deformedPos.z = 0.0;
-        computedNormal = vec3(0.0, 0.0, 1.0);
-        facing = 1.0;
-      } else {
-        float rotX = 2.0 * foldX - pos.x - pos.y * sin(angle);
-        float rotY = pos.y - (pos.x - foldX) * sin(2.0 * angle);
-
-        if (dist < rollCircumference && dynamicRadius > 1.0) {
-          // Na curva do arco 3D: progressão linear 1:1 no eixo X e elevação senoidal no eixo Z
-          float t = clamp(dist / rollCircumference, 0.0, 1.0);
-          deformedPos.x = rotX;
-          deformedPos.y = rotY;
-          deformedPos.z = dynamicRadius * sin(t * PI);
-          computedNormal = normalize(vec3(sin(t * PI), 0.0, cos(t * PI)));
-          facing = t <= 0.5 ? 1.0 : -1.0;
-        } else {
-          // Virada sobre a página esquerda (vai 100% até -W)
-          deformedPos.x = rotX;
-          deformedPos.y = rotY;
+        if (dist <= 0.0) {
+          // Região ainda plana na direita
           deformedPos.z = 0.0;
-          computedNormal = vec3(0.0, 0.0, -1.0);
-          facing = -1.0;
+          computedNormal = vec3(0.0, 0.0, 1.0);
+          facing = 1.0;
+        } else {
+          float rotX = 2.0 * foldX - pos.x - pos.y * sin(angle);
+          float rotY = pos.y - (pos.x - foldX) * sin(2.0 * angle);
+
+          if (dist < rollCircumference && dynamicRadius > 1.0) {
+            float t = clamp(dist / rollCircumference, 0.0, 1.0);
+            deformedPos.x = rotX;
+            deformedPos.y = rotY;
+            deformedPos.z = dynamicRadius * sin(t * PI);
+            computedNormal = normalize(vec3(sin(t * PI), 0.0, cos(t * PI)));
+            facing = t <= 0.5 ? 1.0 : -1.0;
+          } else {
+            deformedPos.x = rotX;
+            deformedPos.y = rotY;
+            deformedPos.z = 0.0;
+            computedNormal = vec3(0.0, 0.0, -1.0);
+            facing = -1.0;
+          }
+        }
+      } else {
+        // PREVIOUS (Two-Page): Folha esquerda [-W, 0] dobra em direção à direita [0, W] ao redor da lombada (x = 0)
+        float foldX = -uPageWidth * (1.0 - p);
+        float dist = (foldX - pos.x) + (pos.y * sin(angle));
+
+        if (dist <= 0.0) {
+          // Região ainda plana na esquerda
+          deformedPos.z = 0.0;
+          computedNormal = vec3(0.0, 0.0, 1.0);
+          facing = 1.0;
+        } else {
+          float rotX = 2.0 * foldX - pos.x + pos.y * sin(angle);
+          float rotY = pos.y - (foldX - pos.x) * sin(2.0 * angle);
+
+          if (dist < rollCircumference && dynamicRadius > 1.0) {
+            float t = clamp(dist / rollCircumference, 0.0, 1.0);
+            deformedPos.x = rotX;
+            deformedPos.y = rotY;
+            deformedPos.z = dynamicRadius * sin(t * PI);
+            computedNormal = normalize(vec3(-sin(t * PI), 0.0, cos(t * PI)));
+            facing = t <= 0.5 ? 1.0 : -1.0;
+          } else {
+            deformedPos.x = rotX;
+            deformedPos.y = rotY;
+            deformedPos.z = 0.0;
+            computedNormal = vec3(0.0, 0.0, -1.0);
+            facing = -1.0;
+          }
         }
       }
     } else {
-      // PREVIOUS: Folha esquerda [-W, 0] dobra em direção à direita [0, W] ao redor da lombada (x = 0)
-      float foldX = -uPageWidth * (1.0 - p);
-      float dist = (foldX - pos.x) + (pos.y * sin(angle));
+      // SINGLE-PAGE MODE: Folha reside em [0, W]
+      if (uDirection > 0.0) {
+        // NEXT (Single-Page): Folha [0, W] dobra da direita em direção à esquerda
+        float foldX = uPageWidth * (1.0 - p);
+        float dist = (pos.x - foldX) + (pos.y * sin(angle));
 
-      if (dist <= 0.0) {
-        // Região ainda plana na esquerda
-        deformedPos.z = 0.0;
-        computedNormal = vec3(0.0, 0.0, 1.0);
-        facing = 1.0;
-      } else {
-        float rotX = 2.0 * foldX - pos.x + pos.y * sin(angle);
-        float rotY = pos.y - (foldX - pos.x) * sin(2.0 * angle);
-
-        if (dist < rollCircumference && dynamicRadius > 1.0) {
-          // Na curva do arco 3D: progressão linear 1:1 no eixo X e elevação senoidal no eixo Z
-          float t = clamp(dist / rollCircumference, 0.0, 1.0);
-          deformedPos.x = rotX;
-          deformedPos.y = rotY;
-          deformedPos.z = dynamicRadius * sin(t * PI);
-          computedNormal = normalize(vec3(-sin(t * PI), 0.0, cos(t * PI)));
-          facing = t <= 0.5 ? 1.0 : -1.0;
-        } else {
-          // Virada sobre a página direita (vai 100% até +W)
-          deformedPos.x = rotX;
-          deformedPos.y = rotY;
+        if (dist <= 0.0) {
           deformedPos.z = 0.0;
-          computedNormal = vec3(0.0, 0.0, -1.0);
-          facing = -1.0;
+          computedNormal = vec3(0.0, 0.0, 1.0);
+          facing = 1.0;
+        } else {
+          float rotX = 2.0 * foldX - pos.x - pos.y * sin(angle);
+          float rotY = pos.y - (pos.x - foldX) * sin(2.0 * angle);
+
+          if (dist < rollCircumference && dynamicRadius > 1.0) {
+            float t = clamp(dist / rollCircumference, 0.0, 1.0);
+            deformedPos.x = rotX;
+            deformedPos.y = rotY;
+            deformedPos.z = dynamicRadius * sin(t * PI);
+            computedNormal = normalize(vec3(sin(t * PI), 0.0, cos(t * PI)));
+            facing = t <= 0.5 ? 1.0 : -1.0;
+          } else {
+            deformedPos.x = rotX;
+            deformedPos.y = rotY;
+            deformedPos.z = max(0.0, (1.0 - p) * 12.0);
+            computedNormal = vec3(0.0, 0.0, -1.0);
+            facing = -1.0;
+          }
+        }
+      } else {
+        // PREVIOUS (Single-Page): Folha [0, W] dobra da esquerda em direção à direita
+        float foldX = uPageWidth * p;
+        float dist = (foldX - pos.x) + (pos.y * sin(angle));
+
+        if (dist <= 0.0) {
+          deformedPos.z = 0.0;
+          computedNormal = vec3(0.0, 0.0, 1.0);
+          facing = 1.0;
+        } else {
+          float rotX = 2.0 * foldX - pos.x + pos.y * sin(angle);
+          float rotY = pos.y - (foldX - pos.x) * sin(2.0 * angle);
+
+          if (dist < rollCircumference && dynamicRadius > 1.0) {
+            float t = clamp(dist / rollCircumference, 0.0, 1.0);
+            deformedPos.x = rotX;
+            deformedPos.y = rotY;
+            deformedPos.z = dynamicRadius * sin(t * PI);
+            computedNormal = normalize(vec3(-sin(t * PI), 0.0, cos(t * PI)));
+            facing = t <= 0.5 ? 1.0 : -1.0;
+          } else {
+            deformedPos.x = rotX;
+            deformedPos.y = rotY;
+            deformedPos.z = max(0.0, (1.0 - p) * 12.0);
+            computedNormal = vec3(0.0, 0.0, -1.0);
+            facing = -1.0;
+          }
         }
       }
     }
@@ -211,7 +494,7 @@ export function usePageCurl3D(canvasHostRef: Ref<HTMLCanvasElement | null>) {
 
     const totalCanvasWidth = isTwoPageMode ? currentWidth * 2 : currentWidth
     const totalCanvasHeight = currentHeight
-    const dpr = Math.min(window.devicePixelRatio || 1, 2)
+    const dpr = typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 2) : 1
 
     if (!renderer) {
       renderer = new THREE.WebGLRenderer({
@@ -227,12 +510,10 @@ export function usePageCurl3D(canvasHostRef: Ref<HTMLCanvasElement | null>) {
     renderer.setSize(totalCanvasWidth, totalCanvasHeight, false)
     renderer.toneMapping = THREE.NoToneMapping
 
-    // Reutiliza a cena existente em vez de criar uma nova a cada virada (P2: evita vazamento de memória)
     if (!scene) {
       scene = new THREE.Scene()
     }
 
-    // Remove a mesh anterior da cena antes de recriar (P2: evita acúmulo de objetos)
     if (mesh) {
       scene.remove(mesh)
       mesh = null
@@ -260,7 +541,7 @@ export function usePageCurl3D(canvasHostRef: Ref<HTMLCanvasElement | null>) {
     camera.position.z = 800
 
     if (geometry) geometry.dispose()
-    geometry = new THREE.PlaneGeometry(currentWidth, currentHeight, 64, 64)
+    geometry = new THREE.PlaneGeometry(currentWidth, currentHeight, 48, 48)
 
     if (isTwoPageMode) {
       if (currentDirection === 'next') {
@@ -297,6 +578,7 @@ export function usePageCurl3D(canvasHostRef: Ref<HTMLCanvasElement | null>) {
         uniforms: {
           uProgress: { value: 0.0 },
           uDirection: { value: currentDirection === 'next' ? 1.0 : -1.0 },
+          uIsTwoPage: { value: isTwoPageMode ? 1.0 : 0.0 },
           uGripY: { value: 0.5 },
           uPointerDeltaY: { value: 0.0 },
           uPageWidth: { value: currentWidth },
@@ -313,6 +595,7 @@ export function usePageCurl3D(canvasHostRef: Ref<HTMLCanvasElement | null>) {
       u.uPageHeight.value = currentHeight
       u.uRadius.value = Math.max(32, currentWidth * 0.14)
       u.uDirection.value = currentDirection === 'next' ? 1.0 : -1.0
+      u.uIsTwoPage.value = isTwoPageMode ? 1.0 : 0.0
       u.uFrontTexture.value = frontTexture
       u.uBackTexture.value = backTexture
     }
@@ -330,23 +613,29 @@ export function usePageCurl3D(canvasHostRef: Ref<HTMLCanvasElement | null>) {
     const u = shaderMaterial.uniforms as any
 
     if (frontCanvas && frontCanvas.width > 0 && frontCanvas.height > 0) {
-      if (frontTexture) frontTexture.dispose()
-      frontTexture = new THREE.CanvasTexture(frontCanvas)
-      frontTexture.minFilter = THREE.LinearFilter
-      frontTexture.magFilter = THREE.LinearFilter
-      frontTexture.generateMipmaps = false
-      frontTexture.needsUpdate = true
-      u.uFrontTexture.value = frontTexture
+      if (!frontTexture) {
+        frontTexture = new THREE.CanvasTexture(frontCanvas)
+        frontTexture.minFilter = THREE.LinearFilter
+        frontTexture.magFilter = THREE.LinearFilter
+        frontTexture.generateMipmaps = false
+        u.uFrontTexture.value = frontTexture
+      } else {
+        frontTexture.image = frontCanvas
+        frontTexture.needsUpdate = true
+      }
     }
 
     if (backCanvas && backCanvas.width > 0 && backCanvas.height > 0) {
-      if (backTexture) backTexture.dispose()
-      backTexture = new THREE.CanvasTexture(backCanvas)
-      backTexture.minFilter = THREE.LinearFilter
-      backTexture.magFilter = THREE.LinearFilter
-      backTexture.generateMipmaps = false
-      backTexture.needsUpdate = true
-      u.uBackTexture.value = backTexture
+      if (!backTexture) {
+        backTexture = new THREE.CanvasTexture(backCanvas)
+        backTexture.minFilter = THREE.LinearFilter
+        backTexture.magFilter = THREE.LinearFilter
+        backTexture.generateMipmaps = false
+        u.uBackTexture.value = backTexture
+      } else {
+        backTexture.image = backCanvas
+        backTexture.needsUpdate = true
+      }
     }
 
     render()
@@ -355,6 +644,7 @@ export function usePageCurl3D(canvasHostRef: Ref<HTMLCanvasElement | null>) {
   function updateUniforms(params: {
     progress: number
     direction: 'next' | 'previous'
+    isTwoPage?: boolean
     gripY?: number
     pointerDeltaY?: number
     theme?: 'sepia' | 'white' | 'black'
@@ -365,6 +655,9 @@ export function usePageCurl3D(canvasHostRef: Ref<HTMLCanvasElement | null>) {
     u.uProgress.value = params.progress
     u.uDirection.value = params.direction === 'next' ? 1.0 : -1.0
 
+    if (typeof params.isTwoPage === 'boolean') {
+      u.uIsTwoPage.value = params.isTwoPage ? 1.0 : 0.0
+    }
     if (typeof params.gripY === 'number') {
       u.uGripY.value = params.gripY
     }

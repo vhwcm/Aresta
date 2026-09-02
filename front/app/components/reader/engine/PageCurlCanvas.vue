@@ -330,6 +330,7 @@ const physics = usePagePhysics({
     pageCurl3D.updateUniforms({
       progress,
       direction: currentDirection.value,
+      isTwoPage: pageLayout.value.isTwoPage,
       gripY,
       pointerDeltaY: deltaY,
       theme: activeTheme.value as any,
@@ -516,7 +517,7 @@ async function renderPageToElement(
   }
 }
 
-async function renderCurrentSpread(pageOverride?: number) {
+async function renderCurrentSpread(pageOverride?: number): Promise<void> {
   const version = ++currentRenderVersion
   if (!store.document) return
 
@@ -530,24 +531,30 @@ async function renderCurrentSpread(pageOverride?: number) {
     const leftNum = curPage % 2 !== 0 ? curPage : curPage - 1
     const rightNum = leftNum + 1 <= store.totalPages ? leftNum + 1 : 0
 
+    const renders: Promise<void>[] = []
     if (leftNum > 0 && layout.leftPage) {
-      await renderPageToElement(
-        leftNum,
-        baseLeftCanvasRef.value,
-        baseLeftTextLayerRef.value,
-        layout.leftPage.width,
-        layout.leftPage.height,
+      renders.push(
+        renderPageToElement(
+          leftNum,
+          baseLeftCanvasRef.value,
+          baseLeftTextLayerRef.value,
+          layout.leftPage.width,
+          layout.leftPage.height,
+        ),
       )
     }
     if (rightNum > 0 && layout.rightPage) {
-      await renderPageToElement(
-        rightNum,
-        baseRightCanvasRef.value,
-        baseRightTextLayerRef.value,
-        layout.rightPage.width,
-        layout.rightPage.height,
+      renders.push(
+        renderPageToElement(
+          rightNum,
+          baseRightCanvasRef.value,
+          baseRightTextLayerRef.value,
+          layout.rightPage.width,
+          layout.rightPage.height,
+        ),
       )
     }
+    await Promise.all(renders)
   } else if (layout.singlePage && curPage > 0) {
     await renderPageToElement(
       curPage,
@@ -560,7 +567,7 @@ async function renderCurrentSpread(pageOverride?: number) {
 }
 
 /**
- * Prepara as texturas e o setup Three.js de forma instantânea
+ * Prepara as texturas e o setup Three.js de forma instantânea e robusta
  */
 function prepare3DTextures(direction: PageTurnDirection, gripY = 0.5) {
   if (!store.document) return
@@ -580,18 +587,34 @@ function prepare3DTextures(direction: PageTurnDirection, gripY = 0.5) {
     const pageW = layout.rightPage?.width ?? layout.leftPage?.width ?? 400
     const pageH = layout.rightPage?.height ?? layout.leftPage?.height ?? 600
 
+    frontCanvas.width = pageW
+    frontCanvas.height = pageH
+    backCanvas.width = pageW
+    backCanvas.height = pageH
+
+    const fCtx = frontCanvas.getContext('2d')
+    if (fCtx) {
+      fCtx.fillStyle = themeBgColor.value
+      fCtx.fillRect(0, 0, pageW, pageH)
+    }
+    const bCtx = backCanvas.getContext('2d')
+    if (bCtx) {
+      bCtx.fillStyle = themeBgColor.value
+      bCtx.fillRect(0, 0, pageW, pageH)
+    }
+
     if (direction === 'next') {
       const nextLeft = curLeft + 2 <= total ? curLeft + 2 : 0
       const nextRight = curLeft + 3 <= total ? curLeft + 3 : 0
 
       // Frente da folha girando: Página Direita atual (curRight)
       if (baseRightCanvasRef.value && baseRightCanvasRef.value.width > 0 && store.document?.type === 'pdf') {
-        frontCanvas.width = baseRightCanvasRef.value.width
-        frontCanvas.height = baseRightCanvasRef.value.height
-        const fCtx = frontCanvas.getContext('2d')
-        fCtx?.drawImage(baseRightCanvasRef.value, 0, 0)
+        fCtx?.drawImage(baseRightCanvasRef.value, 0, 0, pageW, pageH)
       } else if (curRight > 0) {
-        void renderPageToCanvas(curRight, frontCanvas, pageW, pageH)
+        void renderPageToCanvas(curRight, frontCanvas, pageW, pageH).then(() => {
+          pageCurl3D.setTextures(frontCanvas, backCanvas)
+          pageCurl3D.render()
+        })
       }
 
       // Inicializa a cena 3D e texturas instantaneamente
@@ -605,6 +628,7 @@ function prepare3DTextures(direction: PageTurnDirection, gripY = 0.5) {
       pageCurl3D.updateUniforms({
         progress: 0.001,
         direction: 'next',
+        isTwoPage: true,
         gripY,
         pointerDeltaY: 0,
         theme: activeTheme.value as any,
@@ -624,18 +648,18 @@ function prepare3DTextures(direction: PageTurnDirection, gripY = 0.5) {
         void renderPageToElement(nextRight, baseRightCanvasRef.value, baseRightTextLayerRef.value, pageW, pageH)
       }
     } else {
-      // PREVIOUS
+      // PREVIOUS (Two-Page)
       const prevLeft = curLeft - 2 >= 1 ? curLeft - 2 : 0
       const prevRight = curLeft - 1 >= 1 ? curLeft - 1 : 0
 
       // Frente da folha girando: Página Esquerda atual (curLeft)
       if (baseLeftCanvasRef.value && baseLeftCanvasRef.value.width > 0 && store.document?.type === 'pdf') {
-        frontCanvas.width = baseLeftCanvasRef.value.width
-        frontCanvas.height = baseLeftCanvasRef.value.height
-        const fCtx = frontCanvas.getContext('2d')
-        fCtx?.drawImage(baseLeftCanvasRef.value, 0, 0)
+        fCtx?.drawImage(baseLeftCanvasRef.value, 0, 0, pageW, pageH)
       } else if (curLeft > 0) {
-        void renderPageToCanvas(curLeft, frontCanvas, pageW, pageH)
+        void renderPageToCanvas(curLeft, frontCanvas, pageW, pageH).then(() => {
+          pageCurl3D.setTextures(frontCanvas, backCanvas)
+          pageCurl3D.render()
+        })
       }
 
       // Inicializa a cena 3D e texturas instantaneamente
@@ -649,6 +673,7 @@ function prepare3DTextures(direction: PageTurnDirection, gripY = 0.5) {
       pageCurl3D.updateUniforms({
         progress: 0.001,
         direction: 'previous',
+        isTwoPage: true,
         gripY,
         pointerDeltaY: 0,
         theme: activeTheme.value as any,
@@ -672,13 +697,29 @@ function prepare3DTextures(direction: PageTurnDirection, gripY = 0.5) {
     const pageW = layout.singlePage.width
     const pageH = layout.singlePage.height
 
+    frontCanvas.width = pageW
+    frontCanvas.height = pageH
+    backCanvas.width = pageW
+    backCanvas.height = pageH
+
+    const fCtx = frontCanvas.getContext('2d')
+    if (fCtx) {
+      fCtx.fillStyle = themeBgColor.value
+      fCtx.fillRect(0, 0, pageW, pageH)
+    }
+    const bCtx = backCanvas.getContext('2d')
+    if (bCtx) {
+      bCtx.fillStyle = themeBgColor.value
+      bCtx.fillRect(0, 0, pageW, pageH)
+    }
+
     if (baseSingleCanvasRef.value && baseSingleCanvasRef.value.width > 0 && store.document?.type === 'pdf') {
-      frontCanvas.width = baseSingleCanvasRef.value.width
-      frontCanvas.height = baseSingleCanvasRef.value.height
-      const fCtx = frontCanvas.getContext('2d')
-      fCtx?.drawImage(baseSingleCanvasRef.value, 0, 0)
+      fCtx?.drawImage(baseSingleCanvasRef.value, 0, 0, pageW, pageH)
     } else {
-      void renderPageToCanvas(curPage, frontCanvas, pageW, pageH)
+      void renderPageToCanvas(curPage, frontCanvas, pageW, pageH).then(() => {
+        pageCurl3D.setTextures(frontCanvas, backCanvas)
+        pageCurl3D.render()
+      })
     }
 
     pageCurl3D.setupScene({
@@ -691,6 +732,7 @@ function prepare3DTextures(direction: PageTurnDirection, gripY = 0.5) {
     pageCurl3D.updateUniforms({
       progress: 0.001,
       direction,
+      isTwoPage: false,
       gripY,
       pointerDeltaY: 0,
       theme: activeTheme.value as any,
@@ -700,19 +742,11 @@ function prepare3DTextures(direction: PageTurnDirection, gripY = 0.5) {
     if (direction === 'next') {
       const nextPage = Math.min(total, curPage + 1)
       if (nextPage > 0) {
-        void renderPageToCanvas(nextPage, backCanvas, pageW, pageH).then(() => {
-          pageCurl3D.setTextures(frontCanvas, backCanvas)
-          pageCurl3D.render()
-        })
         void renderPageToElement(nextPage, baseSingleCanvasRef.value, baseSingleTextLayerRef.value, pageW, pageH)
       }
     } else {
       const prevPage = Math.max(1, curPage - 1)
       if (prevPage > 0) {
-        void renderPageToCanvas(prevPage, backCanvas, pageW, pageH).then(() => {
-          pageCurl3D.setTextures(frontCanvas, backCanvas)
-          pageCurl3D.render()
-        })
         void renderPageToElement(prevPage, baseSingleCanvasRef.value, baseSingleTextLayerRef.value, pageW, pageH)
       }
     }
