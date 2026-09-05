@@ -21,7 +21,6 @@
           @open-saved-pages="isSavedPagesOpen = true"
           @open-annotation="handleOpenAnnotation"
           @toggle-notes="handleToggleNotes"
-          @toggle-graph="handleToggleNotes"
           @open-typography="isTypographyOpen = true"
         />
 
@@ -325,7 +324,12 @@ function exitZenMode() {
   }
 }
 
+let lastToggleNotesTime = 0
 function handleToggleNotes() {
+  const now = Date.now()
+  if (now - lastToggleNotesTime < 200) return
+  lastToggleNotesTime = now
+
   if (typeof window !== 'undefined' && window.innerWidth < 1024) {
     store.toggleMobileNotes()
   } else {

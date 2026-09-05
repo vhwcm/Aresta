@@ -704,6 +704,55 @@ describe('Reader Components', () => {
       expect(modal.props('isOpen')).toBe(true)
       expect(modal.props('initialText')).toBe('Ao verme que primeiro roeu as frias carnes')
     })
+
+    it('abre e fecha o painel de anotações do livro ao receber toggleNotes da barra inferior sem fechar imediatamente', async () => {
+      const store = useReaderStore()
+      store.setDocument({
+        type: 'epub',
+        metadata: { title: 'Dom Casmurro' },
+        totalPages: 100,
+        isLoaded: true,
+        load: vi.fn(),
+        destroy: vi.fn(),
+      } as any, 'dom-casmurro.epub')
+
+      const wrapper = mount(ReaderViewer, {
+        global: {
+          stubs: {
+            ReaderEnginePageCurlCanvas: true,
+            ReaderBookNotesPanel: true,
+            ReaderGraphPanel: true,
+            ReaderBottomBar: {
+              name: 'ReaderBottomBar',
+              template: '<div class="bottom-bar-stub"><button id="notes-btn" @click="$emit(\'toggleNotes\'); $emit(\'toggleGraph\')">Notas</button></div>',
+              emits: ['toggleNotes', 'toggleGraph'],
+            },
+            ReaderSavedPagesModal: true,
+            ReaderAnnotationModal: true,
+            ReaderAnnotationDrawer: true,
+            ReaderTypographyPopover: true,
+            ReaderSelectionTooltip: true,
+            ReaderDictionaryCard: true,
+          },
+        },
+      })
+
+      expect(store.isNotesOpen).toBe(false)
+
+      const bottomBar = wrapper.findComponent({ name: 'ReaderBottomBar' })
+      expect(bottomBar.exists()).toBe(true)
+
+      // Clica no botão de notas (que emite toggleNotes e toggleGraph)
+      await bottomBar.find('#notes-btn').trigger('click')
+
+      // O painel deve permanecer aberto (não pode fechar imediatamente)
+      expect(store.isNotesOpen).toBe(true)
+
+      // Ao clicar novamente após intervalo de throttle, deve fechar
+      await new Promise((r) => setTimeout(r, 250))
+      await bottomBar.find('#notes-btn').trigger('click')
+      expect(store.isNotesOpen).toBe(false)
+    })
   })
 })
 
