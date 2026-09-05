@@ -26,8 +26,10 @@ npm test
 
 ## Regra Inegociável de Rastreamento no Checklist (`checklist.md`)
 É **MANDATÓRIO** e **INEGOCIÁVEL** registrar e manter atualizado o arquivo `checklist.md` na raiz do projeto para **TODAS** as tarefas solicitadas pelo usuário:
-1. **Entrada de Tarefa**: Toda nova solicitação do usuário deve ser inserida imediatamente na seção `🔄 O Que Está Sendo Feito Agora (In Progress / Doing)` com subtarefas decompostas.
-2. **Atualização**: Marcar `[x]` conforme o avanço.
-3. **Conclusão**: Ao finalizar a entrega e validar os Quality Gates, mover a tarefa para `✅ O Que Já Foi Feito (Done / Concluído)`.
-4. **Preservação de Contexto**: NUNCA apagar tarefas concluídas. O histórico cumulativo deve ser sempre preservado.
+1. **Formato Resumido Obrigatório**: Exatamente 1 linha por tarefa, status de uma palavra, com data e hora:
+   `- [DD/MM/AAAA HH:MM] [Fazendo] Descrição concisa da tarefa` (em `## 🔄 Em Andamento`)
+   `- [DD/MM/AAAA HH:MM] [Concluído] Descrição concisa da tarefa` (em `## ✅ Concluído`)
+2. **Sem Visão Geral**: Não adicionar tabelas de métricas ou introduções.
+3. **Preservação de Contexto**: NUNCA apagar tarefas concluídas. O histórico deve ser sempre cumulativo.
+
 

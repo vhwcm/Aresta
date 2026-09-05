@@ -49,8 +49,9 @@ Este projeto adota o **modelo mental do Kiro**, onde o conhecimento estruturado,
 
 ### 3.2. Rastreamento Obrigatório em `checklist.md`
 É **MANDATÓRIO** manter o arquivo `checklist.md` na raiz sempre atualizado com **todas** as tarefas:
-- Sempre registrar o que está sendo feito (Doing/In Progress) no início da solicitação.
-- Marcar o progresso das etapas.
-- Mover para concluído (Done) ao finalizar e validar Quality Gates.
-- Jamais apagar itens concluídos, mantendo a integridade do contexto do usuário.
+- **Formato de 1 linha por tarefa**: `- [DD/MM/AAAA HH:MM] [Status] Descrição resumida da tarefa`.
+- **Status em uma palavra**: `[Fazendo]` (em `## 🔄 Em Andamento`) e `[Concluído]` (em `## ✅ Concluído`).
+- **Sem visão geral**: Não incluir blocos de estatísticas ou tabelas de métricas.
+- **Histórico cumulativo**: Jamais apagar itens concluídos, mantendo a integridade do contexto do usuário.
+
 
