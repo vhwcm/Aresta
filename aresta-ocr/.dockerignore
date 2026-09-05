@@ -1,7 +1,0 @@
-.git
-.env
-.env.*
-*.tmp
-*.exe
-bin/
-dist/

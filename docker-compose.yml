@@ -1,108 +1,172 @@
 services:
-  db:
-    image: postgres:16-alpine
+  # ==========================================
+  # UNIFIED DATABASE (Aresta Monolith)
+  # ==========================================
+  aresta-db:
+    image: pgvector/pgvector:pg16
     container_name: aresta-db
-    restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-aresta}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aresta_secret}
-      POSTGRES_DB: ${POSTGRES_DB:-aresta_db}
+      POSTGRES_DB: aresta_db
+      POSTGRES_USER: aresta
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
     ports:
-      - "${DB_PORT:-5432}:5432"
+      - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - aresta-db-data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U aresta -d aresta_db"]
       interval: 5s
       timeout: 5s
       retries: 5
-      start_period: 5s
-    networks:
-      - aresta-network
 
-  ocr-service:
-    build:
-      context: ./aresta-ocr
-      dockerfile: Dockerfile
-    container_name: aresta-ocr
-    restart: unless-stopped
+  # ==========================================
+  # DATABASES (Legacy)
+  # ==========================================
+  auth-db:
+    image: postgres:16-alpine
+    container_name: aresta-auth-db
     environment:
-      GRPC_PORT: 50051
-      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
-      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-flash-latest}
-      USE_MOCK: ${USE_MOCK:-true}
+      POSTGRES_DB: aresta_auth_db
+      POSTGRES_USER: aresta
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
     ports:
-      - "${OCR_GRPC_PORT:-50051}:50051"
-    networks:
-      - aresta-network
-
-  backend:
-    build:
-      context: ./aresta-back-node
-      dockerfile: Dockerfile
-    container_name: aresta-backend
-    restart: unless-stopped
-    depends_on:
-      db:
-        condition: service_healthy
-      ocr-service:
-        condition: service_started
-    environment:
-      PORT: 7070
-      DATABASE_URL: ${DATABASE_URL:-postgresql://aresta:aresta_secret@db:5432/aresta_db?schema=public}
-      OCR_GRPC_URL: ocr-service:50051
-      JWT_SECRET: ${JWT_SECRET:-aresta_jwt_super_secret_key_2026}
-      DEBUG: ${DEBUG:-true}
-    ports:
-      - "${BACKEND_PORT:-7070}:7070"
+      - "5431:5432"
     volumes:
-      - ./aresta-back-node/storage:/app/storage
+      - auth-db-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:7070/api/health"]
-      interval: 10s
+      test: ["CMD-SHELL", "pg_isready -U aresta -d aresta_auth_db"]
+      interval: 5s
       timeout: 5s
       retries: 5
-      start_period: 10s
-    networks:
-      - aresta-network
 
-  converter:
-    build:
-      context: ./pdf2epub
-      dockerfile: Dockerfile
-    container_name: aresta-converter
-    restart: unless-stopped
-    ports:
-      - "${CONVERTER_PORT:-8000}:8000"
-    networks:
-      - aresta-network
-
-  frontend:
-    build:
-      context: ./front
-      dockerfile: Dockerfile
-    container_name: aresta-frontend
-    restart: unless-stopped
-    depends_on:
-      backend:
-        condition: service_healthy
-      converter:
-        condition: service_started
+  memory-db:
+    image: pgvector/pgvector:pg16
+    container_name: aresta-memory-db
     environment:
-      PORT: 3000
-      NITRO_PORT: 3000
-      NITRO_HOST: 0.0.0.0
-      NUXT_PUBLIC_API_BASE: ${NUXT_PUBLIC_API_BASE:-http://localhost:7070}
+      POSTGRES_DB: aresta_memory_db
+      POSTGRES_USER: aresta
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
     ports:
-      - "${FRONTEND_PORT:-3000}:3000"
-    networks:
-      - aresta-network
+      - "5435:5432"
+    volumes:
+      - memory-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aresta -d aresta_memory_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  reader-db:
+    image: postgres:16-alpine
+    container_name: aresta-reader-db
+    environment:
+      POSTGRES_DB: aresta_reader_db
+      POSTGRES_USER: aresta
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+    ports:
+      - "5433:5432"
+    volumes:
+      - reader-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aresta -d aresta_reader_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ==========================================
+  # APPLICATION SERVICES (Docker Mode)
+  # ==========================================
+  aresta-auth:
+    build: ./aresta-auth
+    container_name: aresta-auth-svc
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://aresta:${DB_PASSWORD:-password}@auth-db:5432/aresta_auth_db
+      JWT_SECRET: ${JWT_SECRET:-sua-chave-jwt-secreta-compartilhada}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+    depends_on:
+      auth-db:
+        condition: service_healthy
+
+  aresta-ai:
+    build: ./aresta-ai
+    container_name: aresta-ai-svc
+    ports:
+      - "3002:3002"
+    environment:
+      NODE_ENV: production
+      PORT: 3002
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      JWT_SECRET: ${JWT_SECRET:-sua-chave-jwt-secreta-compartilhada}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-1.5-flash}
+      GEMINI_EMBED_MODEL: ${GEMINI_EMBED_MODEL:-text-embedding-004}
+
+  aresta-memory:
+    build: ./aresta-memory
+    container_name: aresta-memory-svc
+    ports:
+      - "3005:3005"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://aresta:${DB_PASSWORD:-password}@memory-db:5432/aresta_memory_db
+      JWT_SECRET: ${JWT_SECRET:-sua-chave-jwt-secreta-compartilhada}
+      AI_SERVICE_URL: http://aresta-ai:3002
+    depends_on:
+      memory-db:
+        condition: service_healthy
+      aresta-ai:
+        condition: service_started
+
+  aresta-reader:
+    build: ./aresta-reader/backend
+    container_name: aresta-reader-svc
+    ports:
+      - "3003:3003"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://aresta:${DB_PASSWORD:-password}@reader-db:5432/aresta_reader_db
+      JWT_SECRET: ${JWT_SECRET:-sua-chave-jwt-secreta-compartilhada}
+      AUTH_SERVICE_URL: http://aresta-auth:3001
+      MEMORY_SERVICE_URL: http://aresta-memory:3005
+      AI_SERVICE_URL: http://aresta-ai:3002
+      STORAGE_PATH: /app/storage
+    volumes:
+      - reader-storage:/app/storage
+    depends_on:
+      reader-db:
+        condition: service_healthy
+      aresta-auth:
+        condition: service_started
+      aresta-memory:
+        condition: service_started
+
+  aresta-canvas:
+    build: ./aresta-canvas/backend
+    container_name: aresta-canvas-svc
+    ports:
+      - "3004:3004"
+    environment:
+      NODE_ENV: production
+      PORT: 3004
+      DATABASE_URL: "file:/app/data/aresta_canvas.db"
+      JWT_SECRET: ${JWT_SECRET:-sua-chave-jwt-secreta-compartilhada}
+      AUTH_SERVICE_URL: http://aresta-auth:3001
+      MEMORY_SERVICE_URL: http://aresta-memory:3005
+      AI_SERVICE_URL: http://aresta-ai:3002
+    volumes:
+      - canvas-data:/app/data
+    depends_on:
+      aresta-auth:
+        condition: service_started
+      aresta-memory:
+        condition: service_started
 
 volumes:
-  pgdata:
-    name: aresta_pgdata
-
-networks:
-  aresta-network:
-    name: aresta_network
-    driver: bridge
+  aresta-db-data:
+  auth-db-data:
+  memory-db-data:
+  reader-db-data:
+  reader-storage:
+  canvas-data:

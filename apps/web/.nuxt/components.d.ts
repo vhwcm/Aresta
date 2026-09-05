@@ -1,0 +1,166 @@
+
+import type { DefineComponent, SlotsType } from 'vue'
+type IslandComponent<T> = DefineComponent<{}, {refresh: () => Promise<void>}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, SlotsType<{ fallback: { error: unknown } }>> & T
+
+type HydrationStrategies = {
+  hydrateOnVisible?: IntersectionObserverInit | true
+  hydrateOnIdle?: number | true
+  hydrateOnInteraction?: keyof HTMLElementEventMap | Array<keyof HTMLElementEventMap> | true
+  hydrateOnMediaQuery?: string
+  hydrateAfter?: number
+  hydrateWhen?: boolean
+  hydrateNever?: true
+}
+type LazyComponent<T> = DefineComponent<HydrationStrategies, {}, {}, {}, {}, {}, {}, { hydrated: () => void }> & T
+
+
+export const AiMarkdown: typeof import("../app/components/AiMarkdown.vue")['default']
+export const ArestaLogoGraph: typeof import("../app/components/ArestaLogoGraph.vue")['default']
+export const BottomNavbar: typeof import("../app/components/BottomNavbar.vue")['default']
+export const CommandPalette: typeof import("../app/components/CommandPalette.vue")['default']
+export const ConnectNodesModal: typeof import("../app/components/ConnectNodesModal.vue")['default']
+export const CreateNodeModal: typeof import("../app/components/CreateNodeModal.vue")['default']
+export const EbbinghausChart: typeof import("../app/components/EbbinghausChart.vue")['default']
+export const FolderTagSidebar: typeof import("../app/components/FolderTagSidebar.vue")['default']
+export const GraphCanvas: typeof import("../app/components/GraphCanvas.vue")['default']
+export const HomeBookReaderDemo: typeof import("../app/components/HomeBookReaderDemo.vue")['default']
+export const HomeKnowledgeGraphDemo: typeof import("../app/components/HomeKnowledgeGraphDemo.vue")['default']
+export const NodeDrawer: typeof import("../app/components/NodeDrawer.vue")['default']
+export const ReadingStreak: typeof import("../app/components/ReadingStreak.vue")['default']
+export const SettingsModal: typeof import("../app/components/SettingsModal.vue")['default']
+export const SidebarGraph: typeof import("../app/components/SidebarGraph.vue")['default']
+export const StreakCelebrationModal: typeof import("../app/components/StreakCelebrationModal.vue")['default']
+export const StreakShareModal: typeof import("../app/components/StreakShareModal.vue")['default']
+export const CanvasActionModals: typeof import("../app/components/canvas/CanvasActionModals.vue")['default']
+export const CanvasBoard: typeof import("../app/components/canvas/CanvasBoard.vue")['default']
+export const CanvasEdgeLayer: typeof import("../app/components/canvas/CanvasEdgeLayer.vue")['default']
+export const CanvasEmbedPreview: typeof import("../app/components/canvas/CanvasEmbedPreview.vue")['default']
+export const CanvasInkingOverlay: typeof import("../app/components/canvas/CanvasInkingOverlay.vue")['default']
+export const CanvasInsertDrawer: typeof import("../app/components/canvas/CanvasInsertDrawer.vue")['default']
+export const CanvasNode: typeof import("../app/components/canvas/CanvasNode.vue")['default']
+export const CanvasNodeBook: typeof import("../app/components/canvas/CanvasNodeBook.vue")['default']
+export const CanvasNodeNote: typeof import("../app/components/canvas/CanvasNodeNote.vue")['default']
+export const CanvasNodeShape: typeof import("../app/components/canvas/CanvasNodeShape.vue")['default']
+export const CanvasNodeText: typeof import("../app/components/canvas/CanvasNodeText.vue")['default']
+export const CanvasToolbar: typeof import("../app/components/canvas/CanvasToolbar.vue")['default']
+export const CanvasCycleWarningPlaceholder: typeof import("../app/components/canvas/CycleWarningPlaceholder.vue")['default']
+export const CanvasKnowledgeGraphView: typeof import("../app/components/canvas/KnowledgeGraphView.vue")['default']
+export const GraphBookAnnotationsDrawer: typeof import("../app/components/graph/BookAnnotationsDrawer.vue")['default']
+export const GraphThemeCanvasOverlay: typeof import("../app/components/graph/ThemeCanvasOverlay.vue")['default']
+export const NotesNoteCompositeRenderer: typeof import("../app/components/notes/NoteCompositeRenderer.vue")['default']
+export const NotesNoteEditorPane: typeof import("../app/components/notes/NoteEditorPane.vue")['default']
+export const ReaderHandwritingCanvas: typeof import("../app/components/reader/HandwritingCanvas.vue")['default']
+export const ReaderAnnotationDrawer: typeof import("../app/components/reader/ReaderAnnotationDrawer.vue")['default']
+export const ReaderAnnotationModal: typeof import("../app/components/reader/ReaderAnnotationModal.vue")['default']
+export const ReaderBookNotesPanel: typeof import("../app/components/reader/ReaderBookNotesPanel.vue")['default']
+export const ReaderBottomBar: typeof import("../app/components/reader/ReaderBottomBar.vue")['default']
+export const ReaderDictionaryCard: typeof import("../app/components/reader/ReaderDictionaryCard.vue")['default']
+export const ReaderGraphPanel: typeof import("../app/components/reader/ReaderGraphPanel.vue")['default']
+export const ReaderSavedPagesModal: typeof import("../app/components/reader/ReaderSavedPagesModal.vue")['default']
+export const ReaderSelectionTooltip: typeof import("../app/components/reader/ReaderSelectionTooltip.vue")['default']
+export const ReaderShell: typeof import("../app/components/reader/ReaderShell.vue")['default']
+export const ReaderTypographyPopover: typeof import("../app/components/reader/ReaderTypographyPopover.vue")['default']
+export const ReaderUploader: typeof import("../app/components/reader/Uploader.vue")['default']
+export const ReaderViewer: typeof import("../app/components/reader/Viewer.vue")['default']
+export const ReaderEnginePageCurlCanvas: typeof import("../app/components/reader/engine/PageCurlCanvas.vue")['default']
+export const ReaderUploadDropZone: typeof import("../app/components/reader/upload/DropZone.vue")['default']
+export const NuxtWelcome: typeof import("../node_modules/nuxt/dist/app/components/welcome.vue")['default']
+export const NuxtLayout: typeof import("../node_modules/nuxt/dist/app/components/nuxt-layout")['default']
+export const NuxtErrorBoundary: typeof import("../node_modules/nuxt/dist/app/components/nuxt-error-boundary.vue")['default']
+export const ClientOnly: typeof import("../node_modules/nuxt/dist/app/components/client-only")['default']
+export const DevOnly: typeof import("../node_modules/nuxt/dist/app/components/dev-only")['default']
+export const ServerPlaceholder: typeof import("../node_modules/nuxt/dist/app/components/server-placeholder")['default']
+export const NuxtLink: typeof import("../node_modules/nuxt/dist/app/components/nuxt-link")['default']
+export const NuxtLoadingIndicator: typeof import("../node_modules/nuxt/dist/app/components/nuxt-loading-indicator")['default']
+export const NuxtTime: typeof import("../node_modules/nuxt/dist/app/components/nuxt-time.vue")['default']
+export const NuxtRouteAnnouncer: typeof import("../node_modules/nuxt/dist/app/components/nuxt-route-announcer")['default']
+export const NuxtAnnouncer: typeof import("../node_modules/nuxt/dist/app/components/nuxt-announcer")['default']
+export const NuxtImg: typeof import("../node_modules/nuxt/dist/app/components/nuxt-stubs")['NuxtImg']
+export const NuxtPicture: typeof import("../node_modules/nuxt/dist/app/components/nuxt-stubs")['NuxtPicture']
+export const NuxtPage: typeof import("../node_modules/nuxt/dist/pages/runtime/page")['default']
+export const NoScript: typeof import("../node_modules/nuxt/dist/head/runtime/components")['NoScript']
+export const Link: typeof import("../node_modules/nuxt/dist/head/runtime/components")['Link']
+export const Base: typeof import("../node_modules/nuxt/dist/head/runtime/components")['Base']
+export const Title: typeof import("../node_modules/nuxt/dist/head/runtime/components")['Title']
+export const Meta: typeof import("../node_modules/nuxt/dist/head/runtime/components")['Meta']
+export const Style: typeof import("../node_modules/nuxt/dist/head/runtime/components")['Style']
+export const Head: typeof import("../node_modules/nuxt/dist/head/runtime/components")['Head']
+export const Html: typeof import("../node_modules/nuxt/dist/head/runtime/components")['Html']
+export const Body: typeof import("../node_modules/nuxt/dist/head/runtime/components")['Body']
+export const NuxtIsland: typeof import("../node_modules/nuxt/dist/app/components/nuxt-island")['default']
+export const LazyAiMarkdown: LazyComponent<typeof import("../app/components/AiMarkdown.vue")['default']>
+export const LazyArestaLogoGraph: LazyComponent<typeof import("../app/components/ArestaLogoGraph.vue")['default']>
+export const LazyBottomNavbar: LazyComponent<typeof import("../app/components/BottomNavbar.vue")['default']>
+export const LazyCommandPalette: LazyComponent<typeof import("../app/components/CommandPalette.vue")['default']>
+export const LazyConnectNodesModal: LazyComponent<typeof import("../app/components/ConnectNodesModal.vue")['default']>
+export const LazyCreateNodeModal: LazyComponent<typeof import("../app/components/CreateNodeModal.vue")['default']>
+export const LazyEbbinghausChart: LazyComponent<typeof import("../app/components/EbbinghausChart.vue")['default']>
+export const LazyFolderTagSidebar: LazyComponent<typeof import("../app/components/FolderTagSidebar.vue")['default']>
+export const LazyGraphCanvas: LazyComponent<typeof import("../app/components/GraphCanvas.vue")['default']>
+export const LazyHomeBookReaderDemo: LazyComponent<typeof import("../app/components/HomeBookReaderDemo.vue")['default']>
+export const LazyHomeKnowledgeGraphDemo: LazyComponent<typeof import("../app/components/HomeKnowledgeGraphDemo.vue")['default']>
+export const LazyNodeDrawer: LazyComponent<typeof import("../app/components/NodeDrawer.vue")['default']>
+export const LazyReadingStreak: LazyComponent<typeof import("../app/components/ReadingStreak.vue")['default']>
+export const LazySettingsModal: LazyComponent<typeof import("../app/components/SettingsModal.vue")['default']>
+export const LazySidebarGraph: LazyComponent<typeof import("../app/components/SidebarGraph.vue")['default']>
+export const LazyStreakCelebrationModal: LazyComponent<typeof import("../app/components/StreakCelebrationModal.vue")['default']>
+export const LazyStreakShareModal: LazyComponent<typeof import("../app/components/StreakShareModal.vue")['default']>
+export const LazyCanvasActionModals: LazyComponent<typeof import("../app/components/canvas/CanvasActionModals.vue")['default']>
+export const LazyCanvasBoard: LazyComponent<typeof import("../app/components/canvas/CanvasBoard.vue")['default']>
+export const LazyCanvasEdgeLayer: LazyComponent<typeof import("../app/components/canvas/CanvasEdgeLayer.vue")['default']>
+export const LazyCanvasEmbedPreview: LazyComponent<typeof import("../app/components/canvas/CanvasEmbedPreview.vue")['default']>
+export const LazyCanvasInkingOverlay: LazyComponent<typeof import("../app/components/canvas/CanvasInkingOverlay.vue")['default']>
+export const LazyCanvasInsertDrawer: LazyComponent<typeof import("../app/components/canvas/CanvasInsertDrawer.vue")['default']>
+export const LazyCanvasNode: LazyComponent<typeof import("../app/components/canvas/CanvasNode.vue")['default']>
+export const LazyCanvasNodeBook: LazyComponent<typeof import("../app/components/canvas/CanvasNodeBook.vue")['default']>
+export const LazyCanvasNodeNote: LazyComponent<typeof import("../app/components/canvas/CanvasNodeNote.vue")['default']>
+export const LazyCanvasNodeShape: LazyComponent<typeof import("../app/components/canvas/CanvasNodeShape.vue")['default']>
+export const LazyCanvasNodeText: LazyComponent<typeof import("../app/components/canvas/CanvasNodeText.vue")['default']>
+export const LazyCanvasToolbar: LazyComponent<typeof import("../app/components/canvas/CanvasToolbar.vue")['default']>
+export const LazyCanvasCycleWarningPlaceholder: LazyComponent<typeof import("../app/components/canvas/CycleWarningPlaceholder.vue")['default']>
+export const LazyCanvasKnowledgeGraphView: LazyComponent<typeof import("../app/components/canvas/KnowledgeGraphView.vue")['default']>
+export const LazyGraphBookAnnotationsDrawer: LazyComponent<typeof import("../app/components/graph/BookAnnotationsDrawer.vue")['default']>
+export const LazyGraphThemeCanvasOverlay: LazyComponent<typeof import("../app/components/graph/ThemeCanvasOverlay.vue")['default']>
+export const LazyNotesNoteCompositeRenderer: LazyComponent<typeof import("../app/components/notes/NoteCompositeRenderer.vue")['default']>
+export const LazyNotesNoteEditorPane: LazyComponent<typeof import("../app/components/notes/NoteEditorPane.vue")['default']>
+export const LazyReaderHandwritingCanvas: LazyComponent<typeof import("../app/components/reader/HandwritingCanvas.vue")['default']>
+export const LazyReaderAnnotationDrawer: LazyComponent<typeof import("../app/components/reader/ReaderAnnotationDrawer.vue")['default']>
+export const LazyReaderAnnotationModal: LazyComponent<typeof import("../app/components/reader/ReaderAnnotationModal.vue")['default']>
+export const LazyReaderBookNotesPanel: LazyComponent<typeof import("../app/components/reader/ReaderBookNotesPanel.vue")['default']>
+export const LazyReaderBottomBar: LazyComponent<typeof import("../app/components/reader/ReaderBottomBar.vue")['default']>
+export const LazyReaderDictionaryCard: LazyComponent<typeof import("../app/components/reader/ReaderDictionaryCard.vue")['default']>
+export const LazyReaderGraphPanel: LazyComponent<typeof import("../app/components/reader/ReaderGraphPanel.vue")['default']>
+export const LazyReaderSavedPagesModal: LazyComponent<typeof import("../app/components/reader/ReaderSavedPagesModal.vue")['default']>
+export const LazyReaderSelectionTooltip: LazyComponent<typeof import("../app/components/reader/ReaderSelectionTooltip.vue")['default']>
+export const LazyReaderShell: LazyComponent<typeof import("../app/components/reader/ReaderShell.vue")['default']>
+export const LazyReaderTypographyPopover: LazyComponent<typeof import("../app/components/reader/ReaderTypographyPopover.vue")['default']>
+export const LazyReaderUploader: LazyComponent<typeof import("../app/components/reader/Uploader.vue")['default']>
+export const LazyReaderViewer: LazyComponent<typeof import("../app/components/reader/Viewer.vue")['default']>
+export const LazyReaderEnginePageCurlCanvas: LazyComponent<typeof import("../app/components/reader/engine/PageCurlCanvas.vue")['default']>
+export const LazyReaderUploadDropZone: LazyComponent<typeof import("../app/components/reader/upload/DropZone.vue")['default']>
+export const LazyNuxtWelcome: LazyComponent<typeof import("../node_modules/nuxt/dist/app/components/welcome.vue")['default']>
+export const LazyNuxtLayout: LazyComponent<typeof import("../node_modules/nuxt/dist/app/components/nuxt-layout")['default']>
+export const LazyNuxtErrorBoundary: LazyComponent<typeof import("../node_modules/nuxt/dist/app/components/nuxt-error-boundary.vue")['default']>
+export const LazyClientOnly: LazyComponent<typeof import("../node_modules/nuxt/dist/app/components/client-only")['default']>
+export const LazyDevOnly: LazyComponent<typeof import("../node_modules/nuxt/dist/app/components/dev-only")['default']>
+export const LazyServerPlaceholder: LazyComponent<typeof import("../node_modules/nuxt/dist/app/components/server-placeholder")['default']>
+export const LazyNuxtLink: LazyComponent<typeof import("../node_modules/nuxt/dist/app/components/nuxt-link")['default']>
+export const LazyNuxtLoadingIndicator: LazyComponent<typeof import("../node_modules/nuxt/dist/app/components/nuxt-loading-indicator")['default']>
+export const LazyNuxtTime: LazyComponent<typeof import("../node_modules/nuxt/dist/app/components/nuxt-time.vue")['default']>
+export const LazyNuxtRouteAnnouncer: LazyComponent<typeof import("../node_modules/nuxt/dist/app/components/nuxt-route-announcer")['default']>
+export const LazyNuxtAnnouncer: LazyComponent<typeof import("../node_modules/nuxt/dist/app/components/nuxt-announcer")['default']>
+export const LazyNuxtImg: LazyComponent<typeof import("../node_modules/nuxt/dist/app/components/nuxt-stubs")['NuxtImg']>
+export const LazyNuxtPicture: LazyComponent<typeof import("../node_modules/nuxt/dist/app/components/nuxt-stubs")['NuxtPicture']>
+export const LazyNuxtPage: LazyComponent<typeof import("../node_modules/nuxt/dist/pages/runtime/page")['default']>
+export const LazyNoScript: LazyComponent<typeof import("../node_modules/nuxt/dist/head/runtime/components")['NoScript']>
+export const LazyLink: LazyComponent<typeof import("../node_modules/nuxt/dist/head/runtime/components")['Link']>
+export const LazyBase: LazyComponent<typeof import("../node_modules/nuxt/dist/head/runtime/components")['Base']>
+export const LazyTitle: LazyComponent<typeof import("../node_modules/nuxt/dist/head/runtime/components")['Title']>
+export const LazyMeta: LazyComponent<typeof import("../node_modules/nuxt/dist/head/runtime/components")['Meta']>
+export const LazyStyle: LazyComponent<typeof import("../node_modules/nuxt/dist/head/runtime/components")['Style']>
+export const LazyHead: LazyComponent<typeof import("../node_modules/nuxt/dist/head/runtime/components")['Head']>
+export const LazyHtml: LazyComponent<typeof import("../node_modules/nuxt/dist/head/runtime/components")['Html']>
+export const LazyBody: LazyComponent<typeof import("../node_modules/nuxt/dist/head/runtime/components")['Body']>
+export const LazyNuxtIsland: LazyComponent<typeof import("../node_modules/nuxt/dist/app/components/nuxt-island")['default']>
+
+export const componentNames: string[]

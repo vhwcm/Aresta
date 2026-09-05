@@ -1,0 +1,154 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==========================================================================
+   Design Tokens dos Temas (Escuro, Claro, Sépia / Estilo Livro)
+   ========================================================================== */
+
+:root,
+[data-theme="dark"],
+.dark-theme {
+  --bg-app: #0A0A0B;
+  --bg-panel: #121315;
+  --text-primary: #F2F2F2;
+  --text-secondary: #7A7D84;
+  --divider: rgba(255, 255, 255, 0.08);
+  --accent: #E57B55;
+  --color-border: rgba(255, 255, 255, 0.12);
+  --color-text-primary: #F2F2F2;
+  --color-text-secondary: #7A7D84;
+  --color-accent: #E57B55;
+  color-scheme: dark;
+}
+
+[data-theme="light"],
+.light-theme {
+  --bg-app: #F8F9FA;
+  --bg-panel: #FFFFFF;
+  --text-primary: #18191B;
+  --text-secondary: #6B7280;
+  --divider: rgba(0, 0, 0, 0.08);
+  --accent: #E57B55;
+  --color-border: rgba(0, 0, 0, 0.1);
+  --color-text-primary: #18191B;
+  --color-text-secondary: #6B7280;
+  --color-accent: #E57B55;
+  color-scheme: light;
+}
+
+[data-theme="sepia"],
+.sepia-theme {
+  --bg-app: #F5EEDC;
+  --bg-panel: #EFE6D1;
+  --text-primary: #2A2521;
+  --text-secondary: #786C5E;
+  --divider: rgba(120, 108, 94, 0.2);
+  --accent: #C96538;
+  --color-border: rgba(120, 108, 94, 0.22);
+  --color-text-primary: #2A2521;
+  --color-text-secondary: #786C5E;
+  --color-accent: #C96538;
+  color-scheme: light;
+}
+
+/* ==========================================================================
+   Estilos dos Livretos Didáticos com IA (Callouts & Mermaid)
+   ========================================================================== */
+
+.didactic-page-wrapper {
+  color: inherit;
+  line-height: 1.8;
+}
+
+.didactic-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  font-family: monospace;
+  font-size: 0.75rem;
+  opacity: 0.6;
+}
+
+.didactic-article-body h1 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  line-height: 1.3;
+}
+
+.didactic-article-body h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.didactic-article-body p {
+  margin-bottom: 1rem;
+}
+
+.didactic-callout {
+  margin: 1.25rem 0;
+  padding: 1rem 1.25rem;
+  border-radius: 1rem;
+  border: 1px solid transparent;
+  backdrop-filter: blur(8px);
+}
+
+.didactic-callout .callout-header {
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.didactic-callout .callout-body {
+  font-size: 0.95em;
+  line-height: 1.6;
+}
+
+.callout-analogy {
+  background-color: rgba(168, 85, 247, 0.08);
+  border-color: rgba(168, 85, 247, 0.3);
+  color: #e9d5ff;
+}
+
+.callout-key-concept {
+  background-color: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.3);
+  color: #bfdbfe;
+}
+
+.callout-tip {
+  background-color: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #a7f3d0;
+}
+
+.callout-warning {
+  background-color: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.3);
+  color: #fde68a;
+}
+
+.callout-note {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #e5e5e5;
+}
+
+.didactic-mermaid-container {
+  margin: 1.5rem 0;
+  padding: 1.25rem;
+  background-color: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  overflow-x: auto;
+  display: flex;
+  justify-content: center;
+}

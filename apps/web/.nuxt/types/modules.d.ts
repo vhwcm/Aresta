@@ -1,0 +1,99 @@
+import { NuxtModule, ModuleDependencyMeta } from '@nuxt/schema'
+declare module '@nuxt/schema' {
+  interface ModuleDependencies {
+    ["pinia"]?: ModuleDependencyMeta<typeof import("@pinia/nuxt").default extends NuxtModule<infer O> ? O | false : Record<string, unknown>> | false
+    ["@nuxtjs/tailwindcss"]?: ModuleDependencyMeta<typeof import("@nuxtjs/tailwindcss").default extends NuxtModule<infer O> ? O | false : Record<string, unknown>> | false
+    ["@nuxtjs/google-fonts"]?: ModuleDependencyMeta<typeof import("@nuxtjs/google-fonts").default extends NuxtModule<infer O> ? O | false : Record<string, unknown>> | false
+    ["@nuxt/devtools"]?: ModuleDependencyMeta<typeof import("@nuxt/devtools").default extends NuxtModule<infer O> ? O | false : Record<string, unknown>> | false
+  }
+  interface NuxtOptions {
+    /**
+     * Configuration for `@pinia/nuxt`
+     */
+    ["pinia"]: typeof import("@pinia/nuxt").default extends NuxtModule<infer O, unknown, boolean> ? O | false : Record<string, any> | false
+    /**
+     * Configuration for `@nuxtjs/tailwindcss`
+     */
+    ["tailwindcss"]: typeof import("@nuxtjs/tailwindcss").default extends NuxtModule<infer O, unknown, boolean> ? O | false : Record<string, any> | false
+    /**
+     * Configuration for `@nuxtjs/google-fonts`
+     */
+    ["googleFonts"]: typeof import("@nuxtjs/google-fonts").default extends NuxtModule<infer O, unknown, boolean> ? O | false : Record<string, any> | false
+    /**
+     * Configuration for `@nuxt/devtools`
+     */
+    ["devtools"]: typeof import("@nuxt/devtools").default extends NuxtModule<infer O, unknown, boolean> ? O | false : Record<string, any> | false
+  }
+  interface NuxtConfig {
+    /**
+     * Configuration for `@pinia/nuxt`
+     */
+    ["pinia"]?: typeof import("@pinia/nuxt").default extends NuxtModule<infer O, unknown, boolean> ? Partial<O> | false : Record<string, any> | false
+    /**
+     * Configuration for `@nuxtjs/tailwindcss`
+     */
+    ["tailwindcss"]?: typeof import("@nuxtjs/tailwindcss").default extends NuxtModule<infer O, unknown, boolean> ? Partial<O> | false : Record<string, any> | false
+    /**
+     * Configuration for `@nuxtjs/google-fonts`
+     */
+    ["googleFonts"]?: typeof import("@nuxtjs/google-fonts").default extends NuxtModule<infer O, unknown, boolean> ? Partial<O> | false : Record<string, any> | false
+    /**
+     * Configuration for `@nuxt/devtools`
+     */
+    ["devtools"]?: typeof import("@nuxt/devtools").default extends NuxtModule<infer O, unknown, boolean> ? Partial<O> | false : Record<string, any> | false
+    modules?: (undefined | null | false | NuxtModule<any> | string | [NuxtModule | string, Record<string, any>] | ["@pinia/nuxt", Exclude<NuxtConfig["pinia"], boolean>] | ["@nuxtjs/tailwindcss", Exclude<NuxtConfig["tailwindcss"], boolean>] | ["@nuxtjs/google-fonts", Exclude<NuxtConfig["googleFonts"], boolean>] | ["@nuxt/devtools", Exclude<NuxtConfig["devtools"], boolean>])[],
+  }
+}
+declare module 'nuxt/schema' {
+  interface ModuleDependencies {
+    ["pinia"]?: ModuleDependencyMeta<typeof import("@pinia/nuxt").default extends NuxtModule<infer O> ? O | false : Record<string, unknown>> | false
+    ["@nuxtjs/tailwindcss"]?: ModuleDependencyMeta<typeof import("@nuxtjs/tailwindcss").default extends NuxtModule<infer O> ? O | false : Record<string, unknown>> | false
+    ["@nuxtjs/google-fonts"]?: ModuleDependencyMeta<typeof import("@nuxtjs/google-fonts").default extends NuxtModule<infer O> ? O | false : Record<string, unknown>> | false
+    ["@nuxt/devtools"]?: ModuleDependencyMeta<typeof import("@nuxt/devtools").default extends NuxtModule<infer O> ? O | false : Record<string, unknown>> | false
+  }
+  interface NuxtOptions {
+    /**
+     * Configuration for `@pinia/nuxt`
+     * @see https://www.npmjs.com/package/@pinia/nuxt
+     */
+    ["pinia"]: typeof import("@pinia/nuxt").default extends NuxtModule<infer O, unknown, boolean> ? O | false : Record<string, any> | false
+    /**
+     * Configuration for `@nuxtjs/tailwindcss`
+     * @see https://www.npmjs.com/package/@nuxtjs/tailwindcss
+     */
+    ["tailwindcss"]: typeof import("@nuxtjs/tailwindcss").default extends NuxtModule<infer O, unknown, boolean> ? O | false : Record<string, any> | false
+    /**
+     * Configuration for `@nuxtjs/google-fonts`
+     * @see https://www.npmjs.com/package/@nuxtjs/google-fonts
+     */
+    ["googleFonts"]: typeof import("@nuxtjs/google-fonts").default extends NuxtModule<infer O, unknown, boolean> ? O | false : Record<string, any> | false
+    /**
+     * Configuration for `@nuxt/devtools`
+     * @see https://www.npmjs.com/package/@nuxt/devtools
+     */
+    ["devtools"]: typeof import("@nuxt/devtools").default extends NuxtModule<infer O, unknown, boolean> ? O | false : Record<string, any> | false
+  }
+  interface NuxtConfig {
+    /**
+     * Configuration for `@pinia/nuxt`
+     * @see https://www.npmjs.com/package/@pinia/nuxt
+     */
+    ["pinia"]?: typeof import("@pinia/nuxt").default extends NuxtModule<infer O, unknown, boolean> ? Partial<O> | false : Record<string, any> | false
+    /**
+     * Configuration for `@nuxtjs/tailwindcss`
+     * @see https://www.npmjs.com/package/@nuxtjs/tailwindcss
+     */
+    ["tailwindcss"]?: typeof import("@nuxtjs/tailwindcss").default extends NuxtModule<infer O, unknown, boolean> ? Partial<O> | false : Record<string, any> | false
+    /**
+     * Configuration for `@nuxtjs/google-fonts`
+     * @see https://www.npmjs.com/package/@nuxtjs/google-fonts
+     */
+    ["googleFonts"]?: typeof import("@nuxtjs/google-fonts").default extends NuxtModule<infer O, unknown, boolean> ? Partial<O> | false : Record<string, any> | false
+    /**
+     * Configuration for `@nuxt/devtools`
+     * @see https://www.npmjs.com/package/@nuxt/devtools
+     */
+    ["devtools"]?: typeof import("@nuxt/devtools").default extends NuxtModule<infer O, unknown, boolean> ? Partial<O> | false : Record<string, any> | false
+    modules?: (undefined | null | false | NuxtModule<any> | string | [NuxtModule | string, Record<string, any>] | ["@pinia/nuxt", Exclude<NuxtConfig["pinia"], boolean>] | ["@nuxtjs/tailwindcss", Exclude<NuxtConfig["tailwindcss"], boolean>] | ["@nuxtjs/google-fonts", Exclude<NuxtConfig["googleFonts"], boolean>] | ["@nuxt/devtools", Exclude<NuxtConfig["devtools"], boolean>])[],
+  }
+}

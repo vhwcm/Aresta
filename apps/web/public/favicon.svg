@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="100%" height="100%">
+  <defs>
+    <!-- Sombra sutil para máxima legibilidade tanto em abas escuras quanto claras -->
+    <filter id="tabShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="0.5" stdDeviation="0.4" flood-color="#000000" flood-opacity="0.35" />
+    </filter>
+  </defs>
+
+  <g filter="url(#tabShadow)" fill="#CF7754" stroke="#CF7754">
+    <!-- Base horizontal -->
+    <line x1="9.4" y1="26.2" x2="22.6" y2="26.2" stroke-width="1.1" stroke-linecap="round" />
+
+    <!-- Hastes principais do A -->
+    <line x1="16" y1="6.5" x2="9.4" y2="26.2" stroke-width="2.4" stroke-linecap="round" />
+    <line x1="16" y1="6.5" x2="22.6" y2="26.2" stroke-width="2.4" stroke-linecap="round" />
+
+    <!-- Traço transversal característico da Aresta -->
+    <polygon points="1.2,20.8 16,18.0 30.8,14.2 16,16.8" stroke-width="0.3" stroke-linejoin="round" />
+
+    <!-- 3 Nós nos vértices do triângulo da marca -->
+    <circle cx="16" cy="6.5" r="2.6" stroke-width="0" />
+    <circle cx="9.4" cy="26.2" r="2.6" stroke-width="0" />
+    <circle cx="22.6" cy="26.2" r="2.6" stroke-width="0" />
+  </g>
+</svg>

@@ -1,0 +1,21 @@
+{
+  "extends": "./.nuxt/tsconfig.json",
+  "compilerOptions": {
+    "skipLibCheck": true,
+    "noEmit": true,
+    "types": [
+      "node",
+      "vitest/globals"
+    ]
+  },
+  "vueCompilerOptions": {
+    "plugins": []
+  },
+  "include": [
+    ".nuxt/nuxt.d.ts",
+    "app/**/*",
+    "lib/**/*",
+    "tests/**/*",
+    "nuxt.config.ts"
+  ]
+}

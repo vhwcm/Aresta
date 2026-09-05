@@ -1,178 +1,67 @@
-# 📐 Aresta — Monorepositório (Leitor de Ebooks, Biblioteca & Mapa Mental)
+# Aresta — Plataforma Unificada de Leitura, Conhecimento e Notas Visuais
 
-O **Aresta** é uma aplicação web moderna para leitura interativa de ebooks (EPUB e PDF), gerenciamento de biblioteca pessoal, retenção de conhecimento com flashcards e visualização de conexões conceituais através de um **Grafo de Conhecimento / Mapa Mental**.
-
----
-
-<p align="center">
-  <img src="./aresta-back-node/storage/capturas_de_tela/Captura_de_tela_Home_Aresta.png" alt="Aresta — Dashboard Home, Flashcards e Anotações" width="900" style="border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.2);">
-</p>
+O **Aresta** é um ecossistema integrado para leitura ativa, estudo aprofundado, mapas mentais infinitos e aprendizagem acelerada com repetição espaçada (SM-2) potencializada por IA.
 
 ---
 
-## ✨ Principais Funcionalidades
+## 🏛️ Arquitetura do Monólito Modular
 
-- 📖 **Leitor de Ebooks Multi-formato**: Suporte fluido a arquivos **EPUB** (via `foliate-js`) e **PDF** (via `pdfjs-dist`) com alternância de temas, controle de progresso e persistência.
-- 🧠 **Grafo de Conhecimento & Mapa Mental**: Visualização interativa e física de nós (D3.js) conectando obras, conceitos, autores e ideias transversais.
-- 🎯 **Dashboard Home & Streaks**: Acompanhamento de metas de leitura contínua, histórico recente e atalhos de continuidade imediata.
-- 🗂️ **Central de Revisão & Flashcards**: Sistema de repetição espaçada e metodologia baseada na **Curva do Esquecimento** para fixação de conceitos-chave.
-- 📝 **Anotações & Citações**: Extração e catalogação de trechos, pensamentos e marcações organizadas por livro, capítulo e página.
-- 🔄 **Conversor de Documentos & Ferramentas**: Utilitários para conversão e processamento de livros digitais.
-- 📚 **Biblioteca Pessoal & Catálogo**: Gestão de livros do usuário, upload de arquivos, capas e catálogo compartilhado.
-
----
-
-## 🏛️ Arquitetura do Projeto
-
-O repositório é um **monorepositório** unificado contendo o Frontend, Backend, Documentação e Automações de CI/CD.
+O sistema opera em um **Monólito Modular em Duas Camadas** (`apps/api` e `apps/web`):
 
 ```
-Aresta/
-├── front/                    # Frontend em Nuxt 4 (Vue 3 + TypeScript)
-│   ├── app/
-│   │   ├── adapters/         # Padrão Adapter (PDF.js e Foliate-js)
-│   │   ├── components/       # Componentes Vue (Leitor, Grafo, Modais, Dock)
-│   │   ├── composables/      # Lógica reativa (useGraph, useUserBooks, useCatalog, etc.)
-│   │   ├── interfaces/       # Definições de tipos TypeScript
-│   │   └── pages/            # Rotas do Nuxt (Home, Leitor, Grafo, Revisão, Biblioteca)
-│   ├── tests/                # Testes Unitários (Vitest) e E2E (Playwright)
-│   └── package.json
-│
-├── aresta-back-node/         # Backend em Node.js + Express + TypeScript (MVC + Swagger + Prisma)
-│   ├── src/
-│   │   ├── controllers/      # Controladores HTTP com anotações OpenAPI/Swagger
-│   │   ├── services/         # Regras de negócio e persistência
-│   │   ├── routes/           # Rotas da API e Swagger UI (/api-docs)
-│   │   ├── middlewares/      # Autenticação JWT, Zod validation, error handler
-│   │   ├── schemas/          # Schemas de validação Zod
-│   │   └── config/           # Prisma client, envs e OpenAPI spec
-│   ├── prisma/               # Schema Prisma, migrations e seeds (SQLite)
-│   ├── storage/              # Armazenamento de livros, capas e capturas
-│   ├── tests/                # Testes de integração (Vitest + Supertest)
-│   └── package.json
-│
-├── docs/                     # Documentação de arquitetura e APIs (Mintlify)
-├── scripts/                  # Scripts de suporte e git hooks
-├── .github/workflows/        # CI/CD Quality Gates (GitHub Actions)
-├── start.sh                  # Script de inicialização concorrente (Front + Back)
-└── package.json              # Entrypoint de scripts do monorepositório
+┌───────────────────────────────────────────┐
+│           apps/web (Nuxt 3)               │
+│  Home / Leitor 3D / Canvas / Flashcards   │
+│             Porta: :3000                  │
+│       (Empacotado no Tauri v2)            │
+└─────────────────────┬─────────────────────┘
+                      │ REST / JWT
+                      ▼
+┌───────────────────────────────────────────┐
+│           apps/api (Express)              │
+│   Auth / Reader / Canvas / Memory / AI    │
+│             Porta: :3001                  │
+└─────────────────────┬─────────────────────┘
+                      │ Prisma ORM
+                      ▼
+┌───────────────────────────────────────────┐
+│         PostgreSQL 16 + pgvector          │
+│            Porta: :5432                   │
+└───────────────────────────────────────────┘
 ```
 
 ---
 
-### 🎨 Frontend (`front/`)
-- **Tecnologias**: [Nuxt 4](https://nuxt.com/) / Vue 3, TypeScript, Tailwind CSS, Pinia, D3.js.
-- **Leitor de Ebooks**: Padrão *Adapter* (`BookDocumentFactory`) abstraindo o suporte a formatos:
-  - **EPUB**: Renderização via [`foliate-js`](https://github.com/johnfactotum/foliate-js).
-  - **PDF**: Renderização via [`pdfjs-dist`](https://mozilla.github.io/pdf.js/).
-- **Grafo & Mapa Mental**: Renderização interativa baseada em SVG/Canvas com física de nós para conectar livros e temas conceituais.
+## 🚀 Como Executar
 
----
+### 1. Pré-requisitos
+- Node.js 20+
+- Docker & Docker Compose
+- NPM
 
-### ⚡ Backend Express.js (`aresta-back-node/`)
-- **Tecnologias**: Node.js, Express.js, TypeScript, [Prisma ORM](https://www.prisma.io/), SQLite, Swagger (OpenAPI 3.0), JWT, BCrypt, Zod.
-- **Porta padrão**: `7070` (`http://localhost:7070/api`).
-- **Documentação Swagger UI**: `http://localhost:7070/api-docs`.
-- **Domínio das APIs**:
-  - `/api/auth`: Autenticação e perfil de usuário (`POST /login`, `GET /me`).
-  - `/api/books`: Catálogo global, download de PDF/EPUB e capas.
-  - `/api/user-books`: Estante pessoal do usuário e progresso de leitura.
-  - `/api/annotations`: Anotações, notas e citações em livros.
-  - `/api/graph`: Nós de temas, conexões e vínculos conceituais.
-  - `/api/users`: Gestão de usuários e permissões (ADMIN).
-  - `/api/user-settings`: Configurações de leitura e idioma.
-
----
-
-## 🚀 Como Rodar o Projeto
-
-### Pré-requisitos
-- **Node.js**: v18 ou superior (`npm` v9+)
-- **Git**
-
----
-
-### 🟢 1. Inicialização Rápida (Monorepositório)
-
-Você pode iniciar o **Frontend e o Backend simultaneamente** executando um único comando na raiz do projeto:
-
+### 2. Subir o Banco de Dados
 ```bash
-# 1. Instalar as dependências
-npm install
-cd front && npm install && cd ../aresta-back-node && npm install && cd ..
-
-# 2. Iniciar ambos os serviços (Backend na 7070 e Frontend na 3000)
-npm start
-```
-*Ou execute diretamente:*
-```bash
-./start.sh
+npm run db:up
 ```
 
-Acesse no seu navegador:
-- **Frontend**: [http://localhost:3000](http://localhost:3000)
-- **Backend Health Check**: [http://localhost:7070/api/health](http://localhost:7070/api/health)
-- **Swagger UI**: [http://localhost:7070/api-docs](http://localhost:7070/api-docs)
-
----
-
-### 🛠️ 2. Execução Individual dos Módulos
-
-#### Executando apenas o Frontend:
+### 3. Iniciar o Ambiente de Desenvolvimento
 ```bash
-cd front
-npm install
 npm run dev
 ```
+- **Web App / Desktop:** [http://localhost:3000](http://localhost:3000)
+- **API REST:** [http://localhost:3001](http://localhost:3001)
 
-#### Executando apenas o Backend:
+### 4. Executar Bateria de Testes
 ```bash
-cd aresta-back-node
-npm install
-npm run dev
-```
-
----
-
-## 🧪 Suíte de Testes e Qualidade
-
-O projeto utiliza **Quality Gates** automatizados via GitHub Actions e pré-commit hooks.
-
-### Frontend (`front/`)
-```bash
-cd front
-
-# Executar testes unitários (Vitest)
-npm run test
-
-# Executar linter (ESLint)
-npm run lint
-
-# Checagem de tipos TypeScript
-npm run typecheck
-```
-
-### Backend Express.js (`aresta-back-node/`)
-```bash
-cd aresta-back-node
-
-# Executar testes unitários e de integração (Vitest + Supertest)
 npm test
+```
 
-# Executar testes em modo watch
-npm run test:watch
-
-# Checagem de tipos e compilação
+### 5. Compilar para Produção
+```bash
 npm run build
 ```
 
-### Configurar Git Hooks (Opcional):
-Para validar linters e testes automaticamente antes de cada commit:
+### 6. Executar Versão Desktop (Tauri v2)
 ```bash
-npm run setup:hooks
+npm run tauri:dev
 ```
-
----
-
-## 📄 Licença e Contribuição
-Desenvolvido como parte do projeto **Aresta**. Consulte a pasta [`docs/`](docs/) para mais detalhes de design system e decisões de arquitetura.
