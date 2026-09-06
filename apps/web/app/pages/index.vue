@@ -77,18 +77,262 @@
               <PanelRightOpenIcon class="w-4 h-4 text-accent" />
               <span>Mostrar Grafo</span>
             </button>
+            <!-- Alternar Tema ao lado da Ofensiva -->
+            <button
+              @click="toggleThemeMode"
+              data-testid="header-theme-toggle"
+              class="p-2 sm:px-2.5 sm:py-2 rounded-full bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 border border-divider hover:border-accent/40 text-textSecondary hover:text-textPrimary transition-all cursor-pointer shadow-sm focus:outline-none flex items-center justify-center"
+              :title="themeMode === 'dark' ? 'Tema: Escuro (clique para Claro)' : (themeMode === 'light' ? 'Tema: Claro (clique para Livro)' : 'Tema: Livro / Amarelado (clique para Escuro)')"
+              aria-label="Alternar tema da interface"
+            >
+              <SunIcon v-if="themeMode === 'light'" class="w-4 h-4 text-amber-500 hover:rotate-45 transition-transform" />
+              <PaletteIcon v-else-if="themeMode === 'sepia'" class="w-4 h-4 text-amber-600 dark:text-amber-300 hover:scale-110 transition-transform" />
+              <MoonIcon v-else class="w-4 h-4 text-accent hover:-rotate-12 transition-transform" />
+            </button>
             <ReadingStreak />
+          </div>
+        </section>
+
+        <!-- HUB DOS 5 PILARES: NAVEGAÇÃO RÁPIDA -->
+        <nav aria-label="Navegação rápida dos 5 pilares" class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 pt-1">
+          <!-- 1. Continuar Leitura -->
+          <NuxtLink
+            :to="activeBookReaderLink"
+            class="flex flex-col gap-1 p-3 rounded-2xl bg-black/[0.03] dark:bg-white/[0.03] hover:bg-black/[0.06] dark:hover:bg-white/[0.07] border border-divider/70 hover:border-accent/50 transition-all group cursor-pointer"
+            title="Continuar leitura ativa"
+          >
+            <div class="flex items-center justify-between">
+              <BookOpenIcon class="w-4 h-4 text-accent group-hover:scale-110 transition-transform" />
+              <span class="text-[10px] font-technical text-textSecondary">{{ activeBookProgress }}%</span>
+            </div>
+            <span class="font-interface text-xs font-medium text-textPrimary group-hover:text-accent truncate">Continuar Leitura</span>
+          </NuxtLink>
+
+          <!-- 2. Ir para Canvas -->
+          <NuxtLink
+            to="/canvas"
+            class="flex flex-col gap-1 p-3 rounded-2xl bg-black/[0.03] dark:bg-white/[0.03] hover:bg-black/[0.06] dark:hover:bg-white/[0.07] border border-divider/70 hover:border-accent/50 transition-all group cursor-pointer"
+            title="Ir para o espaço criativo de Canvas"
+          >
+            <div class="flex items-center justify-between">
+              <LayoutGridIcon class="w-4 h-4 text-accent group-hover:scale-110 transition-transform" />
+              <span class="text-[10px] font-technical text-accent">Quadros</span>
+            </div>
+            <span class="font-interface text-xs font-medium text-textPrimary group-hover:text-accent truncate">Ir para Canvas</span>
+          </NuxtLink>
+
+          <!-- 3. Grafo do Conhecimento -->
+          <NuxtLink
+            to="/grafo"
+            class="flex flex-col gap-1 p-3 rounded-2xl bg-black/[0.03] dark:bg-white/[0.03] hover:bg-black/[0.06] dark:hover:bg-white/[0.07] border border-divider/70 hover:border-accent/50 transition-all group cursor-pointer"
+            title="Explorar o Grafo de Conhecimento"
+          >
+            <div class="flex items-center justify-between">
+              <NetworkIcon class="w-4 h-4 text-accent group-hover:scale-110 transition-transform" />
+              <span class="text-[10px] font-technical text-textSecondary">Rede</span>
+            </div>
+            <span class="font-interface text-xs font-medium text-textPrimary group-hover:text-accent truncate">Grafo do Conhecimento</span>
+          </NuxtLink>
+
+          <!-- 4. Anotações -->
+          <NuxtLink
+            to="/canvas?tab=notes"
+            class="flex flex-col gap-1 p-3 rounded-2xl bg-black/[0.03] dark:bg-white/[0.03] hover:bg-black/[0.06] dark:hover:bg-white/[0.07] border border-divider/70 hover:border-accent/50 transition-all group cursor-pointer"
+            title="Acessar anotações e fichamentos"
+          >
+            <div class="flex items-center justify-between">
+              <FileTextIcon class="w-4 h-4 text-accent group-hover:scale-110 transition-transform" />
+              <span class="text-[10px] font-technical text-textSecondary">Notas</span>
+            </div>
+            <span class="font-interface text-xs font-medium text-textPrimary group-hover:text-accent truncate">Anotações</span>
+          </NuxtLink>
+
+          <!-- 5. Flashcards -->
+          <NuxtLink
+            to="/revisao"
+            class="col-span-2 sm:col-span-1 flex flex-col gap-1 p-3 rounded-2xl bg-black/[0.03] dark:bg-white/[0.03] hover:bg-black/[0.06] dark:hover:bg-white/[0.07] border border-divider/70 hover:border-accent/50 transition-all group cursor-pointer"
+            title="Praticar Flashcards e repetição espaçada"
+          >
+            <div class="flex items-center justify-between">
+              <BrainIcon class="w-4 h-4 text-accent group-hover:scale-110 transition-transform" />
+              <span class="text-[10px] font-technical text-accent">Hoje</span>
+            </div>
+            <span class="font-interface text-xs font-medium text-textPrimary group-hover:text-accent truncate">Flashcards</span>
+          </NuxtLink>
+        </nav>
+
+        <div class="h-px bg-divider/60 w-full"></div>
+
+        <!-- BLOCO 2: IR PARA CANVAS & ESPAÇO CRIATIVO -->
+        <section class="flex flex-col gap-4">
+          <div class="flex items-center justify-between">
+            <div class="font-technical text-xs sm:text-sm uppercase font-semibold tracking-widest text-textSecondary flex items-center gap-2.5">
+              <LayoutGridIcon class="w-4 h-4 text-accent" />
+              <span>Quadros & Canvas</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <NuxtLink
+                to="/canvas"
+                class="font-interface text-xs sm:text-sm font-medium text-accent hover:underline flex items-center gap-1.5 transition-colors"
+                title="Abrir o Canvas infinito"
+              >
+                <span>Ir para Canvas →</span>
+              </NuxtLink>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <!-- Card 1: Abrir Canvas Principal -->
+            <NuxtLink
+              to="/canvas"
+              class="p-4 rounded-2xl border border-divider/80 hover:border-accent/60 bg-gradient-to-br from-black/[0.02] to-black/[0.04] dark:from-white/[0.02] dark:to-white/[0.04] flex flex-col justify-between gap-3 group transition-all duration-300 hover:shadow-lg cursor-pointer"
+            >
+              <div class="flex items-start justify-between">
+                <div class="p-2.5 rounded-xl bg-accent/10 text-accent group-hover:scale-105 transition-transform">
+                  <LayoutGridIcon class="w-5 h-5" />
+                </div>
+                <span class="text-[10px] font-technical px-2 py-0.5 rounded-full bg-accent/15 text-accent font-semibold">Espaço Infinito</span>
+              </div>
+              <div>
+                <h4 class="font-interface text-sm sm:text-base font-semibold text-textPrimary group-hover:text-accent transition-colors">
+                  Síntese Visual & Quadros
+                </h4>
+                <p class="font-interface text-xs text-textSecondary mt-1 leading-relaxed line-clamp-2">
+                  Conecte livros, anotações em Markdown e crie mapas conceituais no mesmo espaço.
+                </p>
+              </div>
+              <div class="flex items-center gap-2 text-xs font-interface text-accent font-medium pt-1">
+                <span>Ir para Canvas</span>
+                <ArrowRightIcon class="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </NuxtLink>
+
+            <!-- Card 2: Ação Rápida de Criar / Explorar Árvore de Notas -->
+            <NuxtLink
+              to="/canvas?action=new"
+              class="p-4 rounded-2xl border border-dashed border-divider hover:border-accent/60 bg-black/[0.01] dark:bg-white/[0.01] hover:bg-black/[0.03] dark:hover:bg-white/[0.03] flex flex-col justify-between gap-3 group transition-all duration-300 cursor-pointer"
+            >
+              <div class="flex items-start justify-between">
+                <div class="p-2.5 rounded-xl bg-black/5 dark:bg-white/5 text-textSecondary group-hover:text-accent transition-colors">
+                  <PlusIcon class="w-5 h-5" />
+                </div>
+                <span class="text-[10px] font-technical text-textSecondary">Novo Quadro</span>
+              </div>
+              <div>
+                <h4 class="font-interface text-sm sm:text-base font-semibold text-textPrimary group-hover:text-accent transition-colors">
+                  Criar Novo Quadro
+                </h4>
+                <p class="font-interface text-xs text-textSecondary mt-1 leading-relaxed line-clamp-2">
+                  Inicie uma nova síntese em branco para conectar suas reflexões de leitura.
+                </p>
+              </div>
+              <div class="flex items-center gap-2 text-xs font-interface text-textSecondary group-hover:text-accent font-medium pt-1">
+                <span>Criar agora</span>
+                <ArrowRightIcon class="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </NuxtLink>
           </div>
         </section>
 
         <div class="h-px bg-divider/60 w-full"></div>
 
-        <!-- BLOCO 2: FLASHCARDS DO DIA (Clean, sem caixa, com botão direto) -->
+        <!-- BLOCO 3: GRAFO DE CONHECIMENTO -->
+        <section class="flex flex-col gap-4">
+          <div class="flex items-center justify-between">
+            <div class="font-technical text-xs sm:text-sm uppercase font-semibold tracking-widest text-textSecondary flex items-center gap-2.5">
+              <NetworkIcon class="w-4 h-4 text-accent" />
+              <span>Grafo de Conhecimento</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <button
+                v-if="isGraphCollapsed"
+                @click="toggleGraph"
+                class="hidden xl:inline-flex items-center gap-1.5 text-xs font-interface text-textSecondary hover:text-accent transition-colors cursor-pointer"
+              >
+                <PanelRightOpenIcon class="w-3.5 h-3.5 text-accent" />
+                <span>Fixar Lateral</span>
+              </button>
+              <NuxtLink
+                to="/grafo"
+                class="font-interface text-xs sm:text-sm font-medium text-accent hover:underline flex items-center gap-1.5 transition-colors"
+                title="Ver grafo de conhecimento em tela cheia"
+              >
+                <span>Explorar Grafo →</span>
+              </NuxtLink>
+            </div>
+          </div>
+
+          <NuxtLink
+            to="/grafo"
+            class="relative overflow-hidden p-5 sm:p-6 rounded-2xl border border-divider/80 hover:border-accent/50 bg-gradient-to-br from-black/[0.02] via-accent/[0.02] to-black/[0.04] dark:from-white/[0.02] dark:via-accent/[0.03] dark:to-white/[0.04] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 group transition-all duration-300 hover:shadow-lg cursor-pointer"
+          >
+            <div class="flex flex-col gap-2 max-w-lg">
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] font-technical uppercase tracking-wider font-semibold text-accent px-2.5 py-0.5 rounded-full bg-accent/10 border border-accent/20">
+                  Rede Semântica Viva
+                </span>
+              </div>
+              <h3 class="font-editorial text-xl sm:text-2xl font-light text-textPrimary group-hover:text-accent transition-colors">
+                Mapeamento conceitual entre suas obras, temas e notas
+              </h3>
+              <p class="font-interface text-xs sm:text-sm text-textSecondary leading-relaxed">
+                Navegue pelas pontes de conhecimento que conectam Machado de Assis, psiquiatria e iluminismo.
+              </p>
+            </div>
+
+            <div class="flex items-center gap-2 px-5 py-2.5 rounded-full bg-textPrimary text-bgApp font-interface text-xs sm:text-sm font-medium shrink-0 shadow-md group-hover:opacity-90 transition-opacity">
+              <span>Abrir Grafo</span>
+              <ArrowRightIcon class="w-4 h-4" />
+            </div>
+          </NuxtLink>
+        </section>
+
+        <div class="h-px bg-divider/60 w-full"></div>
+
+        <!-- BLOCO 4: ANOTAÇÕES & DESTAQUES -->
+        <section class="flex flex-col gap-4">
+          <div class="flex items-center justify-between">
+            <div class="font-technical text-xs sm:text-sm uppercase font-semibold tracking-widest text-textSecondary flex items-center gap-2.5">
+              <FileTextIcon class="w-4 h-4 text-accent" />
+              <span>Anotações & Destaques</span>
+            </div>
+            <NuxtLink to="/canvas?tab=notes" class="font-technical text-xs sm:text-sm font-medium text-accent hover:underline flex items-center gap-1">
+              Ver todas →
+            </NuxtLink>
+          </div>
+
+          <div class="flex flex-col divide-y divide-divider/40">
+            <div
+              v-for="note in activeBookNotes"
+              :key="note.id"
+              class="flex flex-col gap-2.5 py-4 first:pt-0 last:pb-0"
+            >
+              <div class="flex items-center justify-between text-xs sm:text-sm">
+                <span class="font-technical text-xs sm:text-sm uppercase font-semibold tracking-widest text-accent">
+                  {{ note.chapter }} · Pág. {{ note.page }}
+                </span>
+                <span class="font-technical text-xs sm:text-sm text-textSecondary">{{ note.date }}</span>
+              </div>
+
+              <blockquote class="border-l-2 border-accent pl-3.5 text-sm sm:text-base 2xl:text-lg font-interface italic text-textPrimary/90 leading-relaxed">
+                "{{ note.quote }}"
+              </blockquote>
+
+              <p class="font-interface text-xs sm:text-sm 2xl:text-base text-textSecondary leading-relaxed pl-3.5">
+                {{ note.insight }}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <div class="h-px bg-divider/60 w-full"></div>
+
+        <!-- BLOCO 5: FLASHCARDS DO DIA -->
         <section class="flex flex-col gap-4">
           <div class="flex items-center justify-between">
             <div class="font-technical text-xs sm:text-sm uppercase font-semibold tracking-widest text-textSecondary flex items-center gap-2.5">
               <BrainIcon class="w-4 h-4 text-accent" />
-              Flashcards do Dia
+              <span>Flashcards do Dia</span>
             </div>
 
             <!-- Link com Ícone de Informação para Curva do Esquecimento -->
@@ -118,44 +362,6 @@
             >
               <span>Fazer Flashcard</span>
             </NuxtLink>
-          </div>
-        </section>
-
-        <div class="h-px bg-divider/60 w-full"></div>
-
-        <!-- BLOCO 3: ANOTAÇÕES DO ÚLTIMO LIVRO (Clean, sem caixa, 3 anotações) -->
-        <section class="flex flex-col gap-4">
-          <div class="flex items-center justify-between">
-            <div class="font-technical text-xs sm:text-sm uppercase font-semibold tracking-widest text-textSecondary flex items-center gap-2.5">
-              <FileTextIcon class="w-4 h-4 text-accent" />
-              Anotações & Destaques
-            </div>
-            <NuxtLink to="/revisao" class="font-technical text-xs sm:text-sm font-medium text-accent hover:underline flex items-center gap-1">
-              Ver todas →
-            </NuxtLink>
-          </div>
-
-          <div class="flex flex-col divide-y divide-divider/40">
-            <div
-              v-for="note in activeBookNotes"
-              :key="note.id"
-              class="flex flex-col gap-2.5 py-4 first:pt-0 last:pb-0"
-            >
-              <div class="flex items-center justify-between text-xs sm:text-sm">
-                <span class="font-technical text-xs sm:text-sm uppercase font-semibold tracking-widest text-accent">
-                  {{ note.chapter }} · Pág. {{ note.page }}
-                </span>
-                <span class="font-technical text-xs sm:text-sm text-textSecondary">{{ note.date }}</span>
-              </div>
-
-              <blockquote class="border-l-2 border-accent pl-3.5 text-sm sm:text-base 2xl:text-lg font-interface italic text-textPrimary/90 leading-relaxed">
-                "{{ note.quote }}"
-              </blockquote>
-
-              <p class="font-interface text-xs sm:text-sm 2xl:text-base text-textSecondary leading-relaxed pl-3.5">
-                {{ note.insight }}
-              </p>
-            </div>
           </div>
         </section>
       </div>
@@ -947,7 +1153,12 @@ import {
   HeartPulseIcon,
   ShieldCheckIcon,
   LayersIcon,
-  LightbulbIcon
+  LightbulbIcon,
+  LayoutGridIcon,
+  PlusIcon,
+  SunIcon,
+  MoonIcon,
+  PaletteIcon
 } from 'lucide-vue-next'
 import ReadingStreak from '~/components/ReadingStreak.vue'
 import EbbinghausChart from '~/components/EbbinghausChart.vue'
@@ -1009,7 +1220,7 @@ if (typeof useHead === 'function') {
 }
 
 const auth = useAuth()
-const { loadFromServer, desktopHomeGraphOpen } = useSettings()
+const { loadFromServer, desktopHomeGraphOpen, themeMode, toggleThemeMode } = useSettings()
 const { userBooks, fetchUserBooks } = useUserBooks()
 const flashcards = useFlashcards()
 
@@ -1097,7 +1308,7 @@ const activeBookCoverUrl = computed(() => {
   if (latestUserBook.value?.coverPath) {
     return getCoverUrl(latestUserBook.value.coverPath, latestUserBook.value.bookId)
   }
-  return getCoverUrl('storage/covers/O-Alienista.png')
+  return ''
 })
 
 const activeBookCurrentPage = computed(() => {

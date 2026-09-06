@@ -37,7 +37,12 @@ describe('Index Page (Landing Page & Home)', () => {
     HeartPulseIcon: true,
     ShieldCheckIcon: true,
     LayersIcon: true,
-    LightbulbIcon: true
+    LightbulbIcon: true,
+    LayoutGridIcon: true,
+    PlusIcon: true,
+    SunIcon: true,
+    MoonIcon: true,
+    PaletteIcon: true
   }
 
   it('renders guest landing page with PKM, deep reading, copywriting questions, de-emphasized forgetting curve, and CTA', async () => {
@@ -144,24 +149,34 @@ describe('Index Page (Landing Page & Home)', () => {
     expect(wrapper.find('[data-testid="guest-landing"]').exists()).toBe(false)
     expect(wrapper.text()).toContain('O Alienista')
     expect(wrapper.text()).toContain('33%')
+    expect(wrapper.text()).toContain('Ir para Canvas')
+    expect(wrapper.text()).toContain('Grafo de Conhecimento')
+    expect(wrapper.text()).toContain('Anotações & Destaques')
     expect(wrapper.text()).toContain('Flashcards do Dia')
     expect(wrapper.text()).toContain('Por que revisar?')
     expect(wrapper.text()).toContain('1º Flashcard de Hoje')
     expect(wrapper.text()).toContain('Fazer Flashcard')
-    expect(wrapper.text()).toContain('Anotações & Destaques')
 
     // Verifica que 3 anotações são renderizadas
     expect(wrapper.text()).toContain('A razão é a perfeita saúde da alma')
     expect(wrapper.text()).toContain('A ciência é a minha esposa única')
     expect(wrapper.text()).toContain('A loucura, objeto dos meus estudos')
 
-    // Verifica que Flashcards do Dia aparece antes de Anotações & Destaques
+    // Verifica que os 5 pilares aparecem na ordem solicitada: Leitura -> Canvas -> Grafo -> Anotações -> Flashcards
     const text = wrapper.text()
-    const flashcardsIndex = text.indexOf('Flashcards do Dia')
+    const leituraIndex = text.indexOf('Continuar')
+    const canvasIndex = text.indexOf('Ir para Canvas')
+    const grafoIndex = text.indexOf('Grafo de Conhecimento')
     const notesIndex = text.indexOf('Anotações & Destaques')
-    expect(flashcardsIndex).toBeLessThan(notesIndex)
+    const flashcardsIndex = text.indexOf('Flashcards do Dia')
+
+    expect(leituraIndex).toBeLessThan(canvasIndex)
+    expect(canvasIndex).toBeLessThan(grafoIndex)
+    expect(grafoIndex).toBeLessThan(notesIndex)
+    expect(notesIndex).toBeLessThan(flashcardsIndex)
 
     expect(wrapper.find('[data-testid="reading-streak"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="header-theme-toggle"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="toggle-graph-open-btn"]').exists()).toBe(true)
   })
 

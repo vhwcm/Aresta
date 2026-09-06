@@ -3,23 +3,20 @@ import { mount } from '@vue/test-utils'
 import LojaPage from '~/pages/loja.vue'
 
 describe('Loja Page (/loja)', () => {
-  it('renders curated catalog and book categories', () => {
+  it('renders coming soon message', () => {
     const wrapper = mount(LojaPage, {
       global: {
         stubs: {
           NuxtLink: { template: '<a><slot /></a>' },
           ShoppingBagIcon: true,
-          BookOpenIcon: true,
-          BookIcon: true,
-          PlusIcon: true,
-          XIcon: true,
-          CheckCircle2Icon: true
+          ClockIcon: true,
+          BookOpenIcon: true
         }
       }
     })
 
-    expect(wrapper.text()).toContain('Loja & Catálogo Aberto')
-    expect(wrapper.text()).toContain('Destaque do Mês')
-    expect(wrapper.text()).toContain('Todas as Obras Disponíveis')
+    expect(wrapper.text()).toContain('Loja & Catálogo')
+    expect(wrapper.text()).toContain('Em breve.')
+    expect(wrapper.text()).toContain('Acessar Minha Estante')
   })
 })

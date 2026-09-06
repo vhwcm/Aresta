@@ -5,8 +5,13 @@ import { prisma } from '../config/database'
 const STORAGE_PATH = process.env.STORAGE_PATH ?? './storage'
 
 export class BookService {
-  async findAll() {
+  async findAll(userId?: number) {
+    const where = userId
+      ? { userBooks: { some: { user_id: userId } } }
+      : { userBooks: { some: {} } }
+
     const books = await prisma.book.findMany({
+      where,
       include: {
         publicInfo: true,
         bookThemes: { include: { theme: true } },

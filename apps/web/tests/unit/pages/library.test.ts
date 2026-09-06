@@ -18,12 +18,6 @@ describe('Library Page', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockFetch.mockImplementation((url: string) => {
-      if (url.includes('/api/books')) {
-        return Promise.resolve([
-          { id: 1, title: 'Contos Fluminenses', filePath: 'storage/epubs/contos.epub', coverPath: 'storage/covers/1.png' },
-          { id: 2, title: 'Manual de Engenharia', filePath: 'storage/pdfs/manual.pdf', coverPath: 'storage/covers/2.png' }
-        ])
-      }
       if (url.includes('/api/user-books')) {
         return Promise.resolve([
           { id: 10, bookId: 1, title: 'Contos Fluminenses', filePath: 'storage/epubs/contos.epub', status: 'LENDO', currentPage: 45 },
@@ -34,41 +28,60 @@ describe('Library Page', () => {
     })
   })
 
-  it('renders the library page with catalog tab and displays format badges', async () => {
+  it('renders the library page with user shelf content and actions', async () => {
     const wrapper = mount(LibraryPage, {
       global: {
         stubs: {
-          NuxtLink: true
+          NuxtLink: { template: '<a><slot /></a>' }
         }
       }
     })
     await flushPromises()
     expect(wrapper.text()).toContain('Biblioteca & Estante')
-    expect(wrapper.text()).toContain('Catálogo Geral')
+    expect(wrapper.text()).toContain('Total na sua Estante')
+    expect(wrapper.text()).toContain('Novo Livreto IA')
+    expect(wrapper.text()).toContain('Enviar Arquivo')
     expect(wrapper.text()).toContain('EPUB')
     expect(wrapper.text()).toContain('PDF')
   })
 
-  it('switches to My Books tab when clicked by logged-in user and displays EPUB/PDF badges', async () => {
+  it('does not display general catalog tab selection', async () => {
     const wrapper = mount(LibraryPage, {
       global: {
         stubs: {
-          NuxtLink: true
+          NuxtLink: { template: '<a><slot /></a>' }
         }
       }
     })
     await flushPromises()
 
-    const buttons = wrapper.findAll('button')
-    const myBooksButton = buttons.find(b => b.text().includes('Minha Estante'))
+    expect(wrapper.text()).not.toContain('Catálogo Geral')
+    expect(wrapper.text()).not.toContain('Todos os Livros do Acervo')
+  })
 
-    expect(myBooksButton).toBeDefined()
-    await myBooksButton!.trigger('click')
+  it('orders user books by most recently opened or added first', async () => {
+    mockFetch.mockImplementation((url: string) => {
+      if (url.includes('/api/user-books')) {
+        return Promise.resolve([
+          { id: 10, bookId: 1, title: 'Livro Antigo', status: 'LENDO', currentPage: 10, lastAccessedAt: '2026-09-01T10:00:00.000Z' },
+          { id: 11, bookId: 2, title: 'Livro Mais Recente', status: 'LENDO', currentPage: 5, lastAccessedAt: '2026-09-06T08:00:00.000Z' },
+          { id: 12, bookId: 3, title: 'Livro Intermediário', status: 'LENDO', currentPage: 20, lastAccessedAt: '2026-09-04T12:00:00.000Z' }
+        ])
+      }
+      return Promise.resolve([])
+    })
+
+    const wrapper = mount(LibraryPage, {
+      global: {
+        stubs: {
+          NuxtLink: { template: '<a><slot /></a>' }
+        }
+      }
+    })
     await flushPromises()
 
-    expect(wrapper.text()).toContain('Total na sua Estante')
-    expect(wrapper.text()).toContain('EPUB')
-    expect(wrapper.text()).toContain('PDF')
+    const titles = wrapper.findAll('h3').map(h => h.text())
+    expect(titles.indexOf('Livro Mais Recente')).toBeLessThan(titles.indexOf('Livro Intermediário'))
+    expect(titles.indexOf('Livro Intermediário')).toBeLessThan(titles.indexOf('Livro Antigo'))
   })
 })
-

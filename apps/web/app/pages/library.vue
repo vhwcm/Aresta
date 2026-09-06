@@ -12,27 +12,8 @@
         </h1>
       </div>
 
-      <!-- Tab Navigation & Action -->
+      <!-- Actions -->
       <div class="flex items-center gap-3">
-        <div class="flex items-center bg-black/5 dark:bg-white/5 p-1 rounded-full border border-divider w-max">
-          <button
-            @click="activeTab = 'catalog'"
-            class="px-6 py-2 rounded-full font-interface text-sm font-medium transition-all duration-300 flex items-center gap-2"
-            :class="activeTab === 'catalog' ? 'bg-textPrimary text-bgApp shadow-md' : 'text-textSecondary hover:text-textPrimary'"
-          >
-            <CompassIcon class="w-4 h-4" />
-            Catálogo Geral
-          </button>
-          <button
-            @click="handleSelectMyBooksTab"
-            class="px-6 py-2 rounded-full font-interface text-sm font-medium transition-all duration-300 flex items-center gap-2"
-            :class="activeTab === 'my-books' ? 'bg-textPrimary text-bgApp shadow-md' : 'text-textSecondary hover:text-textPrimary'"
-          >
-            <LibraryIcon class="w-4 h-4" />
-            Minha Estante
-          </button>
-        </div>
-
         <button
           @click="isCreateDidacticModalOpen = true"
           class="px-5 py-2.5 rounded-full bg-purple-500/20 hover:bg-purple-500 text-purple-300 hover:text-white border border-purple-500/40 text-xs font-interface font-semibold transition-all flex items-center gap-2"
@@ -55,105 +36,8 @@
 
     <div class="h-px bg-divider w-full"></div>
 
-    <!-- Catálogo Geral View (Todos os Livros do Banco) -->
-    <section v-if="activeTab === 'catalog'" class="flex flex-col gap-10 animate-in fade-in duration-500">
-      <div class="flex items-center justify-between">
-        <div>
-          <h2 class="font-editorial text-2xl text-textPrimary font-light">Todos os Livros do Acervo</h2>
-          <p class="text-xs text-textSecondary font-interface mt-1">
-            Escolha qualquer livro para adicionar à sua estante pessoal e sincronizar com o Mapa Mental.
-          </p>
-        </div>
-        <span class="text-xs font-technical text-textSecondary bg-white/5 border border-divider px-3 py-1 rounded-full">
-          {{ catalogBooks.length }} Obras Disponíveis
-        </span>
-      </div>
-
-      <!-- Loading State -->
-      <div v-if="catalogLoading" class="grid grid-cols-2 md:grid-cols-4 gap-6">
-        <div v-for="i in 4" :key="i" class="aspect-[2/3] bg-white/5 rounded-2xl animate-pulse border border-divider"></div>
-      </div>
-
-      <!-- Grid de Livros do Catálogo -->
-      <div v-else class="grid grid-cols-2 md:grid-cols-4 gap-8">
-        <div
-          v-for="book in catalogBooks"
-          :key="book.id"
-          class="flex flex-col gap-4 group relative bg-bgPanel/60 border border-divider rounded-2xl p-4 hover:border-accent/50 transition-all duration-300 shadow-xl"
-        >
-          <!-- Capa do Livro -->
-          <div class="aspect-[2/3] bg-white/5 border border-divider rounded-xl overflow-hidden relative shadow-lg group-hover:scale-[1.02] transition-transform duration-500">
-            <img
-              v-if="book.coverPath"
-              :src="getCoverUrl(book.coverPath, book.id)"
-              :alt="book.title"
-              class="w-full h-full object-cover"
-            />
-            <div v-else class="w-full h-full bg-gradient-to-br from-neutral-800 to-neutral-900 flex items-center justify-center p-4 text-center">
-              <span class="font-editorial text-lg text-white/60 line-clamp-3">{{ book.title }}</span>
-            </div>
-
-            <!-- Badge de Formato (EPUB / PDF / DIDACTIC) -->
-            <div class="absolute top-2.5 right-2.5 z-10">
-              <span
-                class="px-2 py-0.5 rounded-full text-[10px] font-technical uppercase font-bold tracking-wider shadow backdrop-blur-md"
-                :class="{
-                  'bg-amber-500/20 text-amber-300 border border-amber-500/40': getBookFormat(book.filePath) === 'EPUB',
-                  'bg-sky-500/20 text-sky-300 border border-sky-500/40': getBookFormat(book.filePath) === 'PDF',
-                  'bg-purple-500/20 text-purple-300 border border-purple-500/40': getBookFormat(book.filePath) === 'DIDACTIC'
-                }"
-              >
-                {{ getBookFormat(book.filePath) === 'DIDACTIC' ? 'IA DIDÁTICO' : getBookFormat(book.filePath) }}
-              </span>
-            </div>
-
-            <!-- Overlay de Ação ao Passar o Mouse -->
-            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4 gap-2">
-              <NuxtLink
-                :to="`/reader?bookId=${book.id}`"
-                class="w-full bg-white text-black font-interface text-xs font-semibold py-2 rounded-xl flex items-center justify-center gap-2 hover:bg-white/90 transition-all"
-              >
-                <BookOpenIcon class="w-3.5 h-3.5" /> Ler Agora
-              </NuxtLink>
-            </div>
-          </div>
-
-          <!-- Informações e Botão de Pegar / Remover -->
-          <div class="flex flex-col gap-2 flex-1 justify-between">
-            <h3 class="font-editorial text-lg font-light text-textPrimary leading-snug group-hover:text-accent transition-colors line-clamp-2">
-              {{ book.title }}
-            </h3>
-
-            <div class="pt-2 border-t border-divider/60">
-              <!-- Se o usuário já pegou este livro -->
-              <div v-if="isBookInShelf(book.id)" class="flex flex-col gap-2">
-                <div class="flex items-center gap-1.5 text-[10px] font-technical uppercase font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 rounded-full w-max">
-                  <CheckCircleIcon class="w-3 h-3" /> Na sua estante
-                </div>
-                <button
-                  @click="handleRemoveFromShelf(book.id)"
-                  class="w-full text-[11px] text-rose-400 hover:text-rose-300 font-technical hover:underline flex items-center justify-center gap-1 py-1"
-                >
-                  <TrashIcon class="w-3 h-3" /> Remover da Estante
-                </button>
-              </div>
-
-              <!-- Se ainda não pegou -->
-              <button
-                v-else
-                @click="handleTakeBook(book.id)"
-                class="w-full bg-accent/20 hover:bg-accent text-accent hover:text-white border border-accent/40 font-interface text-xs font-semibold py-2 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-md"
-              >
-                <PlusIcon class="w-3.5 h-3.5" /> Pegar Livro
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- My Books View (Estante Pessoal do Usuário Logado) -->
-    <section v-else class="flex flex-col gap-10 animate-in fade-in duration-500">
+    <!-- Estante Pessoal do Usuário Logado -->
+    <section class="flex flex-col gap-10 animate-in fade-in duration-500">
 
       <!-- Card de Status do Usuário -->
       <div v-if="auth.isLoggedIn.value" class="grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -357,12 +241,25 @@
       <div v-else class="text-center py-16 border border-dashed border-divider rounded-3xl flex flex-col items-center gap-4">
         <LibraryIcon class="w-10 h-10 text-textSecondary/40" />
         <h3 class="font-editorial text-xl text-textPrimary font-light">Sua estante está vazia nesta categoria</h3>
-        <p class="text-xs text-textSecondary font-interface">
-          Acesse a aba <strong>Catálogo Geral</strong> para pegar livros e adicioná-los à sua biblioteca.
+        <p class="text-xs text-textSecondary font-interface max-w-sm">
+          Faça o upload de um livro (EPUB/PDF) ou crie um livreto didático com IA para começar sua jornada.
         </p>
-        <button @click="activeTab = 'catalog'" class="px-5 py-2.5 rounded-xl bg-accent text-white font-semibold text-xs hover:bg-accent/90 transition-all">
-          Explorar Catálogo
-        </button>
+        <div class="flex items-center gap-3 mt-2">
+          <NuxtLink
+            to="/upload"
+            class="px-5 py-2.5 rounded-xl bg-accent text-white font-semibold text-xs hover:bg-accent/90 transition-all flex items-center gap-2"
+          >
+            <UploadIcon class="w-4 h-4" />
+            <span>Enviar Arquivo</span>
+          </NuxtLink>
+          <button
+            @click="isCreateDidacticModalOpen = true"
+            class="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs transition-all flex items-center gap-2"
+          >
+            <SparklesIcon class="w-4 h-4" />
+            <span>Novo Livreto IA</span>
+          </button>
+        </div>
       </div>
     </section>
 
@@ -586,7 +483,6 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   BookIcon,
-  CompassIcon,
   LibraryIcon,
   PlusIcon,
   PlayIcon,
@@ -605,13 +501,12 @@ import {
 import { useDidacticBooklet } from '~/composables/useDidacticBooklet'
 
 import type { UserBookItem } from '~/interfaces/graph'
-import { useCatalog } from '~/composables/useCatalog'
 import { useUserBooks } from '~/composables/useUserBooks'
 import { useGraph } from '~/composables/useGraph'
 import { useAuth } from '~/composables/useAuth'
 import { getCoverUrl, getBookFormat } from '~/utils/cover'
 
-const activeTab = ref<'catalog' | 'my-books'>('catalog')
+const auth = useAuth()
 const statusFilter = ref('TODOS')
 const selectedThemeId = ref<number | string | null>(null)
 const isLoginModalOpen = ref(false)
@@ -637,7 +532,6 @@ const handleCreateDidacticBooklet = async () => {
     newBookletTitle.value = ''
     newBookletTopic.value = ''
     newBookletThemeId.value = null
-    await fetchCatalog()
     if (auth.isLoggedIn.value) {
       await fetchUserBooks()
     }
@@ -657,7 +551,6 @@ const newThemeColor = ref('#E57B55')
 const creatingTheme = ref(false)
 const savingThemes = ref(false)
 
-const { books: catalogBooks, loading: catalogLoading, fetchCatalog } = useCatalog()
 const {
   userBooks,
   fetchUserBooks,
@@ -669,31 +562,8 @@ const {
   isBookInShelf
 } = useUserBooks()
 const { graphData, fetchGraph, createNode } = useGraph()
-const auth = useAuth()
 
 const availableThemes = computed(() => graphData.value.nodes || [])
-
-const handleSelectMyBooksTab = () => {
-  if (!auth.isLoggedIn.value) {
-    isLoginModalOpen.value = true
-    return
-  }
-  activeTab.value = 'my-books'
-}
-
-const handleTakeBook = async (bookId: number) => {
-  if (!auth.isLoggedIn.value) {
-    isLoginModalOpen.value = true
-    return
-  }
-  await addUserBook(bookId, 'QUERO_LER', 0)
-}
-
-const handleRemoveFromShelf = async (bookId: number) => {
-  if (confirm('Tem certeza que deseja remover este livro da sua estante?')) {
-    await deleteUserBookByBookId(bookId)
-  }
-}
 
 const handleDeleteFromShelf = async (userBookId: number) => {
   if (confirm('Tem certeza que deseja remover este livro da sua estante?')) {
@@ -718,11 +588,21 @@ const countByTheme = (themeId: number | string) => {
 }
 
 const filteredUserBooks = computed(() => {
-  return userBooks.value.filter((b: UserBookItem) => {
-    const matchesStatus = statusFilter.value === 'TODOS' || b.status === statusFilter.value
-    const matchesTheme = selectedThemeId.value === null || (b.themes && b.themes.some((t: any) => String(t.id) === String(selectedThemeId.value)))
-    return matchesStatus && matchesTheme
-  })
+  return userBooks.value
+    .filter((b: UserBookItem) => {
+      const matchesStatus = statusFilter.value === 'TODOS' || b.status === statusFilter.value
+      const matchesTheme = selectedThemeId.value === null || (b.themes && b.themes.some((t: any) => String(t.id) === String(selectedThemeId.value)))
+      return matchesStatus && matchesTheme
+    })
+    .slice()
+    .sort((a: UserBookItem, b: UserBookItem) => {
+      const timeA = a.lastAccessedAt ? new Date(a.lastAccessedAt).getTime() : 0
+      const timeB = b.lastAccessedAt ? new Date(b.lastAccessedAt).getTime() : 0
+      if (timeA !== timeB) {
+        return timeB - timeA
+      }
+      return (b.userBookId || 0) - (a.userBookId || 0)
+    })
 })
 
 const getFilterLabel = (filter: string) => {
@@ -789,7 +669,6 @@ const handleSaveBookThemes = async () => {
 }
 
 onMounted(() => {
-  fetchCatalog()
   if (auth.isLoggedIn.value) {
     fetchUserBooks()
     fetchGraph()

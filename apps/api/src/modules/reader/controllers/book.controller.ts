@@ -2,9 +2,10 @@ import type { Request, Response } from 'express'
 import { bookService } from '../services/book.service'
 
 export class BookController {
-  async list(_req: Request, res: Response): Promise<void> {
+  async list(req: Request, res: Response): Promise<void> {
     try {
-      const books = await bookService.findAll()
+      const userId = (req as any).user?.id
+      const books = await bookService.findAll(userId)
       res.json({ books })
     } catch (err: any) {
       res.status(500).json({ error: err.message })
