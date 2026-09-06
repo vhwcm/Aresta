@@ -13,6 +13,7 @@ vi.mock('~/composables/useAuth', () => ({
 describe('useAnnotations', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    ;(globalThis as any).$fetch = mockFetch
   })
 
   it('fetchAnnotations busca e preenche anotações', async () => {
@@ -30,7 +31,7 @@ describe('useAnnotations', () => {
     expect(mockFetch).toHaveBeenCalledWith(
       'http://localhost:7070/api/annotations?bookId=1',
       expect.objectContaining({
-        headers: { Authorization: 'Bearer fake-token' },
+        headers: expect.objectContaining({ Authorization: 'Bearer fake-token' }),
       })
     )
   })
@@ -126,5 +127,25 @@ describe('useAnnotations', () => {
         }),
       })
     )
+  })
+
+  it('preserva anotações salvas localmente quando a API remota retorna vazia ou falha', async () => {
+    mockFetch.mockRejectedValueOnce(new Error('Network error'))
+
+    const { annotations, createAnnotation, fetchAnnotations } = useAnnotations()
+    await createAnnotation({
+      bookId: 99,
+      cfi: 'page:10',
+      note: 'Minha nota offline',
+    })
+
+    expect(annotations.value.some((a) => a.note === 'Minha nota offline')).toBe(true)
+
+    // Simula abertura da gaveta de anotações com a API remota retornando vazia
+    mockFetch.mockResolvedValueOnce([])
+    const fetched = await fetchAnnotations({ bookId: 99 })
+
+    expect(fetched.some((a) => a.note === 'Minha nota offline')).toBe(true)
+    expect(annotations.value.some((a) => a.note === 'Minha nota offline')).toBe(true)
   })
 })

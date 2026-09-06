@@ -24,6 +24,14 @@ export class AnnotationController {
 
   async listByUser(req: Request, res: Response): Promise<void> {
     try {
+      if (req.query.bookId) {
+        const bookId = parseInt(String(req.query.bookId), 10)
+        if (!isNaN(bookId)) {
+          const annotations = await annotationService.findByBook(req.user!.userId, bookId)
+          res.json({ annotations })
+          return
+        }
+      }
       const annotations = await annotationService.findByUser(req.user!.userId)
       res.json({ annotations })
     } catch (err: any) {

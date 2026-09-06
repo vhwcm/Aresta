@@ -7,9 +7,10 @@
   >
     <!-- Corpo Principal com Divisão Leitor / Grafo -->
     <div class="reader-viewer__body" :style="{ backgroundColor: themeBgColor }">
-      <!-- Seção do Leitor (Sempre 100% de largura útil para foco na leitura) -->
+      <!-- Seção do Leitor (Ajusta suavemente de largura para ficar lado a lado com as anotações no desktop) -->
       <section
-        class="reader-viewer__reader-pane reader-viewer__reader-pane--full"
+        class="reader-viewer__reader-pane"
+        :class="store.isNotesOpen && !store.isZenMode ? 'reader-viewer__reader-pane--with-notes' : 'reader-viewer__reader-pane--full'"
         :style="{ backgroundColor: themeBgColor }"
       >
         <!-- Barra de Ferramentas de Leitura (Esquerda no Desktop/Tablet, Inferior no Mobile) (Oculta no Modo Zen) -->
@@ -79,14 +80,39 @@
               {{ store.title }}
             </h2>
           </footer>
+          <!-- Painel de Notas do Livro no Mobile (Cobre toda a área útil do livro, sem cobrir a navbar) -->
+          <transition name="mobile-notes">
+            <div
+              v-if="store.isMobileNotesOpen && !store.isZenMode"
+              class="lg:hidden absolute inset-0 z-30 flex flex-col overflow-hidden"
+              :class="{
+                'bg-[#FAF5E8] text-[#2a2521]': activeTheme === 'sepia',
+                'bg-[#ffffff] text-[#1a1a1a]': activeTheme === 'white',
+                'bg-[#121214] text-[#e4e4e7]': activeTheme === 'black',
+              }"
+              role="dialog"
+              aria-modal="true"
+            >
+              <ReaderBookNotesPanel
+                ref="mobileNotesPanelRef"
+                :is-mobile="true"
+                :theme="activeTheme"
+                :book-id="store.bookId"
+                :book-title="store.title"
+                @close="store.setMobileNotesOpen(false)"
+                @open-annotation-modal="handleOpenAnnotation"
+                @go-to-page="handleSelectSavedPage"
+              />
+            </div>
+          </transition>
         </div>
       </section>
 
-      <!-- Painel de Notas do Livro no Desktop (Gaveta Lateral / Slide-over Drawer) -->
-      <transition name="slide-left">
+      <!-- Painel de Notas do Livro no Desktop (Fica AO LADO do livro, não sobreposto) -->
+      <transition name="panel-slide">
         <aside
           v-if="store.isNotesOpen && !store.isZenMode"
-          class="hidden lg:flex fixed inset-y-0 right-0 z-40 w-[520px] max-w-[85vw] h-full shadow-2xl flex-col border-l transition-all duration-300"
+          class="hidden lg:flex relative z-20 w-[420px] xl:w-[460px] 2xl:w-[500px] shrink-0 h-full shadow-2xl flex-col border-l transition-all duration-300"
           :class="{
             'bg-[#FAF5E8] text-[#2a2521] border-[#dfd5c0]': activeTheme === 'sepia',
             'bg-white text-gray-900 border-gray-200': activeTheme === 'white',
@@ -105,40 +131,6 @@
           />
         </aside>
       </transition>
-
-      <!-- Backdrop sutil para fechar o painel de notas ao clicar fora no desktop -->
-      <transition name="fade">
-        <div
-          v-if="store.isNotesOpen && !store.isZenMode"
-          class="hidden lg:block fixed inset-0 bg-black/25 z-30 backdrop-blur-[1px] transition-opacity"
-          @click="store.setNotesOpen(false)"
-          aria-hidden="true"
-        />
-      </transition>
-    </div>
-
-    <!-- Painel de Notas do Livro em Tela Cheia no Mobile (Oculto no Modo Zen) -->
-    <div
-      v-if="store.isMobileNotesOpen && !store.isZenMode"
-      class="fixed inset-0 z-50 flex flex-col lg:hidden animate-fadeIn"
-      :class="{
-        'bg-[#f5eedc] text-[#2a2521]': activeTheme === 'sepia',
-        'bg-[#ffffff] text-[#1a1a1a]': activeTheme === 'white',
-        'bg-[#121214] text-[#e4e4e7]': activeTheme === 'black',
-      }"
-      role="dialog"
-      aria-modal="true"
-    >
-      <ReaderBookNotesPanel
-        ref="mobileNotesPanelRef"
-        :is-mobile="true"
-        :theme="activeTheme"
-        :book-id="store.bookId"
-        :book-title="store.title"
-        @close="store.setMobileNotesOpen(false)"
-        @open-annotation-modal="handleOpenAnnotation"
-        @go-to-page="handleSelectSavedPage"
-      />
     </div>
 
     <!-- Controles e Avisos Flutuantes do Modo Zen -->
@@ -182,6 +174,7 @@
       :initial-text="capturedSelectionText"
       :current-page="annotationPage"
       :book-id="store.bookId"
+      :book-title="store.title"
       @close="isAnnotationModalOpen = false"
       @expand="handleExpandToDrawer"
       @created="handleAnnotationCreated"
@@ -193,6 +186,7 @@
       :initial-text="capturedSelectionText"
       :current-page="annotationPage"
       :book-id="store.bookId"
+      :book-title="store.title"
       :initial-mode="drawerInitialMode"
       @close="isAnnotationDrawerOpen = false"
       @created="handleAnnotationCreated"
@@ -497,18 +491,17 @@ function handleAnnotationCreated() {
 
 function updateDeviceType() {
   if (typeof window !== 'undefined') {
+    const wasDesktop = isDesktop.value
     isDesktop.value = window.innerWidth >= 1024
-    let hasSpace = true
-    if (canvasAreaRef.value) {
-      const width = canvasAreaRef.value.clientWidth
-      const height = canvasAreaRef.value.clientHeight
-      hasSpace = width >= 800 && (height > 0 ? width / height >= 1.0 : true)
-    } else {
-      hasSpace = window.innerWidth >= 1024
+    if (wasDesktop !== isDesktop.value) {
+      if (isDesktop.value && store.isMobileNotesOpen) {
+        store.setNotesOpen(true)
+        store.setMobileNotesOpen(false)
+      } else if (!isDesktop.value && store.isNotesOpen) {
+        store.setMobileNotesOpen(true)
+        store.setNotesOpen(false)
+      }
     }
-    const isNotesShowing = (store.isNotesOpen || store.isGraphOpen) && !store.isZenMode
-    const shouldBeTwoPage = isDesktop.value && !isNotesShowing && hasSpace && store.totalPages > 1
-    store.setTwoPageMode(shouldBeTwoPage)
   }
 }
 
@@ -518,13 +511,6 @@ function onPopState() {
     store.setZenMode(false)
   }
 }
-
-watch(
-  [() => store.isNotesOpen, () => store.isGraphOpen, () => store.totalPages],
-  () => {
-    updateDeviceType()
-  },
-)
 
 watch(
   () => store.isZenMode,
@@ -699,7 +685,7 @@ onUnmounted(() => {
   height: 100%;
   min-width: 0;
   position: relative;
-  transition: width 0.3s ease;
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1), flex 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @media (min-width: 768px) {
@@ -720,6 +706,13 @@ onUnmounted(() => {
 
 .reader-viewer__reader-pane--full {
   width: 100%;
+  flex: 1 1 100%;
+}
+
+.reader-viewer__reader-pane--with-notes {
+  flex: 1 1 0%;
+  width: auto;
+  min-width: 0;
 }
 
 .reader-viewer__content-column {
@@ -1070,5 +1063,29 @@ onUnmounted(() => {
 .fade-leave-to {
   opacity: 0;
   transform: translateY(-6px);
+}
+
+.panel-slide-enter-active,
+.panel-slide-leave-active {
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.panel-slide-enter-from,
+.panel-slide-leave-to {
+  width: 0 !important;
+  opacity: 0;
+  transform: translateX(30px);
+}
+
+.mobile-notes-enter-active,
+.mobile-notes-leave-active {
+  transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mobile-notes-enter-from,
+.mobile-notes-leave-to {
+  opacity: 0;
+  transform: translateY(16px);
 }
 </style>

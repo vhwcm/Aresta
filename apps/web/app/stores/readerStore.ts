@@ -195,6 +195,8 @@ export const useReaderStore = defineStore('reader', {
       this.fileName = fileName
       if (bookId !== null) {
         this.bookId = bookId
+      } else if (!this.bookId) {
+        this.bookId = 1
       }
       this.currentPage = 1
       this.isLoading = false

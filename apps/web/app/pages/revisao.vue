@@ -207,18 +207,59 @@
 
     <!-- SEÇÃO 2: RESUMOS & ANOTAÇÕES GERADAS POR IA -->
     <section v-if="activeTab === 'summaries'" class="flex flex-col gap-6">
-      <div class="flex items-center justify-between">
-        <h3 class="font-editorial text-2xl font-light text-textPrimary">
-          Sínteses e Anotações Inteligentes
-        </h3>
-        <span class="font-technical text-xs text-textSecondary">
-          Extraídas de marcações ativas
-        </span>
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h3 class="font-editorial text-2xl font-light text-textPrimary">
+            Sínteses e Anotações Inteligentes
+          </h3>
+          <p class="font-technical text-xs text-textSecondary mt-0.5">
+            {{ userSummaries.length > 0 ? `${userSummaries.length} anotação(ões) extraída(s) das suas leituras` : 'Extraídas de marcações ativas' }}
+          </p>
+        </div>
+
+        <!-- Filtro por Obra na aba de anotações -->
+        <div class="flex items-center gap-2">
+          <span class="font-technical text-xs text-textSecondary">Filtrar por Obra:</span>
+          <select
+            v-model="selectedSummaryBookFilter"
+            class="bg-bgPanel text-textPrimary text-xs rounded-xl px-3 py-1.5 border border-divider focus:outline-none focus:border-accent"
+          >
+            <option value="all">Todas as Obras ({{ summaries.length }})</option>
+            <option
+              v-for="book in availableSummaryBooks"
+              :key="book.id"
+              :value="book.id"
+            >
+              {{ book.title }}
+            </option>
+          </select>
+        </div>
       </div>
 
-      <div class="flex flex-col gap-6">
+      <!-- Estado Vazio: nenhuma anotação encontrada -->
+      <div
+        v-if="filteredSummaries.length === 0 && !annotationsLoading"
+        class="flex flex-col items-center justify-center p-12 rounded-3xl bg-bgPanel/60 border border-divider text-center gap-4 max-w-xl mx-auto"
+      >
+        <div class="w-12 h-12 rounded-full bg-accent/15 flex items-center justify-center text-accent">
+          <FileTextIcon class="w-6 h-6" />
+        </div>
+        <h3 class="font-editorial text-2xl font-light text-textPrimary">Nenhuma Anotação Encontrada</h3>
+        <p class="font-interface text-sm text-textSecondary max-w-md">
+          Você ainda não possui anotações registradas para este filtro. Abra um livro na biblioteca e destaque trechos ou faça anotações durante a leitura.
+        </p>
+        <NuxtLink
+          to="/library"
+          class="px-5 py-2.5 rounded-full bg-accent text-white font-interface text-xs font-medium hover:bg-accent/90 transition-all shadow-md mt-2"
+        >
+          Ir para Meus Livros
+        </NuxtLink>
+      </div>
+
+      <!-- Lista de Anotações e Resumos -->
+      <div v-else class="flex flex-col gap-6">
         <div
-          v-for="summary in summaries"
+          v-for="summary in filteredSummaries"
           :key="summary.id"
           class="p-6 md:p-8 rounded-3xl bg-white/[0.02] hover:bg-white/[0.04] border border-divider transition-all flex flex-col gap-4"
         >
@@ -227,43 +268,67 @@
               <span class="px-2.5 py-0.5 rounded-full bg-accent/20 border border-accent/40 text-accent font-technical text-[10px] font-semibold uppercase">
                 {{ summary.bookTitle }}
               </span>
-              <span class="text-xs font-interface text-textSecondary">· {{ summary.chapter }}</span>
+              <span v-if="summary.chapter" class="text-xs font-interface text-textSecondary">· {{ summary.chapter }}</span>
             </div>
-            <span class="font-technical text-[10px] text-textSecondary">{{ summary.date }}</span>
+            <div class="flex items-center gap-3">
+              <span class="font-technical text-[10px] text-textSecondary">{{ summary.date }}</span>
+              <button
+                v-if="summary.annotationId"
+                @click="removeAnnotation(summary.annotationId)"
+                class="text-textSecondary hover:text-rose-400 transition-colors p-1"
+                title="Excluir anotação"
+              >
+                <Trash2Icon class="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
 
           <div class="flex flex-col gap-2">
             <h4 class="font-editorial text-2xl font-light text-textPrimary">
               {{ summary.topic }}
             </h4>
-            <blockquote class="p-4 rounded-xl bg-white/5 border-l-2 border-accent text-xs font-interface italic text-textPrimary/90 leading-relaxed">
+            <blockquote
+              v-if="summary.highlightQuote"
+              class="p-4 rounded-xl bg-white/5 border-l-2 border-accent text-xs font-interface italic text-textPrimary/90 leading-relaxed"
+            >
               "{{ summary.highlightQuote }}"
             </blockquote>
           </div>
 
-          <!-- Resumo estruturado pela IA -->
-          <div class="flex flex-col gap-1.5 bg-white/[0.02] p-4 rounded-xl border border-divider/50">
+          <!-- Resumo estruturado pela IA ou Nota do Leitor -->
+          <div v-if="summary.aiSynthesis" class="flex flex-col gap-1.5 bg-white/[0.02] p-4 rounded-xl border border-divider/50">
             <span class="font-technical text-[10px] uppercase font-semibold text-accent tracking-wider flex items-center gap-1.5">
-              Síntese Aresta IA
+              <SparklesIcon class="w-3.5 h-3.5" />
+              {{ summary.isUserNote ? 'Anotação do Leitor' : 'Síntese Aresta IA' }}
             </span>
-            <p class="font-interface text-xs text-textSecondary leading-relaxed">
+            <p class="font-interface text-xs text-textSecondary leading-relaxed whitespace-pre-wrap">
               {{ summary.aiSynthesis }}
             </p>
           </div>
 
-          <div class="flex items-center justify-between pt-2 text-xs">
-            <div class="flex items-center gap-2">
+          <div class="flex flex-wrap items-center justify-between gap-2 pt-2 text-xs">
+            <div class="flex flex-wrap items-center gap-1.5">
               <span v-for="tag in summary.tags" :key="tag" class="font-technical text-[10px] text-textSecondary bg-white/5 px-2 py-0.5 rounded">
                 #{{ tag }}
               </span>
             </div>
-            <button
-              @click="createCardFromSummary(summary)"
-              class="px-3 py-1.5 rounded-lg border border-accent/30 hover:bg-accent/15 text-accent font-interface text-xs transition-colors flex items-center gap-1.5"
-            >
-              <PlusIcon class="w-3.5 h-3.5" />
-              Criar Flashcard
-            </button>
+            <div class="flex items-center gap-2">
+              <NuxtLink
+                v-if="summary.bookId"
+                :to="`/reader?bookId=${summary.bookId}`"
+                class="px-3 py-1.5 rounded-lg border border-divider hover:bg-white/5 text-textSecondary hover:text-textPrimary font-interface text-xs transition-colors flex items-center gap-1.5"
+              >
+                <BookOpenIcon class="w-3.5 h-3.5" />
+                Abrir Obra
+              </NuxtLink>
+              <button
+                @click="createCardFromSummary(summary)"
+                class="px-3 py-1.5 rounded-lg border border-accent/30 hover:bg-accent/15 text-accent font-interface text-xs transition-colors flex items-center gap-1.5"
+              >
+                <PlusIcon class="w-3.5 h-3.5" />
+                Criar Flashcard
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -385,11 +450,15 @@ import {
   ChevronRightIcon,
   PlusIcon,
   BrainIcon,
-  SparklesIcon
+  SparklesIcon,
+  Trash2Icon,
+  BookOpenIcon
 } from 'lucide-vue-next'
 import { useReadingStreak } from '~/composables/useReadingStreak'
 import { useFlashcards, type FlashcardItem } from '~/composables/useFlashcards'
 import { useDidacticBooklet } from '~/composables/useDidacticBooklet'
+import { useAnnotations } from '~/composables/useAnnotations'
+import { useUserBooks } from '~/composables/useUserBooks'
 
 interface AnnotationSummary {
   id: string
@@ -400,15 +469,21 @@ interface AnnotationSummary {
   aiSynthesis: string
   date: string
   tags: string[]
+  annotationId?: number
+  bookId?: number
+  isUserNote?: boolean
 }
 
 const activeTab = ref<'flashcards' | 'summaries'>('flashcards')
 const selectedBookFilter = ref('all')
+const selectedSummaryBookFilter = ref('all')
 const currentCardIndex = ref(0)
 const isFlipped = ref(false)
 
 const streak = useReadingStreak()
 const flashcards = useFlashcards()
+const { annotations: userAnnotations, loading: annotationsLoading, fetchAnnotations, deleteAnnotation } = useAnnotations()
+const { userBooks, fetchUserBooks } = useUserBooks()
 
 // Mock inicial como fallback caso o backend esteja vazio ou offline
 const fallbackCards = ref<FlashcardItem[]>([
@@ -472,11 +547,27 @@ const displayCards = computed<FlashcardItem[]>(() => {
   return fallbackCards.value
 })
 
+const bookTitlesMap = computed(() => {
+  const map = new Map<number, string>()
+  for (const b of userBooks.value) {
+    if (b.bookId && b.title) {
+      map.set(Number(b.bookId), b.title)
+    }
+  }
+  return map
+})
+
 const availableBooks = computed(() => {
   const map = new Map<number, { id: number; title: string }>()
   for (const c of displayCards.value) {
     if (c.bookId && !map.has(c.bookId)) {
       map.set(c.bookId, { id: c.bookId, title: c.bookTitle })
+    }
+  }
+  for (const a of userAnnotations.value) {
+    if (a.bookId && !map.has(a.bookId)) {
+      const title = a.bookTitle || bookTitlesMap.value.get(Number(a.bookId)) || `Livro #${a.bookId}`
+      map.set(a.bookId, { id: a.bookId, title })
     }
   }
   return Array.from(map.values())
@@ -500,7 +591,7 @@ const formatCardType = (cardType?: string) => {
   }
 }
 
-const summaries = ref<AnnotationSummary[]>([
+const initialMockSummaries = ref<AnnotationSummary[]>([
   {
     id: 's1',
     bookTitle: 'A Estrutura das Revoluções Científicas',
@@ -523,13 +614,99 @@ const summaries = ref<AnnotationSummary[]>([
   }
 ])
 
+const userSummaries = computed<AnnotationSummary[]>(() => {
+  return userAnnotations.value.map((a) => {
+    let dateStr = ''
+    try {
+      if (a.createdAt) {
+        const d = new Date(a.createdAt)
+        dateStr = d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+      }
+    } catch {
+      dateStr = a.createdAt || ''
+    }
+
+    const title = a.bookTitle || bookTitlesMap.value.get(Number(a.bookId)) || `Livro #${a.bookId}`
+    const chapter = a.chapterTitle || 'Anotação de Leitura'
+    const quote = a.selectedText?.trim() || ''
+    const noteText = a.note?.trim() || ''
+
+    let topic = 'Anotação de Leitura'
+    if (noteText) {
+      topic = noteText.length > 70 ? `${noteText.slice(0, 67)}...` : noteText
+    } else if (quote) {
+      topic = quote.length > 70 ? `${quote.slice(0, 67)}...` : quote
+    } else if (a.chapterTitle) {
+      topic = a.chapterTitle
+    }
+
+    const synthesis = noteText || (quote ? 'Destaque registrado durante a leitura.' : '')
+
+    const tags = a.themes && a.themes.length > 0
+      ? a.themes.map((t) => t.name)
+      : ['Leitura']
+
+    return {
+      id: `annotation-${a.id}`,
+      bookTitle: title,
+      chapter,
+      topic,
+      highlightQuote: quote || (!quote && noteText ? noteText : ''),
+      aiSynthesis: synthesis,
+      date: dateStr,
+      tags,
+      annotationId: a.id,
+      bookId: a.bookId,
+      isUserNote: true
+    }
+  })
+})
+
+const summaries = computed<AnnotationSummary[]>(() => {
+  if (userSummaries.value.length > 0) {
+    return userSummaries.value
+  }
+  return initialMockSummaries.value
+})
+
+const availableSummaryBooks = computed(() => {
+  const map = new Map<string, { id: string; title: string }>()
+  for (const s of summaries.value) {
+    const key = s.bookId ? String(s.bookId) : s.bookTitle
+    if (!map.has(key)) {
+      map.set(key, { id: key, title: s.bookTitle })
+    }
+  }
+  return Array.from(map.values())
+})
+
+const filteredSummaries = computed(() => {
+  if (selectedSummaryBookFilter.value === 'all') return summaries.value
+  return summaries.value.filter((s) => {
+    const key = s.bookId ? String(s.bookId) : s.bookTitle
+    return key === selectedSummaryBookFilter.value
+  })
+})
+
 onMounted(async () => {
   try {
-    await flashcards.fetchDailyDeck()
+    await Promise.allSettled([
+      flashcards.fetchDailyDeck(),
+      fetchAnnotations(),
+      fetchUserBooks()
+    ])
   } catch (e) {
     // Fallback gracioso
   }
 })
+
+const removeAnnotation = async (id: number) => {
+  try {
+    await deleteAnnotation(id)
+  } catch (err) {
+    console.error('Erro ao excluir anotação:', err)
+  }
+}
 
 const nextCard = () => {
   if (currentCardIndex.value < filteredCards.value.length - 1) {
@@ -566,11 +743,11 @@ const rateCurrentCard = async (rating: 'hard' | 'good' | 'easy') => {
 }
 
 const createCardFromSummary = (summary: AnnotationSummary) => {
-  fallbackCards.value.push({
+  const newCard: FlashcardItem = {
     id: Date.now(),
     userId: 1,
-    annotationId: Date.now(),
-    bookId: 999,
+    annotationId: summary.annotationId || Date.now(),
+    bookId: summary.bookId || 999,
     bookTitle: summary.bookTitle,
     bookCover: null,
     chapterTitle: summary.chapter,
@@ -582,9 +759,11 @@ const createCardFromSummary = (summary: AnnotationSummary) => {
     contextSummary: 'Criado a partir de anotação',
     repetitionLevel: 1,
     nextReviewAt: new Date().toISOString()
-  })
+  }
+  fallbackCards.value.push(newCard)
+  selectedBookFilter.value = 'all'
   activeTab.value = 'flashcards'
-  currentCardIndex.value = fallbackCards.value.length - 1
+  currentCardIndex.value = filteredCards.value.length - 1
 }
 
 const router = useRouter()

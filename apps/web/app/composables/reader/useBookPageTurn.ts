@@ -91,7 +91,7 @@ export function useBookPageTurn(
 
     const hostWidth = host.clientWidth || 800
     const hostHeight = host.clientHeight || 600
-    const isTwoPage = store.isTwoPageMode && hostWidth >= 768
+    const isTwoPage = store.isTwoPageMode && hostWidth >= 480
 
     const currentPage = store.currentPage
     const isEpub = store.document?.type === 'epub'

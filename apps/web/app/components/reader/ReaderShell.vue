@@ -224,6 +224,8 @@ const loadBookFromQuery = async () => {
 
       if (targetPage && !isNaN(targetPage) && targetPage > 0) {
         store.goToPage(targetPage)
+      } else if (validBookId) {
+        void store.persistProgress(localBookMeta?.currentPage || 1)
       }
     }, 'store')
   } catch (err: any) {

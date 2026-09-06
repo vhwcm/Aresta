@@ -753,6 +753,145 @@ describe('Reader Components', () => {
       await bottomBar.find('#notes-btn').trigger('click')
       expect(store.isNotesOpen).toBe(false)
     })
+
+    it('no desktop, ao abrir anotações, reader-pane contrai com classe with-notes e aside fica lado a lado sem backdrop', async () => {
+      const store = useReaderStore()
+      store.setDocument({
+        type: 'epub',
+        metadata: { title: 'Dom Casmurro' },
+        totalPages: 100,
+        isLoaded: true,
+        load: vi.fn(),
+        destroy: vi.fn(),
+      } as any, 'dom-casmurro.epub')
+
+      const wrapper = mount(ReaderViewer, {
+        global: {
+          stubs: {
+            ReaderEnginePageCurlCanvas: true,
+            ReaderBookNotesPanel: true,
+            ReaderGraphPanel: true,
+            ReaderBottomBar: true,
+            ReaderSavedPagesModal: true,
+            ReaderAnnotationModal: true,
+            ReaderAnnotationDrawer: true,
+            ReaderTypographyPopover: true,
+            ReaderSelectionTooltip: true,
+            ReaderDictionaryCard: true,
+          },
+        },
+      })
+
+      const readerPane = wrapper.find('.reader-viewer__reader-pane')
+      expect(readerPane.classes()).toContain('reader-viewer__reader-pane--full')
+      expect(readerPane.classes()).not.toContain('reader-viewer__reader-pane--with-notes')
+      expect(wrapper.find('aside').exists()).toBe(false)
+
+      // Abre as notas no desktop
+      store.setNotesOpen(true)
+      await wrapper.vm.$nextTick()
+
+      expect(readerPane.classes()).toContain('reader-viewer__reader-pane--with-notes')
+      const aside = wrapper.find('aside')
+      expect(aside.exists()).toBe(true)
+      // Confirma que não há backdrop sobreposto com fixed inset-0 cobrindo o livro
+      expect(wrapper.find('.fixed.inset-0.bg-black\\/25').exists()).toBe(false)
+    })
+
+    it('no mobile, ao abrir anotações, ocupa totalmente a área do livro dentro de content-column sem cobrir a navbar', async () => {
+      const store = useReaderStore()
+      store.setDocument({
+        type: 'epub',
+        metadata: { title: 'Dom Casmurro' },
+        totalPages: 100,
+        isLoaded: true,
+        load: vi.fn(),
+        destroy: vi.fn(),
+      } as any, 'dom-casmurro.epub')
+
+      const wrapper = mount(ReaderViewer, {
+        global: {
+          stubs: {
+            ReaderEnginePageCurlCanvas: true,
+            ReaderBookNotesPanel: true,
+            ReaderGraphPanel: true,
+            ReaderBottomBar: true,
+            ReaderSavedPagesModal: true,
+            ReaderAnnotationModal: true,
+            ReaderAnnotationDrawer: true,
+            ReaderTypographyPopover: true,
+            ReaderSelectionTooltip: true,
+            ReaderDictionaryCard: true,
+          },
+        },
+      })
+
+      // Abre notas mobile
+      store.setMobileNotesOpen(true)
+      await wrapper.vm.$nextTick()
+
+      // Painel mobile está contido dentro da coluna de conteúdo do livro
+      const contentCol = wrapper.find('.reader-viewer__content-column')
+      expect(contentCol.exists()).toBe(true)
+
+      const mobileNotes = contentCol.findComponent({ name: 'ReaderBookNotesPanel' })
+      expect(mobileNotes.exists()).toBe(true)
+      expect(mobileNotes.props('isMobile')).toBe(true)
+
+      // BottomBar (navbar) permanece presente no reader-pane e externa ao content-column
+      const bottomBar = wrapper.findComponent({ name: 'ReaderBottomBar' })
+      expect(bottomBar.exists()).toBe(true)
+      expect(contentCol.findComponent({ name: 'ReaderBottomBar' }).exists()).toBe(false)
+    })
+
+    it('preserva o modo de 2 páginas (duas folhas) ao abrir e fechar as anotações', async () => {
+      const store = useReaderStore()
+      store.setTwoPageMode(true)
+      store.setDocument({
+        type: 'epub',
+        metadata: { title: 'Dom Casmurro' },
+        totalPages: 100,
+        isLoaded: true,
+        load: vi.fn(),
+        destroy: vi.fn(),
+      } as any, 'dom-casmurro.epub')
+
+      expect(store.isTwoPageMode).toBe(true)
+
+      const wrapper = mount(ReaderViewer, {
+        global: {
+          stubs: {
+            ReaderEnginePageCurlCanvas: true,
+            ReaderBookNotesPanel: true,
+            ReaderGraphPanel: true,
+            ReaderBottomBar: true,
+            ReaderSavedPagesModal: true,
+            ReaderAnnotationModal: true,
+            ReaderAnnotationDrawer: true,
+            ReaderTypographyPopover: true,
+            ReaderSelectionTooltip: true,
+            ReaderDictionaryCard: true,
+          },
+        },
+      })
+
+      // Ao montar e com duas páginas ativas, permanece true
+      expect(store.isTwoPageMode).toBe(true)
+
+      // Abre as anotações
+      store.setNotesOpen(true)
+      await wrapper.vm.$nextTick()
+
+      // O modo de 2 páginas DEVE continuar ativo
+      expect(store.isTwoPageMode).toBe(true)
+
+      // Fecha as anotações
+      store.setNotesOpen(false)
+      await wrapper.vm.$nextTick()
+
+      // Continua com 2 páginas ativas
+      expect(store.isTwoPageMode).toBe(true)
+    })
   })
 })
 

@@ -239,6 +239,7 @@ const props = defineProps<{
   initialText?: string
   currentPage: number
   bookId?: number | null
+  bookTitle?: string
   chapterTitle?: string | null
   initialMode?: 'type' | 'handwriting'
 }>()
@@ -379,6 +380,7 @@ const handleSubmit = async () => {
   try {
     const created = await createAnnotation({
       bookId,
+      bookTitle: props.bookTitle,
       cfi,
       selectedText: selectedText.value.trim() || null,
       note: note.value.trim() || null,

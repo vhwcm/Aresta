@@ -28,7 +28,7 @@
               v-if="!loading"
               class="px-2 py-0.5 rounded-full text-[10px] font-technical font-semibold bg-accent/15 text-accent shrink-0"
             >
-              {{ annotations.length }}
+              {{ bookAnnotations.length }}
             </span>
           </div>
           <p
@@ -118,7 +118,7 @@
                 ? 'bg-gray-200 text-gray-700 hover:text-black'
                 : 'bg-white/5 text-textSecondary hover:text-textPrimary'))"
         >
-          Todas ({{ annotations.length }})
+          Todas ({{ bookAnnotations.length }})
         </button>
 
         <button
@@ -624,12 +624,26 @@ function getPageNumber(item: AnnotationItem): number | null {
   return null
 }
 
+const targetBookId = computed(() => {
+  const id = props.bookId ?? store.bookId
+  if (id !== undefined && id !== null) {
+    const num = Number(id)
+    return isNaN(num) ? 1 : num
+  }
+  return 1
+})
+
+const bookAnnotations = computed(() => {
+  const bookId = targetBookId.value
+  return annotations.value.filter((a) => Number(a.bookId) === bookId || !a.bookId)
+})
+
 const currentPageNotesCount = computed(() => {
-  return annotations.value.filter((a) => getPageNumber(a) === store.currentPage).length
+  return bookAnnotations.value.filter((a) => getPageNumber(a) === store.currentPage).length
 })
 
 const filteredAnnotations = computed(() => {
-  let list = annotations.value
+  let list = bookAnnotations.value
 
   // Filtro de Categoria
   if (activeFilter.value === 'currentPage') {
@@ -656,12 +670,8 @@ const filteredAnnotations = computed(() => {
 })
 
 async function loadNotes() {
-  const currentBookId = props.bookId ?? store.bookId
-  if (currentBookId) {
-    await fetchAnnotations({ bookId: currentBookId })
-  } else {
-    await fetchAnnotations()
-  }
+  const currentBookId = targetBookId.value
+  await fetchAnnotations({ bookId: currentBookId })
 }
 
 function handleJumpToPage(page: number) {
@@ -726,7 +736,7 @@ async function handleSaveQuickNote() {
   isSavingQuickNote.value = true
 
   try {
-    const currentBookId = props.bookId ?? store.bookId ?? 1
+    const currentBookId = targetBookId.value
     await createAnnotation({
       bookId: currentBookId,
       cfi: `page:${store.currentPage}`,

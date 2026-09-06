@@ -170,6 +170,7 @@ const props = defineProps<{
   initialText?: string
   currentPage: number
   bookId?: number | null
+  bookTitle?: string
 }>()
 
 const emit = defineEmits<{
@@ -249,6 +250,7 @@ const handleSubmit = async () => {
     const bookId = props.bookId || 1 // Fallback para 1 se bookId não estiver setado
     const created = await createAnnotation({
       bookId,
+      bookTitle: props.bookTitle,
       cfi: `page:${props.currentPage}`,
       selectedText: selectedText.value.trim() || null,
       note: note.value.trim() || null,

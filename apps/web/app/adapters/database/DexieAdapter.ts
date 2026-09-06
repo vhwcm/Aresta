@@ -82,11 +82,11 @@ export class DexieAdapter implements IDatabaseAdapter {
     let list = await query.toArray();
     list = list.filter((a) => !a.deleted_at);
 
-    if (filters?.bookId) {
-      list = list.filter((a) => a.bookId === filters.bookId);
+    if (filters?.bookId !== undefined && filters?.bookId !== null) {
+      list = list.filter((a) => Number(a.bookId) === Number(filters.bookId));
     }
-    if (filters?.themeId) {
-      list = list.filter((a) => a.themes?.some((t) => t.id === filters.themeId));
+    if (filters?.themeId !== undefined && filters?.themeId !== null) {
+      list = list.filter((a) => a.themes?.some((t) => Number(t.id) === Number(filters.themeId)));
     }
     return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }

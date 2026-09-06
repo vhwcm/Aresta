@@ -11,20 +11,52 @@ export class AnnotationService {
     note?: string
     chapterTitle?: string
     progress?: number
+    themeIds?: number[]
+    bookTitle?: string
     token: string
   }) {
-    const { token, ...rest } = data
+    const { token, themeIds, bookTitle, ...rest } = data
+    const numericBookId = parseInt(String(rest.bookId), 10) || 1
 
-    // Create annotation (without embedding first)
+    // Garantir existência do livro na tabela 'books' para evitar violação de FK no Postgres
+    const bookExists = await prisma.book.findUnique({ where: { id: numericBookId } })
+    if (!bookExists) {
+      await prisma.book.upsert({
+        where: { id: numericBookId },
+        update: {},
+        create: {
+          id: numericBookId,
+          title: bookTitle || 'Livro Sem Título',
+          file_path: 'local/book.epub',
+          file_type: 'epub',
+        },
+      })
+    }
+
+    // Criar anotação com temas vinculados e progresso normalizado
     const annotation = await prisma.annotation.create({
       data: {
         user_id: rest.userId,
-        book_id: rest.bookId,
+        book_id: numericBookId,
         cfi: rest.cfi,
         selected_text: rest.selectedText,
         note: rest.note,
         chapter_title: rest.chapterTitle,
-        progress: rest.progress,
+        progress: rest.progress ? Number(rest.progress) : 0,
+        ...(Array.isArray(themeIds) && themeIds.length > 0
+          ? {
+              annotationThemes: {
+                create: themeIds.map((tid) => ({
+                  theme_id: Number(tid),
+                })),
+              },
+            }
+          : {}),
+      },
+      include: {
+        book: { select: { id: true, title: true, cover_path: true } },
+        annotationThemes: { include: { theme: true } },
+        flashcard: true,
       },
     })
 
@@ -58,7 +90,11 @@ export class AnnotationService {
   async findByUser(userId: number) {
     return prisma.annotation.findMany({
       where: { user_id: userId },
-      include: { annotationThemes: { include: { theme: true } }, flashcard: true },
+      include: {
+        book: { select: { id: true, title: true, cover_path: true } },
+        annotationThemes: { include: { theme: true } },
+        flashcard: true,
+      },
       orderBy: { created_at: 'desc' },
     })
   }
@@ -66,7 +102,11 @@ export class AnnotationService {
   async findByBook(userId: number, bookId: number) {
     return prisma.annotation.findMany({
       where: { user_id: userId, book_id: bookId },
-      include: { annotationThemes: { include: { theme: true } }, flashcard: true },
+      include: {
+        book: { select: { id: true, title: true, cover_path: true } },
+        annotationThemes: { include: { theme: true } },
+        flashcard: true,
+      },
       orderBy: { progress: 'asc' },
     })
   }
