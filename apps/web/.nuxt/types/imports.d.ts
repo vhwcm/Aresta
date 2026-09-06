@@ -159,6 +159,7 @@ declare global {
   const useError: typeof import('../../node_modules/nuxt/dist/app/composables/error').useError
   const useFetch: typeof import('../../node_modules/nuxt/dist/app/composables/fetch').useFetch
   const useFlashcards: typeof import('../../app/composables/useFlashcards').useFlashcards
+  const useGoogleDriveSync: typeof import('../../app/composables/useGoogleDriveSync').useGoogleDriveSync
   const useGraph: typeof import('../../app/composables/useGraph').useGraph
   const useHead: typeof import('../../node_modules/nuxt/dist/app/composables/head').useHead
   const useHeadSafe: typeof import('../../node_modules/nuxt/dist/app/composables/head').useHeadSafe
@@ -174,6 +175,7 @@ declare global {
   const useNotes: typeof import('../../app/composables/useNotes').useNotes
   const useNuxtApp: typeof import('../../node_modules/nuxt/dist/app/nuxt').useNuxtApp
   const useNuxtData: typeof import('../../node_modules/nuxt/dist/app/composables/asyncData').useNuxtData
+  const useOAuth: typeof import('../../app/composables/useOAuth').useOAuth
   const usePinia: typeof import('../../node_modules/@pinia/nuxt/dist/runtime/composables').usePinia
   const usePreviewMode: typeof import('../../node_modules/nuxt/dist/app/composables/preview').usePreviewMode
   const useReaderStore: typeof import('../../app/stores/readerStore').useReaderStore
@@ -292,8 +294,14 @@ declare global {
   export type { FlashcardItem, DailyDeckResponse } from '../../app/composables/useFlashcards'
   import('../../app/composables/useFlashcards')
   // @ts-ignore
+  export type { GoogleDriveSyncResult } from '../../app/composables/useGoogleDriveSync'
+  import('../../app/composables/useGoogleDriveSync')
+  // @ts-ignore
   export type { UploadLocalBookOptions, UploadLocalBookResult } from '../../app/composables/useLocalBookUpload'
   import('../../app/composables/useLocalBookUpload')
+  // @ts-ignore
+  export type { OAuthResult } from '../../app/composables/useOAuth'
+  import('../../app/composables/useOAuth')
   // @ts-ignore
   export type { TypographyFont } from '../../app/composables/useReaderTypography'
   import('../../app/composables/useReaderTypography')
@@ -484,6 +492,7 @@ declare module 'vue' {
     readonly useError: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/error')['useError']>
     readonly useFetch: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/fetch')['useFetch']>
     readonly useFlashcards: UnwrapRef<typeof import('../../app/composables/useFlashcards')['useFlashcards']>
+    readonly useGoogleDriveSync: UnwrapRef<typeof import('../../app/composables/useGoogleDriveSync')['useGoogleDriveSync']>
     readonly useGraph: UnwrapRef<typeof import('../../app/composables/useGraph')['useGraph']>
     readonly useHead: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/head')['useHead']>
     readonly useHeadSafe: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/head')['useHeadSafe']>
@@ -499,6 +508,7 @@ declare module 'vue' {
     readonly useNotes: UnwrapRef<typeof import('../../app/composables/useNotes')['useNotes']>
     readonly useNuxtApp: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/nuxt')['useNuxtApp']>
     readonly useNuxtData: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/asyncData')['useNuxtData']>
+    readonly useOAuth: UnwrapRef<typeof import('../../app/composables/useOAuth')['useOAuth']>
     readonly usePinia: UnwrapRef<typeof import('../../node_modules/@pinia/nuxt/dist/runtime/composables')['usePinia']>
     readonly usePreviewMode: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/preview')['usePreviewMode']>
     readonly useReaderStore: UnwrapRef<typeof import('../../app/stores/readerStore')['useReaderStore']>

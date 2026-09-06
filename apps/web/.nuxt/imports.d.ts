@@ -45,9 +45,11 @@ export { useConverter, ConversionOptions, ConversionStatus, ConversionResult } f
 export { MAX_COMPOSITE_DEPTH, useCycleDetector, RenderContextItem } from '../app/composables/useCycleDetector';
 export { useDidacticBooklet, DidacticChapterItem, DidacticBookletItem } from '../app/composables/useDidacticBooklet';
 export { useFlashcards, FlashcardItem, DailyDeckResponse } from '../app/composables/useFlashcards';
+export { useGoogleDriveSync, GoogleDriveSyncResult } from '../app/composables/useGoogleDriveSync';
 export { useGraph } from '../app/composables/useGraph';
 export { useLocalBookUpload, UploadLocalBookOptions, UploadLocalBookResult } from '../app/composables/useLocalBookUpload';
 export { useNotes } from '../app/composables/useNotes';
+export { useOAuth, OAuthResult } from '../app/composables/useOAuth';
 export { READER_FONTS, useReaderTypography, TypographyFont } from '../app/composables/useReaderTypography';
 export { useReadingStreak, StreakDay, TodayActivity } from '../app/composables/useReadingStreak';
 export { themeModeToReaderTheme, readerThemeToThemeMode, resetSettingsForTesting, applyTheme, useSettings, ThemeMode, EpubFontFamilyId, DictionaryLanguage, SettingsState, UserSettingsResponse } from '../app/composables/useSettings';
