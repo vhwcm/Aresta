@@ -1,3 +1,5 @@
+name: aresta-projeto
+
 services:
   # ==========================================
   # UNIFIED DATABASE (Aresta Monolith)

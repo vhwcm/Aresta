@@ -1,6 +1,9 @@
 node_modules/
 .env
 *.log
+.nuxt/
+.output/
+dist/
 
 # Terraform & Infra Secrets
 infra/*.pem
