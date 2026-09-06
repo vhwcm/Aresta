@@ -36,8 +36,28 @@ model User {
   flashcards          Flashcard[]
   dailyDeckCards      DailyDeckCard[]
   didacticBooklets    DidacticBooklet[]
+  accounts            Account[]
 
   @@map("users")
+}
+
+model Account {
+  id                  Int       @id @default(autoincrement())
+  user_id             Int
+  provider            String    // 'google' | 'microsoft' | 'apple'
+  provider_account_id String
+  access_token        String?   @db.Text
+  refresh_token       String?   @db.Text
+  expires_at          Int?
+  token_type          String?
+  scope               String?
+  created_at          DateTime  @default(now())
+  updated_at          DateTime  @default(now()) @updatedAt
+  user                User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([provider, provider_account_id])
+  @@index([user_id])
+  @@map("accounts")
 }
 
 model UserSettings {

@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { authController } from '../controllers/auth.controller'
+import { oauthController } from '../controllers/oauth.controller'
 import { authenticate } from '../middlewares/jwt.middleware'
 
 export const authRouter = Router()
@@ -7,3 +8,8 @@ export const authRouter = Router()
 authRouter.post('/register', (req, res) => authController.register(req, res))
 authRouter.post('/login', (req, res) => authController.login(req, res))
 authRouter.get('/me', authenticate, (req, res) => authController.me(req, res))
+
+authRouter.get('/oauth/:provider/url', (req, res) => oauthController.getUrl(req, res))
+authRouter.post('/oauth/:provider/callback', (req, res) => oauthController.callback(req, res))
+authRouter.post('/oauth/:provider/refresh', authenticate, (req, res) => oauthController.refresh(req, res))
+authRouter.get('/oauth/:provider/status', authenticate, (req, res) => oauthController.getStatus(req, res))

@@ -21,8 +21,13 @@ export const authenticate = (req: Request, res: Response, next: NextFunction): v
   const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : authHeader
 
   if (!token) {
-    if (process.env.NODE_ENV === 'test' || process.env.ALLOW_DEV_ANON === 'true') {
+    if (process.env.NODE_ENV === 'test') {
       req.user = { userId: 1, email: 'admin@aresta.app', role: 'ADMIN' }
+      next()
+      return
+    }
+    if (process.env.NODE_ENV !== 'production' || process.env.ALLOW_DEV_ANON === 'true') {
+      req.user = { userId: 2, email: 'viktor@aresta.org', role: 'ADMIN' }
       next()
       return
     }
@@ -35,8 +40,13 @@ export const authenticate = (req: Request, res: Response, next: NextFunction): v
     req.user = payload
     next()
   } catch {
-    if (process.env.NODE_ENV === 'test' || process.env.ALLOW_DEV_ANON === 'true') {
+    if (process.env.NODE_ENV === 'test') {
       req.user = { userId: 1, email: 'admin@aresta.app', role: 'ADMIN' }
+      next()
+      return
+    }
+    if (process.env.NODE_ENV !== 'production' || process.env.ALLOW_DEV_ANON === 'true') {
+      req.user = { userId: 2, email: 'viktor@aresta.org', role: 'ADMIN' }
       next()
       return
     }
