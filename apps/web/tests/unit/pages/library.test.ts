@@ -6,6 +6,13 @@ import LibraryPage from '../../../app/pages/library.vue'
 const mockFetch = vi.fn()
 ;(globalThis as any).$fetch = mockFetch
 
+const mockPush = vi.fn()
+vi.mock('vue-router', () => ({
+  useRouter: () => ({
+    push: mockPush
+  })
+}))
+
 vi.mock('~/composables/useAuth', () => ({
   useAuth: () => ({
     isLoggedIn: ref(true),
@@ -37,12 +44,54 @@ describe('Library Page', () => {
       }
     })
     await flushPromises()
-    expect(wrapper.text()).toContain('Biblioteca & Estante')
-    expect(wrapper.text()).toContain('Total na sua Estante')
+    expect(wrapper.text()).toContain('Estante')
+    expect(wrapper.text()).not.toContain('Biblioteca & Estante')
+    expect(wrapper.text()).not.toContain('Acervo da Aresta')
     expect(wrapper.text()).toContain('Novo Livreto IA')
     expect(wrapper.text()).toContain('Enviar Arquivo')
-    expect(wrapper.text()).toContain('EPUB')
-    expect(wrapper.text()).toContain('PDF')
+    // Não deve conter os cards de status removidos
+    expect(wrapper.text()).not.toContain('Total na sua Estante')
+    expect(wrapper.text()).not.toContain('Lendo Atualmente')
+    // Não deve exibir formato de arquivo (EPUB ou PDF)
+    expect(wrapper.text()).not.toContain('EPUB')
+    expect(wrapper.text()).not.toContain('PDF')
+    // Deve exibir porcentagem de leitura não editável
+    expect(wrapper.text()).toContain('45%')
+    expect(wrapper.text()).toContain('0%')
+    // Botão Ler Livro e seletor de status devem ter sido removidos
+    expect(wrapper.text()).not.toContain('Ler Livro')
+    expect(wrapper.text()).not.toContain('Lendo')
+    expect(wrapper.text()).not.toContain('📖 Lendo')
+    expect(wrapper.text()).not.toContain('Ver no Mapa Mental')
+  })
+
+  it('navigates to reader when clicking a book card', async () => {
+    const wrapper = mount(LibraryPage, {
+      global: {
+        stubs: {
+          NuxtLink: { template: '<a><slot /></a>' }
+        }
+      }
+    })
+    await flushPromises()
+
+    const bookCards = wrapper.findAll('[data-testid="user-book-card"]')
+    expect(bookCards.length).toBeGreaterThanOrEqual(2)
+
+    const card0 = bookCards[0]
+    const card1 = bookCards[1]
+    expect(card0).toBeDefined()
+    expect(card1).toBeDefined()
+
+    if (card0 && card1) {
+      // Primeiro card na ordem por recência/id (Manual de Engenharia: bookId 2, page 1 fallback)
+      await card0.trigger('click')
+      expect(mockPush).toHaveBeenCalledWith('/reader?bookId=2&page=1')
+
+      // Segundo card (Contos Fluminenses: bookId 1, page 45)
+      await card1.trigger('click')
+      expect(mockPush).toHaveBeenCalledWith('/reader?bookId=1&page=45')
+    }
   })
 
   it('does not display general catalog tab selection', async () => {
@@ -83,5 +132,23 @@ describe('Library Page', () => {
     const titles = wrapper.findAll('h3').map(h => h.text())
     expect(titles.indexOf('Livro Mais Recente')).toBeLessThan(titles.indexOf('Livro Intermediário'))
     expect(titles.indexOf('Livro Intermediário')).toBeLessThan(titles.indexOf('Livro Antigo'))
+  })
+
+  it('opens delete confirmation modal with book title when clicking delete button', async () => {
+    const wrapper = mount(LibraryPage, {
+      global: {
+        stubs: {
+          NuxtLink: { template: '<a><slot /></a>' }
+        }
+      }
+    })
+    await flushPromises()
+
+    const deleteBtn = wrapper.find('[data-testid="delete-book-btn"]')
+    expect(deleteBtn.exists()).toBe(true)
+
+    await deleteBtn.trigger('click')
+    expect(wrapper.text()).toContain('Remover Livro da Estante')
+    expect(wrapper.text()).toContain('Contos Fluminenses')
   })
 })

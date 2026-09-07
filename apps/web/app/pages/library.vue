@@ -1,34 +1,31 @@
 <template>
-  <div class="flex flex-col gap-12 pb-32 animate-in fade-in slide-in-from-bottom-4 duration-700">
-    <!-- Header: Title and Tabs -->
-    <header class="flex flex-col md:flex-row md:items-end justify-between gap-6">
-      <div class="flex flex-col gap-2">
-        <div class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary flex items-center gap-2">
-          <BookIcon class="w-3.5 h-3.5" />
-          Acervo da Aresta
-        </div>
-        <h1 class="font-editorial text-5xl font-light text-textPrimary leading-tight">
-          Biblioteca & Estante
+  <div class="flex flex-col gap-6 sm:gap-8 pb-32 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <!-- Header: Title and Actions -->
+    <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 sm:gap-4">
+      <div class="flex items-center gap-2">
+        <BookIcon class="w-4 h-4 text-accent" />
+        <h1 class="font-technical text-xs uppercase font-bold tracking-widest text-textSecondary">
+          Estante
         </h1>
       </div>
 
       <!-- Actions -->
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2 sm:gap-3">
         <button
           @click="isCreateDidacticModalOpen = true"
-          class="px-5 py-2.5 rounded-full bg-purple-500/20 hover:bg-purple-500 text-purple-300 hover:text-white border border-purple-500/40 text-xs font-interface font-semibold transition-all flex items-center gap-2"
+          class="flex-1 sm:flex-initial px-4 sm:px-5 py-2 sm:py-2.5 rounded-full bg-purple-500/20 hover:bg-purple-500 text-purple-300 hover:text-white border border-purple-500/40 text-xs font-interface font-semibold transition-all flex items-center justify-center gap-2"
           title="Criar Novo Livreto Didático com IA"
         >
-          <SparklesIcon class="w-4 h-4" />
+          <SparklesIcon class="w-4 h-4 shrink-0" />
           <span>Novo Livreto IA</span>
         </button>
 
         <NuxtLink
           to="/upload"
-          class="px-5 py-2.5 rounded-full bg-accent/20 hover:bg-accent text-accent hover:text-white border border-accent/40 text-xs font-interface font-semibold transition-all flex items-center gap-2"
+          class="flex-1 sm:flex-initial px-4 sm:px-5 py-2 sm:py-2.5 rounded-full bg-accent/20 hover:bg-accent text-accent hover:text-white border border-accent/40 text-xs font-interface font-semibold transition-all flex items-center justify-center gap-2"
           title="Fazer Upload de Livro"
         >
-          <UploadIcon class="w-4 h-4" />
+          <UploadIcon class="w-4 h-4 shrink-0" />
           <span>Enviar Arquivo</span>
         </NuxtLink>
       </div>
@@ -37,51 +34,33 @@
     <div class="h-px bg-divider w-full"></div>
 
     <!-- Estante Pessoal do Usuário Logado -->
-    <section class="flex flex-col gap-10 animate-in fade-in duration-500">
+    <section class="flex flex-col gap-6 sm:gap-8 animate-in fade-in duration-500">
 
-      <!-- Card de Status do Usuário -->
-      <div v-if="auth.isLoggedIn.value" class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        <div class="p-6 rounded-2xl bg-white/5 border border-divider flex flex-col gap-2 shadow-lg">
-          <span class="font-technical text-[10px] uppercase tracking-widest text-textSecondary">Lendo Atualmente</span>
-          <span class="font-editorial text-4xl text-textPrimary">{{ countByStatus('LENDO') }}</span>
-        </div>
-        <div class="p-6 rounded-2xl bg-white/5 border border-divider flex flex-col gap-2 shadow-lg">
-          <span class="font-technical text-[10px] uppercase tracking-widest text-textSecondary">Livros Concluídos</span>
-          <span class="font-editorial text-4xl text-textPrimary">{{ countByStatus('LIDO') }}</span>
-        </div>
-        <div class="p-6 rounded-2xl bg-white/5 border border-divider flex flex-col gap-2 shadow-lg">
-          <span class="font-technical text-[10px] uppercase tracking-widest text-textSecondary">Total na sua Estante</span>
-          <span class="font-editorial text-4xl text-accent">{{ userBooks.length }}</span>
-        </div>
-      </div>
-
-      <!-- Filtros por Status e Temas do Grafo -->
-      <div class="flex flex-col gap-4 border-b border-divider pb-5">
-        <!-- Linha 1: Filtro por Status -->
-        <div class="flex items-center gap-3 flex-wrap">
-          <span class="text-xs font-technical uppercase font-bold text-textSecondary">Filtrar:</span>
-          <button
-            v-for="filter in ['TODOS', 'LENDO', 'LIDO', 'QUERO_LER', 'ABANDONADO']"
-            :key="filter"
-            @click="statusFilter = filter"
-            class="px-3 py-1 rounded-xl text-xs font-technical transition-all"
-            :class="statusFilter === filter ? 'bg-accent text-white font-bold shadow' : 'bg-white/5 text-textSecondary hover:text-textPrimary'"
-          >
-            {{ getFilterLabel(filter) }}
-          </button>
-        </div>
-
-        <!-- Linha 2: Filtro por Temas / Tags do Grafo -->
-        <div class="flex items-center gap-2 flex-wrap pt-3 border-t border-divider/40">
-          <span class="text-xs font-technical uppercase font-bold text-textSecondary flex items-center gap-1.5 mr-1">
+      <!-- Filtro por Temas / Tags do Grafo -->
+      <div class="flex flex-col gap-3 border-b border-divider pb-4">
+        <!-- Linha Superior: Rótulo e Link do Grafo -->
+        <div class="flex items-center justify-between gap-3">
+          <div class="text-xs font-technical uppercase font-bold text-textSecondary flex items-center gap-1.5">
             <NetworkIcon class="w-3.5 h-3.5 text-accent" />
-            Temas do Grafo:
-          </span>
+            <span>Filtrar Temas</span>
+          </div>
 
+          <NuxtLink
+            to="/grafo"
+            class="text-xs text-accent hover:underline font-technical flex items-center gap-1 hover:opacity-80 transition-all shrink-0 py-0.5"
+            title="Abrir Mapa Mental Completo"
+          >
+            <NetworkIcon class="w-3.5 h-3.5" />
+            <span>Ver Grafo</span>
+          </NuxtLink>
+        </div>
+
+        <!-- Chips de Temas: Scroll horizontal suave no mobile, wrap no desktop -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1 sm:mx-0 sm:px-0 sm:flex-wrap no-scrollbar">
           <button
             @click="selectedThemeId = null"
-            class="px-3 py-1 rounded-xl text-xs font-technical transition-all flex items-center gap-1.5"
-            :class="selectedThemeId === null ? 'bg-textPrimary text-bgApp font-bold shadow-sm' : 'bg-white/5 text-textSecondary hover:text-textPrimary'"
+            class="px-3 py-1.5 rounded-xl text-xs font-technical transition-all flex items-center gap-1.5 shrink-0"
+            :class="selectedThemeId === null ? 'bg-textPrimary text-bgApp font-bold shadow-sm' : 'bg-white/5 text-textSecondary hover:text-textPrimary border border-divider'"
           >
             <span>Todos os Temas</span>
             <span class="text-[10px] opacity-70">({{ userBooks.length }})</span>
@@ -91,7 +70,7 @@
             v-for="theme in availableThemes"
             :key="theme.id"
             @click="selectedThemeId = selectedThemeId === theme.id ? null : theme.id"
-            class="px-3 py-1 rounded-xl text-xs font-technical transition-all flex items-center gap-1.5 border"
+            class="px-3 py-1.5 rounded-xl text-xs font-technical transition-all flex items-center gap-1.5 border shrink-0"
             :style="selectedThemeId === theme.id ? {
               backgroundColor: (theme.color || '#E57B55'),
               borderColor: (theme.color || '#E57B55'),
@@ -107,15 +86,6 @@
             <span class="font-medium">{{ theme.name }}</span>
             <span class="text-[10px] opacity-70">({{ countByTheme(theme.id) }})</span>
           </button>
-
-          <NuxtLink
-            to="/grafo"
-            class="text-xs text-accent hover:underline font-technical ml-auto flex items-center gap-1 hover:opacity-80 transition-all"
-            title="Abrir Mapa Mental Completo"
-          >
-            <NetworkIcon class="w-3.5 h-3.5" />
-            <span>Ver Grafo</span>
-          </NuxtLink>
         </div>
       </div>
 
@@ -124,115 +94,93 @@
         <div
           v-for="item in filteredUserBooks"
           :key="item.userBookId"
-          class="group relative bg-white/[0.02] hover:bg-white/[0.04] border border-divider rounded-2xl p-6 transition-all duration-300 flex flex-col sm:flex-row sm:items-center gap-6 shadow-lg"
+          @click="openReader(item)"
+          data-testid="user-book-card"
+          class="group relative bg-white/[0.02] hover:bg-white/[0.04] border border-divider hover:border-accent/40 rounded-2xl p-4 sm:p-5 transition-all duration-300 flex items-center gap-4 sm:gap-6 shadow-lg hover:shadow-xl cursor-pointer"
+          :title="`Clique para abrir ${item.title} no leitor`"
         >
-          <!-- Capa -->
-          <div class="w-16 h-24 shrink-0 rounded-xl border border-divider overflow-hidden bg-white/5 shadow-md flex items-center justify-center">
-            <img v-if="item.coverPath" :src="getCoverUrl(item.coverPath, item.bookId)" class="w-full h-full object-cover" />
-            <BookOpenIcon v-else class="w-6 h-6 text-textSecondary" />
+          <!-- Capa do Livro (clique abre o leitor) -->
+          <div
+            class="w-16 h-24 sm:w-20 sm:h-28 shrink-0 rounded-xl border border-divider overflow-hidden bg-white/5 shadow-md flex items-center justify-center group-hover:scale-105 group-hover:border-accent/40 transition-all duration-300"
+          >
+            <img
+              v-if="item.coverPath"
+              :src="getCoverUrl(item.coverPath, item.bookId)"
+              class="w-full h-full object-cover"
+              :alt="item.title"
+            />
+            <BookOpenIcon v-else class="w-6 h-6 sm:w-8 sm:h-8 text-textSecondary" />
           </div>
 
           <!-- Conteúdo -->
-          <div class="flex-1 flex flex-col gap-3">
-            <div class="flex items-start justify-between gap-4">
-              <div class="flex flex-col gap-2">
-                <div class="flex items-center gap-2.5 flex-wrap">
-                  <h3 class="font-editorial text-2xl font-light text-textPrimary group-hover:text-accent transition-colors">{{ item.title }}</h3>
-                  <!-- Badge do Formato (EPUB / PDF / DIDACTIC) -->
-                  <span
-                    class="px-2.5 py-0.5 rounded-full text-[10px] font-technical uppercase font-bold tracking-wider shrink-0 shadow-sm"
-                    :class="{
-                      'text-amber-400 bg-amber-500/10 border border-amber-500/30': getBookFormat(item.filePath) === 'EPUB',
-                      'text-sky-400 bg-sky-500/10 border border-sky-500/30': getBookFormat(item.filePath) === 'PDF',
-                      'text-purple-400 bg-purple-500/10 border border-purple-500/30': getBookFormat(item.filePath) === 'DIDACTIC'
-                    }"
-                  >
-                    {{ getBookFormat(item.filePath) === 'DIDACTIC' ? 'IA DIDÁTICO' : getBookFormat(item.filePath) }}
-                  </span>
-                </div>
-
-                <!-- Tags / Temas do Livro -->
-                <div class="flex items-center gap-1.5 flex-wrap">
-                  <span
-                    v-for="theme in (item.themes || [])"
-                    :key="theme.id"
-                    @click.stop="selectedThemeId = selectedThemeId === theme.id ? null : theme.id"
-                    class="cursor-pointer text-[10px] font-technical uppercase font-bold px-2 py-0.5 rounded-md flex items-center gap-1.5 border transition-all hover:scale-105"
-                    :style="{
-                      borderColor: (theme.color || '#E57B55') + '60',
-                      backgroundColor: (theme.color || '#E57B55') + '18',
-                      color: theme.color || '#E57B55'
-                    }"
-                    :title="`Filtrar estante por '${theme.name}'`"
-                  >
-                    <span class="w-1.5 h-1.5 rounded-full shrink-0" :style="{ backgroundColor: theme.color || '#E57B55' }"></span>
-                    <span>{{ theme.name }}</span>
-                  </span>
-
-                  <!-- Botão de Editar / Adicionar Tags -->
-                  <button
-                    @click="openTagModal(item)"
-                    class="text-[10px] font-technical text-textSecondary hover:text-accent border border-dashed border-divider hover:border-accent px-2 py-0.5 rounded-md flex items-center gap-1 transition-all bg-white/5 hover:bg-accent/10"
-                    title="Vincular ou gerenciar nós do mapa mental neste livro"
-                  >
-                    <TagIcon class="w-3 h-3" />
-                    <span>{{ (item.themes && item.themes.length > 0) ? 'Editar Temas' : '+ Adicionar Tema' }}</span>
-                  </button>
-                </div>
+          <div class="flex-1 min-w-0 flex flex-col justify-between py-0.5 gap-2 sm:gap-2.5">
+            <div class="flex flex-col gap-1.5 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap min-w-0">
+                <h3 class="font-editorial text-lg sm:text-2xl font-light text-textPrimary group-hover:text-accent transition-colors line-clamp-1 break-words">
+                  {{ item.title }}
+                </h3>
+                <!-- Badge IA Didático se aplicável (não exibe EPUB ou PDF) -->
+                <span
+                  v-if="getBookFormat(item.filePath) === 'DIDACTIC'"
+                  class="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-technical uppercase font-bold tracking-wider shrink-0 shadow-sm text-purple-400 bg-purple-500/10 border border-purple-500/30"
+                >
+                  IA DIDÁTICO
+                </span>
               </div>
 
-              <!-- Seletor de Status -->
-              <select
-                :value="item.status"
-                @change="handleStatusChange(item.userBookId, ($event.target as HTMLSelectElement).value, item.currentPage)"
-                class="bg-bgApp border border-divider rounded-xl px-3 py-1.5 text-xs text-textPrimary font-technical focus:outline-none focus:border-accent"
-              >
-                <option value="LENDO">📖 Lendo</option>
-                <option value="LIDO">✅ Lido</option>
-                <option value="QUERO_LER">📌 Quero Ler</option>
-                <option value="ABANDONADO">⏸️ Abandonado</option>
-              </select>
+              <!-- Tags / Temas do Livro -->
+              <div class="flex items-center gap-1.5 flex-wrap min-w-0">
+                <span
+                  v-for="theme in (item.themes || [])"
+                  :key="theme.id"
+                  @click.stop="selectedThemeId = selectedThemeId === theme.id ? null : theme.id"
+                  class="cursor-pointer text-[10px] font-technical uppercase font-bold px-2 py-0.5 rounded-md flex items-center gap-1.5 border transition-all hover:scale-105 shrink-0"
+                  :style="{
+                    borderColor: (theme.color || '#E57B55') + '60',
+                    backgroundColor: (theme.color || '#E57B55') + '18',
+                    color: theme.color || '#E57B55'
+                  }"
+                  :title="`Filtrar estante por '${theme.name}'`"
+                >
+                  <span class="w-1.5 h-1.5 rounded-full shrink-0" :style="{ backgroundColor: theme.color || '#E57B55' }"></span>
+                  <span class="truncate max-w-[120px]">{{ theme.name }}</span>
+                </span>
+
+                <!-- Botão de Editar / Adicionar Tags -->
+                <button
+                  @click.stop="openTagModal(item)"
+                  class="text-[10px] font-technical text-textSecondary hover:text-accent border border-dashed border-divider hover:border-accent px-2 py-0.5 rounded-md flex items-center gap-1 transition-all bg-white/5 hover:bg-accent/10 shrink-0"
+                  title="Vincular ou gerenciar nós do mapa mental neste livro"
+                >
+                  <TagIcon class="w-3 h-3" />
+                  <span>{{ (item.themes && item.themes.length > 0) ? 'Editar Temas' : '+ Adicionar Tema' }}</span>
+                </button>
+              </div>
             </div>
 
-            <!-- Progresso de Página -->
-            <div class="flex items-center gap-4 text-xs font-technical text-textSecondary">
-              <span>Página Atual:</span>
-              <input
-                type="number"
-                :value="item.currentPage"
-                min="0"
-                @change="handlePageChange(item.userBookId, item.status, Number(($event.target as HTMLInputElement).value))"
-                class="w-20 bg-bgApp border border-divider rounded-lg px-2 py-1 text-xs text-textPrimary text-center focus:outline-none focus:border-accent"
-              />
+            <!-- Progresso de Leitura (Porcentagem Não Editável) -->
+            <div class="flex items-center gap-2.5 text-xs font-technical text-textSecondary">
+              <div class="w-20 sm:w-28 h-1.5 rounded-full bg-white/10 overflow-hidden shrink-0">
+                <div
+                  class="h-full bg-accent transition-all duration-300 rounded-full"
+                  :style="{ width: `${getBookProgress(item)}%` }"
+                ></div>
+              </div>
+              <span class="font-medium">{{ getBookProgress(item) }}%</span>
             </div>
           </div>
 
-          <!-- Ações -->
-          <div class="flex items-center gap-3 shrink-0">
-            <NuxtLink
-              :to="`/reader?bookId=${item.bookId}&page=${item.currentPage}`"
-              class="px-4 py-2.5 rounded-xl bg-accent text-white font-interface text-xs font-semibold hover:bg-accent/90 transition-all shadow-md flex items-center gap-2"
-              title="Ler Livro"
-            >
-              <BookOpenIcon class="w-4 h-4" />
-              <span>Ler Livro</span>
-            </NuxtLink>
-
-            <NuxtLink
-              to="/grafo"
-              class="p-3 rounded-xl bg-white/5 border border-divider text-textSecondary hover:text-textPrimary transition-all"
-              title="Ver no Mapa Mental"
-            >
-              <NetworkIcon class="w-4 h-4" />
-            </NuxtLink>
-
+          <!-- Ações à Direita -->
+          <div class="shrink-0 flex items-center gap-1 sm:gap-2">
             <button
-              @click="handleDeleteFromShelf(item.userBookId)"
-              class="p-3 rounded-xl border border-rose-500/20 text-rose-400 hover:bg-rose-500/10 transition-all"
+              @click.stop="promptDeleteBook(item)"
+              data-testid="delete-book-btn"
+              class="p-2 sm:p-2.5 rounded-xl border border-rose-500/20 text-rose-400 hover:bg-rose-500/10 transition-all opacity-80 sm:opacity-0 group-hover:opacity-100 focus:opacity-100"
               title="Remover da Estante"
             >
               <Trash2Icon class="w-4 h-4" />
             </button>
+            <ChevronRightIcon class="w-5 h-5 text-textSecondary/40 group-hover:text-accent group-hover:translate-x-0.5 transition-all shrink-0 hidden sm:block" />
           </div>
         </div>
       </div>
@@ -240,17 +188,23 @@
       <!-- Estado Vazio -->
       <div v-else class="text-center py-16 border border-dashed border-divider rounded-3xl flex flex-col items-center gap-4">
         <LibraryIcon class="w-10 h-10 text-textSecondary/40" />
-        <h3 class="font-editorial text-xl text-textPrimary font-light">Sua estante está vazia nesta categoria</h3>
-        <p class="text-xs text-textSecondary font-interface max-w-sm">
-          Faça o upload de um livro (EPUB/PDF) ou crie um livreto didático com IA para começar sua jornada.
+        <h3 class="font-editorial text-2xl text-textPrimary font-light">
+          {{ userBooks.length === 0 ? 'Comece uma leitura' : 'Sua estante está vazia nesta categoria' }}
+        </h3>
+        <p class="text-xs sm:text-sm text-textSecondary font-interface max-w-sm">
+          {{ userBooks.length === 0
+            ? 'Você ainda não possui nenhum livro na sua estante. Faça upload do seu primeiro arquivo (EPUB ou PDF) para começar sua jornada.'
+            : 'Ajuste os filtros de temas para visualizar outras obras da sua estante.'
+          }}
         </p>
         <div class="flex items-center gap-3 mt-2">
           <NuxtLink
             to="/upload"
-            class="px-5 py-2.5 rounded-xl bg-accent text-white font-semibold text-xs hover:bg-accent/90 transition-all flex items-center gap-2"
+            data-testid="start-reading-btn"
+            class="px-5 py-2.5 rounded-xl bg-accent text-white font-semibold text-xs hover:bg-accent/90 transition-all flex items-center gap-2 shadow-lg shadow-accent/20"
           >
             <UploadIcon class="w-4 h-4" />
-            <span>Enviar Arquivo</span>
+            <span>Comece uma leitura</span>
           </NuxtLink>
           <button
             @click="isCreateDidacticModalOpen = true"
@@ -475,6 +429,20 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal de Confirmação de Remoção de Livro -->
+    <ConfirmModal
+      :is-open="showDeleteBookModal"
+      title="Remover Livro da Estante"
+      subtitle="Ação Destrutiva"
+      :description="`Tem certeza de que deseja remover «${bookToDelete?.title || 'este livro'}» da sua estante? O progresso da leitura será removido.`"
+      confirm-text="Remover Livro"
+      action-type="delete"
+      variant="danger"
+      :loading="isDeletingBook"
+      @confirm="confirmDeleteBook"
+      @cancel="cancelDeleteBook"
+    />
   </div>
 </template>
 
@@ -496,7 +464,8 @@ import {
   TagIcon,
   XIcon,
   CheckIcon,
-  SparklesIcon
+  SparklesIcon,
+  ChevronRightIcon
 } from 'lucide-vue-next'
 import { useDidacticBooklet } from '~/composables/useDidacticBooklet'
 
@@ -505,6 +474,8 @@ import { useUserBooks } from '~/composables/useUserBooks'
 import { useGraph } from '~/composables/useGraph'
 import { useAuth } from '~/composables/useAuth'
 import { getCoverUrl, getBookFormat } from '~/utils/cover'
+
+import ConfirmModal from '~/components/ConfirmModal.vue'
 
 const auth = useAuth()
 const statusFilter = ref('TODOS')
@@ -551,6 +522,10 @@ const newThemeColor = ref('#E57B55')
 const creatingTheme = ref(false)
 const savingThemes = ref(false)
 
+const bookToDelete = ref<UserBookItem | null>(null)
+const showDeleteBookModal = ref(false)
+const isDeletingBook = ref(false)
+
 const {
   userBooks,
   fetchUserBooks,
@@ -565,9 +540,27 @@ const { graphData, fetchGraph, createNode } = useGraph()
 
 const availableThemes = computed(() => graphData.value.nodes || [])
 
-const handleDeleteFromShelf = async (userBookId: number) => {
-  if (confirm('Tem certeza que deseja remover este livro da sua estante?')) {
-    await deleteUserBook(userBookId)
+const promptDeleteBook = (book: UserBookItem) => {
+  bookToDelete.value = book
+  showDeleteBookModal.value = true
+}
+
+const cancelDeleteBook = () => {
+  showDeleteBookModal.value = false
+  bookToDelete.value = null
+}
+
+const confirmDeleteBook = async () => {
+  if (!bookToDelete.value) return
+  isDeletingBook.value = true
+  try {
+    await deleteUserBook(bookToDelete.value.userBookId)
+    showDeleteBookModal.value = false
+    bookToDelete.value = null
+  } catch (e) {
+    console.error('Erro ao remover livro da estante:', e)
+  } finally {
+    isDeletingBook.value = false
   }
 }
 
@@ -575,8 +568,35 @@ const handleStatusChange = async (userBookId: number, status: string, page: numb
   await updateUserBook(userBookId, status, page)
 }
 
-const handlePageChange = async (userBookId: number, status: string, page: number) => {
-  await updateUserBook(userBookId, status, page)
+const getBookProgress = (item: UserBookItem): number => {
+  if (item.status === 'LIDO') return 100
+  if (item.status === 'QUERO_LER') return 0
+  if ((item as any).progress !== undefined && (item as any).progress !== null) {
+    return Math.min(100, Math.max(0, Math.round(Number((item as any).progress))))
+  }
+  const total = (item as any).totalPages || (item as any).total_pages
+  if (total && total > 0 && typeof item.currentPage === 'number') {
+    return Math.min(100, Math.max(0, Math.round((item.currentPage / total) * 100)))
+  }
+  if (typeof item.currentPage === 'number' && item.currentPage > 0) {
+    return Math.min(100, Math.max(0, Math.round(item.currentPage)))
+  }
+  return 0
+}
+
+const getStatusBadgeClass = (status: string) => {
+  switch (status) {
+    case 'LENDO':
+      return 'bg-[#E57B55]/15 border-[#E57B55]/30 text-[#E57B55] hover:border-[#E57B55]/60'
+    case 'LIDO':
+      return 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300 hover:border-emerald-500/60'
+    case 'QUERO_LER':
+      return 'bg-sky-500/15 border-sky-500/30 text-sky-300 hover:border-sky-500/60'
+    case 'ABANDONADO':
+      return 'bg-stone-500/15 border-stone-500/30 text-stone-300 hover:border-stone-500/60'
+    default:
+      return 'bg-white/5 border-divider text-textSecondary'
+  }
 }
 
 const countByStatus = (status: string) => {
@@ -587,12 +607,16 @@ const countByTheme = (themeId: number | string) => {
   return userBooks.value.filter((b: UserBookItem) => b.themes?.some((t: any) => String(t.id) === String(themeId))).length
 }
 
+const openReader = (item: UserBookItem) => {
+  const page = typeof item.currentPage === 'number' && item.currentPage > 0 ? item.currentPage : 1
+  router.push(`/reader?bookId=${item.bookId}&page=${page}`)
+}
+
 const filteredUserBooks = computed(() => {
   return userBooks.value
     .filter((b: UserBookItem) => {
-      const matchesStatus = statusFilter.value === 'TODOS' || b.status === statusFilter.value
       const matchesTheme = selectedThemeId.value === null || (b.themes && b.themes.some((t: any) => String(t.id) === String(selectedThemeId.value)))
-      return matchesStatus && matchesTheme
+      return matchesTheme
     })
     .slice()
     .sort((a: UserBookItem, b: UserBookItem) => {
@@ -675,3 +699,14 @@ onMounted(() => {
   }
 })
 </script>
+
+<style scoped>
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+</style>
+

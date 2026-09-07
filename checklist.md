@@ -1,8 +1,45 @@
 # Checklist
 
 ## 🔄 Em Andamento
+- [07/09/2026 10:01] [Fazendo] Implementar exibição dos livros em grade responsiva tipo estante em telas maiores
+- [07/09/2026 09:59] [Fazendo] Remover título Biblioteca & Estante, renomear Acervo da Aresta para Estante e otimizar layout mobile dos filtros
+- [07/09/2026 09:57] [Fazendo] Investigar e corrigir duplicação de livros na estante após upload
 
 ## ✅ Concluído
+- [07/09/2026 10:00] [Concluído] Reformular página inicial com foco em retenção de conhecimento, notas ativas e exemplo interativo de canvas
+- [07/09/2026 09:18] [Concluído] Ajustar card do livro na estante: remover status e botão Ler Livro, tornar card clicável e melhorar layout mobile
+- [07/09/2026 09:17] [Concluído] Atualizar botão de continuar leitura para ícone de seta e adicionar botão de atalho para a estante
+
+- [07/09/2026 09:09] [Concluído] Posicionar a seção da Curva de Ebbinghaus logo abaixo da seção de anotação e retenção na página inicial
+- [07/09/2026 09:07] [Concluído] Ajustar estante de livros: remover cards de status, ocultar tipo de arquivo, exibir progresso percentual não editável, alinhar status com cores pastel ao botão Ler Livro e remover link do mapa mental
+- [07/09/2026 09:03] [Concluído] Manter arquivos completos de livros salvos apenas no cliente e Google Drive, armazenando somente metadados leves no backend
+- [07/09/2026 09:01] [Concluído] Integrar visual do Grafo de Conhecimento no card da hero, remover botão Revisar, badges inferiores e renomear CTA
+- [07/09/2026 08:57] [Concluído] Remover badge de segundo cérebro e leitura profunda da hero section na página inicial
+- [07/09/2026 08:53] [Concluído] Exibir estado vazio informativo na Home quando não houver anotações ou flashcards e remover dados mockados
+- [07/09/2026 08:48] [Concluído] Diagnosticar bloqueio 403 Google Drive por API desativada no Google Cloud e validar refresh token ativo
+- [06/09/2026 22:33] [Concluído] Remover cabeçalho de número e capítulo no card de flashcards da Home
+- [06/09/2026 22:26] [Concluído] Adicionar margem sutil nas laterais e no topo em todo o aplicativo
+- [06/09/2026 22:25] [Concluído] Ocultar a navbar ao realizar log out
+- [06/09/2026 22:23] [Concluído] Remover exibição do texto citado/selecionado na seção de anotação do leitor
+- [06/09/2026 22:22] [Concluído] Implementar painel escuro de onboarding em carrossel para novas contas com display name, objetivos, benefícios e meta de ofensiva
+- [06/09/2026 22:20] [Concluído] Tornar seções de Flashcards e Anotações inteiramente clicáveis e substituir botão por seta lateral em Flashcards
+- [06/09/2026 22:15] [Concluído] Ajustar espaçamento da Home, simplificar Canvas com novo quadro e notas, remover seção do Grafo e posicionar Flashcards acima das Anotações
+- [06/09/2026 22:15] [Concluído] Persistir livros no backend para usuários OAuth, auto-refresh do token Google Drive, correção do upload multipart e sincronização com a nuvem
+- [06/09/2026 22:05] [Concluído] Investigar persistência de livros e sincronização com Google Drive no login OAuth
+- [06/09/2026 22:02] [Concluído] Substituir navbar padrão pela toolbar de ferramentas (formas, desenho, texto) quando dentro do canvas
+- [06/09/2026 21:57] [Concluído] Ajustar proporções do cabeçalho da Home, alinhar tema e ofensiva no topo e expandir texto na largura total
+- [06/09/2026 19:58] [Concluído] Bloquear edição do texto selecionado, simplificar tela de anotação com opção de nota e seleção de cor
+- [06/09/2026 19:57] [Concluído] Não pré-carregar livros para novos usuários OAuth e exibir CTA Comece uma leitura direcionando para upload
+- [06/09/2026 19:49] [Concluído] Reduzir dimensões do cabeçalho Comece uma leitura e remover barra de navegação rápida inferior na Home
+- [06/09/2026 19:45] [Concluído] Remover banner de sincronização do Google Drive do upload tornando transparente e exibir status em Conta
+- [06/09/2026 19:48] [Concluído] Remover badge de processamento e centralizar título e descrição na página do conversor
+- [06/09/2026 19:35] [Concluído] Habilitar exibição do Grafo do Conhecimento por padrão na Home
+- [06/09/2026 19:26] [Concluído] Remover badge Acesso Imediato e alinhar botão Voltar ao Início na altura de Acessar Conta na tela de login
+- [06/09/2026 19:19] [Concluído] Adicionar variáveis de ambiente OAuth (Google, Microsoft, Apple) nos arquivos .env e .env.example
+- [06/09/2026 19:11] [Concluído] Remover logo e mover botão 'Voltar ao Início' para dentro do canvas principal na tela de login
+- [06/09/2026 19:00] [Concluído] Implementar modais de confirmação destrutivos (sair da conta, deletar livro) e funcionalidade de exclusão de conta
+- [06/09/2026 10:01] [Concluído] Colocar porcentagem ao lado do título do livro e unificar ações de marcar página e páginas marcadas em um menu popover
+- [06/09/2026 09:55] [Concluído] Remover rótulos de texto dos botões de anotação e tema na barra do leitor mantendo apenas ícones
 - [06/09/2026 07:41] [Concluído] Remoção de arquivos do catálogo geral no servidor e filtro de livros apenas do usuário
 - [06/09/2026 07:41] [Concluído] Atualização da página de loja com mensagem em breve
 - [06/09/2026 07:41] [Concluído] Remoção da aba de catálogo geral na página de livros
