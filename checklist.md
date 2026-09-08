@@ -1,11 +1,31 @@
 # Checklist
 
 ## 🔄 Em Andamento
-- [07/09/2026 10:01] [Fazendo] Implementar exibição dos livros em grade responsiva tipo estante em telas maiores
-- [07/09/2026 09:59] [Fazendo] Remover título Biblioteca & Estante, renomear Acervo da Aresta para Estante e otimizar layout mobile dos filtros
-- [07/09/2026 09:57] [Fazendo] Investigar e corrigir duplicação de livros na estante após upload
 
 ## ✅ Concluído
+- [08/09/2026 18:38] [Concluído] Criar 4 subagentes especializados (api-worker, web-worker, code-reviewer, security-auditor)
+- [08/09/2026 15:44] [Concluído] Gerar explicativo interativo em HTML (explain-diff) das alterações recentes
+- [08/09/2026 15:23] [Concluído] Criar skill explain-diff-html em .agent/skills/explain-diff-html/SKILL.md
+- [08/09/2026 14:48] [Concluído] Explicitar ciclo de vida do TASKS.md, organização de workers e suporte a paralelismo nas regras e skills
+- [08/09/2026 14:26] [Concluído] Implementar workflow e regras de orquestração central com subagentes e central de checklist
+- [08/09/2026 13:47] [Concluído] Remover texto Início ao lado da logo e tornar navbar 100% sólida sem transparência
+- [08/09/2026 13:40] [Concluído] Fixar navbar inferior sempre aberta, remover botão de colapsar e destacar página ativa
+- [08/09/2026 12:06] [Concluído] Ocultar tags não anexadas a livros ou notas no grafo de conhecimento e estilizar nós com ícones limpos, monocromáticos com bordas
+- [08/09/2026 11:36] [Concluído] Alterar o título da aba da aplicação de 'Aresta reader' para 'Aresta'
+- [08/09/2026 11:32] [Concluído] Atualizar logo oficial na hero da home, remover demonstração inferior do grafo, alinhar grafo do card com grafo real e nós com emojis
+- [07/09/2026 11:44] [Concluído] Corrigir exibição de capas dos livros e conexões com o grafo de conhecimento
+- [07/09/2026 11:32] [Concluído] Implementar busca e seleção de tags existentes com filtro por digitação e lista com scroll ao criar novo quadro
+- [07/09/2026 11:21] [Concluído] Remover barra inferior de Markdown e botões de formatação do bloco de notas do canvas
+- [07/09/2026 11:19] [Concluído] Fazer com que o livro exibido na home seja o último livro aberto pelo usuário
+- [07/09/2026 11:11] [Concluído] Corrigir salvamento de temas do livro e criação inline de tema no modal da estante
+- [07/09/2026 10:23] [Concluído] Remover caixas de Formatos Suportados e Recursos Aresta da tela de upload
+- [07/09/2026 10:18] [Concluído] Adicionar botão de voltar para a estante no topo da página de upload, remover botão de biblioteca, retirar linha divisória e aproximar área de upload
+- [07/09/2026 10:16] [Concluído] Posicionar filtros de temas ao lado do título Estante, remover Filtrar Temas e Ver Grafo, e colapsar temas no mobile
+- [07/09/2026 10:10] [Concluído] Remover badges de cabeçalho das seções na página inicial e unificar a Curva de Ebbinghaus com a seção de anotação e retenção
+- [07/09/2026 10:09] [Concluído] Corrigir duplicação de livros na estante após upload sincronizando IDs remotos no repositório local e deduplicando livros
+- [07/09/2026 10:07] [Concluído] Implementar exibição dos livros em grade responsiva tipo estante em telas maiores
+- [07/09/2026 10:04] [Concluído] Remover card e credenciais de acesso rápido demo na página de login
+- [07/09/2026 10:04] [Concluído] Remover título Biblioteca & Estante, renomear Acervo da Aresta para Estante e otimizar layout mobile dos filtros
 - [07/09/2026 10:00] [Concluído] Reformular página inicial com foco em retenção de conhecimento, notas ativas e exemplo interativo de canvas
 - [07/09/2026 09:18] [Concluído] Ajustar card do livro na estante: remover status e botão Ler Livro, tornar card clicável e melhorar layout mobile
 - [07/09/2026 09:17] [Concluído] Atualizar botão de continuar leitura para ícone de seta e adicionar botão de atalho para a estante
