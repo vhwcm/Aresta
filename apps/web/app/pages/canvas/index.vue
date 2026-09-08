@@ -520,6 +520,7 @@
       v-model:tags-modal-open="tagsModalOpen"
       :target-canvas="targetCanvas"
       :folders="unifiedFolders"
+      :available-tags="availableTags"
       :is-creating="isCreating"
       :initial-folder="activeFolder"
       :initial-tag="activeTag"
@@ -719,6 +720,28 @@ const unifiedSidebarItems = computed<SidebarTreeItem[]>(() => {
 
 const totalCombinedCount = computed(() => {
   return canvasesList.value.length + notesList.value.length
+})
+
+// Lista unificada de todas as tags existentes em quadros e notas
+const availableTags = computed<string[]>(() => {
+  const counts: Record<string, number> = {}
+  for (const item of canvasesList.value) {
+    if (Array.isArray(item.tags)) {
+      for (const t of item.tags) {
+        const clean = typeof t === 'string' ? t.trim() : ''
+        if (clean) counts[clean] = (counts[clean] || 0) + 1
+      }
+    }
+  }
+  for (const note of notesList.value) {
+    if (Array.isArray(note.tags)) {
+      for (const t of note.tags) {
+        const clean = typeof t === 'string' ? t.trim() : ''
+        if (clean) counts[clean] = (counts[clean] || 0) + 1
+      }
+    }
+  }
+  return Object.keys(counts).sort((a, b) => (counts[b] || 0) - (counts[a] || 0) || a.localeCompare(b))
 })
 
 // Manipuladores da Sidebar de Pastas e Tags

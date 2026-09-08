@@ -15,6 +15,7 @@ export interface IDatabaseAdapter {
   getBookById(id: number): Promise<LocalBook | null>;
   saveBook(book: LocalBook): Promise<void>;
   deleteBook(id: number): Promise<void>;
+  clearBooks(): Promise<void>;
 
   // Annotations
   getAnnotations(filters?: { bookId?: number; themeId?: number }): Promise<LocalAnnotation[]>;

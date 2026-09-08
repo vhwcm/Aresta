@@ -272,6 +272,11 @@
               }"
               title="Clique para ir para esta página no livro"
             >
+              <span
+                class="w-2 h-2 rounded-full shrink-0 shadow-xs"
+                :style="{ backgroundColor: item.color || '#E57B55' }"
+                title="Cor do destaque"
+              ></span>
               <BookmarkIcon class="w-3.5 h-3.5 text-accent group-hover/btn:scale-110 transition-transform" />
               <span>{{ item.chapterTitle || `Página ${getPageNumber(item)}` }}</span>
               <ArrowRightIcon class="w-3 h-3 opacity-0 group-hover/btn:opacity-100 transition-opacity" />
@@ -339,7 +344,8 @@
           <!-- Citação do Livro (Texto Selecionado) -->
           <blockquote
             v-if="item.selectedText"
-            class="p-3 rounded-xl border-l-3 border-accent/70 text-xs italic font-serif leading-relaxed"
+            class="p-3 rounded-xl border-l-4 text-xs italic font-serif leading-relaxed"
+            :style="{ borderLeftColor: item.color || '#E57B55' }"
             :class="{
               'bg-[#f0e7d3]/70 text-[#5c4d3c]': activeTheme === 'sepia',
               'bg-gray-50 text-gray-700': activeTheme === 'white',

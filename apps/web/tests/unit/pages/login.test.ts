@@ -62,8 +62,12 @@ describe('Login & Register Dedicated Page Component', () => {
       }
     })
 
+    // Navegação e ausência de logo externo
+    expect(wrapper.find('[data-testid="back-to-home-link"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Voltar ao Início')
+    expect(wrapper.find('[data-testid="aresta-logo"]').exists()).toBe(false)
+
     // Coluna esquerda: Copywriting e benefícios
-    expect(wrapper.text()).toContain('Acesso Imediato')
     expect(wrapper.text()).toContain('Pronto para transformar sua leitura em')
     expect(wrapper.text()).toContain('sabedoria duradoura')
     expect(wrapper.text()).toContain('Junte-se a leitores, estudantes e pesquisadores')
@@ -75,9 +79,7 @@ describe('Login & Register Dedicated Page Component', () => {
     // Coluna direita: Card com abas e formulário de login
     expect(wrapper.find('[data-testid="tab-login"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="tab-register"]').exists()).toBe(true)
-    expect(wrapper.text()).toContain('Acesso Rápido Demo')
-    expect(wrapper.text()).toContain('viktor')
-    expect(wrapper.text()).toContain('orlaweb123123#')
+    expect(wrapper.text()).not.toContain('Acesso Rápido Demo')
     expect(wrapper.find('[data-testid="login-input"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="password-input"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="submit-login-btn"]').exists()).toBe(true)

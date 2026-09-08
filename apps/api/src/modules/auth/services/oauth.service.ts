@@ -19,12 +19,14 @@ export class OAuthService {
     const cleanEmail = userProfile.email.toLowerCase().trim()
 
     // 1. Procura usuário já existente por email ou por conta vinculada
+    let isNewUser = false
     let user = await prisma.user.findUnique({
       where: { email: cleanEmail },
       include: { accounts: true },
     })
 
     if (!user) {
+      isNewUser = true
       // 2. Se não existir, cria o novo usuário com userSettings padrão
       user = await prisma.user.create({
         data: {
@@ -78,6 +80,7 @@ export class OAuthService {
 
     return {
       token,
+      isNewUser,
       user: {
         id: user.id,
         name: user.name,

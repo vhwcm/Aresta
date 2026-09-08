@@ -36,7 +36,14 @@ export class EpubCoverExtractor implements ICoverExtractor {
       }
 
       const zipData = new Uint8Array(arrayBuffer)
-      const unzipped = unzipSync(zipData)
+      let unzipped: any = null
+      try {
+        unzipped = unzipSync(zipData)
+      } catch (zipErr) {
+        // Arquivo zip inválido ou mock de teste sem header zip válido
+        return null
+      }
+      if (!unzipped) return null
 
       // 1. Localiza o arquivo OPF principal via META-INF/container.xml
       let opfPath = ''
@@ -96,7 +103,7 @@ export class EpubCoverExtractor implements ICoverExtractor {
           const coverBytes = unzipped[resolvedCoverPath] || unzipped[decodeURIComponent(resolvedCoverPath)]
           if (coverBytes && coverBytes.byteLength > 0) {
             const mimeType = getMimeType(resolvedCoverPath)
-            const blob = new Blob([coverBytes], { type: mimeType })
+            const blob = new Blob([coverBytes.buffer as ArrayBuffer], { type: mimeType })
             const base64 = uint8ArrayToBase64(coverBytes)
             return {
               blob,
@@ -109,15 +116,16 @@ export class EpubCoverExtractor implements ICoverExtractor {
       }
 
       // ESTRATÉGIA 2: Procura no zip por arquivos de imagem com 'cover' ou 'capa' no nome
-      for (const [key, bytes] of Object.entries(unzipped)) {
+      for (const [key, rawBytes] of Object.entries(unzipped)) {
+        const bytes = rawBytes as Uint8Array
         const lower = key.toLowerCase()
         if (
           (lower.includes('cover') || lower.includes('capa')) &&
           (lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.png') || lower.endsWith('.webp'))
         ) {
-          if (bytes.byteLength > 0) {
+          if (bytes && bytes.byteLength > 0) {
             const mimeType = getMimeType(key)
-            const blob = new Blob([bytes], { type: mimeType })
+            const blob = new Blob([bytes.buffer as ArrayBuffer], { type: mimeType })
             const base64 = uint8ArrayToBase64(bytes)
             return {
               blob,
@@ -160,7 +168,7 @@ export class EpubCoverExtractor implements ICoverExtractor {
                   const imgBytes = unzipped[resolvedImgPath] || unzipped[decodeURIComponent(resolvedImgPath)]
                   if (imgBytes && imgBytes.byteLength > 0) {
                     const mimeType = getMimeType(resolvedImgPath)
-                    const blob = new Blob([imgBytes], { type: mimeType })
+                    const blob = new Blob([imgBytes.buffer as ArrayBuffer], { type: mimeType })
                     const base64 = uint8ArrayToBase64(imgBytes)
                     return {
                       blob,

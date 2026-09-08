@@ -46,21 +46,21 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-          cache-dependency-path: front/package-lock.json
+          cache-dependency-path: apps/web/package-lock.json
 
       - name: Install Frontend Dependencies
-        working-directory: ./front
+        working-directory: ./apps/web
         run: npm ci
 
       - name: Initialize Tauri Android (if needed)
-        working-directory: ./front
+        working-directory: ./apps/web
         run: |
           if [ ! -d "src-tauri/gen/android" ]; then
             npx tauri android init
           fi
 
       - name: Build Android APK
-        working-directory: ./front
+        working-directory: ./apps/web
         run: |
           if [ -f "src-tauri/gen/android/gradlew" ]; then
             chmod +x src-tauri/gen/android/gradlew
@@ -71,7 +71,7 @@ jobs:
         run: |
           mkdir -p release-apks
           # Localiza todos os apks gerados
-          find front/src-tauri/gen/android/app/build/outputs/apk/ -type f -name "*.apk" | while read file; do
+          find apps/web/src-tauri/gen/android/app/build/outputs/apk/ -type f -name "*.apk" | while read file; do
             filename=$(basename "$file")
             cp "$file" "release-apks/Aresta-$filename"
           done

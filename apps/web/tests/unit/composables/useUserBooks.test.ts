@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { ref } from 'vue'
 import { useUserBooks } from '~/composables/useUserBooks'
+import * as authComposable from '~/composables/useAuth'
+import { dbManager } from '~/adapters/database/DatabaseManager'
+import { InMemoryAdapter } from '~/adapters/database/InMemoryAdapter'
 
 const mockFetch = vi.fn()
 ;(globalThis as any).$fetch = mockFetch
@@ -7,6 +11,13 @@ const mockFetch = vi.fn()
 describe('useUserBooks Composable', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    dbManager.setAdapter(new InMemoryAdapter())
+    vi.spyOn(authComposable, 'useAuth').mockReturnValue({
+      token: ref('fake-token'),
+      user: ref({ id: 1, name: 'viktor', email: 'viktor@aresta.org' }),
+      isLoggedIn: ref(true),
+      isAdmin: ref(true),
+    } as any)
   })
 
   it('fetchUserBooks carrega a estante do usuário', async () => {
@@ -18,7 +29,7 @@ describe('useUserBooks Composable', () => {
     const { userBooks, fetchUserBooks } = useUserBooks()
     await fetchUserBooks()
 
-    expect(mockFetch).toHaveBeenCalledWith('http://localhost:7070/api/user-books', expect.any(Object))
+    expect(mockFetch).toHaveBeenCalledWith('http://localhost:3001/api/user-books', expect.any(Object))
     expect(userBooks.value?.length).toBe(1)
     expect(userBooks.value?.[0]?.title).toBe('Contos Fluminenses')
     expect(userBooks.value?.[0]?.status).toBe('LIDO')
@@ -31,7 +42,7 @@ describe('useUserBooks Composable', () => {
     const { addUserBook } = useUserBooks()
     await addUserBook(2, 'LENDO', 45)
 
-    expect(mockFetch).toHaveBeenCalledWith('http://localhost:7070/api/user-books', expect.objectContaining({
+    expect(mockFetch).toHaveBeenCalledWith('http://localhost:3001/api/user-books', expect.objectContaining({
       method: 'POST',
       body: { bookId: 2, status: 'LENDO', currentPage: 45 }
     }))
@@ -44,7 +55,7 @@ describe('useUserBooks Composable', () => {
     const { updateUserBook } = useUserBooks()
     await updateUserBook(10, 'LIDO', 200)
 
-    expect(mockFetch).toHaveBeenCalledWith('http://localhost:7070/api/user-books/10', expect.objectContaining({
+    expect(mockFetch).toHaveBeenCalledWith('http://localhost:3001/api/user-books/10', expect.objectContaining({
       method: 'PATCH',
       body: { status: 'LIDO', currentPage: 200 }
     }))
@@ -57,7 +68,7 @@ describe('useUserBooks Composable', () => {
     const { recordBookAccess } = useUserBooks()
     await recordBookAccess(10)
 
-    expect(mockFetch).toHaveBeenCalledWith('http://localhost:7070/api/user-books/10/access', expect.objectContaining({
+    expect(mockFetch).toHaveBeenCalledWith('http://localhost:3001/api/user-books/10/access', expect.objectContaining({
       method: 'PATCH'
     }))
   })
@@ -82,5 +93,48 @@ describe('useUserBooks Composable', () => {
 
     expect(userBooks.value.some(b => b.title === 'Livro Remoto')).toBe(true)
     expect(userBooks.value.some(b => b.title === 'Livro Upload Local Offline')).toBe(true)
+  })
+
+  it('fetchUserBooks não duplica livro após upload local quando sincronizado com backend', async () => {
+    const { bookRepo } = await import('~/adapters/database/repositories/BookRepository')
+    // Simula registro temporário salvo no upload local
+    await bookRepo.save({
+      id: 1725712345678,
+      bookId: 1725712345678,
+      title: 'O Alquimista',
+      filePath: '1725712345678.epub',
+      status: 'LENDO',
+      currentPage: 1
+    })
+
+    // Backend retorna o registro oficial criado
+    const mockRemote = [
+      {
+        id: 42,
+        bookId: 15,
+        title: 'O Alquimista',
+        filePath: '1725712345678.epub',
+        status: 'LENDO',
+        currentPage: 1
+      }
+    ]
+    mockFetch.mockResolvedValueOnce(mockRemote)
+
+    const { userBooks, fetchUserBooks } = useUserBooks()
+    await fetchUserBooks()
+
+    // Não deve aparecer duplicado na estante
+    const matching = userBooks.value.filter(b => b.title === 'O Alquimista')
+    expect(matching.length).toBe(1)
+    expect(matching[0]?.bookId).toBe(15)
+
+    // O ID temporário antigo deve ter sido removido do repositório local
+    const oldTemp = await bookRepo.getById(1725712345678)
+    expect(oldTemp).toBeNull()
+
+    // O ID oficial remoto deve estar salvo no repositório local
+    const officialLocal = await bookRepo.getById(42)
+    expect(officialLocal).not.toBeNull()
+    expect(officialLocal?.title).toBe('O Alquimista')
   })
 })

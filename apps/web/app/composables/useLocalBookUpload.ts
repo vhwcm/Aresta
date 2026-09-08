@@ -5,6 +5,7 @@ import { saveCachedBook } from '~/utils/bookCache'
 import { bookRepo } from '~/adapters/database/repositories/BookRepository'
 import { CoverExtractorFactory } from '~/adapters/cover/CoverExtractorFactory'
 import { useGoogleDriveSync, type GoogleDriveSyncResult } from './useGoogleDriveSync'
+import { useAuth } from './useAuth'
 import type { IBookDocument } from '~/interfaces/reader/IBookDocument'
 import type { SupportedFileType } from '~/interfaces/reader/IValidationResult'
 import type { LocalBook } from '~/adapters/database/types'
@@ -33,6 +34,7 @@ export const useLocalBookUpload = () => {
   const isUploading = ref(false)
   const uploadError = ref<string | null>(null)
   const { syncBookToDrive, isGoogleDriveConnected } = useGoogleDriveSync()
+  const auth = useAuth()
 
   const uploadBookLocally = async (options: UploadLocalBookOptions): Promise<UploadLocalBookResult> => {
     isUploading.value = true
@@ -93,7 +95,7 @@ export const useLocalBookUpload = () => {
       }
 
       // 6. Salva no banco de dados local (Tauri SQLite / Dexie / InMemory)
-      const localBook = await bookRepo.save({
+      let localBook = await bookRepo.save({
         id: bookId,
         bookId,
         title,
@@ -104,9 +106,79 @@ export const useLocalBookUpload = () => {
         currentPage: 1,
       })
 
-      // 7. Sincronização assíncrona com o Google Drive (Aresta/[Título]/) se conta vinculada
+      let finalBookId = bookId
+
+      // 6.1 Se o usuário estiver autenticado, persiste o livro na conta do usuário no backend
+      if (auth.isLoggedIn.value) {
+        try {
+          let apiBase = 'http://localhost:3001/api'
+          if (typeof useRuntimeConfig === 'function') {
+            try {
+              const cfg = useRuntimeConfig()
+              if (cfg?.public?.apiUrl) {
+                apiBase = `${cfg.public.apiUrl}/api`
+              }
+            } catch {}
+          }
+
+          const res = await $fetch<any>(`${apiBase}/user-books`, {
+            method: 'POST',
+            headers: auth.token.value ? { Authorization: `Bearer ${auth.token.value}` } : {},
+            body: {
+              title,
+              author,
+              coverPath: coverUrl,
+              filePath: savedPath || `${bookId}.${type}`,
+              fileType: type,
+              status: 'LENDO',
+              currentPage: 1,
+            },
+          })
+
+          const remoteUserBook = res?.userBook
+          const realBookId = remoteUserBook?.book_id || remoteUserBook?.bookId
+          const realUserBookId = remoteUserBook?.id || remoteUserBook?.userBookId
+
+          if (realBookId && realUserBookId) {
+            finalBookId = realBookId
+
+            // Remove o ID temporário local para prevenir duplicatas na estante
+            if (bookId !== realUserBookId && bookId !== realBookId) {
+              try {
+                await bookRepo.delete(bookId)
+              } catch (delErr) {
+                console.warn('[useLocalBookUpload] Aviso ao deletar ID temporário:', delErr)
+              }
+            }
+
+            // Atualiza com o registro oficial remoto
+            localBook = await bookRepo.save({
+              id: realUserBookId,
+              bookId: realBookId,
+              title,
+              author,
+              coverPath: coverUrl,
+              filePath: savedPath || `${realBookId}.${type}`,
+              status: 'LENDO',
+              currentPage: 1,
+            })
+
+            // Espelha o binário sob a chave do realBookId no storage/cache
+            try {
+              await storage.saveFile(String(realBookId), arrayBuffer, mimeType)
+              await saveCachedBook(String(realBookId), arrayBuffer, title, type)
+            } catch (mirrorErr) {
+              console.warn('[useLocalBookUpload] Aviso ao espelhar cache binário:', mirrorErr)
+            }
+          }
+        } catch (apiErr) {
+          console.warn('[useLocalBookUpload] Falha ao registrar livro no backend do usuário:', apiErr)
+        }
+      }
+
+      // 7. Sincronização com o Google Drive (Aresta/[Título]/) se conta vinculada ou usuário autenticado
       let cloudSyncPromise: Promise<GoogleDriveSyncResult> | undefined
-      if (isGoogleDriveConnected.value) {
+      if (isGoogleDriveConnected.value || auth.isLoggedIn.value) {
         cloudSyncPromise = syncBookToDrive({
           bookTitle: title,
           bookFile: file,
@@ -118,7 +190,7 @@ export const useLocalBookUpload = () => {
       }
 
       return {
-        bookId,
+        bookId: finalBookId,
         title,
         author,
         doc,

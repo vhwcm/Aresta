@@ -82,10 +82,11 @@
           Você não possui flashcards pendentes de revisão hoje. Continue lendo seus livros e adicionando anotações para gerar novos cards inteligentes.
         </p>
         <NuxtLink
-          to="/"
-          class="px-5 py-2.5 rounded-full bg-accent text-white font-interface text-xs font-medium hover:bg-accent/90 transition-all shadow-md mt-2"
+          :to="availableBooks.length === 0 ? '/upload' : '/'"
+          class="px-5 py-2.5 rounded-full bg-accent text-white font-interface text-xs font-medium hover:bg-accent/90 transition-all shadow-md mt-2 flex items-center gap-2"
         >
-          Voltar para Leitura
+          <UploadIcon v-if="availableBooks.length === 0" class="w-4 h-4" />
+          <span>{{ availableBooks.length === 0 ? 'Comece uma leitura' : 'Voltar para Leitura' }}</span>
         </NuxtLink>
       </div>
 
@@ -249,10 +250,11 @@
           Você ainda não possui anotações registradas para este filtro. Abra um livro na biblioteca e destaque trechos ou faça anotações durante a leitura.
         </p>
         <NuxtLink
-          to="/library"
-          class="px-5 py-2.5 rounded-full bg-accent text-white font-interface text-xs font-medium hover:bg-accent/90 transition-all shadow-md mt-2"
+          :to="availableSummaryBooks.length === 0 ? '/upload' : '/library'"
+          class="px-5 py-2.5 rounded-full bg-accent text-white font-interface text-xs font-medium hover:bg-accent/90 transition-all shadow-md mt-2 flex items-center gap-2"
         >
-          Ir para Meus Livros
+          <UploadIcon v-if="availableSummaryBooks.length === 0" class="w-4 h-4" />
+          <span>{{ availableSummaryBooks.length === 0 ? 'Comece uma leitura' : 'Ir para Meus Livros' }}</span>
         </NuxtLink>
       </div>
 
@@ -452,7 +454,8 @@ import {
   BrainIcon,
   SparklesIcon,
   Trash2Icon,
-  BookOpenIcon
+  BookOpenIcon,
+  UploadIcon
 } from 'lucide-vue-next'
 import { useReadingStreak } from '~/composables/useReadingStreak'
 import { useFlashcards, type FlashcardItem } from '~/composables/useFlashcards'
@@ -477,74 +480,16 @@ interface AnnotationSummary {
 const activeTab = ref<'flashcards' | 'summaries'>('flashcards')
 const selectedBookFilter = ref('all')
 const selectedSummaryBookFilter = ref('all')
+const streak = useReadingStreak()
+const flashcards = useFlashcards()
+const { annotations: userAnnotations, loading: annotationsLoading, fetchAnnotations, deleteAnnotation, convertAnnotationToFlashcard } = useAnnotations()
+const { userBooks, fetchUserBooks } = useUserBooks()
+
 const currentCardIndex = ref(0)
 const isFlipped = ref(false)
 
-const streak = useReadingStreak()
-const flashcards = useFlashcards()
-const { annotations: userAnnotations, loading: annotationsLoading, fetchAnnotations, deleteAnnotation } = useAnnotations()
-const { userBooks, fetchUserBooks } = useUserBooks()
-
-// Mock inicial como fallback caso o backend esteja vazio ou offline
-const fallbackCards = ref<FlashcardItem[]>([
-  {
-    id: 1,
-    userId: 1,
-    annotationId: 1,
-    bookId: 101,
-    bookTitle: 'A Estrutura das Revoluções Científicas',
-    bookCover: null,
-    chapterTitle: 'Cap. II: O Caminho para a Ciência Normal',
-    selectedText: 'A ciência normal consiste na realização da promessa...',
-    note: 'Ciência normal e paradigmas',
-    cardType: 'CONCEPT_RECALL',
-    question: 'O que caracteriza a "Ciência Normal" segundo Thomas Kuhn?',
-    answer: 'É a pesquisa firmemente baseada em uma ou mais realizações científicas passadas, que uma comunidade científica reconhece como base para sua prática posterior de resolução de quebra-cabeças.',
-    contextSummary: 'Epistemologia kuhniana',
-    repetitionLevel: 1,
-    nextReviewAt: new Date().toISOString()
-  },
-  {
-    id: 2,
-    userId: 1,
-    annotationId: 2,
-    bookId: 101,
-    bookTitle: 'A Estrutura das Revoluções Científicas',
-    chapterTitle: 'Cap. IX: A Natureza das Revoluções Científicas',
-    bookCover: null,
-    selectedText: 'A mudança de paradigma é uma ruptura...',
-    note: 'Revoluções científicas',
-    cardType: 'CONCEPT_RECALL',
-    question: 'O que define uma mudança de paradigma?',
-    answer: 'É uma ruptura não-cumulativa onde um paradigma antigo é total ou parcialmente substituído por um novo e incompatível, alterando a visão de mundo da comunidade científica.',
-    contextSummary: 'Revolução paradigmática',
-    repetitionLevel: 2,
-    nextReviewAt: new Date().toISOString()
-  },
-  {
-    id: 3,
-    userId: 1,
-    annotationId: 3,
-    bookId: 102,
-    bookTitle: 'Sapiens',
-    chapterTitle: 'Cap. 2: A Árvore do Conhecimento',
-    bookCover: null,
-    selectedText: 'Mitos compartilhados permitiram a cooperação...',
-    note: 'Revolução cognitiva',
-    cardType: 'REAL_SITUATION',
-    question: 'Qual foi o principal gatilho da Revolução Cognitiva há 70.000 anos?',
-    answer: 'O surgimento da capacidade linguística de transmitir informações sobre coisas que não existem no mundo físico (a habilidade de criar e acreditar em ficções e mitos compartilhados).',
-    contextSummary: 'Evolução social humana',
-    repetitionLevel: 1,
-    nextReviewAt: new Date().toISOString()
-  }
-])
-
 const displayCards = computed<FlashcardItem[]>(() => {
-  if (flashcards.dailyDeck.value.length > 0) {
-    return flashcards.dailyDeck.value
-  }
-  return fallbackCards.value
+  return flashcards.dailyDeck.value
 })
 
 const bookTitlesMap = computed(() => {
@@ -590,29 +535,6 @@ const formatCardType = (cardType?: string) => {
       return 'Relembração de Conceito'
   }
 }
-
-const initialMockSummaries = ref<AnnotationSummary[]>([
-  {
-    id: 's1',
-    bookTitle: 'A Estrutura das Revoluções Científicas',
-    chapter: 'Capítulo IV: A Ciência Normal como Resolução de Quebra-Cabeças',
-    topic: 'Anomalias e Crise Epistêmica',
-    highlightQuote: 'A descoberta começa com a percepção da anomalia, ou seja, com o reconhecimento de que a natureza violou de algum modo as expectativas induzidas pelo paradigma.',
-    aiSynthesis: 'Kuhn destaca que as anomalias não destroem um paradigma imediatamente; elas se acumulam até provocarem um período de crise que culmina na transição revolucionária.',
-    date: '22 Ago 2026',
-    tags: ['Epistemologia', 'Filosofia da Ciência', 'Kuhn']
-  },
-  {
-    id: 's2',
-    bookTitle: 'Sapiens: Uma Breve História da Humanidade',
-    chapter: 'Capítulo 3: Um Dia na Vida de Adão e Eva',
-    topic: 'A Economia Forrageira e a Dieta Humana',
-    highlightQuote: 'Os forrageadores antigos sabiam de cor a forma dos arbustos, o cheiro do vento e os hábitos das feras com uma maestria que raramente encontramos hoje.',
-    aiSynthesis: 'Os caçadores-coletores possuíam uma dieta mais variada e uma carga de trabalho menor do que as sociedades agrícolas posteriores.',
-    date: '20 Ago 2026',
-    tags: ['Antropologia', 'Evolução', 'História']
-  }
-])
 
 const userSummaries = computed<AnnotationSummary[]>(() => {
   return userAnnotations.value.map((a) => {
@@ -663,10 +585,7 @@ const userSummaries = computed<AnnotationSummary[]>(() => {
 })
 
 const summaries = computed<AnnotationSummary[]>(() => {
-  if (userSummaries.value.length > 0) {
-    return userSummaries.value
-  }
-  return initialMockSummaries.value
+  return userSummaries.value
 })
 
 const availableSummaryBooks = computed(() => {
@@ -742,28 +661,22 @@ const rateCurrentCard = async (rating: 'hard' | 'good' | 'easy') => {
   }
 }
 
-const createCardFromSummary = (summary: AnnotationSummary) => {
-  const newCard: FlashcardItem = {
-    id: Date.now(),
-    userId: 1,
-    annotationId: summary.annotationId || Date.now(),
-    bookId: summary.bookId || 999,
-    bookTitle: summary.bookTitle,
-    bookCover: null,
-    chapterTitle: summary.chapter,
-    selectedText: summary.highlightQuote,
-    note: summary.topic,
-    cardType: 'CONCEPT_RECALL',
-    question: `Qual a importância de "${summary.topic}"?`,
-    answer: summary.aiSynthesis,
-    contextSummary: 'Criado a partir de anotação',
-    repetitionLevel: 1,
-    nextReviewAt: new Date().toISOString()
+const createCardFromSummary = async (summary: AnnotationSummary) => {
+  if (summary.annotationId) {
+    try {
+      await convertAnnotationToFlashcard(
+        summary.annotationId,
+        `Qual a importância de "${summary.topic}"?`,
+        summary.aiSynthesis
+      )
+      await flashcards.fetchDailyDeck()
+    } catch (e) {
+      console.warn('Erro ao criar flashcard da anotação:', e)
+    }
   }
-  fallbackCards.value.push(newCard)
   selectedBookFilter.value = 'all'
   activeTab.value = 'flashcards'
-  currentCardIndex.value = filteredCards.value.length - 1
+  currentCardIndex.value = Math.max(0, filteredCards.value.length - 1)
 }
 
 const router = useRouter()

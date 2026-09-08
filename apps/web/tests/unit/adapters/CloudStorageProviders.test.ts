@@ -91,4 +91,30 @@ describe('CloudStorageProviders & Factory (SOLID)', () => {
     // Verifica se headers de Authorization com Bearer token foram enviados
     expect(calls.length).toBeGreaterThanOrEqual(4)
   })
+
+  it('GoogleDriveStorageProvider deve listar livros existentes na pasta Aresta', async () => {
+    global.fetch = vi.fn(async (url: string | URL | Request) => {
+      const urlStr = url.toString()
+      if (urlStr.includes('name') && urlStr.includes('Aresta')) {
+        return new Response(JSON.stringify({ files: [{ id: 'aresta_root_1', name: 'Aresta' }] }), { status: 200 })
+      }
+      if (urlStr.includes('aresta_root_1')) {
+        return new Response(
+          JSON.stringify({
+            files: [
+              { id: 'b1', name: 'Memórias Póstumas', mimeType: 'application/vnd.google-apps.folder' },
+              { id: 'f1', name: 'notas.txt', mimeType: 'text/plain' },
+            ],
+          }),
+          { status: 200 }
+        )
+      }
+      return new Response(JSON.stringify({ files: [] }), { status: 200 })
+    }) as any
+
+    const provider = new GoogleDriveStorageProvider('test-token')
+    const books = await provider.listBooks()
+    expect(books).toHaveLength(1)
+    expect(books[0]?.title).toBe('Memórias Póstumas')
+  })
 })

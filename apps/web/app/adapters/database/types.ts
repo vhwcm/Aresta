@@ -31,6 +31,7 @@ export interface LocalAnnotation extends BaseLocalEntity {
   note?: string | null;
   chapterTitle?: string | null;
   progress?: number | null;
+  color?: string | null;
   themes?: Array<{ id: number; name: string; color?: string | null }>;
   createdAt: string;
 }

@@ -3,6 +3,7 @@ export interface BookThemeItem {
   name: string
   color?: string
   description?: string
+  emoji?: string
 }
 
 export interface BookItem {
@@ -55,9 +56,11 @@ export interface GraphNode {
   summary?: string | null
   color?: string
   description?: string
+  emoji?: string
   coverPath?: string | null
   filePath?: string
   bookCount?: number
+  annotationCount?: number
   books?: any[]
   isRoot?: boolean
   // D3 force fields

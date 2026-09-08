@@ -18,12 +18,14 @@ interface _GlobalComponents {
   ArestaLogoGraph: typeof import("../../app/components/ArestaLogoGraph.vue")['default']
   BottomNavbar: typeof import("../../app/components/BottomNavbar.vue")['default']
   CommandPalette: typeof import("../../app/components/CommandPalette.vue")['default']
+  ConfirmModal: typeof import("../../app/components/ConfirmModal.vue")['default']
   ConnectNodesModal: typeof import("../../app/components/ConnectNodesModal.vue")['default']
   CreateNodeModal: typeof import("../../app/components/CreateNodeModal.vue")['default']
   EbbinghausChart: typeof import("../../app/components/EbbinghausChart.vue")['default']
   FolderTagSidebar: typeof import("../../app/components/FolderTagSidebar.vue")['default']
   GraphCanvas: typeof import("../../app/components/GraphCanvas.vue")['default']
   HomeBookReaderDemo: typeof import("../../app/components/HomeBookReaderDemo.vue")['default']
+  HomeCanvasNotesDemo: typeof import("../../app/components/HomeCanvasNotesDemo.vue")['default']
   HomeKnowledgeGraphDemo: typeof import("../../app/components/HomeKnowledgeGraphDemo.vue")['default']
   NodeDrawer: typeof import("../../app/components/NodeDrawer.vue")['default']
   ReadingStreak: typeof import("../../app/components/ReadingStreak.vue")['default']
@@ -92,12 +94,14 @@ interface _GlobalComponents {
   LazyArestaLogoGraph: LazyComponent<typeof import("../../app/components/ArestaLogoGraph.vue")['default']>
   LazyBottomNavbar: LazyComponent<typeof import("../../app/components/BottomNavbar.vue")['default']>
   LazyCommandPalette: LazyComponent<typeof import("../../app/components/CommandPalette.vue")['default']>
+  LazyConfirmModal: LazyComponent<typeof import("../../app/components/ConfirmModal.vue")['default']>
   LazyConnectNodesModal: LazyComponent<typeof import("../../app/components/ConnectNodesModal.vue")['default']>
   LazyCreateNodeModal: LazyComponent<typeof import("../../app/components/CreateNodeModal.vue")['default']>
   LazyEbbinghausChart: LazyComponent<typeof import("../../app/components/EbbinghausChart.vue")['default']>
   LazyFolderTagSidebar: LazyComponent<typeof import("../../app/components/FolderTagSidebar.vue")['default']>
   LazyGraphCanvas: LazyComponent<typeof import("../../app/components/GraphCanvas.vue")['default']>
   LazyHomeBookReaderDemo: LazyComponent<typeof import("../../app/components/HomeBookReaderDemo.vue")['default']>
+  LazyHomeCanvasNotesDemo: LazyComponent<typeof import("../../app/components/HomeCanvasNotesDemo.vue")['default']>
   LazyHomeKnowledgeGraphDemo: LazyComponent<typeof import("../../app/components/HomeKnowledgeGraphDemo.vue")['default']>
   LazyNodeDrawer: LazyComponent<typeof import("../../app/components/NodeDrawer.vue")['default']>
   LazyReadingStreak: LazyComponent<typeof import("../../app/components/ReadingStreak.vue")['default']>

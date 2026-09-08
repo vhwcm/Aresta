@@ -2,12 +2,21 @@ export const getCoverUrl = (coverPath?: string, bookId?: number) => {
   if (coverPath && (coverPath.startsWith('data:') || coverPath.startsWith('blob:') || coverPath.startsWith('http://') || coverPath.startsWith('https://'))) {
     return coverPath
   }
+  let baseUrl = 'http://localhost:3001'
+  if (typeof useRuntimeConfig === 'function') {
+    try {
+      const config = useRuntimeConfig()
+      if (config?.public?.apiUrl) {
+        baseUrl = config.public.apiUrl
+      }
+    } catch {}
+  }
   if (bookId) {
-    return `http://localhost:7070/api/books/${bookId}/cover`
+    return `${baseUrl}/api/books/${bookId}/cover`
   }
   if (!coverPath) return ''
   const fileName = coverPath.replace(/^storage\/covers\//, '').replace(/^storage\//, '')
-  return `http://localhost:7070/covers/${fileName}`
+  return `${baseUrl}/storage/covers/${fileName}`
 }
 
 export type BookFormat = 'EPUB' | 'PDF' | 'DIDACTIC'

@@ -18,6 +18,7 @@ export interface AnnotationItem {
   cfi: string
   selectedText?: string | null
   note?: string | null
+  color?: string | null
   chapterTitle?: string | null
   progress?: number | null
   themes?: AnnotationTheme[]
@@ -30,6 +31,7 @@ export interface CreateAnnotationPayload {
   cfi: string
   selectedText?: string | null
   note?: string | null
+  color?: string | null
   chapterTitle?: string | null
   progress?: number
   themeIds?: number[]
@@ -115,6 +117,7 @@ export const useAnnotations = () => {
       note: a.note ?? '',
       themes: a.themes || (a.annotationThemes ? a.annotationThemes.map((at: any) => at.theme) : []),
     }
+    if (a.color) item.color = a.color
     if (a.chapterTitle || a.chapter_title) item.chapterTitle = a.chapterTitle || a.chapter_title
     if (a.progress !== undefined) item.progress = a.progress
     if (a.bookTitle || a.book?.title) item.bookTitle = a.bookTitle || a.book?.title
@@ -163,6 +166,7 @@ export const useAnnotations = () => {
             cfi: item.cfi,
             selectedText: item.selectedText,
             note: item.note,
+            color: item.color,
             chapterTitle: item.chapterTitle,
             progress: item.progress,
             themes: item.themes,
@@ -203,6 +207,7 @@ export const useAnnotations = () => {
       cfi: payload.cfi,
       selectedText: payload.selectedText,
       note: payload.note,
+      ...(payload.color ? { color: payload.color } : {}),
       chapterTitle: payload.chapterTitle,
       progress: payload.progress,
       themes: [],
@@ -218,6 +223,7 @@ export const useAnnotations = () => {
       cfi: payload.cfi,
       selectedText: payload.selectedText,
       note: payload.note,
+      ...(payload.color ? { color: payload.color } : {}),
       chapterTitle: payload.chapterTitle,
       progress: payload.progress,
       createdAt: now
@@ -256,6 +262,7 @@ export const useAnnotations = () => {
           cfi: created.cfi,
           selectedText: created.selectedText,
           note: created.note,
+          ...(created.color || payload.color ? { color: created.color || payload.color } : {}),
           chapterTitle: created.chapterTitle,
           progress: created.progress,
           themes: created.themes,

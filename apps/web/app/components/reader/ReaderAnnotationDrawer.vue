@@ -70,17 +70,30 @@
 
       <!-- Conteúdo do Formulário -->
       <div class="flex-1 overflow-y-auto px-4 sm:px-6 py-3 space-y-4 flex flex-col">
-        <!-- Texto Selecionado / Citação -->
+        <!-- Cor da Anotação -->
         <div>
           <label class="block text-xs font-semibold text-textSecondary uppercase tracking-wider mb-1.5">
-            Citação do Livro
+            Cor da Anotação
           </label>
-          <textarea
-            v-model="selectedText"
-            rows="2"
-            placeholder="Trecho destacado ou selecione no livro..."
-            class="w-full bg-bgApp/70 border border-divider rounded-xl p-3 text-xs text-textPrimary placeholder:text-textSecondary/50 focus:outline-none focus:border-accent resize-none transition-colors"
-          ></textarea>
+          <div class="flex items-center gap-2.5 flex-wrap">
+            <button
+              v-for="c in ANNOTATION_COLORS"
+              :key="c.id"
+              type="button"
+              @click="selectedColor = c.hex"
+              class="flex items-center justify-center w-7 h-7 rounded-full transition-all cursor-pointer focus:outline-none"
+              :class="selectedColor === c.hex
+                ? 'scale-110 shadow-md ring-2 ring-white ring-offset-2 ring-offset-bgPanel'
+                : 'opacity-70 hover:opacity-100 hover:scale-105'"
+              :style="{ backgroundColor: c.hex }"
+              :title="c.label"
+            >
+              <CheckIcon
+                v-if="selectedColor === c.hex"
+                class="w-3.5 h-3.5 text-white stroke-[3]"
+              />
+            </button>
+          </div>
         </div>
 
         <!-- Temas do Grafo -->
@@ -252,8 +265,18 @@ const emit = defineEmits<{
 const { graphData, fetchGraph, createNode } = useGraph()
 const { createAnnotation, createAnnotationWithOcr } = useAnnotations()
 
+const ANNOTATION_COLORS = [
+  { id: 'yellow', label: 'Amarelo Ouro', hex: '#F59E0B' },
+  { id: 'coral', label: 'Coral Aresta', hex: '#E57B55' },
+  { id: 'green', label: 'Verde Menta', hex: '#10B981' },
+  { id: 'blue', label: 'Azul Celeste', hex: '#3B82F6' },
+  { id: 'purple', label: 'Roxo Lavanda', hex: '#8B5CF6' },
+  { id: 'rose', label: 'Rosa Carmim', hex: '#EC4899' },
+]
+
 const inputMode = ref<'type' | 'handwriting'>('handwriting')
 const selectedText = ref('')
+const selectedColor = ref('#E57B55')
 const note = ref('')
 const selectedThemeIds = ref<number[]>([])
 const showNewThemeInput = ref(false)
@@ -384,6 +407,7 @@ const handleSubmit = async () => {
       cfi,
       selectedText: selectedText.value.trim() || null,
       note: note.value.trim() || null,
+      color: selectedColor.value,
       themeIds: selectedThemeIds.value,
       chapterTitle: chapter,
     })

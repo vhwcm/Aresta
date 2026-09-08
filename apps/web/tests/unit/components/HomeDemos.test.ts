@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import HomeKnowledgeGraphDemo from '~/components/HomeKnowledgeGraphDemo.vue'
 import HomeBookReaderDemo from '~/components/HomeBookReaderDemo.vue'
+import HomeCanvasNotesDemo from '~/components/HomeCanvasNotesDemo.vue'
 
 describe('Home Page Interactive Demos', () => {
   const commonStubs = {
@@ -14,7 +15,12 @@ describe('Home Page Interactive Demos', () => {
     BookOpenIcon: true,
     ChevronLeftIcon: true,
     ChevronRightIcon: true,
-    BrainIcon: true
+    BrainIcon: true,
+    FileTextIcon: true,
+    LayersIcon: true,
+    QuoteIcon: true,
+    MoveIcon: true,
+    CheckCircle2Icon: true
   }
 
   describe('HomeKnowledgeGraphDemo', () => {
@@ -107,6 +113,51 @@ describe('Home Page Interactive Demos', () => {
       // Verifica que o modal de flashcard abre
       expect(wrapper.find('[data-testid="flashcard-modal"]').exists()).toBe(true)
       expect(wrapper.text()).toContain('Repetição Espaçada Ebbinghaus')
+    })
+  })
+
+  describe('HomeCanvasNotesDemo', () => {
+    it('renders the interactive canvas notes demo, retention pipeline, and nodes', () => {
+      const wrapper = mount(HomeCanvasNotesDemo, {
+        global: {
+          stubs: commonStubs
+        }
+      })
+
+      expect(wrapper.find('[data-testid="home-canvas-notes-demo"]').exists()).toBe(true)
+      expect(wrapper.text()).toContain('Do Livro à Maestria')
+      expect(wrapper.text()).toContain('Notas Ativas & Canvas Espacial')
+      expect(wrapper.text()).toContain('Retenção de Conhecimento na Prática')
+      expect(wrapper.text()).toContain('Etapa 01')
+      expect(wrapper.text()).toContain('Etapa 02')
+      expect(wrapper.text()).toContain('Etapa 03')
+      expect(wrapper.text()).toContain('Etapa 04')
+      expect(wrapper.text()).toContain('Rápido e Devagar')
+      expect(wrapper.text()).toContain('Nota Ativa (Markdown)')
+      expect(wrapper.text()).toContain('Flashcard de Retenção')
+    })
+
+    it('allows selecting different knowledge scenarios and toggling flashcard answer', async () => {
+      const wrapper = mount(HomeCanvasNotesDemo, {
+        global: {
+          stubs: commonStubs
+        }
+      })
+
+      // Alternar para o cenário de Filosofia & Sanidade
+      const filoScenarioBtn = wrapper.find('[data-testid="canvas-scenario-filosofia"]')
+      expect(filoScenarioBtn.exists()).toBe(true)
+      await filoScenarioBtn.trigger('click')
+
+      expect(wrapper.text()).toContain('O Alienista')
+      expect(wrapper.text()).toContain('A Arbitrariedade dos Critérios de Normalidade')
+
+      // Verificar revelação da resposta do flashcard
+      expect(wrapper.text()).not.toContain('Concluiu que se a maioria possuía desvios morais')
+      const showAnswerBtn = wrapper.find('button.text-accent')
+      expect(showAnswerBtn.exists()).toBe(true)
+      await showAnswerBtn.trigger('click')
+      expect(wrapper.text()).toContain('Concluiu que se a maioria possuía desvios morais')
     })
   })
 })

@@ -2,7 +2,9 @@ import { getDatabase, dbManager } from '../DatabaseManager';
 import type { LocalBook } from '../types';
 
 export class BookRepository {
-  private db = getDatabase();
+  private get db() {
+    return getDatabase();
+  }
 
   async getAll(): Promise<LocalBook[]> {
     return this.db.getBooks();
@@ -32,6 +34,10 @@ export class BookRepository {
   async delete(id: number): Promise<void> {
     await this.db.deleteBook(id);
     await dbManager.recordMutation('book', id, 'DELETE', { id });
+  }
+
+  async clear(): Promise<void> {
+    await this.db.clearBooks();
   }
 }
 

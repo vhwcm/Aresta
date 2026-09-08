@@ -41,6 +41,10 @@ export class InMemoryAdapter implements IDatabaseAdapter {
     }
   }
 
+  async clearBooks(): Promise<void> {
+    this.books.clear();
+  }
+
   // Annotations
   async getAnnotations(filters?: { bookId?: number; themeId?: number }): Promise<LocalAnnotation[]> {
     let list = Array.from(this.annotations.values()).filter((a) => !a.deleted_at);

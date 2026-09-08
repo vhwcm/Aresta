@@ -184,6 +184,7 @@ import { ref, computed, watch } from 'vue'
 import { XIcon, BookOpenIcon, BookIcon, QuoteIcon } from 'lucide-vue-next'
 import type { GraphNode, BookItem, AnnotationThemeItem } from '~/interfaces/graph'
 import { useGraph } from '~/composables/useGraph'
+import { getCoverUrl as resolveCoverUrl } from '~/utils/cover'
 
 const props = defineProps<{
   isOpen: boolean
@@ -203,11 +204,8 @@ const loadingBooks = ref(false)
 const loadingAnnotations = ref(false)
 const selectedBookId = ref<number | null>(null)
 
-const API_BASE = 'http://localhost:7070'
-
 const getCoverUrl = (book: BookItem) => {
-  if (book.coverPath?.startsWith('http')) return book.coverPath
-  return `${API_BASE}/api/books/${book.id}/cover`
+  return resolveCoverUrl(book.coverPath || undefined, book.id)
 }
 
 const onCoverError = (event: Event) => {

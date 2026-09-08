@@ -33,14 +33,17 @@ describe('Upload Page', () => {
     const wrapper = mount(UploadPage, {
       global: {
         stubs: {
-          NuxtLink: true,
+          NuxtLink: { template: '<a><slot /></a>' },
           ReaderUploadDropZone: true
         }
       }
     })
     expect(wrapper.text()).toContain('Upload de Livros')
     expect(wrapper.text()).toContain('Módulo de Importação')
-    expect(wrapper.text()).toContain('Formatos Suportados')
+    expect(wrapper.text()).toContain('Voltar para a Estante')
+    expect(wrapper.text()).not.toContain('Ir para Biblioteca')
+    expect(wrapper.text()).not.toContain('Formatos Suportados')
+    expect(wrapper.text()).not.toContain('Recursos Aresta')
   })
 
   it('ao validar arquivo na dropzone, salva no banco local e navega para /reader com bookId', async () => {

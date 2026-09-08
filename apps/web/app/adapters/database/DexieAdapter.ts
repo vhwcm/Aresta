@@ -75,6 +75,11 @@ export class DexieAdapter implements IDatabaseAdapter {
     }
   }
 
+  async clearBooks(): Promise<void> {
+    await this.init();
+    await this.db.books.clear();
+  }
+
   // Annotations
   async getAnnotations(filters?: { bookId?: number; themeId?: number }): Promise<LocalAnnotation[]> {
     await this.init();

@@ -45,4 +45,24 @@ describe('GraphCanvas Component', () => {
       expect(wrapper.emitted('openConnectModal')).toBeTruthy()
     }
   })
+
+  it('renders clean monochromatic vector icons with borders instead of emojis in theme nodes', () => {
+    const wrapper = mount(GraphCanvas, {
+      props: {
+        nodes: [
+          { id: 'theme-1', rawId: 1, type: 'theme', name: 'Filosofia', color: '#3B82F6', bookCount: 1 },
+          { id: 'theme-2', rawId: 2, type: 'theme', name: 'Psicologia', color: '#10B981', bookCount: 1 },
+        ],
+        edges: [],
+      },
+    })
+
+    const monochromeIcons = wrapper.findAll('.node-icon-monochrome')
+    expect(monochromeIcons.length).toBeGreaterThanOrEqual(2)
+    // Garantir que não contém emojis cartoon nos nós
+    expect(wrapper.html()).not.toContain('🏛️')
+    expect(wrapper.html()).not.toContain('🧠')
+    // Garantir presença de caminhos vetoriais monocromáticos
+    expect(wrapper.find('.node-icon-monochrome').find('line, path').exists()).toBe(true)
+  })
 })

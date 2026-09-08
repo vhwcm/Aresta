@@ -21,5 +21,8 @@ describe('App Root (app.vue)', () => {
     expect(wrapper.find('[data-testid="bottom-navbar-stub"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="command-palette-stub"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="settings-modal-stub"]').exists()).toBe(true)
+    // Valida que o container padrão possui margem sutil lateral e no topo
+    expect(wrapper.classes()).toContain('px-3')
+    expect(wrapper.classes()).toContain('pt-2.5')
   })
 })

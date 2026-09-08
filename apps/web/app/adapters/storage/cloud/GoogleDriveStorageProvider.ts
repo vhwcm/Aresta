@@ -34,11 +34,13 @@ export class GoogleDriveStorageProvider implements ICloudStorageProvider {
     let query = `name = '${safeName}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false`
     if (parentId) {
       query += ` and '${parentId}' in parents`
+    } else {
+      query += ` and 'root' in parents`
     }
 
     const searchUrl = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(
       query
-    )}&fields=files(id,name)`
+    )}&fields=files(id,name)&orderBy=createdTime asc`
 
     const searchRes = await fetch(searchUrl, { headers })
     if (!searchRes.ok) {
@@ -61,7 +63,7 @@ export class GoogleDriveStorageProvider implements ICloudStorageProvider {
       body: JSON.stringify({
         name,
         mimeType: 'application/vnd.google-apps.folder',
-        ...(parentId ? { parents: [parentId] } : {}),
+        parents: [parentId || 'root'],
       }),
     })
 
@@ -76,7 +78,6 @@ export class GoogleDriveStorageProvider implements ICloudStorageProvider {
 
   async uploadFile(options: UploadFileOptions): Promise<CloudFileResult> {
     const headers = this.getAuthHeader()
-    const boundary = '-------aresta_drive_boundary_' + Date.now()
 
     const metadata: Record<string, any> = {
       name: options.name,
@@ -91,12 +92,13 @@ export class GoogleDriveStorageProvider implements ICloudStorageProvider {
       fileBlob = new Blob([options.content], { type: options.mimeType })
     }
 
-    const delimiter = `\r\n--${boundary}\r\n`
+    const boundary = '-------aresta_drive_boundary_' + Date.now()
+    const delimiter = `--${boundary}\r\n`
     const closeDelimiter = `\r\n--${boundary}--`
 
     const metadataPart = `${delimiter}Content-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(
       metadata
-    )}`
+    )}\r\n`
     const mediaHeaderPart = `${delimiter}Content-Type: ${options.mimeType}\r\n\r\n`
 
     const multipartBlob = new Blob([metadataPart, mediaHeaderPart, fileBlob, closeDelimiter], {
@@ -188,6 +190,18 @@ export class GoogleDriveStorageProvider implements ICloudStorageProvider {
       bookFolderId: bookFolder.id,
       bookFile,
       coverFile,
+    }
+  }
+
+  async listBooks(): Promise<Array<{ title: string; folderId: string }>> {
+    try {
+      const rootFolder = await this.ensureFolder('Aresta')
+      const items = await this.listFolder(rootFolder.id)
+      return items
+        .filter((item) => item.mimeType === 'application/vnd.google-apps.folder')
+        .map((folder) => ({ title: folder.name, folderId: folder.id }))
+    } catch {
+      return []
     }
   }
 }

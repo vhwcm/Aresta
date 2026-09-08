@@ -32,4 +32,17 @@ npm test
 2. **Sem Visão Geral**: Não adicionar tabelas de métricas ou introduções.
 3. **Preservação de Contexto**: NUNCA apagar tarefas concluídas. O histórico deve ser sempre cumulativo.
 
+## Padrão Central Lead Orchestrator vs Worker
+- **Sessão Raiz (Lead Agent / Chat Central)**:
+  - Ponto Único de Contato com o usuário;
+  - Decompõe demandas em subtarefas atômicas e instancia subagentes em background;
+  - Mantém o `checklist.md` (resumido na raiz) e artefato dinâmico de tarefas (`TASKS.md`);
+  - Envia no chat central sínteses de entregas a cada conclusão de subagente, sem ruído de logs brutos;
+  - Centraliza solicitações de aprovação para comandos ou decisões críticas.
+- **Subagentes de Background (Workers)**:
+  - Executam estritamente a tarefa técnica designada no escopo;
+  - **NUNCA** orquestram outros subagentes ou alteram o `checklist.md` macro da raiz;
+  - Retornam um resumo técnico objetivo dos arquivos modificados e testes locais para o Lead Agent.
+
+
 

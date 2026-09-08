@@ -22,8 +22,10 @@ vi.mock('~/composables/useAuth', () => ({
 }))
 
 describe('Library Page', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks()
+    const { bookRepo } = await import('../../../app/adapters/database/repositories/BookRepository')
+    await bookRepo.clear()
     mockFetch.mockImplementation((url: string) => {
       if (url.includes('/api/user-books')) {
         return Promise.resolve([
@@ -63,6 +65,9 @@ describe('Library Page', () => {
     expect(wrapper.text()).not.toContain('Lendo')
     expect(wrapper.text()).not.toContain('📖 Lendo')
     expect(wrapper.text()).not.toContain('Ver no Mapa Mental')
+    // As palavras Filtrar Temas e Ver Grafo devem ser removidas
+    expect(wrapper.text()).not.toContain('Filtrar Temas')
+    expect(wrapper.text()).not.toContain('Ver Grafo')
   })
 
   it('navigates to reader when clicking a book card', async () => {
@@ -151,4 +156,78 @@ describe('Library Page', () => {
     expect(wrapper.text()).toContain('Remover Livro da Estante')
     expect(wrapper.text()).toContain('Contos Fluminenses')
   })
+
+  it('renders book list inside a responsive grid for shelf display on larger screens', async () => {
+    const wrapper = mount(LibraryPage, {
+      global: {
+        stubs: {
+          NuxtLink: { template: '<a><slot /></a>' }
+        }
+      }
+    })
+    await flushPromises()
+
+    const bookCard = wrapper.find('[data-testid="user-book-card"]')
+    expect(bookCard.exists()).toBe(true)
+
+    const gridContainer = bookCard.element.parentElement
+    expect(gridContainer?.className).toContain('grid')
+    expect(gridContainer?.className).toContain('grid-cols-1')
+    expect(gridContainer?.className).toContain('md:grid-cols-2')
+    expect(gridContainer?.className).toContain('lg:grid-cols-3')
+  })
+
+  it('renders selectable and deselectable theme tags beside Estante and supports mobile collapsible list', async () => {
+    mockFetch.mockImplementation((url: string) => {
+      if (url.includes('/api/user-books')) {
+        return Promise.resolve([
+          { id: 10, bookId: 1, title: 'Livro Filosofia', themes: [{ id: 1, name: 'Filosofia', color: '#E57B55' }], status: 'LENDO', currentPage: 10 },
+          { id: 11, bookId: 2, title: 'Livro Ficção', themes: [{ id: 2, name: 'Ficção', color: '#38BDF8' }], status: 'LENDO', currentPage: 5 }
+        ])
+      }
+      if (url.includes('/graph')) {
+        return Promise.resolve({
+          nodes: [
+            { id: 1, name: 'Filosofia', color: '#E57B55' },
+            { id: 2, name: 'Ficção', color: '#38BDF8' }
+          ],
+          edges: []
+        })
+      }
+      return Promise.resolve([])
+    })
+
+    const wrapper = mount(LibraryPage, {
+      global: {
+        stubs: {
+          NuxtLink: { template: '<a><slot /></a>' }
+        }
+      }
+    })
+    await flushPromises()
+
+    // Não deve conter os textos antigos removidos
+    expect(wrapper.text()).not.toContain('Filtrar Temas')
+    expect(wrapper.text()).not.toContain('Ver Grafo')
+
+    // Deve renderizar Todos os Temas e as tags dos temas
+    expect(wrapper.text()).toContain('Todos os Temas')
+    expect(wrapper.text()).toContain('Filosofia')
+    expect(wrapper.text()).toContain('Ficção')
+
+    // Botão de alternar lista no mobile
+    const toggleMobileBtn = wrapper.find('[data-testid="toggle-mobile-themes-btn"]')
+    expect(toggleMobileBtn.exists()).toBe(true)
+
+    // Ao clicar no botão mobile, a lista colapsável para baixo deve aparecer
+    expect(wrapper.find('[data-testid="mobile-themes-dropdown"]').exists()).toBe(false)
+    await toggleMobileBtn.trigger('click')
+    expect(wrapper.find('[data-testid="mobile-themes-dropdown"]').exists()).toBe(true)
+
+    // Ao clicar novamente, a lista colapsa
+    await toggleMobileBtn.trigger('click')
+    expect(wrapper.find('[data-testid="mobile-themes-dropdown"]').exists()).toBe(false)
+  })
 })
+
+

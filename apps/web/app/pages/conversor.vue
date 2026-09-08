@@ -1,15 +1,11 @@
 <template>
   <div class="flex flex-col gap-12 pb-16">
     <!-- Cabeçalho Editorial -->
-    <header class="flex flex-col gap-3">
-      <div class="flex items-center gap-2 font-technical text-[10px] uppercase font-semibold tracking-widest text-accent">
-        <FileCode2Icon class="w-3.5 h-3.5" />
-        Processamento de Documentos
-      </div>
+    <header class="flex flex-col items-center text-center gap-3 max-w-2xl mx-auto">
       <h1 class="font-editorial text-4xl md:text-5xl font-light text-textPrimary leading-tight">
         Conversor de PDF para EPUB
       </h1>
-      <p class="font-interface text-textSecondary text-base max-w-2xl leading-relaxed">
+      <p class="font-interface text-textSecondary text-base leading-relaxed">
         Transforme documentos estáticos em formato EPUB fluido e responsivo. Desfrute de tipografia ajustável, notas de rodapé interativas e integração com o leitor Aresta.
       </p>
     </header>
@@ -247,7 +243,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import {
-  FileCode2Icon,
   UploadCloudIcon,
   FileTextIcon,
   SlidersIcon,

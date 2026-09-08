@@ -1,9 +1,22 @@
 import { ref } from 'vue'
 import type { UserBookItem } from '~/interfaces/graph'
 import { useAuth } from '~/composables/useAuth'
+import { useGoogleDriveSync } from '~/composables/useGoogleDriveSync'
 import { bookRepo } from '~/adapters/database/repositories/BookRepository'
 
-const API_BASE = 'http://localhost:7070/api'
+const getApiBase = () => {
+  if (typeof useRuntimeConfig === 'function') {
+    try {
+      const config = useRuntimeConfig()
+      if (config?.public?.apiUrl) {
+        return `${config.public.apiUrl}/api`
+      }
+    } catch {
+      // fallback gracioso se runtime config não estiver disponível
+    }
+  }
+  return 'http://localhost:3001/api'
+}
 
 export const useUserBooks = () => {
   const userBooks = ref<UserBookItem[]>([])
@@ -23,6 +36,8 @@ export const useUserBooks = () => {
     userBookId: b.id,
     bookId: b.bookId || b.id,
     title: b.title,
+    author: b.author,
+    summary: b.summary,
     coverPath: b.coverPath,
     filePath: b.filePath,
     status: b.status || 'QUERO_LER',
@@ -31,66 +46,204 @@ export const useUserBooks = () => {
     themes: b.themes || []
   })
 
+  const clearLocalBooks = async () => {
+    userBooks.value = []
+    try {
+      await bookRepo.clear()
+    } catch (e) {
+      console.warn('[useUserBooks] Falha ao limpar cache local de livros:', e)
+    }
+  }
+
   const fetchUserBooks = async () => {
     loading.value = true
     error.value = null
 
-    // 1. Carrega imediatamente do repositório local (Local-First)
-    let localBooks: any[] = []
-    try {
-      localBooks = await bookRepo.getAll()
-      if (localBooks && localBooks.length > 0) {
-        userBooks.value = localBooks.map(mapLocalToUserBookItem)
-      }
-    } catch (e) {
-      console.warn('[useUserBooks] Falha ao carregar do banco local:', e)
+    // Se o usuário não estiver autenticado, a estante deve ficar vazia
+    if (!auth.isLoggedIn.value) {
+      userBooks.value = []
+      loading.value = false
+      return
     }
 
-    // 2. Se online / autenticado, sincroniza com o backend em background
+    const apiBase = getApiBase()
+
+    // 1. Tenta sincronizar com o backend (fonte da verdade do usuário)
     try {
-      const data = await $fetch<any[]>(`${API_BASE}/user-books`, {
+      const data = await $fetch<any>(`${apiBase}/user-books`, {
         headers: getHeaders()
       })
-      if (Array.isArray(data)) {
-        const remoteItems = data.map((item) => ({
-          userBookId: item.id,
-          bookId: item.bookId,
-          title: item.title,
-          coverPath: item.coverPath,
-          filePath: item.filePath,
-          status: item.status,
-          currentPage: item.currentPage,
-          lastAccessedAt: item.lastAccessedAt,
-          themes: item.themes || []
-        }))
+      const rawItems = Array.isArray(data) ? data : (data?.books || [])
+      const remoteItems: UserBookItem[] = rawItems.map((item: any) => ({
+        userBookId: item.userBookId || item.id,
+        bookId: item.bookId || item.book_id || item.id,
+        title: item.title,
+        author: item.author,
+        summary: item.summary,
+        coverPath: item.coverPath || item.cover_path,
+        filePath: item.filePath || item.file_path,
+        status: item.status || 'QUERO_LER',
+        currentPage: item.currentPage ?? item.current_page ?? 0,
+        lastAccessedAt: item.lastAccessedAt || item.last_accessed_at,
+        themes: item.themes || []
+      }))
 
-        // Preservar livros exclusivos do banco local (ex: upload local offline-first)
-        const remoteBookIds = new Set(data.map((d: any) => d.bookId))
-        const localOnlyItems = (localBooks || [])
-          .filter((lb: any) => !remoteBookIds.has(lb.bookId) && !remoteBookIds.has(lb.id))
-          .map(mapLocalToUserBookItem)
+      // Mescla livros remotos com possíveis livros exclusivos salvos localmente offline nesta sessão
+      try {
+        const localBooks = await bookRepo.getAll()
+        const localOnly: any[] = []
 
-        userBooks.value = [...remoteItems, ...localOnlyItems]
+        for (const lb of localBooks) {
+          const matchingRemote = remoteItems.find((r: any) => {
+            const idMatches = r.bookId === (lb.bookId || lb.id) || r.userBookId === lb.id
+            const titleMatches = Boolean(r.title && lb.title && r.title.trim().toLowerCase() === lb.title.trim().toLowerCase())
+            const fileMatches = Boolean(r.filePath && lb.filePath && r.filePath === lb.filePath)
+            return idMatches || titleMatches || fileMatches
+          })
 
-        // Atualiza banco local com os dados remotos
-        for (const item of data) {
+          if (matchingRemote) {
+            // Se o timestamp de acesso local for mais recente que o remoto, atualiza
+            if (lb.lastAccessedAt) {
+              const localTime = new Date(lb.lastAccessedAt).getTime()
+              const remoteTime = matchingRemote.lastAccessedAt ? new Date(matchingRemote.lastAccessedAt).getTime() : 0
+              if (localTime > remoteTime) {
+                matchingRemote.lastAccessedAt = lb.lastAccessedAt
+              }
+            }
+            if (typeof lb.currentPage === 'number' && lb.currentPage > (matchingRemote.currentPage || 0)) {
+              matchingRemote.currentPage = lb.currentPage
+            }
+
+            // Se o ID local for diferente dos IDs oficiais remotos (ex: ID temporário Date.now()),
+            // limpa o registro antigo para evitar acúmulo de duplicatas no armazenamento local
+            if (lb.id !== matchingRemote.userBookId && lb.id !== matchingRemote.bookId) {
+              try {
+                await bookRepo.delete(lb.id)
+              } catch (delErr) {
+                console.warn('[useUserBooks] Erro ao limpar livro duplicado do banco local:', delErr)
+              }
+            }
+          } else {
+            localOnly.push(lb)
+          }
+        }
+
+        const candidateBooks = [...remoteItems, ...localOnly.map(mapLocalToUserBookItem)]
+        
+        // Garante unicidade estrita por bookId, userBookId e título normalizado
+        const seenIds = new Set<number>()
+        const seenTitles = new Set<string>()
+        const uniqueBooks: UserBookItem[] = []
+
+        for (const book of candidateBooks) {
+          const normTitle = book.title ? book.title.trim().toLowerCase() : ''
+          if (seenIds.has(book.bookId) || seenIds.has(book.userBookId) || (normTitle && seenTitles.has(normTitle))) {
+            continue
+          }
+          seenIds.add(book.bookId)
+          seenIds.add(book.userBookId)
+          if (normTitle) seenTitles.add(normTitle)
+          uniqueBooks.push(book)
+        }
+
+        // Ordena estritamente pelo acesso mais recente
+        uniqueBooks.sort((a, b) => {
+          const timeA = a.lastAccessedAt ? new Date(a.lastAccessedAt).getTime() : 0
+          const timeB = b.lastAccessedAt ? new Date(b.lastAccessedAt).getTime() : 0
+          return timeB - timeA
+        })
+
+        userBooks.value = uniqueBooks
+
+        // Atualiza o banco local com os dados remotos oficiais
+        for (const item of remoteItems) {
           await bookRepo.save({
-            id: item.id,
+            id: item.userBookId,
             bookId: item.bookId,
             title: item.title,
-            coverPath: item.coverPath,
+            author: item.author,
+            coverPath: item.coverPath || undefined,
             filePath: item.filePath,
             status: item.status,
             currentPage: item.currentPage,
-            lastAccessedAt: item.lastAccessedAt,
-            themes: item.themes || []
+            lastAccessedAt: item.lastAccessedAt || undefined,
+            themes: item.themes
           })
         }
+
+        // 2. Se o Google Drive estiver conectado, mescla livros existentes na pasta Aresta do Drive
+        try {
+          const { isGoogleDriveConnected, listDriveBooks } = useGoogleDriveSync()
+          if (isGoogleDriveConnected.value) {
+            const driveBooks = await listDriveBooks()
+            for (const dbBook of driveBooks) {
+              const normDbTitle = dbBook.title.toLowerCase().trim()
+              const alreadyExists = userBooks.value.some(
+                (b) => b.title.toLowerCase().trim() === normDbTitle
+              )
+              if (!alreadyExists) {
+                const driveBookId = Date.now() + Math.floor(Math.random() * 1000)
+                const driveBookItem: UserBookItem = {
+                  userBookId: driveBookId,
+                  bookId: driveBookId,
+                  title: dbBook.title,
+                  author: 'Google Drive',
+                  filePath: `drive:${dbBook.folderId}`,
+                  status: 'QUERO_LER',
+                  currentPage: 0,
+                  themes: [],
+                }
+                userBooks.value.push(driveBookItem)
+                await bookRepo.save({
+                  id: driveBookItem.userBookId,
+                  bookId: driveBookItem.bookId,
+                  title: driveBookItem.title,
+                  author: driveBookItem.author,
+                  filePath: driveBookItem.filePath,
+                  status: driveBookItem.status,
+                  currentPage: 0,
+                })
+              }
+            }
+          }
+        } catch (driveErr) {
+          console.warn('[useUserBooks] Aviso ao sincronizar com Google Drive:', driveErr)
+        }
+      } catch (err) {
+        console.warn('[useUserBooks] Falha ao sincronizar banco local com livros remotos:', err)
+        userBooks.value = remoteItems
       }
     } catch (e: any) {
-      // Se estiver offline, mantém os dados locais sem travar
-      if (userBooks.value.length === 0) {
-        console.warn('Backend indisponível e sem livros locais:', e)
+      // Se estiver offline ou backend temporariamente indisponível, carrega do banco local
+      console.warn('[useUserBooks] Backend indisponível, tentando repositório local:', e)
+      try {
+        const localBooks = await bookRepo.getAll()
+        if (localBooks && localBooks.length > 0) {
+          const seenIds = new Set<number>()
+          const seenTitles = new Set<string>()
+          const uniqueLocal: UserBookItem[] = []
+          for (const lb of localBooks) {
+            const item = mapLocalToUserBookItem(lb)
+            const normTitle = item.title ? item.title.trim().toLowerCase() : ''
+            if (seenIds.has(item.bookId) || (normTitle && seenTitles.has(normTitle))) {
+              continue
+            }
+            seenIds.add(item.bookId)
+            if (normTitle) seenTitles.add(normTitle)
+            uniqueLocal.push(item)
+          }
+          uniqueLocal.sort((a, b) => {
+            const timeA = a.lastAccessedAt ? new Date(a.lastAccessedAt).getTime() : 0
+            const timeB = b.lastAccessedAt ? new Date(b.lastAccessedAt).getTime() : 0
+            return timeB - timeA
+          })
+          userBooks.value = uniqueLocal
+        } else {
+          userBooks.value = []
+        }
+      } catch (localErr) {
+        console.warn('[useUserBooks] Falha ao carregar livros locais:', localErr)
+        userBooks.value = []
       }
     } finally {
       loading.value = false
@@ -109,7 +262,7 @@ export const useUserBooks = () => {
     })
 
     try {
-      const res = await $fetch<any>(`${API_BASE}/user-books`, {
+      const res = await $fetch<any>(`${getApiBase()}/user-books`, {
         method: 'POST',
         headers: getHeaders(),
         body: { bookId, status, currentPage }
@@ -136,7 +289,7 @@ export const useUserBooks = () => {
     }
 
     try {
-      const res = await $fetch<any>(`${API_BASE}/user-books/${userBookId}`, {
+      const res = await $fetch<any>(`${getApiBase()}/user-books/${userBookId}`, {
         method: 'PATCH',
         headers: getHeaders(),
         body: { status, currentPage }
@@ -150,9 +303,36 @@ export const useUserBooks = () => {
     }
   }
 
-  const setBookThemes = async (userBookId: number, themeIds: number[]) => {
+  const setBookThemes = async (userBookId: number, themeIds: number[], themesList?: any[]) => {
+    // 1. Atualização Otimista local
+    const bookIndex = userBooks.value.findIndex(b => b.userBookId === userBookId || b.bookId === userBookId)
+    if (bookIndex !== -1 && userBooks.value[bookIndex]) {
+      const book = userBooks.value[bookIndex]!
+      const existingThemes = themesList || book.themes || []
+      const updatedThemes = themeIds.map(tid => {
+        const found = existingThemes.find((t: any) => Number(t.id) === Number(tid))
+        return found || { id: Number(tid), name: `Tema ${tid}` }
+      })
+      userBooks.value[bookIndex] = {
+        ...book,
+        themes: updatedThemes
+      }
+      try {
+        await bookRepo.save({
+          id: book.userBookId,
+          bookId: book.bookId,
+          title: book.title,
+          status: book.status,
+          currentPage: book.currentPage,
+          themes: updatedThemes
+        })
+      } catch (repoErr) {
+        console.warn('[useUserBooks] Erro ao persistir temas localmente:', repoErr)
+      }
+    }
+
     try {
-      const res = await $fetch<any>(`${API_BASE}/user-books/${userBookId}/themes`, {
+      const res = await $fetch<any>(`${getApiBase()}/user-books/${userBookId}/themes`, {
         method: 'PUT',
         headers: getHeaders(),
         body: { themeIds }
@@ -160,14 +340,14 @@ export const useUserBooks = () => {
       await fetchUserBooks()
       return res
     } catch (e: any) {
-      console.error('Erro ao definir temas do livro:', e)
-      throw e
+      console.warn('Operação de temas sincronizada localmente (offline/fallback):', e)
+      return { success: true, localOnly: true }
     }
   }
 
   const addThemeToBook = async (userBookId: number, themeId: number) => {
     try {
-      const res = await $fetch<any>(`${API_BASE}/user-books/${userBookId}/themes`, {
+      const res = await $fetch<any>(`${getApiBase()}/user-books/${userBookId}/themes`, {
         method: 'POST',
         headers: getHeaders(),
         body: { themeId }
@@ -182,7 +362,7 @@ export const useUserBooks = () => {
 
   const removeThemeFromBook = async (userBookId: number, themeId: number) => {
     try {
-      const res = await $fetch<any>(`${API_BASE}/user-books/${userBookId}/themes/${themeId}`, {
+      const res = await $fetch<any>(`${getApiBase()}/user-books/${userBookId}/themes/${themeId}`, {
         method: 'DELETE',
         headers: getHeaders()
       })
@@ -195,9 +375,26 @@ export const useUserBooks = () => {
   }
 
   const deleteUserBook = async (userBookId: number) => {
+    const item = userBooks.value.find((b: UserBookItem) => b.userBookId === userBookId)
     await bookRepo.delete(userBookId)
+    if (item && item.bookId !== userBookId) {
+      try {
+        await bookRepo.delete(item.bookId)
+      } catch {}
+    }
+    if (item?.title) {
+      try {
+        const all = await bookRepo.getAll()
+        const norm = item.title.trim().toLowerCase()
+        for (const b of all) {
+          if (b.title && b.title.trim().toLowerCase() === norm) {
+            await bookRepo.delete(b.id)
+          }
+        }
+      } catch {}
+    }
     try {
-      await $fetch(`${API_BASE}/user-books/${userBookId}`, {
+      await $fetch(`${getApiBase()}/user-books/${userBookId}`, {
         method: 'DELETE',
         headers: getHeaders()
       })
@@ -215,21 +412,52 @@ export const useUserBooks = () => {
     }
   }
 
-  const recordBookAccess = async (userBookId: number) => {
-    const existing = userBooks.value.find((b: UserBookItem) => b.userBookId === userBookId)
+  const recordBookAccess = async (userBookOrBookId: number) => {
+    const nowIso = new Date().toISOString()
+    const existing = userBooks.value.find((b: UserBookItem) => b.userBookId === userBookOrBookId || b.bookId === userBookOrBookId)
     if (existing) {
-      await bookRepo.save({
-        id: userBookId,
-        bookId: existing.bookId,
-        title: existing.title,
-        status: existing.status,
-        currentPage: existing.currentPage,
-        lastAccessedAt: new Date().toISOString()
-      })
+      existing.lastAccessedAt = nowIso
+      // Move para a primeira posição otimisticamente
+      const rest = userBooks.value.filter(b => b !== existing)
+      userBooks.value = [existing, ...rest]
+
+      try {
+        await bookRepo.save({
+          id: existing.userBookId,
+          bookId: existing.bookId,
+          title: existing.title,
+          author: existing.author,
+          coverPath: existing.coverPath || undefined,
+          filePath: existing.filePath,
+          status: existing.status,
+          currentPage: existing.currentPage,
+          lastAccessedAt: nowIso,
+          themes: existing.themes
+        })
+      } catch (repoErr) {
+        console.warn('[useUserBooks] Erro ao salvar acesso no bookRepo:', repoErr)
+      }
+    } else {
+      try {
+        const local = await bookRepo.getById(userBookOrBookId)
+        if (local) {
+          await bookRepo.save({
+            ...local,
+            lastAccessedAt: nowIso
+          })
+        }
+      } catch {}
+    }
+
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('aresta_last_accessed_book_id', String(userBookOrBookId))
+        localStorage.setItem('aresta_last_accessed_at', nowIso)
+      } catch {}
     }
 
     try {
-      const res = await $fetch<any>(`${API_BASE}/user-books/${userBookId}/access`, {
+      const res = await $fetch<any>(`${getApiBase()}/user-books/${userBookOrBookId}/access`, {
         method: 'PATCH',
         headers: getHeaders()
       })
@@ -253,6 +481,7 @@ export const useUserBooks = () => {
     loading,
     error,
     fetchUserBooks,
+    clearLocalBooks,
     addUserBook,
     updateUserBook,
     setBookThemes,

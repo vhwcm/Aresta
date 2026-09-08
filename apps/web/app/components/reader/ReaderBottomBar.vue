@@ -63,19 +63,18 @@
       <!-- Botão Anotar -->
       <button
         @click="$emit('openAnnotation')"
-        class="flex flex-row md:flex-col items-center justify-center gap-1.5 md:gap-0.5 px-3 py-1.5 sm:px-4 sm:py-2 md:w-11 md:h-11 md:p-0 rounded-xl bg-accent text-white text-xs font-semibold hover:bg-accent/90 transition-all shadow-md active:scale-95 group"
+        class="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-xl bg-accent text-white hover:bg-accent/90 transition-all shadow-md active:scale-95 group"
         title="Criar anotação nesta página"
         aria-label="Criar anotação"
       >
         <HighlighterIcon class="w-4 h-4 group-hover:scale-110 transition-transform" />
-        <span class="text-xs md:hidden">Anotar</span>
       </button>
 
       <!-- Botão Aparência & Configurações de Leitura (Fundo, Tipografia, Folhas e Largura) -->
       <div class="relative" ref="appearanceWrapperRef">
         <button
           @click="isAppearancePopoverOpen = !isAppearancePopoverOpen"
-          class="flex flex-row md:flex-col items-center justify-center gap-1.5 md:gap-0.5 px-2.5 py-1.5 sm:px-3 sm:py-2 md:w-11 md:h-11 md:p-0 rounded-xl border transition-all text-xs font-semibold active:scale-95 group relative"
+          class="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-xl border transition-all active:scale-95 group relative"
           :class="isAppearancePopoverOpen
             ? 'bg-accent/20 border-accent text-accent shadow-sm'
             : (store.readerTheme === 'sepia'
@@ -88,10 +87,10 @@
           id="btn-appearance-toggle"
         >
           <!-- Ícone com indicador de cor do tema -->
-          <div class="relative">
+          <div class="relative flex items-center justify-center">
             <PaletteIcon class="w-4 h-4 group-hover:scale-110 transition-transform" />
             <span
-              class="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-black/40 shadow-xs"
+              class="absolute -bottom-1 -right-1 w-2 h-2 rounded-full border border-black/40 shadow-xs"
               :class="{
                 'bg-[#f5eedc]': store.readerTheme === 'sepia',
                 'bg-[#ffffff]': store.readerTheme === 'white',
@@ -99,9 +98,6 @@
               }"
             />
           </div>
-          <span class="text-xs md:text-[9px] font-technical font-medium leading-tight">
-            {{ store.readerTheme === 'sepia' ? 'Livro' : (store.readerTheme === 'white' ? 'Branco' : 'Preto') }}
-          </span>
         </button>
 
         <!-- Popover Flutuante de Aparência & Configurações de Leitura (Mobile: Centralizado acima da barra | Desktop: Abre para a direita) -->
@@ -442,50 +438,87 @@
 
     <!-- Grupo 3: Marcação de Página, Páginas Salvas, Grafo & Zen (Mobile: Direita | Tablet/Desktop: Base) -->
     <div class="flex flex-row md:flex-col items-center gap-1.5 sm:gap-2 md:gap-2.5 shrink-0">
-      <!-- Botão Marcar Página -->
-      <button
-        @click="store.toggleBookmark()"
-        class="flex items-center justify-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 md:w-11 md:h-11 md:p-0 rounded-xl border transition-all text-xs font-semibold active:scale-95"
-        :class="store.isCurrentPageBookmarked
-          ? 'bg-amber-500/20 border-amber-500/50 text-amber-300 shadow-sm'
-          : (store.readerTheme === 'sepia'
-            ? 'bg-[#f5eedc] border-[#dfd5c0] text-[#5c4d3c] hover:text-[#2a2521] hover:bg-[#EBE2CE]'
-            : (store.readerTheme === 'white'
-              ? 'bg-gray-100 border-gray-200 text-gray-700 hover:text-black hover:bg-gray-200'
-              : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary hover:bg-white/10'))"
-        :title="store.isCurrentPageBookmarked ? 'Página marcada (clique para desmarcar)' : 'Marcar esta página'"
-        aria-label="Marcar ou desmarcar página atual"
-      >
-        <BookmarkIcon
-          class="w-4 h-4 transition-transform active:scale-125"
-          :class="{ 'fill-current text-amber-500': store.isCurrentPageBookmarked }"
-        />
-        <span class="hidden md:hidden">
-          {{ store.isCurrentPageBookmarked ? 'Marcada' : 'Marcar' }}
-        </span>
-      </button>
-
-      <!-- Botão Ver Páginas Salvas -->
-      <button
-        @click="$emit('openSavedPages')"
-        class="flex items-center justify-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 md:w-11 md:h-11 md:p-0 rounded-xl border text-xs font-semibold transition-all relative active:scale-95"
-        :class="store.readerTheme === 'sepia'
-          ? 'bg-[#f5eedc] border-[#dfd5c0] text-[#5c4d3c] hover:text-[#2a2521] hover:bg-[#EBE2CE]'
-          : (store.readerTheme === 'white'
-            ? 'bg-gray-100 border-gray-200 text-gray-700 hover:text-black hover:bg-gray-200'
-            : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary hover:bg-white/10')"
-        title="Ver páginas salvas"
-        aria-label="Abrir lista de páginas salvas"
-      >
-        <BookmarkCheckIcon class="w-4 h-4 text-accent" />
-        <span class="hidden lg:hidden">Salvas</span>
-        <span
-          v-if="store.savedPages.length > 0"
-          class="absolute -top-1 -right-1 px-1.5 py-0.2 min-w-[16px] text-center text-[9px] rounded-full bg-accent text-white font-bold font-technical shadow-sm"
+      <!-- Botão Unificado de Marcadores (Marcar página ou Ver páginas marcadas) -->
+      <div class="relative" ref="bookmarkWrapperRef">
+        <button
+          @click="isBookmarkPopoverOpen = !isBookmarkPopoverOpen"
+          class="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-xl border transition-all text-xs font-semibold active:scale-95 group relative"
+          :class="isBookmarkPopoverOpen
+            ? 'bg-accent/20 border-accent text-accent shadow-sm'
+            : (store.isCurrentPageBookmarked
+              ? 'bg-amber-500/20 border-amber-500/50 text-amber-300 shadow-sm'
+              : (store.readerTheme === 'sepia'
+                ? 'bg-[#f5eedc] border-[#dfd5c0] text-[#5c4d3c] hover:text-[#2a2521] hover:bg-[#EBE2CE]'
+                : (store.readerTheme === 'white'
+                  ? 'bg-gray-100 border-gray-200 text-gray-700 hover:text-black hover:bg-gray-200'
+                  : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary hover:bg-white/10')))"
+          title="Opções de marcadores (marcar página atual ou ver páginas marcadas)"
+          aria-label="Opções de marcadores de página"
+          id="btn-bookmarks-menu"
         >
-          {{ store.savedPages.length }}
-        </span>
-      </button>
+          <BookmarkIcon
+            class="w-4 h-4 transition-transform group-hover:scale-110"
+            :class="{ 'fill-current text-amber-500': store.isCurrentPageBookmarked }"
+          />
+          <!-- Badge com quantidade de páginas salvas -->
+          <span
+            v-if="store.savedPages.length > 0"
+            class="absolute -top-1 -right-1 px-1.5 py-0.2 min-w-[16px] text-center text-[9px] rounded-full bg-accent text-white font-bold font-technical shadow-sm"
+          >
+            {{ store.savedPages.length }}
+          </span>
+        </button>
+
+        <!-- Popover de Opções de Marcador -->
+        <div
+          v-if="isBookmarkPopoverOpen"
+          class="fixed bottom-16 right-4 w-60 md:absolute md:left-full md:bottom-0 md:right-auto md:translate-x-2 border rounded-2xl p-2 shadow-2xl z-50 flex flex-col gap-1 animate-fadeIn"
+          :class="{
+            'bg-[#f5eedc] border-[#dfd5c0] text-[#2a2521]': store.readerTheme === 'sepia',
+            'bg-white border-gray-200 text-gray-900': store.readerTheme === 'white',
+            'bg-[#18181b] border-white/10 text-[#f2f2f2]': store.readerTheme === 'black' || !store.readerTheme,
+          }"
+          role="menu"
+          aria-label="Opções de marcador"
+        >
+          <!-- Opção 1: Marcar / Desmarcar Página Atual -->
+          <button
+            @click="store.toggleBookmark(); isBookmarkPopoverOpen = false"
+            class="flex items-center gap-2.5 w-full px-3 py-2 rounded-xl text-xs font-semibold transition-all text-left group"
+            :class="store.isCurrentPageBookmarked
+              ? (store.readerTheme === 'sepia' ? 'bg-amber-100 text-amber-900' : 'bg-amber-500/15 text-amber-400')
+              : (store.readerTheme === 'sepia' ? 'hover:bg-[#ebe0c8]' : 'hover:bg-white/10')"
+            aria-label="Marcar ou desmarcar página atual"
+          >
+            <BookmarkIcon
+              class="w-4 h-4 shrink-0 transition-transform group-hover:scale-110"
+              :class="{ 'fill-current text-amber-500': store.isCurrentPageBookmarked }"
+            />
+            <span class="flex-1">
+              {{ store.isCurrentPageBookmarked ? 'Desmarcar esta página' : 'Marcar esta página' }}
+            </span>
+          </button>
+
+          <!-- Opção 2: Ver Páginas Salvas -->
+          <button
+            @click="$emit('openSavedPages'); isBookmarkPopoverOpen = false"
+            class="flex items-center justify-between w-full px-3 py-2 rounded-xl text-xs font-semibold transition-all text-left group"
+            :class="store.readerTheme === 'sepia' ? 'hover:bg-[#ebe0c8]' : 'hover:bg-white/10'"
+            aria-label="Abrir lista de páginas salvas"
+          >
+            <div class="flex items-center gap-2.5">
+              <BookmarkCheckIcon class="w-4 h-4 shrink-0 text-accent group-hover:scale-110 transition-transform" />
+              <span>Ver páginas marcadas</span>
+            </div>
+            <span
+              v-if="store.savedPages.length > 0"
+              class="px-2 py-0.5 text-[10px] rounded-full bg-accent/20 text-accent font-technical font-bold"
+            >
+              {{ store.savedPages.length }}
+            </span>
+          </button>
+        </div>
+      </div>
 
       <!-- Botão Notas do Livro -->
       <button
@@ -570,6 +603,8 @@ function handleToggleNotes() {
 const store = useReaderStore()
 const isAppearancePopoverOpen = ref(false)
 const appearanceWrapperRef = ref<HTMLElement | null>(null)
+const isBookmarkPopoverOpen = ref(false)
+const bookmarkWrapperRef = ref<HTMLElement | null>(null)
 
 const pageDisplay = computed(() => {
   if (store.isTwoPageMode && store.totalPages > 1) {
@@ -599,11 +634,24 @@ function handleClickOutside(event: MouseEvent) {
   ) {
     isAppearancePopoverOpen.value = false
   }
+
+  if (
+    isBookmarkPopoverOpen.value &&
+    bookmarkWrapperRef.value &&
+    !bookmarkWrapperRef.value.contains(event.target as Node)
+  ) {
+    isBookmarkPopoverOpen.value = false
+  }
 }
 
 function handleKeydown(event: KeyboardEvent) {
-  if (event.key === 'Escape' && isAppearancePopoverOpen.value) {
-    isAppearancePopoverOpen.value = false
+  if (event.key === 'Escape') {
+    if (isAppearancePopoverOpen.value) {
+      isAppearancePopoverOpen.value = false
+    }
+    if (isBookmarkPopoverOpen.value) {
+      isBookmarkPopoverOpen.value = false
+    }
   }
 }
 

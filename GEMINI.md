@@ -54,4 +54,9 @@ Este projeto adota o **modelo mental do Kiro**, onde o conhecimento estruturado,
 - **Sem visão geral**: Não incluir blocos de estatísticas ou tabelas de métricas.
 - **Histórico cumulativo**: Jamais apagar itens concluídos, mantendo a integridade do contexto do usuário.
 
+### 3.3. Central Lead Orchestrator vs Worker
+- A **sessão raiz** opera como a Central de Comando (Ponto Único de Contato com o usuário). Decompõe metas em tarefas atômicas, instancia subagentes em background e reporta sínteses limpas em formato de checklist no chat central.
+- Os **subagentes** de background operam como workers executores especializados, nunca delegando nem alterando o `checklist.md` geral da raiz. Retornam resumos estruturados ao orquestrador pai.
+
+
 

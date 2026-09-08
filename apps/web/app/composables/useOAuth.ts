@@ -1,11 +1,13 @@
 import { ref, computed } from 'vue'
 import { useAuth, type AuthUser } from './useAuth'
+import { bookRepo } from '~/adapters/database/repositories/BookRepository'
 
 export interface OAuthResult {
   success: boolean
   provider?: string
   user?: AuthUser
   accessToken?: string
+  isNewUser?: boolean
   error?: string
 }
 
@@ -26,19 +28,28 @@ const getAuthApiUrl = () => {
 const GOOGLE_TOKEN_KEY = 'aresta_google_drive_token'
 const ONEDRIVE_TOKEN_KEY = 'aresta_onedrive_token'
 
+// Estado compartilhado singleton entre todos os composables e componentes
+const sharedGoogleDriveToken = ref<string | null>(
+  typeof window !== 'undefined' ? localStorage.getItem(GOOGLE_TOKEN_KEY) : null
+)
+
 export const useOAuth = () => {
   const auth = useAuth()
   const isLoggingIn = ref(false)
   const oauthError = ref<string | null>(null)
 
-  const googleDriveToken = ref<string | null>(
-    typeof window !== 'undefined' ? localStorage.getItem(GOOGLE_TOKEN_KEY) : null
-  )
+  if (typeof window !== 'undefined') {
+    const currentStored = localStorage.getItem(GOOGLE_TOKEN_KEY)
+    if (currentStored !== sharedGoogleDriveToken.value) {
+      sharedGoogleDriveToken.value = currentStored
+    }
+  }
 
+  const googleDriveToken = sharedGoogleDriveToken
   const isGoogleDriveConnected = computed(() => !!googleDriveToken.value)
 
   const setGoogleDriveToken = (token: string | null) => {
-    googleDriveToken.value = token
+    sharedGoogleDriveToken.value = token
     if (typeof window !== 'undefined') {
       if (token) {
         localStorage.setItem(GOOGLE_TOKEN_KEY, token)
@@ -56,6 +67,43 @@ export const useOAuth = () => {
         localStorage.removeItem(ONEDRIVE_TOKEN_KEY)
       }
     }
+  }
+
+  const refreshGoogleToken = async (): Promise<string | null> => {
+    if (!auth.token.value) return null
+    try {
+      const authUrl = getAuthApiUrl()
+      const data = await $fetch<{ accessToken: string }>(
+        `${authUrl}/api/auth/oauth/google/refresh`,
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${auth.token.value}` },
+        }
+      )
+      if (data?.accessToken) {
+        setGoogleDriveToken(data.accessToken)
+        return data.accessToken
+      }
+      return null
+    } catch (err) {
+      console.warn('[useOAuth] Não foi possível renovar o token do Google Drive:', err)
+      return null
+    }
+  }
+
+  const ensureGoogleDriveToken = async (): Promise<string | null> => {
+    if (sharedGoogleDriveToken.value) {
+      return sharedGoogleDriveToken.value
+    }
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem(GOOGLE_TOKEN_KEY)
+      if (stored) {
+        sharedGoogleDriveToken.value = stored
+        return stored
+      }
+    }
+    // Tenta renovar via backend se usuário autenticado
+    return await refreshGoogleToken()
   }
 
   const getCloudToken = (provider: 'google' | 'onedrive' | 'apple'): string | null => {
@@ -162,6 +210,7 @@ export const useOAuth = () => {
       const response = await $fetch<{
         token: string
         user: AuthUser
+        isNewUser?: boolean
         oauth: { provider: string; accessToken: string; refreshToken?: string }
       }>(`${authUrl}/api/auth/oauth/${provider}/callback`, {
         method: 'POST',
@@ -171,6 +220,12 @@ export const useOAuth = () => {
       // 5. Atualiza sessão do Aresta e armazena token em nuvem
       const tokenCookie = useCookie<string | null>('aresta_token', { path: '/', maxAge: 60 * 60 * 24 * 7, sameSite: 'lax' })
       const userCookie = useCookie<AuthUser | null>('aresta_user', { path: '/', maxAge: 60 * 60 * 24 * 7, sameSite: 'lax' })
+
+      if (userCookie.value && userCookie.value.id !== response.user.id) {
+        try {
+          await bookRepo.clear()
+        } catch {}
+      }
 
       tokenCookie.value = response.token
       userCookie.value = response.user
@@ -187,6 +242,7 @@ export const useOAuth = () => {
         success: true,
         provider,
         user: response.user,
+        isNewUser: response.isNewUser ?? false,
         accessToken: response.oauth?.accessToken,
       }
     } catch (err: any) {
@@ -207,5 +263,7 @@ export const useOAuth = () => {
     setGoogleDriveToken,
     setOneDriveToken,
     getCloudToken,
+    refreshGoogleToken,
+    ensureGoogleDriveToken,
   }
 }

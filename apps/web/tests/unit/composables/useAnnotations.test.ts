@@ -44,6 +44,7 @@ describe('useAnnotations', () => {
       cfi: 'page:2',
       selectedText: 'Citação',
       note: 'Minha reflexão',
+      color: '#E57B55',
       themes: [{ id: 5, name: 'Filosofia' }],
     }
     mockFetch.mockResolvedValueOnce(createdItem)
@@ -62,7 +63,7 @@ describe('useAnnotations', () => {
   })
 
   it('updateAnnotationNote atualiza a nota na lista', async () => {
-    const existing = { id: 1, userId: 10, bookId: 1, cfi: 'page:1', selectedText: 'Original', note: 'Nota Velha', createdAt: '2026-08-24' }
+    const existing = { id: 1, userId: 10, bookId: 1, cfi: 'page:1', selectedText: 'Original', note: 'Nota Velha', color: '#E57B55', createdAt: '2026-08-24' }
     const updated = { ...existing, note: 'Nota Atualizada' }
     mockFetch.mockResolvedValueOnce(updated)
 
@@ -100,6 +101,7 @@ describe('useAnnotations', () => {
       cfi: 'page:5',
       selectedText: 'Citação da página 5',
       note: 'Texto manuscrito transcrito pelo OCR',
+      color: '#E57B55',
       themes: [{ id: 7, name: 'História' }],
     }
     mockFetch.mockResolvedValueOnce(ocrCreatedItem)

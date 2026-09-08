@@ -20,7 +20,7 @@ export class AuthService {
       { expiresIn: (process.env.JWT_EXPIRES_IN ?? '7d') as any }
     )
 
-    return { token, user: { id: user.id, name: user.name, email: user.email, role: user.role, isActive: user.is_active } }
+    return { token, isNewUser: true, user: { id: user.id, name: user.name, email: user.email, role: user.role, isActive: user.is_active } }
   }
 
   async login(data: LoginDto) {
@@ -43,7 +43,12 @@ export class AuthService {
       process.env.JWT_SECRET || 'sua-chave-jwt-secreta-compartilhada',
       { expiresIn: (process.env.JWT_EXPIRES_IN ?? '7d') as any }
     )
-    return { token, user: { id: user.id, name: user.name, email: user.email, role: user.role, isActive: user.is_active } }
+    return { token, isNewUser: false, user: { id: user.id, name: user.name, email: user.email, role: user.role, isActive: user.is_active } }
+  }
+
+  async deleteAccount(userId: number) {
+    await prisma.user.delete({ where: { id: userId } })
+    return { success: true }
   }
 }
 

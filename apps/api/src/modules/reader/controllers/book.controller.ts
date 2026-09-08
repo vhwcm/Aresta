@@ -4,7 +4,7 @@ import { bookService } from '../services/book.service'
 export class BookController {
   async list(req: Request, res: Response): Promise<void> {
     try {
-      const userId = (req as any).user?.id
+      const userId = (req as any).user?.userId ?? (req as any).user?.id
       const books = await bookService.findAll(userId)
       res.json({ books })
     } catch (err: any) {

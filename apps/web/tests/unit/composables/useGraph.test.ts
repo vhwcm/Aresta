@@ -72,7 +72,7 @@ describe('useGraph Composable', () => {
   })
 
   it('createNode envia requisição POST e atualiza o grafo', async () => {
-    const mockNewNode = { id: 'theme-2', rawId: 2, name: 'Filosofia', color: '#3B82F6', description: 'Stoicismo' }
+    const mockNewNode = { id: 'theme-2', rawId: 2, name: 'Filosofia', color: '#3B82F6', description: 'Stoicismo', bookCount: 1 }
     mockFetch.mockResolvedValueOnce(mockNewNode) // POST
     mockFetch.mockResolvedValueOnce({ nodes: [mockNewNode], edges: [] }) // GET recarregado
 
@@ -84,5 +84,32 @@ describe('useGraph Composable', () => {
       body: { name: 'Filosofia', color: '#3B82F6', description: 'Stoicismo' },
     }))
     expect(result.name).toBe('Filosofia')
+  })
+
+  it('não exibe no grafo tags que não estão anexadas a nenhum livro nem nenhuma nota', async () => {
+    const mockGraphData = {
+      nodes: [
+        { id: 'theme-attached-book', rawId: 10, type: 'theme', name: 'Tema Com Livro', color: '#E57B55', bookCount: 1 },
+        { id: 'theme-attached-note', rawId: 20, type: 'theme', name: 'Tema Com Nota', color: '#3B82F6', annotationCount: 1 },
+        { id: 'theme-orphan', rawId: 30, type: 'theme', name: 'Tema Isolado Sem Nada', color: '#64748B', bookCount: 0, annotationCount: 0 },
+        { id: 'book-1', rawId: 1, type: 'book', name: 'Livro Teste', fullTitle: 'Livro Teste' },
+      ],
+      edges: [
+        { id: 'edge-1', source: 'book-1', target: 'theme-attached-book', type: 'book-theme' },
+      ],
+      annotations: [
+        { id: 99, annotationThemes: [{ theme_id: 20 }] },
+      ],
+    }
+    mockFetch.mockResolvedValueOnce(mockGraphData)
+
+    const { graphData, fetchGraph } = useGraph()
+    await fetchGraph()
+
+    const nodeNames = graphData.value.nodes.map((n) => n.name)
+    expect(nodeNames).toContain('Tema Com Livro')
+    expect(nodeNames).toContain('Tema Com Nota')
+    expect(nodeNames).toContain('Livro Teste')
+    expect(nodeNames).not.toContain('Tema Isolado Sem Nada')
   })
 })

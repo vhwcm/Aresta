@@ -12,21 +12,21 @@
           <div class="reader-shell__empty-icon">
             <BookOpenIcon class="w-10 h-10 text-accent" />
           </div>
-          <h2 class="reader-shell__empty-title">Nenhum livro carregado</h2>
+          <h2 class="reader-shell__empty-title">Comece uma leitura</h2>
           <p class="reader-shell__empty-desc">
-            O módulo de leitura é dedicado à visualização de obras. Escolha um livro na biblioteca ou envie um novo arquivo.
+            Nenhum livro foi selecionado para leitura. Escolha uma obra na sua estante ou faça o upload de um arquivo para começar.
           </p>
           <p v-if="store.error" class="reader-shell__empty-error" role="alert">
             {{ store.error }}
           </p>
           <div class="reader-shell__empty-actions">
-            <NuxtLink to="/library" class="reader-shell__btn reader-shell__btn--primary">
+            <NuxtLink to="/upload" class="reader-shell__btn reader-shell__btn--primary">
+              <UploadIcon class="w-4 h-4" />
+              <span>Comece uma leitura</span>
+            </NuxtLink>
+            <NuxtLink to="/library" class="reader-shell__btn reader-shell__btn--secondary">
               <BookOpenIcon class="w-4 h-4" />
               <span>Ver Biblioteca</span>
-            </NuxtLink>
-            <NuxtLink to="/upload" class="reader-shell__btn reader-shell__btn--secondary">
-              <UploadIcon class="w-4 h-4" />
-              <span>Enviar Arquivo</span>
             </NuxtLink>
           </div>
         </div>
@@ -51,6 +51,7 @@ import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { BookOpenIcon, UploadIcon } from 'lucide-vue-next'
 import { useReaderStore } from '~/stores/readerStore'
+import { useUserBooks } from '~/composables/useUserBooks'
 import { createBookDocument } from '~/adapters/BookDocumentFactory'
 
 import { readerProfiler } from '~/utils/readerProfiler'
@@ -77,7 +78,7 @@ const loadingLabel = computed(() => {
 
 function resolveBookFileUrl(bookId?: string, bookPath?: string): string {
   const config = useRuntimeConfig()
-  const readerApi = config.public.readerApiUrl || 'http://localhost:3003'
+  const readerApi = config.public.readerApiUrl || config.public.apiUrl || 'http://localhost:3001'
   if (bookId) return `${readerApi}/api/books/${bookId}/file`
   if (!bookPath) return ''
   if (bookPath.startsWith('http://') || bookPath.startsWith('https://')) return bookPath
@@ -94,7 +95,9 @@ function resolveBookFileUrl(bookId?: string, bookPath?: string): string {
 
 async function fetchBookMetadata(bookId: string) {
   try {
-    const metaRes = await fetch(`http://localhost:7070/api/books/${bookId}`)
+    const config = useRuntimeConfig()
+    const readerApi = config.public.readerApiUrl || config.public.apiUrl || 'http://localhost:3001'
+    const metaRes = await fetch(`${readerApi}/api/books/${bookId}`)
     return metaRes.ok ? await metaRes.json() : null
   } catch (e) {
     console.warn('[ReaderShell] Falha ao buscar metadados do livro:', e)
@@ -126,6 +129,10 @@ const loadBookFromQuery = async () => {
     if (validBookId) {
       try {
         localBookMeta = await bookRepo.getById(validBookId)
+        if (!localBookMeta) {
+          const all = await bookRepo.getAll()
+          localBookMeta = all.find(b => b.bookId === validBookId || b.id === validBookId) || null
+        }
         if (localBookMeta?.title && (!route.query.title || route.query.title === 'Livro')) {
           title = localBookMeta.title
         }
@@ -226,6 +233,13 @@ const loadBookFromQuery = async () => {
         store.goToPage(targetPage)
       } else if (validBookId) {
         void store.persistProgress(localBookMeta?.currentPage || 1)
+      }
+
+      if (validBookId) {
+        try {
+          const { recordBookAccess } = useUserBooks()
+          void recordBookAccess(validBookId)
+        } catch {}
       }
     }, 'store')
   } catch (err: any) {

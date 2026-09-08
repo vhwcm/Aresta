@@ -472,18 +472,48 @@ export const useReaderStore = defineStore('reader', {
 
     async persistProgress(page: number) {
       if (!this.bookId) return
+      const nowIso = new Date().toISOString()
       try {
-        const existing = await bookRepo.getById(this.bookId)
+        let existing = await bookRepo.getById(this.bookId)
+        if (!existing) {
+          const all = await bookRepo.getAll()
+          existing = all.find(b => b.bookId === this.bookId || b.id === this.bookId) || null
+        }
         if (existing) {
           await bookRepo.save({
             ...existing,
             currentPage: page,
-            lastAccessedAt: new Date().toISOString()
+            lastAccessedAt: nowIso
           })
         }
       } catch (e) {
         // Silencioso em caso de erro local
       }
+
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('aresta_last_accessed_book_id', String(this.bookId))
+          localStorage.setItem('aresta_last_accessed_at', nowIso)
+        } catch {}
+      }
+
+      // Sincroniza em background com o backend se autenticado
+      try {
+        const config = typeof useRuntimeConfig === 'function' ? useRuntimeConfig() : null
+        const apiUrl = config?.public?.apiUrl || 'http://localhost:3001'
+        const authData = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
+        const token = authData ? (authData.startsWith('"') ? JSON.parse(authData) : authData) : null
+        if (token && typeof fetch !== 'undefined') {
+          fetch(`${apiUrl}/api/user-books/${this.bookId}`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ currentPage: page })
+          }).catch(() => {})
+        }
+      } catch {}
     },
 
     setCurrentPage(page: number) {

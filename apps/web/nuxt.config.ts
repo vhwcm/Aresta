@@ -69,8 +69,8 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      title: 'Aresta Reader',
-      titleTemplate: 'Aresta Reader',
+      title: 'Aresta',
+      titleTemplate: 'Aresta',
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },

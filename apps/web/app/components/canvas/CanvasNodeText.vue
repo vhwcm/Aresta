@@ -25,42 +25,13 @@
         <textarea
           ref="textareaRef"
           v-model="localText"
-          class="w-full flex-1 bg-transparent text-textPrimary text-sm resize-none focus:outline-none font-interface placeholder:text-textSecondary/50 select-text cursor-text"
+          class="w-full h-full bg-transparent text-textPrimary text-sm resize-none focus:outline-none font-interface placeholder:text-textSecondary/50 select-text cursor-text custom-scrollbar"
           placeholder="Escreva em Markdown..."
           @pointerdown.stop
           @mousedown.stop
           @blur="finishEditing"
           @keydown="onCardKeydown"
         ></textarea>
-        <div class="flex items-center justify-between pt-2 border-t border-divider text-xs text-textSecondary">
-          <div class="flex items-center gap-1.5">
-            <span>Markdown suportado</span>
-            <div class="flex items-center gap-0.5 ml-1 border-l border-divider/60 pl-1.5">
-              <button
-                type="button"
-                class="w-5 h-5 flex items-center justify-center rounded font-bold text-[11px] text-textPrimary/80 hover:text-textPrimary hover:bg-white/10 transition-colors"
-                title="Negrito (Ctrl+B)"
-                @mousedown.prevent="formatBold"
-              >
-                B
-              </button>
-              <button
-                type="button"
-                class="w-5 h-5 flex items-center justify-center rounded italic text-[11px] text-textPrimary/80 hover:text-textPrimary hover:bg-white/10 transition-colors"
-                title="Itálico (Ctrl+I)"
-                @mousedown.prevent="formatItalic"
-              >
-                I
-              </button>
-            </div>
-          </div>
-          <button
-            class="px-2 py-0.5 rounded bg-primary text-white hover:bg-primaryHover text-xs font-medium"
-            @click.stop="finishEditing"
-          >
-            Pronto
-          </button>
-        </div>
       </div>
 
       <div
@@ -199,6 +170,10 @@ const handleCommonShortcuts = (e: KeyboardEvent): boolean => {
 };
 
 const onCardKeydown = (e: KeyboardEvent) => {
+  if (e.ctrlKey && e.key === 'Enter') {
+    finishEditing();
+    return;
+  }
   handleCommonShortcuts(e);
 };
 

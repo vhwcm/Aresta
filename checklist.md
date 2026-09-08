@@ -3,6 +3,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [08/09/2026 19:02] [Concluído] Corrigir workflow release.yml — paths ./front → apps/web e resolver cache de dependências
 - [08/09/2026 18:38] [Concluído] Criar 4 subagentes especializados (api-worker, web-worker, code-reviewer, security-auditor)
 - [08/09/2026 15:44] [Concluído] Gerar explicativo interativo em HTML (explain-diff) das alterações recentes
 - [08/09/2026 15:23] [Concluído] Criar skill explain-diff-html em .agent/skills/explain-diff-html/SKILL.md

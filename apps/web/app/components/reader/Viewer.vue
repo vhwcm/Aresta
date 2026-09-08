@@ -64,7 +64,7 @@
             </div>
           </main>
 
-          <!-- Título do Livro em Fonte Medieval -->
+          <!-- Título do Livro em Fonte Medieval com Porcentagem ao lado -->
           <footer
             v-if="store.title && !store.isZenMode"
             class="reader-viewer__book-title-bar"
@@ -73,12 +73,20 @@
               'reader-viewer__book-title-bar--white': activeTheme === 'white',
               'reader-viewer__book-title-bar--black': activeTheme === 'black'
             }"
-            :title="store.title"
+            :title="`${store.title} (${store.progressPercentage}%)`"
             aria-label="Título do livro"
           >
-            <h2 class="reader-viewer__book-title-text font-medieval">
-              {{ store.title }}
-            </h2>
+            <div class="flex items-center justify-center gap-2 max-w-[95%]">
+              <h2 class="reader-viewer__book-title-text font-medieval">
+                {{ store.title }}
+              </h2>
+              <span
+                class="reader-viewer__book-progress-badge font-technical font-bold text-accent shrink-0 text-xs sm:text-sm px-2 py-0.5 rounded-full border border-accent/30 bg-accent/10"
+                :title="`Progresso da leitura: ${store.progressPercentage}%`"
+              >
+                {{ store.progressPercentage }}%
+              </span>
+            </div>
           </footer>
           <!-- Painel de Notas do Livro no Mobile (Cobre toda a área útil do livro, sem cobrir a navbar) -->
           <transition name="mobile-notes">

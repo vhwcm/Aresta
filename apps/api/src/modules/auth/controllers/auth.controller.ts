@@ -26,6 +26,20 @@ export class AuthController {
   async me(req: Request, res: Response): Promise<void> {
     res.json({ user: req.user })
   }
+
+  async deleteMe(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = req.user?.userId
+      if (!userId) {
+        res.status(401).json({ error: 'Unauthorized' })
+        return
+      }
+      await authService.deleteAccount(userId)
+      res.json({ success: true, message: 'Account deleted successfully' })
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || 'Failed to delete account' })
+    }
+  }
 }
 
 export const authController = new AuthController()

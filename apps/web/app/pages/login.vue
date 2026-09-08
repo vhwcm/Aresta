@@ -1,33 +1,29 @@
 <template>
   <div class="min-h-[85vh] flex flex-col items-center justify-center py-8 sm:py-12 px-2 animate-in fade-in duration-500">
-    <!-- Header com Logo de Retorno -->
-    <div class="w-full max-w-5xl flex items-center justify-between mb-6 sm:mb-8 px-2">
-      <NuxtLink
-        to="/"
-        class="inline-flex items-center gap-2.5 text-textSecondary hover:text-textPrimary transition-colors font-interface text-xs sm:text-sm group"
-        title="Voltar para a página inicial"
-      >
-        <ArrowLeftIcon class="w-4 h-4 transition-transform group-hover:-translate-x-1 text-accent" />
-        <span>Voltar ao Início</span>
-      </NuxtLink>
-
-      <ArestaLogoGraph :size="28" to="/" />
-    </div>
-
     <!-- Container Principal do Card em 2 Colunas -->
-    <div class="w-full max-w-5xl rounded-3xl bg-bgPanel border border-divider shadow-2xl backdrop-blur-xl p-6 sm:p-10 lg:p-12 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center relative overflow-hidden">
-      <!-- Coluna da Esquerda: Copywriting, Benefícios & Chamada de Conversão -->
-      <div class="lg:col-span-7 flex flex-col gap-6 text-left">
-        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-accent/15 border border-accent/30 text-accent font-technical text-[10px] uppercase tracking-widest font-semibold w-fit shadow-sm">
-          Acesso Imediato
-        </div>
+    <div class="w-full max-w-5xl rounded-3xl bg-bgPanel border border-divider shadow-2xl backdrop-blur-xl p-6 sm:p-10 lg:p-12 relative overflow-hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+        <!-- Coluna da Esquerda: Copywriting, Benefícios & Chamada de Conversão -->
+        <div class="lg:col-span-7 flex flex-col gap-6 text-left">
+          <!-- Ação Voltar ao Início na mesma altura da aba Acessar Conta -->
+          <div>
+            <NuxtLink
+              to="/"
+              data-testid="back-to-home-link"
+              class="inline-flex items-center gap-2 text-textSecondary hover:text-textPrimary transition-colors font-interface text-xs sm:text-sm group py-1"
+              title="Voltar para a página inicial"
+            >
+              <ArrowLeftIcon class="w-4 h-4 transition-transform group-hover:-translate-x-1 text-accent" />
+              <span>Voltar ao Início</span>
+            </NuxtLink>
+          </div>
 
-        <h1 class="font-editorial text-3xl sm:text-4xl lg:text-5xl font-light text-textPrimary leading-[1.15]">
-          Pronto para transformar sua leitura em <span class="text-accent italic">sabedoria duradoura</span>?
-        </h1>
+          <h1 class="font-editorial text-3xl sm:text-4xl lg:text-5xl font-light text-textPrimary leading-[1.15]">
+            Pronto para transformar sua leitura em <span class="text-accent italic">sabedoria duradoura</span>?
+          </h1>
 
         <p class="font-interface text-sm sm:text-base text-textSecondary leading-relaxed">
-          Junte-se a leitores, estudantes e pesquisadores que construíram seu segundo cérebro no Aresta. Crie sua conta gratuita em menos de 1 minuto ou acesse instantaneamente a demonstração.
+          Junte-se a leitores, estudantes e pesquisadores que construíram seu segundo cérebro no Aresta. Crie sua conta gratuita em menos de 1 minuto.
         </p>
 
         <!-- Lista de Benefícios com Ícones de Checagem -->
@@ -75,17 +71,6 @@
           </button>
         </div>
 
-        <!-- Alerta de Dica de Demonstração (Exibido na aba Login) -->
-        <div v-if="authMode === 'login'" class="bg-accent/10 border border-accent/25 rounded-2xl p-3.5 flex items-start gap-2.5 text-xs text-textPrimary">
-          <KeyIcon class="w-4 h-4 text-accent shrink-0 mt-0.5" />
-          <div class="flex flex-col gap-0.5">
-            <span class="font-semibold text-accent uppercase tracking-wider text-[9px]">Acesso Rápido Demo</span>
-            <span class="font-technical text-textSecondary text-[11px]">
-              Login: <strong class="text-textPrimary">viktor</strong> · Senha: <strong class="text-textPrimary">orlaweb123123#</strong>
-            </span>
-          </div>
-        </div>
-
         <!-- Alerta de Erro de Autenticação -->
         <div v-if="errorMessage" class="bg-rose-500/10 border border-rose-500/30 rounded-xl p-3 text-xs text-rose-400 flex items-center gap-2">
           <AlertCircleIcon class="w-4 h-4 shrink-0" />
@@ -105,7 +90,7 @@
                 type="text"
                 required
                 data-testid="login-input"
-                placeholder="viktor"
+                placeholder="seu.usuario ou e-mail"
                 class="w-full bg-black/[0.03] dark:bg-black/40 border border-divider rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-textPrimary placeholder:text-textSecondary/40 focus:outline-none focus:border-accent transition-colors"
               />
             </div>
@@ -276,6 +261,7 @@
           </div>
         </div>
       </div>
+      </div>
     </div>
   </div>
 </template>
@@ -286,13 +272,11 @@ import {
   UserIcon,
   LockIcon,
   MailIcon,
-  KeyIcon,
   AlertCircleIcon,
   ArrowRightIcon,
   ArrowLeftIcon,
   CheckCircle2Icon
 } from 'lucide-vue-next'
-import ArestaLogoGraph from '~/components/ArestaLogoGraph.vue'
 import { useAuth } from '~/composables/useAuth'
 import { useOAuth } from '~/composables/useOAuth'
 import { useSettings } from '~/composables/useSettings'
@@ -315,8 +299,8 @@ const { loginWithOAuth, isLoggingIn, oauthError } = useOAuth()
 const { loadFromServer } = useSettings()
 
 const authMode = ref<'login' | 'register'>('login')
-const loginId = ref('viktor')
-const password = ref('orlaweb123123#')
+const loginId = ref('')
+const password = ref('')
 
 const registerName = ref('')
 const registerEmail = ref('')
@@ -370,7 +354,7 @@ const handleRegister = async () => {
   if (result.success) {
     await loadFromServer()
     resetScrollToTop()
-    await navigateTo(getRedirectUrl())
+    await navigateTo('/onboarding')
   } else {
     errorMessage.value = result.error || 'Falha ao criar conta. Verifique os dados informados.'
   }
@@ -383,7 +367,10 @@ const handleOAuthLogin = async (provider: 'google' | 'microsoft' | 'apple') => {
   if (result.success) {
     await loadFromServer()
     resetScrollToTop()
-    await navigateTo(getRedirectUrl())
+    const targetUrl = (result.isNewUser || !auth.isOnboardingCompleted(result.user?.id))
+      ? '/onboarding'
+      : getRedirectUrl()
+    await navigateTo(targetUrl)
   } else if (result.error) {
     errorMessage.value = result.error
   }

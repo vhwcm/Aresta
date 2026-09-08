@@ -26,6 +26,7 @@ describe('Conta Page (/conta)', () => {
     TypeIcon: true,
     CheckIcon: true,
     PaletteIcon: true,
+    CloudIcon: true,
   }
 
   beforeEach(() => {
@@ -243,6 +244,54 @@ describe('Conta Page (/conta)', () => {
     // Digita frase exata
     await input.setValue('deletar minha conta permanentemente')
     expect((confirmBtn.element as HTMLButtonElement).disabled).toBe(false)
+  })
+
+  it('opens logout confirmation modal when clicking logout button', async () => {
+    const wrapper = mount(ContaPage, {
+      global: {
+        stubs: defaultStubs,
+      },
+    })
+
+    const logoutBtn = wrapper.find('[data-testid="logout-btn"]')
+    expect(logoutBtn.exists()).toBe(true)
+
+    await logoutBtn.trigger('click')
+    expect(wrapper.text()).toContain('Sair da Conta')
+    expect(wrapper.text()).toContain('Encerramento de Sessão')
+  })
+
+  it('exibe seção de sincronização em nuvem com status do Google Drive e permite conectar/desconectar', async () => {
+    const wrapper = mount(ContaPage, {
+      global: {
+        stubs: defaultStubs,
+      },
+    })
+
+    expect(wrapper.find('[data-testid="cloud-sync-section"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Sincronização em Nuvem')
+    expect(wrapper.text()).toContain('Google Drive')
+    expect(wrapper.text()).toContain('Desconectado')
+
+    const connectBtn = wrapper.find('[data-testid="connect-drive-account-btn"]')
+    expect(connectBtn.exists()).toBe(true)
+    expect(connectBtn.text()).toContain('Conectar Google Drive')
+
+    // Simula token conectado
+    localStorage.setItem('aresta_google_drive_token', 'mock_token_123')
+    const wrapperConnected = mount(ContaPage, {
+      global: {
+        stubs: defaultStubs,
+      },
+    })
+
+    expect(wrapperConnected.text()).toContain('Sincronizado & Ativo')
+    const disconnectBtn = wrapperConnected.find('[data-testid="disconnect-drive-account-btn"]')
+    expect(disconnectBtn.exists()).toBe(true)
+    expect(disconnectBtn.text()).toContain('Desconectar')
+
+    await disconnectBtn.trigger('click')
+    expect(localStorage.getItem('aresta_google_drive_token')).toBeNull()
   })
 })
 

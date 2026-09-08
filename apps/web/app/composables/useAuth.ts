@@ -1,4 +1,5 @@
 import { ref, computed } from 'vue'
+import { bookRepo } from '~/adapters/database/repositories/BookRepository'
 
 export interface AuthUser {
   id: number
@@ -10,6 +11,7 @@ export interface AuthUser {
 
 export interface LoginResponse {
   token: string
+  isNewUser?: boolean
   user: AuthUser
 }
 
@@ -73,9 +75,14 @@ export const useAuth = () => {
         }
       })
 
+      if (userCookie.value?.id !== response.user.id) {
+        try {
+          await bookRepo.clear()
+        } catch {}
+      }
       tokenCookie.value = response.token
       userCookie.value = response.user
-      return { success: true, user: response.user }
+      return { success: true, user: response.user, isNewUser: response.isNewUser ?? false }
     } catch (e: any) {
       console.error('Erro no login:', e)
       const errorMsg = e.data?.error || e.data?.message || e.statusMessage || 'Falha ao autenticar. Verifique o login e a senha.'
@@ -95,9 +102,14 @@ export const useAuth = () => {
         }
       })
 
+      if (userCookie.value?.id !== response.user.id) {
+        try {
+          await bookRepo.clear()
+        } catch {}
+      }
       tokenCookie.value = response.token
       userCookie.value = response.user
-      return { success: true, user: response.user }
+      return { success: true, user: response.user, isNewUser: response.isNewUser ?? true }
     } catch (e: any) {
       console.error('Erro no registro:', e)
       const errorMsg = e.data?.error || e.data?.message || e.data || e.statusMessage || 'Falha ao registrar usuário.'
@@ -125,6 +137,9 @@ export const useAuth = () => {
       tokenCookie.value = null
       userCookie.value = null
       clearAllAuthCookies()
+      try {
+        await bookRepo.clear()
+      } catch {}
       if (typeof navigateTo === 'function') {
         await navigateTo('/', { replace: true })
       }
@@ -133,6 +148,41 @@ export const useAuth = () => {
       console.error('Erro ao deletar conta:', e)
       const errorMsg = e.data?.message || e.data?.error || e.data || e.statusMessage || 'Falha ao deletar conta.'
       return { success: false, error: typeof errorMsg === 'string' ? errorMsg : 'Falha ao excluir conta.' }
+    }
+  }
+
+  const updateProfile = async (name: string) => {
+    if (!tokenCookie.value) return { success: false, error: 'Usuário não autenticado.' }
+    try {
+      const authUrl = getAuthApiUrl()
+      const response = await $fetch<{ user: AuthUser }>(`${authUrl}/api/users/me/profile`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${tokenCookie.value}` },
+        body: { name }
+      })
+      if (response?.user) {
+        userCookie.value = { ...userCookie.value, ...response.user }
+      }
+      return { success: true, user: response.user }
+    } catch (e: any) {
+      console.error('Erro ao atualizar perfil:', e)
+      const errorMsg = e.data?.error || e.data?.message || 'Falha ao atualizar perfil.'
+      return { success: false, error: typeof errorMsg === 'string' ? errorMsg : 'Falha ao atualizar perfil.' }
+    }
+  }
+
+  const isOnboardingCompleted = (userId?: number): boolean => {
+    if (typeof window === 'undefined') return true
+    const id = userId || userCookie.value?.id
+    if (!id) return true
+    return localStorage.getItem(`aresta_onboarding_completed_${id}`) === 'true'
+  }
+
+  const completeOnboarding = (userId?: number) => {
+    if (typeof window === 'undefined') return
+    const id = userId || userCookie.value?.id
+    if (id) {
+      localStorage.setItem(`aresta_onboarding_completed_${id}`, 'true')
     }
   }
 
@@ -163,6 +213,9 @@ export const useAuth = () => {
     register,
     logout,
     deleteAccount,
+    updateProfile,
+    isOnboardingCompleted,
+    completeOnboarding,
     fetchCurrentUser
   }
 }

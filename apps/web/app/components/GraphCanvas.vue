@@ -96,6 +96,7 @@ import * as d3 from 'd3'
 import type { GraphNode, GraphEdge } from '~/interfaces/graph'
 import { PlusIcon, SearchIcon, LinkIcon } from 'lucide-vue-next'
 import { useSettings } from '~/composables/useSettings'
+import { getCoverUrl } from '~/utils/cover'
 
 const props = withDefaults(
   defineProps<{
@@ -136,8 +137,6 @@ const searchQuery = ref('')
 let simulation: any = null
 let zoomBehavior: any = null
 
-const API_BASE = 'http://localhost:7070'
-
 const getPastelFill = (colorHex?: string, isRoot = false) => {
   const baseColor = colorHex || (isRoot ? '#E57B55' : '#64748B')
   const neutral = isSepiaMode.value ? '#F5EEDC' : (isLightMode.value ? '#FFFFFF' : '#161619')
@@ -148,6 +147,64 @@ const getPastelStroke = (colorHex?: string, isRoot = false) => {
   const baseColor = colorHex || (isRoot ? '#E57B55' : '#64748B')
   const neutral = isSepiaMode.value ? '#D8CCB0' : (isLightMode.value ? '#CBD5E1' : '#161619')
   return d3.interpolateRgb(neutral, baseColor)(isRoot ? 0.85 : 0.70)
+}
+
+const getMonochromeIconColor = () => {
+  if (isSepiaMode.value) return '#4A3E31'
+  if (isLightMode.value) return '#1E293B'
+  return '#F1F5F9'
+}
+
+const getNodeFill = (isRoot = false) => {
+  if (isSepiaMode.value) return isRoot ? '#F5EEDC' : '#FAF5E8'
+  if (isLightMode.value) return isRoot ? '#F8FAFC' : '#FFFFFF'
+  return isRoot ? '#232329' : '#1A1A1F'
+}
+
+const getNodeStroke = (colorHex?: string, isRoot = false) => {
+  if (isRoot) return '#E57B55'
+  if (isSepiaMode.value) return '#C4B59D'
+  if (isLightMode.value) return '#CBD5E1'
+  return '#3F3F46'
+}
+
+const getNodeInnerBorderStroke = () => {
+  if (isSepiaMode.value) return 'rgba(120, 108, 94, 0.28)'
+  if (isLightMode.value) return 'rgba(0, 0, 0, 0.12)'
+  return 'rgba(255, 255, 255, 0.16)'
+}
+
+const getThemeIconSvg = (name?: string, category?: string, isRoot = false): string => {
+  if (isRoot) {
+    return `<path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-2.04" /><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-2.04" />`
+  }
+
+  const str = `${name || ''} ${category || ''}`.toLowerCase()
+  if (/filosof|ética|epistem|moral|lógica/.test(str)) {
+    return `<line x1="3" y1="21" x2="21" y2="21"/><line x1="12" y1="3" x2="3" y2="8"/><line x1="12" y1="3" x2="21" y2="8"/><line x1="3" y1="8" x2="21" y2="8"/><line x1="7" y1="11" x2="7" y2="18"/><line x1="12" y1="11" x2="12" y2="18"/><line x1="17" y1="11" x2="17" y2="18"/>`
+  }
+  if (/psicolog|mente|cogni|comportamento|emoção|sanidade/.test(str)) {
+    return `<path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/>`
+  }
+  if (/literatur|ficção|romance|poesia|alienista|machado|conto|ensaio/.test(str)) {
+    return `<path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><line x1="16" y1="8" x2="2" y2="22"/><line x1="17.5" y1="15" x2="9" y2="15"/>`
+  }
+  if (/ciênc|tecnolog|física|químic|biolog|computa|software|program/.test(str)) {
+    return `<circle cx="12" cy="12" r="1.5" fill="currentColor"/><path d="M20.2 20.2c2.04-2.03.02-7.36-4.5-11.9-4.54-4.52-9.87-6.54-11.9-4.5-2.04 2.03-.02 7.36 4.5 11.9 4.54 4.52 9.87 6.54 11.9 4.5Z"/><path d="M15.7 8.3c4.54 4.54 6.54 9.87 4.5 11.9-2.03 2.04-7.36.02-11.9-4.5-4.52-4.54-6.54-9.87-4.5-11.9 2.03-2.04 7.36-.02 11.9 4.5Z"/>`
+  }
+  if (/história|sociedade|política|economia|antropolog/.test(str)) {
+    return `<circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a14.5 14.5 0 0 1 3.8 9 14.5 14.5 0 0 1-3.8 9 14.5 14.5 0 0 1-3.8-9 14.5 14.5 0 0 1 3.8-9z"/>`
+  }
+  if (/arte|design|música|cinema/.test(str)) {
+    return `<circle cx="13.5" cy="6.5" r=".75" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".75" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".75" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".75" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>`
+  }
+  if (/saúde|medicina|corpo|natureza/.test(str)) {
+    return `<path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>`
+  }
+  if (/estoic|sabedoria|medita/.test(str)) {
+    return `<circle cx="12" cy="12" r="9"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>`
+  }
+  return `<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>`
 }
 
 const getNodeRadius = (node: GraphNode) => {
@@ -238,7 +295,26 @@ const initGraph = () => {
     }))
     .filter((link) => link.target)
 
-  const simulationLinks = [...rootLinks, ...explicitLinks]
+  // 4. Links conectando Livros sem tema ao Nó Raiz (para nenhum livro ficar flutuando isolado)
+  const bookNodes = inputNodes.filter((n) => n.type === 'book')
+  const connectedBookNodeIds = new Set<string>()
+  for (const link of explicitLinks) {
+    if (link.source) connectedBookNodeIds.add(String(link.source.id))
+    if (link.target) connectedBookNodeIds.add(String(link.target.id))
+  }
+
+  const orphanBookLinks = bookNodes
+    .filter((b) => !connectedBookNodeIds.has(String(b.id)))
+    .map((b) => ({
+      id: `root-book-edge-${b.id}`,
+      source: rootNode,
+      target: nodeMap.get(String(b.id)),
+      type: 'root-book',
+      isRootEdge: true,
+    }))
+    .filter((link) => link.target)
+
+  const simulationLinks = [...rootLinks, ...orphanBookLinks, ...explicitLinks]
 
   // Criar Simulação de Forças D3
   simulation = d3
@@ -248,9 +324,9 @@ const initGraph = () => {
       d3
         .forceLink(simulationLinks as any)
         .id((d: any) => String(d.id))
-        .distance((d: any) => (d.isRootEdge ? 180 : d.type === 'book-theme' ? 95 : 140))
+        .distance((d: any) => (d.isRootEdge ? (d.type === 'root-book' ? 200 : 170) : d.type === 'book-theme' ? 95 : 130))
     )
-    .force('charge', d3.forceManyBody().strength((d: any) => (d.type === 'book' ? -220 : -440)))
+    .force('charge', d3.forceManyBody().strength((d: any) => (d.type === 'book' ? -220 : -420)))
     .force('center', d3.forceCenter(width / 2, height / 2))
     .force('collide', d3.forceCollide().radius((d: any) => getNodeRadius(d) + 20))
 
@@ -280,7 +356,7 @@ const initGraph = () => {
         : 'rgba(255, 255, 255, 0.12)'
     )
     .attr('stroke-width', (d: any) => (d.isRootEdge ? 1.6 : d.type === 'book-theme' ? 1.4 : 1.2))
-    .attr('stroke-dasharray', (d: any) => (d.type === 'book-theme' ? '3,3' : 'none'))
+    .attr('stroke-dasharray', (d: any) => (d.type === 'book-theme' ? '3,3' : (d.type === 'root-book' ? '4,4' : 'none')))
     .attr('stroke-opacity', 1)
 
   // Renderizar Nós
@@ -333,17 +409,29 @@ const initGraph = () => {
     .attr('filter', 'url(#node-shadow)')
     .attr('class', 'transition-all duration-300 hover:scale-105')
 
-  // Miniatura da Capa do Livro
+  // Ícone de placeholder elegante e capa do livro
   bookNodesSelection.each(function (d: any) {
     const nodeEl = d3.select(this)
-    const coverUrl = d.coverPath
-      ? d.coverPath.startsWith('http')
-        ? d.coverPath
-        : `${API_BASE}/api/books/${d.rawId}/cover`
-      : null
+    const rawBookId = d.rawId || (typeof d.id === 'number' ? d.id : parseInt(String(d.id).replace('book-', ''), 10))
+    const coverUrl = getCoverUrl(d.coverPath, rawBookId)
+
+    // Ícone SVG de fallback sempre posicionado centralmente no card
+    const fallbackG = nodeEl.append('g').attr('class', 'book-fallback-icon').attr('pointer-events', 'none')
+    fallbackG
+      .append('path')
+      .attr(
+        'd',
+        'M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20'
+      )
+      .attr('fill', 'none')
+      .attr('stroke', isSepiaMode.value ? '#8B4513' : (isLightMode.value ? '#EA580C' : '#E57B55'))
+      .attr('stroke-width', '1.6')
+      .attr('stroke-linecap', 'round')
+      .attr('stroke-linejoin', 'round')
+      .attr('transform', 'translate(-10, -10) scale(0.85)')
 
     if (coverUrl) {
-      const clipId = `book-clip-${d.rawId}`
+      const clipId = `book-clip-${rawBookId || d.id}`
       nodeEl
         .append('clipPath')
         .attr('id', clipId)
@@ -355,7 +443,7 @@ const initGraph = () => {
         .attr('rx', 7)
         .attr('ry', 7)
 
-      nodeEl
+      const img = nodeEl
         .append('image')
         .attr('href', coverUrl)
         .attr('x', -21)
@@ -364,6 +452,11 @@ const initGraph = () => {
         .attr('height', 58)
         .attr('preserveAspectRatio', 'xMidYMid slice')
         .attr('clip-path', `url(#${clipId})`)
+
+      // Se falhar o carregamento da imagem remota/local, remove a tag image sem exibir ícone quebrado do navegador
+      img.on('error', function () {
+        d3.select(this).remove()
+      })
     }
   })
 
@@ -384,82 +477,54 @@ const initGraph = () => {
   // ----------------------------------------------------
   const themeAndRootNodesSelection = nodesSelection.filter((d: any) => d.type !== 'book')
 
-  // Círculo com efeito de ambient ring
+  // 1. Círculo com efeito de borda externa decorativa
   themeAndRootNodesSelection
     .append('circle')
-    .attr('r', (d: any) => getNodeRadius(d) + 5)
-    .attr('fill', (d: any) => getPastelFill(d.color, d.isRoot))
-    .attr('opacity', 0.16)
-    .attr('class', 'transition-all duration-300')
+    .attr('r', (d: any) => getNodeRadius(d) + 4)
+    .attr('fill', 'none')
+    .attr('stroke', (d: any) => (d.isRoot ? 'rgba(229, 123, 85, 0.35)' : getNodeInnerBorderStroke()))
+    .attr('stroke-width', 1)
+    .attr('stroke-dasharray', (d: any) => (d.isRoot ? 'none' : '2,2'))
+    .attr('opacity', 0.7)
 
-  // Círculo principal do nó
+  // 2. Círculo principal do nó (monocromático com borda definida)
   themeAndRootNodesSelection
     .append('circle')
     .attr('r', (d: any) => getNodeRadius(d))
-    .attr('fill', (d: any) => getPastelFill(d.color, d.isRoot))
-    .attr('stroke', (d: any) => getPastelStroke(d.color, d.isRoot))
-    .attr('stroke-width', (d: any) => (d.isRoot ? 2 : 1.4))
-    .attr('class', 'transition-all duration-300 shadow-lg')
+    .attr('fill', (d: any) => getNodeFill(d.isRoot))
+    .attr('stroke', (d: any) => (d.isRoot ? '#E57B55' : getNodeStroke(d.color, d.isRoot)))
+    .attr('stroke-width', (d: any) => (d.isRoot ? 2 : 1.5))
+    .attr('class', 'transition-all duration-300 shadow-md')
 
-  // Ícone Nó Raiz (Meu Conhecimento)
-  const rootNodesSelection = themeAndRootNodesSelection.filter((d: any) => d.isRoot)
-  const rootIconGroup = rootNodesSelection
-    .append('g')
-    .attr('transform', 'translate(-10.5, -10.5)')
+  // 3. Borda interna fina para acabamento clean e elegante com bordas
+  themeAndRootNodesSelection
+    .append('circle')
+    .attr('r', (d: any) => Math.max(getNodeRadius(d) - 5, 12))
+    .attr('fill', 'none')
+    .attr('stroke', getNodeInnerBorderStroke())
+    .attr('stroke-width', 1)
     .attr('pointer-events', 'none')
 
-  rootIconGroup
-    .append('path')
-    .attr(
-      'd',
-      'M12 18V5 M15 13a4.17 4.17 0 0 1-3-4 4.17 4.17 0 0 1-3 4 M17.598 6.5A3 3 0 1 0 12 5a3 3 0 1 0-5.598 1.5 M17.997 5.125a4 4 0 0 1 2.526 5.77 M18 18a4 4 0 0 0 2-7.464 M19.967 17.483A4 4 0 1 1 12 18a4 4 0 1 1-7.967-.517 M6 18a4 4 0 0 1-2-7.464 M6.003 5.125a4 4 0 0 0-2.526 5.77'
-    )
-    .attr('fill', 'none')
-    .attr('stroke', isSepiaMode.value ? '#8B4513' : (isLightMode.value ? '#C2410C' : '#FFFFFF'))
-    .attr('stroke-width', '1.6')
-    .attr('stroke-linecap', 'round')
-    .attr('stroke-linejoin', 'round')
-    .attr('transform', 'scale(0.9)')
-
-  // Ícone & Contagem para Temas
-  const standardThemeSelection = themeAndRootNodesSelection.filter((d: any) => !d.isRoot)
-  standardThemeSelection.each(function (d: any) {
+  // 4. Ícone Monocromático Vetorial Clean com Bordas
+  themeAndRootNodesSelection.each(function (d: any) {
     const nodeEl = d3.select(this)
-    const bookCount = d.bookCount || 0
+    const iconMarkup = getThemeIconSvg(d.name, d.category, d.isRoot)
+    const iconColor = getMonochromeIconColor()
+    const scale = d.isRoot ? 0.85 : 0.66
+    const offset = -(24 * scale) / 2
 
-    const iconG = nodeEl.append('g').attr('pointer-events', 'none').attr('class', 'theme-icon-group')
+    const iconG = nodeEl
+      .append('g')
+      .attr('class', 'node-icon-monochrome')
+      .attr('pointer-events', 'none')
+      .attr('transform', `translate(${offset}, ${offset}) scale(${scale})`)
+      .attr('fill', 'none')
+      .attr('stroke', iconColor)
+      .attr('stroke-width', '1.65')
+      .attr('stroke-linecap', 'round')
+      .attr('stroke-linejoin', 'round')
 
-    if (bookCount > 0) {
-      iconG
-        .append('path')
-        .attr('d', 'M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z')
-        .attr('fill', 'none')
-        .attr('stroke', isSepiaMode.value ? 'rgba(44, 38, 33, 0.85)' : (isLightMode.value ? 'rgba(30, 41, 59, 0.85)' : 'rgba(255, 255, 255, 0.85)'))
-        .attr('stroke-width', '1.5')
-        .attr('stroke-linecap', 'round')
-        .attr('stroke-linejoin', 'round')
-        .attr('transform', 'translate(-13, -7.5) scale(0.62)')
-
-      iconG
-        .append('text')
-        .attr('x', 4)
-        .attr('y', 4)
-        .attr('font-size', '11.5px')
-        .attr('font-weight', '600')
-        .attr('font-family', 'ui-monospace, monospace')
-        .attr('fill', isSepiaMode.value ? '#2C2621' : (isLightMode.value ? '#1E293B' : 'rgba(255, 255, 255, 0.92)'))
-        .text(bookCount)
-    } else {
-      iconG
-        .append('path')
-        .attr('d', 'M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20')
-        .attr('fill', 'none')
-        .attr('stroke', isSepiaMode.value ? 'rgba(44, 38, 33, 0.75)' : (isLightMode.value ? 'rgba(30, 41, 59, 0.75)' : 'rgba(255, 255, 255, 0.55)'))
-        .attr('stroke-width', '1.5')
-        .attr('stroke-linecap', 'round')
-        .attr('stroke-linejoin', 'round')
-        .attr('transform', 'translate(-7, -7.5) scale(0.62)')
-    }
+    iconG.html(iconMarkup)
   })
 
   // Rótulo para Temas

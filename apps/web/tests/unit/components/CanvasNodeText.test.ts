@@ -222,15 +222,15 @@ describe('CanvasNodeText Component', () => {
     expect(textareaEl.value).toBe('Texto *base*');
   });
 
-  it('aplica negrito e itálico via botões da barra inferior no card', async () => {
+  it('edita nota do card em modo limpo sem barra inferior e finaliza com Ctrl+Enter', async () => {
     const node: CanvasNode = {
-      id: 'node-buttons',
+      id: 'node-clean-editor',
       type: 'text',
       x: 0,
       y: 0,
       width: 300,
       height: 200,
-      text: 'Destaque',
+      text: 'Texto do card',
     };
 
     const wrapper = mount(CanvasNodeText, {
@@ -244,24 +244,23 @@ describe('CanvasNodeText Component', () => {
     await body.trigger('dblclick');
     await nextTick();
 
-    const textareaEl = wrapper.find('textarea').element as HTMLTextAreaElement;
-    textareaEl.selectionStart = 0;
-    textareaEl.selectionEnd = 8; // "Destaque"
+    const textarea = wrapper.find('textarea');
+    expect(textarea.exists()).toBe(true);
 
-    const boldBtn = wrapper.find('button[title="Negrito (Ctrl+B)"]');
-    expect(boldBtn.exists()).toBe(true);
-    await boldBtn.trigger('mousedown');
+    // Não deve conter a barra inferior com Markdown suportado ou botão Pronto
+    expect(wrapper.text()).not.toContain('Markdown suportado');
+    expect(wrapper.find('button').exists()).toBe(false);
+
+    // Altera o texto e pressiona Ctrl+Enter para finalizar
+    await textarea.setValue('Texto atualizado');
+    await textarea.trigger('keydown', {
+      key: 'Enter',
+      ctrlKey: true,
+    });
     await nextTick();
 
-    expect(textareaEl.value).toBe('**Destaque**');
-
-    const italicBtn = wrapper.find('button[title="Itálico (Ctrl+I)"]');
-    expect(italicBtn.exists()).toBe(true);
-    await italicBtn.trigger('mousedown');
-    await nextTick();
-
-    // Com "**Destaque**" envolvido em asteriscos, itálico adiciona *
-    expect(textareaEl.value).toBe('***Destaque***');
+    expect(wrapper.emitted('update:text')).toBeTruthy();
+    expect(wrapper.emitted('update:text')?.[0]).toEqual(['Texto atualizado']);
   });
 });
 

@@ -94,7 +94,8 @@
                   <div>
                     <button
                       v-if="auth.isLoggedIn.value"
-                      @click="handleLogout"
+                      @click="showLogoutConfirm = true"
+                      data-testid="settings-logout-btn"
                       class="px-3 py-1.5 text-xs font-interface font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-lg hover:bg-rose-500/20 active:scale-95 transition-all flex items-center gap-1.5 shrink-0"
                     >
                       <LogOutIcon class="w-3.5 h-3.5" />
@@ -112,10 +113,13 @@
                   </div>
                 </div>
 
-                <!-- Item 3: Excluir Conta (Desabilitado) -->
-                <div class="p-4 flex items-center justify-between opacity-60 cursor-not-allowed">
-                  <div class="flex items-center gap-3">
-                    <div class="p-2 rounded-lg bg-rose-500/5 text-rose-400/50">
+                <!-- Item 3: Excluir Conta -->
+                <div
+                  class="p-4 flex items-center justify-between gap-4"
+                  :class="auth.isLoggedIn.value ? '' : 'opacity-60 cursor-not-allowed'"
+                >
+                  <div class="flex items-center gap-3 min-w-0">
+                    <div class="p-2 rounded-lg bg-rose-500/10 text-rose-400">
                       <UserXIcon class="w-4 h-4" />
                     </div>
                     <div>
@@ -128,9 +132,23 @@
                     </div>
                   </div>
 
-                  <span class="px-2 py-0.5 text-[10px] font-technical font-semibold bg-rose-500/10 text-rose-400/50 border border-rose-500/20 rounded">
-                    Desabilitado
-                  </span>
+                  <div>
+                    <button
+                      v-if="auth.isLoggedIn.value"
+                      @click="openDeleteAccountConfirm"
+                      data-testid="settings-delete-account-btn"
+                      class="px-3 py-1.5 text-xs font-interface font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-lg hover:bg-rose-500/20 active:scale-95 transition-all flex items-center gap-1.5 shrink-0"
+                    >
+                      <Trash2Icon class="w-3.5 h-3.5" />
+                      <span>Excluir</span>
+                    </button>
+                    <span
+                      v-else
+                      class="px-2 py-0.5 text-[10px] font-technical font-semibold bg-rose-500/10 text-rose-400/50 border border-rose-500/20 rounded"
+                    >
+                      Desabilitado
+                    </span>
+                  </div>
                 </div>
 
               </div>
@@ -364,11 +382,38 @@
         </div>
       </div>
     </Transition>
+
+    <!-- Modal de Confirmação de Logout -->
+    <ConfirmModal
+      :is-open="showLogoutConfirm"
+      title="Sair da Conta"
+      subtitle="Encerramento de Sessão"
+      description="Tem certeza de que deseja sair da sua conta? Você precisará fazer login novamente para acessar seus livros e anotações sincronizadas."
+      confirm-text="Sair da Conta"
+      action-type="logout"
+      variant="danger"
+      @confirm="handleConfirmLogout"
+      @cancel="showLogoutConfirm = false"
+    />
+
+    <!-- Modal de Confirmação de Exclusão de Conta -->
+    <ConfirmModal
+      :is-open="showDeleteAccountConfirm"
+      title="Excluir Conta Permanentemente"
+      subtitle="Ação Irreversível"
+      description="Tem certeza de que deseja excluir permanentemente sua conta? Todos os seus livros enviados, anotações e progresso serão apagados definitivamente."
+      confirm-text="Excluir Minha Conta"
+      action-type="delete"
+      variant="danger"
+      :loading="isDeletingAccount"
+      @confirm="handleConfirmDeleteAccount"
+      @cancel="showDeleteAccountConfirm = false"
+    />
   </Teleport>
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import {
   SettingsIcon,
   XIcon,
@@ -383,10 +428,12 @@ import {
   MoonIcon,
   NetworkIcon,
   PaletteIcon,
+  Trash2Icon,
 } from 'lucide-vue-next'
 import { useSettingsModal } from '~/composables/useSettingsModal'
 import { useSettings } from '~/composables/useSettings'
 import { useAuth } from '~/composables/useAuth'
+import ConfirmModal from '~/components/ConfirmModal.vue'
 
 const modal = useSettingsModal()
 const {
@@ -402,6 +449,10 @@ const {
 } = useSettings()
 const auth = useAuth()
 
+const showLogoutConfirm = ref(false)
+const showDeleteAccountConfirm = ref(false)
+const isDeletingAccount = ref(false)
+
 watch(
   () => modal.isOpen.value,
   (open) => {
@@ -411,13 +462,31 @@ watch(
   }
 )
 
-function handleLogout() {
-  auth.logout()
+function openDeleteAccountConfirm() {
+  showDeleteAccountConfirm.value = true
+}
+
+async function handleConfirmLogout() {
+  showLogoutConfirm.value = false
   modal.close()
+  await auth.logout()
+}
+
+async function handleConfirmDeleteAccount() {
+  isDeletingAccount.value = true
+  try {
+    const result = await auth.deleteAccount()
+    if (result.success) {
+      showDeleteAccountConfirm.value = false
+      modal.close()
+    }
+  } finally {
+    isDeletingAccount.value = false
+  }
 }
 
 function handleKeydown(e: KeyboardEvent) {
-  if (e.key === 'Escape' && modal.isOpen.value) {
+  if (e.key === 'Escape' && modal.isOpen.value && !showLogoutConfirm.value && !showDeleteAccountConfirm.value) {
     modal.close()
   }
 }

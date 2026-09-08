@@ -221,6 +221,11 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
     await this.db!.execute('UPDATE books SET deleted_at = ?, sync_status = "pending", updated_at = ? WHERE id = ?', [now, now, id]);
   }
 
+  async clearBooks(): Promise<void> {
+    await this.init();
+    await this.db!.execute('DELETE FROM books');
+  }
+
   // Annotations
   async getAnnotations(filters?: { bookId?: number; themeId?: number }): Promise<LocalAnnotation[]> {
     await this.init();

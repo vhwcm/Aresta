@@ -179,6 +179,9 @@ import {
 import type { GraphNode, AnnotationThemeItem, BookThemeItem } from '~/interfaces/graph'
 import { useGraph } from '~/composables/useGraph'
 
+const API_BASE = 'http://localhost:7070'
+import { getCoverUrl as resolveCoverUrl } from '~/utils/cover'
+
 const props = defineProps<{
   isOpen: boolean
   book: GraphNode | null
@@ -198,11 +201,8 @@ const selectedThemeIds = ref<number[]>([])
 const creatingNote = ref(false)
 const availableThemes = ref<BookThemeItem[]>([])
 
-const API_BASE = 'http://localhost:7070'
-
 const getCoverUrl = (b: any) => {
-  if (b.coverPath?.startsWith('http')) return b.coverPath
-  return `${API_BASE}/api/books/${b.rawId || b.id}/cover`
+  return resolveCoverUrl(b.coverPath, b.rawId || b.id)
 }
 
 const onCoverError = (event: Event) => {

@@ -1,65 +1,175 @@
 <template>
   <div class="flex flex-col gap-6 sm:gap-8 pb-32 animate-in fade-in slide-in-from-bottom-4 duration-700">
-    <!-- Header: Title and Actions -->
-    <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 sm:gap-4">
-      <div class="flex items-center gap-2">
-        <BookIcon class="w-4 h-4 text-accent" />
-        <h1 class="font-technical text-xs uppercase font-bold tracking-widest text-textSecondary">
-          Estante
-        </h1>
-      </div>
-
-      <!-- Actions -->
-      <div class="flex items-center gap-2 sm:gap-3">
-        <button
-          @click="isCreateDidacticModalOpen = true"
-          class="flex-1 sm:flex-initial px-4 sm:px-5 py-2 sm:py-2.5 rounded-full bg-purple-500/20 hover:bg-purple-500 text-purple-300 hover:text-white border border-purple-500/40 text-xs font-interface font-semibold transition-all flex items-center justify-center gap-2"
-          title="Criar Novo Livreto Didático com IA"
-        >
-          <SparklesIcon class="w-4 h-4 shrink-0" />
-          <span>Novo Livreto IA</span>
-        </button>
-
-        <NuxtLink
-          to="/upload"
-          class="flex-1 sm:flex-initial px-4 sm:px-5 py-2 sm:py-2.5 rounded-full bg-accent/20 hover:bg-accent text-accent hover:text-white border border-accent/40 text-xs font-interface font-semibold transition-all flex items-center justify-center gap-2"
-          title="Fazer Upload de Livro"
-        >
-          <UploadIcon class="w-4 h-4 shrink-0" />
-          <span>Enviar Arquivo</span>
-        </NuxtLink>
-      </div>
-    </header>
-
-    <div class="h-px bg-divider w-full"></div>
-
-    <!-- Estante Pessoal do Usuário Logado -->
-    <section class="flex flex-col gap-6 sm:gap-8 animate-in fade-in duration-500">
-
-      <!-- Filtro por Temas / Tags do Grafo -->
-      <div class="flex flex-col gap-3 border-b border-divider pb-4">
-        <!-- Linha Superior: Rótulo e Link do Grafo -->
-        <div class="flex items-center justify-between gap-3">
-          <div class="text-xs font-technical uppercase font-bold text-textSecondary flex items-center gap-1.5">
-            <NetworkIcon class="w-3.5 h-3.5 text-accent" />
-            <span>Filtrar Temas</span>
+    <!-- Header: Title, Tags Filter and Actions -->
+    <header class="flex flex-col gap-3.5 sm:gap-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 sm:gap-4">
+        <!-- Lado Esquerdo: Título Estante + Tags de Temas ao lado -->
+        <div class="flex items-center gap-2.5 sm:gap-3 flex-wrap min-w-0">
+          <div class="flex items-center gap-2 shrink-0">
+            <BookIcon class="w-4 h-4 text-accent" />
+            <h1 class="font-technical text-xs uppercase font-bold tracking-widest text-textSecondary">
+              Estante
+            </h1>
           </div>
 
-          <NuxtLink
-            to="/grafo"
-            class="text-xs text-accent hover:underline font-technical flex items-center gap-1 hover:opacity-80 transition-all shrink-0 py-0.5"
-            title="Abrir Mapa Mental Completo"
-          >
-            <NetworkIcon class="w-3.5 h-3.5" />
-            <span>Ver Grafo</span>
-          </NuxtLink>
+          <!-- Divisor vertical no desktop quando houver conteúdo -->
+          <div v-if="availableThemes.length > 0 || userBooks.length > 0" class="hidden sm:block h-3.5 w-px bg-divider"></div>
+
+          <!-- Tags de Temas no Desktop (ao lado da palavra Estante) -->
+          <div class="hidden sm:flex items-center gap-1.5 flex-wrap">
+            <button
+              @click="selectedThemeId = null"
+              class="px-2.5 py-1 rounded-xl text-xs font-technical transition-all flex items-center gap-1.5 shrink-0"
+              :class="selectedThemeId === null ? 'bg-textPrimary text-bgApp font-bold shadow-sm' : 'bg-white/5 text-textSecondary hover:text-textPrimary border border-divider'"
+            >
+              <span>Todos os Temas</span>
+              <span class="text-[10px] opacity-70">({{ userBooks.length }})</span>
+            </button>
+
+            <button
+              v-for="theme in availableThemes"
+              :key="theme.id"
+              @click="selectedThemeId = selectedThemeId === theme.id ? null : theme.id"
+              class="px-2.5 py-1 rounded-xl text-xs font-technical transition-all flex items-center gap-1.5 border shrink-0"
+              :style="selectedThemeId === theme.id ? {
+                backgroundColor: (theme.color || '#E57B55'),
+                borderColor: (theme.color || '#E57B55'),
+                color: '#FFFFFF',
+                boxShadow: '0 2px 8px ' + (theme.color || '#E57B55') + '40'
+              } : {
+                backgroundColor: (theme.color || '#E57B55') + '10',
+                borderColor: (theme.color || '#E57B55') + '30',
+                color: 'inherit'
+              }"
+            >
+              <span class="w-2 h-2 rounded-full shrink-0" :style="{ backgroundColor: theme.color || '#E57B55' }"></span>
+              <span class="font-medium">{{ theme.name }}</span>
+              <span class="text-[10px] opacity-70">({{ countByTheme(theme.id) }})</span>
+            </button>
+          </div>
+
+          <!-- No Mobile: Tags ao lado da palavra Estante -->
+          <div class="flex sm:hidden items-center gap-1.5 min-w-0 flex-1 justify-start">
+            <!-- Quando cabe em uma linha (até 1 tema) -->
+            <template v-if="availableThemes.length <= 1">
+              <button
+                @click="selectedThemeId = null"
+                class="px-2.5 py-1 rounded-xl text-xs font-technical transition-all flex items-center gap-1.5 shrink-0"
+                :class="selectedThemeId === null ? 'bg-textPrimary text-bgApp font-bold shadow-sm' : 'bg-white/5 text-textSecondary hover:text-textPrimary border border-divider'"
+              >
+                <span>Todos os Temas</span>
+                <span class="text-[10px] opacity-70">({{ userBooks.length }})</span>
+              </button>
+
+              <button
+                v-for="theme in availableThemes"
+                :key="theme.id"
+                @click="selectedThemeId = selectedThemeId === theme.id ? null : theme.id"
+                class="px-2.5 py-1 rounded-xl text-xs font-technical transition-all flex items-center gap-1.5 border shrink-0"
+                :style="selectedThemeId === theme.id ? {
+                  backgroundColor: (theme.color || '#E57B55'),
+                  borderColor: (theme.color || '#E57B55'),
+                  color: '#FFFFFF',
+                  boxShadow: '0 2px 8px ' + (theme.color || '#E57B55') + '40'
+                } : {
+                  backgroundColor: (theme.color || '#E57B55') + '10',
+                  borderColor: (theme.color || '#E57B55') + '30',
+                  color: 'inherit'
+                }"
+              >
+                <span class="w-2 h-2 rounded-full shrink-0" :style="{ backgroundColor: theme.color || '#E57B55' }"></span>
+                <span class="font-medium">{{ theme.name }}</span>
+                <span class="text-[10px] opacity-70">({{ countByTheme(theme.id) }})</span>
+              </button>
+            </template>
+
+            <!-- Quando não couber mais em uma linha (> 1 tema): exibe tag selecionada/todos + botão de lista que colapsa para baixo -->
+            <template v-else>
+              <button
+                v-if="selectedThemeId === null"
+                @click="isMobileThemeListOpen = !isMobileThemeListOpen"
+                class="px-2.5 py-1 rounded-xl text-xs font-technical transition-all flex items-center gap-1.5 bg-textPrimary text-bgApp font-bold shadow-sm shrink-0 truncate max-w-[130px]"
+              >
+                <span class="truncate">Todos os Temas</span>
+                <span class="text-[10px] opacity-70">({{ userBooks.length }})</span>
+              </button>
+
+              <button
+                v-else-if="selectedTheme"
+                @click="selectedThemeId = null"
+                class="px-2.5 py-1 rounded-xl text-xs font-technical transition-all flex items-center gap-1.5 border shrink-0 truncate max-w-[130px]"
+                :style="{
+                  backgroundColor: (selectedTheme.color || '#E57B55'),
+                  borderColor: (selectedTheme.color || '#E57B55'),
+                  color: '#FFFFFF',
+                  boxShadow: '0 2px 8px ' + (selectedTheme.color || '#E57B55') + '40'
+                }"
+                title="Clique para desmarcar tema"
+              >
+                <span class="w-1.5 h-1.5 rounded-full shrink-0 bg-white"></span>
+                <span class="truncate font-medium">{{ selectedTheme.name }}</span>
+                <XIcon class="w-3 h-3 shrink-0 ml-0.5" />
+              </button>
+
+              <button
+                @click="isMobileThemeListOpen = !isMobileThemeListOpen"
+                data-testid="toggle-mobile-themes-btn"
+                class="px-2 py-1 rounded-xl border border-divider bg-white/5 hover:bg-white/10 text-textSecondary hover:text-textPrimary flex items-center gap-1 text-[11px] font-technical transition-all shrink-0"
+                :class="{ 'bg-white/10 text-accent border-accent/40': isMobileThemeListOpen }"
+                :title="isMobileThemeListOpen ? 'Fechar temas' : 'Abrir temas'"
+              >
+                <span>{{ availableThemes.length }} temas</span>
+                <ChevronDownIcon
+                  class="w-3.5 h-3.5 transition-transform duration-200"
+                  :class="{ 'rotate-180': isMobileThemeListOpen }"
+                />
+              </button>
+            </template>
+          </div>
         </div>
 
-        <!-- Chips de Temas: Scroll horizontal suave no mobile, wrap no desktop -->
-        <div class="flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1 sm:mx-0 sm:px-0 sm:flex-wrap no-scrollbar">
+        <!-- Actions -->
+        <div class="flex items-center gap-2 sm:gap-3 shrink-0">
           <button
-            @click="selectedThemeId = null"
-            class="px-3 py-1.5 rounded-xl text-xs font-technical transition-all flex items-center gap-1.5 shrink-0"
+            @click="isCreateDidacticModalOpen = true"
+            class="flex-1 sm:flex-initial px-4 sm:px-5 py-2 sm:py-2.5 rounded-full bg-purple-500/20 hover:bg-purple-500 text-purple-300 hover:text-white border border-purple-500/40 text-xs font-interface font-semibold transition-all flex items-center justify-center gap-2"
+            title="Criar Novo Livreto Didático com IA"
+          >
+            <SparklesIcon class="w-4 h-4 shrink-0" />
+            <span>Novo Livreto IA</span>
+          </button>
+
+          <NuxtLink
+            to="/upload"
+            class="flex-1 sm:flex-initial px-4 sm:px-5 py-2 sm:py-2.5 rounded-full bg-accent/20 hover:bg-accent text-accent hover:text-white border border-accent/40 text-xs font-interface font-semibold transition-all flex items-center justify-center gap-2"
+            title="Fazer Upload de Livro"
+          >
+            <UploadIcon class="w-4 h-4 shrink-0" />
+            <span>Enviar Arquivo</span>
+          </NuxtLink>
+        </div>
+      </div>
+
+      <!-- Lista que colapsa para baixo no mobile quando não couber em uma linha -->
+      <div
+        v-if="isMobileThemeListOpen && availableThemes.length > 1"
+        data-testid="mobile-themes-dropdown"
+        class="sm:hidden flex flex-col gap-2 p-3 bg-white/[0.03] border border-divider rounded-2xl animate-in slide-in-from-top-2 fade-in duration-200"
+      >
+        <div class="flex items-center justify-between pb-1 border-b border-divider/40">
+          <span class="text-[11px] font-technical uppercase font-bold text-textSecondary">Filtrar por Tema</span>
+          <button
+            @click="isMobileThemeListOpen = false"
+            class="text-[11px] font-technical text-accent hover:underline"
+          >
+            Fechar
+          </button>
+        </div>
+
+        <div class="flex flex-wrap gap-1.5 max-h-52 overflow-y-auto pr-1">
+          <button
+            @click="selectedThemeId = null; isMobileThemeListOpen = false"
+            class="px-2.5 py-1 rounded-xl text-xs font-technical transition-all flex items-center gap-1.5 shrink-0"
             :class="selectedThemeId === null ? 'bg-textPrimary text-bgApp font-bold shadow-sm' : 'bg-white/5 text-textSecondary hover:text-textPrimary border border-divider'"
           >
             <span>Todos os Temas</span>
@@ -69,8 +179,8 @@
           <button
             v-for="theme in availableThemes"
             :key="theme.id"
-            @click="selectedThemeId = selectedThemeId === theme.id ? null : theme.id"
-            class="px-3 py-1.5 rounded-xl text-xs font-technical transition-all flex items-center gap-1.5 border shrink-0"
+            @click="selectedThemeId = selectedThemeId === theme.id ? null : theme.id; isMobileThemeListOpen = false"
+            class="px-2.5 py-1 rounded-xl text-xs font-technical transition-all flex items-center gap-1.5 border shrink-0"
             :style="selectedThemeId === theme.id ? {
               backgroundColor: (theme.color || '#E57B55'),
               borderColor: (theme.color || '#E57B55'),
@@ -88,20 +198,26 @@
           </button>
         </div>
       </div>
+    </header>
 
-      <!-- Lista da Estante -->
-      <div v-if="filteredUserBooks.length > 0" class="flex flex-col gap-4">
+    <div class="h-px bg-divider w-full"></div>
+
+    <!-- Estante Pessoal do Usuário Logado -->
+    <section class="flex flex-col gap-6 sm:gap-8 animate-in fade-in duration-500">
+
+      <!-- Lista da Estante em Grade Responsiva -->
+      <div v-if="filteredUserBooks.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-5">
         <div
           v-for="item in filteredUserBooks"
           :key="item.userBookId"
           @click="openReader(item)"
           data-testid="user-book-card"
-          class="group relative bg-white/[0.02] hover:bg-white/[0.04] border border-divider hover:border-accent/40 rounded-2xl p-4 sm:p-5 transition-all duration-300 flex items-center gap-4 sm:gap-6 shadow-lg hover:shadow-xl cursor-pointer"
+          class="group relative bg-white/[0.02] hover:bg-white/[0.04] border border-divider hover:border-accent/40 rounded-2xl p-4 sm:p-4.5 lg:p-5 transition-all duration-300 flex items-center gap-3.5 sm:gap-4 lg:gap-4.5 shadow-lg hover:shadow-xl cursor-pointer"
           :title="`Clique para abrir ${item.title} no leitor`"
         >
           <!-- Capa do Livro (clique abre o leitor) -->
           <div
-            class="w-16 h-24 sm:w-20 sm:h-28 shrink-0 rounded-xl border border-divider overflow-hidden bg-white/5 shadow-md flex items-center justify-center group-hover:scale-105 group-hover:border-accent/40 transition-all duration-300"
+            class="w-16 h-24 sm:w-18 sm:h-26 lg:w-20 lg:h-28 shrink-0 rounded-xl border border-divider overflow-hidden bg-white/5 shadow-md flex items-center justify-center group-hover:scale-105 group-hover:border-accent/40 transition-all duration-300"
           >
             <img
               v-if="item.coverPath"
@@ -109,14 +225,17 @@
               class="w-full h-full object-cover"
               :alt="item.title"
             />
-            <BookOpenIcon v-else class="w-6 h-6 sm:w-8 sm:h-8 text-textSecondary" />
+            <BookOpenIcon v-else class="w-6 h-6 sm:w-7 sm:h-7 text-textSecondary" />
           </div>
 
           <!-- Conteúdo -->
           <div class="flex-1 min-w-0 flex flex-col justify-between py-0.5 gap-2 sm:gap-2.5">
             <div class="flex flex-col gap-1.5 min-w-0">
               <div class="flex items-center gap-2 flex-wrap min-w-0">
-                <h3 class="font-editorial text-lg sm:text-2xl font-light text-textPrimary group-hover:text-accent transition-colors line-clamp-1 break-words">
+                <h3
+                  class="font-editorial text-base sm:text-lg lg:text-xl font-light text-textPrimary group-hover:text-accent transition-colors line-clamp-1 break-words"
+                  :title="item.title"
+                >
                   {{ item.title }}
                 </h3>
                 <!-- Badge IA Didático se aplicável (não exibe EPUB ou PDF) -->
@@ -143,7 +262,7 @@
                   :title="`Filtrar estante por '${theme.name}'`"
                 >
                   <span class="w-1.5 h-1.5 rounded-full shrink-0" :style="{ backgroundColor: theme.color || '#E57B55' }"></span>
-                  <span class="truncate max-w-[120px]">{{ theme.name }}</span>
+                  <span class="truncate max-w-[100px] sm:max-w-[120px]">{{ theme.name }}</span>
                 </span>
 
                 <!-- Botão de Editar / Adicionar Tags -->
@@ -160,18 +279,18 @@
 
             <!-- Progresso de Leitura (Porcentagem Não Editável) -->
             <div class="flex items-center gap-2.5 text-xs font-technical text-textSecondary">
-              <div class="w-20 sm:w-28 h-1.5 rounded-full bg-white/10 overflow-hidden shrink-0">
+              <div class="w-16 sm:w-20 md:w-24 h-1.5 rounded-full bg-white/10 overflow-hidden shrink-0">
                 <div
                   class="h-full bg-accent transition-all duration-300 rounded-full"
                   :style="{ width: `${getBookProgress(item)}%` }"
                 ></div>
               </div>
-              <span class="font-medium">{{ getBookProgress(item) }}%</span>
+              <span class="font-medium shrink-0">{{ getBookProgress(item) }}%</span>
             </div>
           </div>
 
           <!-- Ações à Direita -->
-          <div class="shrink-0 flex items-center gap-1 sm:gap-2">
+          <div class="shrink-0 flex items-center gap-1 sm:gap-1.5">
             <button
               @click.stop="promptDeleteBook(item)"
               data-testid="delete-book-btn"
@@ -180,7 +299,7 @@
             >
               <Trash2Icon class="w-4 h-4" />
             </button>
-            <ChevronRightIcon class="w-5 h-5 text-textSecondary/40 group-hover:text-accent group-hover:translate-x-0.5 transition-all shrink-0 hidden sm:block" />
+            <ChevronRightIcon class="w-4 h-4 sm:w-5 sm:h-5 text-textSecondary/40 group-hover:text-accent group-hover:translate-x-0.5 transition-all shrink-0 hidden sm:block" />
           </div>
         </div>
       </div>
@@ -454,7 +573,6 @@ import {
   LibraryIcon,
   PlusIcon,
   PlayIcon,
-  NetworkIcon,
   CheckCircleIcon,
   TrashIcon,
   Trash2Icon,
@@ -465,7 +583,8 @@ import {
   XIcon,
   CheckIcon,
   SparklesIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  ChevronDownIcon
 } from 'lucide-vue-next'
 import { useDidacticBooklet } from '~/composables/useDidacticBooklet'
 
@@ -480,6 +599,7 @@ import ConfirmModal from '~/components/ConfirmModal.vue'
 const auth = useAuth()
 const statusFilter = ref('TODOS')
 const selectedThemeId = ref<number | string | null>(null)
+const isMobileThemeListOpen = ref(false)
 const isLoginModalOpen = ref(false)
 
 const router = useRouter()
@@ -532,6 +652,7 @@ const {
   addUserBook,
   updateUserBook,
   setBookThemes,
+  recordBookAccess,
   deleteUserBook,
   deleteUserBookByBookId,
   isBookInShelf
@@ -539,6 +660,11 @@ const {
 const { graphData, fetchGraph, createNode } = useGraph()
 
 const availableThemes = computed(() => graphData.value.nodes || [])
+
+const selectedTheme = computed(() => {
+  if (selectedThemeId.value === null) return null
+  return availableThemes.value.find((t: any) => String(t.id) === String(selectedThemeId.value)) || null
+})
 
 const promptDeleteBook = (book: UserBookItem) => {
   bookToDelete.value = book
@@ -609,6 +735,7 @@ const countByTheme = (themeId: number | string) => {
 
 const openReader = (item: UserBookItem) => {
   const page = typeof item.currentPage === 'number' && item.currentPage > 0 ? item.currentPage : 1
+  void recordBookAccess(item.userBookId || item.bookId)
   router.push(`/reader?bookId=${item.bookId}&page=${page}`)
 }
 
@@ -642,9 +769,12 @@ const getFilterLabel = (filter: string) => {
 
 const openTagModal = (book: UserBookItem) => {
   tagModalBook.value = book
-  selectedThemeIdsForModal.value = (book.themes || []).map((t: any) => t.id)
+  selectedThemeIdsForModal.value = (book.themes || [])
+    .map((t: any) => Number(t.id))
+    .filter((id) => !isNaN(id))
   showCreateThemeInline.value = false
   newThemeName.value = ''
+  fetchGraph()
 }
 
 const toggleModalTheme = (themeId: number | string) => {
@@ -659,20 +789,23 @@ const toggleModalTheme = (themeId: number | string) => {
 }
 
 const handleCreateThemeInline = async () => {
-  if (!newThemeName.value.trim()) return
+  const name = newThemeName.value.trim()
+  if (!name) return null
   creatingTheme.value = true
   try {
-    const created = await createNode(newThemeName.value.trim(), newThemeColor.value)
+    const created = await createNode(name, newThemeColor.value)
     if (created && created.id) {
       const numId = Number(created.id)
-      if (!isNaN(numId)) {
+      if (!isNaN(numId) && !selectedThemeIdsForModal.value.includes(numId)) {
         selectedThemeIdsForModal.value.push(numId)
       }
     }
     newThemeName.value = ''
     showCreateThemeInline.value = false
+    return created
   } catch (e) {
     console.error('Erro ao criar tema:', e)
+    return null
   } finally {
     creatingTheme.value = false
   }
@@ -682,11 +815,16 @@ const handleSaveBookThemes = async () => {
   if (!tagModalBook.value) return
   savingThemes.value = true
   try {
-    await setBookThemes(tagModalBook.value.userBookId, selectedThemeIdsForModal.value)
+    if (newThemeName.value && newThemeName.value.trim()) {
+      await handleCreateThemeInline()
+    }
+    const bookTargetId = tagModalBook.value.userBookId || tagModalBook.value.bookId
+    await setBookThemes(bookTargetId, selectedThemeIdsForModal.value, availableThemes.value)
     await fetchGraph()
     tagModalBook.value = null
   } catch (e) {
     console.error('Erro ao salvar temas do livro:', e)
+    tagModalBook.value = null
   } finally {
     savingThemes.value = false
   }

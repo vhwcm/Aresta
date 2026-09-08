@@ -58,6 +58,10 @@ describe('Reader Components', () => {
         props: { isGraphActive: false },
       })
 
+      const bookmarksMenuBtn = wrapper.find('#btn-bookmarks-menu')
+      expect(bookmarksMenuBtn.exists()).toBe(true)
+      await bookmarksMenuBtn.trigger('click')
+
       const bookmarkBtn = wrapper.find('button[aria-label="Marcar ou desmarcar página atual"]')
       expect(bookmarkBtn.exists()).toBe(true)
 
@@ -97,8 +101,14 @@ describe('Reader Components', () => {
       await annotateBtn.trigger('click')
       expect(wrapper.emitted('openAnnotation')).toBeTruthy()
 
-      // Botão Páginas Salvas
+      // Botão Opções de Marcadores (Abre popover para marcar ou ver páginas salvas)
+      const bookmarksMenuBtn = wrapper.find('#btn-bookmarks-menu')
+      expect(bookmarksMenuBtn.exists()).toBe(true)
+      await bookmarksMenuBtn.trigger('click')
+
+      // Botão Páginas Salvas dentro do popover
       const savedPagesBtn = wrapper.find('button[aria-label="Abrir lista de páginas salvas"]')
+      expect(savedPagesBtn.exists()).toBe(true)
       await savedPagesBtn.trigger('click')
       expect(wrapper.emitted('openSavedPages')).toBeTruthy()
 
@@ -290,7 +300,7 @@ describe('Reader Components', () => {
   })
 
   describe('ReaderAnnotationModal', () => {
-    it('preenche texto inicial e seleciona temas', async () => {
+    it('permite escolher cor e salvar anotação com tema', async () => {
       const wrapper = mount(ReaderAnnotationModal, {
         props: {
           isOpen: true,
@@ -303,21 +313,31 @@ describe('Reader Components', () => {
       expect(wrapper.text()).toContain('Nova Anotação')
       expect(wrapper.text()).toContain('Página 3')
 
-      const textarea = wrapper.find('textarea')
-      expect(textarea.element.value).toBe('Trecho interessante do capítulo 1')
+      // Inicialmente o campo de nota fica oculto até o usuário optar por anotar
+      expect(wrapper.find('[data-testid="annotation-note-textarea"]').exists()).toBe(false)
 
-      // Temas disponíveis
-      expect(wrapper.text()).toContain('História Antiga')
-      expect(wrapper.text()).toContain('Filosofia')
+      // Seleciona uma cor (Amarelo Ouro #F59E0B)
+      const yellowBtn = wrapper.find('button[aria-label="Cor Amarelo Ouro"]')
+      expect(yellowBtn.exists()).toBe(true)
+      await yellowBtn.trigger('click')
+
+      // Clica no toggle para desejar fazer uma anotação escrita
+      const toggle = wrapper.find('[data-testid="toggle-want-note"]')
+      await toggle.trigger('click')
+
+      // Agora o textarea de reflexão/nota aparece
+      const noteTextarea = wrapper.find('[data-testid="annotation-note-textarea"]')
+      expect(noteTextarea.exists()).toBe(true)
+      await noteTextarea.setValue('Reflexão sobre filosofia grega')
+
+      // Abre temas do grafo
+      const themeSectionBtn = wrapper.findAll('button').find((b) => b.text().includes('Temas no Grafo'))
+      await themeSectionBtn?.trigger('click')
 
       // Clica no tema Filosofia (id: 2)
       const themeBtns = wrapper.findAll('button[type="button"]')
       const filosofiaBtn = themeBtns.find((b) => b.text().includes('Filosofia'))
       await filosofiaBtn?.trigger('click')
-
-      // Digita anotação
-      const noteTextarea = wrapper.findAll('textarea')[1]
-      await noteTextarea?.setValue('Reflexão sobre filosofia grega')
 
       mockCreateAnnotation.mockResolvedValueOnce({
         id: 10,
@@ -325,6 +345,7 @@ describe('Reader Components', () => {
         cfi: 'page:3',
         selectedText: 'Trecho interessante do capítulo 1',
         note: 'Reflexão sobre filosofia grega',
+        color: '#F59E0B',
         themes: [{ id: 2, name: 'Filosofia' }],
       })
 
@@ -336,12 +357,56 @@ describe('Reader Components', () => {
         cfi: 'page:3',
         selectedText: 'Trecho interessante do capítulo 1',
         note: 'Reflexão sobre filosofia grega',
+        color: '#F59E0B',
         themeIds: [2],
         chapterTitle: 'Página 3',
       })
 
       expect(wrapper.emitted('created')).toBeTruthy()
       expect(wrapper.emitted('close')).toBeTruthy()
+    })
+
+    it('salva apenas como destaque com cor selecionada quando não deseja anotação escrita', async () => {
+      const wrapper = mount(ReaderAnnotationModal, {
+        props: {
+          isOpen: true,
+          initialText: 'Citação direta para marcação',
+          currentPage: 5,
+          bookId: 1,
+        },
+      })
+
+      // Não há textarea aberto para nota inicialmente
+      expect(wrapper.find('[data-testid="annotation-note-textarea"]').exists()).toBe(false)
+      expect(wrapper.text()).toContain('Salvar Destaque')
+
+      // Seleciona cor Verde Menta (#10B981)
+      const greenBtn = wrapper.find('button[aria-label="Cor Verde Menta"]')
+      expect(greenBtn.exists()).toBe(true)
+      await greenBtn.trigger('click')
+
+      mockCreateAnnotation.mockResolvedValueOnce({
+        id: 11,
+        bookId: 1,
+        cfi: 'page:5',
+        selectedText: 'Citação direta para marcação',
+        note: null,
+        color: '#10B981',
+        themes: [],
+      })
+
+      const saveBtn = wrapper.findAll('button').find((b) => b.text().includes('Salvar Destaque'))
+      await saveBtn?.trigger('click')
+
+      expect(mockCreateAnnotation).toHaveBeenCalledWith({
+        bookId: 1,
+        cfi: 'page:5',
+        selectedText: 'Citação direta para marcação',
+        note: null,
+        color: '#10B981',
+        themeIds: [],
+        chapterTitle: 'Página 5',
+      })
     })
   })
 
@@ -430,9 +495,13 @@ describe('Reader Components', () => {
       expect(wrapper.text()).toContain('Desenho / Caneta (OCR)')
       expect(wrapper.text()).toContain('História Antiga')
 
-      // Preenche nota no modo digitação
-      const noteTextarea = wrapper.findAll('textarea')[1]
-      await noteTextarea?.setValue('Nota digitada no painel expandido')
+      // Clica no modo digitação e preenche nota
+      const typeBtn = wrapper.findAll('button').find((b) => b.text().includes('Digitação'))
+      await typeBtn?.trigger('click')
+
+      const noteTextarea = wrapper.find('textarea')
+      expect(noteTextarea.exists()).toBe(true)
+      await noteTextarea.setValue('Nota digitada no painel expandido')
 
       mockCreateAnnotation.mockResolvedValueOnce({
         id: 11,
