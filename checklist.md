@@ -3,6 +3,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [09/09/2026 07:45] [Concluído] Criar skill smart-commit-push para agrupar arquivos staged em commits atômicos descritivos e fazer push
 - [09/09/2026 07:38] [Concluído] Corrigir package-lock.json desatualizado causando falha no CI de build Android
 - [08/09/2026 19:07] [Concluído] Verificar e diagnosticar Quality Gates falhando no CI
 - [08/09/2026 19:02] [Concluído] Corrigir workflow release.yml — paths ./front → apps/web e resolver cache de dependências
