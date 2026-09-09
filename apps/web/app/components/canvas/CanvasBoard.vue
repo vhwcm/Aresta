@@ -131,6 +131,22 @@
       @insert-note="handleInsertNote"
       @insert-annotation="handleInsertAnnotation"
     />
+
+    <!-- Marquee Selection Rectangle Overlay -->
+    <div
+      v-if="isMarqueeSelecting"
+      class="absolute pointer-events-none z-20"
+      :style="marqueeStyle"
+    />
+
+    <!-- Multi-Select Floating Toolbar -->
+    <CanvasSelectionToolbar
+      :selected-nodes="selectedNodesData"
+      :selected-count="selectedNodeIds.length"
+      :viewport="viewport"
+      @color-selected="onBulkColorChange"
+      @delete-selected="removeSelected"
+    />
   </div>
 </template>
 
@@ -212,6 +228,46 @@ const resizingNodeState = ref<{
 } | null>(null);
 
 const isSpacePressed = ref(false);
+
+// Marquee Selection State
+const isMarqueeSelecting = ref(false);
+const marqueeStart = ref({ x: 0, y: 0 }); // screen coords
+const marqueeEnd = ref({ x: 0, y: 0 });   // screen coords
+
+const marqueeStyle = computed(() => {
+  const x1 = Math.min(marqueeStart.value.x, marqueeEnd.value.x);
+  const y1 = Math.min(marqueeStart.value.y, marqueeEnd.value.y);
+  const x2 = Math.max(marqueeStart.value.x, marqueeEnd.value.x);
+  const y2 = Math.max(marqueeStart.value.y, marqueeEnd.value.y);
+  const rect = boardContainerRef.value?.getBoundingClientRect();
+  return {
+    left: `${x1 - (rect?.left || 0)}px`,
+    top: `${y1 - (rect?.top || 0)}px`,
+    width: `${x2 - x1}px`,
+    height: `${y2 - y1}px`,
+    border: '2px dashed #3B82F6',
+    backgroundColor: 'rgba(59,130,246,0.05)',
+    borderRadius: '4px',
+  };
+});
+
+const selectedNodesData = computed(() =>
+  nodes.value.filter((n) => selectedNodeIds.value.includes(n.id))
+);
+
+// Multi-node drag state
+const multiDragState = ref<{
+  startX: number;
+  startY: number;
+  initialPositions: Array<{ id: string; x: number; y: number }>;
+} | null>(null);
+
+// Bulk color change for multi-selection
+const onBulkColorChange = (color: string) => {
+  for (const id of selectedNodeIds.value) {
+    updateNode(id, { color }, true);
+  }
+};
 
 const centerScreen = computed(() => {
   if (typeof window === 'undefined') return { x: 400, y: 300 };
@@ -299,6 +355,9 @@ const createLooseTextAtCenter = () => {
 const onBackgroundPointerDown = (e: PointerEvent) => {
   if (activeTool.value === 'pen') return;
 
+  // Guard: ignore clicks originating from toolbar or insert drawer
+  if ((e.target as HTMLElement)?.closest?.('.canvas-toolbar-container')) return;
+
   const isMiddleClick = e.button === 1;
   const isLeftClick = e.button === 0;
 
@@ -329,14 +388,26 @@ const onBackgroundPointerDown = (e: PointerEvent) => {
     return;
   }
 
-  // Deselect on empty background click
+  // Deselect on empty background click (will be overridden if marquee starts)
+  if (isLeftClick && !isSpacePressed.value && activeTool.value === 'select') {
+    // Start marquee selection
+    marqueeStart.value = { x: e.clientX, y: e.clientY };
+    marqueeEnd.value = { x: e.clientX, y: e.clientY };
+    isMarqueeSelecting.value = true;
+    selectedNodeIds.value = [];
+    selectedEdgeId.value = null;
+    (e.target as HTMLElement)?.setPointerCapture?.(e.pointerId);
+    return;
+  }
+
+  // Deselect on background click for non-select tools
   if (isLeftClick && !isSpacePressed.value) {
     selectedNodeIds.value = [];
     selectedEdgeId.value = null;
   }
 
-  // Pan start (middle click, space + left click, or background drag)
-  if (isMiddleClick || isSpacePressed.value || (isLeftClick && activeTool.value === 'select')) {
+  // Pan start (middle click or space + left click only — no more background drag pan)
+  if (isMiddleClick || (isSpacePressed.value && isLeftClick)) {
     isPanning.value = true;
     panStart.value = { x: e.clientX, y: e.clientY };
     (e.target as HTMLElement)?.setPointerCapture?.(e.pointerId);
@@ -344,6 +415,34 @@ const onBackgroundPointerDown = (e: PointerEvent) => {
 };
 
 const onPointerMove = (e: PointerEvent) => {
+  // Marquee Selection (updating rectangle + hit-testing nodes)
+  if (isMarqueeSelecting.value) {
+    marqueeEnd.value = { x: e.clientX, y: e.clientY };
+    // Calculate selected nodes within marquee (screen to canvas)
+    const topLeft = screenToCanvas(
+      Math.min(marqueeStart.value.x, marqueeEnd.value.x),
+      Math.min(marqueeStart.value.y, marqueeEnd.value.y)
+    );
+    const bottomRight = screenToCanvas(
+      Math.max(marqueeStart.value.x, marqueeEnd.value.x),
+      Math.max(marqueeStart.value.y, marqueeEnd.value.y)
+    );
+    const hits: string[] = [];
+    for (const node of nodes.value) {
+      // Check if node intersects marquee rectangle
+      if (
+        node.x + node.width > topLeft.x &&
+        node.x < bottomRight.x &&
+        node.y + node.height > topLeft.y &&
+        node.y < bottomRight.y
+      ) {
+        hits.push(node.id);
+      }
+    }
+    selectedNodeIds.value = hits;
+    return;
+  }
+
   // Panning Viewport
   if (isPanning.value) {
     const dx = e.clientX - panStart.value.x;
@@ -353,7 +452,20 @@ const onPointerMove = (e: PointerEvent) => {
     return;
   }
 
-  // Dragging Node
+  // Multi-node drag
+  if (multiDragState.value) {
+    const dx = (e.clientX - multiDragState.value.startX) / viewport.value.zoom;
+    const dy = (e.clientY - multiDragState.value.startY) / viewport.value.zoom;
+    for (const pos of multiDragState.value.initialPositions) {
+      updateNode(pos.id, {
+        x: Math.round(pos.x + dx),
+        y: Math.round(pos.y + dy),
+      });
+    }
+    return;
+  }
+
+  // Dragging Single Node
   if (draggingNodeState.value) {
     const dx = (e.clientX - draggingNodeState.value.startX) / viewport.value.zoom;
     const dy = (e.clientY - draggingNodeState.value.startY) / viewport.value.zoom;
@@ -401,8 +513,21 @@ const onPointerMove = (e: PointerEvent) => {
 };
 
 const onPointerUp = (e: PointerEvent) => {
+  // Finalize marquee selection
+  if (isMarqueeSelecting.value) {
+    isMarqueeSelecting.value = false;
+    // selectedNodeIds are already set during move; keep them
+    return;
+  }
+
   if (isPanning.value) {
     isPanning.value = false;
+  }
+
+  // Finalize multi-node drag
+  if (multiDragState.value) {
+    multiDragState.value = null;
+    return;
   }
 
   if (draggingNodeState.value) {
@@ -481,6 +606,23 @@ const onNodeDragStart = (id: string, e: PointerEvent) => {
   if (activeTool.value === 'pen') return;
   const node = nodes.value.find((n) => n.id === id);
   if (!node) return;
+
+  // Multi-node drag: if the dragged node is part of a multi-selection
+  if (selectedNodeIds.value.length > 1 && selectedNodeIds.value.includes(id)) {
+    const initialPositions = selectedNodeIds.value
+      .map((nid) => {
+        const n = nodes.value.find((nd) => nd.id === nid);
+        return n ? { id: nid, x: n.x, y: n.y } : null;
+      })
+      .filter((p): p is { id: string; x: number; y: number } => p !== null);
+
+    multiDragState.value = {
+      startX: e.clientX,
+      startY: e.clientY,
+      initialPositions,
+    };
+    return;
+  }
 
   draggingNodeState.value = {
     nodeId: id,

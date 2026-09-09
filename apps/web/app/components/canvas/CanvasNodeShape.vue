@@ -63,6 +63,58 @@
         :stroke="strokeColor"
         stroke-width="2"
       />
+
+      <!-- Cylinder -->
+      <g v-else-if="shapeType === 'cylinder'">
+        <!-- Body -->
+        <rect
+          x="3"
+          :y="node.height * 0.15"
+          :width="node.width - 6"
+          :height="node.height * 0.7"
+          :fill="fillColor"
+          :stroke="strokeColor"
+          stroke-width="2"
+        />
+        <!-- Top ellipse -->
+        <ellipse
+          :cx="node.width / 2"
+          :cy="node.height * 0.15"
+          :rx="(node.width - 6) / 2"
+          :ry="node.height * 0.12"
+          :fill="fillColor"
+          :stroke="strokeColor"
+          stroke-width="2"
+        />
+        <!-- Bottom ellipse -->
+        <ellipse
+          :cx="node.width / 2"
+          :cy="node.height * 0.85"
+          :rx="(node.width - 6) / 2"
+          :ry="node.height * 0.12"
+          :fill="fillColor"
+          :stroke="strokeColor"
+          stroke-width="2"
+        />
+        <!-- Cover body sides to hide stroke overlap -->
+        <rect
+          :x="3"
+          :y="node.height * 0.15"
+          :width="node.width - 6"
+          :height="node.height * 0.7"
+          :fill="fillColor"
+          stroke="none"
+        />
+      </g>
+
+      <!-- Trapezoid -->
+      <polygon
+        v-else-if="shapeType === 'trapezoid'"
+        :points="`${node.width * 0.2},4 ${node.width * 0.8},4 ${node.width - 4},${node.height - 4} 4,${node.height - 4}`"
+        :fill="fillColor"
+        :stroke="strokeColor"
+        stroke-width="2"
+      />
     </svg>
 
     <!-- Shape Content / Text Center -->

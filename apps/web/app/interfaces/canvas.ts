@@ -1,6 +1,6 @@
 export type CanvasSide = 'top' | 'right' | 'bottom' | 'left';
 
-export type CanvasShapeType = 'rectangle' | 'rounded' | 'ellipse' | 'diamond' | 'triangle';
+export type CanvasShapeType = 'rectangle' | 'rounded' | 'ellipse' | 'diamond' | 'triangle' | 'cylinder' | 'trapezoid';
 
 export type CanvasNodeType = 'text' | 'shape' | 'loose_text' | 'book' | 'highlight' | 'note_embed';
 

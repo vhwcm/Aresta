@@ -3,6 +3,8 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [09/09/2026 12:57] [Concluído] Melhorias no Canvas: seleção em área (marquee), novas formas (cilindro/trapézio) e bug fix toolbar
+- [09/09/2026 08:15] [Concluído] Adicionar ASCII art do Aresta na inicialização do dev:all
 - [09/09/2026 08:11] [Concluído] Integrar diagramas ASCII nas docs de arquitetura e remover pasta diagrams/
 - [09/09/2026 08:04] [Concluído] Executar smart-commit-push para envio das alterações de CI
 - [09/09/2026 08:01] [Concluído] Configurar workflow do GitHub Actions para gerar APK do Android a cada push
