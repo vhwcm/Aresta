@@ -1,8 +1,10 @@
 # Checklist
 
 ## 🔄 Em Andamento
+- [09/09/2026 07:35] [Fazendo] Corrigir package-lock.json desatualizado causando falha no CI de build Android
 
 ## ✅ Concluído
+- [08/09/2026 19:07] [Concluído] Verificar e diagnosticar Quality Gates falhando no CI
 - [08/09/2026 19:02] [Concluído] Corrigir workflow release.yml — paths ./front → apps/web e resolver cache de dependências
 - [08/09/2026 18:38] [Concluído] Criar 4 subagentes especializados (api-worker, web-worker, code-reviewer, security-auditor)
 - [08/09/2026 15:44] [Concluído] Gerar explicativo interativo em HTML (explain-diff) das alterações recentes
