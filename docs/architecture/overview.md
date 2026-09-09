@@ -1,50 +1,55 @@
 # Visão Geral da Arquitetura (Architecture Overview)
 
-O **Aresta** é um ecossistema monorepositório projetado para leitura inteligente de livros digitais (EPUB e PDF), retenção de conhecimento com flashcards e visualização de mapas mentais através de grafos relacionais.
+O **Aresta** é um ecossistema monolítico modular projetado para leitura ativa de livros digitais (EPUB e PDF), retenção de conhecimento com repetição espaçada e flashcards, mapas mentais através de grafos relacionais e quadros infinitos com inteligência artificial.
 
 ---
 
-## 1. Diagrama Geral do Sistema
+## 1. Diagrama Geral do Monólito
 
-```
+```text
+================================================================================
+ARESTA — VISÃO GERAL DO MONÓLITO MODULAR (SYSTEM OVERVIEW)
+================================================================================
+
                            ┌─────────────────────────┐
-                           │     USUÁRIO / BROWSER   │
+                           │     USUÁRIO / CLIENTE   │
+                           │   (Desktop Tauri / Web) │
                            └────────────┬────────────┘
                                         │
                                         │ HTTP / WebSocket (:3000)
                                         ▼
     ┌────────────────────────────────────────────────────────────────────────┐
-    │ FRONTEND (Nuxt 4 / Vue 3 / TypeScript / Pinia / Tailwind CSS)          │
+    │ FRONTEND (apps/web — Nuxt 3 / Vue 3 / TypeScript / Pinia / Tailwind)   │
     │                                                                        │
     │  ┌────────────────────┐   ┌────────────────────┐   ┌────────────────┐  │
-    │  │  Pages & Layouts   │   │ Reader Adapter     │   │ D3.js Graph &  │  │
-    │  │  (Home, Reader,    │   │ (Foliate-js EPUB / │   │ Mental Map     │  │
-    │  │   Graph, Review)   │   │  PDF.js Renderer)  │   │ Physics Engine │  │
+    │  │  Pages & Layouts   │   │ Reader Engine      │   │ D3.js Graph &  │  │
+    │  │  (Home, Reader,    │   │ (Adapter, Foliate, │   │ Canvas Infinito│  │
+    │  │   Canvas, Review)  │   │  PDF.js, 3D Curl)  │   │ Physics Engine │  │
     │  └─────────┬──────────┘   └─────────┬──────────┘   └───────┬────────┘  │
     │            │                        │                      │           │
     │            └────────────────────────┼──────────────────────┘           │
     │                                     ▼                                  │
     │                        ┌────────────────────────┐                      │
     │                        │ Composables & Stores   │                      │
-    │                        │ (useUserBooks, useAuth)│                      │
+    │                        │ (useAuth, useBooks...) │                      │
     │                        └────────────┬───────────┘                      │
     └─────────────────────────────────────┼──────────────────────────────────┘
                                           │
-                                          │ REST API Calls / JSON (:7070/api)
+                                          │ REST API Calls / JSON (:3001/api)
                                           ▼
     ┌────────────────────────────────────────────────────────────────────────┐
-    │ BACKEND (Node.js / Express.js / TypeScript / MVC / Swagger OpenAPI)    │
+    │ BACKEND (apps/api — Node.js / Express Modular / TypeScript / Prisma)   │
     │                                                                        │
     │  ┌──────────────────────────────────────────────────────────────────┐  │
     │  │ Middlewares (CORS, JWT Auth, Zod Validation, Error Handler)      │  │
     │  └──────────────────────────────────┬───────────────────────────────┘  │
     │                                     ▼                                  │
     │  ┌──────────────────────────────────────────────────────────────────┐  │
-    │  │ Controllers (Auth, Books, UserBooks, Annotations, Graph, Streak) │  │
+    │  │ Módulos: auth, reader, canvas, memory, ai                        │  │
     │  └──────────────────────────────────┬───────────────────────────────┘  │
     │                                     ▼                                  │
     │  ┌──────────────────────────────────────────────────────────────────┐  │
-    │  │ Business Services (Regras de negócio, cálculos de streak/grafo)  │  │
+    │  │ Business Services & AI Orchestrator                              │  │
     │  └──────────────────────────────────┬───────────────────────────────┘  │
     │                                     ▼                                  │
     │  ┌──────────────────────────────────────────────────────────────────┐  │
@@ -56,28 +61,24 @@ O **Aresta** é um ecossistema monorepositório projetado para leitura inteligen
                  │                                                 │
                  ▼                                                 ▼
     ┌─────────────────────────┐                       ┌─────────────────────────┐
-    │ Banco de Dados SQLite   │                       │ Sistema de Arquivos     │
-    │ (dev.db / WAL Mode)     │                       │ (storage/epubs, covers) │
+    │ PostgreSQL 16 + pgvector│                       │ Google Drive / FS Local │
+    │ (aresta-db :5432)       │                       │ (Binários EPUB/PDF)     │
     └─────────────────────────┘                       └─────────────────────────┘
+================================================================================
 ```
 
 ---
 
-## 2. Stack Tecnológica
+## 2. Mapa dos Documentos de Arquitetura
 
-| Camada | Tecnologias Principais | Propósito |
-| :--- | :--- | :--- |
-| **Frontend** | [Nuxt 4](https://nuxt.com/) / Vue 3, TypeScript, Tailwind CSS, Pinia, D3.js | Interface web reativa, renderização de documentos e simulação física de grafos |
-| **Leitor de Livros** | `foliate-js` (EPUB), `pdfjs-dist` (PDF), Canvas API | Renderização performática de múltiplos formatos com padrão Adapter |
-| **Backend** | [Node.js](https://nodejs.org/), Express.js, TypeScript, [Prisma ORM](https://www.prisma.io/), Zod, BCrypt, JWT | API RESTful em arquitetura MVC com documentação Swagger OpenAPI |
-| **Banco de Dados** | [SQLite 3](https://sqlite.org/) (via Prisma) | Armazenamento relacional local, com modo WAL ativado para alta concorrência |
-| **Conversor** | Python 3.12, PyPDF, EbookLib, Pytest (`pdf2epub/`) | Conversão e processamento de arquivos PDF para EPUB |
-| **Qualidade & CI/CD** | Vitest, Supertest, Playwright, ESLint, Pre-commit, GitHub Actions | Quality gates, testes unitários, testes de integração e validações automáticas |
+Cada subsistema possui sua documentação técnica com seus respectivos diagramas ASCII integrados:
 
----
-
-## 3. Módulos e Comunicação
-
-1. **Frontend e Backend**: Comunicação exclusiva via protocolo HTTP/JSON (`http://localhost:7070/api`).
-2. **Autenticação**: Stateless baseada em tokens JWT no cabeçalho `Authorization: Bearer <token>`.
-3. **Armazenamento de Mídia**: Arquivos binários de livros (`.epub`, `.pdf`) e capas (`.png`, `.jpg`) são servidos através de endpoints de download e streaming do backend.
+- [apps/api (Backend Modular)](file:///c:/Users/vichw/Aresta/docs/architecture/backend.md): Ciclo de requisição, autenticação JWT, cálculo de ofensivas/streaks e endpoints.
+- [apps/web (Frontend Nuxt 3 & Tauri)](file:///c:/Users/vichw/Aresta/docs/architecture/frontend.md): Arquitetura de interface, stores reativas e componentes.
+- [Subsistema de Leitor (Reader)](file:///c:/Users/vichw/Aresta/docs/architecture/reader.md): Padrão Adapter (EPUB/PDF), Motor 3D de Virada de Página (Three.js WebGL) e Pilha de Páginas Virtuais.
+- [Quadro Infinito & Grafo (Canvas)](file:///c:/Users/vichw/Aresta/docs/architecture/canvas.md): Padrão JSON Canvas v1.0, notas compostas aninhadas, prevenção de loops e simulação física D3.
+- [Inteligência Artificial & RAG (AI)](file:///c:/Users/vichw/Aresta/docs/architecture/ai.md): Vetorização, busca semântica, geração de flashcards e repetição espaçada.
+- [Banco de Dados Relacional & Vetorial](file:///c:/Users/vichw/Aresta/docs/architecture/database.md): Diagrama ERD, entidades Prisma e tipos de dados.
+- [Local-First & Sincronização Híbrida](file:///c:/Users/vichw/Aresta/docs/architecture/local-first-and-containers.md): Funcionamento offline, Last-Write-Wins e segregação de binários.
+- [Microsserviço de OCR](file:///c:/Users/vichw/Aresta/docs/architecture/ocr-service.md): Inversão de dependência em Go, gRPC e integração Gemini Vision.
+- [Infraestrutura, Portas & CI/CD](file:///c:/Users/vichw/Aresta/docs/architecture/infrastructure.md): Execução local, portas e Quality Gates.

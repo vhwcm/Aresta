@@ -1,3 +1,14 @@
+# Arquitetura de Inteligência Artificial & RAG (AI Architecture)
+
+O subsistema de Inteligência Artificial do **Aresta** provê capacidades de compreensão semântica, geração contextual de flashcards para retenção de conhecimento (Spaced Repetition System / Curva de Ebbinghaus) e transcrição multimodal de anotações manuscritas (OCR).
+
+---
+
+## 1. Fluxo de Geração de Flashcards com RAG e Repetição Espaçada
+
+O pipeline de flashcards opera de forma assíncrona e incremental. Cada anotação realizada pelo usuário no leitor ou no canvas é vetorizada e utilizada como âncora contextual (Small-Shot RAG) para gerar flashcards de alta qualidade cognitiva sem custo de reprocessamento:
+
+```text
 ================================================================================
                     SISTEMA DE FLASHCARDS COM RAG & REPETIÇÃO ESPAÇADA
 ================================================================================
@@ -7,7 +18,7 @@
 
   [ Leitor / UI ]
          │
-         │ POST /api/v1/annotations (note, quote, bookId)
+         │ POST /api/annotations (note, quote, bookId)
          ▼
   [ AnnotationController ]
          │
@@ -16,8 +27,8 @@
          │                                                   │ (text-embedding-004)
          │  ◄──────────────── Retorna vetor float[768] ──────┘
          ▼
-  [ SQLite / Prisma ]
-    Annotation (id, user_id, book_id, note, selected_text, embedding: "[...]")
+  [ PostgreSQL / Prisma ]
+    Annotation (id, user_id, book_id, note, selected_text, embedding)
 
 
 2. GERAÇÃO INCREMENTAL 1:1 DE FLASHCARDS COM RAG (JOB 22:00 / SOB DEMANDA)
@@ -33,7 +44,7 @@
          ├─► Para cada Anotação Alvo:
          │      │
          │      ├─► RAG: Busca top-3 anotações vizinhas no espaço vetorial do usuário
-         │      │        (Cosine Similarity entre embeddings locais)
+         │      │        (Cosine Similarity entre embeddings locais com pgvector)
          │      │
          │      └─► Chama AIService.GenerateFlashcard(targetNote, neighborNotes, theme)
          │              │
@@ -48,7 +59,7 @@
          │          Retorna JSON { question, answer, card_type }
          │
          ▼
-  [ SQLite / Prisma ]
+  [ PostgreSQL / Prisma ]
     Flashcard (id, user_id, annotation_id, question, answer, card_type,
                repetition_level: 1, next_review_at: hoje)
     *Nota: Flashcards persistidos reutilizados em dias seguintes com CUSTO ZERO.*
@@ -67,7 +78,7 @@
          │     2. Prioridade B: Sorteio balanceado entre temas do usuário
          │
          ▼
-  [ SQLite / Prisma ]
+  [ PostgreSQL / Prisma ]
     DailyDeckCard (user_id, date: "YYYY-MM-DD", flashcard_id, position: 1..50, reviewed: false)
 
 
@@ -76,13 +87,13 @@
 
   [ Home Page (index.vue) ]
          │
-         ├─► GET /api/v1/flashcards/daily/first
+         ├─► GET /api/flashcards/daily/first
          │     Exibe Pergunta do 1º Flashcard + Botão "Fazer Flashcard"
          │
          ▼ (Clique)
   [ Central de Revisão (revisao.vue) ]
          │
-         ├─► GET /api/v1/flashcards/daily (Carrega os 50 cards do dia)
+         ├─► GET /api/flashcards/daily (Carrega os 50 cards do dia)
          │
          ├─► Usuário vira card 3D e seleciona autoavaliação:
          │      [ Difícil ] -> Nível 1 (+1 dia)
@@ -90,7 +101,7 @@
          │      [  Fácil  ] -> Nível N+2 (+7 dias)
          │
          ▼
-  POST /api/v1/flashcards/:id/review (rating: 'hard' | 'good' | 'easy')
+  POST /api/flashcards/:id/review (rating: 'hard' | 'good' | 'easy')
          │
          ├─► Atualiza Flashcard (repetition_level, next_review_at, review_count)
          ├─► Marca DailyDeckCard (reviewed = true, rating)
@@ -98,3 +109,13 @@
                  │
                  ▼
              Ofensiva Mantida / Meta Diária Incrementada!
+================================================================================
+```
+
+---
+
+## 2. Tipos Cognitivos de Flashcards Gerados
+
+1. **Situação Real**: Apresenta um cenário prático ou problema cotidiano onde o conceito deve ser aplicado.
+2. **Relembração de Conceito**: Perguntas diretas e objetivas focadas na recuperação ativa (Active Recall) de termos-chave e definições.
+3. **União de Conceitos**: Relaciona a anotação alvo com anotações de outros livros ou temas descobertas via busca vetorial por similaridade de cosseno.

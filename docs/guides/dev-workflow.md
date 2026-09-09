@@ -52,4 +52,4 @@ Antes de submeter alterações ou finalizar tarefas:
 1. `npm test` no backend e no frontend.
 2. `npm run typecheck` e `npm run lint` no frontend.
 3. `npm run build` no backend.
-4. Garantir que os diagramas ASCII em `docs/architecture/diagrams/` e `docs/` refletem as mudanças.
+4. Garantir que os diagramas ASCII em `docs/architecture/*.md` e `docs/` refletem as mudanças.

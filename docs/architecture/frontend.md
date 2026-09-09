@@ -1,68 +1,32 @@
-# Arquitetura do Frontend (`front/`)
+# Arquitetura do Frontend (`apps/web/`)
 
-O frontend do Aresta é desenvolvido em **Nuxt 4 / Vue 3** com **TypeScript**, **Tailwind CSS**, **Pinia** e **D3.js**.
+O frontend do Aresta é desenvolvido em **Nuxt 3 / Vue 3** com **TypeScript**, **Tailwind CSS**, **Pinia**, **Three.js** e **D3.js**, empacotado tanto para Web quanto Desktop via **Tauri v2**.
 
 ---
 
 ## 1. Estrutura de Diretórios
 
-```
-front/
+```text
+apps/web/
 ├── app/
-│   ├── adapters/             # Padrão Adapter (EpubDocumentAdapter, PdfDocumentAdapter, Factory)
-│   ├── components/           # Componentes Vue (Leitor, Grafo D3, Modais, Dock de navegação)
+│   ├── components/           # Componentes Vue (Leitor, Canvas, Grafo D3, Modais, Dock)
 │   ├── composables/          # Lógica reativa (useGraph, useUserBooks, useAnnotations, useAuth)
-│   ├── interfaces/           # Definições de tipos TypeScript (IBookDocument, IPageData, etc.)
-│   ├── pages/                # Rotas do Nuxt (index.vue, reader/[id].vue, graph.vue, etc.)
+│   ├── pages/                # Rotas do Nuxt (index.vue, reader/[id].vue, canvas/[id].vue, etc.)
 │   └── stores/               # Stores globais do Pinia
 ├── public/                   # Assets públicos estáticos (fontes, favicons)
-└── tests/                    # Testes unitários (Vitest) e E2E (Playwright)
+└── tests/                    # Testes unitários (Vitest) e de componentes
 ```
 
 ---
 
-## 2. Padrão Adapter para Leitor de Documentos
+## 2. Subsistema de Leitura (Reader Engine)
 
-O sistema de leitura desacopla as bibliotecas de renderização de baixo nível através de uma interface unificada `IBookDocument`:
+O leitor de documentos utiliza o padrão Adapter para desacoplar bibliotecas de renderização de baixo nível (`foliate-js` e `pdfjs-dist`) e conta com um motor híbrido de virada de página 3D em Three.js / WebGL.
 
-```
-                    ┌──────────────────────────────────────┐
-                    │       Página do Leitor (Vue 3)       │
-                    │      `front/app/pages/reader/[id]`   │
-                    └──────────────────┬───────────────────┘
-                                       │
-                                       │ 1. BookDocumentFactory.loadDocument(url, format)
-                                       ▼
-                    ┌──────────────────────────────────────┐
-                    │         BookDocumentFactory          │
-                    └──────────────────┬───────────────────┘
-                                       │
-                ┌──────────────────────┴──────────────────────┐
-                │ format === 'epub'                           │ format === 'pdf'
-                ▼                                             ▼
-     ┌──────────────────────┐                      ┌──────────────────────┐
-     │ EpubDocumentAdapter  │                      │  PdfDocumentAdapter  │
-     │     (foliate-js)     │                      │     (pdfjs-dist)     │
-     └──────────┬───────────┘                      └──────────┬───────────┘
-                │                                             │
-                └──────────────────────┬──────────────────────┘
-                                       │ 2. Retorna instância unificada
-                                       ▼
-                    ┌──────────────────────────────────────┐
-                    │      Interface `IBookDocument`       │
-                    │   - totalPages, title, getPage()     │
-                    │   - getTextContent(), renderText()   │
-                    └──────────────────┬───────────────────┘
-                                       │
-                                       │ 3. getPage(pageNumber)
-                                       ▼
-                    ┌──────────────────────────────────────┐
-                    │     Canvas Engine & Text Layer       │
-                    │  - Desenha imagem no <canvas>        │
-                    │  - Sobrepõe texto DOM selecionável   │
-                    │  - Cache local de páginas em memória │
-                    └──────────────────────────────────────┘
-```
+> Para detalhes completos e diagramas ASCII dos fluxos de leitura, consulte [docs/architecture/reader.md](file:///c:/Users/vichw/Aresta/docs/architecture/reader.md):
+> - Padrão Reader Adapter (`IBookDocument`)
+> - Motor 3D de Virada de Página Realista (WebGL / Three.js)
+> - Pilha de Páginas Virtuais (Page Stack Edges)
 
 ---
 
@@ -75,13 +39,4 @@ O sistema de leitura desacopla as bibliotecas de renderização de baixo nível 
   - **Anotações**: Citações e pensamentos específicos vinculados a temas e livros.
 - **Física Interativa**: Suporte a arraste de nós com fixação temporária, zoom semântico e filtragem dinâmica por temas ativos.
 
----
-
-## 4. Motor 3D de Virada de Página Realista (WebGL / Three.js)
-
-O leitor adota uma engine híbrida de alto desempenho para virada de página física estilo Kindle/Apple Books:
-- **Camada Estacionária (2D Nativo)**: Em repouso, exibe o Canvas 2D e TextLayer DOM nítidos com suporte a seleção de texto, menu de dicionário, grifos e anotações.
-- **Camada 3D em Movimento (WebGL Contínuo)**: Durante gestos de arrasto ou animações de toque, um canvas WebGL gerenciado por `usePageCurl3D.ts` assume a deformação física contínua da malha (`PlaneGeometry` 64x64) via GLSL Vertex Shader cônico/cilíndrico e Fragment Shader PBR (sombras de contato, luz especular de papel e translucidez).
-- **Física Gestual (`usePagePhysics.ts`)**: Suporte a manipulação direta 1:1 por ponto de contato (cantos e laterais), detecção de velocidade/flick e dinâmica de amortecimento por mola elástica (Hooke's Law).
-- Diagrama arquitetural disponível em: `docs/architecture/diagrams/page-curl-3d-flow.txt`.
-
+> Para os diagramas completos de fluxo de dados do grafo, prevenção de ciclos e notas compostas, consulte [docs/architecture/canvas.md](file:///c:/Users/vichw/Aresta/docs/architecture/canvas.md).
