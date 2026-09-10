@@ -11,38 +11,57 @@ Plataforma unificada de leitura ativa, síntese de conhecimento, mapas mentais e
   - `src/modules/memory/`
   - `src/modules/ai/`
 - Banco de dados PostgreSQL 16 com extensão `pgvector` (:5432)
+# Diretrizes do Monólito Aresta & Manual do Agente (Modelo Mental Kiro)
 
-## Regra Inegociável de Quality Gates
-É **MANDATÓRIO** e **INEGOCIÁVEL** verificar e garantir que todos os Quality Gates estejam passando (100% verde) antes de concluir qualquer tarefa ou realizar qualquer commit/push:
+Este projeto adota o **modelo mental do Kiro**, onde o conhecimento estruturado, especificações técnicas, observabilidade e diagramação visual guiam todo o ciclo de vida do desenvolvimento.
 
-```bash
-# Validação de testes de todo o monólito
-npm test
+---
 
-# Validação individual por aplicação:
-# apps/api: npm --prefix apps/api run build && npm --prefix apps/api test
-# apps/web: npm --prefix apps/web run typecheck && npm --prefix apps/web test
-```
+## 1. Arquitetura do Monólito Modular
 
-## Regra Inegociável de Rastreamento no Checklist (`checklist.md`)
-É **MANDATÓRIO** e **INEGOCIÁVEL** registrar e manter atualizado o arquivo `checklist.md` na raiz do projeto para **TODAS** as tarefas solicitadas pelo usuário:
-1. **Formato Resumido Obrigatório**: Exatamente 1 linha por tarefa, status de uma palavra, com data e hora:
-   `- [DD/MM/AAAA HH:MM] [Fazendo] Descrição concisa da tarefa` (em `## 🔄 Em Andamento`)
-   `- [DD/MM/AAAA HH:MM] [Concluído] Descrição concisa da tarefa` (em `## ✅ Concluído`)
-2. **Sem Visão Geral**: Não adicionar tabelas de métricas ou introduções.
-3. **Preservação de Contexto**: NUNCA apagar tarefas concluídas. O histórico deve ser sempre cumulativo.
+- **Backend (`apps/api`)**: Node.js, Express, TypeScript, Prisma ORM, PostgreSQL 16 com `pgvector`.
+- **Frontend (`apps/web`)**: Nuxt 3, Vue 3, Pinia, Tailwind CSS, Three.js (virada de página 3D), Foliate.js, Tauri v2.
+- Banco de dados único e compartilhado com chaves estrangeiras reais.
 
-## Padrão Central Lead Orchestrator vs Worker
-- **Sessão Raiz (Lead Agent / Chat Central)**:
-  - Ponto Único de Contato com o usuário;
-  - Decompõe demandas em subtarefas atômicas e instancia subagentes em background;
-  - Mantém o `checklist.md` (resumido na raiz) e artefato dinâmico de tarefas (`TASKS.md`);
-  - Envia no chat central sínteses de entregas a cada conclusão de subagente, sem ruído de logs brutos;
-  - Centraliza solicitações de aprovação para comandos ou decisões críticas.
-- **Subagentes de Background (Workers)**:
-  - Executam estritamente a tarefa técnica designada no escopo;
-  - **NUNCA** orquestram outros subagentes ou alteram o `checklist.md` macro da raiz;
-  - Retornam um resumo técnico objetivo dos arquivos modificados e testes locais para o Lead Agent.
+---
+
+## 2. Fluxo de Desenvolvimento
+
+### 🟢 Tarefas Pequenas
+1. Registrar a tarefa em `checklist.md` na seção "In Progress".
+2. Inspecionar o módulo relevante.
+3. Implementar a alteração.
+4. Rodar os Quality Gates (`npm test`).
+5. Mover para "Done" no `checklist.md` e realizar commit atômico.
+
+### 🟡 Tarefas Médias
+1. Registrar a tarefa em `checklist.md` na seção "In Progress" com checklist de passos.
+2. Consultar contratos de rotas e schema Prisma.
+3. Fazer TDD.
+4. Implementar mudanças no código e testes.
+5. Validar Quality Gates (`npm test` e `npm run build`).
+6. Documentar o que foi feito na pasta correta. Criar um novo ou atualizar uma já existente. 
+7. Mover para "Done" no `checklist.md` e realizar commit atômico.
+
+### 🔴 Tarefas Grandes
+1. Registrar a tarefa em `checklist.md` na seção "In Progress" com checklist de passos. 
+2. Planejar especificação técnica detalhada pensando em TDD e usar a skill grill-me.
+3. Executar alterações em `apps/api` e `apps/web`.
+4. Validar Quality Gates 100% verdes.
+6. Documentar o que foi feito na pasta correta. Criar um novo ou atualizar uma já existente. E criar uma ADR
+5. Mover para "Done" no `checklist.md` e realizar commit atômico.
+
+---
+
+## 3. Regras Inegociáveis
+
+### 3.1. Rastreamento Obrigatório em `checklist.md`
+É **MANDATÓRIO** manter o arquivo `checklist.md` na raiz sempre atualizado com **todas** as tarefas:
+- **Formato de 1 linha por tarefa**: `- [DD/MM/AAAA HH:MM] [Status] Descrição resumida da tarefa`.
+- **Status em uma palavra**: `[Fazendo]` (em `## 🔄 Em Andamento`) e `[Concluído]` (em `## ✅ Concluído`).
+- **Sem visão geral**: Não incluir blocos de estatísticas ou tabelas de métricas.
+- **Histórico cumulativo**: Jamais apagar itens concluídos, mantendo a integridade do contexto do usuário.
+
 
 
 

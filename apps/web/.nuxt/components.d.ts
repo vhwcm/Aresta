@@ -44,6 +44,7 @@ export const CanvasNodeBook: typeof import("../app/components/canvas/CanvasNodeB
 export const CanvasNodeNote: typeof import("../app/components/canvas/CanvasNodeNote.vue")['default']
 export const CanvasNodeShape: typeof import("../app/components/canvas/CanvasNodeShape.vue")['default']
 export const CanvasNodeText: typeof import("../app/components/canvas/CanvasNodeText.vue")['default']
+export const CanvasSelectionToolbar: typeof import("../app/components/canvas/CanvasSelectionToolbar.vue")['default']
 export const CanvasToolbar: typeof import("../app/components/canvas/CanvasToolbar.vue")['default']
 export const CanvasCycleWarningPlaceholder: typeof import("../app/components/canvas/CycleWarningPlaceholder.vue")['default']
 export const CanvasKnowledgeGraphView: typeof import("../app/components/canvas/KnowledgeGraphView.vue")['default']
@@ -120,6 +121,7 @@ export const LazyCanvasNodeBook: LazyComponent<typeof import("../app/components/
 export const LazyCanvasNodeNote: LazyComponent<typeof import("../app/components/canvas/CanvasNodeNote.vue")['default']>
 export const LazyCanvasNodeShape: LazyComponent<typeof import("../app/components/canvas/CanvasNodeShape.vue")['default']>
 export const LazyCanvasNodeText: LazyComponent<typeof import("../app/components/canvas/CanvasNodeText.vue")['default']>
+export const LazyCanvasSelectionToolbar: LazyComponent<typeof import("../app/components/canvas/CanvasSelectionToolbar.vue")['default']>
 export const LazyCanvasToolbar: LazyComponent<typeof import("../app/components/canvas/CanvasToolbar.vue")['default']>
 export const LazyCanvasCycleWarningPlaceholder: LazyComponent<typeof import("../app/components/canvas/CycleWarningPlaceholder.vue")['default']>
 export const LazyCanvasKnowledgeGraphView: LazyComponent<typeof import("../app/components/canvas/KnowledgeGraphView.vue")['default']>

@@ -2,7 +2,7 @@
 
 ## 1. Visão Geral da Arquitetura
 
-Este documento estabelece o design técnico da interface do usuário da plataforma **Aresta**, construída com **Nuxt 4 + Vue 3 + Tailwind CSS + Lucide Icons**. A aplicação adota o paradigma *Editorial Premium* e estética *Low-Dopamine*, com fundo escuro ultra-profundo (`#0A0A0B`), contraste tipográfico acentuado e navegação inferior ergonômica e animada.
+Este documento estabelece o design técnico da interface do usuário da plataforma **Aresta**, construída com **Nuxt 4 + Vue 3 + Tailwind CSS + Lucide Icons**. A aplicação adota o paradigma *Editorial Premium* e estética *Low-Dopamine
 
 ```
 +-----------------------------------------------------------------------+

@@ -1,6 +1,8 @@
 # Checklist
 
 ## 🔄 Em Andamento
+- [09/09/2026 12:59] [Fazendo] Substituir editor split-pane por Live Preview Milkdown (canvas + notas)
+- [10/09/2026 19:28] [Concluído] Mover logos do repositório para apps/web/public/logos (renomear em conflitos)
 
 ## ✅ Concluído
 - [09/09/2026 12:57] [Concluído] Melhorias no Canvas: seleção em área (marquee), novas formas (cilindro/trapézio) e bug fix toolbar
