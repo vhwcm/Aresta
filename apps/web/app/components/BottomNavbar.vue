@@ -26,13 +26,6 @@
             :class="(isBooksActive || isBooksOpen) ? 'text-accent' : 'text-textSecondary group-hover:text-textPrimary'"
           />
           <span class="hidden md:inline font-interface text-xs md:text-sm font-medium tracking-tight">Livros</span>
-          <ChevronUpIcon
-            class="w-3.5 h-3.5 transition-transform duration-200"
-            :class="[
-              (isBooksActive || isBooksOpen) ? 'text-accent' : 'text-textSecondary',
-              { 'rotate-180': isBooksOpen }
-            ]"
-          />
         </button>
 
         <!-- Dropdown Flutuante de Livros -->
@@ -107,13 +100,6 @@
             :class="(isNotesActive || isNotesOpen) ? 'text-accent' : 'text-textSecondary group-hover:text-textPrimary'"
           />
           <span class="hidden md:inline font-interface text-xs md:text-sm font-medium tracking-tight">Notas</span>
-          <ChevronUpIcon
-            class="w-3.5 h-3.5 transition-transform duration-200"
-            :class="[
-              (isNotesActive || isNotesOpen) ? 'text-accent' : 'text-textSecondary',
-              { 'rotate-180': isNotesOpen }
-            ]"
-          />
         </button>
 
         <!-- Dropdown Flutuante de Notas -->
@@ -212,7 +198,6 @@ import {
   LayoutGridIcon,
   LayersIcon,
   UserIcon,
-  ChevronUpIcon,
 } from 'lucide-vue-next'
 import ArestaLogoGraph from '~/components/ArestaLogoGraph.vue'
 import { useAuth } from '~/composables/useAuth'
