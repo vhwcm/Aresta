@@ -253,7 +253,20 @@ interface UserItem {
   createdAt?: string
 }
 
-const API_BASE = 'http://localhost:7070/api'
+const getApiBase = () => {
+  if (typeof useRuntimeConfig === 'function') {
+    try {
+      const config = useRuntimeConfig()
+      if (config?.public?.apiUrl) {
+        return `${config.public.apiUrl}/api`
+      }
+    } catch {
+      // fallback
+    }
+  }
+  return 'http://localhost:3001/api'
+}
+
 const auth = useAuth()
 
 const users = ref<UserItem[]>([])
@@ -279,7 +292,7 @@ const getHeaders = (): HeadersInit => {
 
 const fetchUsers = async () => {
   try {
-    const data = await $fetch<UserItem[]>(`${API_BASE}/users`, {
+    const data = await $fetch<UserItem[]>(`${getApiBase()}/users`, {
       headers: getHeaders()
     })
     users.value = data
@@ -335,13 +348,13 @@ const closeModal = () => {
 const saveUser = async () => {
   try {
     if (isEditing.value && editingId.value) {
-      await $fetch(`${API_BASE}/users/${editingId.value}`, {
+      await $fetch(`${getApiBase()}/users/${editingId.value}`, {
         method: 'PUT',
         headers: getHeaders(),
         body: form.value
       })
     } else {
-      await $fetch(`${API_BASE}/users`, {
+      await $fetch(`${getApiBase()}/users`, {
         method: 'POST',
         headers: getHeaders(),
         body: form.value
@@ -357,7 +370,7 @@ const saveUser = async () => {
 const deleteUser = async (id: number) => {
   if (!confirm('Deseja realmente remover este usuário?')) return
   try {
-    await $fetch(`${API_BASE}/users/${id}`, {
+    await $fetch(`${getApiBase()}/users/${id}`, {
       method: 'DELETE',
       headers: getHeaders()
     })

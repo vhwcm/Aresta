@@ -1,8 +1,8 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 
-const DEFAULT_API_KEY = process.env.GEMINI_API_KEY || ''
-const FLASHCARD_API_KEY = process.env.GEMINI_FLASHCARD_API_KEY || DEFAULT_API_KEY
-const DIDACTIC_API_KEY = process.env.GEMINI_DIDACTIC_API_KEY || DEFAULT_API_KEY
+const DEFAULT_API_KEY = process.env.GEMINI_API_KEY || process.env.AI_KEY || ''
+const FLASHCARD_API_KEY = process.env.GEMINI_FLASHCARD_API_KEY || process.env.FLASHCARD_AI_KEY || DEFAULT_API_KEY
+const DIDACTIC_API_KEY = process.env.GEMINI_DIDACTIC_API_KEY || process.env.DIDACTIC_AI_KEY || DEFAULT_API_KEY
 
 if (!DEFAULT_API_KEY && !FLASHCARD_API_KEY && !DIDACTIC_API_KEY) {
   console.warn('[Gemini Config] Warning: Nenhum GEMINI_API_KEY configurado. Chave dummy será usada em modo offline/desenvolvimento.')

@@ -27,7 +27,7 @@ describe('useAdminBooks Composable', () => {
     })
 
     expect(mockFetch).toHaveBeenCalledWith(
-      'http://localhost:7070/api/books/admin-upload',
+      'http://localhost:3001/api/books/admin-upload',
       expect.objectContaining({
         method: 'POST',
         body: expect.objectContaining({
@@ -52,7 +52,7 @@ describe('useAdminBooks Composable', () => {
     const result = await enrichBook(1)
 
     expect(mockFetch).toHaveBeenCalledWith(
-      'http://localhost:7070/api/books/1/enrich',
+      'http://localhost:3001/api/books/1/enrich',
       expect.objectContaining({
         method: 'POST',
       })

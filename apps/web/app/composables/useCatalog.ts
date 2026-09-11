@@ -8,7 +8,22 @@ export interface CatalogBook {
   createdAt?: string
 }
 
-const API_BASE = 'http://localhost:7070/api'
+const getApiBase = () => {
+  if (typeof useRuntimeConfig === 'function') {
+    try {
+      const config = useRuntimeConfig()
+      if (config?.public?.readerApiUrl) {
+        return `${config.public.readerApiUrl}/api`
+      }
+      if (config?.public?.apiUrl) {
+        return `${config.public.apiUrl}/api`
+      }
+    } catch {
+      // fallback
+    }
+  }
+  return 'http://localhost:3001/api'
+}
 
 export const useCatalog = () => {
   const books = ref<CatalogBook[]>([])
@@ -19,7 +34,7 @@ export const useCatalog = () => {
     loading.value = true
     error.value = null
     try {
-      const data = await $fetch<CatalogBook[]>(`${API_BASE}/books`)
+      const data = await $fetch<CatalogBook[]>(`${getApiBase()}/books`)
       books.value = data
     } catch (e: any) {
       console.error('Erro ao carregar catálogo de livros:', e)

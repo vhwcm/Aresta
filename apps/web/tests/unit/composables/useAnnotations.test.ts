@@ -29,7 +29,7 @@ describe('useAnnotations', () => {
     expect(res).toEqual(fakeData)
     expect(annotations.value).toEqual(fakeData)
     expect(mockFetch).toHaveBeenCalledWith(
-      'http://localhost:7070/api/annotations?bookId=1',
+      'http://localhost:3001/api/annotations?bookId=1',
       expect.objectContaining({
         headers: expect.objectContaining({ Authorization: 'Bearer fake-token' }),
       })
@@ -74,7 +74,7 @@ describe('useAnnotations', () => {
     expect(res.note).toBe('Nota Atualizada')
     expect(annotations.value[0]?.note).toBe('Nota Atualizada')
     expect(mockFetch).toHaveBeenCalledWith(
-      'http://localhost:7070/api/annotations/1',
+      'http://localhost:3001/api/annotations/1',
       expect.objectContaining({
         method: 'PUT',
         body: { note: 'Nota Atualizada' },
@@ -118,7 +118,7 @@ describe('useAnnotations', () => {
     expect(res).toEqual(ocrCreatedItem)
     expect(annotations.value[0]).toEqual(ocrCreatedItem)
     expect(mockFetch).toHaveBeenCalledWith(
-      'http://localhost:7070/api/annotations/with-ocr',
+      'http://localhost:3001/api/annotations/with-ocr',
       expect.objectContaining({
         method: 'POST',
         body: expect.objectContaining({

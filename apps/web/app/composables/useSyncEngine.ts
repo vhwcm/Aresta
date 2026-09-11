@@ -5,9 +5,19 @@ import { bookRepo } from '~/adapters/database/repositories/BookRepository';
 import { annotationRepo } from '~/adapters/database/repositories/AnnotationRepository';
 import { flashcardRepo } from '~/adapters/database/repositories/FlashcardRepository';
 import { canvasRepo } from '~/adapters/database/repositories/CanvasRepository';
-
-const API_BASE = 'http://localhost:7070/api';
-
+const getApiBase = () => {
+  if (typeof useRuntimeConfig === 'function') {
+    try {
+      const config = useRuntimeConfig();
+      if (config?.public?.apiUrl) {
+        return `${config.public.apiUrl}/api`;
+      }
+    } catch {
+      // fallback
+    }
+  }
+  return 'http://localhost:3001/api';
+};
 // Shared state across the application
 const isOnline = ref(typeof navigator !== 'undefined' ? navigator.onLine : true);
 const isSyncing = ref(false);
@@ -49,7 +59,7 @@ export function useSyncEngine() {
       const lastTimestamp = typeof localStorage !== 'undefined' ? localStorage.getItem('aresta_last_sync_timestamp') : null;
 
       // 2. Enviar lote para o backend
-      const response = await $fetch<any>(`${API_BASE}/sync`, {
+      const response = await $fetch<any>(`${getApiBase()}/sync`, {
         method: 'POST',
         headers: getHeaders(),
         body: {

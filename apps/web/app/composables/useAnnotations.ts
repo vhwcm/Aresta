@@ -65,7 +65,7 @@ const getApiBase = () => {
       // fallback gracioso
     }
   }
-  return 'http://localhost:7070/api'
+  return 'http://localhost:3001/api'
 }
 
 // Estado reativo compartilhado a nível de módulo

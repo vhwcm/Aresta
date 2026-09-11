@@ -3,6 +3,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [11/09/2026 18:10] [Concluído] Corrigir porta 7070 para 3001 no frontend e implementar endpoint OCR de transcrição com Gemini no backend
 - [11/09/2026 09:39] [Concluído] Corrigir renderização de cabeçalhos e estilos tipográficos no editor e visualizador de notas
 - [11/09/2026 09:36] [Concluído] Remover todos os emojis dos cabeçalhos e seções do README.md
 - [11/09/2026 09:29] [Concluído] Organizar screenshots da aplicação em docs/assets/screenshots e adicionar seção visual no README.md

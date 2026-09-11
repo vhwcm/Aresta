@@ -34,7 +34,22 @@ export interface DailyDeckResponse {
   cards: FlashcardItem[]
 }
 
-const API_BASE = 'http://localhost:7070/api'
+const getApiBase = () => {
+  if (typeof useRuntimeConfig === 'function') {
+    try {
+      const config = useRuntimeConfig()
+      if (config?.public?.memoryApiUrl) {
+        return `${config.public.memoryApiUrl}/api`
+      }
+      if (config?.public?.apiUrl) {
+        return `${config.public.apiUrl}/api`
+      }
+    } catch {
+      // fallback
+    }
+  }
+  return 'http://localhost:3001/api'
+}
 
 // Shared module-level reactive state
 const dailyDeck = ref<FlashcardItem[]>([])
@@ -109,8 +124,8 @@ export const useFlashcards = () => {
     // 2. Se online, sincroniza com o backend
     try {
       const url = dateStr
-        ? `${API_BASE}/v1/flashcards/daily?date=${encodeURIComponent(dateStr)}`
-        : `${API_BASE}/v1/flashcards/daily`
+        ? `${getApiBase()}/v1/flashcards/daily?date=${encodeURIComponent(dateStr)}`
+        : `${getApiBase()}/v1/flashcards/daily`
 
       const res = await $fetch<DailyDeckResponse>(url, {
         method: 'GET',
@@ -212,7 +227,7 @@ export const useFlashcards = () => {
         flashcard: FlashcardItem
         streak: any
         justCompletedStreakGoal: boolean
-      }>(`${API_BASE}/v1/flashcards/${flashcardId}/review`, {
+      }>(`${getApiBase()}/v1/flashcards/${flashcardId}/review`, {
         method: 'POST',
         headers: getHeaders(),
         body: { rating }

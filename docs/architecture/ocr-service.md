@@ -113,6 +113,13 @@ message ExtractTextResponse {
 ## 4. Variáveis de Ambiente
 
 - `GRPC_PORT`: Porta TCP do servidor gRPC (padrão: `50051`).
-- `GEMINI_API_KEY`: Chave de autenticação do Google AI Studio.
-- `GEMINI_MODEL`: Modelo utilizado (padrão: `gemini-flash-latest`).
+- `GEMINI_API_KEY`: Chave de autenticação do Google AI Studio (fallback: `AI_KEY`).
+- `GEMINI_MODEL`: Modelo utilizado (padrão: `gemini-1.5-flash`).
 - `USE_MOCK`: Execução em modo mock sem chamadas externas (`true`/`false`).
+
+---
+
+## 5. Integração com o Monólito (`apps/api`)
+
+No monólito modular Express (`apps/api`), o endpoint `POST /api/ocr/transcribe` e o método `aiService.transcribeImage` executam a transcrição multimodal do Gemini diretamente via `@google/generative-ai`. Isso permite que o frontend Nuxt 3 se comunique via REST padrão na porta `:3001`, mantendo resiliência e fallback automático quando offline ou sem chave de API configurada.
+

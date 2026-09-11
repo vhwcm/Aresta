@@ -6,6 +6,7 @@ export const annotationRouter = Router()
 
 annotationRouter.use(authenticate)
 annotationRouter.post('/', (req, res) => annotationController.create(req, res))
+annotationRouter.post('/with-ocr', (req, res) => annotationController.createWithOcr(req, res))
 annotationRouter.get('/', (req, res) => annotationController.listByUser(req, res))
 annotationRouter.get('/book/:bookId', (req, res) => annotationController.listByBook(req, res))
 annotationRouter.get('/:id/similar', (req, res) => annotationController.similar(req, res))

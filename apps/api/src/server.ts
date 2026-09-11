@@ -27,6 +27,7 @@ import { didacticRouter } from './modules/memory/routes/didactic.routes'
 
 // AI Module
 import { aiRouter } from './modules/ai/routes/ai.routes'
+import { aiController } from './modules/ai/controllers/ai.controller'
 
 const app = express()
 
@@ -69,8 +70,9 @@ app.use('/api/flashcards', flashcardRouter)
 app.use('/api/graph', graphRouter)
 app.use('/api/didactic', didacticRouter)
 
-// AI Routes
+// AI & OCR Routes
 app.use('/api/ai', aiRouter)
+app.post('/api/ocr/transcribe', (req, res) => aiController.transcribe(req, res))
 
 // Global Error Handler
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {

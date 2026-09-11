@@ -216,7 +216,9 @@ const loadBookFromQuery = async () => {
 
     store.syncSettings()
     const doc = createBookDocument(type)
-    const coverUrl = localBookMeta?.coverPath || (validBookId ? `http://localhost:7070/api/books/${validBookId}/cover` : undefined)
+    const config = typeof useRuntimeConfig === 'function' ? useRuntimeConfig() : null
+    const readerApi = config?.public?.readerApiUrl || config?.public?.apiUrl || 'http://localhost:3001'
+    const coverUrl = localBookMeta?.coverPath || (validBookId ? `${readerApi}/api/books/${validBookId}/cover` : undefined)
 
     await readerProfiler.measureAsync('4. Parsing e Inicialização do Documento', async () => {
       await doc.load(arrayBuffer!, title, store.fontSize, store.fontFamily, coverUrl)

@@ -26,7 +26,22 @@ export interface TodayActivity {
   isFrozen: boolean
 }
 
-const API_BASE = 'http://localhost:7070/api'
+const getApiBase = () => {
+  if (typeof useRuntimeConfig === 'function') {
+    try {
+      const config = useRuntimeConfig()
+      if (config?.public?.authApiUrl) {
+        return `${config.public.authApiUrl}/api`
+      }
+      if (config?.public?.apiUrl) {
+        return `${config.public.apiUrl}/api`
+      }
+    } catch {
+      // fallback
+    }
+  }
+  return 'http://localhost:3001/api'
+}
 
 // Shared module-level reactive state
 const currentStreak = ref(0)
@@ -126,7 +141,7 @@ export const useReadingStreak = () => {
 
     // 2. Se online, sincroniza com o backend
     try {
-      const data = await $fetch<any>(`${API_BASE}/users/me/streak`, {
+      const data = await $fetch<any>(`${getApiBase()}/users/me/streak`, {
         headers: getHeaders()
       })
       applyStreakPayload(data)
@@ -141,7 +156,7 @@ export const useReadingStreak = () => {
   const recordReadingTime = async (seconds: number) => {
     if (seconds <= 0) return
     try {
-      const res = await $fetch<{ status: any; justCompleted: boolean }>(`${API_BASE}/users/me/activity/reading-time`, {
+      const res = await $fetch<{ status: any; justCompleted: boolean }>(`${getApiBase()}/users/me/activity/reading-time`, {
         method: 'POST',
         headers: getHeaders(),
         body: { reading_seconds: Math.min(300, seconds) }
@@ -172,7 +187,7 @@ export const useReadingStreak = () => {
   const recordFlashcardReview = async (count: number = 1) => {
     if (count <= 0) return
     try {
-      const res = await $fetch<{ status: any; justCompleted: boolean }>(`${API_BASE}/users/me/activity/flashcards`, {
+      const res = await $fetch<{ status: any; justCompleted: boolean }>(`${getApiBase()}/users/me/activity/flashcard-review`, {
         method: 'POST',
         headers: getHeaders(),
         body: { flashcards_count: count }
@@ -201,7 +216,7 @@ export const useReadingStreak = () => {
   const updateTargetStreakDays = async (newTargetDays: number) => {
     targetStreakDays.value = newTargetDays
     try {
-      await $fetch(`${API_BASE}/users/me/streak/target`, {
+      await $fetch(`${getApiBase()}/users/me/streak/target`, {
         method: 'PATCH',
         headers: getHeaders(),
         body: { target_days: newTargetDays }

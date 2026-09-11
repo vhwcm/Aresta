@@ -179,7 +179,22 @@ import {
 import type { GraphNode, AnnotationThemeItem, BookThemeItem } from '~/interfaces/graph'
 import { useGraph } from '~/composables/useGraph'
 
-const API_BASE = 'http://localhost:7070'
+const getApiBase = () => {
+  if (typeof useRuntimeConfig === 'function') {
+    try {
+      const config = useRuntimeConfig()
+      if (config?.public?.readerApiUrl) {
+        return config.public.readerApiUrl
+      }
+      if (config?.public?.apiUrl) {
+        return config.public.apiUrl
+      }
+    } catch {
+      // fallback
+    }
+  }
+  return 'http://localhost:3001'
+}
 import { getCoverUrl as resolveCoverUrl } from '~/utils/cover'
 
 const props = defineProps<{
@@ -220,7 +235,7 @@ const loadBookData = async () => {
     annotations.value = await fetchBookAnnotations(bookId)
 
     // Buscar os temas que pertencem a este livro
-    const res = await $fetch<any>(`${API_BASE}/api/books/${bookId}`)
+    const res = await $fetch<any>(`${getApiBase()}/api/books/${bookId}`)
     availableThemes.value = res.themes || []
     selectedThemeIds.value = availableThemes.value.map((t: any) => t.id)
   } catch (e) {

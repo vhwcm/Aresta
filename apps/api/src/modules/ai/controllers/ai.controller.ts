@@ -62,6 +62,21 @@ export class AiController {
       res.status(400).json({ error: err.message })
     }
   }
+
+  async transcribe(req: Request, res: Response): Promise<void> {
+    try {
+      const { imageBase64, mimeType, promptHint } = req.body
+      if (!imageBase64 || typeof imageBase64 !== 'string') {
+        res.status(400).json({ error: 'imageBase64 é obrigatório' })
+        return
+      }
+      const result = await aiService.transcribeImage(imageBase64, mimeType, promptHint)
+      res.json(result)
+    } catch (err: any) {
+      console.error('[AiController] Erro na transcrição OCR:', err)
+      res.status(500).json({ error: err.message || 'Falha na transcrição' })
+    }
+  }
 }
 
 export const aiController = new AiController()

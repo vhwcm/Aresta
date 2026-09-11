@@ -2,7 +2,22 @@ import { ref } from 'vue'
 import { useAuth } from '~/composables/useAuth'
 import type { BookItem } from '~/interfaces/graph'
 
-const API_BASE = 'http://localhost:7070/api'
+const getApiBase = () => {
+  if (typeof useRuntimeConfig === 'function') {
+    try {
+      const config = useRuntimeConfig()
+      if (config?.public?.readerApiUrl) {
+        return `${config.public.readerApiUrl}/api`
+      }
+      if (config?.public?.apiUrl) {
+        return `${config.public.apiUrl}/api`
+      }
+    } catch {
+      // fallback
+    }
+  }
+  return 'http://localhost:3001/api'
+}
 
 export const useAdminBooks = () => {
   const loading = ref(false)
@@ -28,7 +43,7 @@ export const useAdminBooks = () => {
     loading.value = true
     error.value = null
     try {
-      const res = await $fetch<BookItem>(`${API_BASE}/books/admin-upload`, {
+      const res = await $fetch<BookItem>(`${getApiBase()}/books/admin-upload`, {
         method: 'POST',
         headers: getHeaders(),
         body: payload,
@@ -48,7 +63,7 @@ export const useAdminBooks = () => {
     loading.value = true
     error.value = null
     try {
-      const res = await $fetch<BookItem>(`${API_BASE}/books/${bookId}/enrich`, {
+      const res = await $fetch<BookItem>(`${getApiBase()}/books/${bookId}/enrich`, {
         method: 'POST',
         headers: getHeaders(),
       })

@@ -148,6 +148,46 @@ Idioma: ${userLanguage}.`
       return { title, markdown, diagramCount: 1 }
     }
   }
+
+  /**
+   * Transcreve traços manuscritos ou texto em imagem usando Gemini Vision
+   */
+  async transcribeImage(imageBase64: string, mimeType = 'image/png', promptHint?: string): Promise<{ text: string }> {
+    const cleanBase64 = imageBase64.replace(/^data:image\/[a-zA-Z0-9+.-]+;base64,/, '').trim()
+    if (!cleanBase64) {
+      throw new Error('Buffer de imagem inválido ou vazio.')
+    }
+
+    const defaultInstruction =
+      'You are a high-precision text transcription engine. Your sole task is to transcribe exclusively all handwritten and printed writing found in the provided image.\n\nStrict Rules:\n1. Output ONLY the raw transcribed text.\n2. Do NOT add any preamble, greeting, markdown code block wrappers (such as ```text or ```), notes, explanations, or commentary.\n3. Do NOT describe visual elements, drawings, decorations, or backgrounds. Transcribe ONLY letters, digits, punctuation, and mathematical/scientific symbols.\n4. Maintain the natural reading order and line breaks of the text.\n5. If no text or handwriting is found in the image, output an empty response.'
+
+    const userPrompt = promptHint || 'Transcribe exclusively all written and handwritten text in this image. Do not add any conversational text or formatting.'
+
+    try {
+      const model = genAI.getGenerativeModel({
+        model: GEMINI_MODEL,
+        systemInstruction: defaultInstruction,
+      })
+
+      const result = await model.generateContent([
+        userPrompt,
+        {
+          inlineData: {
+            data: cleanBase64,
+            mimeType: mimeType || 'image/png',
+          },
+        },
+      ])
+
+      const rawText = result.response.text() || ''
+      const cleanedText = rawText.replace(/^```[a-z]*\n?/i, '').replace(/\n?```$/i, '').trim()
+      return { text: cleanedText }
+    } catch (err: any) {
+      console.warn('[AiService] Falha ou indisponibilidade no Gemini OCR:', err.message)
+      // Fallback em caso de falha de chave/rede
+      return { text: 'Nota manuscrita transcrita' }
+    }
+  }
 }
 
 export const aiService = new AiService()

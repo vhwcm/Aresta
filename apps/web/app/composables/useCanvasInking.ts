@@ -22,7 +22,22 @@ export interface BoundingBox {
   height: number;
 }
 
-const API_BASE = 'http://localhost:7070/api';
+const getApiBase = () => {
+  if (typeof useRuntimeConfig === 'function') {
+    try {
+      const config = useRuntimeConfig();
+      if (config?.public?.canvasApiUrl) {
+        return `${config.public.canvasApiUrl}/api`;
+      }
+      if (config?.public?.apiUrl) {
+        return `${config.public.apiUrl}/api`;
+      }
+    } catch {
+      // fallback
+    }
+  }
+  return 'http://localhost:3001/api';
+};
 
 export function useCanvasInking() {
   const { token } = useAuth();
@@ -175,7 +190,7 @@ export function useCanvasInking() {
         headers.Authorization = `Bearer ${token.value}`;
       }
 
-      const response = await $fetch<{ text: string }>(`${API_BASE}/ocr/transcribe`, {
+      const response = await $fetch<{ text: string }>(`${getApiBase()}/ocr/transcribe`, {
         method: 'POST',
         headers,
         body: {

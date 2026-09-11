@@ -510,9 +510,9 @@ describe('Book Document Adapters and Factory', () => {
       })
 
       const buffer = new ArrayBuffer(16)
-      await adapter.load(buffer, 'url-capa.epub', 18, undefined, 'http://localhost:7070/api/books/42/cover')
+      await adapter.load(buffer, 'url-capa.epub', 18, undefined, 'http://localhost:3001/api/books/42/cover')
 
-      expect(adapter.metadata.coverUrl).toBe('http://localhost:7070/api/books/42/cover')
+      expect(adapter.metadata.coverUrl).toBe('http://localhost:3001/api/books/42/cover')
       expect(adapter.totalPages).toBeGreaterThanOrEqual(2)
 
       const container = document.createElement('div')
@@ -520,7 +520,7 @@ describe('Book Document Adapters and Factory', () => {
 
       const coverImg = container.querySelector('img')
       expect(coverImg).not.toBeNull()
-      expect(coverImg?.getAttribute('src')).toBe('http://localhost:7070/api/books/42/cover')
+      expect(coverImg?.getAttribute('src')).toBe('http://localhost:3001/api/books/42/cover')
 
       adapter.destroy()
     })

@@ -23,7 +23,7 @@ describe('useGraph Composable', () => {
     const { graphData, fetchGraph, loading } = useGraph()
     await fetchGraph()
 
-    expect(mockFetch).toHaveBeenCalledWith('http://localhost:7070/api/graph', expect.any(Object))
+    expect(mockFetch).toHaveBeenCalledWith('http://localhost:3001/api/graph', expect.any(Object))
     expect(graphData.value?.nodes?.length).toBe(2)
     expect(graphData.value?.nodes?.[0]?.name).toBe('Literatura Brasileira')
     expect(loading.value).toBe(false)
@@ -38,7 +38,7 @@ describe('useGraph Composable', () => {
     const { fetchThemeBooks } = useGraph()
     const books = await fetchThemeBooks(7)
 
-    expect(mockFetch).toHaveBeenCalledWith('http://localhost:7070/api/graph/themes/7/books', expect.any(Object))
+    expect(mockFetch).toHaveBeenCalledWith('http://localhost:3001/api/graph/themes/7/books', expect.any(Object))
     expect(books).toHaveLength(1)
     expect(books[0]?.title).toBe('O Programador Pragmático')
   })
@@ -52,7 +52,7 @@ describe('useGraph Composable', () => {
     const { fetchThemeAnnotations } = useGraph()
     const annotations = await fetchThemeAnnotations(7)
 
-    expect(mockFetch).toHaveBeenCalledWith('http://localhost:7070/api/graph/themes/7/annotations', expect.any(Object))
+    expect(mockFetch).toHaveBeenCalledWith('http://localhost:3001/api/graph/themes/7/annotations', expect.any(Object))
     expect(annotations).toHaveLength(1)
     expect(annotations[0]?.note).toBe('Automação é chave')
   })
@@ -64,7 +64,7 @@ describe('useGraph Composable', () => {
     const { createLooseAnnotation } = useGraph()
     const res = await createLooseAnnotation(1, 'Nota Solta Geral', [7, 9])
 
-    expect(mockFetch).toHaveBeenCalledWith('http://localhost:7070/api/annotations', expect.objectContaining({
+    expect(mockFetch).toHaveBeenCalledWith('http://localhost:3001/api/annotations', expect.objectContaining({
       method: 'POST',
       body: { bookId: 1, note: 'Nota Solta Geral', themeIds: [7, 9] },
     }))
@@ -79,7 +79,7 @@ describe('useGraph Composable', () => {
     const { createNode } = useGraph()
     const result = await createNode('Filosofia', '#3B82F6', 'Stoicismo')
 
-    expect(mockFetch).toHaveBeenCalledWith('http://localhost:7070/api/graph/nodes', expect.objectContaining({
+    expect(mockFetch).toHaveBeenCalledWith('http://localhost:3001/api/graph/nodes', expect.objectContaining({
       method: 'POST',
       body: { name: 'Filosofia', color: '#3B82F6', description: 'Stoicismo' },
     }))
