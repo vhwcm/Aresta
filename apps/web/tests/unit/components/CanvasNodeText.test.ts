@@ -1,10 +1,15 @@
 import { describe, it, expect } from 'vitest';
-import { nextTick } from 'vue';
 import { mount } from '@vue/test-utils';
 import CanvasNodeText from '../../../app/components/canvas/CanvasNodeText.vue';
 import type { CanvasNode } from '../../../app/interfaces/canvas';
 
 describe('CanvasNodeText Component', () => {
+  const milkdownStub = {
+    props: ['modelValue', 'placeholder'],
+    emits: ['update:modelValue', 'blur'],
+    template: '<div class="milkdown-stub" :data-placeholder="placeholder">{{ modelValue }}</div>'
+  };
+
   it('renderiza nota em modo card (type === text) com borda e painel', () => {
     const node: CanvasNode = {
       id: 'node-1',
@@ -22,14 +27,17 @@ describe('CanvasNodeText Component', () => {
         node,
         isSelected: false,
       },
+      global: {
+        stubs: {
+          MilkdownEditor: milkdownStub,
+        },
+      },
     });
 
     const rootDiv = wrapper.find('div');
-    // Deve conter classes de painel / card
     expect(rootDiv.classes()).toContain('bg-bgPanel/95');
     expect(rootDiv.classes()).toContain('rounded-xl');
     expect(wrapper.html()).toContain('Texto do card');
-    // Deve conter barra de cor de cabeçalho
     expect(wrapper.find('.h-1\\.5').exists()).toBe(true);
   });
 
@@ -50,28 +58,29 @@ describe('CanvasNodeText Component', () => {
         node,
         isSelected: false,
       },
+      global: {
+        stubs: {
+          MilkdownEditor: milkdownStub,
+        },
+      },
     });
 
     const rootDiv = wrapper.find('div');
-    // NÃO deve conter classes de card/quadrado
     expect(rootDiv.classes()).not.toContain('bg-bgPanel/95');
     expect(rootDiv.classes()).toContain('bg-transparent');
-    expect(rootDiv.classes()).toContain('border-transparent');
-    // NÃO deve conter a barra de cor de cabeçalho
     expect(wrapper.find('.h-1\\.5').exists()).toBe(false);
-    // Deve conter o texto renderizado
     expect(wrapper.text()).toContain('Texto Livre no Canvas');
   });
 
-  it('inicia automaticamente em modo de edição ao criar texto livre vazio', async () => {
+  it('emite update:text quando o editor altera o conteúdo', async () => {
     const node: CanvasNode = {
-      id: 'node-loose-empty',
-      type: 'loose_text',
-      x: 100,
-      y: 100,
-      width: 280,
-      height: 56,
-      text: '',
+      id: 'node-edit',
+      type: 'text',
+      x: 0,
+      y: 0,
+      width: 200,
+      height: 100,
+      text: 'Original',
     };
 
     const wrapper = mount(CanvasNodeText, {
@@ -79,24 +88,22 @@ describe('CanvasNodeText Component', () => {
         node,
         isSelected: true,
       },
+      global: {
+        stubs: {
+          MilkdownEditor: {
+            props: ['modelValue'],
+            emits: ['update:modelValue'],
+            template: '<div class="milkdown-stub" @click="$emit(\'update:modelValue\', \'Texto Atualizado\')">Stub</div>'
+          },
+        },
+      },
     });
 
-    // Aguarda atualização reativa do nextTick do onMounted
-    await wrapper.vm.$nextTick();
-    await nextTick();
+    const stub = wrapper.find('.milkdown-stub');
+    await stub.trigger('click');
 
-    // Textarea deve estar ativo e pronto para digitação imediata
-    const textarea = wrapper.find('textarea');
-    expect(textarea.exists()).toBe(true);
-    expect(textarea.attributes('placeholder')).toContain('Comece a escrever livremente...');
-
-    // Digita texto livre
-    await textarea.setValue('Minha anotação solta');
-    await textarea.trigger('blur');
-
-    // Deve emitir update:text com o conteúdo digitado
     expect(wrapper.emitted('update:text')).toBeTruthy();
-    expect(wrapper.emitted('update:text')?.[0]).toEqual(['Minha anotação solta']);
+    expect(wrapper.emitted('update:text')?.[0]).toEqual(['Texto Atualizado']);
   });
 
   it('emite evento delete ao sair da edição de texto livre sem ter digitado nada', async () => {
@@ -115,152 +122,20 @@ describe('CanvasNodeText Component', () => {
         node,
         isSelected: true,
       },
+      global: {
+        stubs: {
+          MilkdownEditor: {
+            props: ['modelValue'],
+            emits: ['blur'],
+            template: '<div class="milkdown-stub" @click="$emit(\'blur\')">Stub</div>'
+          },
+        },
+      },
     });
 
-    await wrapper.vm.$nextTick();
-    await nextTick();
+    const stub = wrapper.find('.milkdown-stub');
+    await stub.trigger('click');
 
-    const textarea = wrapper.find('textarea');
-    expect(textarea.exists()).toBe(true);
-
-    // Usuário sai sem digitar nada (blur com string vazia)
-    await textarea.setValue('   ');
-    await textarea.trigger('blur');
-
-    // Deve emitir delete para limpar o nó vazio automaticamente
     expect(wrapper.emitted('delete')).toBeTruthy();
   });
-
-  it('renderiza cabeçalhos hierárquicos com #, ##, ### em tags estruturadas', () => {
-    const node: CanvasNode = {
-      id: 'node-headers',
-      type: 'text',
-      x: 0,
-      y: 0,
-      width: 300,
-      height: 200,
-      text: '# Cabeçalho 1\n## Cabeçalho 2\n### Cabeçalho 3\nTexto normal **negrito** e *itálico*',
-    };
-
-    const wrapper = mount(CanvasNodeText, {
-      props: {
-        node,
-        isSelected: false,
-      },
-    });
-
-    const markdownDiv = wrapper.find('.canvas-markdown-content');
-    expect(markdownDiv.exists()).toBe(true);
-    expect(markdownDiv.find('h1').exists()).toBe(true);
-    expect(markdownDiv.find('h1').text()).toBe('Cabeçalho 1');
-    expect(markdownDiv.find('h2').exists()).toBe(true);
-    expect(markdownDiv.find('h2').text()).toBe('Cabeçalho 2');
-    expect(markdownDiv.find('h3').exists()).toBe(true);
-    expect(markdownDiv.find('h3').text()).toBe('Cabeçalho 3');
-    expect(markdownDiv.find('strong').text()).toBe('negrito');
-    expect(markdownDiv.find('em').text()).toBe('itálico');
-  });
-
-  it('aplica negrito com atalho Ctrl+B e itálico com Ctrl+I ao editar', async () => {
-    const node: CanvasNode = {
-      id: 'node-card-edit',
-      type: 'text',
-      x: 0,
-      y: 0,
-      width: 300,
-      height: 200,
-      text: 'Texto base',
-    };
-
-    const wrapper = mount(CanvasNodeText, {
-      props: {
-        node,
-        isSelected: false,
-      },
-    });
-
-    // Inicia edição via dblclick no body
-    const body = wrapper.find('.flex-1.p-3\\.5');
-    await body.trigger('dblclick');
-    await nextTick();
-
-    const textarea = wrapper.find('textarea');
-    expect(textarea.exists()).toBe(true);
-
-    const textareaEl = textarea.element as HTMLTextAreaElement;
-    // Simula seleção da palavra "base" (índices 6 a 10)
-    textareaEl.selectionStart = 6;
-    textareaEl.selectionEnd = 10;
-
-    // Dispara Ctrl+B
-    await textarea.trigger('keydown', {
-      key: 'b',
-      ctrlKey: true,
-    });
-    await nextTick();
-
-    expect(textareaEl.value).toBe('Texto **base**');
-
-    // Dispara Ctrl+B novamente para desfazer (toggle)
-    await textarea.trigger('keydown', {
-      key: 'b',
-      ctrlKey: true,
-    });
-    await nextTick();
-
-    expect(textareaEl.value).toBe('Texto base');
-
-    // Dispara Ctrl+I para itálico
-    textareaEl.selectionStart = 6;
-    textareaEl.selectionEnd = 10;
-    await textarea.trigger('keydown', {
-      key: 'i',
-      ctrlKey: true,
-    });
-    await nextTick();
-
-    expect(textareaEl.value).toBe('Texto *base*');
-  });
-
-  it('edita nota do card em modo limpo sem barra inferior e finaliza com Ctrl+Enter', async () => {
-    const node: CanvasNode = {
-      id: 'node-clean-editor',
-      type: 'text',
-      x: 0,
-      y: 0,
-      width: 300,
-      height: 200,
-      text: 'Texto do card',
-    };
-
-    const wrapper = mount(CanvasNodeText, {
-      props: {
-        node,
-        isSelected: false,
-      },
-    });
-
-    const body = wrapper.find('.flex-1.p-3\\.5');
-    await body.trigger('dblclick');
-    await nextTick();
-
-    const textarea = wrapper.find('textarea');
-    expect(textarea.exists()).toBe(true);
-
-    // Não deve conter a barra inferior com Markdown suportado ou botão Pronto
-    expect(wrapper.text()).not.toContain('Markdown suportado');
-    expect(wrapper.find('button').exists()).toBe(false);
-
-    // Altera o texto e pressiona Ctrl+Enter para finalizar
-    await textarea.setValue('Texto atualizado');
-    await textarea.trigger('keydown', {
-      key: 'Enter',
-      ctrlKey: true,
-    });
-    await nextTick();
-
-    expect(wrapper.emitted('update:text')).toBeTruthy();
-    expect(wrapper.emitted('update:text')?.[0]).toEqual(['Texto atualizado']);
-  });
 });
-

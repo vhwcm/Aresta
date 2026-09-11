@@ -160,7 +160,7 @@
             </button>
           </div>
 
-          <!-- Alternador de Visualização: Grafo de Conhecimento vs. Grade vs. Dividido -->
+          <!-- Alternador de Visualização: Grafo de Conhecimento vs. Grade -->
           <div class="flex items-center gap-1 p-1 rounded-xl bg-bgRoot border border-divider text-xs">
             <button
               class="px-2.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer"
@@ -179,15 +179,6 @@
             >
               <LayoutGridIcon class="w-3.5 h-3.5" />
               <span class="hidden md:inline">Grade</span>
-            </button>
-            <button
-              class="px-2.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer"
-              :class="viewLayout === 'split' ? 'bg-accent text-white font-semibold shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
-              title="Exibir modo editor de notas dividido"
-              @click="openSplitLayout"
-            >
-              <ColumnsIcon class="w-3.5 h-3.5" />
-              <span class="hidden md:inline">Editor</span>
             </button>
           </div>
         </div>
@@ -250,7 +241,7 @@
           :active-folder="activeFolder"
           :active-tag="activeTag"
           @select-canvas="openCanvas"
-          @select-note="openNoteInSplit"
+          @select-note="openNoteEditor"
         />
       </div>
 
@@ -370,7 +361,7 @@
               <div
                 v-else
                 class="group relative flex flex-col justify-between p-5 rounded-2xl bg-bgPanel border border-divider hover:border-indigo-500/60 shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all cursor-pointer overflow-hidden select-none"
-                @click="openNoteInSplit(item.rawNote)"
+                @click="openNoteEditor(item.rawNote)"
               >
                 <div>
                   <div class="flex items-center justify-between mb-2.5">
@@ -394,7 +385,7 @@
                       <button
                         class="p-1 rounded-lg hover:bg-bgSurface text-textSecondary hover:text-indigo-400 transition-colors cursor-pointer"
                         title="Abrir no editor"
-                        @click="openNoteInSplit(item.rawNote)"
+                        @click="openNoteEditor(item.rawNote)"
                       >
                         <Edit3Icon class="w-3.5 h-3.5" />
                       </button>
@@ -546,7 +537,6 @@ import {
   SidebarIcon,
   LayoutGridIcon,
   FileTextIcon,
-  ColumnsIcon,
   Edit3Icon,
   NetworkIcon
 } from 'lucide-vue-next'
@@ -571,12 +561,12 @@ const activeTag = ref<string | null>((route?.query?.tag as string) || null)
 // Controle de abas: 'all' | 'canvases' | 'notes'
 const activeTab = ref<'all' | 'canvases' | 'notes'>('all')
 
-// Controle de layout: 'graph' (Grafo de Conhecimento Central) | 'grid' (Galeria) | 'split' (Editor Mestre-Detalhe)
-const viewLayout = ref<'graph' | 'grid' | 'split'>(
+// Controle de layout: 'graph' (Grafo de Conhecimento Central) | 'grid' (Galeria) | 'note-editor' (Editor Live Preview)
+const viewLayout = ref<'graph' | 'grid' | 'note-editor'>(
   (route?.query?.view as string) === 'grid'
     ? 'grid'
-    : (route?.query?.view as string) === 'split'
-      ? 'split'
+    : (route?.query?.view as string) === 'split' || (route?.query?.view as string) === 'note-editor'
+      ? 'note-editor'
       : 'graph'
 )
 
@@ -636,8 +626,8 @@ const syncFromRoute = () => {
   }
   if (route?.query?.view === 'grid') {
     viewLayout.value = 'grid'
-  } else if (route?.query?.view === 'split') {
-    viewLayout.value = 'split'
+  } else if (route?.query?.view === 'split' || route?.query?.view === 'note-editor') {
+    viewLayout.value = 'note-editor'
   }
 }
 
@@ -663,7 +653,7 @@ onMounted(async () => {
       const note = await loadNote(route.query.id)
       if (note) {
         activeNote.value = note
-        viewLayout.value = 'split'
+        viewLayout.value = 'note-editor'
       }
     }
   } catch (err: any) {
@@ -761,7 +751,7 @@ const handleSelectItemFromTree = (item: SidebarTreeItem) => {
     const rawId = item.id.replace(/^note-/, '')
     const found = notesList.value.find((n) => n.id === rawId)
     if (found) {
-      openNoteInSplit(found)
+      openNoteEditor(found)
     }
   }
 }
@@ -1035,17 +1025,9 @@ const selectNote = (note: NoteItem) => {
   activeNote.value = { ...note, tags: Array.isArray(note.tags) ? [...note.tags] : [] }
 }
 
-const openNoteInSplit = (note: NoteItem) => {
+const openNoteEditor = (note: NoteItem) => {
   selectNote(note)
-  viewLayout.value = 'split'
-}
-
-const openSplitLayout = () => {
-  viewLayout.value = 'split'
-  if (!activeNote.value && filteredNotes.value.length > 0) {
-    const first = filteredNotes.value[0]
-    if (first) selectNote(first)
-  }
+  viewLayout.value = 'note-editor'
 }
 
 const handleCreateNewNote = async (targetFolder?: string | Event) => {
@@ -1063,7 +1045,7 @@ const handleCreateNewNote = async (targetFolder?: string | Event) => {
 
   if (created) {
     activeNote.value = { ...created, tags: Array.isArray(created.tags) ? [...created.tags] : [] }
-    viewLayout.value = 'split'
+    viewLayout.value = 'note-editor'
   }
 }
 

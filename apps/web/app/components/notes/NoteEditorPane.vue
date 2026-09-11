@@ -24,31 +24,6 @@
           </select>
         </div>
 
-        <!-- Alternador de Modos do Editor (Dividido / Editor / Preview) -->
-        <div class="flex rounded-xl bg-bgElevated p-0.5 border border-divider text-xs">
-          <button
-            class="px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
-            :class="noteViewMode === 'split' ? 'bg-accent text-white font-medium shadow-sm' : 'text-textSecondary hover:text-textPrimary'"
-            @click="noteViewMode = 'split'"
-          >
-            Dividido
-          </button>
-          <button
-            class="px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
-            :class="noteViewMode === 'edit' ? 'bg-accent text-white font-medium shadow-sm' : 'text-textSecondary hover:text-textPrimary'"
-            @click="noteViewMode = 'edit'"
-          >
-            Editor
-          </button>
-          <button
-            class="px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
-            :class="noteViewMode === 'preview' ? 'bg-accent text-white font-medium shadow-sm' : 'text-textSecondary hover:text-textPrimary'"
-            @click="noteViewMode = 'preview'"
-          >
-            Preview
-          </button>
-        </div>
-
         <!-- Botão Inserir Canvas Embed -->
         <button
           class="px-2.5 py-1 rounded-xl bg-bgElevated hover:bg-bgSurface text-xs text-textSecondary hover:text-textPrimary border border-divider transition-colors flex items-center gap-1 cursor-pointer"
@@ -68,14 +43,14 @@
           <Trash2Icon class="w-4 h-4" />
         </button>
 
-        <!-- Botão Fechar e Voltar à Grade -->
+        <!-- Botão Fechar e Voltar ao Hub -->
         <button
           class="px-2.5 py-1 rounded-xl bg-bgSurface hover:bg-bgElevated text-xs text-textSecondary hover:text-textPrimary border border-divider transition-colors flex items-center gap-1 cursor-pointer ml-1"
-          title="Fechar e retornar à visão em grade"
+          title="Fechar e retornar"
           @click="$emit('close')"
         >
           <LayoutGridIcon class="w-3.5 h-3.5 text-accent" />
-          <span>Ver Grade</span>
+          <span>Fechar</span>
         </button>
       </div>
     </div>
@@ -106,32 +81,13 @@
       </div>
     </div>
 
-    <!-- Corpo do Editor & Preview em Tempo Real -->
-    <div class="flex-1 flex overflow-hidden">
-      <!-- Textarea (Markdown) -->
-      <div
-        v-if="noteViewMode === 'edit' || noteViewMode === 'split'"
-        class="flex-1 border-r border-divider/60 p-6 overflow-y-auto bg-bgSurface/30 custom-scrollbar"
-      >
-        <textarea
-          ref="textareaRef"
+    <!-- Corpo do Editor Live Preview Unificado -->
+    <div class="flex-1 p-4 md:p-6 overflow-hidden bg-bgDarker flex flex-col">
+      <div class="flex-1 bg-bgPanel/60 rounded-2xl border border-divider/60 shadow-inner overflow-hidden flex flex-col">
+        <MilkdownEditor
           v-model="localNote.content"
-          placeholder="Escreva sua anotação em Markdown... Use ![[canvas:id]] para embutir um canvas ou ![[book:id]] para embutir um livro."
-          class="w-full h-full bg-transparent border-none resize-none focus:outline-none text-sm leading-relaxed text-textPrimary font-mono placeholder:text-textSecondary/40"
-          @input="onInput"
-          @keydown="onTextareaKeydown"
-        ></textarea>
-      </div>
-
-      <!-- Preview em Tempo Real (Composite Renderer) -->
-      <div
-        v-if="noteViewMode === 'preview' || noteViewMode === 'split'"
-        class="flex-1 p-6 overflow-y-auto bg-bgDarker custom-scrollbar"
-      >
-        <NoteCompositeRenderer
-          :content="localNote.content"
-          :note-id="localNote.id"
-          :note-title="localNote.title"
+          placeholder="Comece a escrever sua nota... Live Preview renderiza automaticamente."
+          @update:model-value="onInput"
         />
       </div>
     </div>
@@ -139,15 +95,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick } from 'vue'
-import { applyMarkdownFormat } from '~/utils/markdownFormat'
+import { ref, watch } from 'vue'
 import {
   FolderIcon,
   TagIcon,
   Trash2Icon,
   LayoutGridIcon
 } from 'lucide-vue-next'
-import NoteCompositeRenderer from '~/components/notes/NoteCompositeRenderer.vue'
+import MilkdownEditor from '~/components/MilkdownEditor.vue'
 import type { NoteItem } from '~/interfaces/note'
 import type { CanvasSummary } from '~/interfaces/canvas'
 
@@ -180,7 +135,6 @@ watch(
   { deep: true }
 )
 
-const noteViewMode = ref<'split' | 'edit' | 'preview'>('split')
 const newTagInput = ref('')
 
 const onInput = () => {
@@ -220,34 +174,6 @@ const openCanvasPicker = () => {
   if (canvas) {
     localNote.value.content = (localNote.value.content || '') + `\n\n![[canvas:${canvas.id}]]\n`
     onInput()
-  }
-}
-
-const textareaRef = ref<HTMLTextAreaElement | null>(null)
-
-const formatMarkdown = (format: 'bold' | 'italic') => {
-  if (!textareaRef.value) return
-  const textarea = textareaRef.value
-  const start = textarea.selectionStart ?? 0
-  const end = textarea.selectionEnd ?? 0
-  const result = applyMarkdownFormat(localNote.value.content || '', start, end, format)
-  localNote.value.content = result.newText
-  onInput()
-  nextTick(() => {
-    if (textareaRef.value) {
-      textareaRef.value.focus()
-      textareaRef.value.setSelectionRange(result.selectionStart, result.selectionEnd)
-    }
-  })
-}
-
-const onTextareaKeydown = (e: KeyboardEvent) => {
-  if ((e.ctrlKey || e.metaKey) && (e.key === 'b' || e.key === 'B')) {
-    e.preventDefault()
-    formatMarkdown('bold')
-  } else if ((e.ctrlKey || e.metaKey) && (e.key === 'i' || e.key === 'I')) {
-    e.preventDefault()
-    formatMarkdown('italic')
   }
 }
 </script>

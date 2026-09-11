@@ -1,0 +1,209 @@
+/* ==========================================================================
+   Milkdown Aresta Theme — Live Preview Markdown Styling
+   ========================================================================== */
+
+.milkdown-aresta-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  color: var(--text-primary, #f2f2f2);
+  font-family: inherit;
+}
+
+.milkdown-aresta-wrapper .milkdown {
+  width: 100%;
+  height: 100%;
+  outline: none;
+  border: none;
+  background: transparent;
+  overflow-y: auto;
+}
+
+.milkdown-aresta-wrapper .milkdown .editor {
+  min-height: 100%;
+  outline: none;
+  padding: 1rem 1.25rem;
+  font-family: inherit;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: var(--text-primary, #f2f2f2);
+  cursor: text;
+}
+
+/* Headings */
+.milkdown-aresta-wrapper .milkdown .editor h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.25;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  color: var(--text-primary, #f2f2f2);
+  border-bottom: 1px solid var(--divider, rgba(255, 255, 255, 0.08));
+  padding-bottom: 0.35rem;
+  font-family: ui-serif, Georgia, Cambria, Times New Roman, Times, serif;
+}
+
+.milkdown-aresta-wrapper .milkdown .editor h2 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  line-height: 1.3;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary, #f2f2f2);
+  border-bottom: 1px solid var(--divider, rgba(255, 255, 255, 0.05));
+  padding-bottom: 0.25rem;
+  font-family: ui-serif, Georgia, Cambria, Times New Roman, Times, serif;
+}
+
+.milkdown-aresta-wrapper .milkdown .editor h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  line-height: 1.35;
+  margin-top: 1rem;
+  margin-bottom: 0.4rem;
+  color: var(--text-primary, #f2f2f2);
+}
+
+.milkdown-aresta-wrapper .milkdown .editor h4 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.4;
+  margin-top: 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.milkdown-aresta-wrapper .milkdown .editor h5 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-top: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.milkdown-aresta-wrapper .milkdown .editor h6 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.8;
+  margin-top: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.milkdown-aresta-wrapper .milkdown .editor h1:first-child,
+.milkdown-aresta-wrapper .milkdown .editor h2:first-child,
+.milkdown-aresta-wrapper .milkdown .editor h3:first-child {
+  margin-top: 0;
+}
+
+/* Paragraphs */
+.milkdown-aresta-wrapper .milkdown .editor p {
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  line-height: 1.7;
+}
+
+/* Bold and Italic */
+.milkdown-aresta-wrapper .milkdown .editor strong,
+.milkdown-aresta-wrapper .milkdown .editor b {
+  font-weight: 700;
+  color: inherit;
+}
+
+.milkdown-aresta-wrapper .milkdown .editor em,
+.milkdown-aresta-wrapper .milkdown .editor i {
+  font-style: italic;
+  color: inherit;
+}
+
+/* Lists */
+.milkdown-aresta-wrapper .milkdown .editor ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin-top: 0.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.milkdown-aresta-wrapper .milkdown .editor ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+  margin-top: 0.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.milkdown-aresta-wrapper .milkdown .editor li {
+  margin-bottom: 0.25rem;
+}
+
+.milkdown-aresta-wrapper .milkdown .editor li p {
+  margin-bottom: 0;
+}
+
+/* Blockquote */
+.milkdown-aresta-wrapper .milkdown .editor blockquote {
+  border-left: 3px solid var(--accent, #E57B55);
+  padding-left: 1rem;
+  margin: 0.75rem 0;
+  font-style: italic;
+  color: var(--text-secondary, #7A7D84);
+  background: rgba(229, 123, 85, 0.05);
+  border-radius: 0 0.5rem 0.5rem 0;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+
+/* Code */
+.milkdown-aresta-wrapper .milkdown .editor code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.875em;
+  background-color: rgba(255, 255, 255, 0.08);
+  color: var(--accent, #E57B55);
+  padding: 0.15rem 0.4rem;
+  border-radius: 0.375rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.milkdown-aresta-wrapper .milkdown .editor pre {
+  background-color: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--divider, rgba(255, 255, 255, 0.1));
+  border-radius: 0.75rem;
+  padding: 1rem;
+  margin: 0.75rem 0;
+  overflow-x: auto;
+}
+
+.milkdown-aresta-wrapper .milkdown .editor pre code {
+  background-color: transparent;
+  color: var(--text-primary, #f2f2f2);
+  padding: 0;
+  border: none;
+  font-size: 0.875rem;
+}
+
+/* Horizontal Rule */
+.milkdown-aresta-wrapper .milkdown .editor hr {
+  border: none;
+  border-top: 1px solid var(--divider, rgba(255, 255, 255, 0.1));
+  margin: 1.5rem 0;
+}
+
+/* Links */
+.milkdown-aresta-wrapper .milkdown .editor a {
+  color: var(--accent, #E57B55);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: opacity 0.2s;
+}
+
+.milkdown-aresta-wrapper .milkdown .editor a:hover {
+  opacity: 0.8;
+}
+
+/* Custom Scrollbar */
+.milkdown-aresta-wrapper .milkdown::-webkit-scrollbar {
+  width: 6px;
+}
+.milkdown-aresta-wrapper .milkdown::-webkit-scrollbar-thumb {
+  background-color: var(--divider, rgba(255, 255, 255, 0.1));
+  border-radius: 4px;
+}

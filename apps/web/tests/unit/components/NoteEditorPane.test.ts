@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { mount } from '@vue/test-utils';
 import NoteEditorPane from '~/components/notes/NoteEditorPane.vue';
+import MilkdownEditor from '~/components/MilkdownEditor.vue';
 import type { NoteItem } from '~/interfaces/note';
 
 describe('NoteEditorPane Component', () => {
@@ -23,7 +24,10 @@ describe('NoteEditorPane Component', () => {
       },
       global: {
         stubs: {
-          NoteCompositeRenderer: { template: '<div>Renderer</div>' },
+          MilkdownEditor: {
+            props: ['modelValue'],
+            template: '<div class="milkdown-stub">{{ modelValue }}</div>'
+          },
         },
       },
     });
@@ -43,7 +47,10 @@ describe('NoteEditorPane Component', () => {
       },
       global: {
         stubs: {
-          NoteCompositeRenderer: { template: '<div>Renderer</div>' },
+          MilkdownEditor: {
+            props: ['modelValue'],
+            template: '<div class="milkdown-stub">{{ modelValue }}</div>'
+          },
         },
       },
     });
@@ -64,7 +71,10 @@ describe('NoteEditorPane Component', () => {
       },
       global: {
         stubs: {
-          NoteCompositeRenderer: { template: '<div>Renderer</div>' },
+          MilkdownEditor: {
+            props: ['modelValue'],
+            template: '<div class="milkdown-stub">{{ modelValue }}</div>'
+          },
         },
       },
     });
@@ -77,7 +87,7 @@ describe('NoteEditorPane Component', () => {
     expect(wrapper.emitted('delete')?.[0]).toEqual(['note-test-1']);
   });
 
-  it('emits close when ver grade button is clicked', async () => {
+  it('emits close when close button is clicked', async () => {
     const wrapper = mount(NoteEditorPane, {
       props: {
         note: sampleNote,
@@ -86,19 +96,22 @@ describe('NoteEditorPane Component', () => {
       },
       global: {
         stubs: {
-          NoteCompositeRenderer: { template: '<div>Renderer</div>' },
+          MilkdownEditor: {
+            props: ['modelValue'],
+            template: '<div class="milkdown-stub">{{ modelValue }}</div>'
+          },
         },
       },
     });
 
-    const closeBtn = wrapper.find('button[title="Fechar e retornar à visão em grade"]');
+    const closeBtn = wrapper.find('button[title="Fechar e retornar"]');
     expect(closeBtn.exists()).toBe(true);
     await closeBtn.trigger('click');
 
     expect(wrapper.emitted('close')).toBeTruthy();
   });
 
-  it('formats note content with bold when Ctrl+B is pressed in textarea', async () => {
+  it('emits update:note and save when MilkdownEditor content changes', async () => {
     const wrapper = mount(NoteEditorPane, {
       props: {
         note: sampleNote,
@@ -107,26 +120,19 @@ describe('NoteEditorPane Component', () => {
       },
       global: {
         stubs: {
-          NoteCompositeRenderer: { template: '<div>Renderer</div>' },
+          MilkdownEditor: {
+            props: ['modelValue'],
+            emits: ['update:modelValue'],
+            template: '<div class="milkdown-stub" @click="$emit(\'update:modelValue\', \'# Novo Conteudo\')">Stub</div>'
+          },
         },
       },
     });
 
-    const textarea = wrapper.find('textarea');
-    expect(textarea.exists()).toBe(true);
-
-    const textareaEl = textarea.element as HTMLTextAreaElement;
-    // Seleciona "Cabeçalho" (índice 2 a 11 em "# Cabeçalho\nTexto da nota")
-    textareaEl.selectionStart = 2;
-    textareaEl.selectionEnd = 11;
-
-    await textarea.trigger('keydown', {
-      key: 'b',
-      ctrlKey: true,
-    });
+    const stub = wrapper.find('.milkdown-stub');
+    await stub.trigger('click');
 
     expect(wrapper.emitted('update:note')).toBeTruthy();
-    expect(textareaEl.value).toContain('**Cabeçalho**');
+    expect(wrapper.emitted('save')).toBeTruthy();
   });
 });
-
