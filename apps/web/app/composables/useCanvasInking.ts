@@ -1,17 +1,9 @@
 import { ref, computed } from 'vue';
 import { useAuth } from '~/composables/useAuth';
+import { useCanvas } from '~/composables/useCanvas';
+import type { StrokePoint, InkingStroke } from '~/interfaces/canvas';
 
-export interface StrokePoint {
-  x: number;
-  y: number;
-  pressure?: number;
-}
-
-export interface InkingStroke {
-  points: StrokePoint[];
-  color: string;
-  width: number;
-}
+export type { StrokePoint, InkingStroke };
 
 export interface BoundingBox {
   minX: number;
@@ -41,9 +33,9 @@ const getApiBase = () => {
 
 export function useCanvasInking() {
   const { token } = useAuth();
+  const { strokes, pushHistory, triggerAutosave } = useCanvas();
 
   const isDrawing = ref(false);
-  const strokes = ref<InkingStroke[]>([]);
   const currentStroke = ref<StrokePoint[]>([]);
   const strokeColor = ref('#E57B55');
   const strokeWidth = ref(3);
@@ -102,19 +94,33 @@ export function useCanvasInking() {
 
   const endStroke = () => {
     if (!isDrawing.value) return;
-    if (currentStroke.value.length > 1) {
+    if (currentStroke.value.length > 0) {
+      pushHistory();
+      const points =
+        currentStroke.value.length === 1
+          ? [
+              currentStroke.value[0]!,
+              { x: currentStroke.value[0]!.x + 0.1, y: currentStroke.value[0]!.y + 0.1 },
+            ]
+          : [...currentStroke.value];
+
       strokes.value.push({
-        points: [...currentStroke.value],
+        points,
         color: strokeColor.value,
         width: strokeWidth.value,
       });
+      triggerAutosave();
     }
     currentStroke.value = [];
     isDrawing.value = false;
   };
 
   const clearStrokes = () => {
-    strokes.value = [];
+    if (strokes.value.length > 0) {
+      pushHistory();
+      strokes.value = [];
+      triggerAutosave();
+    }
     currentStroke.value = [];
     ocrError.value = null;
   };

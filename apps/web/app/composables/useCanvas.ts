@@ -8,6 +8,7 @@ import type {
   CanvasItem,
   CanvasSide,
   CanvasShapeType,
+  InkingStroke,
 } from '~/interfaces/canvas';
 import { useAuth } from '~/composables/useAuth';
 import { canvasRepo } from '~/adapters/database/repositories/CanvasRepository';
@@ -30,6 +31,7 @@ const canvasFolders = ref<string[]>([]);
 const currentCanvas = ref<CanvasItem | null>(null);
 const nodes = ref<CanvasNode[]>([]);
 const edges = ref<CanvasEdge[]>([]);
+const strokes = ref<InkingStroke[]>([]);
 const viewport = ref<CanvasViewport>({ x: 0, y: 0, zoom: 1.0 });
 
 const selectedNodeIds = ref<string[]>([]);
@@ -49,8 +51,8 @@ const isSaving = ref(false);
 const error = ref<string | null>(null);
 
 // Histórico para Undo / Redo
-const undoStack = ref<Array<{ nodes: CanvasNode[]; edges: CanvasEdge[] }>>([]);
-const redoStack = ref<Array<{ nodes: CanvasNode[]; edges: CanvasEdge[] }>>([]);
+const undoStack = ref<Array<{ nodes: CanvasNode[]; edges: CanvasEdge[]; strokes: InkingStroke[] }>>([]);
+const redoStack = ref<Array<{ nodes: CanvasNode[]; edges: CanvasEdge[]; strokes: InkingStroke[] }>>([]);
 const maxHistory = 40;
 
 let autosaveTimeout: any = null;
@@ -73,6 +75,7 @@ export function useCanvas() {
     undoStack.value.push({
       nodes: JSON.parse(JSON.stringify(nodes.value)),
       edges: JSON.parse(JSON.stringify(edges.value)),
+      strokes: JSON.parse(JSON.stringify(strokes.value)),
     });
     if (undoStack.value.length > maxHistory) {
       undoStack.value.shift();
@@ -85,9 +88,11 @@ export function useCanvas() {
     redoStack.value.push({
       nodes: JSON.parse(JSON.stringify(nodes.value)),
       edges: JSON.parse(JSON.stringify(edges.value)),
+      strokes: JSON.parse(JSON.stringify(strokes.value)),
     });
     nodes.value = previousState.nodes;
     edges.value = previousState.edges;
+    strokes.value = previousState.strokes || [];
     triggerAutosave();
   };
 
@@ -97,9 +102,11 @@ export function useCanvas() {
     undoStack.value.push({
       nodes: JSON.parse(JSON.stringify(nodes.value)),
       edges: JSON.parse(JSON.stringify(edges.value)),
+      strokes: JSON.parse(JSON.stringify(strokes.value)),
     });
     nodes.value = nextState.nodes;
     edges.value = nextState.edges;
+    strokes.value = nextState.strokes || [];
     triggerAutosave();
   };
 
@@ -216,6 +223,7 @@ export function useCanvas() {
   const resetCanvasState = () => {
     nodes.value = [];
     edges.value = [];
+    strokes.value = [];
     selectedNodeIds.value = [];
     selectedEdgeId.value = null;
     activeTool.value = 'select';
@@ -235,6 +243,7 @@ export function useCanvas() {
       nodes: nodes.value,
       edges: edges.value,
       viewport: viewport.value,
+      strokes: strokes.value,
     };
     return JSON.stringify(doc);
   };
@@ -244,6 +253,7 @@ export function useCanvas() {
       const parsed: CanvasDocument = JSON.parse(dataStr);
       nodes.value = Array.isArray(parsed.nodes) ? parsed.nodes : [];
       edges.value = Array.isArray(parsed.edges) ? parsed.edges : [];
+      strokes.value = Array.isArray(parsed.strokes) ? parsed.strokes : [];
       if (parsed.viewport) {
         viewport.value = {
           x: Number(parsed.viewport.x) || 0,
@@ -615,6 +625,7 @@ export function useCanvas() {
     currentCanvas,
     nodes,
     edges,
+    strokes,
     viewport,
     selectedNodeIds,
     selectedEdgeId,

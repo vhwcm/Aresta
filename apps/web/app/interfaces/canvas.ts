@@ -44,10 +44,23 @@ export interface CanvasViewport {
   zoom: number;
 }
 
+export interface StrokePoint {
+  x: number;
+  y: number;
+  pressure?: number;
+}
+
+export interface InkingStroke {
+  points: StrokePoint[];
+  color: string;
+  width: number;
+}
+
 export interface CanvasDocument {
   nodes: CanvasNode[];
   edges: CanvasEdge[];
   viewport?: CanvasViewport;
+  strokes?: InkingStroke[];
 }
 
 export interface CanvasSummary {

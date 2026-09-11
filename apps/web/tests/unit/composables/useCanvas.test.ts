@@ -113,4 +113,69 @@ describe('useCanvas composable', () => {
     expect(newCanvas.nodes.value[0]?.shape).toBe('diamond');
     expect(newCanvas.viewport.value.zoom).toBe(1.5);
   });
+
+  it('suporta Undo e Redo de traços da caneta (strokes)', () => {
+    const canvas = useCanvas();
+    expect(canvas.strokes.value).toHaveLength(0);
+
+    // Simula adição de 2 traços
+    canvas.pushHistory();
+    canvas.strokes.value.push({
+      points: [{ x: 10, y: 10 }, { x: 20, y: 20 }],
+      color: '#E57B55',
+      width: 3,
+    });
+
+    canvas.pushHistory();
+    canvas.strokes.value.push({
+      points: [{ x: 30, y: 30 }, { x: 40, y: 40 }],
+      color: '#3B82F6',
+      width: 4,
+    });
+
+    expect(canvas.strokes.value).toHaveLength(2);
+    expect(canvas.canUndo.value).toBe(true);
+
+    // 1º Undo: desfaz o 2º traço
+    canvas.undo();
+    expect(canvas.strokes.value).toHaveLength(1);
+    expect(canvas.strokes.value[0]?.color).toBe('#E57B55');
+    expect(canvas.canRedo.value).toBe(true);
+
+    // 2º Undo: desfaz o 1º traço
+    canvas.undo();
+    expect(canvas.strokes.value).toHaveLength(0);
+
+    // Redo restaura o 1º traço
+    canvas.redo();
+    expect(canvas.strokes.value).toHaveLength(1);
+    expect(canvas.strokes.value[0]?.color).toBe('#E57B55');
+
+    // Redo restaura o 2º traço
+    canvas.redo();
+    expect(canvas.strokes.value).toHaveLength(2);
+  });
+
+  it('preserva traços da caneta na serialização e desserialização do documento', () => {
+    const canvas = useCanvas();
+    canvas.strokes.value = [
+      {
+        points: [{ x: 5, y: 5 }, { x: 15, y: 25 }],
+        color: '#10B981',
+        width: 5,
+      },
+    ];
+
+    const serialized = canvas.serializeDocument();
+    expect(serialized).toContain('"strokes":');
+    expect(serialized).toContain('"#10B981"');
+
+    canvas.resetCanvasState();
+    expect(canvas.strokes.value).toHaveLength(0);
+
+    canvas.deserializeDocument(serialized);
+    expect(canvas.strokes.value).toHaveLength(1);
+    expect(canvas.strokes.value[0]?.color).toBe('#10B981');
+    expect(canvas.strokes.value[0]?.points).toHaveLength(2);
+  });
 });
