@@ -3,6 +3,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [11/09/2026 09:39] [Concluído] Corrigir renderização de cabeçalhos e estilos tipográficos no editor e visualizador de notas
 - [11/09/2026 09:36] [Concluído] Remover todos os emojis dos cabeçalhos e seções do README.md
 - [11/09/2026 09:29] [Concluído] Organizar screenshots da aplicação em docs/assets/screenshots e adicionar seção visual no README.md
 - [11/09/2026 09:27] [Concluído] Remover overlay flutuante de legenda (Quadros, Notas) e controles de zoom do Grafo de Conhecimento

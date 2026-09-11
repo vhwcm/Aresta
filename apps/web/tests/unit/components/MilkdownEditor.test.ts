@@ -26,4 +26,17 @@ describe('MilkdownEditor Component', () => {
     expect(typeof wrapper.vm.getContent).toBe('function');
     expect(wrapper.vm.getContent()).toBe('Initial text');
   });
+
+  it('guarantees heading and typographic styling rules exist in milkdown theme', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const cssPath = path.resolve(__dirname, '../../../app/assets/css/milkdown-aresta-theme.css');
+    expect(fs.existsSync(cssPath)).toBe(true);
+
+    const cssContent = fs.readFileSync(cssPath, 'utf-8');
+    expect(cssContent).toContain('.milkdown-aresta-wrapper h1');
+    expect(cssContent).toContain('.milkdown-aresta-wrapper h2');
+    expect(cssContent).toContain('.milkdown-aresta-wrapper h3');
+    expect(cssContent).toContain('font-weight: 700');
+  });
 });

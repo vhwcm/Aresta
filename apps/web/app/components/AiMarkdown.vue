@@ -93,7 +93,7 @@ onUpdated(() => {
 .ai-markdown-content :deep(h1) {
   font-family: 'Newsreader', serif;
   font-size: 1.65rem;
-  font-weight: 400;
+  font-weight: 700;
   color: #F2F2F2;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   padding-bottom: 0.5rem;
@@ -105,7 +105,7 @@ onUpdated(() => {
 .ai-markdown-content :deep(h2) {
   font-family: 'Newsreader', serif;
   font-size: 1.35rem;
-  font-weight: 400;
+  font-weight: 600;
   color: #F2F2F2;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   padding-bottom: 0.35rem;

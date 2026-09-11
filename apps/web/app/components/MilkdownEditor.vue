@@ -160,3 +160,7 @@ onUnmounted(() => {
   }
 })
 </script>
+
+<style>
+@import '~/assets/css/milkdown-aresta-theme.css';
+</style>
