@@ -27,6 +27,7 @@ interface _GlobalComponents {
   HomeBookReaderDemo: typeof import("../../app/components/HomeBookReaderDemo.vue")['default']
   HomeCanvasNotesDemo: typeof import("../../app/components/HomeCanvasNotesDemo.vue")['default']
   HomeKnowledgeGraphDemo: typeof import("../../app/components/HomeKnowledgeGraphDemo.vue")['default']
+  MilkdownEditor: typeof import("../../app/components/MilkdownEditor.vue")['default']
   NodeDrawer: typeof import("../../app/components/NodeDrawer.vue")['default']
   ReadingStreak: typeof import("../../app/components/ReadingStreak.vue")['default']
   SettingsModal: typeof import("../../app/components/SettingsModal.vue")['default']
@@ -104,6 +105,7 @@ interface _GlobalComponents {
   LazyHomeBookReaderDemo: LazyComponent<typeof import("../../app/components/HomeBookReaderDemo.vue")['default']>
   LazyHomeCanvasNotesDemo: LazyComponent<typeof import("../../app/components/HomeCanvasNotesDemo.vue")['default']>
   LazyHomeKnowledgeGraphDemo: LazyComponent<typeof import("../../app/components/HomeKnowledgeGraphDemo.vue")['default']>
+  LazyMilkdownEditor: LazyComponent<typeof import("../../app/components/MilkdownEditor.vue")['default']>
   LazyNodeDrawer: LazyComponent<typeof import("../../app/components/NodeDrawer.vue")['default']>
   LazyReadingStreak: LazyComponent<typeof import("../../app/components/ReadingStreak.vue")['default']>
   LazySettingsModal: LazyComponent<typeof import("../../app/components/SettingsModal.vue")['default']>
