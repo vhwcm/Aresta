@@ -184,19 +184,6 @@
       :book-id="store.bookId"
       :book-title="store.title"
       @close="isAnnotationModalOpen = false"
-      @expand="handleExpandToDrawer"
-      @created="handleAnnotationCreated"
-    />
-
-    <!-- Painel Lateral Expandido de Escrita e Desenho Manual (OCR) -->
-    <ReaderAnnotationDrawer
-      :is-open="isAnnotationDrawerOpen"
-      :initial-text="capturedSelectionText"
-      :current-page="annotationPage"
-      :book-id="store.bookId"
-      :book-title="store.title"
-      :initial-mode="drawerInitialMode"
-      @close="isAnnotationDrawerOpen = false"
       @created="handleAnnotationCreated"
     />
 
@@ -244,7 +231,6 @@ import ReaderEnginePageCurlCanvas from '~/components/reader/engine/PageCurlCanva
 import ReaderBottomBar from '~/components/reader/ReaderBottomBar.vue'
 import ReaderSavedPagesModal from '~/components/reader/ReaderSavedPagesModal.vue'
 import ReaderAnnotationModal from '~/components/reader/ReaderAnnotationModal.vue'
-import ReaderAnnotationDrawer from '~/components/reader/ReaderAnnotationDrawer.vue'
 import ReaderBookNotesPanel from '~/components/reader/ReaderBookNotesPanel.vue'
 import ReaderSelectionTooltip from '~/components/reader/ReaderSelectionTooltip.vue'
 import ReaderDictionaryCard from '~/components/reader/ReaderDictionaryCard.vue'
@@ -265,8 +251,6 @@ const isTypographyOpen = ref(false)
 
 const isSavedPagesOpen = ref(false)
 const isAnnotationModalOpen = ref(false)
-const isAnnotationDrawerOpen = ref(false)
-const drawerInitialMode = ref<'type' | 'handwriting'>('handwriting')
 const capturedSelectionText = ref('')
 const annotationPage = ref(1)
 const isDesktop = ref(true)
@@ -385,12 +369,6 @@ async function handleOpenAnnotation() {
     capturedSelectionText.value = ''
   }
   isAnnotationModalOpen.value = true
-}
-
-function handleExpandToDrawer(mode: 'type' | 'handwriting' = 'handwriting') {
-  isAnnotationModalOpen.value = false
-  drawerInitialMode.value = mode
-  isAnnotationDrawerOpen.value = true
 }
 
 function handleTextSelectionCheck() {

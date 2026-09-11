@@ -1,8 +1,9 @@
 # Checklist
 
-- [11/09/2026 18:44] [Fazendo] Remover funcionalidade e componentes de OCR/Desenho do leitor de livros (ReaderAnnotationDrawer, HandwritingCanvas e referências)
+## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [11/09/2026 18:49] [Concluído] Remover funcionalidade e componentes de OCR/Desenho do leitor de livros (ReaderAnnotationDrawer, HandwritingCanvas e referências)
 - [11/09/2026 18:46] [Concluído] Integrar traços da caneta (inking) no sistema de histórico (desfazer/refazer) do Canvas
 - [11/09/2026 18:32] [Concluído] Permitir arrastar e mover múltiplos itens selecionados no Canvas e com as setas do teclado
 - [11/09/2026 18:10] [Concluído] Corrigir porta 7070 para 3001 no frontend e implementar endpoint OCR de transcrição com Gemini no backend

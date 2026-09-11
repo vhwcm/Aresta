@@ -4,8 +4,6 @@ import { setActivePinia, createPinia } from 'pinia'
 import ReaderBottomBar from '../../../app/components/reader/ReaderBottomBar.vue'
 import ReaderSavedPagesModal from '../../../app/components/reader/ReaderSavedPagesModal.vue'
 import ReaderAnnotationModal from '../../../app/components/reader/ReaderAnnotationModal.vue'
-import ReaderAnnotationDrawer from '../../../app/components/reader/ReaderAnnotationDrawer.vue'
-import HandwritingCanvas from '../../../app/components/reader/HandwritingCanvas.vue'
 import ReaderSelectionTooltip from '../../../app/components/reader/ReaderSelectionTooltip.vue'
 import ReaderTypographyPopover from '../../../app/components/reader/ReaderTypographyPopover.vue'
 import ReaderViewer from '../../../app/components/reader/Viewer.vue'
@@ -31,14 +29,12 @@ vi.mock('~/composables/useGraph', () => ({
 }))
 
 const mockCreateAnnotation = vi.fn()
-const mockCreateAnnotationWithOcr = vi.fn()
 vi.mock('~/composables/useAnnotations', () => ({
   useAnnotations: () => ({
     annotations: { value: [] },
     loading: { value: false },
     fetchAnnotations: vi.fn().mockResolvedValue([]),
     createAnnotation: mockCreateAnnotation,
-    createAnnotationWithOcr: mockCreateAnnotationWithOcr,
     updateAnnotationNote: vi.fn().mockResolvedValue({ id: 1, note: 'atualizado' }),
     deleteAnnotation: vi.fn().mockResolvedValue(true),
   }),
@@ -475,72 +471,6 @@ describe('Reader Components', () => {
 
       expect(wrapper.text()).toContain('Dicionário')
       expect(wrapper.text()).toContain('Anotar')
-    })
-  })
-
-  describe('ReaderAnnotationDrawer', () => {
-    it('renderiza o drawer lateral com alternador de modo e temas', async () => {
-      const wrapper = mount(ReaderAnnotationDrawer, {
-        props: {
-          isOpen: true,
-          initialText: 'Trecho do livro no drawer',
-          currentPage: 5,
-          bookId: 1,
-          initialMode: 'type',
-        },
-      })
-
-      expect(wrapper.text()).toContain('Painel de Escrita & Anotação')
-      expect(wrapper.text()).toContain('Digitação')
-      expect(wrapper.text()).toContain('Desenho / Caneta (OCR)')
-      expect(wrapper.text()).toContain('História Antiga')
-
-      // Clica no modo digitação e preenche nota
-      const typeBtn = wrapper.findAll('button').find((b) => b.text().includes('Digitação'))
-      await typeBtn?.trigger('click')
-
-      const noteTextarea = wrapper.find('textarea')
-      expect(noteTextarea.exists()).toBe(true)
-      await noteTextarea.setValue('Nota digitada no painel expandido')
-
-      mockCreateAnnotation.mockResolvedValueOnce({
-        id: 11,
-        bookId: 1,
-        cfi: 'page:5',
-        selectedText: 'Trecho do livro no drawer',
-        note: 'Nota digitada no painel expandido',
-        themes: [],
-      })
-
-      const submitBtn = wrapper.findAll('button').find((b) => b.text().includes('Salvar Anotação'))
-      await submitBtn?.trigger('click')
-
-      expect(mockCreateAnnotation).toHaveBeenCalledWith(
-        expect.objectContaining({
-          bookId: 1,
-          cfi: 'page:5',
-          selectedText: 'Trecho do livro no drawer',
-          note: 'Nota digitada no painel expandido',
-        })
-      )
-      expect(wrapper.emitted('created')).toBeTruthy()
-      expect(wrapper.emitted('close')).toBeTruthy()
-    })
-
-    it('emite evento expand na modal de anotações ao clicar no botão Modo Caneta', async () => {
-      const wrapper = mount(ReaderAnnotationModal, {
-        props: {
-          isOpen: true,
-          currentPage: 3,
-          bookId: 1,
-        },
-      })
-
-      const expandBtn = wrapper.find('button[title="Expandir tela / Modo Caneta (OCR)"]')
-      expect(expandBtn.exists()).toBe(true)
-      await expandBtn.trigger('click')
-
-      expect(wrapper.emitted('expand')).toBeTruthy()
     })
   })
 

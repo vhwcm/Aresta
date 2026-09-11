@@ -39,18 +39,6 @@ export interface CreateAnnotationPayload {
   bookCover?: string
 }
 
-export interface CreateAnnotationWithOcrPayload {
-  bookId: number
-  cfi: string
-  selectedText?: string | null
-  chapterTitle?: string | null
-  progress?: number
-  themeIds?: number[]
-  imageBase64: string
-  mimeType?: 'image/png' | 'image/jpeg' | 'image/webp'
-  promptHint?: string
-}
-
 const getApiBase = () => {
   if (typeof useRuntimeConfig === 'function') {
     try {
@@ -279,43 +267,6 @@ export const useAnnotations = () => {
     }
   }
 
-  const createAnnotationWithOcr = async (payload: CreateAnnotationWithOcrPayload): Promise<AnnotationItem> => {
-    loading.value = true
-    error.value = null
-    try {
-      const response = await $fetch<any>(`${getApiBase()}/annotations/with-ocr`, {
-        method: 'POST',
-        headers: getHeaders(),
-        body: payload
-      })
-      const createdRaw = response?.annotation || response
-      const created = normalizeItem(createdRaw)
-      annotations.value = [created, ...annotations.value]
-      await annotationRepo.save({
-        id: created.id,
-        userId: created.userId,
-        bookId: created.bookId,
-        bookTitle: created.bookTitle,
-        bookCover: created.bookCover,
-        cfi: created.cfi,
-        selectedText: created.selectedText,
-        note: created.note,
-        chapterTitle: created.chapterTitle,
-        progress: created.progress,
-        themes: created.themes,
-        createdAt: created.createdAt
-      })
-      return created
-    } catch (err: any) {
-      console.error('Erro ao criar anotação com OCR:', err)
-      const msg = err.data?.error || err.message || 'Falha ao processar escrita manual via OCR.'
-      error.value = msg
-      throw new Error(msg)
-    } finally {
-      loading.value = false
-    }
-  }
-
   const updateAnnotationNote = async (id: number, note: string): Promise<AnnotationItem> => {
     loading.value = true
     error.value = null
@@ -398,7 +349,6 @@ export const useAnnotations = () => {
     error,
     fetchAnnotations,
     createAnnotation,
-    createAnnotationWithOcr,
     updateAnnotationNote,
     deleteAnnotation,
     convertAnnotationToFlashcard

@@ -49,7 +49,6 @@ describe('Index Page (Landing Page & Home)', () => {
       error: ref(null),
       fetchAnnotations: vi.fn().mockResolvedValue([]),
       createAnnotation: vi.fn(),
-      createAnnotationWithOcr: vi.fn(),
       updateAnnotationNote: vi.fn(),
       deleteAnnotation: vi.fn(),
       convertAnnotationToFlashcard: vi.fn()
@@ -214,7 +213,6 @@ describe('Index Page (Landing Page & Home)', () => {
       error: ref(null),
       fetchAnnotations: vi.fn().mockResolvedValue([]),
       createAnnotation: vi.fn(),
-      createAnnotationWithOcr: vi.fn(),
       updateAnnotationNote: vi.fn(),
       deleteAnnotation: vi.fn(),
       convertAnnotationToFlashcard: vi.fn()
@@ -299,7 +297,6 @@ describe('Index Page (Landing Page & Home)', () => {
       error: ref(null),
       fetchAnnotations: vi.fn().mockResolvedValue([]),
       createAnnotation: vi.fn(),
-      createAnnotationWithOcr: vi.fn(),
       updateAnnotationNote: vi.fn(),
       deleteAnnotation: vi.fn(),
       convertAnnotationToFlashcard: vi.fn()
