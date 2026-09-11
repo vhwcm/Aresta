@@ -3,6 +3,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [11/09/2026 09:18] [Concluído] Remover título, logo e badge Hub da página de quadros e otimizar layout mobile do cabeçalho e controles
 - [11/09/2026 09:12] [Concluído] Remover ícones de seta (chevrons) dos botões de Livros e Notas na navbar inferior
 - [11/09/2026 09:10] [Concluído] Substituir editor split-pane por Live Preview Milkdown no Canvas e Notas
 - [10/09/2026 20:00] [Concluído] Atualizar regras de arquitetura para refletir a estrutura atual do monólito (apps/api, apps/web, Prisma e Tauri)

@@ -22,10 +22,11 @@
     <!-- Área Central / Workspace Hub -->
     <div class="flex-1 flex flex-col h-full overflow-hidden">
       <!-- Top Header & Ações Globais -->
-      <header class="border-b border-divider bg-bgPanel/80 backdrop-blur-md px-6 py-4 flex-shrink-0 z-10">
-        <div class="max-w-7xl w-full mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <!-- Título & Logo -->
-          <div class="flex items-center gap-3">
+      <header class="border-b border-divider bg-bgPanel/80 backdrop-blur-md px-3.5 sm:px-6 py-2.5 sm:py-3.5 flex-shrink-0 z-10">
+        <!-- Linha 1: Botão Sidebar (Mobile) + Ações Rápidas (Importar, Nova Nota, Novo Quadro) -->
+        <div class="max-w-7xl w-full mx-auto flex items-center justify-between gap-2">
+          <!-- Botão Sidebar Drawer no Mobile -->
+          <div class="flex items-center gap-2 min-w-0">
             <button
               v-if="isSidebarCollapsed"
               class="md:hidden p-2 rounded-xl bg-bgPanel hover:bg-bgSurface text-textSecondary hover:text-textPrimary border border-divider transition-all cursor-pointer flex-shrink-0"
@@ -34,24 +35,10 @@
             >
               <SidebarIcon class="w-4 h-4" />
             </button>
-            <ArestaLogoGraph :size="32" :to="null" use-image />
-            <div>
-              <div class="flex items-center gap-2">
-                <h1 class="text-xl md:text-2xl font-bold font-serif tracking-tight text-textPrimary">
-                  Quadros & Anotações
-                </h1>
-                <span class="text-xs px-2 py-0.5 rounded-full bg-accent/15 text-accent font-mono font-semibold">
-                  Hub
-                </span>
-              </div>
-              <p class="text-xs text-textSecondary mt-0.5 hidden sm:block">
-                Grafo de conhecimento, árvore de arquivos e notas em Markdown unificados.
-              </p>
-            </div>
           </div>
 
           <!-- Botões de Ação Rápida -->
-          <div class="flex items-center gap-2.5 flex-wrap">
+          <div class="flex items-center gap-1.5 sm:gap-2.5 ml-auto flex-shrink-0">
             <input
               ref="fileInputRef"
               type="file"
@@ -62,7 +49,7 @@
 
             <!-- Importar .canvas -->
             <button
-              class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-bgSurface hover:bg-bgElevated text-textSecondary hover:text-textPrimary border border-divider text-xs font-medium transition-all shadow-sm cursor-pointer"
+              class="inline-flex items-center gap-1.5 p-2 sm:px-3.5 sm:py-2 rounded-xl bg-bgSurface hover:bg-bgElevated text-textSecondary hover:text-textPrimary border border-divider text-xs font-medium transition-all shadow-xs cursor-pointer"
               title="Importar quadro no formato JSON .canvas do Obsidian"
               @click="triggerImport"
             >
@@ -72,7 +59,7 @@
 
             <!-- Nova Nota -->
             <button
-              class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-bgSurface hover:bg-accent/10 text-textPrimary hover:text-accent border border-divider hover:border-accent/40 text-xs font-semibold transition-all shadow-sm cursor-pointer"
+              class="inline-flex items-center gap-1.5 px-2.5 py-2 sm:px-3.5 sm:py-2 rounded-xl bg-bgSurface hover:bg-accent/10 text-textPrimary hover:text-accent border border-divider hover:border-accent/40 text-xs font-semibold transition-all shadow-xs cursor-pointer"
               title="Criar nova anotação em Markdown"
               @click="handleCreateNewNote()"
             >
@@ -82,7 +69,7 @@
 
             <!-- Novo Quadro -->
             <button
-              class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-accent hover:bg-accent/90 text-white text-xs font-semibold transition-all shadow-md shadow-accent/20 hover:scale-102 cursor-pointer disabled:opacity-50"
+              class="inline-flex items-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2 rounded-xl bg-accent hover:bg-accent/90 text-white text-xs font-semibold transition-all shadow-sm shadow-accent/20 hover:scale-102 cursor-pointer disabled:opacity-50"
               :disabled="isCreating"
               title="Criar novo quadro infinito"
               @click="newCanvasModalOpen = true"
@@ -93,18 +80,18 @@
           </div>
         </div>
 
-        <!-- Barra de Controle: Tabs (Pills), Busca e Alternador de Layout -->
-        <div class="max-w-7xl w-full mx-auto mt-4 pt-3 border-t border-divider/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <!-- Linha 2: Tabs (Pills), Alternador de Layout (Grafo/Grade) e Busca em Tempo Real -->
+        <div class="max-w-7xl w-full mx-auto mt-2.5 sm:mt-3 pt-2 sm:pt-2.5 border-t border-divider/50 flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 sm:gap-3">
           <!-- Segmented Switcher: Tudo / Quadros / Notas -->
-          <div class="flex items-center gap-1 p-1 rounded-xl bg-bgRoot border border-divider text-xs font-medium">
+          <div class="order-1 flex-shrink-0 flex items-center gap-0.5 sm:gap-1 p-0.5 sm:p-1 rounded-xl bg-bgRoot border border-divider text-xs font-medium">
             <button
-              class="px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer"
-              :class="activeTab === 'all' ? 'bg-accent text-white font-semibold shadow-sm' : 'text-textSecondary hover:text-textPrimary'"
+              class="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer text-xs"
+              :class="activeTab === 'all' ? 'bg-accent text-white font-semibold shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
               @click="setTab('all')"
             >
               <span>🌐 Tudo</span>
               <span
-                class="text-[10px] px-1.5 py-0.2 rounded-full font-mono"
+                class="text-[10px] px-1 sm:px-1.5 py-0.2 rounded-full font-mono"
                 :class="activeTab === 'all' ? 'bg-white/20 text-white' : 'bg-bgSurface text-textSecondary'"
               >
                 {{ totalCombinedCount }}
@@ -112,14 +99,14 @@
             </button>
 
             <button
-              class="px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer"
-              :class="activeTab === 'canvases' ? 'bg-accent text-white font-semibold shadow-sm' : 'text-textSecondary hover:text-textPrimary'"
+              class="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer text-xs"
+              :class="activeTab === 'canvases' ? 'bg-accent text-white font-semibold shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
               @click="setTab('canvases')"
             >
               <LayoutGridIcon class="w-3.5 h-3.5" />
               <span>Quadros</span>
               <span
-                class="text-[10px] px-1.5 py-0.2 rounded-full font-mono"
+                class="text-[10px] px-1 sm:px-1.5 py-0.2 rounded-full font-mono"
                 :class="activeTab === 'canvases' ? 'bg-white/20 text-white' : 'bg-bgSurface text-textSecondary'"
               >
                 {{ canvasesList.length }}
@@ -127,14 +114,14 @@
             </button>
 
             <button
-              class="px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer"
-              :class="activeTab === 'notes' ? 'bg-accent text-white font-semibold shadow-sm' : 'text-textSecondary hover:text-textPrimary'"
+              class="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer text-xs"
+              :class="activeTab === 'notes' ? 'bg-accent text-white font-semibold shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
               @click="setTab('notes')"
             >
               <FileTextIcon class="w-3.5 h-3.5" />
               <span>Notas</span>
               <span
-                class="text-[10px] px-1.5 py-0.2 rounded-full font-mono"
+                class="text-[10px] px-1 sm:px-1.5 py-0.2 rounded-full font-mono"
                 :class="activeTab === 'notes' ? 'bg-white/20 text-white' : 'bg-bgSurface text-textSecondary'"
               >
                 {{ notesList.length }}
@@ -142,14 +129,36 @@
             </button>
           </div>
 
+          <!-- Alternador de Visualização: Grafo de Conhecimento vs. Grade -->
+          <div class="order-2 sm:order-3 flex-shrink-0 flex items-center gap-0.5 sm:gap-1 p-0.5 sm:p-1 rounded-xl bg-bgRoot border border-divider text-xs">
+            <button
+              class="px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer"
+              :class="viewLayout === 'graph' ? 'bg-accent text-white font-semibold shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
+              title="Exibir Grafo de Conhecimento interativo"
+              @click="viewLayout = 'graph'"
+            >
+              <NetworkIcon class="w-3.5 h-3.5" />
+              <span class="hidden sm:inline">Grafo</span>
+            </button>
+            <button
+              class="px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer"
+              :class="viewLayout === 'grid' ? 'bg-accent text-white font-semibold shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
+              title="Exibir como galeria em grade"
+              @click="viewLayout = 'grid'"
+            >
+              <LayoutGridIcon class="w-3.5 h-3.5" />
+              <span class="hidden sm:inline">Grade</span>
+            </button>
+          </div>
+
           <!-- Campo de Busca em Tempo Real -->
-          <div class="relative flex-1 max-w-sm">
+          <div class="order-3 sm:order-2 w-full sm:w-auto sm:flex-1 sm:max-w-xs md:max-w-sm relative">
             <SearchIcon class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-textSecondary pointer-events-none" />
             <input
               v-model="searchQuery"
               type="text"
               placeholder="Buscar em títulos, notas, quadros e tags..."
-              class="w-full pl-9 pr-7 py-1.5 rounded-xl bg-bgRoot border border-divider text-xs text-textPrimary focus:outline-none focus:border-accent placeholder:text-textSecondary/50 font-interface shadow-inner"
+              class="w-full pl-8 sm:pl-9 pr-7 py-1.5 rounded-xl bg-bgRoot border border-divider text-xs text-textPrimary focus:outline-none focus:border-accent placeholder:text-textSecondary/50 font-interface shadow-inner"
             />
             <button
               v-if="searchQuery"
@@ -159,32 +168,10 @@
               ✕
             </button>
           </div>
-
-          <!-- Alternador de Visualização: Grafo de Conhecimento vs. Grade -->
-          <div class="flex items-center gap-1 p-1 rounded-xl bg-bgRoot border border-divider text-xs">
-            <button
-              class="px-2.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer"
-              :class="viewLayout === 'graph' ? 'bg-accent text-white font-semibold shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
-              title="Exibir Grafo de Conhecimento interativo"
-              @click="viewLayout = 'graph'"
-            >
-              <NetworkIcon class="w-3.5 h-3.5" />
-              <span class="hidden md:inline">Grafo</span>
-            </button>
-            <button
-              class="px-2.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer"
-              :class="viewLayout === 'grid' ? 'bg-accent text-white font-semibold shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
-              title="Exibir como galeria em grade"
-              @click="viewLayout = 'grid'"
-            >
-              <LayoutGridIcon class="w-3.5 h-3.5" />
-              <span class="hidden md:inline">Grade</span>
-            </button>
-          </div>
         </div>
 
         <!-- Chips de Filtros Ativos (Pasta, Tag, Busca) -->
-        <div v-if="activeFolder || activeTag || searchQuery" class="max-w-7xl w-full mx-auto mt-3 flex items-center gap-2 flex-wrap text-xs">
+        <div v-if="activeFolder || activeTag || searchQuery" class="max-w-7xl w-full mx-auto mt-2 sm:mt-2.5 flex items-center gap-1.5 sm:gap-2 flex-wrap text-xs">
           <span class="text-textSecondary text-[11px]">Filtros ativos:</span>
 
           <span
