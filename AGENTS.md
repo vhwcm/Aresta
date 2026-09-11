@@ -42,14 +42,16 @@ Este projeto adota o **modelo mental do Kiro**, onde o conhecimento estruturado,
 5. Validar Quality Gates (`npm test` e `npm run build`).
 6. Documentar o que foi feito na pasta correta. Criar um novo ou atualizar uma já existente. 
 7. Mover para "Done" no `checklist.md` e realizar commit atômico.
+8. Faça perguntas técnicas profundas ao usuário para ver se ele entendeu o que foi feito.
 
 ### 🔴 Tarefas Grandes
 1. Registrar a tarefa em `checklist.md` na seção "In Progress" com checklist de passos. 
 2. Planejar especificação técnica detalhada pensando em TDD e usar a skill grill-me.
 3. Executar alterações em `apps/api` e `apps/web`.
 4. Validar Quality Gates 100% verdes.
-6. Documentar o que foi feito na pasta correta. Criar um novo ou atualizar uma já existente. E criar uma ADR
-5. Mover para "Done" no `checklist.md` e realizar commit atômico.
+5. Documentar o que foi feito na pasta correta. Criar um novo ou atualizar uma já existente. E criar uma ADR
+6. Mover para "Done" no `checklist.md` e realizar commit atômico.
+7. Faça perguntas técnicas profundas ao usuário para ver se ele entendeu o que foi feito.
 
 ---
 
