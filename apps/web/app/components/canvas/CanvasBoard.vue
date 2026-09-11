@@ -44,6 +44,7 @@
         :key="node.id"
         :node="node"
         :is-selected="selectedNodeIds.includes(node.id)"
+        :is-multi-select="selectedNodeIds.length > 1"
         :zoom="viewport.zoom"
         @select="onSelectNode"
         @drag-start="onNodeDragStart"
@@ -190,6 +191,7 @@ const {
   isSaving,
   canUndo,
   canRedo,
+  pushHistory,
   addNode,
   updateNode,
   removeNode,
@@ -214,6 +216,7 @@ const draggingNodeState = ref<{
   startY: number;
   initialNodeX: number;
   initialNodeY: number;
+  hasMoved?: boolean;
 } | null>(null);
 
 const resizingNodeState = ref<{
@@ -260,6 +263,15 @@ const multiDragState = ref<{
   startX: number;
   startY: number;
   initialPositions: Array<{ id: string; x: number; y: number }>;
+  hasMoved?: boolean;
+} | null>(null);
+
+// Pending click state when clicking an already-selected node
+const pendingNodeClick = ref<{
+  id: string;
+  isShift: boolean;
+  startX: number;
+  startY: number;
 } | null>(null);
 
 // Bulk color change for multi-selection
@@ -454,6 +466,13 @@ const onPointerMove = (e: PointerEvent) => {
 
   // Multi-node drag
   if (multiDragState.value) {
+    const rawDist = Math.hypot(
+      e.clientX - multiDragState.value.startX,
+      e.clientY - multiDragState.value.startY
+    );
+    if (rawDist > 3) {
+      multiDragState.value.hasMoved = true;
+    }
     const dx = (e.clientX - multiDragState.value.startX) / viewport.value.zoom;
     const dy = (e.clientY - multiDragState.value.startY) / viewport.value.zoom;
     for (const pos of multiDragState.value.initialPositions) {
@@ -467,6 +486,13 @@ const onPointerMove = (e: PointerEvent) => {
 
   // Dragging Single Node
   if (draggingNodeState.value) {
+    const rawDist = Math.hypot(
+      e.clientX - draggingNodeState.value.startX,
+      e.clientY - draggingNodeState.value.startY
+    );
+    if (rawDist > 3) {
+      draggingNodeState.value.hasMoved = true;
+    }
     const dx = (e.clientX - draggingNodeState.value.startX) / viewport.value.zoom;
     const dy = (e.clientY - draggingNodeState.value.startY) / viewport.value.zoom;
     updateNode(draggingNodeState.value.nodeId, {
@@ -526,13 +552,24 @@ const onPointerUp = (e: PointerEvent) => {
 
   // Finalize multi-node drag
   if (multiDragState.value) {
+    const didMove = multiDragState.value.hasMoved;
     multiDragState.value = null;
+
+    if (!didMove && pendingNodeClick.value) {
+      if (pendingNodeClick.value.isShift) {
+        selectedNodeIds.value = selectedNodeIds.value.filter((i) => i !== pendingNodeClick.value!.id);
+      } else {
+        selectedNodeIds.value = [pendingNodeClick.value.id];
+      }
+    }
+    pendingNodeClick.value = null;
     return;
   }
 
   if (draggingNodeState.value) {
     draggingNodeState.value = null;
   }
+  pendingNodeClick.value = null;
 
   if (resizingNodeState.value) {
     resizingNodeState.value = null;
@@ -589,16 +626,25 @@ const onWheel = (e: WheelEvent) => {
 };
 
 // Node Interactions
-const onSelectNode = (id: string, isShift: boolean) => {
+const onSelectNode = (id: string, isShift: boolean, e?: PointerEvent) => {
   selectedEdgeId.value = null;
+  const clientX = e?.clientX ?? 0;
+  const clientY = e?.clientY ?? 0;
+
   if (isShift) {
     if (selectedNodeIds.value.includes(id)) {
-      selectedNodeIds.value = selectedNodeIds.value.filter((i) => i !== id);
+      pendingNodeClick.value = { id, isShift: true, startX: clientX, startY: clientY };
     } else {
       selectedNodeIds.value.push(id);
+      pendingNodeClick.value = null;
     }
   } else {
-    selectedNodeIds.value = [id];
+    if (selectedNodeIds.value.includes(id) && selectedNodeIds.value.length > 1) {
+      pendingNodeClick.value = { id, isShift: false, startX: clientX, startY: clientY };
+    } else {
+      selectedNodeIds.value = [id];
+      pendingNodeClick.value = null;
+    }
   }
 };
 
@@ -609,6 +655,7 @@ const onNodeDragStart = (id: string, e: PointerEvent) => {
 
   // Multi-node drag: if the dragged node is part of a multi-selection
   if (selectedNodeIds.value.length > 1 && selectedNodeIds.value.includes(id)) {
+    pushHistory();
     const initialPositions = selectedNodeIds.value
       .map((nid) => {
         const n = nodes.value.find((nd) => nd.id === nid);
@@ -620,17 +667,22 @@ const onNodeDragStart = (id: string, e: PointerEvent) => {
       startX: e.clientX,
       startY: e.clientY,
       initialPositions,
+      hasMoved: false,
     };
+    boardContainerRef.value?.setPointerCapture?.(e.pointerId);
     return;
   }
 
+  pushHistory();
   draggingNodeState.value = {
     nodeId: id,
     startX: e.clientX,
     startY: e.clientY,
     initialNodeX: node.x,
     initialNodeY: node.y,
+    hasMoved: false,
   };
+  boardContainerRef.value?.setPointerCapture?.(e.pointerId);
 };
 
 const onNodeResizeStart = (id: string, handle: string, e: PointerEvent) => {
@@ -760,7 +812,35 @@ const handleConvertToNote = async (nodeId: string) => {
 
 // Keydown Shortcuts
 const onKeyDown = (e: KeyboardEvent) => {
-  if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+  if (
+    e.target instanceof HTMLInputElement ||
+    e.target instanceof HTMLTextAreaElement ||
+    (e.target as HTMLElement)?.isContentEditable ||
+    (e.target as HTMLElement)?.closest?.('.ProseMirror')
+  ) {
+    return;
+  }
+
+  // Move selected nodes with Arrow keys
+  if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key) && selectedNodeIds.value.length > 0) {
+    e.preventDefault();
+    const step = e.shiftKey ? 10 : 2;
+    let dx = 0;
+    let dy = 0;
+    if (e.key === 'ArrowUp') dy = -step;
+    if (e.key === 'ArrowDown') dy = step;
+    if (e.key === 'ArrowLeft') dx = -step;
+    if (e.key === 'ArrowRight') dx = step;
+
+    pushHistory();
+    for (const id of selectedNodeIds.value) {
+      const n = nodes.value.find((nd) => nd.id === id);
+      if (n) {
+        updateNode(id, { x: n.x + dx, y: n.y + dy });
+      }
+    }
+    return;
+  }
 
   if (e.key === 'Delete' || e.key === 'Backspace') {
     removeSelected();

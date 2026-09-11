@@ -1,8 +1,10 @@
 # Checklist
 
 ## 🔄 Em Andamento
+- [11/09/2026 18:37] [Fazendo] Remover completamente todas as rotas, serviços, componentes e menções de OCR do sistema (backend e frontend)
 
 ## ✅ Concluído
+- [11/09/2026 18:32] [Concluído] Permitir arrastar e mover múltiplos itens selecionados no Canvas e com as setas do teclado
 - [11/09/2026 18:10] [Concluído] Corrigir porta 7070 para 3001 no frontend e implementar endpoint OCR de transcrição com Gemini no backend
 - [11/09/2026 09:39] [Concluído] Corrigir renderização de cabeçalhos e estilos tipográficos no editor e visualizador de notas
 - [11/09/2026 09:36] [Concluído] Remover todos os emojis dos cabeçalhos e seções do README.md

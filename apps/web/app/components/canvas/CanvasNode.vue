@@ -56,8 +56,8 @@
       </div>
     </div>
 
-    <!-- Resize Handles (When Selected) -->
-    <template v-if="isSelected">
+    <!-- Resize Handles (When Single Selected) -->
+    <template v-if="isSelected && !isMultiSelect">
       <!-- Bottom-Right Resize Handle -->
       <div
         class="resize-handle absolute -bottom-1.5 -right-1.5 w-3.5 h-3.5 rounded-full bg-primary border-2 border-white dark:border-zinc-900 shadow cursor-nwse-resize z-30 hover:scale-125 transition-transform"
@@ -137,11 +137,12 @@ import CanvasNodeNote from './CanvasNodeNote.vue';
 const props = defineProps<{
   node: CanvasNode;
   isSelected?: boolean;
+  isMultiSelect?: boolean;
   zoom: number;
 }>();
 
 const emit = defineEmits<{
-  (_e: 'select', _id: string, _isShift: boolean): void;
+  (_e: 'select', _id: string, _isShift: boolean, _event: PointerEvent): void;
   (_e: 'drag-start', _id: string, _event: PointerEvent): void;
   (_e: 'resize-start', _id: string, _handle: string, _event: PointerEvent): void;
   (_e: 'start-connect', _nodeId: string, _side: CanvasSide, _event: PointerEvent): void;
@@ -177,15 +178,15 @@ const getAnchorPositionClass = (side: CanvasSide): string => {
 };
 
 const onPointerDown = (e: PointerEvent) => {
-  emit('select', props.node.id, e.shiftKey);
+  emit('select', props.node.id, e.shiftKey, e);
   const target = e.target as HTMLElement | null;
   if (
     target &&
     (target.tagName === 'TEXTAREA' ||
       target.tagName === 'INPUT' ||
-      target.isContentEditable ||
       target.closest('button') ||
-      target.closest('a'))
+      target.closest('a') ||
+      (!props.isMultiSelect && (target.isContentEditable || target.closest('.ProseMirror'))))
   ) {
     return;
   }

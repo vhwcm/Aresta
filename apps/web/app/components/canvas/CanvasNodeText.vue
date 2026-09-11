@@ -2,23 +2,21 @@
   <!-- 1. NOTA / CARD (type === 'text') - Bloco retangular estilo card Markdown com Live Preview -->
   <div
     v-if="!isLooseText"
-    class="w-full h-full flex flex-col rounded-xl overflow-hidden bg-bgPanel/95 border backdrop-blur-md transition-all shadow-md cursor-text"
+    class="w-full h-full flex flex-col rounded-xl overflow-hidden bg-bgPanel/95 border backdrop-blur-md transition-all shadow-md cursor-move"
     :class="[
       isSelected ? 'border-primary shadow-primary/20 ring-2 ring-primary/40' : 'border-divider hover:border-dividerHover'
     ]"
     :style="{ borderColor: node.color ? node.color : undefined }"
-    @pointerdown.stop
-    @mousedown.stop
   >
     <!-- Header/Color Bar -->
     <div
       v-if="node.color"
-      class="h-1.5 w-full flex-shrink-0"
+      class="h-1.5 w-full flex-shrink-0 cursor-move"
       :style="{ backgroundColor: node.color }"
     ></div>
 
     <!-- Body com Milkdown Live Preview -->
-    <div class="flex-1 p-2 overflow-auto text-textPrimary text-sm custom-scrollbar">
+    <div class="flex-1 p-2 overflow-auto text-textPrimary text-sm custom-scrollbar cursor-text">
       <MilkdownEditor
         v-model="localText"
         placeholder="Escreva em Markdown..."
@@ -31,15 +29,13 @@
   <!-- 2. TEXTO LIVRE (type === 'loose_text') - Escrita livre sem quadrado, sem borda e sem fundo com Live Preview -->
   <div
     v-else
-    class="w-full h-full flex flex-col bg-transparent transition-all relative group cursor-text"
+    class="w-full h-full flex flex-col bg-transparent transition-all relative group cursor-move"
     :class="[
       isSelected
         ? 'ring-1 ring-primary/50 border border-dashed border-primary/50 rounded-lg'
         : 'border border-transparent'
     ]"
     :style="{ color: node.color || 'inherit' }"
-    @pointerdown.stop
-    @mousedown.stop
   >
     <div class="w-full h-full p-1 overflow-visible">
       <MilkdownEditor

@@ -157,4 +157,78 @@ describe('CanvasNode Component', () => {
     expect(wrapper.emitted('select')).toBeTruthy();
     expect(wrapper.emitted('drag-start')).toBeFalsy();
   });
+
+  it('permite drag-start mesmo ao clicar em conteúdo com isMultiSelect ativo', async () => {
+    const node: ICanvasNode = {
+      id: 'node-text-multi',
+      type: 'text',
+      x: 100,
+      y: 100,
+      width: 260,
+      height: 160,
+      text: 'Texto de anotação no corpo',
+      color: '#E57B55',
+    };
+
+    const wrapper = mount(CanvasNode, {
+      props: {
+        node,
+        isSelected: true,
+        isMultiSelect: true,
+        zoom: 1,
+      },
+      global: {
+        stubs: {
+          CanvasNodeText: {
+            template: '<div class="body-content"><div class="ProseMirror">Texto</div></div>',
+          },
+          CanvasNodeShape: true,
+          CanvasNodeBook: true,
+          CanvasNodeNote: true,
+        },
+      },
+    });
+
+    const editorEl = wrapper.find('.ProseMirror');
+    expect(editorEl.exists()).toBe(true);
+
+    await editorEl.trigger('pointerdown');
+
+    expect(wrapper.emitted('select')).toBeTruthy();
+    expect(wrapper.emitted('drag-start')).toBeTruthy();
+  });
+
+  it('oculta mini toolbar flutuante individual e resize handles quando isMultiSelect é verdadeiro', () => {
+    const node: ICanvasNode = {
+      id: 'node-text-toolbar-multi',
+      type: 'text',
+      x: 100,
+      y: 100,
+      width: 260,
+      height: 160,
+      text: 'Nota multi selecionada',
+    };
+
+    const wrapper = mount(CanvasNode, {
+      props: {
+        node,
+        isSelected: true,
+        isMultiSelect: true,
+        zoom: 1,
+      },
+      global: {
+        stubs: {
+          CanvasNodeText: true,
+          CanvasNodeShape: true,
+          CanvasNodeBook: true,
+          CanvasNodeNote: true,
+        },
+      },
+    });
+
+    // Resize handles e mini toolbar não devem existir em multi-seleção
+    expect(wrapper.find('.resize-handle').exists()).toBe(false);
+    const createNoteButton = wrapper.findAll('button').find((b) => b.attributes('title')?.includes('Salvar como Nota'));
+    expect(createNoteButton).toBeUndefined();
+  });
 });

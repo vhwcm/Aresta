@@ -263,7 +263,7 @@ export const useFlashcards = () => {
         totalPendingFound: number
         totalGenerated: number
         flashcards: FlashcardItem[]
-      }>(`${API_BASE}/v1/flashcards/generate-batch`, {
+      }>(`${getApiBase()}/v1/flashcards/generate-batch`, {
         method: 'POST',
         headers: getHeaders(),
         body: { limit }
