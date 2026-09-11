@@ -1,9 +1,9 @@
 # Checklist
 
 ## 🔄 Em Andamento
-- [11/09/2026 09:23] [Fazendo] Remover switcher de abas (Tudo, Quadros e Notas) do cabeçalho de quadros
 
 ## ✅ Concluído
+- [11/09/2026 09:24] [Concluído] Remover switcher de abas (Tudo, Quadros e Notas) do cabeçalho de quadros
 - [11/09/2026 09:23] [Concluído] Remover funcionalidade de Assistente Chat genérico (pages/ai.vue, server/api/ai.post.ts, testes) e atualizar artefato de arquitetura de IA
 - [11/09/2026 09:18] [Concluído] Remover título, logo e badge Hub da página de quadros e otimizar layout mobile do cabeçalho e controles
 - [11/09/2026 09:12] [Concluído] Remover ícones de seta (chevrons) dos botões de Livros e Notas na navbar inferior

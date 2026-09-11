@@ -80,79 +80,10 @@
           </div>
         </div>
 
-        <!-- Linha 2: Tabs (Pills), Alternador de Layout (Grafo/Grade) e Busca em Tempo Real -->
-        <div class="max-w-7xl w-full mx-auto mt-2.5 sm:mt-3 pt-2 sm:pt-2.5 border-t border-divider/50 flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 sm:gap-3">
-          <!-- Segmented Switcher: Tudo / Quadros / Notas -->
-          <div class="order-1 flex-shrink-0 flex items-center gap-0.5 sm:gap-1 p-0.5 sm:p-1 rounded-xl bg-bgRoot border border-divider text-xs font-medium">
-            <button
-              class="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer text-xs"
-              :class="activeTab === 'all' ? 'bg-accent text-white font-semibold shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
-              @click="setTab('all')"
-            >
-              <span>🌐 Tudo</span>
-              <span
-                class="text-[10px] px-1 sm:px-1.5 py-0.2 rounded-full font-mono"
-                :class="activeTab === 'all' ? 'bg-white/20 text-white' : 'bg-bgSurface text-textSecondary'"
-              >
-                {{ totalCombinedCount }}
-              </span>
-            </button>
-
-            <button
-              class="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer text-xs"
-              :class="activeTab === 'canvases' ? 'bg-accent text-white font-semibold shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
-              @click="setTab('canvases')"
-            >
-              <LayoutGridIcon class="w-3.5 h-3.5" />
-              <span>Quadros</span>
-              <span
-                class="text-[10px] px-1 sm:px-1.5 py-0.2 rounded-full font-mono"
-                :class="activeTab === 'canvases' ? 'bg-white/20 text-white' : 'bg-bgSurface text-textSecondary'"
-              >
-                {{ canvasesList.length }}
-              </span>
-            </button>
-
-            <button
-              class="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer text-xs"
-              :class="activeTab === 'notes' ? 'bg-accent text-white font-semibold shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
-              @click="setTab('notes')"
-            >
-              <FileTextIcon class="w-3.5 h-3.5" />
-              <span>Notas</span>
-              <span
-                class="text-[10px] px-1 sm:px-1.5 py-0.2 rounded-full font-mono"
-                :class="activeTab === 'notes' ? 'bg-white/20 text-white' : 'bg-bgSurface text-textSecondary'"
-              >
-                {{ notesList.length }}
-              </span>
-            </button>
-          </div>
-
-          <!-- Alternador de Visualização: Grafo de Conhecimento vs. Grade -->
-          <div class="order-2 sm:order-3 flex-shrink-0 flex items-center gap-0.5 sm:gap-1 p-0.5 sm:p-1 rounded-xl bg-bgRoot border border-divider text-xs">
-            <button
-              class="px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer"
-              :class="viewLayout === 'graph' ? 'bg-accent text-white font-semibold shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
-              title="Exibir Grafo de Conhecimento interativo"
-              @click="viewLayout = 'graph'"
-            >
-              <NetworkIcon class="w-3.5 h-3.5" />
-              <span class="hidden sm:inline">Grafo</span>
-            </button>
-            <button
-              class="px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer"
-              :class="viewLayout === 'grid' ? 'bg-accent text-white font-semibold shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
-              title="Exibir como galeria em grade"
-              @click="viewLayout = 'grid'"
-            >
-              <LayoutGridIcon class="w-3.5 h-3.5" />
-              <span class="hidden sm:inline">Grade</span>
-            </button>
-          </div>
-
+        <!-- Linha 2: Alternador de Layout (Grafo/Grade) e Busca em Tempo Real -->
+        <div class="max-w-7xl w-full mx-auto mt-2.5 sm:mt-3 pt-2 sm:pt-2.5 border-t border-divider/50 flex items-center justify-between gap-2 sm:gap-3">
           <!-- Campo de Busca em Tempo Real -->
-          <div class="order-3 sm:order-2 w-full sm:w-auto sm:flex-1 sm:max-w-xs md:max-w-sm relative">
+          <div class="flex-1 max-w-sm sm:max-w-md relative">
             <SearchIcon class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-textSecondary pointer-events-none" />
             <input
               v-model="searchQuery"
@@ -166,6 +97,28 @@
               @click="searchQuery = ''"
             >
               ✕
+            </button>
+          </div>
+
+          <!-- Alternador de Visualização: Grafo de Conhecimento vs. Grade -->
+          <div class="flex-shrink-0 flex items-center gap-0.5 sm:gap-1 p-0.5 sm:p-1 rounded-xl bg-bgRoot border border-divider text-xs">
+            <button
+              class="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer"
+              :class="viewLayout === 'graph' ? 'bg-accent text-white font-semibold shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
+              title="Exibir Grafo de Conhecimento interativo"
+              @click="viewLayout = 'graph'"
+            >
+              <NetworkIcon class="w-3.5 h-3.5" />
+              <span class="hidden sm:inline">Grafo</span>
+            </button>
+            <button
+              class="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer"
+              :class="viewLayout === 'grid' ? 'bg-accent text-white font-semibold shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
+              title="Exibir como galeria em grade"
+              @click="viewLayout = 'grid'"
+            >
+              <LayoutGridIcon class="w-3.5 h-3.5" />
+              <span class="hidden sm:inline">Grade</span>
             </button>
           </div>
         </div>
