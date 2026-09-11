@@ -4,6 +4,14 @@ O **Aresta** é um ecossistema integrado para leitura ativa, estudo aprofundado,
 
 ---
 
+## 📸 Demonstração Visual & Interface
+
+| Visão Desktop (Dashboard & Grafo de Conhecimento) | Visão Mobile (Leitura Ativa & Navegação) |
+| :---: | :---: |
+| <img src="docs/assets/screenshots/home-desktop-knowledge-graph.png" alt="Dashboard Desktop & Grafo de Conhecimento" width="700" /> | <img src="docs/assets/screenshots/home-mobile-reading.png" alt="Dashboard Mobile & Leitura Ativa" width="320" /> |
+
+---
+
 ## 🏛️ Arquitetura do Monólito Modular
 
 O sistema opera em um **Monólito Modular em Duas Camadas** (`apps/api` e `apps/web`):
