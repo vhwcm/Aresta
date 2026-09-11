@@ -4,7 +4,7 @@ O **Aresta** é um ecossistema integrado para leitura ativa, estudo aprofundado,
 
 ---
 
-## 📸 Demonstração Visual & Interface
+## Demonstração Visual & Interface
 
 | Visão Desktop (Dashboard & Grafo de Conhecimento) | Visão Mobile (Leitura Ativa & Navegação) |
 | :---: | :---: |
@@ -12,7 +12,7 @@ O **Aresta** é um ecossistema integrado para leitura ativa, estudo aprofundado,
 
 ---
 
-## 🏛️ Arquitetura do Monólito Modular
+## Arquitetura do Monólito Modular
 
 O sistema opera em um **Monólito Modular em Duas Camadas** (`apps/api` e `apps/web`):
 
@@ -40,7 +40,7 @@ O sistema opera em um **Monólito Modular em Duas Camadas** (`apps/api` e `apps/
 
 ---
 
-## 🧠 Arquitetura de Inteligência Artificial Contextual
+## Arquitetura de Inteligência Artificial Contextual
 
 O ecossistema de IA do Aresta é desenhado com uma estratégia **híbrida (Local-First + Backend Monolítico + Google Gemini SDK + pgvector)**, garantindo resiliência offline e execução com fallbacks determinísticos.
 
@@ -95,7 +95,7 @@ O ecossistema de IA do Aresta é desenhado com uma estratégia **híbrida (Local
 
 ---
 
-## 🔄 Fluxos Detalhados de IA
+## Fluxos Detalhados de IA
 
 ### 1. Embeddings Vetoriais & Busca Semântica (`pgvector`)
 
@@ -223,7 +223,7 @@ Binarização de alta fidelidade de traços de stylus/touch (traços pretos sól
 
 ---
 
-## 🚀 Como Executar
+## Como Executar
 
 ### 1. Pré-requisitos
 - Node.js 20+
