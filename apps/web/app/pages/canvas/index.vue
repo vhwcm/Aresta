@@ -174,14 +174,11 @@
 
       <!-- CORPO PRINCIPAL: MODO 1 - GRAFO DE CONHECIMENTO NO CENTRO -->
       <div v-if="viewLayout === 'graph'" class="flex-1 relative overflow-hidden">
-        <KnowledgeGraphView
-          :canvases="filteredCanvases"
-          :notes="filteredNotes"
-          :search-query="searchQuery"
-          :active-folder="activeFolder"
-          :active-tag="activeTag"
-          @select-canvas="openCanvas"
-          @select-note="openNoteEditor"
+        <GraphCanvas
+          :nodes="graphData.nodes || []"
+          :edges="graphData.edges || []"
+          @select-node="handleSelectGraphNode"
+          @open-create-node="openNewCanvasModal"
         />
       </div>
 
@@ -484,9 +481,10 @@ import FolderTagSidebar, { type SidebarTreeItem } from '~/components/FolderTagSi
 import ArestaLogoGraph from '~/components/ArestaLogoGraph.vue'
 import CanvasActionModals from '~/components/canvas/CanvasActionModals.vue'
 import NoteEditorPane from '~/components/notes/NoteEditorPane.vue'
-import KnowledgeGraphView from '~/components/canvas/KnowledgeGraphView.vue'
+import GraphCanvas from '~/components/GraphCanvas.vue'
 import { useCanvas } from '~/composables/useCanvas'
 import { useNotes } from '~/composables/useNotes'
+import { useGraph } from '~/composables/useGraph'
 import type { CanvasSummary } from '~/interfaces/canvas'
 import type { NoteItem } from '~/interfaces/note'
 
@@ -550,6 +548,33 @@ const {
   loadNote,
 } = useNotes()
 
+const { graphData, fetchGraph: fetchUnifiedGraph } = useGraph()
+
+const handleSelectGraphNode = async (node: any) => {
+  if (node.type === 'canvas') {
+    const rawId = String(node.rawId || node.id).replace('canvas-', '')
+    openCanvas(rawId)
+  } else if (node.type === 'note') {
+    const rawId = String(node.rawId || node.id).replace('note-', '')
+    const target = notesList.value.find((n) => n.id === rawId)
+    if (target) {
+      openNoteEditor(target)
+    } else {
+      const loaded = await loadNote(rawId)
+      if (loaded) openNoteEditor(loaded)
+    }
+  } else if (node.type === 'book') {
+    const bookId = node.rawId || String(node.id).replace('book-', '')
+    navigateTo(`/reader/${bookId}`)
+  } else if (node.type === 'annotation') {
+    if (node.bookId) {
+      navigateTo(`/reader/${node.bookId}${node.cfi ? '?cfi=' + encodeURIComponent(node.cfi) : ''}`)
+    }
+  } else if (node.type === 'theme') {
+    navigateTo(`/grafo`)
+  }
+}
+
 // Sincroniza query params da rota
 const syncFromRoute = () => {
   if (route?.query?.tab) {
@@ -585,7 +610,8 @@ onMounted(async () => {
       fetchCanvases(),
       fetchCanvasFolders(),
       fetchNotes(),
-      fetchNoteFolders()
+      fetchNoteFolders(),
+      fetchUnifiedGraph(),
     ])
 
     // Se houver id de nota na rota, abre direto no editor
@@ -598,6 +624,12 @@ onMounted(async () => {
     }
   } catch (err: any) {
     console.error('Erro ao carregar dados do Hub:', err)
+  }
+})
+
+watch(viewLayout, (val) => {
+  if (val === 'graph') {
+    fetchUnifiedGraph()
   }
 })
 

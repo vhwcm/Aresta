@@ -65,6 +65,65 @@
         :book="selectedBookNode"
         @close="isBookDrawerOpen = false"
       />
+
+      <!-- 3. Modal de Detalhes da Anotação de Leitura -->
+      <div
+        v-if="isAnnotationModalOpen && selectedAnnotationNode"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200"
+        @click.self="isAnnotationModalOpen = false"
+      >
+        <div class="w-full max-w-lg rounded-2xl bg-bgPanel border border-divider shadow-2xl p-6 flex flex-col gap-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-400 text-xs font-semibold">
+                📝 Anotação de Leitura
+              </span>
+              <span v-if="selectedAnnotationNode.bookTitle" class="text-xs text-textSecondary truncate max-w-[200px]">
+                {{ selectedAnnotationNode.bookTitle }}
+              </span>
+            </div>
+            <button
+              @click="isAnnotationModalOpen = false"
+              class="p-1 rounded-lg text-textSecondary hover:text-textPrimary hover:bg-white/5 transition-all"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div v-if="selectedAnnotationNode.chapterTitle" class="text-xs text-textSecondary font-mono">
+            Capítulo: {{ selectedAnnotationNode.chapterTitle }}
+          </div>
+
+          <blockquote
+            v-if="selectedAnnotationNode.selectedText"
+            class="p-3.5 rounded-xl bg-bgRoot border-l-4 border-amber-500 text-xs text-textPrimary leading-relaxed italic"
+          >
+            "{{ selectedAnnotationNode.selectedText }}"
+          </blockquote>
+
+          <div v-if="selectedAnnotationNode.note" class="text-xs text-textPrimary/90 leading-relaxed font-light">
+            <span class="font-semibold text-accent block mb-1">Nota pessoal:</span>
+            {{ selectedAnnotationNode.note }}
+          </div>
+
+          <div class="flex items-center justify-end gap-3 mt-2 pt-3 border-t border-divider">
+            <button
+              @click="isAnnotationModalOpen = false"
+              class="px-4 py-2 rounded-xl border border-divider text-xs text-textSecondary hover:text-textPrimary"
+            >
+              Fechar
+            </button>
+            <button
+              v-if="selectedAnnotationNode.bookId"
+              @click="goToAnnotationBook(selectedAnnotationNode)"
+              class="px-4 py-2 rounded-xl bg-accent text-white text-xs font-semibold hover:bg-accent/90 transition-all flex items-center gap-1.5"
+            >
+              <BookOpenIcon class="w-3.5 h-3.5" />
+              <span>Abrir no Livro</span>
+            </button>
+          </div>
+        </div>
+      </div>
     </main>
 
     <!-- Modais Auxiliares -->
@@ -85,7 +144,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { NetworkIcon, RotateCwIcon, SparklesIcon } from 'lucide-vue-next'
+import { NetworkIcon, RotateCwIcon, SparklesIcon, BookOpenIcon } from 'lucide-vue-next'
 import type { GraphNode, BookItem } from '~/interfaces/graph'
 import { useGraph } from '~/composables/useGraph'
 
@@ -100,9 +159,11 @@ const { graphData, loading, fetchGraph, createNode, createConnection } = useGrap
 const selectedNode = ref<GraphNode | null>(null)
 const selectedThemeNode = ref<GraphNode | null>(null)
 const selectedBookNode = ref<GraphNode | null>(null)
+const selectedAnnotationNode = ref<GraphNode | null>(null)
 
 const isThemeOverlayOpen = ref(false)
 const isBookDrawerOpen = ref(false)
+const isAnnotationModalOpen = ref(false)
 const isCreateModalOpen = ref(false)
 const isConnectModalOpen = ref(false)
 
@@ -113,10 +174,30 @@ const handleSelectNode = (node: GraphNode) => {
     selectedBookNode.value = node
     isBookDrawerOpen.value = true
     isThemeOverlayOpen.value = false
+    isAnnotationModalOpen.value = false
   } else if (node.type === 'theme' && !node.isRoot) {
     selectedThemeNode.value = node
     isThemeOverlayOpen.value = true
     isBookDrawerOpen.value = false
+    isAnnotationModalOpen.value = false
+  } else if (node.type === 'annotation') {
+    selectedAnnotationNode.value = node
+    isAnnotationModalOpen.value = true
+  } else if (node.type === 'note') {
+    navigateTo(`/canvas?note=${node.rawId}`)
+  } else if (node.type === 'canvas') {
+    navigateTo(`/canvas/${node.rawId}`)
+  }
+}
+
+const goToAnnotationBook = (node: GraphNode) => {
+  isAnnotationModalOpen.value = false
+  const bookId = node.bookId
+  if (!bookId) return
+  if (node.cfi) {
+    navigateTo(`/reader/${bookId}?cfi=${encodeURIComponent(node.cfi)}`)
+  } else {
+    navigateTo(`/reader/${bookId}`)
   }
 }
 

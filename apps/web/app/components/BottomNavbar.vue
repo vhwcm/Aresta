@@ -83,63 +83,21 @@
         </div>
       </div>
 
-      <!-- Item 2: Notas (Dropdown: Notas/Quadros, Grafo de Conhecimento) -->
-      <div class="relative" ref="notesMenuRef">
-        <button
-          @click="isNotesOpen = !isNotesOpen; isBooksOpen = false"
-          class="nav-item group focus:outline-none"
-          :class="{
-            'nav-item-active': isNotesActive || isNotesOpen
-          }"
-          title="Menu de Notas"
-          aria-haspopup="true"
-          :aria-expanded="isNotesOpen"
-        >
-          <FileTextIcon
-            class="w-4 h-4 md:w-4.5 md:h-4.5 transition-transform duration-200 group-hover:scale-110"
-            :class="(isNotesActive || isNotesOpen) ? 'text-accent' : 'text-textSecondary group-hover:text-textPrimary'"
-          />
-          <span class="hidden md:inline font-interface text-xs md:text-sm font-medium tracking-tight">Notas</span>
-        </button>
-
-        <!-- Dropdown Flutuante de Notas -->
-        <div
-          v-if="isNotesOpen"
-          class="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 w-64 md:w-68 p-2 rounded-2xl bg-bgPanel border border-divider shadow-2xl flex flex-col gap-1 z-50 animate-in fade-in zoom-in-95 duration-200"
-        >
-          <!-- 1. Notas & Quadros -->
-          <NuxtLink
-            to="/canvas"
-            @click="isNotesOpen = false"
-            class="flex items-center gap-3 p-2.5 rounded-xl transition-colors group"
-            :class="isCanvasActive ? 'bg-accent/15 text-accent border border-accent/30' : 'text-textPrimary hover:bg-black/5 dark:hover:bg-white/5'"
-          >
-            <div class="p-2 rounded-lg bg-accent/15 text-accent group-hover:scale-105 transition-transform">
-              <LayoutGridIcon class="w-4 h-4" />
-            </div>
-            <div class="flex flex-col text-left">
-              <span class="font-interface text-xs md:text-sm font-medium" :class="isCanvasActive ? 'text-accent font-semibold' : 'text-textPrimary group-hover:text-accent'">Notas & Quadros</span>
-              <span class="font-interface text-[10px] md:text-xs text-textSecondary">Anotações e canvas infinito</span>
-            </div>
-          </NuxtLink>
-
-          <!-- 2. Grafo de Conhecimento -->
-          <NuxtLink
-            to="/grafo"
-            @click="isNotesOpen = false"
-            class="flex items-center gap-3 p-2.5 rounded-xl transition-colors group"
-            :class="route.path === '/grafo' ? 'bg-accent/15 text-accent border border-accent/30' : 'text-textPrimary hover:bg-black/5 dark:hover:bg-white/5'"
-          >
-            <div class="p-2 rounded-lg bg-accent/15 text-accent group-hover:scale-105 transition-transform">
-              <NetworkIcon class="w-4 h-4" />
-            </div>
-            <div class="flex flex-col text-left">
-              <span class="font-interface text-xs md:text-sm font-medium" :class="route.path === '/grafo' ? 'text-accent font-semibold' : 'text-textPrimary group-hover:text-accent'">Grafo de Conhecimento</span>
-              <span class="font-interface text-[10px] md:text-xs text-textSecondary">Conexões conceituais e semânticas</span>
-            </div>
-          </NuxtLink>
-        </div>
-      </div>
+      <!-- Item 2: Anotações (Link direto para /canvas) -->
+      <NuxtLink
+        to="/canvas"
+        class="nav-item group focus:outline-none"
+        :class="{
+          'nav-item-active': isCanvasActive
+        }"
+        title="Anotações"
+      >
+        <FileTextIcon
+          class="w-4 h-4 md:w-4.5 md:h-4.5 transition-transform duration-200 group-hover:scale-110"
+          :class="isCanvasActive ? 'text-accent' : 'text-textSecondary group-hover:text-textPrimary'"
+        />
+        <span class="hidden md:inline font-interface text-xs md:text-sm font-medium tracking-tight">Anotações</span>
+      </NuxtLink>
 
       <!-- Item 3: Início (Logo Oficial Aresta -> Home) -->
       <NuxtLink
@@ -218,15 +176,12 @@ watch(
   (loggedIn) => {
     if (!loggedIn) {
       isBooksOpen.value = false
-      isNotesOpen.value = false
     }
   }
 )
 
 const isBooksOpen = ref(false)
-const isNotesOpen = ref(false)
 const booksMenuRef = ref<HTMLElement | null>(null)
-const notesMenuRef = ref<HTMLElement | null>(null)
 
 // Rotas ativas com destaque visual
 const isHomeActive = computed(() => {
@@ -248,11 +203,6 @@ const isCanvasActive = computed(() => {
   return path === '/canvas' || path.startsWith('/notes')
 })
 
-const isNotesActive = computed(() => {
-  const path = route?.path || ''
-  return isCanvasActive.value || path.startsWith('/grafo')
-})
-
 const isReviewActive = computed(() => {
   const path = route?.path || ''
   return path.startsWith('/revisao') || path.startsWith('/curva-do-esquecimento')
@@ -263,22 +213,18 @@ const isAccountActive = computed(() => {
   return path.startsWith('/conta') || path.startsWith('/users') || path.startsWith('/admin')
 })
 
-// Fechar dropdowns de livros e notas ao clicar fora
+// Fechar dropdown de livros ao clicar fora
 const handleClickOutside = (e: MouseEvent) => {
   if (booksMenuRef.value && !booksMenuRef.value.contains(e.target as Node)) {
     isBooksOpen.value = false
   }
-  if (notesMenuRef.value && !notesMenuRef.value.contains(e.target as Node)) {
-    isNotesOpen.value = false
-  }
 }
 
-// Fechar dropdowns ao navegar
+// Fechar dropdown ao navegar
 watch(
   () => route?.path,
   () => {
     isBooksOpen.value = false
-    isNotesOpen.value = false
   }
 )
 

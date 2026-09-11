@@ -43,6 +43,8 @@ app.get('/health', (_req, res) => {
     service: 'aresta-api',
     version: '1.0.0',
     port: env.PORT,
+    geminiModel: env.GEMINI_MODEL,
+    hasApiKey: Boolean(env.GEMINI_API_KEY),
     modules: ['auth', 'reader', 'canvas', 'memory', 'ai'],
   })
 })

@@ -2,13 +2,18 @@ import path from 'path'
 import fs from 'fs'
 
 try {
-  const rootEnv = path.resolve(process.cwd(), '.env')
-  const parentEnv = path.resolve(process.cwd(), '../../.env')
-  if (typeof (process as any).loadEnvFile === 'function') {
-    if (fs.existsSync(rootEnv)) {
-      (process as any).loadEnvFile(rootEnv)
-    } else if (fs.existsSync(parentEnv)) {
-      (process as any).loadEnvFile(parentEnv)
+  const envCandidates = [
+    path.resolve(process.cwd(), '.env'),
+    path.resolve(process.cwd(), '../.env'),
+    path.resolve(process.cwd(), '../../.env'),
+    path.resolve(__dirname, '../../../../.env'),
+    path.resolve(__dirname, '../../../.env'),
+    path.resolve(__dirname, '../../.env'),
+  ]
+  for (const candidate of envCandidates) {
+    if (fs.existsSync(candidate) && typeof (process as any).loadEnvFile === 'function') {
+      (process as any).loadEnvFile(candidate)
+      break
     }
   }
 } catch {
@@ -22,6 +27,6 @@ export const env = {
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '7d',
   STORAGE_PATH: path.resolve(process.env.STORAGE_PATH || './storage'),
   GEMINI_API_KEY: process.env.GEMINI_API_KEY || process.env.AI_KEY || '',
-  GEMINI_MODEL: process.env.GEMINI_MODEL || 'gemini-1.5-flash',
-  GEMINI_EMBED_MODEL: process.env.GEMINI_EMBED_MODEL || 'text-embedding-004',
+  GEMINI_MODEL: process.env.GEMINI_MODEL || 'gemini-3.5-flash',
+  GEMINI_EMBED_MODEL: process.env.GEMINI_EMBED_MODEL || 'gemini-embedding-001',
 }

@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import { env } from '../../../config/env'
 
-const DEFAULT_API_KEY = process.env.GEMINI_API_KEY || process.env.AI_KEY || ''
+const DEFAULT_API_KEY = env.GEMINI_API_KEY || process.env.GEMINI_API_KEY || process.env.AI_KEY || ''
 const FLASHCARD_API_KEY = process.env.GEMINI_FLASHCARD_API_KEY || process.env.FLASHCARD_AI_KEY || DEFAULT_API_KEY
 const DIDACTIC_API_KEY = process.env.GEMINI_DIDACTIC_API_KEY || process.env.DIDACTIC_AI_KEY || DEFAULT_API_KEY
 
@@ -8,10 +9,10 @@ if (!DEFAULT_API_KEY && !FLASHCARD_API_KEY && !DIDACTIC_API_KEY) {
   console.warn('[Gemini Config] Warning: Nenhum GEMINI_API_KEY configurado. Chave dummy será usada em modo offline/desenvolvimento.')
 }
 
-export const GEMINI_MODEL = process.env.GEMINI_MODEL ?? 'gemini-1.5-flash'
+export const GEMINI_MODEL = env.GEMINI_MODEL || 'gemini-3.5-flash'
 export const GEMINI_FLASHCARD_MODEL = process.env.GEMINI_FLASHCARD_MODEL ?? GEMINI_MODEL
 export const GEMINI_DIDACTIC_MODEL = process.env.GEMINI_DIDACTIC_MODEL ?? GEMINI_MODEL
-export const GEMINI_EMBED_MODEL = process.env.GEMINI_EMBED_MODEL ?? 'text-embedding-004'
+export const GEMINI_EMBED_MODEL = env.GEMINI_EMBED_MODEL || 'gemini-embedding-001'
 export const EMBED_DIMENSIONS = 1536
 
 // Clients dedicados para cada finalidade de IA

@@ -7,15 +7,23 @@ describe('MemoryService & GraphService', () => {
     expect(true).toBe(true)
   })
 
-  it('getGraph não inclui temas que não possuem livros nem anotações', async () => {
+  it('getGraph retorna grafo unificado com counts e tipos estruturados', async () => {
     const graph = await graphService.getGraph(1)
     expect(graph).toHaveProperty('nodes')
     expect(graph).toHaveProperty('edges')
+    expect(graph).toHaveProperty('counts')
+    expect(Array.isArray(graph.nodes)).toBe(true)
+    expect(Array.isArray(graph.edges)).toBe(true)
+    expect(graph.counts).toHaveProperty('themes')
+    expect(graph.counts).toHaveProperty('books')
+    expect(graph.counts).toHaveProperty('annotations')
+    expect(graph.counts).toHaveProperty('notes')
+    expect(graph.counts).toHaveProperty('canvases')
 
-    const themeNodes = graph.nodes.filter((n: any) => n.type === 'theme')
-    for (const tn of themeNodes) {
-      const hasBookOrNote = (tn.bookCount ?? 0) > 0 || (tn.annotationCount ?? 0) > 0
-      expect(hasBookOrNote).toBe(true)
+    const nodeTypes = new Set(graph.nodes.map((n: any) => n.type))
+    // Os nós retornados devem ser de tipos válidos
+    for (const type of nodeTypes) {
+      expect(['theme', 'book', 'annotation', 'note', 'canvas']).toContain(type)
     }
   })
 })

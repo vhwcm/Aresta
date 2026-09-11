@@ -163,30 +163,37 @@ Idioma: ${userLanguage}.`
 
     const userPrompt = promptHint || 'Transcribe exclusively all written and handwritten text in this image. Do not add any conversational text or formatting.'
 
-    try {
-      const model = genAI.getGenerativeModel({
-        model: GEMINI_MODEL,
-        systemInstruction: defaultInstruction,
-      })
+    const candidateModels = [GEMINI_MODEL, 'gemini-3.5-flash', 'gemini-3.5-flash-lite']
+    const modelsToTry = [...new Set(candidateModels.filter(Boolean))]
 
-      const result = await model.generateContent([
-        userPrompt,
-        {
-          inlineData: {
-            data: cleanBase64,
-            mimeType: mimeType || 'image/png',
+    let lastError: any = null
+    for (const modelName of modelsToTry) {
+      try {
+        const model = genAI.getGenerativeModel({
+          model: modelName,
+          systemInstruction: defaultInstruction,
+        })
+
+        const result = await model.generateContent([
+          userPrompt,
+          {
+            inlineData: {
+              data: cleanBase64,
+              mimeType: mimeType || 'image/png',
+            },
           },
-        },
-      ])
+        ])
 
-      const rawText = result.response.text() || ''
-      const cleanedText = rawText.replace(/^```[a-z]*\n?/i, '').replace(/\n?```$/i, '').trim()
-      return { text: cleanedText }
-    } catch (err: any) {
-      console.warn('[AiService] Falha ou indisponibilidade no Gemini OCR:', err.message)
-      // Fallback em caso de falha de chave/rede
-      return { text: 'Nota manuscrita transcrita' }
+        const rawText = result.response.text() || ''
+        const cleanedText = rawText.replace(/^```[a-z]*\n?/i, '').replace(/\n?```$/i, '').trim()
+        return { text: cleanedText }
+      } catch (err: any) {
+        lastError = err
+        console.warn(`[AiService] Tentativa com modelo ${modelName} falhou:`, err.message)
+      }
     }
+
+    throw new Error(`Falha ao transcrever imagem com IA: ${lastError?.message || 'Erro desconhecido'}`)
   }
 }
 

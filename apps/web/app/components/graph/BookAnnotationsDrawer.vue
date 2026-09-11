@@ -31,6 +31,14 @@
           <p class="text-xs font-interface text-textSecondary mt-0.5">
             {{ book.author || 'Autor desconhecido' }}
           </p>
+          <NuxtLink
+            :to="`/reader/${book.rawId || (typeof book.id === 'number' ? book.id : parseInt(String(book.id).replace('book-', ''), 10))}`"
+            class="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-accent text-white text-xs font-semibold hover:bg-accent/90 transition-all shadow-md w-fit active:scale-95"
+            title="Abrir livro no leitor"
+          >
+            <BookOpenIcon class="w-3.5 h-3.5" />
+            <span>Continuar Leitura</span>
+          </NuxtLink>
         </div>
       </div>
 

@@ -1,0 +1,58 @@
+================================================================================
+                    FLUXO DE DADOS: GRAFO DE CONHECIMENTO UNIFICADO
+================================================================================
+
++-------------------------------------------------------------------------------+
+|                             FONTES DE DADOS (DB)                             |
+|                                                                               |
+|   +-----------+     +-----------+     +--------------+     +--------------+   |
+|   |   Books   |     |  Themes   |     |  Annotations |     | Notes/Canvas |   |
+|   +-----+-----+     +-----+-----+     +-------+------+     +-------+------+   |
++---------|-----------------|-------------------|--------------------|----------+
+          |                 |                   |                    |
+          +-----------------+---------+---------+--------------------+
+                                      |
+                                      v
++-------------------------------------------------------------------------------+
+|                       BACKEND: GraphService.getGraph()                        |
+|                                                                               |
+|   1. Mapeamento de Nós:                                                       |
+|      - theme-${id}    -> { type: 'theme', name, color, ... }                  |
+|      - book-${id}     -> { type: 'book', title, coverPath, ... }              |
+|      - ann-${id}      -> { type: 'annotation', cfi, selectedText, ... }       |
+|      - note-${id}     -> { type: 'note', title, folder, tags, ... }           |
+|      - canvas-${id}   -> { type: 'canvas', title, description, ... }          |
+|                                                                               |
+|   2. Deduplicação e Construção de Arestas Semânticas:                         |
+|      - [Theme]        ---- theme-hierarchy --->   [Child Theme]               |
+|      - [Book]         ---- book-theme -------->   [Theme]                     |
+|      - [Annotation]   ---- annotation-book --->   [Book]                      |
+|      - [Annotation]   ---- annotation-theme -->   [Theme]                     |
+|      - [Note]         ---- note-book --------->   [Book]                      |
+|      - [Note]         ---- note-canvas ------->   [Canvas]                    |
+|      - [Note]         ---- note-note --------->   [Note]                      |
+|      - [Canvas]       ---- canvas-note ------->   [Note]                      |
+|      - [Note]         ---- note-theme -------->   [Theme] (Tag Match)         |
++-------------------------------------+-----------------------------------------+
+                                      |
+                           JSON { nodes, edges }
+                                      |
+                                      v
++-------------------------------------------------------------------------------+
+|                       FRONTEND: useGraph + D3 Simulation                      |
+|                                                                               |
+|   Filtros de Camadas Visuais:                                                 |
+|   [x] Temas   [x] Livros   [x] Anotações   [x] Notas   [x] Quadros            |
+|                                                                               |
+|   Ações ao Clicar no Nó:                                                      |
+|   - Book       -> Abre Gaveta de Anotações do Livro com botão Ler Livro       |
+|   - Annotation -> Abre Card da Anotação com atalho para o Leitor no CFI       |
+|   - Note       -> Abre Modal / Editor da Nota                                 |
+|   - Canvas     -> Redireciona para o Canvas /canvas/:id                       |
+|   - Theme      -> Abre Overlay do Tema                                        |
+|                                                                               |
+|   Contexto de Visualização:                                                   |
+|   - /grafo       : Tela Cheia Principal                                       |
+|   - /canvas      : Alternador 'Grafo' exibe este mesmo Grafo Unificado        |
+|   - /reader      : Grafo DESATIVADO durante a leitura (foco total no texto)   |
++-------------------------------------------------------------------------------+

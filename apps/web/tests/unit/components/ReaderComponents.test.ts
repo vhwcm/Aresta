@@ -113,7 +113,6 @@ describe('Reader Components', () => {
       expect(notesBtn.exists()).toBe(true)
       await notesBtn.trigger('click')
       expect(wrapper.emitted('toggleNotes')).toBeTruthy()
-      expect(wrapper.emitted('toggleGraph')).toBeTruthy()
     })
 
     it('alterna modo de 1 página e 2 páginas ao clicar no botão de layout', async () => {

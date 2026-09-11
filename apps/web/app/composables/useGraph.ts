@@ -133,12 +133,12 @@ export const useGraph = () => {
           console.warn('[useGraph] Falha ao sincronizar dados locais de livros no grafo:', repoErr)
         }
 
-        // Garantir que tags/temas que não estão anexadas a nenhum livro nem nenhuma nota não apareçam no grafo
-        const bookConnectedThemeIds = new Set<string>()
+        // Garantir que tags/temas que não estão anexadas a nenhum livro, anotação ou nota não apareçam no grafo
+        const connectedThemeIds = new Set<string>()
         for (const e of edges) {
-          if (e.type === 'book-theme') {
-            bookConnectedThemeIds.add(String(e.source))
-            bookConnectedThemeIds.add(String(e.target))
+          if (e.type === 'book-theme' || e.type === 'annotation-theme' || e.type === 'note-theme') {
+            connectedThemeIds.add(String(e.source))
+            connectedThemeIds.add(String(e.target))
           }
         }
 
@@ -159,10 +159,11 @@ export const useGraph = () => {
           const rawIdStr = String(node.rawId || '')
           const hasBook =
             Boolean(node.bookCount && node.bookCount > 0) ||
-            bookConnectedThemeIds.has(idStr) ||
-            (Boolean(rawIdStr) && bookConnectedThemeIds.has(rawIdStr))
+            connectedThemeIds.has(idStr) ||
+            (Boolean(rawIdStr) && connectedThemeIds.has(rawIdStr))
           const hasNote =
             Boolean(node.annotationCount && node.annotationCount > 0) ||
+            Boolean(node.noteCount && node.noteCount > 0) ||
             noteConnectedThemeIds.has(idStr) ||
             (Boolean(rawIdStr) && noteConnectedThemeIds.has(rawIdStr))
           return hasBook || hasNote
@@ -173,7 +174,17 @@ export const useGraph = () => {
           (e) => activeNodeIds.has(String(e.source)) && activeNodeIds.has(String(e.target))
         )
 
-        graphData.value = { nodes, edges }
+        graphData.value = {
+          nodes,
+          edges,
+          counts: data.counts || {
+            themes: nodes.filter((n) => n.type === 'theme').length,
+            books: nodes.filter((n) => n.type === 'book').length,
+            annotations: nodes.filter((n) => n.type === 'annotation').length,
+            notes: nodes.filter((n) => n.type === 'note').length,
+            canvases: nodes.filter((n) => n.type === 'canvas').length,
+          },
+        }
       }
     } catch (e: any) {
       console.error('Erro ao carregar dados do Grafo:', e)

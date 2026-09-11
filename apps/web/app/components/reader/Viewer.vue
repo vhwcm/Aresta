@@ -17,7 +17,6 @@
         <ReaderBottomBar
           v-if="!store.isZenMode"
           :is-notes-active="isDesktop ? store.isNotesOpen : store.isMobileNotesOpen"
-          :is-graph-active="isDesktop ? store.isNotesOpen : store.isMobileNotesOpen"
           @close="handleClose"
           @open-saved-pages="isSavedPagesOpen = true"
           @open-annotation="handleOpenAnnotation"

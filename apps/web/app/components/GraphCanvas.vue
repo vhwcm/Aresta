@@ -22,10 +22,59 @@
       <g ref="gRef">
         <!-- Links/Arestas -->
         <g class="links-group"></g>
-        <!-- Nós/Temas e Livros -->
+        <!-- Nós/Temas, Livros, Anotações, Notas e Quadros -->
         <g class="nodes-group"></g>
       </g>
     </svg>
+
+    <!-- Tooltip Flutuante no Hover -->
+    <div
+      v-if="hoveredNode"
+      class="absolute z-30 pointer-events-none p-3 rounded-xl bg-bgPanel/95 backdrop-blur-md border border-divider shadow-2xl text-xs font-interface max-w-xs transition-opacity duration-150 animate-in fade-in"
+      :style="{ left: tooltipPos.x + 16 + 'px', top: tooltipPos.y + 16 + 'px' }"
+    >
+      <div class="flex items-center gap-1.5 mb-1">
+        <span
+          class="text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded tracking-wider"
+          :class="getNodeBadgeClass(hoveredNode.type)"
+        >
+          {{ getNodeBadgeLabel(hoveredNode.type) }}
+        </span>
+        <span v-if="hoveredNode.folder" class="text-[10px] text-textSecondary truncate">
+          📁 {{ hoveredNode.folder }}
+        </span>
+      </div>
+
+      <h4 class="font-semibold text-textPrimary text-sm line-clamp-2">
+        {{ hoveredNode.title || hoveredNode.name }}
+      </h4>
+
+      <p v-if="hoveredNode.selectedText" class="text-[11px] text-accent italic mt-1 line-clamp-3 border-l-2 border-accent/40 pl-2 py-0.5">
+        "{{ hoveredNode.selectedText }}"
+      </p>
+
+      <p v-if="hoveredNode.description" class="text-[11px] text-textSecondary mt-1 line-clamp-2">
+        {{ hoveredNode.description }}
+      </p>
+
+      <p v-if="hoveredNode.note && hoveredNode.selectedText" class="text-[11px] text-textPrimary/90 mt-1 line-clamp-2 font-light">
+        💭 {{ hoveredNode.note }}
+      </p>
+
+      <div v-if="hoveredNode.tags && hoveredNode.tags.length > 0" class="flex flex-wrap gap-1 mt-2">
+        <span
+          v-for="t in hoveredNode.tags"
+          :key="t"
+          class="text-[9px] px-1.5 py-0.2 rounded bg-bgRoot text-textSecondary border border-divider"
+        >
+          #{{ t }}
+        </span>
+      </div>
+
+      <p class="text-[9px] text-accent/80 mt-2 font-mono">
+        💡 Clique para abrir detalhes
+      </p>
+    </div>
 
     <!-- Toolbar Flutuante de Controles Superiores -->
     <div
@@ -46,7 +95,7 @@
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="Buscar tema ou livro..."
+          placeholder="Buscar tema, livro, anotação..."
           class="rounded-xl pl-9 pr-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:outline-none focus:border-accent w-full transition-all border"
           :class="isSepiaMode
             ? 'bg-[#F5EEDC]/80 border-[#dfd5c0] text-[#2C2621] placeholder:text-[#786C5E]/60'
@@ -87,13 +136,39 @@
         <span :class="{ 'hidden sm:inline': isCompact }">Conectar</span>
       </button>
     </div>
+
+    <!-- Barra de Filtros por Camadas de Nós (Chips Visíveis quando não compacto) -->
+    <div
+      v-if="!isCompact"
+      class="absolute z-10 top-20 left-6 flex items-center gap-1.5 p-1.5 rounded-2xl backdrop-blur-md border shadow-lg transition-colors duration-200 max-w-[calc(100%-3rem)] flex-wrap"
+      :class="isSepiaMode
+        ? 'bg-[#FAF5E8]/90 border-[#dfd5c0] text-[#2C2621]'
+        : (isLightMode ? 'bg-white/90 border-gray-200 text-gray-800' : 'bg-bgPanel/85 border-divider text-textPrimary')"
+    >
+      <span class="text-[11px] font-medium text-textSecondary px-2 select-none">Camadas:</span>
+
+      <button
+        v-for="layer in layerDefinitions"
+        :key="layer.type"
+        @click="toggleLayer(layer.type)"
+        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-medium transition-all cursor-pointer select-none border"
+        :class="activeLayers.has(layer.type)
+          ? `${layer.activeBg} ${layer.activeText} shadow-xs font-semibold`
+          : 'opacity-40 hover:opacity-75 bg-transparent text-textSecondary border-transparent'"
+        :title="`Alternar exibição de ${layer.label}`"
+      >
+        <span>{{ layer.icon }}</span>
+        <span>{{ layer.label }}</span>
+        <span class="text-[10px] ml-0.5 opacity-75 font-mono">({{ getLayerCount(layer.type) }})</span>
+      </button>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, onBeforeUnmount } from 'vue'
 import * as d3 from 'd3'
-import type { GraphNode, GraphEdge } from '~/interfaces/graph'
+import type { GraphNode, GraphEdge, GraphNodeType } from '~/interfaces/graph'
 import { PlusIcon, SearchIcon, LinkIcon } from 'lucide-vue-next'
 import { useSettings } from '~/composables/useSettings'
 import { getCoverUrl } from '~/utils/cover'
@@ -126,28 +201,75 @@ const effectiveTheme = computed(() => {
 
 const isSepiaMode = computed(() => effectiveTheme.value === 'sepia')
 const isLightMode = computed(() => effectiveTheme.value === 'light' || effectiveTheme.value === 'white')
-const isDarkMode = computed(() => effectiveTheme.value === 'dark' || effectiveTheme.value === 'black')
 
 const containerRef = ref<HTMLElement | null>(null)
 const svgRef = ref<SVGSVGElement | null>(null)
 const gRef = ref<SVGGElement | null>(null)
 
 const searchQuery = ref('')
+const hoveredNode = ref<GraphNode | null>(null)
+const tooltipPos = ref({ x: 0, y: 0 })
+
+// Filtros de camadas ativas (por padrão, todas visíveis)
+const activeLayers = ref<Set<GraphNodeType>>(
+  new Set(['theme', 'book', 'annotation', 'note', 'canvas'])
+)
+
+const layerDefinitions: Array<{
+  type: GraphNodeType
+  label: string
+  icon: string
+  activeBg: string
+  activeText: string
+}> = [
+  { type: 'theme', label: 'Temas', icon: '🏷️', activeBg: 'bg-accent/20 border-accent/40', activeText: 'text-accent' },
+  { type: 'book', label: 'Livros', icon: '📚', activeBg: 'bg-blue-500/20 border-blue-500/40', activeText: 'text-blue-400' },
+  { type: 'annotation', label: 'Anotações', icon: '📝', activeBg: 'bg-amber-500/20 border-amber-500/40', activeText: 'text-amber-400' },
+  { type: 'note', label: 'Notas', icon: '📄', activeBg: 'bg-indigo-500/20 border-indigo-500/40', activeText: 'text-indigo-400' },
+  { type: 'canvas', label: 'Quadros', icon: '🖼️', activeBg: 'bg-emerald-500/20 border-emerald-500/40', activeText: 'text-emerald-400' },
+]
+
+const toggleLayer = (type: GraphNodeType) => {
+  const next = new Set(activeLayers.value)
+  if (next.has(type)) {
+    if (next.size > 1) {
+      next.delete(type)
+    }
+  } else {
+    next.add(type)
+  }
+  activeLayers.value = next
+  initGraph()
+}
+
+const getLayerCount = (type: GraphNodeType) => {
+  return props.nodes.filter((n) => (n.type || 'theme') === type).length
+}
+
+const getNodeBadgeLabel = (type?: GraphNodeType) => {
+  switch (type) {
+    case 'book': return 'Livro'
+    case 'annotation': return 'Anotação'
+    case 'note': return 'Nota'
+    case 'canvas': return 'Quadro'
+    case 'theme':
+    default: return 'Tema'
+  }
+}
+
+const getNodeBadgeClass = (type?: GraphNodeType) => {
+  switch (type) {
+    case 'book': return 'bg-blue-500/20 text-blue-400'
+    case 'annotation': return 'bg-amber-500/20 text-amber-400'
+    case 'note': return 'bg-indigo-500/20 text-indigo-400'
+    case 'canvas': return 'bg-emerald-500/20 text-emerald-400'
+    case 'theme':
+    default: return 'bg-accent/20 text-accent'
+  }
+}
 
 let simulation: any = null
 let zoomBehavior: any = null
-
-const getPastelFill = (colorHex?: string, isRoot = false) => {
-  const baseColor = colorHex || (isRoot ? '#E57B55' : '#64748B')
-  const neutral = isSepiaMode.value ? '#F5EEDC' : (isLightMode.value ? '#FFFFFF' : '#161619')
-  return d3.interpolateRgb(neutral, baseColor)(isRoot ? 0.35 : 0.25)
-}
-
-const getPastelStroke = (colorHex?: string, isRoot = false) => {
-  const baseColor = colorHex || (isRoot ? '#E57B55' : '#64748B')
-  const neutral = isSepiaMode.value ? '#D8CCB0' : (isLightMode.value ? '#CBD5E1' : '#161619')
-  return d3.interpolateRgb(neutral, baseColor)(isRoot ? 0.85 : 0.70)
-}
 
 const getMonochromeIconColor = () => {
   if (isSepiaMode.value) return '#4A3E31'
@@ -210,13 +332,16 @@ const getThemeIconSvg = (name?: string, category?: string, isRoot = false): stri
 const getNodeRadius = (node: GraphNode) => {
   if (node.isRoot || node.id === -999 || node.id === 'root') return 36
   if (node.type === 'book') return 26
+  if (node.type === 'annotation') return 14
+  if (node.type === 'note') return 17
+  if (node.type === 'canvas') return 19
   const count = node.bookCount || 0
-  return Math.min(24 + count * 3, 40)
+  return Math.min(22 + count * 2, 38)
 }
 
-const getTruncatedTitle = (title?: string) => {
+const getTruncatedTitle = (title?: string, max = 12) => {
   if (!title) return ''
-  return title.length > 10 ? `${title.slice(0, 10)}...` : title
+  return title.length > max ? `${title.slice(0, max - 2)}...` : title
 }
 
 const initGraph = () => {
@@ -243,8 +368,9 @@ const initGraph = () => {
     id: 'root',
     rawId: -999,
     name: 'Meu Conhecimento',
+    title: 'Meu Conhecimento',
     color: '#E57B55',
-    description: 'Nó central agregador do seu universo de leitura',
+    description: 'Nó central agregador do seu universo de conhecimento',
     type: 'theme',
     isRoot: true,
     x: width / 2,
@@ -253,26 +379,32 @@ const initGraph = () => {
     fy: height / 2,
   }
 
-  // Filtrar nós conforme busca
+  // Filtrar nós conforme busca e camadas ativas
   const query = searchQuery.value.trim().toLowerCase()
-  const filteredPropsNodes = query
-    ? props.nodes.filter(
-        (n) =>
-          (n.name && n.name.toLowerCase().includes(query)) ||
-          (n.fullTitle && n.fullTitle.toLowerCase().includes(query)) ||
-          (n.author && n.author.toLowerCase().includes(query))
-      )
-    : props.nodes
+  const filteredPropsNodes = props.nodes.filter((n) => {
+    const nodeType = n.type || 'theme'
+    if (!activeLayers.value.has(nodeType)) return false
+    if (!query) return true
+    return (
+      (n.name && n.name.toLowerCase().includes(query)) ||
+      (n.title && n.title.toLowerCase().includes(query)) ||
+      (n.fullTitle && n.fullTitle.toLowerCase().includes(query)) ||
+      (n.author && n.author.toLowerCase().includes(query)) ||
+      (n.selectedText && n.selectedText.toLowerCase().includes(query)) ||
+      (n.note && n.note.toLowerCase().includes(query)) ||
+      (n.tags && n.tags.some((t) => t.toLowerCase().includes(query)))
+    )
+  })
 
   const inputNodes = filteredPropsNodes.map((n) => ({ ...n }))
   const simulationNodes = [rootNode, ...inputNodes]
   const nodeMap = new Map(simulationNodes.map((n) => [String(n.id), n]))
 
-  // 2. Links explícitos entre nós
+  // 2. Links explícitos entre nós válidos
   const explicitLinks = props.edges
     .map((e) => {
-      const sourceId = String(typeof e.source === 'object' ? e.source.id : e.source)
-      const targetId = String(typeof e.target === 'object' ? e.target.id : e.target)
+      const sourceId = String(typeof e.source === 'object' ? (e.source as any).id : e.source)
+      const targetId = String(typeof e.target === 'object' ? (e.target as any).id : e.target)
       return {
         id: String(e.id),
         source: nodeMap.get(sourceId),
@@ -283,7 +415,7 @@ const initGraph = () => {
     })
     .filter((link) => link.source && link.target)
 
-  // 3. Links conectando Nós de Temas principais ao Nó Raiz
+  // 3. Links conectando Nós de Temas ao Nó Raiz
   const themeNodes = inputNodes.filter((n) => n.type === 'theme')
   const rootLinks = themeNodes
     .map((node) => ({
@@ -295,26 +427,25 @@ const initGraph = () => {
     }))
     .filter((link) => link.target)
 
-  // 4. Links conectando Livros sem tema ao Nó Raiz (para nenhum livro ficar flutuando isolado)
-  const bookNodes = inputNodes.filter((n) => n.type === 'book')
-  const connectedBookNodeIds = new Set<string>()
+  // 4. Links conectando nós sem conexões ao Nó Raiz para evitar dispersão infinita
+  const connectedNodeIds = new Set<string>()
   for (const link of explicitLinks) {
-    if (link.source) connectedBookNodeIds.add(String(link.source.id))
-    if (link.target) connectedBookNodeIds.add(String(link.target.id))
+    if (link.source) connectedNodeIds.add(String(link.source.id))
+    if (link.target) connectedNodeIds.add(String(link.target.id))
   }
 
-  const orphanBookLinks = bookNodes
-    .filter((b) => !connectedBookNodeIds.has(String(b.id)))
-    .map((b) => ({
-      id: `root-book-edge-${b.id}`,
+  const orphanLinks = inputNodes
+    .filter((n) => n.type !== 'theme' && !connectedNodeIds.has(String(n.id)))
+    .map((n) => ({
+      id: `root-orphan-${n.id}`,
       source: rootNode,
-      target: nodeMap.get(String(b.id)),
-      type: 'root-book',
+      target: nodeMap.get(String(n.id)),
+      type: 'root-orphan',
       isRootEdge: true,
     }))
     .filter((link) => link.target)
 
-  const simulationLinks = [...rootLinks, ...orphanBookLinks, ...explicitLinks]
+  const simulationLinks = [...rootLinks, ...orphanLinks, ...explicitLinks]
 
   // Criar Simulação de Forças D3
   simulation = d3
@@ -324,11 +455,24 @@ const initGraph = () => {
       d3
         .forceLink(simulationLinks as any)
         .id((d: any) => String(d.id))
-        .distance((d: any) => (d.isRootEdge ? (d.type === 'root-book' ? 200 : 170) : d.type === 'book-theme' ? 95 : 130))
+        .distance((d: any) => {
+          if (d.isRootEdge) return 180
+          if (d.type === 'book-theme') return 110
+          if (d.type === 'annotation-book') return 70
+          if (d.type === 'annotation-theme') return 85
+          if (d.type === 'note-book' || d.type === 'note-canvas') return 95
+          return 120
+        })
     )
-    .force('charge', d3.forceManyBody().strength((d: any) => (d.type === 'book' ? -220 : -420)))
+    .force('charge', d3.forceManyBody().strength((d: any) => {
+      if (d.type === 'book') return -200
+      if (d.type === 'annotation') return -100
+      if (d.type === 'note') return -140
+      if (d.type === 'canvas') return -180
+      return -360
+    }))
     .force('center', d3.forceCenter(width / 2, height / 2))
-    .force('collide', d3.forceCollide().radius((d: any) => getNodeRadius(d) + 20))
+    .force('collide', d3.forceCollide().radius((d: any) => getNodeRadius(d) + 16))
 
   // Renderizar Links (Arestas)
   const linkGroup = g.select('.links-group')
@@ -336,27 +480,42 @@ const initGraph = () => {
     .selectAll<SVGLineElement, any>('line')
     .data(simulationLinks, (d: any) => d.id)
     .join('line')
-    .attr('stroke', (d: any) =>
-      d.isRootEdge
-        ? isSepiaMode.value
-          ? 'rgba(217, 119, 6, 0.45)'
+    .attr('stroke', (d: any) => {
+      if (d.isRootEdge) {
+        return isSepiaMode.value
+          ? 'rgba(217, 119, 6, 0.40)'
           : isLightMode.value
-          ? 'rgba(229, 123, 85, 0.45)'
-          : 'rgba(229, 123, 85, 0.35)'
-        : d.type === 'book-theme'
-        ? isSepiaMode.value
-          ? 'rgba(180, 83, 9, 0.40)'
-          : isLightMode.value
-          ? 'rgba(59, 130, 246, 0.35)'
-          : 'rgba(59, 130, 246, 0.30)'
-        : isSepiaMode.value
-        ? 'rgba(120, 108, 94, 0.22)'
-        : isLightMode.value
-        ? 'rgba(0, 0, 0, 0.15)'
-        : 'rgba(255, 255, 255, 0.12)'
-    )
-    .attr('stroke-width', (d: any) => (d.isRootEdge ? 1.6 : d.type === 'book-theme' ? 1.4 : 1.2))
-    .attr('stroke-dasharray', (d: any) => (d.type === 'book-theme' ? '3,3' : (d.type === 'root-book' ? '4,4' : 'none')))
+          ? 'rgba(229, 123, 85, 0.40)'
+          : 'rgba(229, 123, 85, 0.30)'
+      }
+      switch (d.type) {
+        case 'book-theme':
+          return isLightMode.value ? 'rgba(59, 130, 246, 0.40)' : 'rgba(59, 130, 246, 0.35)'
+        case 'annotation-book':
+        case 'annotation-theme':
+          return isLightMode.value ? 'rgba(245, 158, 11, 0.45)' : 'rgba(245, 158, 11, 0.35)'
+        case 'note-book':
+        case 'note-note':
+          return isLightMode.value ? 'rgba(99, 102, 241, 0.45)' : 'rgba(99, 102, 241, 0.35)'
+        case 'canvas-note':
+        case 'note-canvas':
+          return isLightMode.value ? 'rgba(16, 185, 129, 0.45)' : 'rgba(16, 185, 129, 0.35)'
+        case 'note-theme':
+          return isLightMode.value ? 'rgba(167, 139, 250, 0.45)' : 'rgba(167, 139, 250, 0.35)'
+        default:
+          return isSepiaMode.value
+            ? 'rgba(120, 108, 94, 0.20)'
+            : isLightMode.value
+            ? 'rgba(0, 0, 0, 0.12)'
+            : 'rgba(255, 255, 255, 0.12)'
+      }
+    })
+    .attr('stroke-width', (d: any) => (d.isRootEdge ? 1.4 : 1.2))
+    .attr('stroke-dasharray', (d: any) => {
+      if (d.type === 'book-theme' || d.type === 'annotation-theme' || d.type === 'note-theme') return '3,3'
+      if (d.isRootEdge) return '4,4'
+      return 'none'
+    })
     .attr('stroke-opacity', 1)
 
   // Renderizar Nós
@@ -394,7 +553,6 @@ const initGraph = () => {
   // ----------------------------------------------------
   const bookNodesSelection = nodesSelection.filter((d: any) => d.type === 'book')
 
-  // Fundo/Card arredondado para livro
   bookNodesSelection
     .append('rect')
     .attr('x', -22)
@@ -409,13 +567,11 @@ const initGraph = () => {
     .attr('filter', 'url(#node-shadow)')
     .attr('class', 'transition-all duration-300 hover:scale-105')
 
-  // Ícone de placeholder elegante e capa do livro
   bookNodesSelection.each(function (d: any) {
     const nodeEl = d3.select(this)
     const rawBookId = d.rawId || (typeof d.id === 'number' ? d.id : parseInt(String(d.id).replace('book-', ''), 10))
     const coverUrl = getCoverUrl(d.coverPath, rawBookId)
 
-    // Ícone SVG de fallback sempre posicionado centralmente no card
     const fallbackG = nodeEl.append('g').attr('class', 'book-fallback-icon').attr('pointer-events', 'none')
     fallbackG
       .append('path')
@@ -453,14 +609,12 @@ const initGraph = () => {
         .attr('preserveAspectRatio', 'xMidYMid slice')
         .attr('clip-path', `url(#${clipId})`)
 
-      // Se falhar o carregamento da imagem remota/local, remove a tag image sem exibir ícone quebrado do navegador
       img.on('error', function () {
         d3.select(this).remove()
       })
     }
   })
 
-  // Rótulo do Livro: Título truncado em 10 caracteres + '...'
   bookNodesSelection
     .append('text')
     .attr('text-anchor', 'middle')
@@ -470,14 +624,140 @@ const initGraph = () => {
     .attr('font-weight', '600')
     .attr('font-family', 'system-ui, -apple-system, sans-serif')
     .attr('pointer-events', 'none')
-    .text((d: any) => getTruncatedTitle(d.fullTitle || d.name))
+    .text((d: any) => getTruncatedTitle(d.fullTitle || d.name, 12))
 
   // ----------------------------------------------------
-  // B. NÓS DE TEMAS & NÓ RAIZ (TIPO 'theme' / isRoot)
+  // B. NÓS DE ANOTAÇÕES (TIPO 'annotation')
   // ----------------------------------------------------
-  const themeAndRootNodesSelection = nodesSelection.filter((d: any) => d.type !== 'book')
+  const annotationNodesSelection = nodesSelection.filter((d: any) => d.type === 'annotation')
 
-  // 1. Círculo com efeito de borda externa decorativa
+  annotationNodesSelection
+    .append('circle')
+    .attr('r', 14)
+    .attr('fill', isSepiaMode.value ? '#FEF3C7' : (isLightMode.value ? '#FFFBEB' : '#2D2312'))
+    .attr('stroke', '#F59E0B')
+    .attr('stroke-width', 1.5)
+    .attr('class', 'transition-all duration-300 shadow-md')
+
+  annotationNodesSelection.each(function () {
+    const nodeEl = d3.select(this)
+    const iconG = nodeEl
+      .append('g')
+      .attr('class', 'annotation-icon')
+      .attr('pointer-events', 'none')
+      .attr('transform', 'translate(-6, -6) scale(0.5)')
+      .attr('fill', 'none')
+      .attr('stroke', '#F59E0B')
+      .attr('stroke-width', '2')
+      .attr('stroke-linecap', 'round')
+      .attr('stroke-linejoin', 'round')
+
+    iconG.html(`<path d="m18 2 4 4-12 12H6v-4L18 2Z"/><path d="m14 6 4 4"/>`)
+  })
+
+  annotationNodesSelection
+    .append('text')
+    .attr('text-anchor', 'middle')
+    .attr('dy', 26)
+    .attr('fill', isSepiaMode.value ? '#854D0E' : (isLightMode.value ? '#B45309' : '#FBBF24'))
+    .attr('font-size', '10px')
+    .attr('font-weight', '500')
+    .attr('font-family', 'system-ui, -apple-system, sans-serif')
+    .attr('pointer-events', 'none')
+    .text((d: any) => getTruncatedTitle(d.title || d.name, 10))
+
+  // ----------------------------------------------------
+  // C. NÓS DE NOTAS LIVRES (TIPO 'note')
+  // ----------------------------------------------------
+  const noteNodesSelection = nodesSelection.filter((d: any) => d.type === 'note')
+
+  noteNodesSelection
+    .append('circle')
+    .attr('r', 16)
+    .attr('fill', isSepiaMode.value ? '#EEF2FF' : (isLightMode.value ? '#F5F3FF' : '#1E1E38'))
+    .attr('stroke', '#6366F1')
+    .attr('stroke-width', 1.5)
+    .attr('class', 'transition-all duration-300 shadow-md')
+
+  noteNodesSelection.each(function () {
+    const nodeEl = d3.select(this)
+    const iconG = nodeEl
+      .append('g')
+      .attr('class', 'note-icon')
+      .attr('pointer-events', 'none')
+      .attr('transform', 'translate(-6, -6) scale(0.5)')
+      .attr('fill', 'none')
+      .attr('stroke', '#6366F1')
+      .attr('stroke-width', '2')
+      .attr('stroke-linecap', 'round')
+      .attr('stroke-linejoin', 'round')
+
+    iconG.html(`<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>`)
+  })
+
+  noteNodesSelection
+    .append('text')
+    .attr('text-anchor', 'middle')
+    .attr('dy', 28)
+    .attr('fill', isSepiaMode.value ? '#3730A3' : (isLightMode.value ? '#4F46E5' : '#818CF8'))
+    .attr('font-size', '10px')
+    .attr('font-weight', '500')
+    .attr('font-family', 'system-ui, -apple-system, sans-serif')
+    .attr('pointer-events', 'none')
+    .text((d: any) => getTruncatedTitle(d.title || d.name, 12))
+
+  // ----------------------------------------------------
+  // D. NÓS DE QUADROS (TIPO 'canvas')
+  // ----------------------------------------------------
+  const canvasNodesSelection = nodesSelection.filter((d: any) => d.type === 'canvas')
+
+  canvasNodesSelection
+    .append('rect')
+    .attr('x', -16)
+    .attr('y', -16)
+    .attr('width', 32)
+    .attr('height', 32)
+    .attr('rx', 7)
+    .attr('ry', 7)
+    .attr('fill', isSepiaMode.value ? '#ECFDF5' : (isLightMode.value ? '#F0FDF4' : '#12261E'))
+    .attr('stroke', '#10B981')
+    .attr('stroke-width', 1.5)
+    .attr('class', 'transition-all duration-300 shadow-md')
+
+  canvasNodesSelection.each(function () {
+    const nodeEl = d3.select(this)
+    const iconG = nodeEl
+      .append('g')
+      .attr('class', 'canvas-icon')
+      .attr('pointer-events', 'none')
+      .attr('transform', 'translate(-6, -6) scale(0.5)')
+      .attr('fill', 'none')
+      .attr('stroke', '#10B981')
+      .attr('stroke-width', '2')
+      .attr('stroke-linecap', 'round')
+      .attr('stroke-linejoin', 'round')
+
+    iconG.html(`<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>`)
+  })
+
+  canvasNodesSelection
+    .append('text')
+    .attr('text-anchor', 'middle')
+    .attr('dy', 28)
+    .attr('fill', isSepiaMode.value ? '#065F46' : (isLightMode.value ? '#047857' : '#34D399'))
+    .attr('font-size', '10px')
+    .attr('font-weight', '500')
+    .attr('font-family', 'system-ui, -apple-system, sans-serif')
+    .attr('pointer-events', 'none')
+    .text((d: any) => getTruncatedTitle(d.title || d.name, 12))
+
+  // ----------------------------------------------------
+  // E. NÓS DE TEMAS & NÓ RAIZ (TIPO 'theme' / isRoot)
+  // ----------------------------------------------------
+  const themeAndRootNodesSelection = nodesSelection.filter(
+    (d: any) => d.type === 'theme' || d.isRoot
+  )
+
   themeAndRootNodesSelection
     .append('circle')
     .attr('r', (d: any) => getNodeRadius(d) + 4)
@@ -487,7 +767,6 @@ const initGraph = () => {
     .attr('stroke-dasharray', (d: any) => (d.isRoot ? 'none' : '2,2'))
     .attr('opacity', 0.7)
 
-  // 2. Círculo principal do nó (monocromático com borda definida)
   themeAndRootNodesSelection
     .append('circle')
     .attr('r', (d: any) => getNodeRadius(d))
@@ -496,7 +775,6 @@ const initGraph = () => {
     .attr('stroke-width', (d: any) => (d.isRoot ? 2 : 1.5))
     .attr('class', 'transition-all duration-300 shadow-md')
 
-  // 3. Borda interna fina para acabamento clean e elegante com bordas
   themeAndRootNodesSelection
     .append('circle')
     .attr('r', (d: any) => Math.max(getNodeRadius(d) - 5, 12))
@@ -505,10 +783,9 @@ const initGraph = () => {
     .attr('stroke-width', 1)
     .attr('pointer-events', 'none')
 
-  // 4. Ícone Monocromático Vetorial Clean com Bordas
   themeAndRootNodesSelection.each(function (d: any) {
     const nodeEl = d3.select(this)
-    const iconMarkup = getThemeIconSvg(d.name, d.category, d.isRoot)
+    const iconMarkup = getThemeIconSvg(d.name, (d as any).category, d.isRoot)
     const iconColor = getMonochromeIconColor()
     const scale = d.isRoot ? 0.85 : 0.66
     const offset = -(24 * scale) / 2
@@ -527,7 +804,6 @@ const initGraph = () => {
     iconG.html(iconMarkup)
   })
 
-  // Rótulo para Temas
   themeAndRootNodesSelection
     .append('text')
     .attr('text-anchor', 'middle')
@@ -552,7 +828,7 @@ const initGraph = () => {
     .text((d: any) => d.name)
 
   // ----------------------------------------------------
-  // INTERAÇÕES & EVENTOS
+  // INTERAÇÕES, TOOLTIPS & EVENTOS
   // ----------------------------------------------------
   nodesSelection.on('click', (event, d) => {
     event.stopPropagation()
@@ -568,9 +844,14 @@ const initGraph = () => {
     }
   })
 
-  // Destaque no Hover
+  // Destaque e Tooltip no Hover
   nodesSelection
     .on('mouseenter', (event, d) => {
+      if (!d.isRoot) {
+        hoveredNode.value = d
+        tooltipPos.value = { x: event.clientX, y: event.clientY }
+      }
+
       links
         .attr('stroke', (l: any) =>
           String(l.source.id) === String(d.id) || String(l.target.id) === String(d.id)
@@ -588,26 +869,39 @@ const initGraph = () => {
           String(l.source.id) === String(d.id) || String(l.target.id) === String(d.id) ? 0.9 : 0.25
         )
     })
+    .on('mousemove', (event) => {
+      tooltipPos.value = { x: event.clientX, y: event.clientY }
+    })
     .on('mouseleave', () => {
+      hoveredNode.value = null
       links
-        .attr('stroke', (d: any) =>
-          d.isRootEdge
-            ? isSepiaMode.value
-              ? 'rgba(217, 119, 6, 0.45)'
-              : 'rgba(229, 123, 85, 0.35)'
-            : d.type === 'book-theme'
-            ? isSepiaMode.value
-              ? 'rgba(180, 83, 9, 0.40)'
-              : isLightMode.value
-              ? 'rgba(59, 130, 246, 0.35)'
-              : 'rgba(59, 130, 246, 0.30)'
-            : isSepiaMode.value
-            ? 'rgba(120, 108, 94, 0.18)'
-            : isLightMode.value
-            ? 'rgba(0, 0, 0, 0.08)'
-            : 'rgba(255, 255, 255, 0.12)'
-        )
-        .attr('stroke-width', (d: any) => (d.isRootEdge ? 1.5 : 1.2))
+        .attr('stroke', (d: any) => {
+          if (d.isRootEdge) {
+            return isSepiaMode.value
+              ? 'rgba(217, 119, 6, 0.40)'
+              : 'rgba(229, 123, 85, 0.30)'
+          }
+          switch (d.type) {
+            case 'book-theme':
+              return isLightMode.value ? 'rgba(59, 130, 246, 0.40)' : 'rgba(59, 130, 246, 0.35)'
+            case 'annotation-book':
+            case 'annotation-theme':
+              return isLightMode.value ? 'rgba(245, 158, 11, 0.45)' : 'rgba(245, 158, 11, 0.35)'
+            case 'note-book':
+            case 'note-note':
+              return isLightMode.value ? 'rgba(99, 102, 241, 0.45)' : 'rgba(99, 102, 241, 0.35)'
+            case 'canvas-note':
+            case 'note-canvas':
+              return isLightMode.value ? 'rgba(16, 185, 129, 0.45)' : 'rgba(16, 185, 129, 0.35)'
+            default:
+              return isSepiaMode.value
+                ? 'rgba(120, 108, 94, 0.20)'
+                : isLightMode.value
+                ? 'rgba(0, 0, 0, 0.12)'
+                : 'rgba(255, 255, 255, 0.12)'
+          }
+        })
+        .attr('stroke-width', (d: any) => (d.isRootEdge ? 1.4 : 1.2))
         .attr('stroke-opacity', 1)
     })
 

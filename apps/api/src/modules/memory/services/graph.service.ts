@@ -4,7 +4,11 @@ export class GraphService {
   async getGraph(userId: number) {
     const annotations = await prisma.annotation.findMany({
       where: { user_id: userId },
-      include: { annotationThemes: { include: { theme: true } }, flashcard: true },
+      include: {
+        annotationThemes: { include: { theme: true } },
+        book: true,
+        flashcard: true,
+      },
     })
 
     const themes = await prisma.theme.findMany({
@@ -27,6 +31,17 @@ export class GraphService {
       },
     })
 
+    const notes = await prisma.note.findMany({
+      where: { user_id: userId },
+      include: {
+        noteLinks: true,
+      },
+    })
+
+    const canvases = await prisma.canvas.findMany({
+      where: { user_id: userId },
+    })
+
     const userBookThemeIds = new Set<number>()
     for (const ub of userBooks) {
       for (const bt of ub.book.bookThemes || []) {
@@ -41,27 +56,64 @@ export class GraphService {
       }
     }
 
-    // Filtrar temas: devem estar anexados a ao menos um livro ou ao menos uma nota
+    // Mapear tags de notas que batem com nomes de temas
+    const noteThemeIds = new Set<number>()
+    const parsedNoteTagsMap = new Map<string, string[]>()
+    for (const n of notes) {
+      let parsedTags: string[] = []
+      try {
+        parsedTags = JSON.parse(n.tags || '[]')
+      } catch {
+        parsedTags = []
+      }
+      parsedNoteTagsMap.set(n.id, parsedTags)
+
+      for (const tag of parsedTags) {
+        const cleanTag = tag.replace(/^#/, '').trim().toLowerCase()
+        for (const t of themes) {
+          if (t.name.trim().toLowerCase() === cleanTag) {
+            noteThemeIds.add(t.id)
+          }
+        }
+      }
+    }
+
+    // Filtrar temas: devem estar anexados a ao menos um livro, anotação ou tag de nota
     const activeThemes = themes.filter((t) => {
       const hasUserBook = userBookThemeIds.has(t.id)
       const hasBook = hasUserBook || (userBooks.length === 0 && Boolean(t.bookThemes && t.bookThemes.length > 0))
-      const hasNote = annotationThemeIds.has(t.id) || Boolean(t.annotationThemes && t.annotationThemes.length > 0)
-      return hasBook || hasNote
+      const hasAnnotation = annotationThemeIds.has(t.id) || Boolean(t.annotationThemes && t.annotationThemes.length > 0)
+      const hasNoteTag = noteThemeIds.has(t.id)
+      return hasBook || hasAnnotation || hasNoteTag
     })
 
     const activeThemeIds = new Set(activeThemes.map((t) => t.id))
 
-    const themeNodes = activeThemes.map((t) => ({
-      id: t.id,
-      rawId: t.id,
-      type: 'theme' as const,
-      name: t.name,
-      color: t.color || '#E57B55',
-      description: t.description || '',
-      bookCount: t.bookThemes?.filter((bt) => userBooks.some((ub) => ub.book.id === bt.book_id)).length || (userBooks.length === 0 ? t.bookThemes?.length || 0 : 0),
-      annotationCount: t.annotationThemes?.length || 0,
-    }))
+    // 1. Nós de Temas
+    const themeNodes = activeThemes.map((t) => {
+      const themeLower = t.name.trim().toLowerCase()
+      let matchingNotesCount = 0
+      for (const [, tags] of parsedNoteTagsMap.entries()) {
+        if (tags.some((tag) => tag.replace(/^#/, '').trim().toLowerCase() === themeLower)) {
+          matchingNotesCount++
+        }
+      }
 
+      return {
+        id: t.id,
+        rawId: t.id,
+        type: 'theme' as const,
+        name: t.name,
+        title: t.name,
+        color: t.color || '#E57B55',
+        description: t.description || '',
+        bookCount: t.bookThemes?.filter((bt) => userBooks.some((ub) => ub.book.id === bt.book_id)).length || (userBooks.length === 0 ? t.bookThemes?.length || 0 : 0),
+        annotationCount: t.annotationThemes?.length || 0,
+        noteCount: matchingNotesCount,
+      }
+    })
+
+    // 2. Nós de Livros
     const bookNodes = userBooks.map((ub) => ({
       id: `book-${ub.book.id}`,
       rawId: ub.book.id,
@@ -71,41 +123,206 @@ export class GraphService {
       fullTitle: ub.book.title,
       coverPath: ub.book.cover_path,
       filePath: ub.book.file_path,
+      color: '#3B82F6',
     }))
 
-    const edges: Array<{ id: string; source: any; target: any; type?: string }> = []
+    // 3. Nós de Anotações do Leitor
+    const annotationNodes = annotations.map((ann) => {
+      const shortText = ann.note
+        ? (ann.note.length > 35 ? ann.note.substring(0, 32) + '...' : ann.note)
+        : (ann.selected_text ? (ann.selected_text.length > 35 ? ann.selected_text.substring(0, 32) + '...' : ann.selected_text) : 'Anotação')
 
+      return {
+        id: `ann-${ann.id}`,
+        rawId: ann.id,
+        type: 'annotation' as const,
+        name: shortText,
+        title: shortText,
+        note: ann.note || '',
+        selectedText: ann.selected_text || '',
+        cfi: ann.cfi || null,
+        chapterTitle: ann.chapter_title || null,
+        progress: ann.progress ?? 0,
+        bookId: ann.book_id,
+        bookTitle: ann.book?.title || '',
+        bookCover: ann.book?.cover_path || null,
+        color: '#F59E0B',
+        createdAt: ann.created_at,
+      }
+    })
+
+    // 4. Nós de Notas Livres
+    const noteNodes = notes.map((n) => {
+      const tags = parsedNoteTagsMap.get(n.id) || []
+      const cleanSnippet = n.content
+        ? n.content.replace(/[#*`_\[\]]/g, '').trim().substring(0, 60)
+        : ''
+
+      return {
+        id: `note-${n.id}`,
+        rawId: n.id,
+        type: 'note' as const,
+        name: n.title || 'Nota sem título',
+        title: n.title || 'Nota sem título',
+        description: cleanSnippet,
+        folder: n.folder || null,
+        tags,
+        color: '#6366F1',
+        createdAt: n.created_at,
+        updatedAt: n.updated_at,
+      }
+    })
+
+    // 5. Nós de Quadros (Canvases)
+    const canvasNodes = canvases.map((c) => {
+      let parsedTags: string[] = []
+      try {
+        parsedTags = JSON.parse(c.tags || '[]')
+      } catch {
+        parsedTags = []
+      }
+
+      return {
+        id: `canvas-${c.id}`,
+        rawId: c.id,
+        type: 'canvas' as const,
+        name: c.title || 'Quadro sem título',
+        title: c.title || 'Quadro sem título',
+        description: c.description || '',
+        folder: c.folder || null,
+        tags: parsedTags,
+        color: '#10B981',
+        createdAt: c.created_at,
+        updatedAt: c.updated_at,
+      }
+    })
+
+    const allNodes = [
+      ...themeNodes,
+      ...bookNodes,
+      ...annotationNodes,
+      ...noteNodes,
+      ...canvasNodes,
+    ]
+
+    const edges: Array<{ id: string; source: any; target: any; type: string }> = []
+    const existingPairs = new Set<string>()
+
+    const addEdge = (id: string, source: any, target: any, type: string) => {
+      const s = String(source)
+      const t = String(target)
+      if (s === t) return
+      const k1 = `${s}---${t}`
+      const k2 = `${t}---${s}`
+      if (existingPairs.has(k1) || existingPairs.has(k2)) return
+      existingPairs.add(k1)
+      existingPairs.add(k2)
+      edges.push({ id, source, target, type })
+    }
+
+    // Arestas: Hierarquia de Temas
     for (const t of activeThemes) {
       for (const ch of t.childHierarchies || []) {
         if (activeThemeIds.has(ch.child_theme_id)) {
-          edges.push({
-            id: `edge-th-${t.id}-${ch.child_theme_id}`,
-            source: t.id,
-            target: ch.child_theme_id,
-            type: 'theme-hierarchy',
-          })
+          addEdge(`edge-th-${t.id}-${ch.child_theme_id}`, t.id, ch.child_theme_id, 'theme-hierarchy')
         }
       }
     }
 
+    // Arestas: Livro com Tema
     for (const ub of userBooks) {
       for (const bt of ub.book.bookThemes || []) {
         if (activeThemeIds.has(bt.theme_id)) {
-          edges.push({
-            id: `edge-bt-${ub.book.id}-${bt.theme_id}`,
-            source: `book-${ub.book.id}`,
-            target: bt.theme_id,
-            type: 'book-theme',
-          })
+          addEdge(`edge-bt-${ub.book.id}-${bt.theme_id}`, `book-${ub.book.id}`, bt.theme_id, 'book-theme')
         }
       }
     }
 
+    // Arestas: Anotação do Leitor com Livro
+    for (const ann of annotations) {
+      addEdge(`edge-ann-bk-${ann.id}-${ann.book_id}`, `ann-${ann.id}`, `book-${ann.book_id}`, 'annotation-book')
+    }
+
+    // Arestas: Anotação do Leitor com Tema
+    for (const ann of annotations) {
+      for (const at of ann.annotationThemes || []) {
+        if (activeThemeIds.has(at.theme_id)) {
+          addEdge(`edge-ann-th-${ann.id}-${at.theme_id}`, `ann-${ann.id}`, at.theme_id, 'annotation-theme')
+        }
+      }
+    }
+
+    // Arestas: Nota com Livros, Quadros e outras Notas
+    for (const n of notes) {
+      const noteKey = `note-${n.id}`
+      for (const link of n.noteLinks || []) {
+        if (link.target_type === 'BOOK') {
+          addEdge(`edge-nb-${n.id}-${link.target_id}`, noteKey, `book-${link.target_id}`, 'note-book')
+        } else if (link.target_type === 'CANVAS') {
+          addEdge(`edge-nc-${n.id}-${link.target_id}`, noteKey, `canvas-${link.target_id}`, 'note-canvas')
+        } else if (link.target_type === 'NOTE') {
+          addEdge(`edge-nn-${n.id}-${link.target_id}`, noteKey, `note-${link.target_id}`, 'note-note')
+        }
+      }
+
+      // Embeds em Markdown
+      if (n.content) {
+        for (const m of n.content.matchAll(/!?\[\[book:(\d+)\]\]/gi)) {
+          addEdge(`edge-nb-emb-${n.id}-${m[1]}`, noteKey, `book-${m[1]}`, 'note-book')
+        }
+        for (const m of n.content.matchAll(/!?\[\[canvas:([a-zA-Z0-9_-]+)\]\]/gi)) {
+          addEdge(`edge-nc-emb-${n.id}-${m[1]}`, noteKey, `canvas-${m[1]}`, 'note-canvas')
+        }
+        for (const m of n.content.matchAll(/!?\[\[note:([a-zA-Z0-9_-]+)\]\]/gi)) {
+          addEdge(`edge-nn-emb-${n.id}-${m[1]}`, noteKey, `note-${m[1]}`, 'note-note')
+        }
+      }
+
+      // Correspondência semântica: Tag da Nota com Nome de Tema Ativo
+      const tags = parsedNoteTagsMap.get(n.id) || []
+      for (const tag of tags) {
+        const cleanTag = tag.replace(/^#/, '').trim().toLowerCase()
+        for (const t of activeThemes) {
+          if (t.name.trim().toLowerCase() === cleanTag) {
+            addEdge(`edge-nt-${n.id}-${t.id}`, noteKey, t.id, 'note-theme')
+          }
+        }
+      }
+    }
+
+    // Arestas: Quadro com Notas embutidas
+    for (const c of canvases) {
+      const canvasKey = `canvas-${c.id}`
+      try {
+        const parsed = JSON.parse(c.data || '{}')
+        if (Array.isArray(parsed.nodes)) {
+          for (const node of parsed.nodes) {
+            if (node.type === 'note' && node.noteId) {
+              addEdge(`edge-cn-${c.id}-${node.noteId}`, canvasKey, `note-${node.noteId}`, 'canvas-note')
+            }
+          }
+        }
+      } catch {}
+    }
+
+    // Filtrar arestas cujos nós de origem ou destino não estejam nos nós retornados
+    const activeNodeIdSet = new Set(allNodes.map((n) => String(n.id)))
+    const validEdges = edges.filter(
+      (e) => activeNodeIdSet.has(String(e.source)) && activeNodeIdSet.has(String(e.target))
+    )
+
     return {
-      nodes: [...themeNodes, ...bookNodes],
-      edges,
+      nodes: allNodes,
+      edges: validEdges,
       annotations,
       themes: activeThemes,
+      counts: {
+        themes: themeNodes.length,
+        books: bookNodes.length,
+        annotations: annotationNodes.length,
+        notes: noteNodes.length,
+        canvases: canvasNodes.length,
+      },
     }
   }
 

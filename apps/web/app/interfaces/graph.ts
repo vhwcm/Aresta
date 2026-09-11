@@ -45,10 +45,12 @@ export interface AnnotationThemeItem {
   createdAt: string
 }
 
+export type GraphNodeType = 'theme' | 'book' | 'annotation' | 'note' | 'canvas'
+
 export interface GraphNode {
   id: string | number
-  rawId?: number
-  type?: 'theme' | 'book'
+  rawId?: string | number
+  type?: GraphNodeType
   name: string
   title?: string
   fullTitle?: string
@@ -61,8 +63,23 @@ export interface GraphNode {
   filePath?: string
   bookCount?: number
   annotationCount?: number
+  noteCount?: number
   books?: any[]
   isRoot?: boolean
+  // Campos de Anotações do Leitor
+  bookId?: number
+  bookTitle?: string
+  bookCover?: string | null
+  cfi?: string | null
+  selectedText?: string | null
+  note?: string | null
+  chapterTitle?: string | null
+  progress?: number | null
+  // Campos de Notas & Quadros
+  folder?: string | null
+  tags?: string[]
+  createdAt?: string
+  updatedAt?: string
   // D3 force fields
   x?: number
   y?: number
@@ -76,10 +93,19 @@ export interface GraphEdge {
   id: string | number
   source: string | number | GraphNode
   target: string | number | GraphNode
-  type?: 'root' | 'theme-hierarchy' | 'book-theme' | string
+  type?: 'root' | 'theme-hierarchy' | 'book-theme' | 'annotation-book' | 'annotation-theme' | 'note-book' | 'note-canvas' | 'note-note' | 'canvas-note' | 'note-theme' | string
+}
+
+export interface GraphCounts {
+  themes: number
+  books: number
+  annotations: number
+  notes: number
+  canvases: number
 }
 
 export interface GraphData {
   nodes: GraphNode[]
   edges: GraphEdge[]
+  counts?: GraphCounts
 }

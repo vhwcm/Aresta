@@ -578,7 +578,6 @@ import { useReaderStore } from '~/stores/readerStore'
 
 const props = defineProps<{
   isNotesActive?: boolean
-  isGraphActive?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -586,18 +585,15 @@ const emit = defineEmits<{
   (_e: 'openSavedPages'): void
   (_e: 'openAnnotation'): void
   (_e: 'toggleNotes'): void
-  (_e: 'toggleGraph'): void
   (_e: 'openTypography'): void
 }>()
 
 const isNotesActiveComputed = computed(() => {
-  if (typeof props.isNotesActive === 'boolean') return props.isNotesActive
-  return Boolean(props.isGraphActive)
+  return Boolean(props.isNotesActive)
 })
 
 function handleToggleNotes() {
   emit('toggleNotes')
-  emit('toggleGraph')
 }
 
 const store = useReaderStore()

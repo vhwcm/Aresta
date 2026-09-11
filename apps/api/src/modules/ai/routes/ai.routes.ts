@@ -11,5 +11,4 @@ aiRouter.post('/flashcard', authenticate, (req, res) => aiController.flashcard(r
 aiRouter.post('/translate', authenticate, (req, res) => aiController.translate(req, res))
 aiRouter.post('/summarize', authenticate, (req, res) => aiController.summarize(req, res))
 aiRouter.post('/didactic', authenticate, (req, res) => aiController.didactic(req, res))
-aiRouter.post('/transcribe', (req, res) => aiController.transcribe(req, res))
 

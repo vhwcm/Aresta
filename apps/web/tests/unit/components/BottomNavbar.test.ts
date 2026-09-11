@@ -31,17 +31,18 @@ describe('BottomNavbar Component', () => {
     expect(wrapper.find('a[title="Início"]').exists()).toBe(true)
     expect(wrapper.text()).not.toContain('Início')
     expect(wrapper.text()).toContain('Livros')
-    expect(wrapper.text()).toContain('Notas')
+    expect(wrapper.text()).toContain('Anotações')
     expect(wrapper.text()).toContain('Revisão')
     expect(wrapper.text()).toContain('Conta')
   })
 
-  it('toggles book menu and notes menu dropdowns', async () => {
+  it('toggles book menu and has direct link to canvas in Anotações', async () => {
     const wrapper = mount(BottomNavbar, {
       global: {
         stubs: {
           NuxtLink: {
-            template: '<a><slot /></a>'
+            props: ['to'],
+            template: '<a :href="to"><slot /></a>'
           },
           ArestaLogoGraph: {
             template: '<div class="aresta-logo-mock" />'
@@ -59,13 +60,11 @@ describe('BottomNavbar Component', () => {
     expect(wrapper.text()).toContain('Conversor')
     expect(wrapper.text()).toContain('Loja')
 
-    // Clicar no menu de Notas para abrir o dropdown de notas
-    const notesButton = wrapper.find('button[title="Menu de Notas"]')
-    expect(notesButton.exists()).toBe(true)
-    await notesButton.trigger('click')
-
-    expect(wrapper.text()).toContain('Notas & Quadros')
-    expect(wrapper.text()).toContain('Grafo de Conhecimento')
+    // Botão de Anotações é um link direto para /canvas
+    const anotaçõesLink = wrapper.find('a[title="Anotações"]')
+    expect(anotaçõesLink.exists()).toBe(true)
+    expect(anotaçõesLink.attributes('href')).toBe('/canvas')
+    expect(wrapper.text()).toContain('Anotações')
   })
 
   it('is always open without collapse button and renders all navigation items', async () => {
@@ -90,7 +89,7 @@ describe('BottomNavbar Component', () => {
     expect(wrapper.find('a[title="Início"]').exists()).toBe(true)
     expect(wrapper.text()).not.toContain('Início')
     expect(wrapper.text()).toContain('Livros')
-    expect(wrapper.text()).toContain('Notas')
+    expect(wrapper.text()).toContain('Anotações')
     expect(wrapper.text()).toContain('Revisão')
     expect(wrapper.text()).toContain('Conta')
   })
@@ -125,7 +124,7 @@ describe('BottomNavbar Component', () => {
     const booksButton = wrapper.find('button[title="Menu de Livros"]')
     expect(booksButton.classes()).toContain('nav-item-active')
 
-    // Testando rota de Notas ('/canvas')
+    // Testando rota de Anotações ('/canvas')
     g.useRoute = () => ({ path: '/canvas', params: {}, query: {} })
     wrapper = mount(BottomNavbar, {
       global: {
@@ -135,8 +134,8 @@ describe('BottomNavbar Component', () => {
         }
       }
     })
-    const notesButton = wrapper.find('button[title="Menu de Notas"]')
-    expect(notesButton.classes()).toContain('nav-item-active')
+    const anotaçõesLink = wrapper.find('a[title="Anotações"]')
+    expect(anotaçõesLink.classes()).toContain('nav-item-active')
 
     // Testando rota de Revisão ('/revisao')
     g.useRoute = () => ({ path: '/revisao', params: {}, query: {} })

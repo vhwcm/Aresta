@@ -1,63 +1,51 @@
-# 🌌 Módulo de Grafo & Mapa Mental de Leitura
+# Módulo de Grafo de Conhecimento & Mapa Mental Unificado
 
-O módulo de **Grafo & Mapa Mental** permite aos usuários visualizar e organizar os conceitos, temas e categorias dos livros que estão lendo no sistema **Aresta** em um visualizador interativo em estilo Obsidian.
-
----
-
-## 🏗️ 1. Banco de Dados e Migrações (Flyway V7)
-
-As tabelas criadas no banco de dados SQLite (`aresta_dev.db` e `aresta_prod.db`) via Flyway em `V7__create_user_books_and_themes_graph.sql` são:
-
-1. **`user_books`**:
-   - Armazena a estante individual de cada usuário.
-   - Campos: `id`, `user_id`, `book_id`, `status` (`QUERO_LER`, `LENDO`, `LIDO`, `ABANDONADO`), `current_page`, `created_at`, `updated_at`.
-   - Restrição `UNIQUE(user_id, book_id)`.
-
-2. **`themes`**:
-   - Representa os nós de temas/conceitos no mapa mental pertencentes a um usuário.
-   - Campos: `id`, `user_id`, `name`, `color`, `description`, `created_at`.
-
-3. **`theme_connections`**:
-   - Conexões (arestas) direcionadas entre nós de temas para compor o mapa mental em malha.
-   - Campos: `id`, `user_id`, `source_theme_id`, `target_theme_id`, `created_at`.
-
-4. **`book_themes`**:
-   - Associação N:N entre os livros do usuário (`user_books`) e os nós de temas no grafo.
-   - Campos: `id`, `user_book_id`, `theme_id`, `created_at`.
+O módulo de **Grafo de Conhecimento Unificado** integra em uma única rede semântica interconectada:
+- 🏷️ **Temas Globais (`Theme`)**
+- 📚 **Livros (`Book`)**
+- 📝 **Anotações de Leitura (`Annotation`)**
+- 📄 **Notas Livres (`Note`)**
+- 🖼️ **Quadros Infinitos (`Canvas`)**
 
 ---
 
-## ⚡ 2. API REST Backend (Java / Javalin)
+## 1. Arquitetura de Dados (Prisma ORM & PostgreSQL 16)
 
-- `GET /api/user-books`: Retorna todos os livros da estante do usuário logado.
-- `POST /api/user-books`: Adiciona um livro à estante do usuário.
-- `PATCH /api/user-books/{id}`: Atualiza status de leitura e página em que o usuário parou.
-- `DELETE /api/user-books/{id}`: Remove o livro da estante.
+O endpoint canônico `GET /api/graph` agrega as seguintes entidades do usuário:
+1. **`user_books` + `books`**: Livros pertencentes à biblioteca do usuário com suas respectivas capas e temas.
+2. **`themes` + `theme_hierarchies`**: Taxonomia conceitual e hierarquias direcionadas de subtemas.
+3. **`annotations` + `annotation_themes`**: Anotações pontuais feitas durante a leitura no leitor EPUB/PDF com trechos grifados e CFIs.
+4. **`notes` + `note_links`**: Notas livres em Markdown com suporte a links bidirecionais e embeds `[[book:id]]`, `[[canvas:id]]`, `[[note:id]]`.
+5. **`canvases`**: Quadros infinitos com cards e notas embutidas.
 
-- `GET /api/graph`: Retorna nós (`nodes`), arestas (`edges`) e livros associados ao grafo do usuário.
-- `POST /api/graph/nodes`: Cria um novo nó de tema.
-- `PUT /api/graph/nodes/{id}`: Atualiza nome, cor ou descrição do tema.
-- `DELETE /api/graph/nodes/{id}`: Deleta um nó de tema.
-- `POST /api/graph/connections`: Conecta dois nós de temas.
-- `DELETE /api/graph/connections/{sourceId}/{targetId}`: Desconecta dois temas.
-- `POST /api/graph/nodes/{id}/books`: Vincula um livro da estante a um nó de tema.
-- `DELETE /api/graph/nodes/{id}/books/{userBookId}`: Desvincula o livro do nó.
-
----
-
-## 🎨 3. Visualizador Frontend (Nuxt 3 / D3.js)
-
-- **Simulação Física em D3.js**: Renderiza o grafo em tela cheia com simulação de forças (`forceSimulation`, `forceLink`, `forceManyBody`, `forceCollide`), zoom, pan e arrasto de nós.
-- **Gaveta de Inspeção (`NodeDrawer.vue`)**: Permite ver os detalhes de cada nó, seus livros conectados (com badge de status `Lendo`, `Lido` e progresso de páginas), alterar cor/descrição ou vincular novos livros.
-- **Modais**: Modais de criação de tema e de conexão entre dois temas no mapa mental.
+### Arestas Estruturais e Semânticas
+- `theme-hierarchy`: Relação pai ➔ filho entre temas.
+- `book-theme`: Relação de pertencimento entre livro e tema.
+- `annotation-book`: Conexão da anotação com o livro de origem.
+- `annotation-theme`: Conexão da anotação com os temas do livro.
+- `note-book`, `note-canvas`, `note-note`: Conexões explícitas por `NoteLink` e menções em Markdown.
+- `canvas-note`: Notas contidas dentro do canvas JSON.
+- `note-theme`: Correspondência semântica automática quando tags de notas coincidem com temas ativos.
 
 ---
 
-## 🧪 4. Cobertura de Testes
+## 2. Componente Visual D3 (`GraphCanvas.vue`)
 
-- **Backend (JUnit 5 + SQLite)**:
-  - `UserBookRepositoryTest.java` (Valida CRUD e relacionamentos da estante).
-  - `GraphRepositoryTest.java` (Valida criação de nós, conexões e buscas de dados do grafo).
-- **Frontend (Vitest)**:
-  - `useGraph.test.ts` (Valida o composable do grafo e requisições REST).
-  - `useUserBooks.test.ts` (Valida o composable de livros do usuário).
+- **Simulação de Forças D3**: `forceSimulation`, `forceLink`, `forceManyBody`, `forceCollide` com distâncias balanceadas para cada categoria de nó.
+- **Filtros de Camadas Visuais**: Chips interativos para ligar/desligar visualmente Temas, Livros, Anotações, Notas e Quadros.
+- **Interatividade Especializada**:
+  - **Livro**: Abre a gaveta lateral `BookAnnotationsDrawer` com as anotações do livro e botão para continuar a leitura no Leitor (`/reader/:id`).
+  - **Anotação**: Abre modal com o trecho citado, nota e atalho para o Leitor no ponto correspondente.
+  - **Nota**: Abre o editor de notas (`/canvas?note=:id`).
+  - **Quadro**: Navega para `/canvas/:id`.
+  - **Tema**: Abre o `ThemeCanvasOverlay` com os livros do tema.
+- **Tooltip Flutuante**: Preview contextual ao passar o mouse sobre os nós.
+
+---
+
+## 3. Navegação Integrada
+
+- **Página `/grafo`**: Visão em tela cheia do Grafo Universal com todos os recursos e modais.
+- **Página `/canvas`**: O alternador de visualização "Grafo" renderiza o mesmo Grafo Universal Unificado.
+- **Navbar Inferior (`BottomNavbar.vue`)**: Botão direto "Anotações" para `/canvas` (sem dropdown intermediário).
+- **Leitor de Livros (`/reader`)**: O grafo foi desativado durante a leitura para manter a imersão completa.
