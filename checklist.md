@@ -3,6 +3,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [11/09/2026 09:27] [Concluído] Remover overlay flutuante de legenda (Quadros, Notas) e controles de zoom do Grafo de Conhecimento
 - [11/09/2026 09:25] [Concluído] Integrar diagramas ASCII de arquitetura e fluxos de Inteligência Artificial no README.md
 - [11/09/2026 09:24] [Concluído] Remover switcher de abas (Tudo, Quadros e Notas) do cabeçalho de quadros
 - [11/09/2026 09:23] [Concluído] Remover funcionalidade de Assistente Chat genérico (pages/ai.vue, server/api/ai.post.ts, testes) e atualizar artefato de arquitetura de IA

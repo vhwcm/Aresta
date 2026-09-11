@@ -3,45 +3,7 @@
     <!-- SVG do Grafo de Conhecimento D3 -->
     <svg ref="svgRef" class="w-full h-full cursor-grab active:cursor-grabbing"></svg>
 
-    <!-- Legenda & Metadados Flutuantes (Canto Superior Esquerdo) -->
-    <div class="absolute top-4 left-4 z-10 flex items-center gap-2 p-1.5 rounded-xl bg-bgPanel/85 backdrop-blur-md border border-divider shadow-lg text-xs font-interface pointer-events-auto">
-      <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-accent/15 text-accent font-semibold text-[11px]">
-        <span class="w-2 h-2 rounded-full bg-accent animate-pulse"></span>
-        Quadros ({{ canvasesCount }})
-      </span>
-      <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-500/15 text-indigo-400 font-semibold text-[11px]">
-        <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
-        Notas ({{ notesCount }})
-      </span>
-      <span class="text-[10px] text-textSecondary font-mono px-1">
-        {{ totalLinksCount }} conexões
-      </span>
-    </div>
 
-    <!-- Controles de Navegação do Grafo (Canto Superior Direito) -->
-    <div class="absolute top-4 right-4 z-10 flex items-center gap-1 p-1 rounded-xl bg-bgPanel/85 backdrop-blur-md border border-divider shadow-lg text-xs pointer-events-auto">
-      <button
-        class="p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 text-textSecondary hover:text-textPrimary transition-colors cursor-pointer"
-        title="Aumentar zoom (+)"
-        @click="zoomIn"
-      >
-        <PlusIcon class="w-3.5 h-3.5" />
-      </button>
-      <button
-        class="p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 text-textSecondary hover:text-textPrimary transition-colors cursor-pointer"
-        title="Diminuir zoom (-)"
-        @click="zoomOut"
-      >
-        <MinusIcon class="w-3.5 h-3.5" />
-      </button>
-      <button
-        class="p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 text-textSecondary hover:text-accent transition-colors cursor-pointer"
-        title="Centralizar e redefinir visão"
-        @click="resetZoom"
-      >
-        <RotateCcwIcon class="w-3.5 h-3.5" />
-      </button>
-    </div>
 
     <!-- Tooltip Flutuante de Detalhes do Nó -->
     <div
@@ -103,7 +65,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import * as d3 from 'd3'
-import { PlusIcon, MinusIcon, RotateCcwIcon } from 'lucide-vue-next'
 import type { CanvasSummary } from '~/interfaces/canvas'
 import type { NoteItem } from '~/interfaces/note'
 

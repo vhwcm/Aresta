@@ -30,7 +30,7 @@ describe('KnowledgeGraphView Component', () => {
     },
   ];
 
-  it('renders SVG element and legend counters correctly', () => {
+  it('renders SVG element correctly when there are nodes', () => {
     const wrapper = mount(KnowledgeGraphView, {
       props: {
         canvases: sampleCanvases,
@@ -39,8 +39,6 @@ describe('KnowledgeGraphView Component', () => {
     });
 
     expect(wrapper.find('svg').exists()).toBe(true);
-    expect(wrapper.text()).toContain('Quadros (1)');
-    expect(wrapper.text()).toContain('Notas (1)');
   });
 
   it('renders empty state when there are no nodes', () => {
@@ -82,9 +80,6 @@ describe('KnowledgeGraphView Component', () => {
       },
     });
 
-    expect(wrapper.text()).toContain('Quadros (1)');
-    expect(wrapper.text()).toContain('Notas (1)');
-    // Deve haver 1 conexão detectada
-    expect(wrapper.text()).toContain('1 conexões');
+    expect(wrapper.find('svg').exists()).toBe(true);
   });
 });
