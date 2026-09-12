@@ -652,23 +652,23 @@ const bookTitlesMap = computed(() => {
 })
 
 const availableBooks = computed(() => {
-  const map = new Map<string, { id: string | number; title: string }>()
+  const map = new Map<string, { title: string; ids: Set<string>; count: number }>()
   for (const c of displayCards.value) {
-    if (c.bookId) {
-      const key = String(c.bookId)
-      if (!map.has(key)) {
-        map.set(key, { id: c.bookId, title: c.bookTitle || bookTitlesMap.value.get(Number(c.bookId)) || `Livro #${c.bookId}` })
-      }
+    const title = c.bookTitle?.trim() || (c.bookId ? bookTitlesMap.value.get(Number(c.bookId)) : null) || (c.bookId ? `Livro #${c.bookId}` : 'Sem título')
+    if (!map.has(title)) {
+      map.set(title, { title, ids: new Set(), count: 0 })
     }
+    const entry = map.get(title)!
+    if (c.bookId) entry.ids.add(String(c.bookId))
+    entry.count++
   }
   for (const a of userAnnotations.value) {
-    if (a.bookId) {
-      const key = String(a.bookId)
-      if (!map.has(key)) {
-        const title = a.bookTitle || bookTitlesMap.value.get(Number(a.bookId)) || `Livro #${a.bookId}`
-        map.set(key, { id: a.bookId, title })
-      }
+    const title = a.bookTitle?.trim() || (a.bookId ? bookTitlesMap.value.get(Number(a.bookId)) : null) || (a.bookId ? `Livro #${a.bookId}` : 'Sem título')
+    if (!map.has(title)) {
+      map.set(title, { title, ids: new Set(), count: 0 })
     }
+    const entry = map.get(title)!
+    if (a.bookId) entry.ids.add(String(a.bookId))
   }
   return Array.from(map.values())
 })
@@ -682,25 +682,32 @@ const bookFilterOptions = computed(() => {
     }
   ]
 
-  const seenIds = new Set<string>()
   for (const b of availableBooks.value) {
-    const idStr = String(b.id)
-    if (!seenIds.has(idStr)) {
-      seenIds.add(idStr)
-      const count = displayCards.value.filter((c) => String(c.bookId) === idStr).length
-      options.push({
-        value: idStr,
-        label: b.title,
-        count: count > 0 ? count : undefined
-      })
-    }
+    const primaryId = Array.from(b.ids)[0] || b.title
+    const cardCount = displayCards.value.filter((c) => {
+      const title = c.bookTitle?.trim() || (c.bookId ? bookTitlesMap.value.get(Number(c.bookId)) : null) || (c.bookId ? `Livro #${c.bookId}` : '')
+      return title === b.title || (c.bookId && b.ids.has(String(c.bookId)))
+    }).length
+
+    options.push({
+      value: primaryId,
+      label: b.title,
+      count: cardCount > 0 ? cardCount : undefined
+    })
   }
   return options
 })
 
 const filteredCards = computed(() => {
   if (selectedBookFilter.value === 'all') return displayCards.value
-  return displayCards.value.filter((c) => String(c.bookId) === selectedBookFilter.value)
+  const group = availableBooks.value.find((b) => b.title === selectedBookFilter.value || b.ids.has(selectedBookFilter.value))
+  return displayCards.value.filter((c) => {
+    const title = c.bookTitle?.trim() || (c.bookId ? bookTitlesMap.value.get(Number(c.bookId)) : null) || (c.bookId ? `Livro #${c.bookId}` : '')
+    if (group) {
+      return group.title === title || (c.bookId && group.ids.has(String(c.bookId)))
+    }
+    return title === selectedBookFilter.value || (c.bookId && String(c.bookId) === selectedBookFilter.value)
+  })
 })
 
 const currentCard = computed(() => filteredCards.value[currentCardIndex.value] || null)
@@ -799,12 +806,17 @@ const allUniqueThemes = computed(() => {
 })
 
 const availableSummaryBooks = computed(() => {
-  const map = new Map<string, { id: string; title: string }>()
+  const map = new Map<string, { title: string; ids: Set<string>; count: number }>()
   for (const s of summaries.value) {
-    const key = s.bookId ? String(s.bookId) : s.bookTitle
-    if (!map.has(key)) {
-      map.set(key, { id: key, title: s.bookTitle })
+    const title = s.bookTitle?.trim() || (s.bookId ? `Livro #${s.bookId}` : 'Sem título')
+    if (!map.has(title)) {
+      map.set(title, { title, ids: new Set(), count: 0 })
     }
+    const entry = map.get(title)!
+    if (s.bookId) {
+      entry.ids.add(String(s.bookId))
+    }
+    entry.count++
   }
   return Array.from(map.values())
 })
@@ -819,14 +831,11 @@ const summaryBookFilterOptions = computed(() => {
   ]
 
   for (const b of availableSummaryBooks.value) {
-    const count = summaries.value.filter((s) => {
-      const key = s.bookId ? String(s.bookId) : s.bookTitle
-      return key === b.id
-    }).length
+    const primaryId = Array.from(b.ids)[0] || b.title
     options.push({
-      value: b.id,
+      value: primaryId,
       label: b.title,
-      count: count > 0 ? count : undefined
+      count: b.count > 0 ? b.count : undefined
     })
   }
   return options
@@ -848,9 +857,14 @@ const bookletOptions = computed(() => {
 const filteredSummaries = computed(() => {
   let list = summaries.value
   if (selectedSummaryBookFilter.value !== 'all') {
+    const group = availableSummaryBooks.value.find((b) => b.title === selectedSummaryBookFilter.value || b.ids.has(selectedSummaryBookFilter.value))
     list = list.filter((s) => {
-      const key = s.bookId ? String(s.bookId) : s.bookTitle
-      return key === selectedSummaryBookFilter.value
+      const title = s.bookTitle?.trim() || (s.bookId ? `Livro #${s.bookId}` : '')
+      const idKey = s.bookId ? String(s.bookId) : ''
+      if (group) {
+        return group.title === title || (idKey && group.ids.has(idKey))
+      }
+      return title === selectedSummaryBookFilter.value || idKey === selectedSummaryBookFilter.value
     })
   }
   if (selectedThemeFilter.value !== 'all') {

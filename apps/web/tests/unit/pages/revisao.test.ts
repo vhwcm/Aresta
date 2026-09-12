@@ -282,4 +282,42 @@ describe('Revisao Page (/revisao)', () => {
       ])
     )
   })
+
+  it('desduplica e agrega contadores quando múltiplos cards compartilham o mesmo título de obra', async () => {
+    mockDailyDeck.value = [
+      { id: 101, bookId: 1, bookTitle: 'Rei Artur', question: 'Q1', answer: 'A1' },
+      { id: 102, bookId: 2, bookTitle: 'Rei Artur', question: 'Q2', answer: 'A2' },
+      { id: 103, bookId: 3, bookTitle: 'Rei Artur', question: 'Q3', answer: 'A3' },
+    ]
+
+    const wrapper = mount(RevisaoPage, {
+      global: {
+        stubs: {
+          NuxtLink: { template: '<a><slot /></a>' },
+          LayersIcon: true,
+          FileTextIcon: true,
+          RotateCwIcon: true,
+          ChevronLeftIcon: true,
+          ChevronRightIcon: true,
+          PlusIcon: true,
+          Trash2Icon: true,
+          BookOpenIcon: true,
+          SparklesIcon: true,
+          ExternalLinkIcon: true,
+          CheckCircle2Icon: true,
+          TagIcon: true,
+          BookMarkedIcon: true,
+          ReaderAnnotationModal: true,
+        },
+      },
+    })
+
+    const select = wrapper.findComponent({ name: 'AppSelect' })
+    const options = select.props('options') as Array<{ value: string; label: string; count?: number }>
+    const reiArturOptions = options.filter((o) => o.label === 'Rei Artur')
+
+    // Deve existir apenas 1 opção para 'Rei Artur', com contagem agregada de 3
+    expect(reiArturOptions).toHaveLength(1)
+    expect(reiArturOptions[0]?.count).toBe(3)
+  })
 })

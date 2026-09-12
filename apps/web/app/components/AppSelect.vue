@@ -14,7 +14,7 @@
       @keydown.down.prevent="onKeyDown"
       @keydown.up.prevent="onKeyUp"
       @keydown.enter.prevent="onKeyEnter"
-      class="group relative flex items-center justify-between gap-2.5 px-3 py-1.5 rounded-xl border transition-all text-xs font-interface select-none cursor-pointer shadow-sm outline-none w-full"
+      class="group relative flex items-center justify-between gap-2.5 px-3 py-1.5 rounded-xl border transition-all text-xs font-interface select-none cursor-pointer shadow-sm outline-none focus:outline-none focus-visible:outline-none min-w-[190px] sm:min-w-[220px]"
       :class="[
         isOpen
           ? 'border-accent/80 ring-1 ring-accent/30 bg-bgPanel text-textPrimary'
@@ -51,40 +51,42 @@
     <div
       v-if="isOpen"
       data-testid="app-select-dropdown"
-      class="absolute left-0 top-full mt-1.5 min-w-full w-max max-w-[280px] sm:max-w-sm z-50 bg-bgPanel/95 backdrop-blur-xl border border-divider shadow-2xl rounded-2xl p-1.5 flex flex-col gap-1 text-textPrimary animate-in fade-in zoom-in-95 duration-150"
+      class="absolute left-0 top-full mt-1.5 w-full min-w-[230px] sm:min-w-[260px] max-w-sm z-50 bg-bgPanel/95 backdrop-blur-xl border border-divider shadow-2xl rounded-2xl p-1.5 flex flex-col gap-1 text-textPrimary animate-in fade-in zoom-in-95 duration-150"
       role="listbox"
     >
       <!-- Campo de Busca (se ativado ou mais de 6 itens) -->
       <div
         v-if="isSearchVisible"
-        class="p-1 pb-1.5 border-b border-divider/60 flex items-center gap-2"
+        class="p-1 pb-1"
       >
-        <SearchIcon class="w-3.5 h-3.5 text-textSecondary shrink-0 ml-1" />
-        <input
-          ref="searchInputRef"
-          v-model="searchQuery"
-          data-testid="app-select-search-input"
-          type="text"
-          :placeholder="searchPlaceholder"
-          class="w-full bg-transparent text-xs text-textPrimary placeholder:text-textSecondary/60 focus:outline-none font-interface"
-          @keydown.stop
-          @keydown.esc.prevent="closeDropdown"
-          @keydown.down.prevent="onKeyDown"
-          @keydown.up.prevent="onKeyUp"
-          @keydown.enter.prevent="onKeyEnter"
-        />
-        <button
-          v-if="searchQuery"
-          type="button"
-          @click="searchQuery = ''"
-          class="p-0.5 text-textSecondary hover:text-textPrimary rounded-md"
-        >
-          <XIcon class="w-3 h-3" />
-        </button>
+        <div class="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-white/[0.04] border border-divider/70 focus-within:border-accent/50 focus-within:bg-white/[0.06] transition-all">
+          <SearchIcon class="w-3.5 h-3.5 text-textSecondary shrink-0" />
+          <input
+            ref="searchInputRef"
+            v-model="searchQuery"
+            data-testid="app-select-search-input"
+            type="text"
+            :placeholder="searchPlaceholder"
+            class="w-full bg-transparent text-xs text-textPrimary placeholder:text-textSecondary/50 outline-none focus:outline-none focus-visible:outline-none font-interface"
+            @keydown.stop
+            @keydown.esc.prevent="closeDropdown"
+            @keydown.down.prevent="onKeyDown"
+            @keydown.up.prevent="onKeyUp"
+            @keydown.enter.prevent="onKeyEnter"
+          />
+          <button
+            v-if="searchQuery"
+            type="button"
+            @click="searchQuery = ''"
+            class="p-0.5 text-textSecondary hover:text-textPrimary rounded-md outline-none focus:outline-none"
+          >
+            <XIcon class="w-3 h-3" />
+          </button>
+        </div>
       </div>
 
       <!-- Lista de Opções -->
-      <div class="max-h-56 overflow-y-auto custom-scrollbar flex flex-col gap-0.5 p-0.5">
+      <div class="max-h-56 overflow-y-auto custom-scrollbar flex flex-col gap-0.5 p-0.5 pr-1">
         <button
           v-for="(opt, idx) in filteredNormalizedOptions"
           :key="String(opt.value)"
@@ -93,12 +95,12 @@
           role="option"
           :aria-selected="isSelected(opt.value)"
           @click="selectOption(opt)"
-          class="flex items-center justify-between gap-2.5 px-2.5 py-2 rounded-xl text-xs transition-all text-left w-full select-none cursor-pointer"
+          class="flex items-center justify-between gap-2.5 px-2.5 py-2 rounded-xl text-xs transition-all text-left w-full select-none cursor-pointer outline-none focus:outline-none focus-visible:outline-none"
           :class="[
             isSelected(opt.value)
-              ? 'bg-accent/15 text-accent font-medium border border-accent/25'
+              ? 'bg-accent/15 text-accent font-medium border border-accent/25 shadow-sm'
               : highlightedIndex === idx
-                ? 'bg-white/10 text-white border border-white/10'
+                ? 'bg-white/10 text-white border border-transparent'
                 : 'text-textPrimary hover:bg-white/5 hover:text-white border border-transparent'
           ]"
         >
@@ -308,3 +310,35 @@ onUnmounted(() => {
   document.removeEventListener('pointerdown', handleClickOutside)
 })
 </script>
+
+<style scoped>
+/* Scrollbar ultra-fina e elegante integrada ao tema dark do Aresta */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+/* Ocultar explicitamente as setas (botões de topo e base) nativas do Windows Chromium */
+.custom-scrollbar::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+</style>
