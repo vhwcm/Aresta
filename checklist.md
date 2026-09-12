@@ -1,9 +1,10 @@
 # Checklist
 
 ## 🔄 Em Andamento
-- [12/09/2026 15:45] [Fazendo] Filtros de camadas no grafo com isolamento inicial, multi-seleção cumulativa e ícones clean Lucide
+<!-- Nenhuma tarefa em andamento -->
 
 ## ✅ Concluído
+- [12/09/2026 15:49] [Concluído] Filtros de camadas no grafo com isolamento inicial, multi-seleção cumulativa e ícones clean Lucide
 - [12/09/2026 15:47] [Concluído] Unificar busca global em tempo real e otimizar cabeçalho e camadas do Grafo no Espaço Criativo
 - [12/09/2026 15:44] [Concluído] Remover do escopo o pipeline de IA e enriquecimento de temas em livros (AnalyzeBook, Gemini e rotas enrich)
 - [12/09/2026 15:41] [Concluído] Remover nós de anotações feitas nos livros do Grafo de Conhecimento (preservando-as na gaveta do livro)

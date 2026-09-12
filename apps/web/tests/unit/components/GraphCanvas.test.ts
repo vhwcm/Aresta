@@ -153,7 +153,7 @@ describe('GraphCanvas Component', () => {
       },
     })
 
-    const chipsBar = wrapper.find('.absolute.z-10')
+    const chipsBar = wrapper.find('[data-testid="layers-filter-bar"]')
     expect(chipsBar.exists()).toBe(true)
 
     // Não deve conter nenhum emoji colorido nos chips
@@ -176,51 +176,53 @@ describe('GraphCanvas Component', () => {
       props: {
         nodes: [
           { id: 'theme-1', rawId: 1, type: 'theme', name: 'Filosofia' },
-          { id: 'book-1', rawId: 1, type: 'book', name: 'O Hobbit', fullTitle: 'O Hobbit' },
-          { id: 'note-1', rawId: 'n1', type: 'note', name: 'Resumo Cap 1', title: 'Resumo Cap 1' },
-          { id: 'canvas-1', rawId: 'c1', type: 'canvas', name: 'Quadro Mental', title: 'Quadro Mental' },
+          { id: 'book-1', rawId: 1, type: 'book', name: 'Hobbit', fullTitle: 'Hobbit' },
+          { id: 'note-1', rawId: 'n1', type: 'note', name: 'Resumo', title: 'Resumo' },
+          { id: 'canvas-1', rawId: 'c1', type: 'canvas', name: 'Quadro', title: 'Quadro' },
         ],
         edges: [],
       },
     })
 
-    const chipsBar = wrapper.find('.absolute.z-10')
+    const chipsBar = wrapper.find('[data-testid="layers-filter-bar"]')
     const chipButtons = chipsBar.findAll('button')
     const themeBtn = chipButtons.find((b) => b.text().includes('Temas'))!
     const bookBtn = chipButtons.find((b) => b.text().includes('Livros'))!
 
+    const nodesGroup = () => wrapper.find('.nodes-group').text()
+
     // 1. Estado inicial: todas as 4 categorias visíveis
-    expect(wrapper.html()).toContain('Filosofia')
-    expect(wrapper.html()).toContain('O Hobbit')
-    expect(wrapper.html()).toContain('Resumo Cap 1')
-    expect(wrapper.html()).toContain('Quadro Mental')
+    expect(nodesGroup()).toContain('Filosofia')
+    expect(nodesGroup()).toContain('Hobbit')
+    expect(nodesGroup()).toContain('Resumo')
+    expect(nodesGroup()).toContain('Quadro')
 
     // 2. Primeiro clique em 'Temas' com tudo habilitado -> Isola apenas Temas
     await themeBtn.trigger('click')
-    expect(wrapper.html()).toContain('Filosofia')
-    expect(wrapper.html()).not.toContain('O Hobbit')
-    expect(wrapper.html()).not.toContain('Resumo Cap 1')
-    expect(wrapper.html()).not.toContain('Quadro Mental')
+    expect(nodesGroup()).toContain('Filosofia')
+    expect(nodesGroup()).not.toContain('Hobbit')
+    expect(nodesGroup()).not.toContain('Resumo')
+    expect(nodesGroup()).not.toContain('Quadro')
 
     // 3. Clique subsequente em 'Livros' -> Adiciona Livros à visualização (multi-seleção)
     await bookBtn.trigger('click')
-    expect(wrapper.html()).toContain('Filosofia')
-    expect(wrapper.html()).toContain('O Hobbit')
-    expect(wrapper.html()).not.toContain('Resumo Cap 1')
-    expect(wrapper.html()).not.toContain('Quadro Mental')
+    expect(nodesGroup()).toContain('Filosofia')
+    expect(nodesGroup()).toContain('Hobbit')
+    expect(nodesGroup()).not.toContain('Resumo')
+    expect(nodesGroup()).not.toContain('Quadro')
 
     // 4. Clique em 'Temas' para desmarcá-lo -> Apenas Livros permanece ativo
     await themeBtn.trigger('click')
-    expect(wrapper.html()).not.toContain('Filosofia')
-    expect(wrapper.html()).toContain('O Hobbit')
-    expect(wrapper.html()).not.toContain('Resumo Cap 1')
-    expect(wrapper.html()).not.toContain('Quadro Mental')
+    expect(nodesGroup()).not.toContain('Filosofia')
+    expect(nodesGroup()).toContain('Hobbit')
+    expect(nodesGroup()).not.toContain('Resumo')
+    expect(nodesGroup()).not.toContain('Quadro')
 
     // 5. Clique em 'Livros' para desmarcar o último filtro ativo -> Auto-reset para todas as camadas
     await bookBtn.trigger('click')
-    expect(wrapper.html()).toContain('Filosofia')
-    expect(wrapper.html()).toContain('O Hobbit')
-    expect(wrapper.html()).toContain('Resumo Cap 1')
-    expect(wrapper.html()).toContain('Quadro Mental')
+    expect(nodesGroup()).toContain('Filosofia')
+    expect(nodesGroup()).toContain('Hobbit')
+    expect(nodesGroup()).toContain('Resumo')
+    expect(nodesGroup()).toContain('Quadro')
   })
 })

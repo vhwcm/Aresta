@@ -141,6 +141,7 @@
     <!-- Barra de Filtros por Camadas de Nós (Chips Visíveis quando não compacto) -->
     <div
       v-if="!isCompact"
+      data-testid="layers-filter-bar"
       class="absolute z-10 flex items-center gap-1.5 p-1.5 rounded-2xl backdrop-blur-md border shadow-lg transition-all duration-200 max-w-[calc(100%-3rem)] flex-wrap"
       :class="[
         showControls ? 'top-20 left-6' : 'top-4 sm:top-5 left-4 sm:left-6',
