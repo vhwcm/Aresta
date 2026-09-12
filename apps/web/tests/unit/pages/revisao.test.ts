@@ -19,6 +19,20 @@ const mockUserAnnotations = ref([
 
 const mockToggleAnnotationFlashcard = vi.fn().mockResolvedValue(true)
 
+const mockDailyDeck = ref<any[]>([])
+
+vi.mock('~/composables/useFlashcards', () => ({
+  useFlashcards: () => ({
+    dailyDeck: mockDailyDeck,
+    isLoading: ref(false),
+    isSubmitting: ref(false),
+    fetchDailyDeck: vi.fn().mockResolvedValue([]),
+    reviewFlashcard: vi.fn().mockResolvedValue(true),
+    reviewedCount: ref(0),
+    totalCards: ref(0),
+  }),
+}))
+
 vi.mock('~/composables/useAnnotations', () => ({
   useAnnotations: () => ({
     annotations: mockUserAnnotations,
@@ -59,6 +73,7 @@ describe('Revisao Page (/revisao)', () => {
           TagIcon: true,
           BookMarkedIcon: true,
           ReaderAnnotationModal: true,
+          AppSelect: true,
         },
       },
     })
@@ -87,6 +102,7 @@ describe('Revisao Page (/revisao)', () => {
           TagIcon: true,
           BookMarkedIcon: true,
           ReaderAnnotationModal: true,
+          AppSelect: true,
         },
       },
     })
@@ -125,6 +141,7 @@ describe('Revisao Page (/revisao)', () => {
           TagIcon: true,
           BookMarkedIcon: true,
           ReaderAnnotationModal: true,
+          AppSelect: true,
         },
       },
     })
@@ -138,5 +155,131 @@ describe('Revisao Page (/revisao)', () => {
     await createFlashcardBtn!.trigger('click')
 
     expect(mockToggleAnnotationFlashcard).toHaveBeenCalledWith(99)
+  })
+
+  it('renderiza "Ver fonte" com apenas uma seta para cartão de livro', async () => {
+    mockDailyDeck.value = [
+      {
+        id: 1,
+        bookId: 42,
+        bookTitle: 'O Guia do Mochileiro das Galáxias',
+        question: 'Qual a resposta para tudo?',
+        answer: '42',
+        sourceType: 'book',
+        repetitionLevel: 1,
+      },
+    ]
+
+    const wrapper = mount(RevisaoPage, {
+      global: {
+        stubs: {
+          NuxtLink: { template: '<a><slot /></a>' },
+          LayersIcon: true,
+          FileTextIcon: true,
+          RotateCwIcon: true,
+          ChevronLeftIcon: true,
+          ChevronRightIcon: true,
+          PlusIcon: true,
+          Trash2Icon: true,
+          BookOpenIcon: true,
+          SparklesIcon: true,
+          ExternalLinkIcon: true,
+          CheckCircle2Icon: true,
+          TagIcon: true,
+          BookMarkedIcon: true,
+          ReaderAnnotationModal: true,
+          AppSelect: true,
+        },
+      },
+    })
+
+    expect(wrapper.text()).toContain('Ver fonte')
+    expect(wrapper.text()).not.toContain('Ver na Obra')
+    expect(wrapper.text()).not.toContain('Ver fonte ↗')
+  })
+
+  it('renderiza "Ver Nota" com apenas uma seta para cartão de nota do canvas', async () => {
+    mockDailyDeck.value = [
+      {
+        id: 2,
+        noteId: 'note-123',
+        question: 'O que é Aresta?',
+        answer: 'Uma plataforma monólito.',
+        sourceType: 'canvas_note',
+        repetitionLevel: 2,
+      },
+    ]
+
+    const wrapper = mount(RevisaoPage, {
+      global: {
+        stubs: {
+          NuxtLink: { template: '<a><slot /></a>' },
+          LayersIcon: true,
+          FileTextIcon: true,
+          RotateCwIcon: true,
+          ChevronLeftIcon: true,
+          ChevronRightIcon: true,
+          PlusIcon: true,
+          Trash2Icon: true,
+          BookOpenIcon: true,
+          SparklesIcon: true,
+          ExternalLinkIcon: true,
+          CheckCircle2Icon: true,
+          TagIcon: true,
+          BookMarkedIcon: true,
+          ReaderAnnotationModal: true,
+          AppSelect: true,
+        },
+      },
+    })
+
+    expect(wrapper.text()).toContain('Ver Nota')
+    expect(wrapper.text()).not.toContain('Ver Nota ↗')
+  })
+
+  it('integra AppSelect com as opções de livros disponíveis', async () => {
+    mockDailyDeck.value = [
+      {
+        id: 1,
+        bookId: 42,
+        bookTitle: 'O Guia do Mochileiro das Galáxias',
+        question: 'Qual a resposta para a vida?',
+        answer: '42',
+        repetitionLevel: 1,
+      },
+    ]
+
+    const wrapper = mount(RevisaoPage, {
+      global: {
+        stubs: {
+          NuxtLink: { template: '<a><slot /></a>' },
+          LayersIcon: true,
+          FileTextIcon: true,
+          RotateCwIcon: true,
+          ChevronLeftIcon: true,
+          ChevronRightIcon: true,
+          PlusIcon: true,
+          Trash2Icon: true,
+          BookOpenIcon: true,
+          SparklesIcon: true,
+          ExternalLinkIcon: true,
+          CheckCircle2Icon: true,
+          TagIcon: true,
+          BookMarkedIcon: true,
+          ReaderAnnotationModal: true,
+        },
+      },
+    })
+
+    // AppSelect rendered
+    const select = wrapper.findComponent({ name: 'AppSelect' })
+    expect(select.exists()).toBe(true)
+    expect(select.props('modelValue')).toBe('all')
+    expect(select.props('options')).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ value: 'all', label: 'Todas as Obras' }),
+        expect.objectContaining({ value: '42', label: 'O Guia do Mochileiro das Galáxias' })
+      ])
+    )
   })
 })

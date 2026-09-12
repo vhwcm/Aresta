@@ -43,19 +43,13 @@
       <div class="flex flex-wrap items-center justify-between gap-4">
         <div class="flex items-center gap-2">
           <span class="font-technical text-xs text-textSecondary">Filtrar por Obra:</span>
-          <select
+          <AppSelect
             v-model="selectedBookFilter"
-            class="bg-bgPanel text-textPrimary text-xs rounded-xl px-3 py-1.5 border border-divider focus:outline-none focus:border-accent"
-          >
-            <option value="all">Todas as Obras ({{ displayCards.length }})</option>
-            <option
-              v-for="book in availableBooks"
-              :key="book.id"
-              :value="String(book.id)"
-            >
-              {{ book.title }}
-            </option>
-          </select>
+            :options="bookFilterOptions"
+            :icon="BookOpenIcon"
+            placeholder="Todas as Obras"
+            search-placeholder="Buscar obra..."
+          />
         </div>
 
         <div class="flex items-center gap-3 text-xs font-technical text-textSecondary">
@@ -133,7 +127,7 @@
                   title="Abrir a fonte original deste cartão"
                 >
                   <ExternalLinkIcon class="w-3 h-3" />
-                  <span>{{ currentCard.sourceType === 'canvas_note' ? 'Ver Nota ↗' : 'Ver na Obra ↗' }}</span>
+                  <span>{{ currentCard.sourceType === 'canvas_note' ? 'Ver Nota' : 'Ver fonte' }}</span>
                 </NuxtLink>
 
                 <span class="font-technical text-[10px] text-accent font-semibold">Nível {{ currentCard.repetitionLevel }}</span>
@@ -167,7 +161,7 @@
                   title="Abrir a fonte original deste cartão"
                 >
                   <ExternalLinkIcon class="w-3 h-3" />
-                  <span>{{ currentCard.sourceType === 'canvas_note' ? 'Ver Nota ↗' : 'Ver na Obra ↗' }}</span>
+                  <span>{{ currentCard.sourceType === 'canvas_note' ? 'Ver Nota' : 'Ver fonte' }}</span>
                 </NuxtLink>
                 <span v-else class="text-accent">Aresta Memory Engine</span>
               </div>
@@ -255,19 +249,13 @@
           <!-- Filtro por Obra na aba de anotações -->
           <div class="flex items-center gap-2">
             <span class="font-technical text-xs text-textSecondary">Obra:</span>
-            <select
+            <AppSelect
               v-model="selectedSummaryBookFilter"
-              class="bg-bgPanel text-textPrimary text-xs rounded-xl px-3 py-1.5 border border-divider focus:outline-none focus:border-accent"
-            >
-              <option value="all">Todas as Obras ({{ summaries.length }})</option>
-              <option
-                v-for="book in availableSummaryBooks"
-                :key="book.id"
-                :value="book.id"
-              >
-                {{ book.title }}
-              </option>
-            </select>
+              :options="summaryBookFilterOptions"
+              :icon="BookOpenIcon"
+              placeholder="Todas as Obras"
+              search-placeholder="Buscar obra..."
+            />
           </div>
         </div>
       </div>
@@ -417,7 +405,7 @@
                     title="Ver nota no Canvas"
                   >
                     <ExternalLinkIcon class="w-3.5 h-3.5" />
-                    <span>Ver no Canvas ↗</span>
+                    <span>Ver no Canvas</span>
                   </NuxtLink>
                   <NuxtLink
                     v-else-if="summary.bookId"
@@ -525,31 +513,22 @@
           <!-- Seletor de Livreto Existente quando Modo = 'append' -->
           <div v-if="selectedBookletMode === 'append'" class="flex flex-col gap-1.5">
             <label class="font-technical text-xs text-textSecondary">Selecione o Livreto Didático:</label>
-            <select
+            <AppSelect
               v-model="selectedTargetBookletId"
-              class="bg-bgPanel text-textPrimary text-xs rounded-xl p-2.5 border border-divider focus:outline-none focus:border-accent"
-            >
-              <option
-                v-for="b in didactic.booklets.value"
-                :key="b.id"
-                :value="b.book_id"
-              >
-                {{ b.title }} ({{ b.chapters?.length || 1 }} capítulos)
-              </option>
-            </select>
+              :options="bookletOptions"
+              placeholder="Selecione um caderno didático"
+              search-placeholder="Buscar caderno..."
+            />
           </div>
 
           <!-- Seletor de Profundidade -->
           <div class="flex flex-col gap-1.5">
             <label class="font-technical text-xs text-textSecondary">Profundidade Didática:</label>
-            <select
+            <AppSelect
               v-model="selectedDepth"
-              class="bg-bgPanel text-textPrimary text-xs rounded-xl p-2.5 border border-divider focus:outline-none focus:border-accent"
-            >
-              <option value="standard">Padrão Equilibrado (~4 páginas, 1 Mermaid)</option>
-              <option value="quick_summary">Resumo Rápido (~2 páginas)</option>
-              <option value="deep_dive">Aprofundamento Completo (~6 páginas, 2 Mermaids)</option>
-            </select>
+              :options="depthOptions"
+              placeholder="Selecione a profundidade"
+            />
           </div>
         </div>
 
@@ -613,6 +592,7 @@ import { useDidacticBooklet } from '~/composables/useDidacticBooklet'
 import { useAnnotations } from '~/composables/useAnnotations'
 import { useUserBooks } from '~/composables/useUserBooks'
 import ReaderAnnotationModal from '~/components/reader/ReaderAnnotationModal.vue'
+import AppSelect from '~/components/AppSelect.vue'
 
 interface AnnotationSummary {
   id: string
@@ -672,19 +652,50 @@ const bookTitlesMap = computed(() => {
 })
 
 const availableBooks = computed(() => {
-  const map = new Map<number, { id: number; title: string }>()
+  const map = new Map<string, { id: string | number; title: string }>()
   for (const c of displayCards.value) {
-    if (c.bookId && !map.has(c.bookId)) {
-      map.set(c.bookId, { id: c.bookId, title: c.bookTitle })
+    if (c.bookId) {
+      const key = String(c.bookId)
+      if (!map.has(key)) {
+        map.set(key, { id: c.bookId, title: c.bookTitle || bookTitlesMap.value.get(Number(c.bookId)) || `Livro #${c.bookId}` })
+      }
     }
   }
   for (const a of userAnnotations.value) {
-    if (a.bookId && !map.has(a.bookId)) {
-      const title = a.bookTitle || bookTitlesMap.value.get(Number(a.bookId)) || `Livro #${a.bookId}`
-      map.set(a.bookId, { id: a.bookId, title })
+    if (a.bookId) {
+      const key = String(a.bookId)
+      if (!map.has(key)) {
+        const title = a.bookTitle || bookTitlesMap.value.get(Number(a.bookId)) || `Livro #${a.bookId}`
+        map.set(key, { id: a.bookId, title })
+      }
     }
   }
   return Array.from(map.values())
+})
+
+const bookFilterOptions = computed(() => {
+  const options: { value: string; label: string; count?: number }[] = [
+    {
+      value: 'all',
+      label: 'Todas as Obras',
+      count: displayCards.value.length
+    }
+  ]
+
+  const seenIds = new Set<string>()
+  for (const b of availableBooks.value) {
+    const idStr = String(b.id)
+    if (!seenIds.has(idStr)) {
+      seenIds.add(idStr)
+      const count = displayCards.value.filter((c) => String(c.bookId) === idStr).length
+      options.push({
+        value: idStr,
+        label: b.title,
+        count: count > 0 ? count : undefined
+      })
+    }
+  }
+  return options
 })
 
 const filteredCards = computed(() => {
@@ -796,6 +807,42 @@ const availableSummaryBooks = computed(() => {
     }
   }
   return Array.from(map.values())
+})
+
+const summaryBookFilterOptions = computed(() => {
+  const options: { value: string; label: string; count?: number }[] = [
+    {
+      value: 'all',
+      label: 'Todas as Obras',
+      count: summaries.value.length
+    }
+  ]
+
+  for (const b of availableSummaryBooks.value) {
+    const count = summaries.value.filter((s) => {
+      const key = s.bookId ? String(s.bookId) : s.bookTitle
+      return key === b.id
+    }).length
+    options.push({
+      value: b.id,
+      label: b.title,
+      count: count > 0 ? count : undefined
+    })
+  }
+  return options
+})
+
+const depthOptions = [
+  { value: 'standard', label: 'Padrão Equilibrado (~4 páginas, 1 Mermaid)' },
+  { value: 'quick_summary', label: 'Resumo Rápido (~2 páginas)' },
+  { value: 'deep_dive', label: 'Aprofundamento Completo (~6 páginas, 2 Mermaids)' }
+]
+
+const bookletOptions = computed(() => {
+  return didactic.booklets.value.map((b) => ({
+    value: b.book_id,
+    label: `${b.title} (${b.chapters?.length || 1} capítulos)`
+  }))
 })
 
 const filteredSummaries = computed(() => {

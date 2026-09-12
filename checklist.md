@@ -1,9 +1,11 @@
 # Checklist
 
 ## 🔄 Em Andamento
+- [12/09/2026 20:07] [Fazendo] Criar componente customizado de seleção (AppSelect) com design do Aresta e aplicar na página de revisão
 - [12/09/2026 20:05] [Fazendo] Excluir anotações e flashcards ao deletar livro e alertar no modal de confirmação se houver notas
 
 ## ✅ Concluído
+- [12/09/2026 20:33] [Concluído] Trocar 'Ver na obra' para 'Ver fonte' e manter apenas uma seta no link de fonte do flashcard
 - [12/09/2026 20:04] [Concluído] Abrir gaveta de anotações do livro e opção de leitura ao clicar em livro no Grafo de Conhecimento
 - [12/09/2026 20:00] [Concluído] Preservar e renderizar a cor exata selecionada para notas e destaques no livro
 - [12/09/2026 19:57] [Concluído] Assinar APK Android automaticamente com apksigner e zipalign no GitHub Actions para permitir instalação
