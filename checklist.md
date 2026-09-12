@@ -1,9 +1,12 @@
 # Checklist
 
 ## 🔄 Em Andamento
-<!-- Nenhuma tarefa em andamento -->
+- [12/09/2026 16:08] [Fazendo] Destacar texto selecionado no livro com a cor da nota/anotação criada no leitor
+- [12/09/2026 15:53] [Fazendo] Integração de anotações (livro e notas) com geração de flashcards via IA e listagem por temas
+
 
 ## ✅ Concluído
+- [12/09/2026 16:10] [Concluído] Implementar comando npm para gerenciar variáveis .env do monólito (npm run set-env)
 - [12/09/2026 15:49] [Concluído] Filtros de camadas no grafo com isolamento inicial, multi-seleção cumulativa e ícones clean Lucide
 - [12/09/2026 15:47] [Concluído] Unificar busca global em tempo real e otimizar cabeçalho e camadas do Grafo no Espaço Criativo
 - [12/09/2026 15:44] [Concluído] Remover do escopo o pipeline de IA e enriquecimento de temas em livros (AnalyzeBook, Gemini e rotas enrich)

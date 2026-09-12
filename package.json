@@ -24,7 +24,11 @@
     "tauri:build": "npm --prefix apps/web run tauri:build",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
-    "docker:build": "docker compose build"
+    "docker:build": "docker compose build",
+    "set-env": "node scripts/set-env.js",
+    "get-env": "node scripts/set-env.js --get",
+    "env:set": "node scripts/set-env.js",
+    "env:get": "node scripts/set-env.js --get"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",
