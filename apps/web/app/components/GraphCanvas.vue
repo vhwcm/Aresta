@@ -212,7 +212,7 @@ const tooltipPos = ref({ x: 0, y: 0 })
 
 // Filtros de camadas ativas (por padrão, todas visíveis)
 const activeLayers = ref<Set<GraphNodeType>>(
-  new Set(['theme', 'book', 'annotation', 'note', 'canvas'])
+  new Set(['theme', 'book', 'note', 'canvas'])
 )
 
 const layerDefinitions: Array<{
@@ -224,7 +224,6 @@ const layerDefinitions: Array<{
 }> = [
   { type: 'theme', label: 'Temas', icon: '🏷️', activeBg: 'bg-accent/20 border-accent/40', activeText: 'text-accent' },
   { type: 'book', label: 'Livros', icon: '📚', activeBg: 'bg-blue-500/20 border-blue-500/40', activeText: 'text-blue-400' },
-  { type: 'annotation', label: 'Anotações', icon: '📝', activeBg: 'bg-amber-500/20 border-amber-500/40', activeText: 'text-amber-400' },
   { type: 'note', label: 'Notas', icon: '📄', activeBg: 'bg-indigo-500/20 border-indigo-500/40', activeText: 'text-indigo-400' },
   { type: 'canvas', label: 'Quadros', icon: '🖼️', activeBg: 'bg-emerald-500/20 border-emerald-500/40', activeText: 'text-emerald-400' },
 ]
@@ -249,7 +248,6 @@ const getLayerCount = (type: GraphNodeType) => {
 const getNodeBadgeLabel = (type?: GraphNodeType) => {
   switch (type) {
     case 'book': return 'Livro'
-    case 'annotation': return 'Anotação'
     case 'note': return 'Nota'
     case 'canvas': return 'Quadro'
     case 'theme':
@@ -260,7 +258,6 @@ const getNodeBadgeLabel = (type?: GraphNodeType) => {
 const getNodeBadgeClass = (type?: GraphNodeType) => {
   switch (type) {
     case 'book': return 'bg-blue-500/20 text-blue-400'
-    case 'annotation': return 'bg-amber-500/20 text-amber-400'
     case 'note': return 'bg-indigo-500/20 text-indigo-400'
     case 'canvas': return 'bg-emerald-500/20 text-emerald-400'
     case 'theme':

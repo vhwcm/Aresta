@@ -126,32 +126,7 @@ export class GraphService {
       color: '#3B82F6',
     }))
 
-    // 3. Nós de Anotações do Leitor
-    const annotationNodes = annotations.map((ann) => {
-      const shortText = ann.note
-        ? (ann.note.length > 35 ? ann.note.substring(0, 32) + '...' : ann.note)
-        : (ann.selected_text ? (ann.selected_text.length > 35 ? ann.selected_text.substring(0, 32) + '...' : ann.selected_text) : 'Anotação')
-
-      return {
-        id: `ann-${ann.id}`,
-        rawId: ann.id,
-        type: 'annotation' as const,
-        name: shortText,
-        title: shortText,
-        note: ann.note || '',
-        selectedText: ann.selected_text || '',
-        cfi: ann.cfi || null,
-        chapterTitle: ann.chapter_title || null,
-        progress: ann.progress ?? 0,
-        bookId: ann.book_id,
-        bookTitle: ann.book?.title || '',
-        bookCover: ann.book?.cover_path || null,
-        color: '#F59E0B',
-        createdAt: ann.created_at,
-      }
-    })
-
-    // 4. Nós de Notas Livres
+    // 3. Nós de Notas Livres
     const noteNodes = notes.map((n) => {
       const tags = parsedNoteTagsMap.get(n.id) || []
       const cleanSnippet = n.content
@@ -173,7 +148,7 @@ export class GraphService {
       }
     })
 
-    // 5. Nós de Quadros (Canvases)
+    // 4. Nós de Quadros (Canvases)
     const canvasNodes = canvases.map((c) => {
       let parsedTags: string[] = []
       try {
@@ -200,7 +175,6 @@ export class GraphService {
     const allNodes = [
       ...themeNodes,
       ...bookNodes,
-      ...annotationNodes,
       ...noteNodes,
       ...canvasNodes,
     ]
@@ -234,20 +208,6 @@ export class GraphService {
       for (const bt of ub.book.bookThemes || []) {
         if (activeThemeIds.has(bt.theme_id)) {
           addEdge(`edge-bt-${ub.book.id}-${bt.theme_id}`, `book-${ub.book.id}`, bt.theme_id, 'book-theme')
-        }
-      }
-    }
-
-    // Arestas: Anotação do Leitor com Livro
-    for (const ann of annotations) {
-      addEdge(`edge-ann-bk-${ann.id}-${ann.book_id}`, `ann-${ann.id}`, `book-${ann.book_id}`, 'annotation-book')
-    }
-
-    // Arestas: Anotação do Leitor com Tema
-    for (const ann of annotations) {
-      for (const at of ann.annotationThemes || []) {
-        if (activeThemeIds.has(at.theme_id)) {
-          addEdge(`edge-ann-th-${ann.id}-${at.theme_id}`, `ann-${ann.id}`, at.theme_id, 'annotation-theme')
         }
       }
     }
@@ -319,7 +279,7 @@ export class GraphService {
       counts: {
         themes: themeNodes.length,
         books: bookNodes.length,
-        annotations: annotationNodes.length,
+        annotations: annotations.length,
         notes: noteNodes.length,
         canvases: canvasNodes.length,
       },

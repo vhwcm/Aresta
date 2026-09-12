@@ -21,10 +21,11 @@ describe('MemoryService & GraphService', () => {
     expect(graph.counts).toHaveProperty('canvases')
 
     const nodeTypes = new Set(graph.nodes.map((n: any) => n.type))
-    // Os nós retornados devem ser de tipos válidos
+    // Os nós retornados devem ser de temas, livros, notas e quadros (anotações de livros ficam no drawer do livro)
     for (const type of nodeTypes) {
-      expect(['theme', 'book', 'annotation', 'note', 'canvas']).toContain(type)
+      expect(['theme', 'book', 'note', 'canvas']).toContain(type)
     }
+    expect(nodeTypes.has('annotation')).toBe(false)
   })
 })
 
