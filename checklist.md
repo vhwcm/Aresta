@@ -4,6 +4,7 @@
 
 
 ## ✅ Concluído
+- [12/09/2026 19:46] [Concluído] Ajustar texto do toggle no ReaderAnnotationModal para 'Gerar flashcard'
 - [12/09/2026 15:53] [Concluído] Integração de anotações (livro e notas) com geração de flashcards via IA e listagem por temas
 - [12/09/2026 16:08] [Concluído] Destacar texto selecionado no livro com a cor da nota/anotação criada no leitor
 - [12/09/2026 16:15] [Concluído] Remover círculo ao redor das setas de navegação de páginas no leitor de livros

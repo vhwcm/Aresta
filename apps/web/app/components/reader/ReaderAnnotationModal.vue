@@ -225,8 +225,7 @@
             </div>
             <div>
               <div class="flex items-center gap-1.5">
-                <span class="text-xs font-semibold text-textPrimary">Gerar Flashcard com IA</span>
-                <span class="text-[9px] px-1.5 py-0.2 rounded bg-accent/20 text-accent font-bold uppercase tracking-wider font-technical">IA</span>
+                <span class="text-xs font-semibold text-textPrimary">Gerar flashcard</span>
               </div>
               <p class="text-[11px] text-textSecondary">
                 {{ wantFlashcard ? 'A IA criará um cartão de estudo em segundo plano' : 'Salvar apenas como anotação' }}
