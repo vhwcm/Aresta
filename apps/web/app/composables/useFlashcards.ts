@@ -25,6 +25,10 @@ export interface FlashcardItem {
   isReviewed?: boolean
   rating?: 'hard' | 'good' | 'easy' | null
   position?: number
+  sourceType?: 'book_annotation' | 'canvas_note'
+  sourceUrl?: string | null
+  sourceTitle?: string | null
+  noteId?: string | null
 }
 
 export interface DailyDeckResponse {
@@ -66,7 +70,7 @@ export const useFlashcards = () => {
   const streak = useReadingStreak()
 
   const getHeaders = () => {
-    const token = typeof useCookie === 'function' ? useCookie('aresta_token').value : null
+    const token = auth.token?.value || (typeof useCookie === 'function' ? useCookie('aresta_token').value : null)
     const headers: Record<string, string> = {
       'Content-Type': 'application/json'
     }
@@ -76,28 +80,38 @@ export const useFlashcards = () => {
     return headers
   }
 
-  const mapLocalToFlashcardItem = (f: any): FlashcardItem => ({
-    id: Number(f.id),
-    userId: f.userId || 0,
-    annotationId: f.annotationId || 0,
-    bookId: f.bookId || 0,
-    bookTitle: f.bookTitle || 'Sem Título',
-    bookCover: f.bookCover || null,
-    chapterTitle: f.chapterTitle || null,
-    selectedText: f.selectedText || null,
-    note: f.note || null,
-    cardType: f.cardType || 'recall',
-    question: f.question || '',
-    answer: f.answer || '',
-    contextSummary: f.contextSummary || null,
-    repetitionLevel: f.repetitionLevel || 0,
-    nextReviewAt: f.nextReviewAt || new Date().toISOString(),
-    lastReviewedAt: f.lastReviewedAt || null,
-    reviewCount: f.reviewCount || 0,
-    difficulty: f.difficulty || 0,
-    isReviewed: f.isReviewed || false,
-    rating: f.rating || null
-  })
+  const mapLocalToFlashcardItem = (f: any): FlashcardItem => {
+    const isNote = f.sourceType === 'canvas_note' || f.noteId || f.cfi?.startsWith('note:')
+    const noteId = f.noteId || (f.cfi?.startsWith('note:') ? f.cfi.replace(/^note:/, '') : null)
+    return {
+      id: Number(f.id),
+      userId: f.userId || 0,
+      annotationId: f.annotationId || 0,
+      bookId: f.bookId || 0,
+      bookTitle: f.bookTitle || 'Sem Título',
+      bookCover: f.bookCover || null,
+      chapterTitle: f.chapterTitle || null,
+      selectedText: f.selectedText || null,
+      note: f.note || null,
+      cardType: f.cardType || 'recall',
+      question: f.question || '',
+      answer: f.answer || '',
+      contextSummary: f.contextSummary || null,
+      repetitionLevel: f.repetitionLevel || 0,
+      nextReviewAt: f.nextReviewAt || new Date().toISOString(),
+      lastReviewedAt: f.lastReviewedAt || null,
+      reviewCount: f.reviewCount || 0,
+      difficulty: f.difficulty || 0,
+      isReviewed: f.isReviewed || false,
+      rating: f.rating || null,
+      sourceType: f.sourceType || (isNote ? 'canvas_note' : 'book_annotation'),
+      sourceUrl: f.sourceUrl || (isNote
+        ? `/canvas?tab=notes&noteId=${noteId}`
+        : (f.bookId ? `/reader?bookId=${f.bookId}` : null)),
+      sourceTitle: f.sourceTitle || f.bookTitle || (isNote ? 'Nota no Canvas' : 'Obra'),
+      noteId
+    }
+  }
 
   /**
    * Busca o deck de flashcards do dia para o usuário com Local-First
@@ -282,6 +296,146 @@ export const useFlashcards = () => {
     }
   }
 
+  /**
+   * Gera flashcard via IA (ou fallback socrático local) para uma anotação (livro ou nota)
+   */
+  const generateAiFlashcardForAnnotation = async (annotation: any) => {
+    isLoading.value = true
+    let question = ''
+    let answer = ''
+    let contextSummary: string | null = null
+
+    const isNote = annotation.cfi?.startsWith('note:') || annotation.sourceType === 'canvas_note' || Boolean(annotation.noteId)
+    const noteId = annotation.noteId || (annotation.cfi?.startsWith('note:') ? annotation.cfi.replace(/^note:/, '') : null)
+    const title = annotation.bookTitle || annotation.chapterTitle || (isNote ? 'Nota' : 'Livro')
+    const selectedText = annotation.selectedText || ''
+    const noteContent = annotation.note || ''
+
+    try {
+      // 1. Tenta gerar via IA
+      const res = await $fetch<{ question: string; answer: string; contextSummary: string }>(
+        `${getApiBase()}/ai/flashcard`,
+        {
+          method: 'POST',
+          headers: getHeaders(),
+          body: {
+            selectedText: selectedText || noteContent,
+            note: noteContent || undefined,
+            bookTitle: title,
+            chapterTitle: annotation.chapterTitle || undefined,
+            cardType: 'CONCEPT_RECALL'
+          }
+        }
+      )
+      if (res?.question && res?.answer) {
+        question = res.question
+        answer = res.answer
+        contextSummary = res.contextSummary || null
+      }
+    } catch (err) {
+      console.warn('[useFlashcards] Geração via IA offline ou sem chave. Usando fallback inteligente:', err)
+    }
+
+    // 2. Fallback heurístico inteligente se IA falhar ou estiver offline
+    if (!question || !answer) {
+      if (noteContent && selectedText) {
+        question = `O que significa a reflexão "${noteContent}" em relação ao trecho grifado?`
+        answer = selectedText
+      } else if (noteContent) {
+        question = `Qual o conceito principal sintetizado nesta anotação?`
+        answer = noteContent
+      } else {
+        const snippet = selectedText.slice(0, 80)
+        question = `Explique a ideia central do trecho: "${snippet}${selectedText.length > 80 ? '...' : ''}"`
+        answer = selectedText
+      }
+      contextSummary = noteContent || selectedText.slice(0, 100)
+    }
+
+    // 3. Salva no banco local com rastreamento da fonte
+    const saved = await flashcardRepo.createFromAnnotation(
+      {
+        id: annotation.id,
+        userId: annotation.userId || 0,
+        bookId: annotation.bookId || 1,
+        bookTitle: title,
+        bookCover: annotation.bookCover || null,
+        chapterTitle: annotation.chapterTitle || null,
+        selectedText,
+        note: noteContent,
+        cfi: annotation.cfi || (isNote ? `note:${noteId}` : ''),
+        createdAt: annotation.createdAt || new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        sync_status: 'pending'
+      },
+      question,
+      answer,
+      {
+        sourceType: isNote ? 'canvas_note' : 'book_annotation',
+        sourceUrl: isNote
+          ? `/canvas?tab=notes&noteId=${noteId}`
+          : `/reader?bookId=${annotation.bookId || 1}${annotation.cfi ? `&cfi=${encodeURIComponent(annotation.cfi)}` : ''}`,
+        sourceTitle: title,
+        noteId
+      }
+    )
+
+    // 4. Sincroniza com backend se online
+    try {
+      await $fetch(`${getApiBase()}/flashcards`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: {
+          annotationId: annotation.id,
+          bookId: annotation.bookId || 1,
+          question,
+          answer,
+          contextSummary,
+          cardType: 'CONCEPT_RECALL'
+        }
+      })
+    } catch {
+      // offline
+    }
+
+    await fetchDailyDeck()
+    isLoading.value = false
+    return saved
+  }
+
+  /**
+   * Exclui flashcard associado a uma anotação (local e remoto)
+   */
+  const deleteFlashcardByAnnotationId = async (annotationId: number) => {
+    await flashcardRepo.deleteByAnnotationId(annotationId)
+    dailyDeck.value = dailyDeck.value.filter((c) => c.annotationId !== annotationId)
+    totalCards.value = dailyDeck.value.length
+    if (firstCard.value?.annotationId === annotationId) {
+      firstCard.value = dailyDeck.value[0] || null
+    }
+
+    try {
+      await $fetch(`${getApiBase()}/flashcards/by-annotation/${annotationId}`, {
+        method: 'DELETE',
+        headers: getHeaders()
+      })
+    } catch (e) {
+      console.warn('Exclusão remota agendada localmente:', e)
+    }
+  }
+
+  /**
+   * Exclui flashcards associados a uma nota do canvas (local e remoto)
+   */
+  const deleteFlashcardByNoteId = async (noteId: string) => {
+    await flashcardRepo.deleteByNoteId(noteId)
+    dailyDeck.value = dailyDeck.value.filter((c) => c.noteId !== noteId && !c.sourceUrl?.includes(noteId))
+    totalCards.value = dailyDeck.value.length
+    if (firstCard.value?.noteId === noteId) {
+      firstCard.value = dailyDeck.value[0] || null
+    }
+  }
+
   return {
     dailyDeck: computed(() => dailyDeck.value),
     firstCard: computed(() => firstCard.value),
@@ -294,6 +448,9 @@ export const useFlashcards = () => {
     fetchDailyDeck,
     fetchFirstDailyCard,
     reviewFlashcard,
-    generateBatch
+    generateBatch,
+    generateAiFlashcardForAnnotation,
+    deleteFlashcardByAnnotationId,
+    deleteFlashcardByNoteId
   }
 }

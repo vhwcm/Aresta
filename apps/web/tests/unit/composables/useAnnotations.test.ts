@@ -20,14 +20,15 @@ describe('useAnnotations', () => {
     const fakeData = [
       { id: 1, userId: 10, bookId: 1, cfi: 'page:1', selectedText: 'Trecho 1', note: 'Nota 1', themes: [] },
     ]
-    mockFetch.mockResolvedValueOnce(fakeData)
+    mockFetch.mockResolvedValue(fakeData)
 
     const { annotations, fetchAnnotations, loading } = useAnnotations()
     expect(loading.value).toBe(false)
 
     const res = await fetchAnnotations({ bookId: 1 })
-    expect(res).toEqual(fakeData)
-    expect(annotations.value).toEqual(fakeData)
+    expect(res).toHaveLength(1)
+    expect(res[0]).toMatchObject(fakeData[0])
+    expect(annotations.value[0]).toMatchObject(fakeData[0])
     expect(mockFetch).toHaveBeenCalledWith(
       'http://localhost:3001/api/annotations?bookId=1',
       expect.objectContaining({
@@ -58,8 +59,8 @@ describe('useAnnotations', () => {
       themeIds: [5],
     })
 
-    expect(res).toEqual(createdItem)
-    expect(annotations.value[0]).toEqual(createdItem)
+    expect(res).toMatchObject(createdItem)
+    expect(annotations.value[0]).toMatchObject(createdItem)
   })
 
   it('updateAnnotationNote atualiza a nota na lista', async () => {

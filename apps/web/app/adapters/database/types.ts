@@ -57,6 +57,10 @@ export interface LocalFlashcard extends BaseLocalEntity {
   difficulty?: number;
   isReviewed?: boolean;
   rating?: 'hard' | 'good' | 'easy' | null;
+  sourceType?: 'book_annotation' | 'canvas_note';
+  sourceUrl?: string | null;
+  sourceTitle?: string | null;
+  noteId?: string | null;
 }
 
 export interface LocalCanvasItem extends BaseLocalEntity {

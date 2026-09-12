@@ -251,6 +251,7 @@
         <article
           v-for="item in filteredAnnotations"
           :key="item.id"
+          :id="'annotation-card-' + item.id"
           class="rounded-2xl p-4 transition-all space-y-3 border shadow-xs group"
           :class="{
             'bg-[#FAF5E8] border-[#dfd5c0] hover:border-accent/50 text-[#2a2521]': activeTheme === 'sepia',
@@ -787,8 +788,22 @@ onMounted(() => {
   loadNotes()
 })
 
+function focusAnnotation(id: number) {
+  nextTick(() => {
+    const el = document.getElementById(`annotation-card-${id}`)
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      el.classList.add('ring-2', 'ring-accent')
+      setTimeout(() => {
+        el.classList.remove('ring-2', 'ring-accent')
+      }, 2200)
+    }
+  })
+}
+
 defineExpose({
   refresh: loadNotes,
+  focusAnnotation,
 })
 </script>
 

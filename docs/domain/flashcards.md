@@ -73,26 +73,36 @@ Na autoavaliação (`/api/v1/flashcards/:id/review`):
 
 ---
 
-## 5. Endpoints REST da API
-
-- `GET /api/v1/flashcards/daily`: Retorna o deck diário de até 50 cards para o usuário logado.
-- `GET /api/v1/flashcards/daily/first`: Retorna o 1º card do dia para o feed da Home.
-- `POST /api/v1/flashcards/:id/review`: Registra a autoavaliação, atualiza a repetição espaçada e pontua no Streak.
-- `POST /api/v1/flashcards/generate-batch`: Trigger administrativo para geração em lote de anotações pendentes.
+- `POST /api/v1/flashcards`: Criação/persistência direta de flashcard vinculado a anotação ou nota.
+- `DELETE /api/v1/flashcards/:id`: Exclui flashcard por ID.
+- `DELETE /api/v1/flashcards/by-annotation/:annotationId`: Exclusão em cascata ao remover a anotação-fonte.
 
 ---
 
-## 6. Código e Arquivos Relacionados
+## 6. Integração Multiorigem (Livros e Trechos de Notas do Canvas)
+
+1. **Anotações no Leitor de Livros**:
+   - Criação com toggle de flashcard direto no modal `ReaderAnnotationModal`.
+   - Gera flashcard pedagógico via IA e associa com `sourceType: 'book'`, `bookId` e `cfi`.
+2. **Trechos de Notas do Canvas**:
+   - Ao selecionar texto em notas do Canvas (`CanvasNodeNote`), o leitor exibe tooltip com "Gerar Flashcard com Trecho (IA)".
+   - Cria uma anotação com `cfi: 'note:${noteId}'` e associa `sourceType: 'canvas_note'` e `noteId`.
+3. **Navegação para a Fonte ("Ver Fonte ↗")**:
+   - Na página de revisão (`/revisao`), os flashcards possuem botão direto apontando para o leitor de livros ou para o Canvas focando na nota.
+4. **Exclusão em Cascata Garantida**:
+   - Ao excluir a nota no Canvas ou a anotação no leitor, os flashcards correspondentes são deletados automaticamente no banco local e remoto via trigger/serviço.
+
+---
+
+## 7. Código e Arquivos Relacionados
 
 - **Backend**:
-  - `src/services/flashcardRAG.service.ts`: Cosine similarity e recuperação de vizinhos.
-  - `src/services/flashcard.service.ts`: Composição do deck de 50 cards e motor de repetição espaçada.
-  - `src/services/flashcardScheduler.service.ts`: Agendamento dos jobs das 22:00 e 00:00.
-  - `src/controllers/flashcard.controller.ts` & `src/routes/flashcard.routes.ts`: Endpoints REST e Swagger.
+  - `apps/api/src/modules/memory/services/flashcard.service.ts`: Composição do deck, repetição espaçada e remoção em cascata.
+  - `apps/api/src/modules/canvas/services/note.service.ts`: Cascata de remoção de flashcards e anotações originadas de notas.
+  - `apps/api/src/modules/memory/routes/flashcard.routes.ts`: Endpoints REST unificados.
 - **Frontend**:
-  - `front/app/composables/useFlashcards.ts`: Composable reativo de deck e revisão.
-  - `front/app/pages/index.vue`: Widget do 1º Flashcard do Dia.
-  - `front/app/pages/revisao.vue`: Interface 3D flip com autoavaliação e progresso diário.
-- **Microsserviço Go**:
-  - `aresta-ocr/proto/ai/v1/ai.proto`: Definições gRPC de `GenerateEmbedding` e `GenerateFlashcard`.
-  - `aresta-ocr/internal/adapters/gemini/analyzer.go`: Prompts few-shot especializados nos 3 arquétipos.
+  - `apps/web/app/composables/useFlashcards.ts`: Deck diário, geração com IA e exclusão por fonte.
+  - `apps/web/app/composables/useAnnotations.ts`: Ciclo de vida de anotações, alternância de flashcard e persistência local-first.
+  - `apps/web/app/components/canvas/CanvasNodeNote.vue`: Seleção de trecho e trigger de anotação com flashcard.
+  - `apps/web/app/components/reader/ReaderAnnotationModal.vue`: Modal unificado com toggle de geração por IA.
+  - `apps/web/app/pages/revisao.vue`: Revisão 3D, link "Ver Fonte ↗", listagem agrupada por temas e filtros rápidos.

@@ -206,6 +206,46 @@
           </div>
         </div>
 
+        <!-- Opção: Transformar em Flashcard com IA -->
+        <div
+          class="flex items-center justify-between p-3.5 rounded-xl bg-bgApp/60 border border-divider hover:border-accent/40 transition-all cursor-pointer select-none"
+          @click="wantFlashcard = !wantFlashcard"
+          role="button"
+          tabindex="0"
+          data-testid="toggle-want-flashcard"
+          @keydown.space.prevent="wantFlashcard = !wantFlashcard"
+          @keydown.enter.prevent="wantFlashcard = !wantFlashcard"
+        >
+          <div class="flex items-center gap-3">
+            <div
+              class="p-2 rounded-lg transition-colors"
+              :class="wantFlashcard ? 'bg-accent/15 text-accent' : 'bg-white/5 text-textSecondary'"
+            >
+              <SparklesIcon class="w-4 h-4" />
+            </div>
+            <div>
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-semibold text-textPrimary">Gerar Flashcard com IA</span>
+                <span class="text-[9px] px-1.5 py-0.2 rounded bg-accent/20 text-accent font-bold uppercase tracking-wider font-technical">IA</span>
+              </div>
+              <p class="text-[11px] text-textSecondary">
+                {{ wantFlashcard ? 'A IA criará um cartão de estudo em segundo plano' : 'Salvar apenas como anotação' }}
+              </p>
+            </div>
+          </div>
+
+          <!-- Toggle Switch -->
+          <div
+            class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out"
+            :class="wantFlashcard ? 'bg-accent' : 'bg-white/10'"
+          >
+            <span
+              class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out"
+              :class="wantFlashcard ? 'translate-x-4' : 'translate-x-0'"
+            />
+          </div>
+        </div>
+
         <p v-if="errorMessage" class="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 p-2.5 rounded-xl">
           {{ errorMessage }}
         </p>
@@ -244,6 +284,7 @@ import {
   MessageSquareIcon,
   ChevronDownIcon,
   ChevronUpIcon,
+  SparklesIcon,
 } from 'lucide-vue-next'
 import { useGraph } from '~/composables/useGraph'
 import { useAnnotations, type AnnotationItem } from '~/composables/useAnnotations'
@@ -269,6 +310,9 @@ const props = defineProps<{
   currentPage: number
   bookId?: number | null
   bookTitle?: string
+  chapterTitle?: string
+  cfi?: string
+  noteId?: string | null
 }>()
 
 const emit = defineEmits<{
@@ -283,6 +327,7 @@ const selectedText = ref('')
 const selectedColor = ref('#E57B55')
 const wantNote = ref(false)
 const note = ref('')
+const wantFlashcard = ref(false)
 const selectedThemeIds = ref<number[]>([])
 const showThemesSection = ref(false)
 const showNewThemeInput = ref(false)
@@ -301,15 +346,15 @@ watch(
     if (open) {
       selectedText.value = props.initialText || ''
       selectedColor.value = '#E57B55'
-      // Se não há texto inicial (ex: clicou em "+ Anotar"), assume que quer escrever anotação
-      wantNote.value = !props.initialText || props.initialText.trim().length === 0
+      wantNote.value = false
       note.value = ''
+      wantFlashcard.value = false
       selectedThemeIds.value = []
       showThemesSection.value = false
       showNewThemeInput.value = false
       newThemeName.value = ''
       errorMessage.value = null
-      void fetchGraph()
+      fetchGraph()
     }
   },
   { immediate: true },
@@ -326,15 +371,18 @@ const toggleThemeSelection = (themeId: number | string) => {
 }
 
 const handleCreateQuickTheme = async () => {
-  if (!newThemeName.value.trim() || isCreatingTheme.value) return
+  const name = newThemeName.value.trim()
+  if (!name || isCreatingTheme.value) return
+
   isCreatingTheme.value = true
   try {
-    const node = await createNode(newThemeName.value.trim())
+    const node = await createNode({
+      label: name,
+      type: 'theme',
+      color: '#E57B55',
+    })
     if (node && node.id) {
-      const numId = Number(node.id)
-      if (!isNaN(numId)) {
-        selectedThemeIds.value.push(numId)
-      }
+      selectedThemeIds.value.push(node.id)
     }
     newThemeName.value = ''
     showNewThemeInput.value = false
@@ -351,17 +399,20 @@ const handleSubmit = async () => {
   errorMessage.value = null
 
   try {
+    const isNote = Boolean(props.noteId) || props.cfi?.startsWith('note:')
     const bookId = props.bookId || 1 // Fallback para 1 se bookId não estiver setado
     const finalNote = wantNote.value ? note.value.trim() : null
     const created = await createAnnotation({
       bookId,
-      bookTitle: props.bookTitle,
-      cfi: `page:${props.currentPage}`,
+      bookTitle: props.bookTitle || (isNote ? 'Nota no Canvas' : 'Obra Sem Título'),
+      cfi: props.cfi || (isNote ? `note:${props.noteId}` : `page:${props.currentPage}`),
       selectedText: selectedText.value.trim() || null,
       note: finalNote || null,
       color: selectedColor.value,
       themeIds: wantNote.value ? selectedThemeIds.value : [],
-      chapterTitle: `Página ${props.currentPage}`,
+      chapterTitle: props.chapterTitle || (isNote ? 'Trecho da Nota' : `Página ${props.currentPage}`),
+      generateFlashcard: wantFlashcard.value,
+      noteId: props.noteId
     })
 
     emit('created', created)

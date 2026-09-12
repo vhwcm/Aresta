@@ -90,6 +90,18 @@ export class FlashcardService {
       orderBy: { next_review_at: 'asc' },
     })
   }
+
+  async delete(flashcardId: number, userId: number) {
+    return prisma.flashcard.deleteMany({
+      where: { id: flashcardId, user_id: userId },
+    })
+  }
+
+  async deleteByAnnotation(annotationId: number, userId: number) {
+    return prisma.flashcard.deleteMany({
+      where: { annotation_id: annotationId, user_id: userId },
+    })
+  }
 }
 
 export const flashcardService = new FlashcardService()

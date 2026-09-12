@@ -178,3 +178,15 @@ Para proporcionar a sensação física de volume e espessura do livro, bordas vo
 
 ========================================================================================
 ```
+
+---
+
+## 4. Sistema de Destaques e Anotações Visuais (Reader Highlights)
+
+O leitor integra um mecanismo robusto e reativo de busca e marcação visual de anotações no DOM das páginas (`apps/web/app/utils/readerHighlight.ts`):
+
+- **Normalização e Extração de Texto**: Utiliza `TreeWalker` sobre nós de texto ignorando scripts/estilos e inserindo espaçadores virtuais entre blocos para garantir correspondência contínua entre múltiplos parágrafos, quebras de linha e nós divididos (como spans gerados pelo PDF.js ou marcações semânticas do EPUB).
+- **Estilização com Cor Personalizada**: Cada anotação é envolvida em `<mark class="reader-highlight">` recebendo a cor selecionada pelo usuário convertida para canal RGBA suave (`rgba(r, g, b, 0.38)`), com borda inferior sólida de `2px solid {color}` e `box-decoration-break: clone` para quebras de linha estéticas.
+- **Sincronização Reativa**: O `PageCurlCanvas` observa o array reativo `annotations` do `useAnnotations()` e reaplica imediatamente os destaques na página ativa quando novas notas são salvas, editadas ou excluídas, além de restaurar os nós com `clearPageHighlights` e `normalize()`.
+- **Interatividade & Foco**: O clique em um destaque na página emite `select-annotation`, abrindo a gaveta de notas do livro e focando suavemente no card correspondente com animação de realce.
+

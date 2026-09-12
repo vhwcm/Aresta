@@ -1,6 +1,7 @@
 import { ref } from 'vue';
 import type { NoteItem, NoteListResponse } from '~/interfaces/note';
 import { useAuth } from '~/composables/useAuth';
+import { useFlashcards } from '~/composables/useFlashcards';
 
 const getNotesApiUrl = () => {
   if (typeof useRuntimeConfig === 'function') {
@@ -227,6 +228,14 @@ export function useNotes() {
       currentNote.value = null;
     }
     saveLocalNotes(notesList.value);
+
+    // Cascata: excluir flashcards locais vinculados a esta nota
+    try {
+      const { deleteFlashcardByNoteId } = useFlashcards()
+      await deleteFlashcardByNoteId(id)
+    } catch (e) {
+      console.warn('[useNotes] Falha na cascata de exclusão de flashcards locais da nota:', e)
+    }
 
     try {
       await $fetch(`${getNotesApiUrl()}/notes/${id}`, {

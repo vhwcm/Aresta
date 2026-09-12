@@ -296,6 +296,11 @@ export class NoteService {
       throw new Error('Nota não encontrada')
     }
 
+    // Exclusão em cascata: remover anotações e flashcards originados de trechos desta nota
+    await prisma.annotation.deleteMany({
+      where: { user_id: userId, cfi: { startsWith: `note:${id}` } },
+    })
+
     await prisma.note.delete({
       where: { id },
     })

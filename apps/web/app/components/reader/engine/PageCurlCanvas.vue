@@ -63,6 +63,7 @@
             <div
               ref="baseLeftTextLayerRef"
               class="page-text-layer page-text-layer--left"
+              @click="handleHighlightClick"
             />
             <!-- Sombra suave projetada quando a folha gira sobre a esquerda -->
             <div
@@ -94,6 +95,7 @@
             <div
               ref="baseRightTextLayerRef"
               class="page-text-layer page-text-layer--right"
+              @click="handleHighlightClick"
             />
             <!-- Sombra suave projetada quando a folha gira sobre a direita -->
             <div
@@ -160,6 +162,7 @@
             <div
               ref="baseSingleTextLayerRef"
               class="page-text-layer page-text-layer--single"
+              @click="handleHighlightClick"
             />
             <div
               class="page-underlying-shadow"
@@ -230,12 +233,16 @@ import { usePageCurl3D, BLEED_X, BLEED_Y } from '~/composables/reader/usePageCur
 import { DRAG_ACTIVATION_THRESHOLD_PX } from '~/composables/reader/constants'
 import { rasterizeElementToCanvas, drawPlainTextToCanvas, applyThemeToCanvas } from '~/utils/pageRasterizer'
 import type { PageTurnDirection, DragPoint } from '~/interfaces/reader/types'
+import { useAnnotations } from '~/composables/useAnnotations'
+import { applyPageHighlights } from '~/utils/readerHighlight'
 
 const emit = defineEmits<{
   (_e: 'transition-state', _isTransitioning: boolean): void
+  (_e: 'select-annotation', _annotationId: number): void
 }>()
 
 const store = useReaderStore()
+const { annotations } = useAnnotations()
 const { pageCreaseEnabled, pageAnimationEnabled } = useSettings()
 const stageRef = ref<HTMLElement | null>(null)
 const webglCanvasRef = ref<HTMLCanvasElement | null>(null)
@@ -708,6 +715,38 @@ async function renderPageToElement(
 
   if (textLayerEl && doc.renderTextLayer) {
     await doc.renderTextLayer(pageNumber, textLayerEl, width, height)
+    applyPageHighlights(textLayerEl, pageNumber, annotations.value, store.bookId)
+  }
+}
+
+function refreshCurrentHighlights() {
+  if (!store.document) return
+  const layout = pageLayout.value
+  const curPage = store.currentPage
+  const bId = store.bookId
+
+  if (layout.isTwoPage) {
+    const leftNum = curPage % 2 !== 0 ? curPage : curPage - 1
+    const rightNum = leftNum + 1 <= store.totalPages ? leftNum + 1 : 0
+    if (baseLeftTextLayerRef.value && leftNum > 0) {
+      applyPageHighlights(baseLeftTextLayerRef.value, leftNum, annotations.value, bId)
+    }
+    if (baseRightTextLayerRef.value && rightNum > 0) {
+      applyPageHighlights(baseRightTextLayerRef.value, rightNum, annotations.value, bId)
+    }
+  } else if (baseSingleTextLayerRef.value && curPage > 0) {
+    applyPageHighlights(baseSingleTextLayerRef.value, curPage, annotations.value, bId)
+  }
+}
+
+function handleHighlightClick(event: MouseEvent) {
+  const target = event.target as HTMLElement | null
+  const mark = target?.closest('mark.reader-highlight')
+  if (mark) {
+    const annId = mark.getAttribute('data-annotation-id')
+    if (annId) {
+      emit('select-annotation', Number(annId))
+    }
   }
 }
 
@@ -1257,9 +1296,19 @@ watch(
   { deep: true, flush: 'post' },
 )
 
+watch(
+  () => annotations.value,
+  () => {
+    refreshCurrentHighlights()
+  },
+  { deep: true },
+)
+
 defineExpose({
   next: () => requestTurn('next'),
   previous: () => requestTurn('previous'),
+  renderCurrentSpread,
+  refreshHighlights: refreshCurrentHighlights,
 })
 </script>
 
@@ -1772,5 +1821,27 @@ defineExpose({
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+:deep(.reader-highlight) {
+  display: inline;
+  border-radius: 2px;
+  padding: 0.05em 0.15em;
+  margin: 0 -0.05em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  transition: background-color 0.15s ease, filter 0.15s ease;
+  cursor: pointer;
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
+}
+
+:deep(.reader-highlight:hover) {
+  filter: brightness(0.92);
+}
+
+:deep(.theme-black .reader-highlight:hover) {
+  filter: brightness(1.2);
 }
 </style>

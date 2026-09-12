@@ -17,6 +17,8 @@ const mockUserAnnotations = ref([
   },
 ])
 
+const mockToggleAnnotationFlashcard = vi.fn().mockResolvedValue(true)
+
 vi.mock('~/composables/useAnnotations', () => ({
   useAnnotations: () => ({
     annotations: mockUserAnnotations,
@@ -24,6 +26,7 @@ vi.mock('~/composables/useAnnotations', () => ({
     error: ref(null),
     fetchAnnotations: vi.fn().mockResolvedValue([]),
     deleteAnnotation: vi.fn().mockResolvedValue(true),
+    toggleAnnotationFlashcard: mockToggleAnnotationFlashcard,
   }),
 }))
 
@@ -51,6 +54,11 @@ describe('Revisao Page (/revisao)', () => {
           Trash2Icon: true,
           BookOpenIcon: true,
           SparklesIcon: true,
+          ExternalLinkIcon: true,
+          CheckCircle2Icon: true,
+          TagIcon: true,
+          BookMarkedIcon: true,
+          ReaderAnnotationModal: true,
         },
       },
     })
@@ -60,7 +68,7 @@ describe('Revisao Page (/revisao)', () => {
     expect(wrapper.text()).toContain('Resumos & Anotações')
   })
 
-  it('exibe anotações de livros na aba de Resumos & Anotações', async () => {
+  it('exibe anotações de livros na aba de Resumos & Anotações e agrupa por tema', async () => {
     const wrapper = mount(RevisaoPage, {
       global: {
         stubs: {
@@ -74,6 +82,11 @@ describe('Revisao Page (/revisao)', () => {
           Trash2Icon: true,
           BookOpenIcon: true,
           SparklesIcon: true,
+          ExternalLinkIcon: true,
+          CheckCircle2Icon: true,
+          TagIcon: true,
+          BookMarkedIcon: true,
+          ReaderAnnotationModal: true,
         },
       },
     })
@@ -84,12 +97,46 @@ describe('Revisao Page (/revisao)', () => {
     expect(summariesTabBtn).toBeDefined()
     await summariesTabBtn!.trigger('click')
 
-    // Deve exibir a anotação do livro
+    // Deve exibir a seção do tema Ficção Científica
+    expect(wrapper.text()).toContain('Ficção Científica')
     expect(wrapper.text()).toContain('O Guia do Mochileiro das Galáxias')
     expect(wrapper.text()).toContain('Não entre em pânico.')
     expect(wrapper.text()).toContain('Princípio fundamental da obra.')
-    expect(wrapper.text()).toContain('Ficção Científica')
     expect(wrapper.text()).toContain('Abrir Obra')
     expect(wrapper.text()).toContain('Criar Flashcard')
+  })
+
+  it('permite alternar flashcard de uma anotação com toggleAnnotationFlashcard', async () => {
+    const wrapper = mount(RevisaoPage, {
+      global: {
+        stubs: {
+          NuxtLink: { template: '<a><slot /></a>' },
+          LayersIcon: true,
+          FileTextIcon: true,
+          RotateCwIcon: true,
+          ChevronLeftIcon: true,
+          ChevronRightIcon: true,
+          PlusIcon: true,
+          Trash2Icon: true,
+          BookOpenIcon: true,
+          SparklesIcon: true,
+          ExternalLinkIcon: true,
+          CheckCircle2Icon: true,
+          TagIcon: true,
+          BookMarkedIcon: true,
+          ReaderAnnotationModal: true,
+        },
+      },
+    })
+
+    const buttons = wrapper.findAll('button')
+    const summariesTabBtn = buttons.find((b) => b.text().includes('Resumos & Anotações'))
+    await summariesTabBtn!.trigger('click')
+
+    const createFlashcardBtn = wrapper.findAll('button').find((b) => b.text().includes('Criar Flashcard'))
+    expect(createFlashcardBtn).toBeDefined()
+    await createFlashcardBtn!.trigger('click')
+
+    expect(mockToggleAnnotationFlashcard).toHaveBeenCalledWith(99)
   })
 })

@@ -30,6 +30,44 @@ export class FlashcardController {
       res.status(500).json({ error: err.message })
     }
   }
+
+  async create(req: Request, res: Response): Promise<void> {
+    try {
+      const { annotationId, bookId, question, answer, contextSummary, cardType } = req.body
+      const card = await flashcardService.create({
+        userId: req.user!.userId,
+        annotationId: Number(annotationId),
+        bookId: Number(bookId) || 1,
+        question,
+        answer,
+        contextSummary,
+        cardType,
+      })
+      res.status(201).json({ card })
+    } catch (err: any) {
+      res.status(400).json({ error: err.message })
+    }
+  }
+
+  async delete(req: Request, res: Response): Promise<void> {
+    try {
+      const id = parseInt(String(req.params.id))
+      await flashcardService.delete(id, req.user!.userId)
+      res.json({ success: true })
+    } catch (err: any) {
+      res.status(500).json({ error: err.message })
+    }
+  }
+
+  async deleteByAnnotation(req: Request, res: Response): Promise<void> {
+    try {
+      const annotationId = parseInt(String(req.params.annotationId))
+      await flashcardService.deleteByAnnotation(annotationId, req.user!.userId)
+      res.json({ success: true })
+    } catch (err: any) {
+      res.status(500).json({ error: err.message })
+    }
+  }
 }
 
 export const flashcardController = new FlashcardController()

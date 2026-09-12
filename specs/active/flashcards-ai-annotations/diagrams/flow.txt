@@ -1,0 +1,35 @@
+======================================================================
+ARESTA: FLUXO DE ANOTAÇÃO COM FLASHCARD VIA IA E REVISÃO POR TEMAS
+======================================================================
+
+[USUÁRIO NO LEITOR OU NOTAS]
+       │
+       ▼
+   Abre Janela de Anotação:
+   ├─ Texto Grifado / Citação
+   ├─ Comentário / Reflexão
+   ├─ Seleção de Temas (Tags)
+   └─ [X] Transformar em Flashcard com IA (Toggle)
+       │
+       ▼
+   Clica em "Salvar"
+       ├─► Modal fecha instantaneamente (UI não bloqueia)
+       ├─► Anotação é salva no banco local (IndexedDB/SQLite)
+       │
+       ▼
+   [BACKGROUND WORKER] Geração do Flashcard
+       │
+       ├──► Tenta Gemini API: POST /api/ai/flashcard
+       │       └─ Sucesso: Extrai Pergunta & Resposta Pedagógica
+       │
+       └──► Fallback se offline/erro de IA:
+               └─ Gera Pergunta Heurística Socrática
+       │
+       ▼
+   Flashcard Persistido & Vinculado (annotation_id)
+       │
+       ├──► Disponível imediatamente na aba "Flashcards" (Deck Diário)
+       │
+       └──► Disponível na aba "Resumos & Anotações"
+               ├─ Agrupado na seção visual do Tema (ex: Filosofia, História)
+               └─ Exibe Badge "Flashcard Ativo" com opção de desativar

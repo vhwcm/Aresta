@@ -2,6 +2,7 @@ import { ref } from 'vue'
 import { useAuth } from '~/composables/useAuth'
 import { annotationRepo } from '~/adapters/database/repositories/AnnotationRepository'
 import { flashcardRepo } from '~/adapters/database/repositories/FlashcardRepository'
+import { useFlashcards } from '~/composables/useFlashcards'
 
 export interface AnnotationTheme {
   id: number
@@ -22,6 +23,10 @@ export interface AnnotationItem {
   chapterTitle?: string | null
   progress?: number | null
   themes?: AnnotationTheme[]
+  hasFlashcard?: boolean
+  flashcardId?: number
+  sourceType?: 'book' | 'canvas_note'
+  noteId?: string | null
   createdAt: string
   updatedAt?: string
 }
@@ -37,6 +42,8 @@ export interface CreateAnnotationPayload {
   themeIds?: number[]
   bookTitle?: string
   bookCover?: string
+  generateFlashcard?: boolean
+  noteId?: string | null
 }
 
 const getApiBase = () => {
@@ -67,26 +74,19 @@ export const useAnnotations = () => {
   const error = sharedError
   const auth = useAuth()
 
-  const getHeaders = (includeContentType = false) => {
-    const headers: Record<string, string> = {}
-    if (includeContentType) {
-      headers['Content-Type'] = 'application/json'
-    }
+  const getHeaders = (includeContentType = true): Record<string, string> => {
     let token: string | null = auth.token.value ?? null
     if (!token && typeof useCookie === 'function') {
       try {
         const cookieVal = useCookie<string | null | undefined>('aresta_token').value
         token = cookieVal ?? null
-      } catch {}
-    }
-    if (!token && typeof document !== 'undefined') {
-      const match = document.cookie.match(/(?:^|;\s*)aresta_token=([^;]+)/)
-      if (match && match[1]) {
-        token = decodeURIComponent(match[1])
+      } catch {
+        token = null
       }
     }
-    if (!token && typeof localStorage !== 'undefined') {
-      token = localStorage.getItem('aresta_token') || localStorage.getItem('token') || null
+    const headers: Record<string, string> = {}
+    if (includeContentType) {
+      headers['Content-Type'] = 'application/json'
     }
     if (token) {
       headers['Authorization'] = `Bearer ${token}`
@@ -96,14 +96,21 @@ export const useAnnotations = () => {
 
   const normalizeItem = (a: any): AnnotationItem => {
     if (!a) return a
+    const isNote = a.cfi?.startsWith('note:') || a.sourceType === 'canvas_note' || Boolean(a.noteId)
+    const noteId = a.noteId || (a.cfi?.startsWith('note:') ? a.cfi.replace(/^note:/, '') : null)
+
     const item: any = {
       id: Number(a.id),
       userId: a.userId ?? a.user_id ?? 0,
-      bookId: Number(a.bookId ?? a.book_id),
-      cfi: a.cfi,
+      bookId: Number(a.bookId ?? a.book_id ?? 1),
+      cfi: a.cfi || '',
       selectedText: a.selectedText ?? a.selected_text ?? '',
       note: a.note ?? '',
       themes: a.themes || (a.annotationThemes ? a.annotationThemes.map((at: any) => at.theme) : []),
+      hasFlashcard: Boolean(a.hasFlashcard || a.flashcard),
+      flashcardId: a.flashcard?.id || a.flashcardId,
+      sourceType: isNote ? 'canvas_note' : 'book',
+      noteId
     }
     if (a.color) item.color = a.color
     if (a.chapterTitle || a.chapter_title) item.chapterTitle = a.chapterTitle || a.chapter_title
@@ -113,6 +120,29 @@ export const useAnnotations = () => {
     if (a.createdAt || a.created_at) item.createdAt = a.createdAt || a.created_at
     if (a.updatedAt || a.updated_at) item.updatedAt = a.updatedAt || a.updated_at
     return item as AnnotationItem
+  }
+
+  const checkFlashcardStatus = async () => {
+    try {
+      const allCards = await flashcardRepo.getAll()
+      const cardMap = new Map<number, number>()
+      for (const card of allCards) {
+        if (card.annotationId) {
+          cardMap.set(card.annotationId, card.id)
+        }
+      }
+      for (const ann of annotations.value) {
+        if (cardMap.has(ann.id)) {
+          ann.hasFlashcard = true
+          ann.flashcardId = cardMap.get(ann.id)
+        } else {
+          ann.hasFlashcard = false
+          ann.flashcardId = undefined
+        }
+      }
+    } catch {
+      // fallback
+    }
   }
 
   const fetchAnnotations = async (filters?: { bookId?: number; themeId?: number }) => {
@@ -142,7 +172,7 @@ export const useAnnotations = () => {
         headers: getHeaders()
       })
       const list = Array.isArray(data) ? data : (Array.isArray(data?.annotations) ? data.annotations : null)
-      if (list && list.length > 0) {
+      if (list !== null) {
         const mapped: AnnotationItem[] = list.map(normalizeItem)
         for (const item of mapped) {
           await annotationRepo.save({
@@ -177,6 +207,7 @@ export const useAnnotations = () => {
       loading.value = false
     }
 
+    await checkFlashcardStatus()
     return annotations.value
   }
 
@@ -185,6 +216,8 @@ export const useAnnotations = () => {
     error.value = null
     const localId = Date.now()
     const now = new Date().toISOString()
+    const isNote = payload.cfi?.startsWith('note:') || Boolean(payload.noteId)
+    const noteId = payload.noteId || (payload.cfi?.startsWith('note:') ? payload.cfi.replace(/^note:/, '') : null)
 
     const localItem: AnnotationItem = {
       id: localId,
@@ -199,6 +232,9 @@ export const useAnnotations = () => {
       chapterTitle: payload.chapterTitle,
       progress: payload.progress,
       themes: [],
+      hasFlashcard: Boolean(payload.generateFlashcard),
+      sourceType: isNote ? 'canvas_note' : 'book',
+      noteId,
       createdAt: now
     }
 
@@ -219,6 +255,7 @@ export const useAnnotations = () => {
     annotations.value = [localItem, ...annotations.value]
 
     // 2. Dispara requisição HTTP em background se online
+    let finalItem = localItem
     try {
       const response = await $fetch<any>(`${getApiBase()}/annotations`, {
         method: 'POST',
@@ -256,15 +293,26 @@ export const useAnnotations = () => {
           themes: created.themes,
           createdAt: created.createdAt
         })
-        return created
+        finalItem = created
       }
-      return localItem
     } catch (err: any) {
       console.warn('Anotação persistida localmente (offline mode):', err)
-      return localItem
     } finally {
       loading.value = false
     }
+
+    // 3. Se solicitado, gera flashcard em background com IA
+    if (payload.generateFlashcard) {
+      const flashcards = useFlashcards()
+      flashcards.generateAiFlashcardForAnnotation(finalItem).then((card) => {
+        finalItem.hasFlashcard = true
+        finalItem.flashcardId = card.id
+      }).catch((err) => {
+        console.warn('Erro ao gerar flashcard com IA em background:', err)
+      })
+    }
+
+    return finalItem
   }
 
   const updateAnnotationNote = async (id: number, note: string): Promise<AnnotationItem> => {
@@ -309,6 +357,7 @@ export const useAnnotations = () => {
     error.value = null
 
     await annotationRepo.delete(id)
+    await flashcardRepo.deleteByAnnotationId(id)
     annotations.value = annotations.value.filter((a) => a.id !== id)
 
     try {
@@ -325,10 +374,46 @@ export const useAnnotations = () => {
     }
   }
 
+  const toggleAnnotationFlashcard = async (annotationId: number) => {
+    const ann = annotations.value.find((a) => a.id === annotationId)
+    if (!ann) return
+    const flashcards = useFlashcards()
+    if (ann.hasFlashcard) {
+      await flashcards.deleteFlashcardByAnnotationId(annotationId)
+      ann.hasFlashcard = false
+      ann.flashcardId = undefined
+    } else {
+      const card = await flashcards.generateAiFlashcardForAnnotation(ann)
+      ann.hasFlashcard = true
+      ann.flashcardId = card.id
+    }
+  }
+
+  const createStandaloneAnnotation = async (payload: {
+    note: string
+    selectedText?: string
+    themeIds?: number[]
+    generateFlashcard?: boolean
+    title?: string
+    noteId?: string
+  }) => {
+    return createAnnotation({
+      bookId: 1,
+      bookTitle: payload.title || (payload.noteId ? 'Nota no Canvas' : 'Anotação Avulsa'),
+      cfi: payload.noteId ? `note:${payload.noteId}` : `standalone:${Date.now()}`,
+      chapterTitle: payload.title || (payload.noteId ? 'Trecho da Nota' : 'Anotações Avulsas'),
+      selectedText: payload.selectedText || null,
+      note: payload.note,
+      themeIds: payload.themeIds || [],
+      generateFlashcard: payload.generateFlashcard,
+      noteId: payload.noteId
+    })
+  }
+
   const convertAnnotationToFlashcard = async (annotationId: number, question?: string, answer?: string) => {
     const note = annotations.value.find((a) => a.id === annotationId)
     if (!note) return null
-    return flashcardRepo.createFromAnnotation({
+    const card = await flashcardRepo.createFromAnnotation({
       id: note.id,
       bookId: note.bookId,
       bookTitle: note.bookTitle,
@@ -341,6 +426,9 @@ export const useAnnotations = () => {
       updated_at: new Date().toISOString(),
       sync_status: 'pending'
     }, question, answer)
+    note.hasFlashcard = true
+    note.flashcardId = card.id
+    return card
   }
 
   return {
@@ -349,8 +437,11 @@ export const useAnnotations = () => {
     error,
     fetchAnnotations,
     createAnnotation,
+    createStandaloneAnnotation,
     updateAnnotationNote,
     deleteAnnotation,
-    convertAnnotationToFlashcard
+    toggleAnnotationFlashcard,
+    convertAnnotationToFlashcard,
+    checkFlashcardStatus
   }
 }

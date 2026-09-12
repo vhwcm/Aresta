@@ -1,11 +1,11 @@
 # Checklist
 
 ## 🔄 Em Andamento
-- [12/09/2026 16:08] [Fazendo] Destacar texto selecionado no livro com a cor da nota/anotação criada no leitor
-- [12/09/2026 15:53] [Fazendo] Integração de anotações (livro e notas) com geração de flashcards via IA e listagem por temas
 
 
 ## ✅ Concluído
+- [12/09/2026 15:53] [Concluído] Integração de anotações (livro e notas) com geração de flashcards via IA e listagem por temas
+- [12/09/2026 16:08] [Concluído] Destacar texto selecionado no livro com a cor da nota/anotação criada no leitor
 - [12/09/2026 16:15] [Concluído] Remover círculo ao redor das setas de navegação de páginas no leitor de livros
 - [12/09/2026 16:10] [Concluído] Implementar comando npm para gerenciar variáveis .env do monólito (npm run set-env)
 - [12/09/2026 15:49] [Concluído] Filtros de camadas no grafo com isolamento inicial, multi-seleção cumulativa e ícones clean Lucide
