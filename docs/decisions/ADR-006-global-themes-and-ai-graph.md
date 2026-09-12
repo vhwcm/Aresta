@@ -1,14 +1,14 @@
-# ADR-006: Catálogo Global de Temas, Enriquecimento com IA e Grafo de Livros
+# ADR-006: Catálogo Global de Temas e Grafo de Livros (Enriquecimento por IA Removido)
 
-- **Status**: Aceito
-- **Data**: 2026-08-27
+- **Status**: Aceito (Escopo de IA revisto e simplificado)
+- **Data**: 2026-08-27 (Atualizado em 12/09/2026)
 - **Autores**: Equipe Aresta
 
 ---
 
 ## 1. Contexto
 
-Anteriormente, os temas no Aresta eram criados de maneira restrita e privada por usuário, sem hierarquia estruturada de subtemas e sem integração com enriquecimento automatizado por IA no momento do upload dos livros. Além disso, o grafo de conhecimento exibia apenas nós circulares de temas abstratos sem representar os livros diretamente no grafo.
+Anteriormente, os temas no Aresta eram criados de maneira restrita e privada por usuário, sem hierarquia estruturada de subtemas. Além disso, o grafo de conhecimento exibia apenas nós circulares de temas abstratos sem representar os livros diretamente no grafo. Havia sido cogitado um pipeline de enriquecimento automatizado por IA para inferir temas e resumos na inserção de livros.
 
 ---
 
@@ -17,12 +17,12 @@ Anteriormente, os temas no Aresta eram criados de maneira restrita e privada por
 1. **Catálogo Global de Temas**:
    - Migrar a entidade `Theme` para uma tabela global única e dinâmica, compartilhada entre todo o acervo.
    - Criar a tabela `ThemeHierarchy` para representar relacionamentos de subtemas de forma direcionada (ex: `Programação` ➔ `Ferramentas`).
-   - Adicionar coluna `embedding` (vetor JSON) para busca por similaridade semântica (cosseno).
+   - A atribuição e vínculo de temas a livros é realizada de forma direta e manual pelo usuário ou curadoria na estante (`PUT /api/user-books/:id/themes`), garantindo controle, simplicidade e ausência de latência externa.
 
-2. **Microserviço Go & IA (AnalyzeBook)**:
-   - Utilizar o serviço Go via gRPC (`AnalyzeBook`) com **Gemini 2.5 Flash** e **Google Search Grounding** para pesquisar informações da obra na web.
-   - Gerar resumo público persistido em `BookPublicInfo`.
-   - Utilizar embeddings semânticos para mapear temas existentes ou propor novos subtemas com parentesco hierárquico.
+2. **Remoção do Pipeline de IA para Enriquecimento de Livros (AnalyzeBook / Enrich)**:
+   - **Removido do escopo**: Foi cancelada a chamada gRPC `AnalyzeBook` / Gemini Google Search Grounding para busca web e classificação automática de temas por similaridade de cosseno.
+   - Livros adicionados iniciam sem temas pré-atribuídos e não dependem de serviços de IA para estarem disponíveis imediatamente para leitura.
+   - Endpoints de enriquecimento sob demanda (`/api/books/:id/enrich`) foram descontinuados/removidos do escopo.
 
 3. **Grafo de Conhecimento com Livros e Canvas Overlay**:
    - Renderizar nós de livros (`type = 'book'`) exibindo a miniatura da capa e o título truncado em até 10 caracteres com `'...'`.
@@ -36,7 +36,6 @@ Anteriormente, os temas no Aresta eram criados de maneira restrita e privada por
 
 - **Positivas**:
   - Catálogo de temas consistente e reutilizável por todos os usuários.
-  - Descoberta semântica rica de tópicos e subtemas no grafo.
+  - Adição de livros instantânea, determinística e sem dependência de APIs externas de busca ou IA.
+  - Eliminação de complexidade desnecessária e microserviços externos para cadastro de livros.
   - Experiência visual rica com capas de livros renderizadas diretamente no SVG do D3.
-- **Mitigações**:
-  - Se a chamada externa do Gemini falhar durante o upload administrativo, o livro continua salvo no catálogo com dados básicos e permite reprocessamento via `/api/books/:id/enrich`.

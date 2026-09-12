@@ -59,29 +59,9 @@ export const useAdminBooks = () => {
     }
   }
 
-  const enrichBook = async (bookId: number): Promise<BookItem> => {
-    loading.value = true
-    error.value = null
-    try {
-      const res = await $fetch<BookItem>(`${getApiBase()}/books/${bookId}/enrich`, {
-        method: 'POST',
-        headers: getHeaders(),
-      })
-      return res
-    } catch (e: any) {
-      console.error(`Erro ao enriquecer livro ${bookId}:`, e)
-      const msg = e.data?.error || e.message || 'Falha no enriquecimento por IA.'
-      error.value = msg
-      throw new Error(msg)
-    } finally {
-      loading.value = false
-    }
-  }
-
   return {
     loading,
     error,
     uploadBook,
-    enrichBook,
   }
 }

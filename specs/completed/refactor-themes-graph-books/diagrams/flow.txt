@@ -2,53 +2,36 @@
 FLUXO DE DADOS & ARQUITETURA: REFATORAÇÃO DE TEMAS, LIVROS E GRAFO DE CONHECIMENTO
 ================================================================================
 
-1. FLUXO DE CADASTRO E ENRIQUECIMENTO POR IA (VIKTOR / ADMIN)
+1. FLUXO DE CADASTRO E ATRIBUIÇÃO DE TEMAS (DIRETO E DETERMINÍSTICO)
 --------------------------------------------------------------------------------
 
-  [ Viktor (Admin) ]
+  [ Viktor / Usuário ]
          │
          │ 1. Upload PDF/EPUB + Title + Author
          ▼
   ┌────────────────────────────────────────────────────────────────────────┐
-  │ Frontend Nuxt (/admin/upload)                                          │
-  │ - Valida permissão de ADMIN                                            │
-  │ - Envia FormData para POST /api/books/admin-upload                     │
+  │ Frontend Nuxt (/library ou /admin/upload)                              │
+  │ - Upload do livro                                                      │
+  │ - Envia dados para o Backend API                                       │
   └──────────────────────────────────┬─────────────────────────────────────┘
                                      │
-                                     │ 2. Multipart/form-data
+                                     │ 2. Salva arquivo e cria registro
                                      ▼
   ┌────────────────────────────────────────────────────────────────────────┐
-  │ Backend Node.js (aresta-back-node)                                     │
+  │ Backend Node.js (Prisma)                                               │
   │ - Salva arquivo localmente / extrai imagem de capa                     │
-  │ - Cria registro na tabela `Book`                                       │
-  │ - Coleta lista de temas existentes com embeddings                      │
-  │ - Invoca gRPC AnalyzeBook no microserviço Go                           │
+  │ - Cria registro na tabela `Book` e `BookPublicInfo`                    │
+  │ - Cria vínculo em `UserBook`                                           │
   └──────────────────────────────────┬─────────────────────────────────────┘
                                      │
-                                     │ 3. gRPC AnalyzeBook(Title, Author, ExistingThemes)
+                                     │ 3. Livro disponível na Estante
                                      ▼
   ┌────────────────────────────────────────────────────────────────────────┐
-  │ Microserviço Go (aresta-ocr / aresta-ai)                               │
-  │ - Gemini 2.5 Flash + Google Search Grounding:                          │
-  │     Busca dados públicos do livro, contexto e tópicos                  │
-  │ - Gera Resumo oficial                                                  │
-  │ - Gera Embeddings dos temas e calcula similaridade de cosseno          │
-  │ - Determina temas existentes + novos temas e subtemas hierárquicos     │
-  └──────────────────────────────────┬─────────────────────────────────────┘
-                                     │
-                                     │ 4. Retorna { Summary, MatchedThemes, NewThemesWithHierarchy }
-                                     ▼
-  ┌────────────────────────────────────────────────────────────────────────┐
-  │ Backend Node.js (Persistência no SQLite via Prisma)                    │
-  │ - Salva dados em `BookPublicInfo` (autor, resumo)                      │
-  │ - Insere novos temas na tabela global `Theme`                          │
-  │ - Insere vínculos pai/filho em `ThemeHierarchy`                       │
-  │ - Insere vínculos livro-tema em `BookTheme`                            │
-  └──────────────────────────────────┬─────────────────────────────────────┘
-                                     │
-                                     │ 5. Resposta 201 Created com Livro + Temas
-                                     ▼
-  [ Viktor (Admin) Visualiza Livro Enriquecido no Catálogo ]
+  │ Estante & Grafo de Conhecimento                                        │
+  │ - Usuário abre modal de tags/temas do livro                            │
+  │ - Seleciona ou cria temas do Catálogo Global (PUT user-books/:id/themes)│
+  │ - Grafo atualiza arestas (livro <-> tema) instantaneamente              │
+  └────────────────────────────────────────────────────────────────────────┘
 
 
 2. MODELO DE DADOS RELACIONAL (PRISMA / SQLITE)

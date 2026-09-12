@@ -4,7 +4,7 @@
 
 A solução refatora o gerenciamento de temas de um modelo restrito por usuário para um **Catálogo Global Dinâmico de Temas**, integrado a um **Grafo Hierárquico de Subtemas**. 
 
-O enriquecimento de livros é orquestrado pelo backend Node.js chamando o microserviço Go via gRPC (`AnalyzeBook`). O microserviço Go utiliza **Gemini 2.5 Flash** com **Google Search Grounding** para pesquisar o livro na internet e extrair o resumo, seguido de **Gemini Embeddings** e similaridade de cosseno para mapear temas existentes no banco ou propor novos temas e suas relações de subtema (`parent -> child`).
+A vinculação de temas aos livros é realizada de forma direta pelo usuário ou curadoria através do modal de temas da estante (`user-books/:id/themes`). O pipeline de enriquecimento automatizado por IA (`AnalyzeBook` via Gemini com Google Search Grounding e similaridade de cosseno) foi **removido do escopo** para manter o fluxo leve, determinístico e livre de dependências externas.
 
 No frontend (Nuxt 4 / Vue 3 + D3.js), o grafo passa a renderizar dois tipos de nós:
 1. **Nós de Tema**: Círculos coloridos estilizados no tema da aplicação.
@@ -111,44 +111,10 @@ model Annotation {
 
 ---
 
-### 3.2. Contrato gRPC (`proto/ai/v1/ai.proto`)
+### 3.2. Contrato gRPC (`proto/ai/v1/ai.proto`) [REMOVIDO DO ESCOPO]
 
-```protobuf
-syntax = "proto3";
-
-package ai.v1;
-option go_package = "aresta-ocr/gen/ai/v1;aiv1";
-
-service AIService {
-  rpc AnalyzeBook (AnalyzeBookRequest) returns (AnalyzeBookResponse);
-}
-
-message ThemeItem {
-  int32 id = 1;
-  string name = 2;
-  repeated float embedding = 3;
-}
-
-message AnalyzeBookRequest {
-  string title = 1;
-  string author = 2;
-  repeated ThemeItem existing_themes = 3;
-}
-
-message NewThemeSuggestion {
-  string name = 1;
-  string description = 2;
-  string color = 3;
-  repeated float embedding = 4;
-  string parent_theme_name = 5; // Caso seja um subtema
-}
-
-message AnalyzeBookResponse {
-  string summary = 1;
-  repeated int32 matched_theme_ids = 2;
-  repeated NewThemeSuggestion new_themes = 3;
-}
-```
+> [!NOTE]
+> O método `AnalyzeBook` e as mensagens de análise automatizada foram removidos do escopo. Os temas são gerenciados diretamente pelo usuário/curador via API REST padrão.
 
 ---
 
@@ -207,8 +173,7 @@ export interface GraphResponse {
 
 | Rota | Método | Descrição | Permissão |
 | :--- | :--- | :--- | :--- |
-| `/api/books/admin-upload` | `POST` | Upload multipart de PDF/EPUB por Viktor + Título e Autor + Disparo de IA | `ADMIN` |
-| `/api/books/:id/enrich` | `POST` | Reexecuta a análise de IA para um livro existente | `ADMIN` |
+| `/api/books/admin-upload` | `POST` | Upload multipart de PDF/EPUB por Viktor + Título e Autor | `ADMIN` |
 | `/api/books/:id/annotations` | `GET` | Lista todas as anotações do livro para o usuário logado | `USER` |
 | `/api/themes/:id/books` | `GET` | Lista todos os livros vinculados a um tema | `USER` |
 | `/api/themes/:id/annotations` | `GET` | Lista anotações do usuário vinculadas ao tema | `USER` |
@@ -236,11 +201,9 @@ export interface GraphResponse {
 
 ## 6. Tratamento de Erros & Fallbacks
 
-1. **Falha na Chamada de IA / Gemini API**:
-   - Caso a busca externa ou IA demore ou retorne erro, o livro é salvo normalmente no catálogo público com capa e dados básicos. O backend registra log de warning e permite reprocessamento via `/api/books/:id/enrich`.
-2. **Capas Inexistentes**:
+1. **Capas Inexistentes**:
    - Se o EPUB/PDF não possuir imagem de capa, o backend gera um cover estilizado em SVG contendo as iniciais e o título do livro.
-3. **Validação de Temas nas Anotações**:
+2. **Validação de Temas nas Anotações**:
    - Se o usuário tentar vincular um tema que não pertence aos `BookTheme` daquele livro, o backend rejeita com erro `400 Bad Request: O tema informado não pertence a este livro`.
 
 ---
@@ -252,7 +215,5 @@ export interface GraphResponse {
     - Upload administrativo e permissões (`role === 'ADMIN'`).
     - Validação de anotações soltas e regra de temas pertencentes ao livro.
     - Estrutura retornada pelo endpoint `/api/graph`.
-- **Microserviço Go (`aresta-ocr`)**:
-  - Testes unitários com mock do Gemini para `AnalyzeBook` e cálculo de similaridade de cosseno.
 - **Frontend (`front`)**:
   - Testes unitários de renderização de nós e truncamento de títulos (`<= 10` caracteres).

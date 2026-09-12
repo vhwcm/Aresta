@@ -99,7 +99,6 @@ package ai.v1;
 option go_package = "aresta-ocr/gen/ai/v1;aiv1";
 
 service AIService {
-  rpc AnalyzeBook(AnalyzeBookRequest) returns (AnalyzeBookResponse);
   rpc GenerateEmbedding(GenerateEmbeddingRequest) returns (GenerateEmbeddingResponse);
   rpc GenerateFlashcard(GenerateFlashcardRequest) returns (GenerateFlashcardResponse);
 }

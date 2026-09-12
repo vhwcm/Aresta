@@ -9,7 +9,7 @@ describe('useAdminBooks Composable', () => {
     vi.clearAllMocks()
   })
 
-  it('uploadBook envia payload e enriquece com IA', async () => {
+  it('uploadBook envia payload de cadastro do livro', async () => {
     const mockCreated = {
       id: 99,
       title: 'Clean Code',
@@ -38,25 +38,5 @@ describe('useAdminBooks Composable', () => {
     )
     expect(result.id).toBe(99)
     expect(loading.value).toBe(false)
-  })
-
-  it('enrichBook dispara endpoint de enriquecimento', async () => {
-    const mockEnriched = {
-      id: 1,
-      title: 'Contos Fluminenses',
-      author: 'Machado de Assis',
-    }
-    mockFetch.mockResolvedValueOnce(mockEnriched)
-
-    const { enrichBook } = useAdminBooks()
-    const result = await enrichBook(1)
-
-    expect(mockFetch).toHaveBeenCalledWith(
-      'http://localhost:3001/api/books/1/enrich',
-      expect.objectContaining({
-        method: 'POST',
-      })
-    )
-    expect(result.title).toBe('Contos Fluminenses')
   })
 })

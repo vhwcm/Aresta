@@ -1,23 +1,23 @@
 # Requisitos: Refatoração de Temas, Anotações e Grafo de Conhecimento
 
 ## 1. Objetivo Geral
-Refatorar a arquitetura de temas, anotações e o grafo de conhecimento no Aresta para transformar temas em um catálogo global dinâmico com hierarquia de subtemas, integrar o microserviço Go com IA (Gemini Grounding Search e Embeddings) para enriquecimento automático de livros e vinculação inteligente de temas, disponibilizar um painel administrativo para upload e catalogação de livros por Viktor, e modernizar o grafo de conhecimento para exibir nós de livros com capas truncadas e um canvas overlay deslizante de temas com carrossel de livros e feed de anotações vinculadas.
+Refatorar a arquitetura de temas, anotações e o grafo de conhecimento no Aresta para transformar temas em um catálogo global dinâmico com hierarquia de subtemas, disponibilizar um painel administrativo para upload e catalogação de livros por Viktor, e modernizar o grafo de conhecimento para exibir nós de livros com capas truncadas e um canvas overlay deslizante de temas com carrossel de livros e feed de anotações vinculadas.
 
 ---
 
 ## 2. Escopo
 
 ### Incluído
-- **Catálogo Global de Temas**: Migração para tabela `Theme` unificada e global, com suporte a embeddings vetoriais e tabela `ThemeHierarchy` para modelagem precisa de subtemas (ex: "Programação" -> "Mentalidade de programação", "Ferramentas").
+- **Catálogo Global de Temas**: Migração para tabela `Theme` unificada e global, com suporte a tabela `ThemeHierarchy` para modelagem precisa de subtemas (ex: "Programação" -> "Mentalidade de programação", "Ferramentas").
 - **Painel Administrativo para Viktor (`/admin/upload` ou `/admin/livros`)**: Upload de PDFs/EPUBs com Título e Autor, extração automática de capa (com fallback) e persistência de metadados públicos em `BookPublicInfo`.
-- **Microserviço Go de IA & Pesquisa na Web (`aresta-ocr` / `aresta-ai`)**: Método gRPC `AnalyzeBook` que realiza busca na web (Google Search grounding via Gemini), gera resumo do livro e utiliza embeddings/similaridade de cosseno para vincular temas existentes ou criar novos temas e sua hierarquia.
 - **Anotações Soltas & Validação de Temas**: Suporte a anotações soltas criadas diretamente no livro (`cfi` opcional) e garantia de que anotações só possam ser vinculadas a temas pertencentes àquele livro.
 - **Visualização do Grafo de Conhecimento**: Renderização de nós de temas (círculos) e nós de livros (capa + título truncado em até 10 caracteres com `'...'`).
 - **Interações do Grafo**:
   - Clique no Livro: Drawer/Painel exibindo todas as anotações do livro e formulário para criação de anotações soltas.
   - Clique no Tema: Canvas Overlay deslizante sobre o grafo contendo carrossel horizontal de livros no topo e feed de anotações do tema abaixo, com redirecionamento/filtro ao clicar em um livro.
 
-### Não Incluído
+### Não Incluído / Fora de Escopo
+- **Enriquecimento Automático por IA (AnalyzeBook / Gemini / Embeddings)**: Removido do escopo. Temas são vinculados manualmente pelo usuário ou curador através da estante.
 - Conversão OCR manual de imagens manuscritas (mantém-se funcional como está no gRPC existente).
 - Sistema de e-commerce ou pagamento de livros.
 
@@ -39,13 +39,9 @@ Refatorar a arquitetura de temas, anotações e o grafo de conhecimento no Arest
   - Arquivos devem ser validados quanto à extensão e MIME type (`application/pdf`, `application/epub+zip`).
   - Campos `title` e `author` são obrigatórios.
 
-### R3. Microserviço Go: Pesquisa na Web, Resumo e Embeddings de Temas
-- **Descrição**: O microserviço Go recebe Título e Autor do livro, pesquisa na internet via Gemini Search Grounding, gera resumo estruturado e analisa o catálogo de temas via embeddings (similaridade de cosseno >= threshold).
-- **Atores**: Backend Node.js, Microserviço Go, Gemini API.
-- **Regras de Validação**:
-  - Se o tema já existe no banco, vincula o livro ao tema existente.
-  - Se temas/subtemas novos forem identificados, cria-os e estabelece a relação hierárquica na tabela `ThemeHierarchy`.
-  - Salva informações públicas em `BookPublicInfo`.
+### R3. [REMOVIDO DO ESCOPO] Pesquisa na Web, Resumo e Embeddings de Temas via IA
+- **Status**: Removido do escopo.
+- **Motivação**: Atribuição automática por IA substituída por vinculação direta e manual via modal da estante/biblioteca (`PUT /api/user-books/:id/themes`), mantendo a adição de livros ágil e determinística.
 
 ### R4. Anotações do Livro e Anotações Soltas
 - **Descrição**: Permitir criação de anotações vinculadas ao leitor (com CFI e trecho selecionado) e anotações soltas (sem CFI obrigatório) criadas diretamente pelo grafo ou painel do livro.
@@ -79,11 +75,10 @@ Refatorar a arquitetura de temas, anotações e o grafo de conhecimento no Arest
 ---
 
 ## 5. Critérios de Aceite
-- [ ] O modelo Prisma foi migrado com sucesso contendo as tabelas `Theme`, `ThemeHierarchy`, `BookTheme`, `BookPublicInfo` e `Annotation` (`cfi` opcional).
-- [ ] Viktor (Admin) consegue acessar o painel `/admin/upload`, subir um PDF/EPUB com Título e Autor, e salvar no catálogo.
-- [ ] O microserviço Go executa `AnalyzeBook`, gera resumo via Gemini Grounding, compara embeddings e retorna temas e subtemas hierárquicos.
-- [ ] O backend Node.js persiste os temas, subtemas e resumo no banco de dados SQLite.
-- [ ] Anotações podem ser criadas sem CFI (anotações soltas) e são restritas aos temas do livro.
-- [ ] O grafo exibe nós de temas e nós de livros com capas e títulos truncados em 10 caracteres (`...`).
-- [ ] Clicar no livro abre o drawer de anotações do livro e criação de notas soltas.
-- [ ] Clicar no tema abre o Canvas Overlay com carrossel horizontal de livros no topo e anotações do tema abaixo.
+- [x] O modelo Prisma foi migrado com sucesso contendo as tabelas `Theme`, `ThemeHierarchy`, `BookTheme`, `BookPublicInfo` e `Annotation` (`cfi` opcional).
+- [x] Viktor (Admin) consegue acessar o painel `/admin/upload`, subir um PDF/EPUB com Título e Autor, e salvar no catálogo.
+- [x] Temas são vinculados manualmente pelo usuário ou curador via modal da estante/biblioteca (`user-books/:id/themes`).
+- [x] Anotações podem ser criadas sem CFI (anotações soltas) e são restritas aos temas do livro.
+- [x] O grafo exibe nós de temas e nós de livros com capas e títulos truncados em 10 caracteres (`...`).
+- [x] Clicar no livro abre o drawer de anotações do livro e criação de notas soltas.
+- [x] Clicar no tema abre o Canvas Overlay com carrossel horizontal de livros no topo e anotações do tema abaixo.

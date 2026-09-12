@@ -7,21 +7,17 @@
   - [x] 1.2 Executar migração do Prisma (`npx prisma db push`) e regenerar Prisma Client.
   - [x] 1.3 Atualizar seed (`prisma/seed.ts`) com temas globais e hierarquias de exemplo.
 
-- [x] **2. Microserviço Go (IA, Web Grounding & Embeddings)**
-  - [x] 2.1 Definir / atualizar proto gRPC (`proto/ai/v1/ai.proto`) com `AnalyzeBook`.
-  - [x] 2.2 Gerar stubs Go e TypeScript a partir do Protobuf.
-  - [x] 2.3 Implementar adaptador Gemini com Google Search Grounding e Embeddings no Go.
-  - [x] 2.4 Implementar lógica de similaridade de cosseno e geração de subtemas hierárquicos no Go.
-  - [x] 2.5 Registrar handler gRPC no servidor Go e adicionar testes unitários no Go.
+- [ ] **2. [REMOVIDO DO ESCOPO] Microserviço Go (IA AnalyzeBook, Web Grounding & Embeddings)**
+  - [x] *Decisão*: Enriquecimento automático de livros por IA via AnalyzeBook removido do escopo. Temas são vinculados diretamente e com curadoria pelo usuário/admin.
 
 - [x] **3. Backend Node.js (Serviços, Controladores e Schemas)**
-  - [x] 3.1 Criar cliente gRPC para `AIService` no Node.js.
-  - [x] 3.2 Atualizar `src/schemas/book.schema.ts`, `src/schemas/annotation.schema.ts` e `src/schemas/graph.schema.ts`.
-  - [x] 3.3 Implementar `bookService.adminUpload` com extração de capa, gravação no banco e enriquecimento assíncrono via Go.
+  - [x] 3.1 Schemas e modelos de livros e anotações.
+  - [x] 3.2 Atualizar schemas de livros, anotações e grafo.
+  - [x] 3.3 Implementar cadastro de livros com extração de capa e gravação no banco.
   - [x] 3.4 Atualizar `annotationService` para suportar anotações soltas e validar que temas pertencem ao livro.
   - [x] 3.5 Atualizar `graphService` para retornar nós de temas e nós de livros com conexões e tipos.
   - [x] 3.6 Criar middleware / verificação de permissão `adminMiddleware` para rotas de upload público.
-  - [x] 3.7 Implementar controllers e rotas com anotações Swagger.
+  - [x] 3.7 Implementar controllers e rotas.
   - [x] 3.8 Criar e rodar testes de integração com Vitest e Supertest no backend.
 
 - [x] **4. Frontend (Nuxt 4 / Vue 3 + D3.js)**
