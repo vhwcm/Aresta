@@ -8,4 +8,5 @@ bookRouter.get('/', authenticate, (req, res) => bookController.list(req, res))
 bookRouter.get('/:id', authenticate, (req, res) => bookController.get(req, res))
 bookRouter.get('/:id/file', authenticate, (req, res) => bookController.getFile(req, res))
 bookRouter.get('/:id/cover', (req, res) => bookController.getCover(req, res))
+bookRouter.delete('/:id', authenticate, (req, res) => bookController.delete(req, res))
 

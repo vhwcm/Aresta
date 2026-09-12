@@ -3,6 +3,8 @@ import type { UserBookItem } from '~/interfaces/graph'
 import { useAuth } from '~/composables/useAuth'
 import { useGoogleDriveSync } from '~/composables/useGoogleDriveSync'
 import { bookRepo } from '~/adapters/database/repositories/BookRepository'
+import { annotationRepo } from '~/adapters/database/repositories/AnnotationRepository'
+import { flashcardRepo } from '~/adapters/database/repositories/FlashcardRepository'
 
 const getApiBase = () => {
   if (typeof useRuntimeConfig === 'function') {
@@ -376,6 +378,8 @@ export const useUserBooks = () => {
 
   const deleteUserBook = async (userBookId: number) => {
     const item = userBooks.value.find((b: UserBookItem) => b.userBookId === userBookId)
+    const targetBookId = item?.bookId || userBookId
+
     await bookRepo.delete(userBookId)
     if (item && item.bookId !== userBookId) {
       try {
@@ -393,6 +397,23 @@ export const useUserBooks = () => {
         }
       } catch {}
     }
+
+    // Exclui anotações e flashcards locais vinculados a este livro
+    try {
+      const notes = await annotationRepo.getAll({ bookId: targetBookId })
+      const noteIds = notes.map((n) => n.id)
+      await annotationRepo.deleteByBookId(targetBookId)
+      await flashcardRepo.deleteByBookId(targetBookId, noteIds)
+      if (item && item.userBookId !== targetBookId) {
+        const ubNotes = await annotationRepo.getAll({ bookId: item.userBookId })
+        const ubNoteIds = ubNotes.map((n) => n.id)
+        await annotationRepo.deleteByBookId(item.userBookId)
+        await flashcardRepo.deleteByBookId(item.userBookId, ubNoteIds)
+      }
+    } catch (cleanErr) {
+      console.warn('[useUserBooks] Erro ao limpar notas e flashcards locais do livro:', cleanErr)
+    }
+
     try {
       await $fetch(`${getApiBase()}/user-books/${userBookId}`, {
         method: 'DELETE',

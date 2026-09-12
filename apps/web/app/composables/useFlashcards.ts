@@ -436,6 +436,22 @@ export const useFlashcards = () => {
     }
   }
 
+  /**
+   * Exclui flashcards associados a um livro (localmente e no estado em memória)
+   */
+  const deleteFlashcardsByBookId = async (bookId: number) => {
+    try {
+      await flashcardRepo.deleteByBookId(bookId)
+      dailyDeck.value = dailyDeck.value.filter((c) => Number(c.bookId) !== Number(bookId))
+      totalCards.value = dailyDeck.value.length
+      if (firstCard.value && Number(firstCard.value.bookId) === Number(bookId)) {
+        firstCard.value = dailyDeck.value[0] || null
+      }
+    } catch (e) {
+      console.warn('[useFlashcards] Erro ao excluir flashcards por bookId:', e)
+    }
+  }
+
   return {
     dailyDeck: computed(() => dailyDeck.value),
     firstCard: computed(() => firstCard.value),
@@ -451,6 +467,7 @@ export const useFlashcards = () => {
     generateBatch,
     generateAiFlashcardForAnnotation,
     deleteFlashcardByAnnotationId,
-    deleteFlashcardByNoteId
+    deleteFlashcardByNoteId,
+    deleteFlashcardsByBookId
   }
 }

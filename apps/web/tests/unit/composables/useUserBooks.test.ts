@@ -137,4 +137,57 @@ describe('useUserBooks Composable', () => {
     expect(officialLocal).not.toBeNull()
     expect(officialLocal?.title).toBe('O Alquimista')
   })
+
+  it('deleteUserBook remove livro, anotações e flashcards locais e notifica API', async () => {
+    const { bookRepo } = await import('~/adapters/database/repositories/BookRepository')
+    const { annotationRepo } = await import('~/adapters/database/repositories/AnnotationRepository')
+    const { flashcardRepo } = await import('~/adapters/database/repositories/FlashcardRepository')
+
+    await bookRepo.save({
+      id: 20,
+      bookId: 5,
+      title: 'Livro com Notas',
+      status: 'LENDO',
+      currentPage: 10
+    })
+
+    await annotationRepo.save({
+      id: 101,
+      bookId: 5,
+      cfi: 'epubcfi(/6/2[chap1]!/4/2/1:0)',
+      note: 'Minha nota importante',
+      selectedText: 'Trecho do livro'
+    })
+
+    await flashcardRepo.save({
+      id: 201,
+      question: 'O que significa?',
+      answer: 'Significado',
+      bookId: 5
+    } as any)
+
+    mockFetch.mockResolvedValueOnce([{ id: 20, bookId: 5, title: 'Livro com Notas', status: 'LENDO', currentPage: 10 }])
+    const { userBooks, fetchUserBooks, deleteUserBook } = useUserBooks()
+    await fetchUserBooks()
+
+    expect(userBooks.value.length).toBe(1)
+    expect(await annotationRepo.getAll({ bookId: 5 })).toHaveLength(1)
+    const cardsBefore = await flashcardRepo.getAll()
+    expect(cardsBefore.some(c => c.bookId === 5)).toBe(true)
+
+    mockFetch.mockResolvedValueOnce({ success: true }) // DELETE
+    mockFetch.mockResolvedValueOnce([]) // GET recarregado
+
+    await deleteUserBook(20)
+
+    expect(mockFetch).toHaveBeenCalledWith('http://localhost:3001/api/user-books/20', expect.objectContaining({
+      method: 'DELETE'
+    }))
+
+    // Livro, anotações e flashcards devem ter sido excluídos
+    expect(await bookRepo.getById(20)).toBeNull()
+    expect(await annotationRepo.getAll({ bookId: 5 })).toHaveLength(0)
+    const cardsAfter = await flashcardRepo.getAll()
+    expect(cardsAfter.some(c => c.bookId === 5)).toBe(false)
+  })
 })

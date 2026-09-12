@@ -38,4 +38,47 @@ describe('BookService & UserBookService', () => {
     expect(result.user_id).toBe(1)
     expect(result.book.title).toBe('O Pequeno Príncipe')
   })
+
+  it('deve excluir flashcards e anotacoes associadas ao livro ao deletar userBook', async () => {
+    vi.spyOn(prisma.userBook, 'findFirst').mockResolvedValue({
+      id: 50,
+      user_id: 1,
+      book_id: 123,
+      status: 'LENDO',
+      current_page: 10,
+      last_accessed_at: new Date(),
+      created_at: new Date(),
+      updated_at: new Date(),
+    } as any)
+
+    const flashcardDeleteSpy = vi.spyOn(prisma.flashcard, 'deleteMany').mockResolvedValue({ count: 2 } as any)
+    const annotationDeleteSpy = vi.spyOn(prisma.annotation, 'deleteMany').mockResolvedValue({ count: 3 } as any)
+    const userBookDeleteSpy = vi.spyOn(prisma.userBook, 'deleteMany').mockResolvedValue({ count: 1 } as any)
+
+    await userBookService.delete(1, 50)
+
+    expect(flashcardDeleteSpy).toHaveBeenCalledWith({
+      where: {
+        user_id: 1,
+        OR: [
+          { book_id: 123 },
+          { annotation: { book_id: 123 } },
+        ],
+      },
+    })
+
+    expect(annotationDeleteSpy).toHaveBeenCalledWith({
+      where: {
+        user_id: 1,
+        book_id: 123,
+      },
+    })
+
+    expect(userBookDeleteSpy).toHaveBeenCalledWith({
+      where: {
+        user_id: 1,
+        OR: [{ id: 50 }, { book_id: 50 }],
+      },
+    })
+  })
 })

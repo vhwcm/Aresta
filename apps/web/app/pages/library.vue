@@ -554,14 +554,33 @@
       :is-open="showDeleteBookModal"
       title="Remover Livro da Estante"
       subtitle="Ação Destrutiva"
-      :description="`Tem certeza de que deseja remover «${bookToDelete?.title || 'este livro'}» da sua estante? O progresso da leitura será removido.`"
+      :description="deleteBookModalDescription"
       confirm-text="Remover Livro"
       action-type="delete"
       variant="danger"
       :loading="isDeletingBook"
       @confirm="confirmDeleteBook"
       @cancel="cancelDeleteBook"
-    />
+    >
+      <template #extra v-if="bookNotesCount > 0 || bookFlashcardsCount > 0">
+        <div
+          data-testid="book-notes-warning-box"
+          class="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex flex-col gap-2 text-rose-300 text-xs font-interface"
+        >
+          <div class="flex items-center gap-2 font-medium text-rose-200">
+            <AlertTriangleIcon class="w-4 h-4 text-rose-400 shrink-0" />
+            <span>Atenção: este livro contém dados vinculados</span>
+          </div>
+          <p class="text-textSecondary text-xs leading-relaxed">
+            Todas as <strong class="text-rose-300">{{ bookNotesCount }} {{ bookNotesCount === 1 ? 'anotação' : 'anotações' }}</strong>
+            <template v-if="bookFlashcardsCount > 0">
+              e <strong class="text-rose-300">{{ bookFlashcardsCount }} {{ bookFlashcardsCount === 1 ? 'flashcard' : 'flashcards' }}</strong>
+            </template>
+            gerados a partir desta obra serão <strong class="text-rose-200">excluídos permanentemente</strong> junto com o livro.
+          </p>
+        </div>
+      </template>
+    </ConfirmModal>
   </div>
 </template>
 
@@ -584,7 +603,8 @@ import {
   CheckIcon,
   SparklesIcon,
   ChevronRightIcon,
-  ChevronDownIcon
+  ChevronDownIcon,
+  AlertTriangleIcon
 } from 'lucide-vue-next'
 import { useDidacticBooklet } from '~/composables/useDidacticBooklet'
 
@@ -592,6 +612,10 @@ import type { UserBookItem } from '~/interfaces/graph'
 import { useUserBooks } from '~/composables/useUserBooks'
 import { useGraph } from '~/composables/useGraph'
 import { useAuth } from '~/composables/useAuth'
+import { useAnnotations } from '~/composables/useAnnotations'
+import { useFlashcards } from '~/composables/useFlashcards'
+import { annotationRepo } from '~/adapters/database/repositories/AnnotationRepository'
+import { flashcardRepo } from '~/adapters/database/repositories/FlashcardRepository'
 import { getCoverUrl, getBookFormat } from '~/utils/cover'
 
 import ConfirmModal from '~/components/ConfirmModal.vue'
@@ -645,6 +669,29 @@ const savingThemes = ref(false)
 const bookToDelete = ref<UserBookItem | null>(null)
 const showDeleteBookModal = ref(false)
 const isDeletingBook = ref(false)
+const bookNotesCount = ref(0)
+const bookFlashcardsCount = ref(0)
+const isCheckingBookContents = ref(false)
+
+const getApiBase = () => {
+  if (typeof useRuntimeConfig === 'function') {
+    try {
+      const config = useRuntimeConfig()
+      if (config?.public?.apiUrl) {
+        return `${config.public.apiUrl}/api`
+      }
+    } catch {}
+  }
+  return 'http://localhost:3001/api'
+}
+
+const deleteBookModalDescription = computed(() => {
+  const title = bookToDelete.value?.title || 'este livro'
+  if (bookNotesCount.value > 0 || bookFlashcardsCount.value > 0) {
+    return `Tem certeza de que deseja remover «${title}» da sua estante? O progresso da leitura, anotações e flashcards vinculados serão removidos permanentemente.`
+  }
+  return `Tem certeza de que deseja remover «${title}» da sua estante? O progresso da leitura será removido.`
+})
 
 const {
   userBooks,
@@ -666,23 +713,77 @@ const selectedTheme = computed(() => {
   return availableThemes.value.find((t: any) => String(t.id) === String(selectedThemeId.value)) || null
 })
 
-const promptDeleteBook = (book: UserBookItem) => {
+const promptDeleteBook = async (book: UserBookItem) => {
   bookToDelete.value = book
   showDeleteBookModal.value = true
+  isCheckingBookContents.value = true
+  bookNotesCount.value = 0
+  bookFlashcardsCount.value = 0
+
+  try {
+    const bookId = book.bookId || book.userBookId
+    const localNotes = await annotationRepo.getAll({ bookId })
+    const localNotesUserBook = book.userBookId !== bookId ? await annotationRepo.getAll({ bookId: book.userBookId }) : []
+    const allNotes = [...localNotes, ...localNotesUserBook]
+    const noteIds = new Set(allNotes.map((n) => n.id))
+    let notesCount = noteIds.size
+
+    const allCards = await flashcardRepo.getAll()
+    const matchingCards = allCards.filter(
+      (c) =>
+        Number(c.bookId) === Number(bookId) ||
+        Number(c.bookId) === Number(book.userBookId) ||
+        (c.annotationId && noteIds.has(c.annotationId))
+    )
+    let flashcardsCount = matchingCards.length
+
+    if (auth.isLoggedIn.value && auth.token.value) {
+      try {
+        const apiNotes = await $fetch<any[]>(`${getApiBase()}/annotations/book/${bookId}`, {
+          headers: { Authorization: `Bearer ${auth.token.value}` }
+        }).catch(() => [])
+        if (Array.isArray(apiNotes) && apiNotes.length > 0) {
+          notesCount = Math.max(notesCount, apiNotes.length)
+          const remoteCards = apiNotes.filter((n) => n.flashcard || n.hasFlashcard)
+          flashcardsCount = Math.max(flashcardsCount, remoteCards.length)
+        }
+      } catch {}
+    }
+
+    bookNotesCount.value = notesCount
+    bookFlashcardsCount.value = flashcardsCount
+  } catch (err) {
+    console.warn('[library] Erro ao verificar conteúdo do livro para remoção:', err)
+  } finally {
+    isCheckingBookContents.value = false
+  }
 }
 
 const cancelDeleteBook = () => {
   showDeleteBookModal.value = false
   bookToDelete.value = null
+  bookNotesCount.value = 0
+  bookFlashcardsCount.value = 0
 }
 
 const confirmDeleteBook = async () => {
   if (!bookToDelete.value) return
   isDeletingBook.value = true
   try {
-    await deleteUserBook(bookToDelete.value.userBookId)
+    const targetBook = bookToDelete.value
+    await deleteUserBook(targetBook.userBookId)
+    const { deleteAnnotationsByBookId } = useAnnotations()
+    const { deleteFlashcardsByBookId } = useFlashcards()
+    await deleteAnnotationsByBookId(targetBook.bookId)
+    await deleteFlashcardsByBookId(targetBook.bookId)
+    if (targetBook.userBookId !== targetBook.bookId) {
+      await deleteAnnotationsByBookId(targetBook.userBookId)
+      await deleteFlashcardsByBookId(targetBook.userBookId)
+    }
     showDeleteBookModal.value = false
     bookToDelete.value = null
+    bookNotesCount.value = 0
+    bookFlashcardsCount.value = 0
   } catch (e) {
     console.error('Erro ao remover livro da estante:', e)
   } finally {

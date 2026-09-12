@@ -109,6 +109,19 @@ export class FlashcardRepository {
     await this.db.deleteFlashcard(id);
     await dbManager.recordMutation('flashcard', id, 'DELETE', { id });
   }
+
+  async deleteByBookId(bookId: number, annotationIds?: number[]): Promise<void> {
+    const cards = await this.getAll();
+    const annIdSet = new Set(annotationIds || []);
+    for (const card of cards) {
+      if (
+        Number(card.bookId) === Number(bookId) ||
+        (card.annotationId && annIdSet.has(card.annotationId))
+      ) {
+        await this.delete(card.id);
+      }
+    }
+  }
 }
 
 export const flashcardRepo = new FlashcardRepository();

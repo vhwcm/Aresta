@@ -38,6 +38,16 @@ export class BookController {
       res.status(404).json({ error: err.message })
     }
   }
+
+  async delete(req: Request, res: Response): Promise<void> {
+    try {
+      const id = parseInt(String(req.params.id))
+      await bookService.delete(id)
+      res.json({ success: true })
+    } catch (err: any) {
+      res.status(400).json({ error: err.message })
+    }
+  }
 }
 
 export const bookController = new BookController()

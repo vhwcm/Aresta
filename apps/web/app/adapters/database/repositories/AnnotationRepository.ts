@@ -32,6 +32,13 @@ export class AnnotationRepository {
     await this.db.deleteAnnotation(id);
     await dbManager.recordMutation('annotation', id, 'DELETE', { id });
   }
+
+  async deleteByBookId(bookId: number): Promise<void> {
+    const notes = await this.getAll({ bookId });
+    for (const note of notes) {
+      await this.delete(note.id);
+    }
+  }
 }
 
 export const annotationRepo = new AnnotationRepository();

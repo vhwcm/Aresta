@@ -464,6 +464,18 @@ export const useAnnotations = () => {
     return card
   }
 
+  const deleteAnnotationsByBookId = async (bookId: number): Promise<void> => {
+    try {
+      const localNotes = await annotationRepo.getAll({ bookId })
+      const noteIds = localNotes.map((n) => n.id)
+      await annotationRepo.deleteByBookId(bookId)
+      await flashcardRepo.deleteByBookId(bookId, noteIds)
+      annotations.value = annotations.value.filter((a) => Number(a.bookId) !== Number(bookId))
+    } catch (err) {
+      console.warn('[useAnnotations] Erro ao deletar anotações por bookId:', err)
+    }
+  }
+
   return {
     annotations,
     loading,
@@ -473,6 +485,7 @@ export const useAnnotations = () => {
     createStandaloneAnnotation,
     updateAnnotationNote,
     deleteAnnotation,
+    deleteAnnotationsByBookId,
     toggleAnnotationFlashcard,
     convertAnnotationToFlashcard,
     checkFlashcardStatus

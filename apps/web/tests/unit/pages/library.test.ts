@@ -24,6 +24,9 @@ vi.mock('~/composables/useAuth', () => ({
 describe('Library Page', () => {
   beforeEach(async () => {
     vi.clearAllMocks()
+    const { dbManager } = await import('../../../app/adapters/database/DatabaseManager')
+    const { InMemoryAdapter } = await import('../../../app/adapters/database/InMemoryAdapter')
+    dbManager.setAdapter(new InMemoryAdapter())
     const { bookRepo } = await import('../../../app/adapters/database/repositories/BookRepository')
     await bookRepo.clear()
     mockFetch.mockImplementation((url: string) => {
@@ -155,6 +158,90 @@ describe('Library Page', () => {
     await deleteBtn.trigger('click')
     expect(wrapper.text()).toContain('Remover Livro da Estante')
     expect(wrapper.text()).toContain('Contos Fluminenses')
+  })
+
+  it('opens delete confirmation modal and warns when book has notes and flashcards, then deletes them', async () => {
+    const { annotationRepo } = await import('../../../app/adapters/database/repositories/AnnotationRepository')
+    const { flashcardRepo } = await import('../../../app/adapters/database/repositories/FlashcardRepository')
+
+    // Cria anotações e flashcards para o livro 1 (Contos Fluminenses)
+    await annotationRepo.save({
+      id: 501,
+      bookId: 1,
+      cfi: 'epubcfi(/6/2!/4)',
+      note: 'Minha anotação crítica',
+      selectedText: 'Texto destacado'
+    })
+    await annotationRepo.save({
+      id: 502,
+      bookId: 1,
+      cfi: 'epubcfi(/6/4!/2)',
+      note: 'Segunda anotação',
+      selectedText: 'Outro trecho'
+    })
+    await flashcardRepo.save({
+      id: 601,
+      bookId: 1,
+      annotationId: 501,
+      question: 'Pergunta sobre a obra',
+      answer: 'Resposta'
+    } as any)
+
+    const wrapper = mount(LibraryPage, {
+      global: {
+        stubs: {
+          NuxtLink: { template: '<a><slot /></a>' }
+        }
+      }
+    })
+    await flushPromises()
+
+    const bookCards = wrapper.findAll('[data-testid="user-book-card"]')
+    const contosCard = bookCards.find((c) => c.text().includes('Contos Fluminenses'))
+    expect(contosCard).toBeDefined()
+    const deleteBtn = contosCard!.find('[data-testid="delete-book-btn"]')
+    expect(deleteBtn.exists()).toBe(true)
+    await deleteBtn.trigger('click')
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Remover Livro da Estante')
+    expect(wrapper.text()).toContain('Contos Fluminenses')
+
+    // Deve exibir caixa de aviso denotando anotações e flashcards
+    const warningBox = wrapper.find('[data-testid="book-notes-warning-box"]')
+    expect(warningBox.exists()).toBe(true)
+    expect(warningBox.text()).toContain('2 anotações')
+    expect(warningBox.text()).toContain('1 flashcard')
+    expect(warningBox.text()).toContain('excluídos permanentemente')
+
+    // Ao confirmar a exclusão, deve deletar o livro e limpar notas e flashcards
+    const confirmBtn = wrapper.find('[data-testid="confirm-modal-confirm-btn"]')
+    expect(confirmBtn.exists()).toBe(true)
+    await confirmBtn.trigger('click')
+    await flushPromises()
+
+    expect(await annotationRepo.getAll({ bookId: 1 })).toHaveLength(0)
+    const cards = await flashcardRepo.getAll()
+    expect(cards.filter(c => c.bookId === 1)).toHaveLength(0)
+  })
+
+  it('does not display warning box when book has no notes or flashcards', async () => {
+    const wrapper = mount(LibraryPage, {
+      global: {
+        stubs: {
+          NuxtLink: { template: '<a><slot /></a>' }
+        }
+      }
+    })
+    await flushPromises()
+
+    const deleteBtn = wrapper.find('[data-testid="delete-book-btn"]')
+    await deleteBtn.trigger('click')
+    await flushPromises()
+
+    const warningBox = wrapper.find('[data-testid="book-notes-warning-box"]')
+    expect(warningBox.exists()).toBe(false)
+    expect(wrapper.text()).toContain('O progresso da leitura será removido.')
   })
 
   it('renders book list inside a responsive grid for shelf display on larger screens', async () => {

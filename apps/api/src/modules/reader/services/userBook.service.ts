@@ -60,6 +60,35 @@ export class UserBookService {
   }
 
   async delete(userId: number, idOrBookId: number) {
+    const userBook = await prisma.userBook.findFirst({
+      where: {
+        user_id: userId,
+        OR: [{ id: idOrBookId }, { book_id: idOrBookId }],
+      },
+    })
+
+    const bookId = userBook ? userBook.book_id : idOrBookId
+
+    // 1. Excluir flashcards vinculados ao livro ou às anotações do livro para este usuário
+    await prisma.flashcard.deleteMany({
+      where: {
+        user_id: userId,
+        OR: [
+          { book_id: bookId },
+          { annotation: { book_id: bookId } },
+        ],
+      },
+    })
+
+    // 2. Excluir anotações do usuário vinculadas a este livro
+    await prisma.annotation.deleteMany({
+      where: {
+        user_id: userId,
+        book_id: bookId,
+      },
+    })
+
+    // 3. Excluir o registro de userBook
     return prisma.userBook.deleteMany({
       where: {
         user_id: userId,

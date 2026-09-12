@@ -51,6 +51,9 @@ model AnnotationTheme {
 3. **Escrita Manual e Transcrição via OCR**:
    - O leitor pode redigir notas digitando ou desenhando à mão em um painel expandido (50% desktop/tablet, 100% mobile).
    - Ao salvar uma nota desenhada no Canvas (`HandwritingCanvas.vue`), a imagem é transmitida ao backend Node.js, que se comunica via gRPC com o microsserviço `aresta-ocr` para transcrever os traços e persistir a anotação diretamente no banco de dados.
+4. **Ciclo de Vida e Exclusão em Cascata com o Livro**:
+   - As anotações pertencem a uma obra específica (`book_id`). Se a obra for removida da estante ou catálogo, todas as anotações e flashcards derivados são deletados automaticamente no PostgreSQL e localmente no IndexedDB/SQLite.
+   - O usuário é expressamente avisado na confirmação de exclusão do livro caso haja anotações registradas.
 
 ---
 

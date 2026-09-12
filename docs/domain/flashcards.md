@@ -90,7 +90,7 @@ Na autoavaliação (`/api/v1/flashcards/:id/review`):
 3. **Navegação para a Fonte ("Ver Fonte ↗")**:
    - Na página de revisão (`/revisao`), os flashcards possuem botão direto apontando para o leitor de livros ou para o Canvas focando na nota.
 4. **Exclusão em Cascata Garantida**:
-   - Ao excluir a nota no Canvas ou a anotação no leitor, os flashcards correspondentes são deletados automaticamente no banco local e remoto via trigger/serviço.
+   - Ao excluir a nota no Canvas, a anotação no leitor ou a obra inteira da estante (`Book` / `UserBook`), todos os flashcards e anotações correspondentes são deletados automaticamente no banco local (IndexedDB/SQLite) e no PostgreSQL central via serviço de remoção. O modal de confirmação do livro avisa explicitamente o usuário quando a obra possui anotações e flashcards associados.
 
 ---
 
