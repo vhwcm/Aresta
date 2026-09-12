@@ -60,14 +60,15 @@
           <div
             v-for="book in displayedBooks"
             :key="book.userBookId"
-            class="flex items-center justify-between bg-bgApp/80 border border-divider/70 hover:border-accent/40 p-3.5 rounded-2xl transition-all group"
+            @click="handleSelectBook(book)"
+            class="flex items-center justify-between bg-bgApp/80 border border-divider/70 hover:border-accent/40 p-3.5 rounded-2xl transition-all group cursor-pointer"
           >
             <div class="flex items-center gap-3.5 min-w-0 flex-1">
               <!-- Capa do Livro -->
               <div class="w-11 h-16 rounded-lg bg-white/5 border border-divider shrink-0 overflow-hidden flex items-center justify-center shadow-md">
                 <img
                   v-if="book.coverPath"
-                  :src="getCoverUrl(book.coverPath, book.bookId)"
+                  :src="getCoverUrl(book.coverPath, book.bookId || (book as any).id)"
                   :alt="book.title"
                   class="w-full h-full object-cover"
                 />
@@ -96,7 +97,8 @@
 
             <!-- Botão de Leitura / Ação -->
             <NuxtLink
-              :to="`/reader?bookId=${book.bookId}`"
+              :to="`/reader?bookId=${book.bookId || (book as any).id}`"
+              @click.stop
               class="p-2.5 rounded-xl bg-accent/10 border border-accent/30 text-accent hover:bg-accent hover:text-white transition-all shrink-0 ml-2"
               title="Ler este livro"
             >
@@ -136,6 +138,13 @@
       </div>
     </div>
 
+    <!-- Gaveta Lateral de Anotações do Livro com Opção de Leitura -->
+    <BookAnnotationsDrawer
+      :is-open="isBookDrawerOpen"
+      :book="selectedBookNode"
+      @close="isBookDrawerOpen = false; selectedBookNode = null"
+    />
+
     <!-- Modais para Criação e Conexão de Nós diretamente no sidebar -->
     <CreateNodeModal
       :is-open="isCreateModalOpen"
@@ -161,6 +170,7 @@ import { useUserBooks } from '~/composables/useUserBooks'
 import { getCoverUrl } from '~/utils/cover'
 
 import GraphCanvas from '~/components/GraphCanvas.vue'
+import BookAnnotationsDrawer from '~/components/graph/BookAnnotationsDrawer.vue'
 import CreateNodeModal from '~/components/CreateNodeModal.vue'
 import ConnectNodesModal from '~/components/ConnectNodesModal.vue'
 
@@ -168,11 +178,46 @@ const { graphData, loading, fetchGraph, createNode, createConnection } = useGrap
 const { userBooks, fetchUserBooks } = useUserBooks()
 
 const selectedNode = ref<GraphNode | null>(null)
+const selectedBookNode = ref<GraphNode | null>(null)
+const isBookDrawerOpen = ref(false)
 const isCreateModalOpen = ref(false)
 const isConnectModalOpen = ref(false)
 
 const handleSelectNode = (node: GraphNode) => {
+  const isBook = node.type === 'book' || String(node.id).startsWith('book-')
+
+  if (isBook) {
+    selectedBookNode.value = node
+    isBookDrawerOpen.value = true
+    return
+  }
+
+  if (node.type === 'note') {
+    navigateTo(`/canvas?note=${node.rawId}`)
+    return
+  }
+
+  if (node.type === 'canvas') {
+    navigateTo(`/canvas/${node.rawId}`)
+    return
+  }
+
   selectedNode.value = node
+}
+
+const handleSelectBook = (book: any) => {
+  selectedBookNode.value = {
+    id: `book-${book.bookId || book.id}`,
+    rawId: book.bookId || book.id,
+    type: 'book',
+    name: book.title,
+    fullTitle: book.title,
+    author: book.author,
+    summary: book.summary,
+    coverPath: book.coverPath,
+    filePath: book.filePath,
+  }
+  isBookDrawerOpen.value = true
 }
 
 const goBackToGraph = () => {
@@ -184,6 +229,22 @@ const displayedBooks = computed<UserBookItem[]>(() => {
   // Se for o Nó Central (Meu Conhecimento)
   if (selectedNode.value.isRoot || selectedNode.value.id === -999) {
     return userBooks.value
+  }
+  // Se porventura um nó de livro for selecionado como nó ativo
+  if (selectedNode.value.type === 'book' || String(selectedNode.value.id).startsWith('book-')) {
+    const rawId = selectedNode.value.rawId || Number(String(selectedNode.value.id).replace('book-', ''))
+    const found = userBooks.value.filter((ub) => ub.bookId === rawId)
+    if (found.length > 0) return found
+    return [{
+      userBookId: rawId,
+      bookId: rawId,
+      title: selectedNode.value.name || selectedNode.value.title || '',
+      author: selectedNode.value.author,
+      summary: selectedNode.value.summary,
+      coverPath: selectedNode.value.coverPath,
+      status: 'LENDO',
+      currentPage: 1,
+    }]
   }
   // Caso contrário, livros vinculados a este tema específico
   return (selectedNode.value.books || []) as any

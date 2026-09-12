@@ -195,9 +195,9 @@ const goToAnnotationBook = (node: GraphNode) => {
   const bookId = node.bookId
   if (!bookId) return
   if (node.cfi) {
-    navigateTo(`/reader/${bookId}?cfi=${encodeURIComponent(node.cfi)}`)
+    navigateTo(`/reader?bookId=${bookId}&cfi=${encodeURIComponent(node.cfi)}`)
   } else {
-    navigateTo(`/reader/${bookId}`)
+    navigateTo(`/reader?bookId=${bookId}`)
   }
 }
 

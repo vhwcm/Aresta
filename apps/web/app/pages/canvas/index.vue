@@ -564,10 +564,10 @@ const handleSelectGraphNode = async (node: any) => {
     }
   } else if (node.type === 'book') {
     const bookId = node.rawId || String(node.id).replace('book-', '')
-    navigateTo(`/reader/${bookId}`)
+    navigateTo(`/reader?bookId=${bookId}`)
   } else if (node.type === 'annotation') {
     if (node.bookId) {
-      navigateTo(`/reader/${node.bookId}${node.cfi ? '?cfi=' + encodeURIComponent(node.cfi) : ''}`)
+      navigateTo(`/reader?bookId=${node.bookId}${node.cfi ? '&cfi=' + encodeURIComponent(node.cfi) : ''}`)
     }
   } else if (node.type === 'theme') {
     navigateTo(`/grafo`)
