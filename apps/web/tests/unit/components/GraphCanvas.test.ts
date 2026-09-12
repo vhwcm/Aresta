@@ -21,6 +21,8 @@ describe('GraphCanvas Component', () => {
     expect(wrapper.find('.nodes-group').exists()).toBe(true)
     expect(wrapper.text()).toContain('Novo Tema')
     expect(wrapper.text()).toContain('Conectar')
+    // O texto do nó central foi removido a pedido do usuário (apenas o ícone permanece)
+    expect(wrapper.html()).not.toContain('>Meu Conhecimento<')
   })
 
   it('emits openCreateNode and openConnectModal events from buttons', async () => {

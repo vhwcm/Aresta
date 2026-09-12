@@ -427,27 +427,81 @@ const initGraph = () => {
     }))
     .filter((link) => link.target)
 
-  // 4. Links conectando nós sem conexões ao Nó Raiz para evitar dispersão infinita
-  const connectedNodeIds = new Set<string>()
+  // 4. Conectar componentes conexos (ilhas) e nós órfãos ao Nó Raiz para evitar dispersão infinita
+  // Montamos adjacência para encontrar nós que têm caminho até a raiz
+  const adj = new Map<string, string[]>()
+  for (const n of simulationNodes) {
+    adj.set(String(n.id), [])
+  }
   for (const link of explicitLinks) {
-    if (link.source) connectedNodeIds.add(String(link.source.id))
-    if (link.target) connectedNodeIds.add(String(link.target.id))
+    if (link.source && link.target) {
+      const sId = String(link.source.id)
+      const tId = String(link.target.id)
+      adj.get(sId)?.push(tId)
+      adj.get(tId)?.push(sId)
+    }
+  }
+  for (const rLink of rootLinks) {
+    if (rLink.target) {
+      const tId = String(rLink.target.id)
+      adj.get('root')?.push(tId)
+      adj.get(tId)?.push('root')
+    }
   }
 
-  const orphanLinks = inputNodes
-    .filter((n) => n.type !== 'theme' && !connectedNodeIds.has(String(n.id)))
-    .map((n) => ({
-      id: `root-orphan-${n.id}`,
-      source: rootNode,
-      target: nodeMap.get(String(n.id)),
-      type: 'root-orphan',
-      isRootEdge: true,
-    }))
-    .filter((link) => link.target)
+  // BFS a partir do nó raiz para descobrir todos os nós já alcançáveis
+  const reachableFromRoot = new Set<string>(['root'])
+  const queue: string[] = ['root']
+  while (queue.length > 0) {
+    const curr = queue.shift()!
+    for (const neighbor of adj.get(curr) || []) {
+      if (!reachableFromRoot.has(neighbor)) {
+        reachableFromRoot.add(neighbor)
+        queue.push(neighbor)
+      }
+    }
+  }
 
-  const simulationLinks = [...rootLinks, ...orphanLinks, ...explicitLinks]
+  // Para cada componente não alcançável a partir da raiz, conecta seu primeiro nó (ou todos os isolados) à raiz
+  const islandLinks: any[] = []
+  const visitedIslands = new Set<string>()
 
-  // Criar Simulação de Forças D3
+  for (const node of inputNodes) {
+    const nId = String(node.id)
+    if (!reachableFromRoot.has(nId) && !visitedIslands.has(nId)) {
+      // Conectar este nó representante da ilha ao nó raiz
+      islandLinks.push({
+        id: `root-island-${node.id}`,
+        source: rootNode,
+        target: nodeMap.get(nId),
+        type: 'root-island',
+        isRootEdge: true,
+      })
+
+      // Marcar toda a ilha como visitada e conectada
+      const islandQueue: string[] = [nId]
+      visitedIslands.add(nId)
+      reachableFromRoot.add(nId)
+      while (islandQueue.length > 0) {
+        const curr = islandQueue.shift()!
+        for (const neighbor of adj.get(curr) || []) {
+          if (!visitedIslands.has(neighbor)) {
+            visitedIslands.add(neighbor)
+            reachableFromRoot.add(neighbor)
+            islandQueue.push(neighbor)
+          }
+        }
+      }
+    }
+  }
+
+  const validIslandLinks = islandLinks.filter((link) => link.target)
+  const simulationLinks = [...rootLinks, ...validIslandLinks, ...explicitLinks]
+
+  // Raio máximo de dispersão ao redor do centro do canvas
+  const maxDispersalRadius = Math.min(width, height) * 0.42
+
+  // Criar Simulação de Forças D3 com contenção e limites
   simulation = d3
     .forceSimulation(simulationNodes)
     .force(
@@ -456,23 +510,26 @@ const initGraph = () => {
         .forceLink(simulationLinks as any)
         .id((d: any) => String(d.id))
         .distance((d: any) => {
-          if (d.isRootEdge) return 180
-          if (d.type === 'book-theme') return 110
-          if (d.type === 'annotation-book') return 70
-          if (d.type === 'annotation-theme') return 85
-          if (d.type === 'note-book' || d.type === 'note-canvas') return 95
-          return 120
+          if (d.isRootEdge) return 130
+          if (d.type === 'book-theme') return 80
+          if (d.type === 'annotation-book') return 50
+          if (d.type === 'annotation-theme') return 60
+          if (d.type === 'note-book' || d.type === 'note-canvas') return 70
+          return 80
         })
+        .strength(0.8)
     )
     .force('charge', d3.forceManyBody().strength((d: any) => {
-      if (d.type === 'book') return -200
-      if (d.type === 'annotation') return -100
-      if (d.type === 'note') return -140
-      if (d.type === 'canvas') return -180
-      return -360
+      if (d.isRoot) return -300
+      if (d.type === 'book') return -140
+      if (d.type === 'annotation') return -60
+      if (d.type === 'note') return -90
+      if (d.type === 'canvas') return -110
+      return -180
     }))
     .force('center', d3.forceCenter(width / 2, height / 2))
-    .force('collide', d3.forceCollide().radius((d: any) => getNodeRadius(d) + 16))
+    .force('radial', d3.forceRadial(maxDispersalRadius * 0.55, width / 2, height / 2).strength(0.18))
+    .force('collide', d3.forceCollide().radius((d: any) => getNodeRadius(d) + 14))
 
   // Renderizar Links (Arestas)
   const linkGroup = g.select('.links-group')
@@ -805,23 +862,18 @@ const initGraph = () => {
   })
 
   themeAndRootNodesSelection
+    .filter((d: any) => !d.isRoot)
     .append('text')
     .attr('text-anchor', 'middle')
     .attr('dy', (d: any) => getNodeRadius(d) + 18)
     .attr('fill', (d: any) =>
-      d.isRoot
-        ? isSepiaMode.value
-          ? '#8B4513'
-          : isLightMode.value
-          ? '#9A3412'
-          : '#F59E0B'
-        : isSepiaMode.value
+      isSepiaMode.value
         ? '#2C2621'
         : isLightMode.value
         ? '#1E293B'
         : '#E2E8F0'
     )
-    .attr('font-size', (d: any) => (d.isRoot ? '13.5px' : '12px'))
+    .attr('font-size', '12px')
     .attr('font-weight', '600')
     .attr('font-family', 'system-ui, -apple-system, sans-serif')
     .attr('pointer-events', 'none')
@@ -905,8 +957,25 @@ const initGraph = () => {
         .attr('stroke-opacity', 1)
     })
 
-  // Tick da simulação
+  // Tick da simulação com contenção estrita de distância máxima
+  const centerX = width / 2
+  const centerY = height / 2
+
   simulation.on('tick', () => {
+    // Clamping de distância máxima em relação ao centro
+    for (const d of simulationNodes) {
+      if (!d.isRoot && d.x != null && d.y != null) {
+        const dx = d.x - centerX
+        const dy = d.y - centerY
+        const dist = Math.sqrt(dx * dx + dy * dy)
+        if (dist > maxDispersalRadius) {
+          const ratio = maxDispersalRadius / dist
+          d.x = centerX + dx * ratio
+          d.y = centerY + dy * ratio
+        }
+      }
+    }
+
     links
       .attr('x1', (d: any) => d.source.x)
       .attr('y1', (d: any) => d.source.y)

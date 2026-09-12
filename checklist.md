@@ -3,6 +3,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [12/09/2026 15:32] [Concluído] Conectar ilhas e nós órfãos ao centro, limitar distância máxima entre nós no grafo e remover rótulo de texto do nó central
 - [11/09/2026 20:00] [Concluído] Unificar Grafo de Conhecimento de livros, temas, anotações de leitura e notas/quadros com navegação direta e filtros
 - [11/09/2026 18:49] [Concluído] Cores de escrita/texto, escala dinâmica de fonte ao puxar alça e suporte markdown no texto solto do canvas
 - [11/09/2026 18:49] [Concluído] Remover funcionalidade e componentes de OCR/Desenho do leitor de livros (ReaderAnnotationDrawer, HandwritingCanvas e referências)
