@@ -123,6 +123,8 @@ export class GraphService {
       fullTitle: ub.book.title,
       coverPath: ub.book.cover_path,
       filePath: ub.book.file_path,
+      author: ub.book.author,
+      summary: ub.book.summary,
       color: '#3B82F6',
     }))
 

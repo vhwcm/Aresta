@@ -1,55 +1,65 @@
 <template>
-  <div
-    v-if="isOpen && book"
-    class="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-bgPanel border-l border-divider shadow-2xl flex flex-col animate-in slide-in-from-right duration-300"
-  >
-    <!-- Cabeçalho do Livro -->
-    <header class="p-6 border-b border-divider flex items-start justify-between shrink-0 bg-white/[0.02]">
-      <div class="flex gap-4 items-center">
-        <!-- Miniatura da Capa -->
-        <div class="w-14 h-20 rounded-xl overflow-hidden bg-white/5 border border-divider shadow-md shrink-0 relative">
-          <img
-            v-if="book.coverPath"
-            :src="getCoverUrl(book)"
-            :alt="book.title || book.name"
-            class="w-full h-full object-cover"
-            @error="onCoverError"
-          />
-          <div v-else class="w-full h-full flex items-center justify-center text-accent">
-            <BookOpenIcon class="w-6 h-6" />
-          </div>
-        </div>
-
-        <div class="flex flex-col">
-          <div class="font-technical text-[10px] uppercase tracking-widest text-accent font-semibold flex items-center gap-1.5">
-            <BookIcon class="w-3 h-3" />
-            <span>Livro da Biblioteca</span>
-          </div>
-          <h2 class="font-editorial text-xl font-light text-textPrimary leading-tight mt-0.5 line-clamp-2" :title="book.fullTitle || book.name">
-            {{ book.fullTitle || book.name }}
-          </h2>
-          <p class="text-xs font-interface text-textSecondary mt-0.5">
-            {{ book.author || 'Autor desconhecido' }}
-          </p>
-          <NuxtLink
-            :to="`/reader/${book.rawId || (typeof book.id === 'number' ? book.id : parseInt(String(book.id).replace('book-', ''), 10))}`"
-            class="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-accent text-white text-xs font-semibold hover:bg-accent/90 transition-all shadow-md w-fit active:scale-95"
-            title="Abrir livro no leitor"
-          >
-            <BookOpenIcon class="w-3.5 h-3.5" />
-            <span>Continuar Leitura</span>
-          </NuxtLink>
-        </div>
-      </div>
-
-      <button
+  <Teleport to="body">
+    <div
+      v-if="isOpen && book"
+      class="fixed inset-0 z-50 overflow-hidden"
+    >
+      <!-- Backdrop translúcido com clique para fechar -->
+      <div
+        class="fixed inset-0 bg-black/50 backdrop-blur-[2px] transition-opacity animate-in fade-in duration-200"
         @click="$emit('close')"
-        class="p-2 rounded-full bg-white/5 border border-divider text-textSecondary hover:text-textPrimary hover:bg-white/10 transition-all active:scale-95 shrink-0"
-        title="Fechar"
+      />
+
+      <aside
+        class="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-bgPanel border-l border-divider shadow-2xl flex flex-col animate-in slide-in-from-right duration-300"
       >
-        <XIcon class="w-4 h-4" />
-      </button>
-    </header>
+        <!-- Cabeçalho do Livro -->
+        <header class="p-6 border-b border-divider flex items-start justify-between shrink-0 bg-white/[0.02]">
+          <div class="flex gap-4 items-center">
+            <!-- Miniatura da Capa -->
+            <div class="w-14 h-20 rounded-xl overflow-hidden bg-white/5 border border-divider shadow-md shrink-0 relative">
+              <img
+                v-if="book.coverPath"
+                :src="getCoverUrl(book)"
+                :alt="book.title || book.name"
+                class="w-full h-full object-cover"
+                @error="onCoverError"
+              />
+              <div v-else class="w-full h-full flex items-center justify-center text-accent">
+                <BookOpenIcon class="w-6 h-6" />
+              </div>
+            </div>
+
+            <div class="flex flex-col">
+              <div class="font-technical text-[10px] uppercase tracking-widest text-accent font-semibold flex items-center gap-1.5">
+                <BookIcon class="w-3 h-3" />
+                <span>Livro da Biblioteca</span>
+              </div>
+              <h2 class="font-editorial text-xl font-light text-textPrimary leading-tight mt-0.5 line-clamp-2" :title="book.fullTitle || book.name">
+                {{ book.fullTitle || book.name }}
+              </h2>
+              <p class="text-xs font-interface text-textSecondary mt-0.5">
+                {{ book.author || 'Autor desconhecido' }}
+              </p>
+              <NuxtLink
+                :to="`/reader?bookId=${book.rawId || (typeof book.id === 'number' ? book.id : parseInt(String(book.id).replace('book-', ''), 10))}`"
+                class="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-accent text-white text-xs font-semibold hover:bg-accent/90 transition-all shadow-md w-fit active:scale-95"
+                title="Abrir livro no leitor"
+              >
+                <BookOpenIcon class="w-3.5 h-3.5" />
+                <span>Continuar Leitura</span>
+              </NuxtLink>
+            </div>
+          </div>
+
+          <button
+            @click="$emit('close')"
+            class="p-2 rounded-full bg-white/5 border border-divider text-textSecondary hover:text-textPrimary hover:bg-white/10 transition-all active:scale-95 shrink-0"
+            title="Fechar"
+          >
+            <XIcon class="w-4 h-4" />
+          </button>
+        </header>
 
     <!-- Resumo do Livro se disponível -->
     <div v-if="book.summary" class="px-6 py-3 bg-white/[0.01] border-b border-divider text-xs text-textSecondary font-interface leading-relaxed">
@@ -151,15 +161,26 @@
               {{ anno.note }}
             </p>
 
-            <!-- Tags -->
-            <div v-if="anno.themes && anno.themes.length > 0" class="flex flex-wrap gap-1 pt-1">
-              <span
-                v-for="t in anno.themes"
-                :key="t.id"
-                class="px-2 py-0.5 rounded text-[9px] font-technical bg-white/5 border border-divider text-textSecondary"
+            <!-- Tags e Ação de Leitura -->
+            <div class="flex items-center justify-between flex-wrap gap-1.5 pt-1">
+              <div v-if="anno.themes && anno.themes.length > 0" class="flex flex-wrap gap-1">
+                <span
+                  v-for="t in anno.themes"
+                  :key="t.id"
+                  class="px-2 py-0.5 rounded text-[9px] font-technical bg-white/5 border border-divider text-textSecondary"
+                >
+                  #{{ t.name }}
+                </span>
+              </div>
+              <NuxtLink
+                v-if="anno.cfi"
+                :to="`/reader?bookId=${book.rawId || (typeof book.id === 'number' ? book.id : parseInt(String(book.id).replace('book-', ''), 10))}&cfi=${encodeURIComponent(anno.cfi)}`"
+                class="text-accent hover:underline inline-flex items-center gap-1 text-[11px] font-technical ml-auto"
+                title="Abrir trecho no leitor"
               >
-                #{{ t.name }}
-              </span>
+                <BookOpenIcon class="w-3 h-3" />
+                <span>Ver no texto</span>
+              </NuxtLink>
             </div>
           </div>
         </div>
@@ -169,7 +190,9 @@
         </div>
       </section>
     </div>
-  </div>
+      </aside>
+    </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">

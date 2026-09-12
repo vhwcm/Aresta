@@ -350,7 +350,7 @@ describe('Reader Components', () => {
       expect(mockCreateAnnotation).toHaveBeenCalledWith({
         bookId: 1,
         bookTitle: 'Obra Sem Título',
-        cfi: 'page:3',
+        cfi: 'page:3#color=F59E0B',
         selectedText: 'Trecho interessante do capítulo 1',
         note: 'Reflexão sobre filosofia grega',
         color: '#F59E0B',
@@ -386,7 +386,7 @@ describe('Reader Components', () => {
       mockCreateAnnotation.mockResolvedValueOnce({
         id: 11,
         bookId: 1,
-        cfi: 'page:5',
+        cfi: 'page:5#color=10B981',
         selectedText: 'Citação direta para marcação',
         note: null,
         color: '#10B981',
@@ -399,7 +399,7 @@ describe('Reader Components', () => {
       expect(mockCreateAnnotation).toHaveBeenCalledWith({
         bookId: 1,
         bookTitle: 'Obra Sem Título',
-        cfi: 'page:5',
+        cfi: 'page:5#color=10B981',
         selectedText: 'Citação direta para marcação',
         note: null,
         color: '#10B981',

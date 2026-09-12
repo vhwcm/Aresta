@@ -113,4 +113,60 @@ describe('useAnnotations', () => {
     expect(fetched.some((a) => a.note === 'Minha nota offline')).toBe(true)
     expect(annotations.value.some((a) => a.note === 'Minha nota offline')).toBe(true)
   })
+
+  it('preserva a cor escolhida pelo usuário mesmo quando a API remota retorna sem o campo color', async () => {
+    // API remota retorna registro do PostgreSQL sem o campo `color`
+    const remoteRecordWithoutColor = {
+      id: 50,
+      userId: 1,
+      bookId: 10,
+      cfi: 'page:5#color=10B981',
+      selectedText: 'Texto em Verde Menta',
+      note: 'Anotação verde',
+      themes: []
+    }
+    mockFetch.mockResolvedValueOnce(remoteRecordWithoutColor)
+
+    const { createAnnotation } = useAnnotations()
+    const result = await createAnnotation({
+      bookId: 10,
+      cfi: 'page:5',
+      selectedText: 'Texto em Verde Menta',
+      color: '#10B981',
+      note: 'Anotação verde'
+    })
+
+    expect(result.color).toBe('#10B981')
+    expect(result.cfi).toContain('#color=10B981')
+  })
+
+  it('recupera a cor codificada no cfi em fetchAnnotations', async () => {
+    mockFetch.mockResolvedValueOnce([
+      {
+        id: 51,
+        userId: 1,
+        bookId: 10,
+        cfi: 'page:3#color=3B82F6',
+        selectedText: 'Texto Azul Celeste',
+        note: null,
+      },
+      {
+        id: 52,
+        userId: 1,
+        bookId: 10,
+        cfi: 'page:4#color=EC4899',
+        selectedText: 'Texto Rosa Carmim',
+        note: null,
+      }
+    ])
+
+    const { fetchAnnotations } = useAnnotations()
+    const items = await fetchAnnotations({ bookId: 10 })
+
+    const blueItem = items.find((i) => i.id === 51)
+    const roseItem = items.find((i) => i.id === 52)
+
+    expect(blueItem?.color).toBe('#3B82F6')
+    expect(roseItem?.color).toBe('#EC4899')
+  })
 })

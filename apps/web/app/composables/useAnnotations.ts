@@ -112,7 +112,16 @@ export const useAnnotations = () => {
       sourceType: isNote ? 'canvas_note' : 'book',
       noteId
     }
-    if (a.color) item.color = a.color
+    // Recupera a cor diretamente ou a partir do sufixo #color= salvo no cfi
+    let resolvedColor: string | null = a.color || null
+    if (!resolvedColor && a.cfi && a.cfi.includes('#color=')) {
+      const colorMatch = a.cfi.match(/#color=([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})/)
+      if (colorMatch && colorMatch[1]) {
+        resolvedColor = `#${colorMatch[1]}`
+      }
+    }
+
+    if (resolvedColor) item.color = resolvedColor
     if (a.chapterTitle || a.chapter_title) item.chapterTitle = a.chapterTitle || a.chapter_title
     if (a.progress !== undefined) item.progress = a.progress
     if (a.bookTitle || a.book?.title) item.bookTitle = a.bookTitle || a.book?.title
@@ -173,7 +182,20 @@ export const useAnnotations = () => {
       })
       const list = Array.isArray(data) ? data : (Array.isArray(data?.annotations) ? data.annotations : null)
       if (list !== null) {
-        const mapped: AnnotationItem[] = list.map(normalizeItem)
+        const currentLocal = await annotationRepo.getAll(filters).catch(() => [])
+        const localMap = new Map((currentLocal || []).map((l: any) => [Number(l.id), l]))
+
+        const mapped: AnnotationItem[] = list.map((rawItem: any) => {
+          const item = normalizeItem(rawItem)
+          if (!item.color && localMap.has(item.id)) {
+            const local = localMap.get(item.id)
+            if (local?.color) {
+              item.color = local.color
+            }
+          }
+          return item
+        })
+
         for (const item of mapped) {
           await annotationRepo.save({
             id: item.id,
@@ -192,8 +214,8 @@ export const useAnnotations = () => {
           })
         }
         try {
-          const currentLocal = await annotationRepo.getAll(filters)
-          const pending = currentLocal.filter((l: any) => !mapped.some((m: AnnotationItem) => m.id === l.id))
+          const updatedLocal = await annotationRepo.getAll(filters)
+          const pending = updatedLocal.filter((l: any) => !mapped.some((m: AnnotationItem) => m.id === l.id))
           annotations.value = [...pending.map(normalizeItem), ...mapped]
         } catch {
           annotations.value = mapped
@@ -219,16 +241,20 @@ export const useAnnotations = () => {
     const isNote = payload.cfi?.startsWith('note:') || Boolean(payload.noteId)
     const noteId = payload.noteId || (payload.cfi?.startsWith('note:') ? payload.cfi.replace(/^note:/, '') : null)
 
+    const rawCfi = payload.cfi
+    const effectiveColor = payload.color || (rawCfi?.includes('#color=') ? `#${rawCfi.match(/#color=([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})/)?.[1]}` : null) || '#E57B55'
+    const finalCfi = rawCfi && !rawCfi.includes('#color=') ? `${rawCfi}#color=${effectiveColor.replace('#', '')}` : rawCfi
+
     const localItem: AnnotationItem = {
       id: localId,
       userId: 0,
       bookId: payload.bookId,
       bookTitle: payload.bookTitle,
       bookCover: payload.bookCover,
-      cfi: payload.cfi,
+      cfi: finalCfi,
       selectedText: payload.selectedText,
       note: payload.note,
-      ...(payload.color ? { color: payload.color } : {}),
+      color: effectiveColor,
       chapterTitle: payload.chapterTitle,
       progress: payload.progress,
       themes: [],
@@ -244,10 +270,10 @@ export const useAnnotations = () => {
       bookId: payload.bookId,
       bookTitle: payload.bookTitle,
       bookCover: payload.bookCover,
-      cfi: payload.cfi,
+      cfi: finalCfi,
       selectedText: payload.selectedText,
       note: payload.note,
-      ...(payload.color ? { color: payload.color } : {}),
+      color: effectiveColor,
       chapterTitle: payload.chapterTitle,
       progress: payload.progress,
       createdAt: now
@@ -260,11 +286,18 @@ export const useAnnotations = () => {
       const response = await $fetch<any>(`${getApiBase()}/annotations`, {
         method: 'POST',
         headers: getHeaders(),
-        body: payload
+        body: {
+          ...payload,
+          cfi: finalCfi,
+          color: effectiveColor,
+        }
       })
       const createdRaw = response?.annotation || response
       if (createdRaw) {
         const created = normalizeItem(createdRaw)
+        if (!created.color && payload.color) {
+          created.color = payload.color
+        }
         if (!created.bookTitle && payload.bookTitle) {
           created.bookTitle = payload.bookTitle
         }

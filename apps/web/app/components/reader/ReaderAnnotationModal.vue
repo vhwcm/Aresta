@@ -401,10 +401,13 @@ const handleSubmit = async () => {
     const isNote = Boolean(props.noteId) || props.cfi?.startsWith('note:')
     const bookId = props.bookId || 1 // Fallback para 1 se bookId não estiver setado
     const finalNote = wantNote.value ? note.value.trim() : null
+    const rawCfi = props.cfi || (isNote ? `note:${props.noteId}` : `page:${props.currentPage}`)
+    const finalCfi = rawCfi.includes('#color=') ? rawCfi : `${rawCfi}#color=${selectedColor.value.replace('#', '')}`
+
     const created = await createAnnotation({
       bookId,
       bookTitle: props.bookTitle || (isNote ? 'Nota no Canvas' : 'Obra Sem Título'),
-      cfi: props.cfi || (isNote ? `note:${props.noteId}` : `page:${props.currentPage}`),
+      cfi: finalCfi,
       selectedText: selectedText.value.trim() || null,
       note: finalNote || null,
       color: selectedColor.value,
