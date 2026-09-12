@@ -41,13 +41,14 @@
                 aria-label="Página anterior"
                 id="btn-prev-page"
               >
-                ‹
+                <ChevronLeftIcon class="w-8 h-8 sm:w-10 sm:h-10" />
               </button>
 
               <div class="reader-viewer__book-stage" id="book-stage" :style="{ backgroundColor: themeBgColor }">
                 <ReaderEnginePageCurlCanvas
                   ref="pageRenderer"
                   @transition-state="isTransitioning = $event"
+                  @select-annotation="handleHighlightSelected"
                 />
               </div>
 
@@ -58,7 +59,7 @@
                 aria-label="Próxima página"
                 id="btn-next-page"
               >
-                ›
+                <ChevronRightIcon class="w-8 h-8 sm:w-10 sm:h-10" />
               </button>
             </div>
           </main>
@@ -222,9 +223,10 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { Minimize2Icon } from 'lucide-vue-next'
+import { Minimize2Icon, ChevronLeftIcon, ChevronRightIcon } from 'lucide-vue-next'
 import { useReaderStore } from '~/stores/readerStore'
 import { useReaderTypography } from '~/composables/useReaderTypography'
+import { useAnnotations } from '~/composables/useAnnotations'
 
 import ReaderEnginePageCurlCanvas from '~/components/reader/engine/PageCurlCanvas.vue'
 import ReaderBottomBar from '~/components/reader/ReaderBottomBar.vue'
@@ -238,6 +240,7 @@ import ReaderTypographyPopover from '~/components/reader/ReaderTypographyPopover
 const store = useReaderStore()
 const router = useRouter()
 const typography = useReaderTypography()
+const { fetchAnnotations } = useAnnotations()
 
 const activeTheme = computed(() => store.readerTheme || 'sepia')
 const themeBgColor = computed(() => {
@@ -287,6 +290,8 @@ const mobileNotesPanelRef = ref<any>(null)
 interface PageRenderer {
   next: () => Promise<void>
   previous: () => Promise<void>
+  refreshHighlights?: () => void
+  renderCurrentSpread?: () => Promise<void>
 }
 
 const pageRenderer = ref<PageRenderer | null>(null)
@@ -472,6 +477,20 @@ function handleTouchEnd() {
 function handleAnnotationCreated() {
   notesPanelRef.value?.refresh?.()
   mobileNotesPanelRef.value?.refresh?.()
+  if (typeof window !== 'undefined') {
+    window.getSelection()?.removeAllRanges()
+  }
+  pageRenderer.value?.refreshHighlights?.()
+}
+
+function handleHighlightSelected(annotationId: number) {
+  if (isDesktop.value) {
+    store.setNotesOpen(true)
+    notesPanelRef.value?.focusAnnotation?.(annotationId)
+  } else {
+    store.setMobileNotesOpen(true)
+    mobileNotesPanelRef.value?.focusAnnotation?.(annotationId)
+  }
 }
 
 function updateDeviceType() {
@@ -522,6 +541,17 @@ watch(
   () => {
     isSelectionTooltipVisible.value = false
     isDictionaryCardVisible.value = false
+  },
+)
+
+watch(
+  () => store.bookId,
+  (newId) => {
+    if (newId) {
+      void fetchAnnotations({ bookId: Number(newId) }).then(() => {
+        pageRenderer.value?.refreshHighlights?.()
+      })
+    }
   },
 )
 
@@ -624,6 +654,11 @@ onMounted(() => {
       updateDeviceType()
     })
     resizeObserver.observe(canvasAreaRef.value)
+  }
+  if (store.bookId) {
+    void fetchAnnotations({ bookId: Number(store.bookId) }).then(() => {
+      pageRenderer.value?.refreshHighlights?.()
+    })
   }
 })
 
@@ -812,42 +847,37 @@ onUnmounted(() => {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  background: rgba(15, 15, 22, 0.75);
-  backdrop-filter: blur(8px);
-  border: 1px solid var(--color-border);
+  background: transparent;
+  border: none;
   color: var(--color-text-secondary);
-  font-size: 2rem;
-  line-height: 1;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.2s, opacity 0.2s;
+  padding: 0.5rem;
+  opacity: 0.5;
+  transition: color 0.2s, transform 0.2s, opacity 0.2s;
   z-index: 20;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 .reader-viewer__nav-btn--prev {
-  left: 0.75rem;
+  left: 0.5rem;
 }
 
 .reader-viewer__nav-btn--next {
-  right: 0.75rem;
+  right: 0.5rem;
 }
 
 .reader-viewer__nav-btn:not(:disabled):hover {
-  background: rgba(229, 123, 85, 0.18);
-  border-color: rgba(229, 123, 85, 0.45);
   color: var(--color-accent, #E57B55);
-  transform: translateY(-50%) scale(1.08);
+  transform: translateY(-50%) scale(1.15);
+  opacity: 1;
 }
 
 .reader-viewer__nav-btn:disabled {
-  opacity: 0.15;
+  opacity: 0;
+  pointer-events: none;
   cursor: not-allowed;
 }
 
@@ -862,20 +892,18 @@ onUnmounted(() => {
     margin: 0 !important;
   }
   .reader-viewer__nav-btn {
-    width: 36px;
-    height: 36px;
-    font-size: 1.5rem;
     opacity: 0.35;
+    padding: 0.25rem;
   }
   .reader-viewer__nav-btn:hover,
   .reader-viewer__nav-btn:active {
-    opacity: 0.95;
+    opacity: 1;
   }
   .reader-viewer__nav-btn--prev {
-    left: 0.35rem;
+    left: 0.25rem;
   }
   .reader-viewer__nav-btn--next {
-    right: 0.35rem;
+    right: 0.25rem;
   }
 }
 
@@ -920,36 +948,27 @@ onUnmounted(() => {
 
 /* Botões de Navegação adaptados a cada tema */
 .reader-viewer--theme-sepia .reader-viewer__nav-btn {
-  background: rgba(235, 224, 200, 0.85);
-  border-color: rgba(180, 160, 130, 0.35);
   color: #5c4d3c;
-  box-shadow: 0 4px 12px rgba(60, 45, 20, 0.12);
 }
 
 .reader-viewer--theme-sepia .reader-viewer__nav-btn:not(:disabled):hover {
-  background: rgba(229, 123, 85, 0.2);
-  border-color: rgba(229, 123, 85, 0.6);
   color: var(--color-accent, #E57B55);
 }
 
 .reader-viewer--theme-white .reader-viewer__nav-btn {
-  background: rgba(255, 255, 255, 0.85);
-  border-color: rgba(0, 0, 0, 0.12);
-  color: #374151;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  color: #4b5563;
 }
 
 .reader-viewer--theme-white .reader-viewer__nav-btn:not(:disabled):hover {
-  background: rgba(229, 123, 85, 0.15);
-  border-color: rgba(229, 123, 85, 0.5);
   color: var(--color-accent, #E57B55);
 }
 
 .reader-viewer--theme-black .reader-viewer__nav-btn {
-  background: rgba(25, 25, 30, 0.85);
-  border-color: rgba(255, 255, 255, 0.1);
-  color: #d1d5db;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  color: #9ca3af;
+}
+
+.reader-viewer--theme-black .reader-viewer__nav-btn:not(:disabled):hover {
+  color: var(--color-accent, #E57B55);
 }
 
 .reader-viewer--zen.reader-viewer--theme-sepia {
@@ -965,13 +984,12 @@ onUnmounted(() => {
 }
 
 .reader-viewer--zen .reader-viewer__nav-btn {
-  opacity: 0.25;
+  opacity: 0.2;
 }
 
 .reader-viewer--zen .reader-viewer__nav-btn:not(:disabled):hover {
   opacity: 1;
-  background: rgba(229, 123, 85, 0.25);
-  border-color: rgba(229, 123, 85, 0.5);
+  color: var(--color-accent, #E57B55);
 }
 
 .reader-viewer__zen-overlay {

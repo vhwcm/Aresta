@@ -6,6 +6,7 @@
 
 
 ## ✅ Concluído
+- [12/09/2026 16:15] [Concluído] Remover círculo ao redor das setas de navegação de páginas no leitor de livros
 - [12/09/2026 16:10] [Concluído] Implementar comando npm para gerenciar variáveis .env do monólito (npm run set-env)
 - [12/09/2026 15:49] [Concluído] Filtros de camadas no grafo com isolamento inicial, multi-seleção cumulativa e ícones clean Lucide
 - [12/09/2026 15:47] [Concluído] Unificar busca global em tempo real e otimizar cabeçalho e camadas do Grafo no Espaço Criativo

@@ -349,12 +349,15 @@ describe('Reader Components', () => {
 
       expect(mockCreateAnnotation).toHaveBeenCalledWith({
         bookId: 1,
+        bookTitle: 'Obra Sem Título',
         cfi: 'page:3',
         selectedText: 'Trecho interessante do capítulo 1',
         note: 'Reflexão sobre filosofia grega',
         color: '#F59E0B',
         themeIds: [2],
         chapterTitle: 'Página 3',
+        generateFlashcard: false,
+        noteId: undefined,
       })
 
       expect(wrapper.emitted('created')).toBeTruthy()
@@ -395,12 +398,15 @@ describe('Reader Components', () => {
 
       expect(mockCreateAnnotation).toHaveBeenCalledWith({
         bookId: 1,
+        bookTitle: 'Obra Sem Título',
         cfi: 'page:5',
         selectedText: 'Citação direta para marcação',
         note: null,
         color: '#10B981',
         themeIds: [],
         chapterTitle: 'Página 5',
+        generateFlashcard: false,
+        noteId: undefined,
       })
     })
   })
@@ -889,6 +895,49 @@ describe('Reader Components', () => {
 
       // Continua com 2 páginas ativas
       expect(store.isTwoPageMode).toBe(true)
+    })
+
+    it('renderiza os botões de navegação apenas com as setas e sem círculos ao redor', async () => {
+      const store = useReaderStore()
+      store.setDocument({
+        type: 'epub',
+        metadata: { title: 'Dom Casmurro' },
+        totalPages: 100,
+        isLoaded: true,
+        load: vi.fn(),
+        destroy: vi.fn(),
+      } as any, 'dom-casmurro.epub')
+
+      const wrapper = mount(ReaderViewer, {
+        global: {
+          stubs: {
+            ReaderEnginePageCurlCanvas: true,
+            ReaderBookNotesPanel: true,
+            ReaderGraphPanel: true,
+            ReaderBottomBar: true,
+            ReaderSavedPagesModal: true,
+            ReaderAnnotationModal: true,
+            ReaderAnnotationDrawer: true,
+            ReaderTypographyPopover: true,
+            ReaderSelectionTooltip: true,
+            ReaderDictionaryCard: true,
+          },
+        },
+      })
+
+      const prevBtn = wrapper.find('#btn-prev-page')
+      const nextBtn = wrapper.find('#btn-next-page')
+
+      expect(prevBtn.exists()).toBe(true)
+      expect(nextBtn.exists()).toBe(true)
+
+      // As setas utilizam ícones SVG
+      expect(prevBtn.find('svg').exists()).toBe(true)
+      expect(nextBtn.find('svg').exists()).toBe(true)
+
+      // Não devem possuir classes circulares
+      expect(prevBtn.classes()).not.toContain('rounded-full')
+      expect(nextBtn.classes()).not.toContain('rounded-full')
     })
   })
 })
