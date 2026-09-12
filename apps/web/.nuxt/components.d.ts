@@ -53,8 +53,6 @@ export const GraphBookAnnotationsDrawer: typeof import("../app/components/graph/
 export const GraphThemeCanvasOverlay: typeof import("../app/components/graph/ThemeCanvasOverlay.vue")['default']
 export const NotesNoteCompositeRenderer: typeof import("../app/components/notes/NoteCompositeRenderer.vue")['default']
 export const NotesNoteEditorPane: typeof import("../app/components/notes/NoteEditorPane.vue")['default']
-export const ReaderHandwritingCanvas: typeof import("../app/components/reader/HandwritingCanvas.vue")['default']
-export const ReaderAnnotationDrawer: typeof import("../app/components/reader/ReaderAnnotationDrawer.vue")['default']
 export const ReaderAnnotationModal: typeof import("../app/components/reader/ReaderAnnotationModal.vue")['default']
 export const ReaderBookNotesPanel: typeof import("../app/components/reader/ReaderBookNotesPanel.vue")['default']
 export const ReaderBottomBar: typeof import("../app/components/reader/ReaderBottomBar.vue")['default']
@@ -131,8 +129,6 @@ export const LazyGraphBookAnnotationsDrawer: LazyComponent<typeof import("../app
 export const LazyGraphThemeCanvasOverlay: LazyComponent<typeof import("../app/components/graph/ThemeCanvasOverlay.vue")['default']>
 export const LazyNotesNoteCompositeRenderer: LazyComponent<typeof import("../app/components/notes/NoteCompositeRenderer.vue")['default']>
 export const LazyNotesNoteEditorPane: LazyComponent<typeof import("../app/components/notes/NoteEditorPane.vue")['default']>
-export const LazyReaderHandwritingCanvas: LazyComponent<typeof import("../app/components/reader/HandwritingCanvas.vue")['default']>
-export const LazyReaderAnnotationDrawer: LazyComponent<typeof import("../app/components/reader/ReaderAnnotationDrawer.vue")['default']>
 export const LazyReaderAnnotationModal: LazyComponent<typeof import("../app/components/reader/ReaderAnnotationModal.vue")['default']>
 export const LazyReaderBookNotesPanel: LazyComponent<typeof import("../app/components/reader/ReaderBookNotesPanel.vue")['default']>
 export const LazyReaderBottomBar: LazyComponent<typeof import("../app/components/reader/ReaderBottomBar.vue")['default']>

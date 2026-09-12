@@ -27,8 +27,8 @@ describe('useAnnotations', () => {
 
     const res = await fetchAnnotations({ bookId: 1 })
     expect(res).toHaveLength(1)
-    expect(res[0]).toMatchObject(fakeData[0])
-    expect(annotations.value[0]).toMatchObject(fakeData[0])
+    expect(res[0]!).toMatchObject(fakeData[0]!)
+    expect(annotations.value[0]!).toMatchObject(fakeData[0]!)
     expect(mockFetch).toHaveBeenCalledWith(
       'http://localhost:3001/api/annotations?bookId=1',
       expect.objectContaining({

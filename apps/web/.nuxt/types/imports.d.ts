@@ -9,7 +9,9 @@ declare global {
   const abortNavigation: typeof import('../../node_modules/nuxt/dist/app/composables/router').abortNavigation
   const acceptHMRUpdate: typeof import('../../node_modules/@pinia/nuxt/dist/runtime/composables').acceptHMRUpdate
   const addRouteMiddleware: typeof import('../../node_modules/nuxt/dist/app/composables/router').addRouteMiddleware
+  const applyAnnotationHighlight: typeof import('../../app/utils/readerHighlight').applyAnnotationHighlight
   const applyMarkdownFormat: typeof import('../../app/utils/markdownFormat').applyMarkdownFormat
+  const applyPageHighlights: typeof import('../../app/utils/readerHighlight').applyPageHighlights
   const applyTheme: typeof import('../../app/composables/useSettings').applyTheme
   const applyThemeToCanvas: typeof import('../../app/utils/pageRasterizer').applyThemeToCanvas
   const calculateBezierPath: typeof import('../../app/utils/canvasGeometry').calculateBezierPath
@@ -20,6 +22,7 @@ declare global {
   const clearError: typeof import('../../node_modules/nuxt/dist/app/composables/error').clearError
   const clearNuxtData: typeof import('../../node_modules/nuxt/dist/app/composables/asyncData').clearNuxtData
   const clearNuxtState: typeof import('../../node_modules/nuxt/dist/app/composables/state').clearNuxtState
+  const clearPageHighlights: typeof import('../../app/utils/readerHighlight').clearPageHighlights
   const computeCurlGeometry: typeof import('../../app/utils/pageCurlMath').computeCurlGeometry
   const computed: typeof import('vue').computed
   const createError: typeof import('../../node_modules/nuxt/dist/app/composables/error').createError
@@ -49,6 +52,7 @@ declare global {
   const effectScope: typeof import('vue').effectScope
   const formatErrorMessage: typeof import('../../app/utils/logger').formatErrorMessage
   const getAnchorPoint: typeof import('../../app/utils/canvasGeometry').getAnchorPoint
+  const getAnnotationPageNumber: typeof import('../../app/utils/readerHighlight').getAnnotationPageNumber
   const getAppManifest: typeof import('../../node_modules/nuxt/dist/app/composables/manifest').getAppManifest
   const getBookFormat: typeof import('../../app/utils/cover').getBookFormat
   const getCachedBook: typeof import('../../app/utils/bookCache').getCachedBook
@@ -58,8 +62,10 @@ declare global {
   const getCurrentScope: typeof import('vue').getCurrentScope
   const getRouteRules: typeof import('../../node_modules/nuxt/dist/app/composables/manifest').getRouteRules
   const getVectorForSide: typeof import('../../app/utils/canvasGeometry').getVectorForSide
+  const getVisibleTextChunks: typeof import('../../app/utils/readerHighlight').getVisibleTextChunks
   const h: typeof import('vue').h
   const hasInjectionContext: typeof import('vue').hasInjectionContext
+  const hexToRgba: typeof import('../../app/utils/readerHighlight').hexToRgba
   const inject: typeof import('vue').inject
   const injectHead: typeof import('../../node_modules/nuxt/dist/app/composables/head').injectHead
   const interpolateCurlState: typeof import('../../app/utils/pageCurlMath').interpolateCurlState
@@ -270,13 +276,13 @@ declare global {
   export type { PageMeta } from '../../node_modules/nuxt/dist/app/composables/pages'
   import('../../node_modules/nuxt/dist/app/composables/pages')
   // @ts-ignore
-  export type { AnnotationTheme, AnnotationItem, CreateAnnotationPayload, CreateAnnotationWithOcrPayload } from '../../app/composables/useAnnotations'
+  export type { AnnotationTheme, AnnotationItem, CreateAnnotationPayload } from '../../app/composables/useAnnotations'
   import('../../app/composables/useAnnotations')
   // @ts-ignore
   export type { AuthUser, LoginResponse } from '../../app/composables/useAuth'
   import('../../app/composables/useAuth')
   // @ts-ignore
-  export type { StrokePoint, InkingStroke, BoundingBox } from '../../app/composables/useCanvasInking'
+  export type { BoundingBox, StrokePoint, InkingStroke } from '../../app/composables/useCanvasInking'
   import('../../app/composables/useCanvasInking')
   // @ts-ignore
   export type { CatalogBook } from '../../app/composables/useCatalog'
@@ -324,6 +330,9 @@ declare global {
   export type { ReaderTheme, RasterizeOptions } from '../../app/utils/pageRasterizer'
   import('../../app/utils/pageRasterizer')
   // @ts-ignore
+  export type { TextChunk } from '../../app/utils/readerHighlight'
+  import('../../app/utils/readerHighlight')
+  // @ts-ignore
   export type { ProfilerCategory, ProfileStep, ProfileReport } from '../../app/utils/readerProfiler'
   import('../../app/utils/readerProfiler')
   // @ts-ignore
@@ -342,7 +351,9 @@ declare module 'vue' {
     readonly abortNavigation: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/router')['abortNavigation']>
     readonly acceptHMRUpdate: UnwrapRef<typeof import('../../node_modules/@pinia/nuxt/dist/runtime/composables')['acceptHMRUpdate']>
     readonly addRouteMiddleware: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/router')['addRouteMiddleware']>
+    readonly applyAnnotationHighlight: UnwrapRef<typeof import('../../app/utils/readerHighlight')['applyAnnotationHighlight']>
     readonly applyMarkdownFormat: UnwrapRef<typeof import('../../app/utils/markdownFormat')['applyMarkdownFormat']>
+    readonly applyPageHighlights: UnwrapRef<typeof import('../../app/utils/readerHighlight')['applyPageHighlights']>
     readonly applyTheme: UnwrapRef<typeof import('../../app/composables/useSettings')['applyTheme']>
     readonly applyThemeToCanvas: UnwrapRef<typeof import('../../app/utils/pageRasterizer')['applyThemeToCanvas']>
     readonly calculateBezierPath: UnwrapRef<typeof import('../../app/utils/canvasGeometry')['calculateBezierPath']>
@@ -353,6 +364,7 @@ declare module 'vue' {
     readonly clearError: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/error')['clearError']>
     readonly clearNuxtData: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/asyncData')['clearNuxtData']>
     readonly clearNuxtState: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/state')['clearNuxtState']>
+    readonly clearPageHighlights: UnwrapRef<typeof import('../../app/utils/readerHighlight')['clearPageHighlights']>
     readonly computeCurlGeometry: UnwrapRef<typeof import('../../app/utils/pageCurlMath')['computeCurlGeometry']>
     readonly computed: UnwrapRef<typeof import('vue')['computed']>
     readonly createError: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/error')['createError']>
@@ -382,6 +394,7 @@ declare module 'vue' {
     readonly effectScope: UnwrapRef<typeof import('vue')['effectScope']>
     readonly formatErrorMessage: UnwrapRef<typeof import('../../app/utils/logger')['formatErrorMessage']>
     readonly getAnchorPoint: UnwrapRef<typeof import('../../app/utils/canvasGeometry')['getAnchorPoint']>
+    readonly getAnnotationPageNumber: UnwrapRef<typeof import('../../app/utils/readerHighlight')['getAnnotationPageNumber']>
     readonly getAppManifest: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/manifest')['getAppManifest']>
     readonly getBookFormat: UnwrapRef<typeof import('../../app/utils/cover')['getBookFormat']>
     readonly getCachedBook: UnwrapRef<typeof import('../../app/utils/bookCache')['getCachedBook']>
@@ -391,8 +404,10 @@ declare module 'vue' {
     readonly getCurrentScope: UnwrapRef<typeof import('vue')['getCurrentScope']>
     readonly getRouteRules: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/manifest')['getRouteRules']>
     readonly getVectorForSide: UnwrapRef<typeof import('../../app/utils/canvasGeometry')['getVectorForSide']>
+    readonly getVisibleTextChunks: UnwrapRef<typeof import('../../app/utils/readerHighlight')['getVisibleTextChunks']>
     readonly h: UnwrapRef<typeof import('vue')['h']>
     readonly hasInjectionContext: UnwrapRef<typeof import('vue')['hasInjectionContext']>
+    readonly hexToRgba: UnwrapRef<typeof import('../../app/utils/readerHighlight')['hexToRgba']>
     readonly inject: UnwrapRef<typeof import('vue')['inject']>
     readonly injectHead: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/head')['injectHead']>
     readonly interpolateCurlState: UnwrapRef<typeof import('../../app/utils/pageCurlMath')['interpolateCurlState']>

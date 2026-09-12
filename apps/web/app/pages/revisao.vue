@@ -127,7 +127,7 @@
                 <!-- Link para a Fonte Original -->
                 <NuxtLink
                   v-if="getSourceUrl(currentCard)"
-                  :to="getSourceUrl(currentCard)"
+                  :to="getSourceUrl(currentCard)!"
                   class="flex items-center gap-1 text-[11px] font-technical text-accent hover:underline px-2.5 py-0.5 rounded-lg bg-accent/10 border border-accent/25 transition-all hover:bg-accent/20 cursor-pointer"
                   @click.stop
                   title="Abrir a fonte original deste cartão"
@@ -161,7 +161,7 @@
                 <span>Repetição Espaçada</span>
                 <NuxtLink
                   v-if="getSourceUrl(currentCard)"
-                  :to="getSourceUrl(currentCard)"
+                  :to="getSourceUrl(currentCard)!"
                   class="text-accent hover:underline flex items-center gap-1 cursor-pointer"
                   @click.stop
                   title="Abrir a fonte original deste cartão"
