@@ -69,15 +69,41 @@ jobs:
           fi
           npx tauri android build --apk
 
-      - name: Rename APKs for Release
+      - name: Sign and Align APKs for Release
         run: |
           mkdir -p release-apks
-          # Localiza todos os apks gerados
+          BUILD_TOOLS_DIR="$ANDROID_HOME/build-tools/34.0.0"
+          
+          # Gera uma keystore padrão de release/distribuição
+          keytool -genkey -v -keystore release.keystore -alias aresta -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=Aresta, OU=Development, O=Aresta, L=SaoPaulo, S=SP, C=BR" \
+            -storepass aresta123 -keypass aresta123
+
           find apps/web/src-tauri/gen/android/app/build/outputs/apk/ -type f -name "*.apk" | while read file; do
-            filename=$(basename "$file")
-            cp "$file" "release-apks/Aresta-$filename"
+            raw_filename=$(basename "$file")
+            clean_name=$(echo "$raw_filename" | sed 's/-unsigned//')
+            aligned_apk="release-apks/aligned-${clean_name}"
+            signed_apk="release-apks/Aresta-${clean_name}"
+
+            echo "=== Processando $file ==="
+            # 1. Alinha com zipalign (garante alinhamento de 4 bytes)
+            "$BUILD_TOOLS_DIR/zipalign" -v -p 4 "$file" "$aligned_apk"
+
+            # 2. Assina com apksigner (v2 e v3 scheme necessários para Android moderno)
+            "$BUILD_TOOLS_DIR/apksigner" sign --ks release.keystore \
+              --ks-pass pass:aresta123 \
+              --key-pass pass:aresta123 \
+              --ks-key-alias aresta \
+              --out "$signed_apk" "$aligned_apk"
+
+            # 3. Valida a assinatura
+            "$BUILD_TOOLS_DIR/apksigner" verify -v "$signed_apk"
+
+            rm -f "$aligned_apk"
           done
-          ls -la release-apks/
+
+          echo "=== APKs assinados gerados: ==="
+          ls -lh release-apks/
 
       - name: Upload Android APK Artifact
         uses: actions/upload-artifact@v4
@@ -96,3 +122,4 @@ jobs:
           prerelease: false
           generate_release_notes: true
           files: release-apks/*.apk
+
