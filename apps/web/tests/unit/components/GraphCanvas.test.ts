@@ -93,4 +93,134 @@ describe('GraphCanvas Component', () => {
     expect(wrapper.findAll('.note-icon').length).toBeGreaterThanOrEqual(1)
     expect(wrapper.findAll('.canvas-icon').length).toBeGreaterThanOrEqual(1)
   })
+
+  it('hides floating controls bar and positions layer chips at top when showControls is false', () => {
+    const wrapper = mount(GraphCanvas, {
+      props: {
+        nodes: [
+          { id: 'theme-1', rawId: 1, type: 'theme', name: 'Filosofia' },
+        ],
+        edges: [],
+        showControls: false,
+      },
+    })
+
+    // Não deve conter a barra flutuante de ações duplicadas
+    expect(wrapper.text()).not.toContain('Novo Tema')
+    expect(wrapper.text()).not.toContain('Conectar')
+    expect(wrapper.find('input[placeholder*="Buscar tema"]').exists()).toBe(false)
+
+    // Barra de camadas deve estar posicionada no topo (top-4 ou top-5)
+    const layersBar = wrapper.find('.absolute.z-10')
+    expect(layersBar.classes()).toContain('top-4')
+    expect(layersBar.text()).toContain('Camadas:')
+  })
+
+  it('filters nodes using searchQuery passed as prop', async () => {
+    const wrapper = mount(GraphCanvas, {
+      props: {
+        nodes: [
+          { id: 'theme-1', rawId: 1, type: 'theme', name: 'Filosofia Estoica' },
+          { id: 'theme-2', rawId: 2, type: 'theme', name: 'Computação Quântica' },
+          { id: 'book-1', rawId: 1, type: 'book', name: 'Clean Code', fullTitle: 'Clean Code' },
+        ],
+        edges: [],
+        searchQuery: 'Estoica',
+        showControls: false,
+      },
+    })
+
+    // Inicialmente apenas o nó correspondente e o root devem estar presentes
+    expect(wrapper.html()).toContain('Filosofia')
+    expect(wrapper.html()).not.toContain('Clean Code')
+
+    // Ao alterar a busca via prop
+    await wrapper.setProps({ searchQuery: 'Clean' })
+    expect(wrapper.html()).toContain('Clean Code')
+    expect(wrapper.html()).not.toContain('Estoica')
+  })
+
+  it('renders clean Lucide SVG icons in layer filter chips instead of emojis', () => {
+    const wrapper = mount(GraphCanvas, {
+      props: {
+        nodes: [
+          { id: 'theme-1', rawId: 1, type: 'theme', name: 'Filosofia' },
+          { id: 'book-1', rawId: 1, type: 'book', name: 'Livro A', fullTitle: 'Livro A' },
+          { id: 'note-1', rawId: 'n1', type: 'note', name: 'Nota A', title: 'Nota A' },
+          { id: 'canvas-1', rawId: 'c1', type: 'canvas', name: 'Quadro A', title: 'Quadro A' },
+        ],
+        edges: [],
+      },
+    })
+
+    const chipsBar = wrapper.find('.absolute.z-10')
+    expect(chipsBar.exists()).toBe(true)
+
+    // Não deve conter nenhum emoji colorido nos chips
+    expect(chipsBar.text()).not.toContain('🏷️')
+    expect(chipsBar.text()).not.toContain('📚')
+    expect(chipsBar.text()).not.toContain('📝')
+    expect(chipsBar.text()).not.toContain('📄')
+    expect(chipsBar.text()).not.toContain('🖼️')
+
+    // Deve conter ícones SVG limpos da Lucide dentro dos botões de chip
+    const chipButtons = chipsBar.findAll('button')
+    expect(chipButtons.length).toBe(4)
+    for (const btn of chipButtons) {
+      expect(btn.find('svg').exists()).toBe(true)
+    }
+  })
+
+  it('filters nodes on layer chip click: isolates category on first click, accumulates, and resets when empty', async () => {
+    const wrapper = mount(GraphCanvas, {
+      props: {
+        nodes: [
+          { id: 'theme-1', rawId: 1, type: 'theme', name: 'Filosofia' },
+          { id: 'book-1', rawId: 1, type: 'book', name: 'O Hobbit', fullTitle: 'O Hobbit' },
+          { id: 'note-1', rawId: 'n1', type: 'note', name: 'Resumo Cap 1', title: 'Resumo Cap 1' },
+          { id: 'canvas-1', rawId: 'c1', type: 'canvas', name: 'Quadro Mental', title: 'Quadro Mental' },
+        ],
+        edges: [],
+      },
+    })
+
+    const chipsBar = wrapper.find('.absolute.z-10')
+    const chipButtons = chipsBar.findAll('button')
+    const themeBtn = chipButtons.find((b) => b.text().includes('Temas'))!
+    const bookBtn = chipButtons.find((b) => b.text().includes('Livros'))!
+
+    // 1. Estado inicial: todas as 4 categorias visíveis
+    expect(wrapper.html()).toContain('Filosofia')
+    expect(wrapper.html()).toContain('O Hobbit')
+    expect(wrapper.html()).toContain('Resumo Cap 1')
+    expect(wrapper.html()).toContain('Quadro Mental')
+
+    // 2. Primeiro clique em 'Temas' com tudo habilitado -> Isola apenas Temas
+    await themeBtn.trigger('click')
+    expect(wrapper.html()).toContain('Filosofia')
+    expect(wrapper.html()).not.toContain('O Hobbit')
+    expect(wrapper.html()).not.toContain('Resumo Cap 1')
+    expect(wrapper.html()).not.toContain('Quadro Mental')
+
+    // 3. Clique subsequente em 'Livros' -> Adiciona Livros à visualização (multi-seleção)
+    await bookBtn.trigger('click')
+    expect(wrapper.html()).toContain('Filosofia')
+    expect(wrapper.html()).toContain('O Hobbit')
+    expect(wrapper.html()).not.toContain('Resumo Cap 1')
+    expect(wrapper.html()).not.toContain('Quadro Mental')
+
+    // 4. Clique em 'Temas' para desmarcá-lo -> Apenas Livros permanece ativo
+    await themeBtn.trigger('click')
+    expect(wrapper.html()).not.toContain('Filosofia')
+    expect(wrapper.html()).toContain('O Hobbit')
+    expect(wrapper.html()).not.toContain('Resumo Cap 1')
+    expect(wrapper.html()).not.toContain('Quadro Mental')
+
+    // 5. Clique em 'Livros' para desmarcar o último filtro ativo -> Auto-reset para todas as camadas
+    await bookBtn.trigger('click')
+    expect(wrapper.html()).toContain('Filosofia')
+    expect(wrapper.html()).toContain('O Hobbit')
+    expect(wrapper.html()).toContain('Resumo Cap 1')
+    expect(wrapper.html()).toContain('Quadro Mental')
+  })
 })

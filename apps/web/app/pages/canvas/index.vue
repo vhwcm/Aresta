@@ -22,11 +22,11 @@
     <!-- Área Central / Workspace Hub -->
     <div class="flex-1 flex flex-col h-full overflow-hidden">
       <!-- Top Header & Ações Globais -->
-      <header class="border-b border-divider bg-bgPanel/80 backdrop-blur-md px-3.5 sm:px-6 py-2.5 sm:py-3.5 flex-shrink-0 z-10">
-        <!-- Linha 1: Botão Sidebar (Mobile) + Ações Rápidas (Importar, Nova Nota, Novo Quadro) -->
-        <div class="max-w-7xl w-full mx-auto flex items-center justify-between gap-2">
-          <!-- Botão Sidebar Drawer no Mobile -->
-          <div class="flex items-center gap-2 min-w-0">
+      <header class="border-b border-divider bg-bgPanel/80 backdrop-blur-md px-3.5 sm:px-6 py-2.5 sm:py-3 flex-shrink-0 z-10">
+        <div class="max-w-7xl w-full mx-auto flex flex-col md:flex-row md:items-center justify-between gap-2.5 sm:gap-3">
+          <!-- Lado Esquerdo: Botão Sidebar (Mobile) + Busca Unificada + Alternador Grafo/Grade -->
+          <div class="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+            <!-- Botão Sidebar Drawer no Mobile -->
             <button
               v-if="isSidebarCollapsed"
               class="md:hidden p-2 rounded-xl bg-bgPanel hover:bg-bgSurface text-textSecondary hover:text-textPrimary border border-divider transition-all cursor-pointer flex-shrink-0"
@@ -35,10 +35,50 @@
             >
               <SidebarIcon class="w-4 h-4" />
             </button>
+
+            <!-- Campo de Busca em Tempo Real Unificado -->
+            <div class="flex-1 max-w-sm sm:max-w-md relative">
+              <SearchIcon class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-textSecondary pointer-events-none" />
+              <input
+                v-model="searchQuery"
+                type="text"
+                placeholder="Buscar livros, notas, temas, quadros e tags..."
+                class="w-full pl-8 sm:pl-9 pr-7 py-1.5 rounded-xl bg-bgRoot border border-divider text-xs text-textPrimary focus:outline-none focus:border-accent placeholder:text-textSecondary/50 font-interface shadow-inner"
+              />
+              <button
+                v-if="searchQuery"
+                class="absolute right-2.5 top-1/2 -translate-y-1/2 text-textSecondary hover:text-textPrimary text-xs cursor-pointer"
+                @click="searchQuery = ''"
+              >
+                ✕
+              </button>
+            </div>
+
+            <!-- Alternador de Visualização: Grafo de Conhecimento vs. Grade -->
+            <div class="flex-shrink-0 flex items-center gap-0.5 sm:gap-1 p-0.5 sm:p-1 rounded-xl bg-bgRoot border border-divider text-xs">
+              <button
+                class="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer"
+                :class="viewLayout === 'graph' ? 'bg-accent text-white font-semibold shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
+                title="Exibir Grafo de Conhecimento interativo"
+                @click="viewLayout = 'graph'"
+              >
+                <NetworkIcon class="w-3.5 h-3.5" />
+                <span class="hidden sm:inline">Grafo</span>
+              </button>
+              <button
+                class="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer"
+                :class="viewLayout === 'grid' ? 'bg-accent text-white font-semibold shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
+                title="Exibir como galeria em grade"
+                @click="viewLayout = 'grid'"
+              >
+                <LayoutGridIcon class="w-3.5 h-3.5" />
+                <span class="hidden sm:inline">Grade</span>
+              </button>
+            </div>
           </div>
 
-          <!-- Botões de Ação Rápida -->
-          <div class="flex items-center gap-1.5 sm:gap-2.5 ml-auto flex-shrink-0">
+          <!-- Lado Direito: Botões de Ação Rápida -->
+          <div class="flex items-center gap-1.5 sm:gap-2.5 flex-shrink-0 self-end md:self-auto">
             <input
               ref="fileInputRef"
               type="file"
@@ -80,51 +120,8 @@
           </div>
         </div>
 
-        <!-- Linha 2: Alternador de Layout (Grafo/Grade) e Busca em Tempo Real -->
-        <div class="max-w-7xl w-full mx-auto mt-2.5 sm:mt-3 pt-2 sm:pt-2.5 border-t border-divider/50 flex items-center justify-between gap-2 sm:gap-3">
-          <!-- Campo de Busca em Tempo Real -->
-          <div class="flex-1 max-w-sm sm:max-w-md relative">
-            <SearchIcon class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-textSecondary pointer-events-none" />
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="Buscar em títulos, notas, quadros e tags..."
-              class="w-full pl-8 sm:pl-9 pr-7 py-1.5 rounded-xl bg-bgRoot border border-divider text-xs text-textPrimary focus:outline-none focus:border-accent placeholder:text-textSecondary/50 font-interface shadow-inner"
-            />
-            <button
-              v-if="searchQuery"
-              class="absolute right-2.5 top-1/2 -translate-y-1/2 text-textSecondary hover:text-textPrimary text-xs cursor-pointer"
-              @click="searchQuery = ''"
-            >
-              ✕
-            </button>
-          </div>
-
-          <!-- Alternador de Visualização: Grafo de Conhecimento vs. Grade -->
-          <div class="flex-shrink-0 flex items-center gap-0.5 sm:gap-1 p-0.5 sm:p-1 rounded-xl bg-bgRoot border border-divider text-xs">
-            <button
-              class="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer"
-              :class="viewLayout === 'graph' ? 'bg-accent text-white font-semibold shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
-              title="Exibir Grafo de Conhecimento interativo"
-              @click="viewLayout = 'graph'"
-            >
-              <NetworkIcon class="w-3.5 h-3.5" />
-              <span class="hidden sm:inline">Grafo</span>
-            </button>
-            <button
-              class="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer"
-              :class="viewLayout === 'grid' ? 'bg-accent text-white font-semibold shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
-              title="Exibir como galeria em grade"
-              @click="viewLayout = 'grid'"
-            >
-              <LayoutGridIcon class="w-3.5 h-3.5" />
-              <span class="hidden sm:inline">Grade</span>
-            </button>
-          </div>
-        </div>
-
         <!-- Chips de Filtros Ativos (Pasta, Tag, Busca) -->
-        <div v-if="activeFolder || activeTag || searchQuery" class="max-w-7xl w-full mx-auto mt-2 sm:mt-2.5 flex items-center gap-1.5 sm:gap-2 flex-wrap text-xs">
+        <div v-if="activeFolder || activeTag || searchQuery" class="max-w-7xl w-full mx-auto mt-2 sm:mt-2.5 flex items-center gap-1.5 sm:gap-2 flex-wrap text-xs pt-2 border-t border-divider/40">
           <span class="text-textSecondary text-[11px]">Filtros ativos:</span>
 
           <span
@@ -177,6 +174,8 @@
         <GraphCanvas
           :nodes="graphData.nodes || []"
           :edges="graphData.edges || []"
+          :search-query="searchQuery"
+          :show-controls="false"
           @select-node="handleSelectGraphNode"
           @open-create-node="openNewCanvasModal"
         />

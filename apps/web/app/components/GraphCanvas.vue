@@ -76,8 +76,9 @@
       </p>
     </div>
 
-    <!-- Toolbar Flutuante de Controles Superiores -->
+    <!-- Toolbar de Controles (Topo-Esquerda) -->
     <div
+      v-if="showControls"
       class="absolute z-10 flex items-center gap-2 backdrop-blur-md border p-2.5 rounded-2xl shadow-2xl max-w-[calc(100%-1.5rem)] flex-wrap transition-colors duration-200"
       :class="[
         isCompact ? 'top-3 left-3 right-3 justify-between' : 'top-6 left-6',
@@ -87,13 +88,13 @@
       ]"
     >
       <!-- Campo de Busca -->
-      <div class="relative flex items-center flex-1 min-w-[110px]">
+      <div v-if="showSearch" class="relative flex items-center flex-1 min-w-[110px]">
         <SearchIcon
           class="w-4 h-4 absolute left-3 pointer-events-none"
           :class="isSepiaMode ? 'text-[#786C5E]' : (isLightMode ? 'text-gray-500' : 'text-textSecondary')"
         />
         <input
-          v-model="searchQuery"
+          v-model="currentSearchQuery"
           type="text"
           placeholder="Buscar tema, livro, anotação..."
           class="rounded-xl pl-9 pr-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:outline-none focus:border-accent w-full transition-all border"
@@ -106,7 +107,7 @@
       </div>
 
       <div
-        v-if="!isCompact"
+        v-if="!isCompact && showSearch"
         class="h-5 w-px"
         :class="isSepiaMode ? 'bg-[#dfd5c0]' : (isLightMode ? 'bg-gray-200' : 'bg-divider')"
       ></div>
@@ -140,10 +141,13 @@
     <!-- Barra de Filtros por Camadas de Nós (Chips Visíveis quando não compacto) -->
     <div
       v-if="!isCompact"
-      class="absolute z-10 top-20 left-6 flex items-center gap-1.5 p-1.5 rounded-2xl backdrop-blur-md border shadow-lg transition-colors duration-200 max-w-[calc(100%-3rem)] flex-wrap"
-      :class="isSepiaMode
-        ? 'bg-[#FAF5E8]/90 border-[#dfd5c0] text-[#2C2621]'
-        : (isLightMode ? 'bg-white/90 border-gray-200 text-gray-800' : 'bg-bgPanel/85 border-divider text-textPrimary')"
+      class="absolute z-10 flex items-center gap-1.5 p-1.5 rounded-2xl backdrop-blur-md border shadow-lg transition-all duration-200 max-w-[calc(100%-3rem)] flex-wrap"
+      :class="[
+        showControls ? 'top-20 left-6' : 'top-4 sm:top-5 left-4 sm:left-6',
+        isSepiaMode
+          ? 'bg-[#FAF5E8]/90 border-[#dfd5c0] text-[#2C2621]'
+          : (isLightMode ? 'bg-white/90 border-gray-200 text-gray-800' : 'bg-bgPanel/85 border-divider text-textPrimary')
+      ]"
     >
       <span class="text-[11px] font-medium text-textSecondary px-2 select-none">Camadas:</span>
 
@@ -157,7 +161,7 @@
           : 'opacity-40 hover:opacity-75 bg-transparent text-textSecondary border-transparent'"
         :title="`Alternar exibição de ${layer.label}`"
       >
-        <span>{{ layer.icon }}</span>
+        <component :is="layer.icon" class="w-3.5 h-3.5 shrink-0" />
         <span>{{ layer.label }}</span>
         <span class="text-[10px] ml-0.5 opacity-75 font-mono">({{ getLayerCount(layer.type) }})</span>
       </button>
@@ -169,7 +173,7 @@
 import { ref, computed, onMounted, watch, onBeforeUnmount } from 'vue'
 import * as d3 from 'd3'
 import type { GraphNode, GraphEdge, GraphNodeType } from '~/interfaces/graph'
-import { PlusIcon, SearchIcon, LinkIcon } from 'lucide-vue-next'
+import { PlusIcon, SearchIcon, LinkIcon, TagIcon, BookOpenIcon, FileTextIcon, LayoutGridIcon } from 'lucide-vue-next'
 import { useSettings } from '~/composables/useSettings'
 import { getCoverUrl } from '~/utils/cover'
 
@@ -180,9 +184,15 @@ const props = withDefaults(
     selectedNodeId?: string | number | null
     isCompact?: boolean
     themeOverride?: 'sepia' | 'white' | 'black' | null
+    searchQuery?: string
+    showControls?: boolean
+    showSearch?: boolean
   }>(),
   {
     themeOverride: null,
+    searchQuery: undefined,
+    showControls: true,
+    showSearch: true,
   }
 )
 
@@ -206,7 +216,13 @@ const containerRef = ref<HTMLElement | null>(null)
 const svgRef = ref<SVGSVGElement | null>(null)
 const gRef = ref<SVGGElement | null>(null)
 
-const searchQuery = ref('')
+const internalSearchQuery = ref('')
+const currentSearchQuery = computed({
+  get: () => (props.searchQuery !== undefined ? props.searchQuery : internalSearchQuery.value),
+  set: (val: string) => {
+    internalSearchQuery.value = val
+  }
+})
 const hoveredNode = ref<GraphNode | null>(null)
 const tooltipPos = ref({ x: 0, y: 0 })
 
@@ -218,26 +234,41 @@ const activeLayers = ref<Set<GraphNodeType>>(
 const layerDefinitions: Array<{
   type: GraphNodeType
   label: string
-  icon: string
+  icon: any
   activeBg: string
   activeText: string
 }> = [
-  { type: 'theme', label: 'Temas', icon: '🏷️', activeBg: 'bg-accent/20 border-accent/40', activeText: 'text-accent' },
-  { type: 'book', label: 'Livros', icon: '📚', activeBg: 'bg-blue-500/20 border-blue-500/40', activeText: 'text-blue-400' },
-  { type: 'note', label: 'Notas', icon: '📄', activeBg: 'bg-indigo-500/20 border-indigo-500/40', activeText: 'text-indigo-400' },
-  { type: 'canvas', label: 'Quadros', icon: '🖼️', activeBg: 'bg-emerald-500/20 border-emerald-500/40', activeText: 'text-emerald-400' },
+  { type: 'theme', label: 'Temas', icon: TagIcon, activeBg: 'bg-accent/20 border-accent/40', activeText: 'text-accent' },
+  { type: 'book', label: 'Livros', icon: BookOpenIcon, activeBg: 'bg-blue-500/20 border-blue-500/40', activeText: 'text-blue-400' },
+  { type: 'note', label: 'Notas', icon: FileTextIcon, activeBg: 'bg-indigo-500/20 border-indigo-500/40', activeText: 'text-indigo-400' },
+  { type: 'canvas', label: 'Quadros', icon: LayoutGridIcon, activeBg: 'bg-emerald-500/20 border-emerald-500/40', activeText: 'text-emerald-400' },
 ]
 
 const toggleLayer = (type: GraphNodeType) => {
-  const next = new Set(activeLayers.value)
-  if (next.has(type)) {
-    if (next.size > 1) {
-      next.delete(type)
+  const allCount = layerDefinitions.length
+  const current = activeLayers.value
+
+  // Se todas as camadas estão ativas (estado inicial / sem restrição ativa),
+  // clicar em uma camada isola a categoria (somente ela fica ativa)
+  if (current.size >= allCount) {
+    activeLayers.value = new Set([type])
+  } else if (current.has(type)) {
+    // Se a camada já está ativa no conjunto filtrado, desativa-a
+    const next = new Set(current)
+    next.delete(type)
+    // Se era o último filtro ativo restante, restaura o padrão com tudo visível
+    if (next.size === 0) {
+      activeLayers.value = new Set(layerDefinitions.map((l) => l.type))
+    } else {
+      activeLayers.value = next
     }
   } else {
+    // Adiciona uma nova camada ao conjunto de filtros ativos (multi-seleção)
+    const next = new Set(current)
     next.add(type)
+    activeLayers.value = next
   }
-  activeLayers.value = next
+
   initGraph()
 }
 
@@ -377,7 +408,7 @@ const initGraph = () => {
   }
 
   // Filtrar nós conforme busca e camadas ativas
-  const query = searchQuery.value.trim().toLowerCase()
+  const query = (currentSearchQuery.value || '').trim().toLowerCase()
   const filteredPropsNodes = props.nodes.filter((n) => {
     const nodeType = n.type || 'theme'
     if (!activeLayers.value.has(nodeType)) return false
@@ -986,7 +1017,7 @@ const initGraph = () => {
 let resizeObserver: ResizeObserver | null = null
 
 watch(
-  () => [props.nodes, props.edges, searchQuery.value],
+  () => [props.nodes, props.edges, currentSearchQuery.value],
   () => {
     initGraph()
   },
