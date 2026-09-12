@@ -63,3 +63,12 @@ Usada para rótulos de categorização, meta-dados e os comandos de atalho de te
 *   O fundo da aplicação escurece levemente (`bg-black/40`) e desfoca agressivamente (`backdrop-blur-md`).
 *   O painel central não é opaco. Tem a cor `rgba(18, 19, 21, 0.85)` com desfoque de fundo (Glassmorphism), criando um aspeto luxuoso e nativo de sistemas operacionais modernos (estilo macOS).
 *   O input de texto não tem qualquer borda. Texto gigante e leve (Inter Light). Sem botões de "Procurar"; funciona exclusivamente ao pressionar Enter.
+
+## 5. Componentes de Interface & Seletores Customizados
+
+### `AppSelect.vue` (Seletor Minimalista & Editorial)
+Substitui o elemento nativo HTML `<select>` (que quebra a imersão com o popover padrão do sistema operacional) por um menu flutuante alinhado à estética "Deep Dark":
+*   **Trigger Elegante:** Fundo `bg-bgPanel/80` com borda sutil `border-divider`, cantos arredondados (`rounded-xl`), ícone de chevron que rotaciona suavemente (180°) e tipografia `font-interface text-xs`. Suporte a ícone de contexto (ex: `BookOpenIcon`) e contadores numéricos estilizados como chips (`font-technical text-[10px]`).
+*   **Menu Flutuante:** Fundo escuro fosco com desfoque `bg-bgPanel/95 backdrop-blur-xl`, sombra profunda (`shadow-2xl`), scroll customizado e animação suave de abertura.
+*   **Busca em Tempo Real:** Campo de busca integrado quando o seletor possui mais de 6 opções ou quando explicitamente ativado (`searchable`), permitindo filtrar rapidamente centenas de obras ou itens.
+*   **Acessibilidade & Atalhos:** Suporte a fechar com tecla `Escape`, navegação via setas do teclado (`ArrowDown`, `ArrowUp`, `Enter`) e detecção de clique externo para fechamento automático.
