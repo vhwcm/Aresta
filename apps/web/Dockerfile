@@ -17,8 +17,9 @@ ENV NUXT_PUBLIC_MEMORY_API_URL=$NUXT_PUBLIC_MEMORY_API_URL
 ENV NUXT_PUBLIC_AI_API_URL=$NUXT_PUBLIC_AI_API_URL
 ENV NUXT_PUBLIC_AUTH_API_URL=$NUXT_PUBLIC_AUTH_API_URL
 ENV NUXT_PUBLIC_CANVAS_API_URL=$NUXT_PUBLIC_CANVAS_API_URL
-RUN npm run build
+RUN npm run generate
 
 FROM nginx:1.27-alpine
 COPY --from=build /app/.output/public /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
