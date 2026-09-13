@@ -1211,7 +1211,7 @@ import { useSettings } from '~/composables/useSettings'
 import { useUserBooks } from '~/composables/useUserBooks'
 import { useFlashcards } from '~/composables/useFlashcards'
 import { useAnnotations } from '~/composables/useAnnotations'
-import { getCoverUrl } from '~/utils/cover'
+import { getCoverUrl, resolveBookCover } from '~/utils/cover'
 
 // Otimização Completa de SEO para a Landing Page e Home do Aresta
 if (typeof useHead === 'function') {
@@ -1362,8 +1362,8 @@ const activeBookShortTitle = computed(() => {
 })
 
 const activeBookCoverUrl = computed(() => {
-  if (latestUserBook.value?.coverPath) {
-    return getCoverUrl(latestUserBook.value.coverPath, latestUserBook.value.bookId)
+  if (latestUserBook.value) {
+    return resolveBookCover(latestUserBook.value)
   }
   return ''
 })

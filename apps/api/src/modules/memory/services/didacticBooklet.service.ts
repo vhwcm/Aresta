@@ -3,6 +3,7 @@ import { prisma } from '../config/database'
 import { SERVICES } from '../config/services.config'
 import { aiService } from '../../ai/services/ai.service'
 import type { CreateBookletInput, AppendChapterInput, GetBookletsQueryInput } from '../schemas/didactic.schema'
+import { generateDidacticCoverDataUri } from '../utils/cover.util'
 
 export class DidacticBookletService {
   /**
@@ -124,6 +125,11 @@ export class DidacticBookletService {
     })
 
     const title = input.title || generated.title || `Didático: ${input.topic.slice(0, 40)}`
+    const coverDataUri = generateDidacticCoverDataUri({
+      title,
+      topic: input.topic,
+      themeName,
+    })
 
     // Cria registro de Book e UserBook para persistência real e compatibilidade com estante e leitor
     const book = await prisma.book.create({
@@ -131,6 +137,7 @@ export class DidacticBookletService {
         title,
         file_path: `virtual://didactic/${title}`,
         file_type: 'didactic',
+        cover_path: coverDataUri,
         userBooks: {
           create: {
             user_id: userId,

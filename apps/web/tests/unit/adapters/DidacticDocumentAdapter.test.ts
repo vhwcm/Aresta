@@ -58,14 +58,15 @@ flowchart TD
     expect(doc.isLoaded).toBe(false)
   })
 
-  it('2. Deve carregar documento JSON e paginar corretamente os capítulos', async () => {
+  it('2. Deve carregar documento JSON e paginar corretamente a capa como página 1 e os capítulos a seguir', async () => {
     await adapter.load(mockBookletJson, 'caderno.ardoc', 18, 'newsreader')
 
     expect(adapter.isLoaded).toBe(true)
     expect(adapter.metadata.title).toBe('Caderno de Algoritmos & Grafos')
     expect(adapter.metadata.author).toBe('Aresta Didactic AI')
-    // Capítulo 1 tem 2 seções, Capítulo 2 tem 2 seções = total 4 páginas virtuais
-    expect(adapter.totalPages).toBe(4)
+    expect(adapter.metadata.coverUrl).toBeDefined()
+    // 1 página de Capa + 2 seções cap 1 + 2 seções cap 2 = total 5 páginas virtuais
+    expect(adapter.totalPages).toBe(5)
   })
 
   it('3. Deve suportar alteração de tamanho e família de fonte com repaginação', async () => {
@@ -98,27 +99,38 @@ flowchart TD
     await expect(pageData.render(mockCtx)).resolves.not.toThrow()
   })
 
-  it('5. Deve renderizar a camada de texto com Callouts, Mermaid e Âncoras de Anotação', async () => {
+  it('5. Deve renderizar a capa na página 1 e a camada de texto com Callouts e Mermaid nas páginas seguintes', async () => {
     await adapter.load(mockBookletJson)
 
+    // Página 1: Capa do livreto
     const containerP1 = document.createElement('div')
     await adapter.renderTextLayer(1, containerP1)
+    expect(containerP1.innerHTML).toContain('didactic-cover-wrapper')
+    expect(containerP1.innerHTML).toContain('didactic-cover-img')
 
-    expect(containerP1.innerHTML).toContain('didactic-page-wrapper')
-    expect(containerP1.innerHTML).toContain('callout-analogy')
-    expect(containerP1.innerHTML).toContain('Analogia Visual')
-    expect(containerP1.innerHTML).toContain('didactic-heading')
-    expect(containerP1.innerHTML).toContain('data-anchor="didactic://c1/p1#b1"')
-
+    // Página 2: Primeira página de conteúdo (Callout de analogia)
     const containerP2 = document.createElement('div')
     await adapter.renderTextLayer(2, containerP2)
-    expect(containerP2.innerHTML).toContain('didactic-mermaid-container')
+    expect(containerP2.innerHTML).toContain('didactic-page-wrapper')
+    expect(containerP2.innerHTML).toContain('callout-analogy')
+    expect(containerP2.innerHTML).toContain('Analogia Visual')
+    expect(containerP2.innerHTML).toContain('didactic-heading')
+    expect(containerP2.innerHTML).toContain('data-anchor="didactic://c1/p2#b1"')
+
+    // Página 3: Segunda página de conteúdo (Mermaid)
+    const containerP3 = document.createElement('div')
+    await adapter.renderTextLayer(3, containerP3)
+    expect(containerP3.innerHTML).toContain('didactic-mermaid-container')
   }, 15000)
 
-  it('6. Deve extrair texto puro através de getTextContent', async () => {
+  it('6. Deve extrair texto puro através de getTextContent na capa e no conteúdo', async () => {
     await adapter.load(mockBookletJson)
 
-    const text = await adapter.getTextContent(1)
+    const coverText = await adapter.getTextContent(1)
+    expect(coverText).toContain('Caderno de Algoritmos & Grafos')
+    expect(coverText).toContain('Capa')
+
+    const text = await adapter.getTextContent(2)
     expect(text).toContain('Árvores Binárias de Busca')
     expect(text).toContain('genealógica')
   })
@@ -132,7 +144,7 @@ flowchart TD
     expect(adapter.totalPages).toBe(1)
   })
 
-  it('8. Deve carregar e paginar seções HTML nativas com flashcards e steppers', async () => {
+  it('8. Deve carregar e paginar seções HTML nativas com capa e flashcards interativos', async () => {
     const nativeHtmlBooklet = JSON.stringify({
       title: 'Livro HTML Nativo',
       chapters: [
@@ -165,14 +177,21 @@ flowchart TD
     })
 
     await adapter.load(nativeHtmlBooklet)
-    expect(adapter.totalPages).toBe(3)
+    // 1 Capa + 3 seções nativas = 4 páginas
+    expect(adapter.totalPages).toBe(4)
 
-    const containerP3 = document.createElement('div')
-    await adapter.renderTextLayer(3, containerP3)
-    expect(containerP3.innerHTML).toContain('aresta-flashcard')
+    // Página 1: Capa
+    const containerP1 = document.createElement('div')
+    await adapter.renderTextLayer(1, containerP1)
+    expect(containerP1.innerHTML).toContain('didactic-cover-wrapper')
+
+    // Página 4: Flashcard
+    const containerP4 = document.createElement('div')
+    await adapter.renderTextLayer(4, containerP4)
+    expect(containerP4.innerHTML).toContain('aresta-flashcard')
 
     // Testa se o runtime montou o listener de clique para flip
-    const cardEl = containerP3.querySelector('.aresta-flashcard') as HTMLElement
+    const cardEl = containerP4.querySelector('.aresta-flashcard') as HTMLElement
     expect(cardEl).not.toBeNull()
     cardEl.click()
     expect(cardEl.classList.contains('is-flipped')).toBe(true)

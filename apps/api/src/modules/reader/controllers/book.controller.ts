@@ -44,7 +44,19 @@ export class BookController {
 
   async getCover(req: Request, res: Response): Promise<void> {
     try {
-      const coverPath = await bookService.getCoverPath(parseInt(String(req.params.id)))
+      const id = parseInt(String(req.params.id))
+      const book = await bookService.findById(id)
+      if (book?.coverPath && book.coverPath.startsWith('data:')) {
+        const matches = book.coverPath.match(/^data:([^;]+);base64,(.*)$/)
+        if (matches) {
+          const mimeType = matches[1]
+          const buffer = Buffer.from(matches[2], 'base64')
+          res.setHeader('Content-Type', mimeType)
+          res.send(buffer)
+          return
+        }
+      }
+      const coverPath = await bookService.getCoverPath(id)
       res.sendFile(coverPath)
     } catch (err: any) {
       res.status(404).json({ error: err.message })

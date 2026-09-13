@@ -230,8 +230,8 @@
             class="w-16 h-24 sm:w-18 sm:h-26 lg:w-20 lg:h-28 shrink-0 rounded-xl border border-divider overflow-hidden bg-white/5 shadow-md flex items-center justify-center group-hover:scale-105 group-hover:border-accent/40 transition-all duration-300"
           >
             <img
-              v-if="item.coverPath"
-              :src="getCoverUrl(item.coverPath, item.bookId)"
+              v-if="resolveBookCover(item)"
+              :src="resolveBookCover(item)"
               class="w-full h-full object-cover"
               :alt="item.title"
             />
@@ -650,7 +650,7 @@ import { useAnnotations } from '~/composables/useAnnotations'
 import { useFlashcards } from '~/composables/useFlashcards'
 import { annotationRepo } from '~/adapters/database/repositories/AnnotationRepository'
 import { flashcardRepo } from '~/adapters/database/repositories/FlashcardRepository'
-import { getCoverUrl, getBookFormat } from '~/utils/cover'
+import { getCoverUrl, getBookFormat, resolveBookCover } from '~/utils/cover'
 
 import ConfirmModal from '~/components/ConfirmModal.vue'
 import ManageThemesModal from '~/components/ManageThemesModal.vue'

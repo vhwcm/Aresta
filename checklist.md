@@ -1,9 +1,11 @@
 # Checklist
 
 ## 🔄 Em Andamento
-- [13/09/2026 10:55] [Fazendo] Definir capa visual do livreto na estante e renderizar como primeira pagina no leitor
+- [13/09/2026 11:04] [Fazendo] Ajustar espaçamento da navbar lateral (aproximar da borda da tela e afastar do conteúdo)
 
 ## ✅ Concluído
+- [13/09/2026 11:03] [Concluído] Definir capa visual do livreto na estante e renderizar como primeira pagina no leitor
+- [13/09/2026 11:03] [Concluído] Posicionar navbar na lateral esquerda no desktop e tablet horizontal com apenas ícones e cantos arredondados
 - [13/09/2026 10:57] [Concluído] Integrar registro de ofensiva em flashcard review e barra de progresso visual com chama meia-preenchida
 - [13/09/2026 10:46] [Concluído] Alterar critério de ofensiva diária para OU (10 minutos de leitura OU 5 flashcards) com reconciliação automática
 - [13/09/2026 10:42] [Concluído] Centralizar visualização e controles do flashcard vertical e horizontalmente no desktop

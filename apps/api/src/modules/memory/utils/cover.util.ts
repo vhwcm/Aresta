@@ -144,65 +144,6 @@ export function generateDidacticCoverSvg(params: DidacticCoverParams): string {
 
 export function generateDidacticCoverDataUri(params: DidacticCoverParams): string {
   const svg = generateDidacticCoverSvg(params)
-  let base64 = ''
-  if (typeof Buffer !== 'undefined') {
-    base64 = Buffer.from(svg, 'utf-8').toString('base64')
-  } else if (typeof btoa === 'function') {
-    base64 = btoa(unescape(encodeURIComponent(svg)))
-  }
+  const base64 = Buffer.from(svg, 'utf-8').toString('base64')
   return `data:image/svg+xml;base64,${base64}`
-}
-
-export const getCoverUrl = (coverPath?: string, bookId?: number) => {
-  if (coverPath && (coverPath.startsWith('data:') || coverPath.startsWith('blob:') || coverPath.startsWith('http://') || coverPath.startsWith('https://'))) {
-    return coverPath
-  }
-  let baseUrl = 'http://localhost:3001'
-  if (typeof useRuntimeConfig === 'function') {
-    try {
-      const config = useRuntimeConfig()
-      if (config?.public?.apiUrl) {
-        baseUrl = config.public.apiUrl
-      }
-    } catch {}
-  }
-  if (bookId) {
-    return `${baseUrl}/api/books/${bookId}/cover`
-  }
-  if (!coverPath) return ''
-  const fileName = coverPath.replace(/^storage\/covers\//, '').replace(/^storage\//, '')
-  return `${baseUrl}/storage/covers/${fileName}`
-}
-
-export type BookFormat = 'EPUB' | 'PDF' | 'DIDACTIC'
-
-export const getBookFormat = (filePath?: string | null): BookFormat => {
-  if (!filePath) return 'EPUB'
-  const lower = filePath.toLowerCase()
-  if (lower.includes('didactic') || lower.startsWith('virtual://didactic')) {
-    return 'DIDACTIC'
-  }
-  if (lower.endsWith('.pdf') || lower.includes('/pdfs/') || lower.includes('.pdf?')) {
-    return 'PDF'
-  }
-  return 'EPUB'
-}
-
-export const resolveBookCover = (item: {
-  coverPath?: string | null
-  bookId?: number
-  filePath?: string | null
-  title?: string
-  themes?: Array<{ name?: string }>
-}): string => {
-  if (item.coverPath) {
-    return getCoverUrl(item.coverPath, item.bookId)
-  }
-  if (getBookFormat(item.filePath) === 'DIDACTIC') {
-    return generateDidacticCoverDataUri({
-      title: item.title || 'Livreto Didático',
-      themeName: item.themes?.[0]?.name,
-    })
-  }
-  return ''
 }

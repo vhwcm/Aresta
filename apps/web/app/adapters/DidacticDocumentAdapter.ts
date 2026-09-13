@@ -1,6 +1,7 @@
 import type { IBookDocument, BookMetadata, PageData, PageViewport } from '~/interfaces/reader/IBookDocument'
 import { marked } from 'marked'
 import { ArestaInteractiveRuntime } from '~/utils/reader/ArestaInteractiveRuntime'
+import { generateDidacticCoverDataUri } from '~/utils/cover'
 
 export interface DidacticChapterData {
   id?: string
@@ -124,10 +125,14 @@ export class DidacticDocumentAdapter implements IBookDocument {
     }
 
     this._bookletData = parsedData
+    const resolvedCoverUrl = coverUrl || generateDidacticCoverDataUri({
+      title: parsedData.title,
+      topic: parsedData.chapters[0]?.topic,
+    })
     this._metadata = {
       title: parsedData.title,
       author: 'Aresta Didactic AI',
-      coverUrl,
+      coverUrl: resolvedCoverUrl,
     }
 
     this.paginate(parsedData)
@@ -141,7 +146,29 @@ export class DidacticDocumentAdapter implements IBookDocument {
    */
   private paginate(booklet: DidacticBookletData): void {
     const pages: VirtualDidacticPage[] = []
-    let pageCounter = 1
+
+    const coverUrl = this._metadata.coverUrl || generateDidacticCoverDataUri({
+      title: booklet.title,
+      topic: booklet.chapters[0]?.topic,
+    })
+
+    // Página 1: Capa do livreto (idêntica à capa exibida na estante)
+    pages.push({
+      pageNumber: 1,
+      chapterIndex: 0,
+      chapterTitle: 'Capa',
+      rawContent: `<section class="didactic-page didactic-cover-page" data-page="1" data-title="Capa"><img src="${coverUrl}" alt="${booklet.title}" /></section>`,
+      htmlContent: `
+        <section class="didactic-page didactic-cover-page" data-page="1" data-title="Capa">
+          <div class="didactic-cover-container">
+            <img src="${coverUrl}" alt="${booklet.title}" class="didactic-cover-img" />
+          </div>
+        </section>
+      `,
+      plainText: `${booklet.title} - Livreto Didático - Capa`,
+    })
+
+    let pageCounter = 2
 
     for (const chapter of booklet.chapters) {
       const rawContent = chapter.raw_markdown || ''
@@ -162,6 +189,9 @@ export class DidacticDocumentAdapter implements IBookDocument {
 
       for (let i = 0; i < sections.length; i++) {
         const raw = sections[i] || ''
+        if (raw.includes('didactic-cover-page')) {
+          continue
+        }
         let html: string
         let plainText: string
         let pageTitle = chapter.title
@@ -295,6 +325,15 @@ export class DidacticDocumentAdapter implements IBookDocument {
     const pageIndex = Math.max(0, Math.min(pageNumber - 1, this._virtualPages.length - 1))
     const page = this._virtualPages[pageIndex]
     if (!page || !container) return
+
+    if (page.chapterTitle === 'Capa' || page.htmlContent.includes('didactic-cover-page')) {
+      container.innerHTML = `
+        <div class="didactic-page-wrapper didactic-cover-wrapper font-${this._fontFamily}">
+          ${page.htmlContent}
+        </div>
+      `
+      return
+    }
 
     container.innerHTML = `
       <div class="didactic-page-wrapper font-${this._fontFamily}" style="font-size: ${this._fontSize}px;">
