@@ -26,6 +26,59 @@
 
     <!-- SEÇÃO 1: FLASHCARDS (Repetição Espaçada 3D) -->
     <section v-if="activeTab === 'flashcards'" class="flex flex-col flex-1 gap-6 sm:gap-8 justify-center max-w-xl md:max-w-2xl mx-auto w-full my-auto">
+      <!-- Barra de Progresso da Ofensiva Diária com Flashcards -->
+      <div data-testid="flashcard-streak-bar" class="flex items-center justify-between gap-4 px-4 py-3 rounded-2xl bg-white/5 border border-divider/60 backdrop-blur-sm w-full">
+        <div class="flex items-center gap-2">
+          <span class="font-interface text-xs font-semibold text-textPrimary">Ofensiva diária</span>
+          <span class="font-technical text-[11px] text-textSecondary">
+            ({{ flashcardsReviewedToday }}/{{ flashcardsGoal }} cards)
+          </span>
+        </div>
+
+        <div class="flex items-center gap-3 flex-1 max-w-xs sm:max-w-sm ml-auto">
+          <!-- Trilho da Barra com preenchimento crescendo em direção ao fogo -->
+          <div class="relative flex-1 h-2 bg-black/10 dark:bg-white/10 rounded-full overflow-hidden">
+            <div
+              class="h-full bg-gradient-to-r from-amber-500 to-accent rounded-full transition-all duration-500 ease-out"
+              :style="{ width: `${flashcardProgressPercent}%` }"
+            ></div>
+          </div>
+
+          <!-- Ícone de Fogo (o mesmo da home) com meio preenchido ao atingir 5 -->
+          <div
+            data-testid="streak-flame-icon"
+            class="relative flex items-center justify-center w-5 h-5 transition-transform duration-300 hover:scale-110"
+            :title="isFlashcardsGoalCompleted ? 'Meta de flashcards atingida (meio preenchido)!' : `${Math.max(0, flashcardsGoal - flashcardsReviewedToday)} cards restantes para completar a barra`"
+          >
+            <!-- Ícone base outline apagado -->
+            <FlameIcon class="w-5 h-5 text-textSecondary/40 transition-colors" />
+
+            <!-- Camada preenchida (meio preenchido se >= 5 cards, ou 100% preenchido se leitura também completa) -->
+            <div
+              v-if="flashcardsReviewedToday > 0"
+              class="absolute inset-0 overflow-hidden flex items-center justify-center pointer-events-none transition-all duration-500"
+              :style="{
+                clipPath: (isGoalReachedToday && todayActivity?.isReadingCompleted)
+                  ? 'inset(0% 0 0 0)'
+                  : isFlashcardsGoalCompleted
+                    ? 'inset(50% 0 0 0)'
+                    : `inset(${100 - (Math.min(flashcardsReviewedToday, flashcardsGoal) / flashcardsGoal) * 50}% 0 0 0)`
+              }"
+            >
+              <FlameIcon
+                class="w-5 h-5 text-accent fill-accent"
+                :class="{ 'animate-pulse': isFlashcardsGoalCompleted }"
+              />
+            </div>
+          </div>
+
+          <!-- Contador de dias da ofensiva -->
+          <span class="font-technical text-xs font-semibold text-textPrimary min-w-[20px] text-right">
+            {{ currentStreak }}
+          </span>
+        </div>
+      </div>
+
       <!-- Barra de Controle e Filtro de Livros -->
       <div class="flex flex-wrap items-center justify-between gap-4 w-full">
         <div class="flex items-center gap-2">
@@ -582,7 +635,8 @@ import {
   ExternalLinkIcon,
   CheckIcon,
   XIcon,
-  TagIcon
+  TagIcon,
+  FlameIcon
 } from 'lucide-vue-next'
 import { useReadingStreak } from '~/composables/useReadingStreak'
 import { useFlashcards, type FlashcardItem } from '~/composables/useFlashcards'
@@ -620,6 +674,13 @@ const isNewAnnotationModalOpen = ref(false)
 const isTogglingFlashcard = ref<number | null>(null)
 
 const streak = useReadingStreak()
+const { todayActivity, currentStreak, isGoalReachedToday } = streak
+
+const flashcardsGoal = computed(() => todayActivity.value?.requiredFlashcards || 5)
+const flashcardsReviewedToday = computed(() => todayActivity.value?.flashcardsReviewed || 0)
+const flashcardProgressPercent = computed(() => Math.min(100, (flashcardsReviewedToday.value / flashcardsGoal.value) * 100))
+const isFlashcardsGoalCompleted = computed(() => flashcardsReviewedToday.value >= flashcardsGoal.value)
+
 const flashcards = useFlashcards()
 const {
   annotations: userAnnotations,
@@ -960,12 +1021,18 @@ const prevCard = () => {
 const rateCurrentCard = async (rating: 'hard' | 'good' | 'easy') => {
   if (!currentCard.value) return
 
+  // Incremento otimista imediato na interface para a barra de ofensiva
+  if (todayActivity.value) {
+    todayActivity.value.flashcardsReviewed = (todayActivity.value.flashcardsReviewed || 0) + 1
+  }
+
   try {
     if (flashcards.dailyDeck.value.length > 0) {
       await flashcards.reviewFlashcard(currentCard.value.id, rating)
     } else {
-      void streak.recordFlashcardReview(1)
+      await streak.recordFlashcardReview(1)
     }
+    await streak.fetchStreak()
   } catch (err) {
     console.error('Erro ao avaliar flashcard:', err)
   }

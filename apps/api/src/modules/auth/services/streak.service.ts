@@ -104,6 +104,27 @@ export class StreakService {
       update: {},
     })
 
+    if (todayActivity.flashcards_reviewed === 0) {
+      try {
+        const todayStart = new Date(`${todayStr}T00:00:00.000Z`)
+        const reviewedCardsCount = await prisma.flashcard.count({
+          where: {
+            user_id: userId,
+            last_reviewed_at: { gte: todayStart }
+          }
+        })
+        if (reviewedCardsCount > 0) {
+          todayActivity.flashcards_reviewed = reviewedCardsCount
+          await prisma.dailyActivity.update({
+            where: { user_id_date: { user_id: userId, date: todayStr } },
+            data: { flashcards_reviewed: reviewedCardsCount }
+          })
+        }
+      } catch {
+        // Fallback silencioso
+      }
+    }
+
     const last7DaysList: string[] = []
     for (let i = 6; i >= 0; i--) last7DaysList.push(this.addDaysToUtcDateString(todayStr, -i))
 

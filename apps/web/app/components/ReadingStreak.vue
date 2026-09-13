@@ -9,11 +9,24 @@
       aria-label="Ofensiva de Leitura"
     >
       <!-- Ícone Chama com preenchimento/brilho -->
-      <div class="relative flex items-center justify-center">
+      <div class="relative flex items-center justify-center w-4 h-4 sm:w-4.5 sm:h-4.5">
         <FlameIcon
-          class="w-4 h-4 sm:w-4.5 sm:h-4.5 transition-transform duration-300 group-hover:scale-110"
-          :class="isGoalReachedToday ? 'text-accent fill-accent animate-pulse' : 'text-textSecondary'"
+          class="w-4 h-4 sm:w-4.5 sm:h-4.5 transition-transform duration-300 group-hover:scale-110 text-textSecondary"
         />
+        <div
+          v-if="isGoalReachedToday || (todayActivity.flashcardsReviewed ?? 0) >= 5 || todayActivity.isReadingCompleted"
+          class="absolute inset-0 overflow-hidden flex items-center justify-center pointer-events-none transition-all duration-500"
+          :style="{
+            clipPath: (todayActivity.isReadingCompleted && (todayActivity.flashcardsReviewed ?? 0) >= 5)
+              ? 'inset(0% 0 0 0)'
+              : 'inset(50% 0 0 0)'
+          }"
+        >
+          <FlameIcon
+            class="w-4 h-4 sm:w-4.5 sm:h-4.5 text-accent fill-accent"
+            :class="{ 'animate-pulse': isGoalReachedToday }"
+          />
+        </div>
       </div>
 
       <!-- Contador da Ofensiva -->
@@ -31,10 +44,26 @@
       <div class="flex items-center justify-between border-b border-divider pb-3">
         <div class="flex items-center gap-2.5">
           <div
-            class="p-2 rounded-xl border transition-colors"
+            class="p-2 rounded-xl border transition-colors relative flex items-center justify-center"
             :class="isGoalReachedToday ? 'bg-accent/20 border-accent/40 text-accent' : 'bg-white/5 border-divider text-textSecondary'"
           >
-            <FlameIcon class="w-5 h-5" :class="{ 'fill-accent': isGoalReachedToday }" />
+            <div class="relative flex items-center justify-center w-5 h-5">
+              <FlameIcon class="w-5 h-5 text-textSecondary/40" />
+              <div
+                v-if="isGoalReachedToday || (todayActivity.flashcardsReviewed ?? 0) >= 5 || todayActivity.isReadingCompleted"
+                class="absolute inset-0 overflow-hidden flex items-center justify-center pointer-events-none transition-all duration-500"
+                :style="{
+                  clipPath: (todayActivity.isReadingCompleted && (todayActivity.flashcardsReviewed ?? 0) >= 5)
+                    ? 'inset(0% 0 0 0)'
+                    : 'inset(50% 0 0 0)'
+                }"
+              >
+                <FlameIcon
+                  class="w-5 h-5 text-accent fill-accent"
+                  :class="{ 'animate-pulse': isGoalReachedToday }"
+                />
+              </div>
+            </div>
           </div>
           <div>
             <h4 class="font-interface text-sm font-semibold text-textPrimary">Ofensiva de Leitura</h4>

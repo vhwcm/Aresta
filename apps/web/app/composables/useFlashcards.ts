@@ -256,7 +256,11 @@ export const useFlashcards = () => {
         }
       }
 
-      await streak.fetchStreak()
+      if (res?.streak) {
+        streak.applyStreakPayload(res.streak)
+      } else {
+        await streak.fetchStreak()
+      }
       return res
     } catch (err: any) {
       console.warn('Avaliação gravada localmente (offline):', err)

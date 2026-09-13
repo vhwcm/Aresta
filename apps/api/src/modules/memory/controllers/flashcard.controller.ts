@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express'
 import { flashcardService } from '../services/flashcard.service'
+import { streakService } from '../../auth/services/streak.service'
 
 export class FlashcardController {
   async getDue(req: Request, res: Response): Promise<void> {
@@ -26,7 +27,8 @@ export class FlashcardController {
       const id = parseInt(String(req.params.id))
       const { rating } = req.body
       const card = await flashcardService.review(id, req.user!.userId, rating)
-      res.json({ card })
+      const streakResult = await streakService.recordFlashcardReview(req.user!.userId, 1)
+      res.json({ card, streak: streakResult.status, justCompletedStreakGoal: streakResult.justCompleted })
     } catch (err: any) {
       res.status(400).json({ error: err.message })
     }

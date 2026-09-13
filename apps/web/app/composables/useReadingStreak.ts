@@ -249,6 +249,7 @@ export const useReadingStreak = () => {
     dailyGoalMinutes,
     todayMinutesRead,
     isGoalReached,
+    applyStreakPayload,
     fetchStreak,
     recordReadingTime,
     recordFlashcardReview,

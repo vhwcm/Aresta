@@ -358,5 +358,40 @@ describe('Revisao Page (/revisao)', () => {
     expect(cardScene.exists()).toBe(true)
     expect(cardScene.classes()).toContain('w-full')
   })
+
+  it('exibe barra de progresso da ofensiva com meta de flashcards e ícone de fogo', async () => {
+    mockDailyDeck.value = [
+      { id: 1, bookId: 42, bookTitle: 'O Livro', question: 'Pergunta 1', answer: 'Resposta 1' },
+    ]
+
+    const wrapper = mount(RevisaoPage, {
+      global: {
+        stubs: {
+          NuxtLink: { template: '<a><slot /></a>' },
+          LayersIcon: true,
+          FileTextIcon: true,
+          RotateCwIcon: true,
+          ChevronLeftIcon: true,
+          ChevronRightIcon: true,
+          PlusIcon: true,
+          Trash2Icon: true,
+          BookOpenIcon: true,
+          SparklesIcon: true,
+          ExternalLinkIcon: true,
+          CheckCircle2Icon: true,
+          TagIcon: true,
+          BookMarkedIcon: true,
+          ReaderAnnotationModal: true,
+          AppSelect: true,
+          FlameIcon: true,
+        },
+      },
+    })
+
+    expect(wrapper.find('[data-testid="flashcard-streak-bar"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="streak-flame-icon"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Ofensiva diária')
+    expect(wrapper.text()).toContain('cards')
+  })
 })
 
