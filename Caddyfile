@@ -1,0 +1,19 @@
+{$DOMAIN:aresta.duckdns.org} {
+    # Roteia chamadas de API, uploads e healthcheck para o container Express (aresta-api)
+    handle /api/* {
+        reverse_proxy aresta-api:3001
+    }
+
+    handle /storage/* {
+        reverse_proxy aresta-api:3001
+    }
+
+    handle /health {
+        reverse_proxy aresta-api:3001
+    }
+
+    # Roteia todas as páginas e assets estáticos para o frontend Nuxt (aresta-web)
+    handle {
+        reverse_proxy aresta-web:80
+    }
+}

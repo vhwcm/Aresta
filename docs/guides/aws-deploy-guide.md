@@ -12,13 +12,14 @@ Este guia orienta o provisionamento, configuração de segurança, instalação 
 │                                                                             │
 │  Security Group (Firewall)                                                  │
 │   ├── Porta 22  (SSH)         -> Acesso ao Terminal                        │
-│   ├── Porta 80  / 443 (HTTP/S)-> Tráfego Web                                │
-│   ├── Porta 3000 (Nuxt Web)   -> Frontend SPA / SSR                         │
-│   └── Porta 3001 (API)        -> Backend Express                            │
+│   └── Porta 80  / 443 (HTTP/S)-> Tráfego Seguro Web (SSL Let's Encrypt)     │
 │                                                                             │
 │  Instância EC2 (Ubuntu 24.04 LTS - t3.small / t2.micro)                     │
 │  ┌───────────────────────────────────────────────────────────────────────┐  │
 │  │ Docker Compose Engine                                                 │  │
+│  │  ├── [Container] aresta-caddy (Caddy Reverse Proxy & SSL Automático)  │  │
+│  │  │     ├── https://aresta.duckdns.org/      -> aresta-web:80          │  │
+│  │  │     └── https://aresta.duckdns.org/api/* -> aresta-api:3001        │  │
 │  │  ├── [Container] aresta-db (PostgreSQL 16 + pgvector)                 │  │
 │  │  ├── [Container] apps/api  (Node.js / Express / Prisma)              │  │
 │  │  └── [Container] apps/web  (Nuxt 3 / Tailwind CSS)                   │  │
@@ -103,16 +104,16 @@ existe na rede interna do Docker).
 
 ## 4. Endpoints e URLs de Acesso
 
-Após subir os containers, a aplicação estará disponível nos seguintes endereços:
+Após subir os containers com o Caddy, a aplicação estará disponível de forma segura em:
 
-* **Frontend Web (Nuxt)**:
-  `http://<IP_PUBLICO_EC2>:3000` (ex: `http://18.228.190.2:3000`)
-* **Backend API (Express)**:
-  `http://<IP_PUBLICO_EC2>:3001/api`
-* **Swagger API Docs**:
-  `http://<IP_PUBLICO_EC2>:3001/api-docs`
+* **Aplicação Web (Nuxt + HTTPS)**:
+  `https://aresta.duckdns.org`
+* **API Backend (Express + HTTPS)**:
+  `https://aresta.duckdns.org/api`
 * **Healthcheck da API**:
-  `http://<IP_PUBLICO_EC2>:3001/api/health`
+  `https://aresta.duckdns.org/health`
+* **OAuth Callback (Google)**:
+  `https://aresta.duckdns.org/api/auth/google/callback`
 
 ---
 

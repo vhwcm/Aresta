@@ -23,8 +23,8 @@ services:
       context: ./apps/api
       dockerfile: Dockerfile
     container_name: aresta-api
-    ports:
-      - "3001:3001"
+    expose:
+      - "3001"
     environment:
       NODE_ENV: production
       PORT: 3001
@@ -57,18 +57,37 @@ services:
       context: ./apps/web
       dockerfile: Dockerfile
       args:
-        NUXT_PUBLIC_API_URL: ${NUXT_PUBLIC_API_URL:-http://localhost:3001}
-        NUXT_PUBLIC_READER_API_URL: ${NUXT_PUBLIC_READER_API_URL:-http://localhost:3001}
-        NUXT_PUBLIC_MEMORY_API_URL: ${NUXT_PUBLIC_MEMORY_API_URL:-http://localhost:3001}
-        NUXT_PUBLIC_AI_API_URL: ${NUXT_PUBLIC_AI_API_URL:-http://localhost:3001}
-        NUXT_PUBLIC_AUTH_API_URL: ${NUXT_PUBLIC_AUTH_API_URL:-http://localhost:3001}
-        NUXT_PUBLIC_CANVAS_API_URL: ${NUXT_PUBLIC_CANVAS_API_URL:-http://localhost:3001}
+        NUXT_PUBLIC_API_URL: ${NUXT_PUBLIC_API_URL:-https://aresta.duckdns.org}
+        NUXT_PUBLIC_READER_API_URL: ${NUXT_PUBLIC_READER_API_URL:-https://aresta.duckdns.org}
+        NUXT_PUBLIC_MEMORY_API_URL: ${NUXT_PUBLIC_MEMORY_API_URL:-https://aresta.duckdns.org}
+        NUXT_PUBLIC_AI_API_URL: ${NUXT_PUBLIC_AI_API_URL:-https://aresta.duckdns.org}
+        NUXT_PUBLIC_AUTH_API_URL: ${NUXT_PUBLIC_AUTH_API_URL:-https://aresta.duckdns.org}
+        NUXT_PUBLIC_CANVAS_API_URL: ${NUXT_PUBLIC_CANVAS_API_URL:-https://aresta.duckdns.org}
     container_name: aresta-web
-    ports:
-      - "3000:80"
+    expose:
+      - "80"
     depends_on:
+      - aresta-api
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: aresta-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:-aresta.duckdns.org}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - aresta-web
       - aresta-api
 
 volumes:
   aresta-db-data:
   reader-storage:
+  caddy-data:
+  caddy-config:
