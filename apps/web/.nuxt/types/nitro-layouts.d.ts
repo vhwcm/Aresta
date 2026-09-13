@@ -1,4 +1,4 @@
-export type LayoutKey = string
+export type LayoutKey = "reader"
 declare module 'nitropack' {
   interface NitroRouteConfig {
     appLayout?: LayoutKey | false

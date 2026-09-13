@@ -27,6 +27,9 @@ export const env = {
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '7d',
   STORAGE_PATH: path.resolve(process.env.STORAGE_PATH || './storage'),
   GEMINI_API_KEY: process.env.GEMINI_API_KEY || process.env.AI_KEY || '',
-  GEMINI_MODEL: process.env.GEMINI_MODEL || 'gemini-3.5-flash',
+  GEMINI_MODEL: process.env.GEMINI_MODEL || 'gemini-3.7-flash',
   GEMINI_EMBED_MODEL: process.env.GEMINI_EMBED_MODEL || 'gemini-embedding-001',
+  FALLBACK_AI_BASE_URL: process.env.FALLBACK_AI_BASE_URL || '',
+  FALLBACK_AI_API_KEY: process.env.FALLBACK_AI_API_KEY || process.env.OPENAI_API_KEY || process.env.GROQ_API_KEY || '',
+  FALLBACK_AI_MODEL: process.env.FALLBACK_AI_MODEL || 'gpt-4o-mini',
 }

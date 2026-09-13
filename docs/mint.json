@@ -34,7 +34,8 @@
         "architecture/frontend",
         "architecture/canvas",
         "architecture/database",
-        "architecture/infrastructure"
+        "architecture/infrastructure",
+        "architecture/didactic-booklets"
       ]
     },
     {
@@ -46,7 +47,8 @@
         "domain/graph",
         "domain/annotations",
         "domain/streak",
-        "domain/flashcards"
+        "domain/flashcards",
+        "domain/didactic-booklets"
       ]
     },
     {

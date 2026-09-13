@@ -540,6 +540,17 @@
               </select>
             </div>
           </div>
+
+          <!-- Alerta de Erro de Geração de IA -->
+          <div
+            v-if="didacticError"
+            class="p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-xs font-interface text-red-400 flex items-start gap-2.5 animate-fadeIn"
+          >
+            <span class="text-base leading-none">⚠️</span>
+            <div class="flex-1 leading-relaxed">
+              {{ didacticError }}
+            </div>
+          </div>
         </div>
 
         <div class="flex items-center justify-end gap-3 pt-2 border-t border-divider">
@@ -606,7 +617,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   BookIcon,
@@ -652,13 +663,21 @@ const isManageThemesModalOpen = ref(false)
 const router = useRouter()
 const didactic = useDidacticBooklet()
 const isCreateDidacticModalOpen = ref(false)
+const didacticError = ref<string | null>(null)
 const newBookletTitle = ref('')
 const newBookletTopic = ref('')
 const newBookletThemeId = ref<number | null>(null)
 const newBookletDepth = ref<'quick_summary' | 'standard' | 'deep_dive'>('standard')
 
+watch(isCreateDidacticModalOpen, (isOpen) => {
+  if (isOpen) {
+    didacticError.value = null
+  }
+})
+
 const handleCreateDidacticBooklet = async () => {
   if (!newBookletTopic.value.trim()) return
+  didacticError.value = null
   try {
     const result = await didactic.createBooklet({
       title: newBookletTitle.value.trim() || undefined,
@@ -670,14 +689,18 @@ const handleCreateDidacticBooklet = async () => {
     newBookletTitle.value = ''
     newBookletTopic.value = ''
     newBookletThemeId.value = null
+    didacticError.value = null
     if (auth.isLoggedIn.value) {
       await fetchUserBooks()
     }
     if (result.book?.id) {
       await router.push(`/reader?bookId=${result.book.id}`)
     }
-  } catch (err) {
+  } catch (err: any) {
     console.error('Erro ao criar livreto didático:', err)
+    didacticError.value =
+      err.message ||
+      'Não foi possível gerar a explicação com Inteligência Artificial no momento. Por favor, tente novamente em instantes.'
   }
 }
 

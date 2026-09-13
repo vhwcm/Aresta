@@ -1,11 +1,12 @@
 import axios from 'axios'
 import { prisma } from '../config/database'
 import { SERVICES } from '../config/services.config'
+import { aiService } from '../../ai/services/ai.service'
 import type { CreateBookletInput, AppendChapterInput, GetBookletsQueryInput } from '../schemas/didactic.schema'
 
 export class DidacticBookletService {
   /**
-   * Gera o conteúdo Markdown pedagógico estruturado chamando aresta-ai ou gerando fallback de alta qualidade.
+   * Gera o conteúdo Markdown pedagógico estruturado chamando aiService do monólito ou serviço externo.
    */
   async generateContent(params: {
     topic: string
@@ -20,7 +21,28 @@ export class DidacticBookletService {
   }): Promise<{ title: string; markdown: string; diagramCount: number }> {
     const { topic, token, themeName, bookTitle, flashcardQuestion, flashcardAnswer, annotationQuote, annotationNote, depthLevel = 'standard' } = params
 
-    if (token) {
+    // 1. Invoca o aiService com cascata completa (Gemini 3.7 -> 3.6 -> 3.5 -> APIs externas)
+    try {
+      const generated = await aiService.generateDidacticExplanation({
+        topic,
+        themeName,
+        bookTitle,
+        flashcardQuestion,
+        flashcardAnswer,
+        annotationQuote,
+        annotationNote,
+        depthLevel,
+        userLanguage: 'pt-BR',
+      })
+      if (generated && generated.markdown) {
+        return generated
+      }
+    } catch (err: any) {
+      console.warn('[DidacticBookletService] Falha na geração com aiService in-process:', err?.message || err)
+    }
+
+    // 2. Se houver token e serviço HTTP externo configurado explicitamente
+    if (token && SERVICES.ai && !SERVICES.ai.includes('3002')) {
       try {
         const response = await axios.post(
           `${SERVICES.ai}/didactic`,
@@ -44,50 +66,17 @@ export class DidacticBookletService {
           return response.data
         }
       } catch (err) {
-        console.warn('[DidacticBookletService] Falha ao consultar aresta-ai, gerando explicação local com fallback:', err)
+        console.warn('[DidacticBookletService] Falha ao consultar serviço HTTP externo de IA:', err)
       }
     }
 
-    // Fallback pedagógico determinístico
-    const title = `Didático: ${topic.slice(0, 45)}`
-    const markdown = `# ${title}
-
-> [!ANALOGY]
-> Pense em **${topic}** como uma engrenagem essencial: isolando a complexidade, cada etapa seguinte se torna intuitiva e previsível.
-
----
-
-## 1. Princípio Fundamental
-
-> [!KEY_CONCEPT]
-> O objetivo principal de ${topic} é criar uma representação mental sólida e sem ambiguidades.
-
----
-
-## 2. Mapa do Fluxo e Estrutura
-
-\`\`\`mermaid
-flowchart TD
-    A[🎯 Entrada / Problema] --> B[⚙️ Núcleo: ${topic.slice(0, 25)}]
-    B --> C[✅ Resolução & Fixação]
-\`\`\`
-
----
-
-## 3. Aplicação Prática
-
-> [!TIP]
-> Ao revisar este conceito, tente explicá-lo com suas próprias palavras antes de ler a resposta.
-
-> [!WARNING]
-> Não decore termos isolados; compreenda as conexões de causa e efeito.
-`
-
-    return {
-      title,
-      markdown,
-      diagramCount: 1,
-    }
+    // SEM FALLBACK OFFLINE: Se todas as tentativas falharem, lança erro genérico amigável
+    const error: any = new Error(
+      'Não foi possível gerar a explicação com Inteligência Artificial no momento. Por favor, verifique sua conexão ou tente novamente em instantes.'
+    )
+    error.statusCode = 503
+    error.code = 'AI_UNAVAILABLE'
+    throw error
   }
 
   /**

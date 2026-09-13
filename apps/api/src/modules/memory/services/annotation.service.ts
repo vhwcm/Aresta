@@ -1,6 +1,7 @@
 import { prisma } from '../config/database'
 import axios from 'axios'
 import { SERVICES } from '../config/services.config'
+import { aiService } from '../../ai/services/ai.service'
 
 export class AnnotationService {
   async create(data: {
@@ -70,18 +71,28 @@ export class AnnotationService {
 
   private async generateAndSaveEmbedding(annotationId: number, text: string, token: string) {
     try {
-      const { data } = await axios.post(
-        `${SERVICES.ai}/api/ai/embed`,
-        { text },
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
-      const vector = data.embedding as number[]
-      // Use raw SQL to update the pgvector column
-      await prisma.$executeRaw`
-        UPDATE annotations
-        SET embedding = ${JSON.stringify(vector)}::vector
-        WHERE id = ${annotationId}
-      `
+      let vector: number[] | null = null
+      try {
+        vector = await aiService.embed(text)
+      } catch {
+        if (token && SERVICES.ai && !SERVICES.ai.includes('3002')) {
+          const { data } = await axios.post(
+            `${SERVICES.ai}/api/ai/embed`,
+            { text },
+            { headers: { Authorization: `Bearer ${token}` } }
+          )
+          vector = data.embedding as number[]
+        }
+      }
+
+      if (vector && vector.length > 0) {
+        // Use raw SQL to update the pgvector column
+        await prisma.$executeRaw`
+          UPDATE annotations
+          SET embedding = ${JSON.stringify(vector)}::vector
+          WHERE id = ${annotationId}
+        `
+      }
     } catch (err) {
       console.error('[annotation] Failed to generate embedding:', err)
     }

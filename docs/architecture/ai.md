@@ -1,6 +1,13 @@
 # Arquitetura de Inteligência Artificial & RAG (AI Architecture)
 
-O subsistema de Inteligência Artificial do **Aresta** provê capacidades de compreensão semântica, geração contextual de flashcards para retenção de conhecimento (Spaced Repetition System / Curva de Ebbinghaus) e transcrição multimodal de anotações manuscritas (OCR).
+O subsistema de Inteligência Artificial do **Aresta** provê capacidades de compreensão semântica, geração contextual de flashcards para retenção de conhecimento (Spaced Repetition System / Curva de Ebbinghaus), geração de livretos pedagógicos estruturados sob demanda com diagramas (Didactic AI Tutor) e transcrição multimodal de anotações manuscritas (OCR).
+
+---
+
+## 0. Livretos Didáticos com IA (`Didactic AI Booklets`)
+
+Para a arquitetura detalhada, contratos de API, renderização client-side com Mermaid e padrão Adapter do leitor 3D para livretos didáticos gerados por IA, consulte o documento dedicado:
+👉 [Arquitetura de Livretos Didáticos com IA](file:///c:/Users/vichw/Aresta/docs/architecture/didactic-booklets.md)
 
 ---
 

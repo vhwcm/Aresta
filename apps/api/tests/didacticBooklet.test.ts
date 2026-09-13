@@ -1,6 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { didacticBookletService } from '../src/modules/memory/services/didacticBooklet.service'
 import { prisma } from '../src/modules/memory/config/database'
+import { aiService } from '../src/modules/ai/services/ai.service'
+
+vi.mock('../src/modules/ai/services/ai.service', () => ({
+  aiService: {
+    generateDidacticExplanation: vi.fn().mockResolvedValue({
+      title: 'Didático: Estruturas de Dados em Árvore',
+      markdown: '# Didático: Estruturas de Dados em Árvore\n\n> [!ANALOGY]\n> Analogia\n\n> [!KEY_CONCEPT]\n> Conceito\n\n```mermaid\nflowchart TD\n  A --> B\n```',
+      diagramCount: 1,
+    }),
+    embed: vi.fn().mockResolvedValue(new Array(1536).fill(0.1)),
+  },
+}))
 
 vi.mock('../src/modules/memory/config/database', () => {
   const booklets: any[] = []
@@ -207,6 +219,21 @@ describe('DidacticBookletService (aresta-memory)', () => {
     ).rejects.toMatchObject({
       statusCode: 422,
       code: 'CANNOT_APPEND_TO_NON_BOOKLET',
+    })
+  })
+
+  it('6. Deve lançar erro genérico 503 e não criar registro de livro caso a IA falhe (sem fallback offline)', async () => {
+    vi.mocked(aiService.generateDidacticExplanation).mockRejectedValueOnce(new Error('API quota exceeded / network down'))
+
+    await expect(
+      didacticBookletService.createBooklet(userId, {
+        title: 'Livro que Não Deve Ser Criado',
+        topic: 'Tópico Falho',
+      })
+    ).rejects.toMatchObject({
+      statusCode: 503,
+      code: 'AI_UNAVAILABLE',
+      message: expect.stringContaining('Não foi possível gerar a explicação com Inteligência Artificial no momento'),
     })
   })
 })

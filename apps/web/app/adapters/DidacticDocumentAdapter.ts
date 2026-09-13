@@ -252,17 +252,9 @@ export class DidacticDocumentAdapter implements IBookDocument {
         const renderHeight = viewport ? viewport.height : height
 
         ctx.save()
-        // Fundo padrão claro/papel digital
+        // Fundo padrão escuro papel digital
         ctx.fillStyle = '#1A1817'
         ctx.fillRect(0, 0, renderWidth, renderHeight)
-
-        // Cabeçalho da página virtual no canvas backing
-        ctx.fillStyle = '#A8A29E'
-        ctx.font = '12px sans-serif'
-        if (page) {
-          ctx.fillText(page.chapterTitle, 30, 30)
-          ctx.fillText(`Página ${page.pageNumber} de ${this.totalPages}`, renderWidth - 120, renderHeight - 20)
-        }
         ctx.restore()
       },
     }
@@ -282,7 +274,7 @@ export class DidacticDocumentAdapter implements IBookDocument {
     container.innerHTML = `
       <div class="didactic-page-wrapper font-${this._fontFamily}" style="font-size: ${this._fontSize}px;">
         <header class="didactic-page-header">
-          <span class="chapter-badge">${page.chapterTitle}</span>
+          <span class="chapter-badge" title="${page.chapterTitle}">${page.chapterTitle}</span>
           <span class="page-badge">${page.pageNumber} / ${this.totalPages}</span>
         </header>
         <article class="didactic-article-body">

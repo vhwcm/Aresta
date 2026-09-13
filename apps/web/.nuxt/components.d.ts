@@ -15,6 +15,7 @@ type LazyComponent<T> = DefineComponent<HydrationStrategies, {}, {}, {}, {}, {},
 
 
 export const AiMarkdown: typeof import("../app/components/AiMarkdown.vue")['default']
+export const AppSelect: typeof import("../app/components/AppSelect.vue")['default']
 export const ArestaLogoGraph: typeof import("../app/components/ArestaLogoGraph.vue")['default']
 export const BottomNavbar: typeof import("../app/components/BottomNavbar.vue")['default']
 export const CommandPalette: typeof import("../app/components/CommandPalette.vue")['default']
@@ -27,6 +28,7 @@ export const GraphCanvas: typeof import("../app/components/GraphCanvas.vue")['de
 export const HomeBookReaderDemo: typeof import("../app/components/HomeBookReaderDemo.vue")['default']
 export const HomeCanvasNotesDemo: typeof import("../app/components/HomeCanvasNotesDemo.vue")['default']
 export const HomeKnowledgeGraphDemo: typeof import("../app/components/HomeKnowledgeGraphDemo.vue")['default']
+export const ManageThemesModal: typeof import("../app/components/ManageThemesModal.vue")['default']
 export const MilkdownEditor: typeof import("../app/components/MilkdownEditor.vue")['default']
 export const NodeDrawer: typeof import("../app/components/NodeDrawer.vue")['default']
 export const ReadingStreak: typeof import("../app/components/ReadingStreak.vue")['default']
@@ -91,6 +93,7 @@ export const Html: typeof import("../node_modules/nuxt/dist/head/runtime/compone
 export const Body: typeof import("../node_modules/nuxt/dist/head/runtime/components")['Body']
 export const NuxtIsland: typeof import("../node_modules/nuxt/dist/app/components/nuxt-island")['default']
 export const LazyAiMarkdown: LazyComponent<typeof import("../app/components/AiMarkdown.vue")['default']>
+export const LazyAppSelect: LazyComponent<typeof import("../app/components/AppSelect.vue")['default']>
 export const LazyArestaLogoGraph: LazyComponent<typeof import("../app/components/ArestaLogoGraph.vue")['default']>
 export const LazyBottomNavbar: LazyComponent<typeof import("../app/components/BottomNavbar.vue")['default']>
 export const LazyCommandPalette: LazyComponent<typeof import("../app/components/CommandPalette.vue")['default']>
@@ -103,6 +106,7 @@ export const LazyGraphCanvas: LazyComponent<typeof import("../app/components/Gra
 export const LazyHomeBookReaderDemo: LazyComponent<typeof import("../app/components/HomeBookReaderDemo.vue")['default']>
 export const LazyHomeCanvasNotesDemo: LazyComponent<typeof import("../app/components/HomeCanvasNotesDemo.vue")['default']>
 export const LazyHomeKnowledgeGraphDemo: LazyComponent<typeof import("../app/components/HomeKnowledgeGraphDemo.vue")['default']>
+export const LazyManageThemesModal: LazyComponent<typeof import("../app/components/ManageThemesModal.vue")['default']>
 export const LazyMilkdownEditor: LazyComponent<typeof import("../app/components/MilkdownEditor.vue")['default']>
 export const LazyNodeDrawer: LazyComponent<typeof import("../app/components/NodeDrawer.vue")['default']>
 export const LazyReadingStreak: LazyComponent<typeof import("../app/components/ReadingStreak.vue")['default']>

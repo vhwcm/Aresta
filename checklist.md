@@ -3,6 +3,9 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [13/09/2026 09:51] [Concluído] Implementar cascata Gemini 3.7/3.6/3.5 e APIs externas, eliminando fallback offline de livretos
+- [13/09/2026 09:40] [Concluído] Corrigir integração do DidacticBookletService com aiService no monólito eliminando fallback indevido
+- [13/09/2026 09:35] [Concluído] Explorar e documentar a arquitetura de livretos de IA com diagramas ASCII
 - [13/09/2026 09:31] [Concluído] Corrigir ordem de @import do CSS para eliminar warning do PostCSS/Vite
 - [12/09/2026 21:22] [Concluído] Desacoplar URLs locais e viabilizar autenticação OAuth e conexões de API no Android e mobile
 - [12/09/2026 21:18] [Concluído] Atualizar ícones do Android com a logo oficial branca do Aresta e sincronizar build e CI

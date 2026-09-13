@@ -15,6 +15,7 @@ type LazyComponent<T> = DefineComponent<HydrationStrategies, {}, {}, {}, {}, {},
 
 interface _GlobalComponents {
   AiMarkdown: typeof import("../../app/components/AiMarkdown.vue")['default']
+  AppSelect: typeof import("../../app/components/AppSelect.vue")['default']
   ArestaLogoGraph: typeof import("../../app/components/ArestaLogoGraph.vue")['default']
   BottomNavbar: typeof import("../../app/components/BottomNavbar.vue")['default']
   CommandPalette: typeof import("../../app/components/CommandPalette.vue")['default']
@@ -27,6 +28,7 @@ interface _GlobalComponents {
   HomeBookReaderDemo: typeof import("../../app/components/HomeBookReaderDemo.vue")['default']
   HomeCanvasNotesDemo: typeof import("../../app/components/HomeCanvasNotesDemo.vue")['default']
   HomeKnowledgeGraphDemo: typeof import("../../app/components/HomeKnowledgeGraphDemo.vue")['default']
+  ManageThemesModal: typeof import("../../app/components/ManageThemesModal.vue")['default']
   MilkdownEditor: typeof import("../../app/components/MilkdownEditor.vue")['default']
   NodeDrawer: typeof import("../../app/components/NodeDrawer.vue")['default']
   ReadingStreak: typeof import("../../app/components/ReadingStreak.vue")['default']
@@ -91,6 +93,7 @@ interface _GlobalComponents {
   Body: typeof import("../../node_modules/nuxt/dist/head/runtime/components")['Body']
   NuxtIsland: typeof import("../../node_modules/nuxt/dist/app/components/nuxt-island")['default']
   LazyAiMarkdown: LazyComponent<typeof import("../../app/components/AiMarkdown.vue")['default']>
+  LazyAppSelect: LazyComponent<typeof import("../../app/components/AppSelect.vue")['default']>
   LazyArestaLogoGraph: LazyComponent<typeof import("../../app/components/ArestaLogoGraph.vue")['default']>
   LazyBottomNavbar: LazyComponent<typeof import("../../app/components/BottomNavbar.vue")['default']>
   LazyCommandPalette: LazyComponent<typeof import("../../app/components/CommandPalette.vue")['default']>
@@ -103,6 +106,7 @@ interface _GlobalComponents {
   LazyHomeBookReaderDemo: LazyComponent<typeof import("../../app/components/HomeBookReaderDemo.vue")['default']>
   LazyHomeCanvasNotesDemo: LazyComponent<typeof import("../../app/components/HomeCanvasNotesDemo.vue")['default']>
   LazyHomeKnowledgeGraphDemo: LazyComponent<typeof import("../../app/components/HomeKnowledgeGraphDemo.vue")['default']>
+  LazyManageThemesModal: LazyComponent<typeof import("../../app/components/ManageThemesModal.vue")['default']>
   LazyMilkdownEditor: LazyComponent<typeof import("../../app/components/MilkdownEditor.vue")['default']>
   LazyNodeDrawer: LazyComponent<typeof import("../../app/components/NodeDrawer.vue")['default']>
   LazyReadingStreak: LazyComponent<typeof import("../../app/components/ReadingStreak.vue")['default']>

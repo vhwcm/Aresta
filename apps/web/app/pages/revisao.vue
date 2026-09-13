@@ -517,6 +517,17 @@
               placeholder="Selecione a profundidade"
             />
           </div>
+
+          <!-- Alerta de Erro de Geração de IA -->
+          <div
+            v-if="didacticError"
+            class="p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-xs font-interface text-red-400 flex items-start gap-2.5 animate-in fade-in"
+          >
+            <span class="text-base leading-none">⚠️</span>
+            <div class="flex-1 leading-relaxed">
+              {{ didacticError }}
+            </div>
+          </div>
         </div>
 
         <div class="flex items-center justify-end gap-3 pt-2 border-t border-divider">
@@ -987,11 +998,13 @@ const createCardFromSummary = async (summary: AnnotationSummary) => {
 const router = useRouter()
 const didactic = useDidacticBooklet()
 const isDidacticModalOpen = ref(false)
+const didacticError = ref<string | null>(null)
 const selectedBookletMode = ref<'new' | 'append'>('new')
 const selectedTargetBookletId = ref<number | null>(null)
 const selectedDepth = ref<'quick_summary' | 'standard' | 'deep_dive'>('standard')
 
 const openDidacticModal = async () => {
+  didacticError.value = null
   isDidacticModalOpen.value = true
   await didactic.fetchBooklets()
   if (didactic.booklets.value.length > 0 && !selectedTargetBookletId.value) {
@@ -1001,6 +1014,7 @@ const openDidacticModal = async () => {
 
 const generateDidacticBooklet = async () => {
   if (!currentCard.value) return
+  didacticError.value = null
 
   const topic = currentCard.value.question
   const title = `Didático: ${currentCard.value.question.slice(0, 45)}...`
@@ -1027,8 +1041,11 @@ const generateDidacticBooklet = async () => {
         await router.push(`/reader?bookId=${result.book.id}`)
       }
     }
-  } catch (err) {
+  } catch (err: any) {
     console.error('Erro ao gerar livro didático com IA:', err)
+    didacticError.value =
+      err.message ||
+      'Não foi possível gerar a explicação com Inteligência Artificial no momento. Por favor, tente novamente em instantes.'
   }
 }
 </script>

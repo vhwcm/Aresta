@@ -1,24 +1,131 @@
 import { TaskType } from '@google/generative-ai'
+import axios from 'axios'
 import {
   genAI,
+  flashcardAI,
+  didacticAI,
   GEMINI_MODEL,
+  GEMINI_FLASHCARD_MODEL,
+  GEMINI_DIDACTIC_MODEL,
+  GEMINI_MODEL_CASCADE,
   GEMINI_EMBED_MODEL,
   EMBED_DIMENSIONS,
-  getFlashcardModel,
-  getDidacticModel,
+  fallbackAiConfig,
 } from '../config/gemini.config'
 
 export class AiService {
   /**
+   * Executa chat com cascata hierárquica de modelos:
+   * 1. Gemini (3.7 -> 3.6 -> 3.5)
+   * 2. Provedor Externo configurado no .env (OpenAI / Groq / OpenRouter)
+   * 3. Lança erro caso todas as tentativas falhem (sem dados falsos/estáticos)
+   */
+  async executeChatCascade(options: {
+    userPrompt: string
+    systemInstruction?: string
+    clientType?: 'general' | 'flashcard' | 'didactic'
+    overrideModels?: string[]
+  }): Promise<string> {
+    const client =
+      options.clientType === 'didactic'
+        ? didacticAI
+        : options.clientType === 'flashcard'
+        ? flashcardAI
+        : genAI
+
+    const preferredModel =
+      options.clientType === 'didactic'
+        ? GEMINI_DIDACTIC_MODEL
+        : options.clientType === 'flashcard'
+        ? GEMINI_FLASHCARD_MODEL
+        : GEMINI_MODEL
+
+    const modelsToTry = [
+      ...new Set(
+        (options.overrideModels || [preferredModel, ...GEMINI_MODEL_CASCADE]).filter(Boolean)
+      ),
+    ]
+
+    let lastError: any = null
+
+    // 1. Tenta a sequência de modelos Gemini
+    for (const modelName of modelsToTry) {
+      try {
+        const model = client.getGenerativeModel({
+          model: modelName,
+          ...(options.systemInstruction ? { systemInstruction: options.systemInstruction } : {}),
+        })
+        const result = await model.generateContent(options.userPrompt)
+        const text = result.response.text()
+        if (text && text.trim().length > 0) {
+          return text
+        }
+      } catch (err: any) {
+        lastError = err
+        console.warn(`[AiService] Tentativa com ${modelName} falhou:`, err?.message || err)
+      }
+    }
+
+    // 2. Tenta provedor fallback externo se configurado no .env
+    if (fallbackAiConfig.isConfigured) {
+      try {
+        console.info(
+          `[AiService] Tentando provedor externo de fallback: ${fallbackAiConfig.baseUrl} (${fallbackAiConfig.model})...`
+        )
+        const messages: Array<{ role: 'system' | 'user'; content: string }> = []
+        if (options.systemInstruction) {
+          messages.push({ role: 'system', content: options.systemInstruction })
+        }
+        messages.push({ role: 'user', content: options.userPrompt })
+
+        const response = await axios.post(
+          `${fallbackAiConfig.baseUrl}/chat/completions`,
+          {
+            model: fallbackAiConfig.model,
+            messages,
+            temperature: 0.7,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${fallbackAiConfig.apiKey}`,
+              'Content-Type': 'application/json',
+            },
+            timeout: 30000,
+          }
+        )
+
+        const reply = response.data?.choices?.[0]?.message?.content
+        if (reply && reply.trim().length > 0) {
+          return reply
+        }
+      } catch (fallbackErr: any) {
+        lastError = fallbackErr
+        console.error(
+          '[AiService] Provedor externo de fallback falhou:',
+          fallbackErr?.response?.data || fallbackErr?.message || fallbackErr
+        )
+      }
+    }
+
+    // 3. Se todos falharem, lança erro genérico limpo (sem fallback offline mockado)
+    const genericMessage =
+      'Não foi possível obter resposta da Inteligência Artificial no momento. Por favor, tente novamente em instantes.'
+    const error: any = new Error(genericMessage)
+    error.statusCode = 503
+    error.code = 'AI_UNAVAILABLE'
+    error.originalError = lastError
+    throw error
+  }
+
+  /**
    * Generate text from a prompt using the default/general AI client
    */
   async generate(prompt: string, systemInstruction?: string): Promise<string> {
-    const model = genAI.getGenerativeModel({
-      model: GEMINI_MODEL,
-      ...(systemInstruction ? { systemInstruction } : {}),
+    return this.executeChatCascade({
+      userPrompt: prompt,
+      systemInstruction,
+      clientType: 'general',
     })
-    const result = await model.generateContent(prompt)
-    return result.response.text()
   }
 
   /**
@@ -71,11 +178,12 @@ Respond ONLY with valid JSON in this exact format:
   "contextSummary": "Brief 1-sentence summary of the context"
 }
 `
-    const model = getFlashcardModel()
-    const result = await model.generateContent(prompt)
-    const text = result.response.text()
+    const text = await this.executeChatCascade({
+      userPrompt: prompt,
+      clientType: 'flashcard',
+    })
     const json = text.match(/\{[\s\S]*\}/)?.[0]
-    if (!json) throw new Error('Failed to parse flashcard JSON from AI response')
+    if (!json) throw new Error('Falha ao interpretar JSON de flashcard gerado pela IA.')
     return JSON.parse(json)
   }
 
@@ -96,7 +204,8 @@ Respond ONLY with valid JSON in this exact format:
   }
 
   /**
-   * Generate rich didactic explanation (Markdown + Mermaid + Callouts) using dedicated Didactic / Tutor AI API
+   * Generate rich didactic explanation (Markdown + Mermaid + Callouts) using dedicated Didactic / Tutor AI API.
+   * SEM FALLBACK OFFLINE: Se a IA falhar em todos os modelos e provedores, propaga o erro.
    */
   async generateDidacticExplanation(params: {
     topic: string
@@ -128,24 +237,21 @@ Idioma: ${userLanguage}.`
     if (annotationQuote) userPrompt += `Trecho grifado: "${annotationQuote}" (${annotationNote ?? ''})\n`
     userPrompt += `Profundidade: ${depthLevel}`
 
-    try {
-      const model = getDidacticModel(systemPrompt)
-      const result = await model.generateContent(userPrompt)
-      const generated = result.response.text()
-      const matches = generated.match(/```mermaid[\s\S]*?```/g)
-      const titleMatch = generated.match(/^#\s+(.+)$/m)
-      const title = titleMatch ? titleMatch[1].replace(/[*_#]/g, '').trim() : `Didático: ${topic}`
+    // Executa em cascata (3.7 -> 3.6 -> 3.5 -> APIs externas). Lança erro se falhar.
+    const generated = await this.executeChatCascade({
+      userPrompt,
+      systemInstruction: systemPrompt,
+      clientType: 'didactic',
+    })
 
-      return {
-        title,
-        markdown: generated,
-        diagramCount: matches ? matches.length : 0,
-      }
-    } catch {
-      // Fallback determinístico caso API esteja indisponível
-      const title = `Didático: ${topic}`
-      const markdown = `# ${title}\n\n> [!ANALOGY]\n> Pense em **${topic}** como um sistema bem orquestrado onde cada etapa depende da integridade da anterior.\n\n---\n\n## 1. Princípio Central\n\n> [!KEY_CONCEPT]\n> A essência de ${topic} é isolar a complexidade e oferecer previsibilidade.\n\n---\n\n## 2. Diagrama Visual\n\n\`\`\`mermaid\nflowchart TD\n    A[🎯 Entrada: ${topic.slice(0, 20)}] --> B[⚙️ Processamento]\n    B --> C[✅ Conclusão & Fixação]\n\`\`\`\n\n---\n\n> [!TIP]\n> Foque primeiro na intuição fundamental.\n\n> [!WARNING]\n> Evite decorar termos sem compreender a mecânica de causa e efeito.\n`
-      return { title, markdown, diagramCount: 1 }
+    const matches = generated.match(/```mermaid[\s\S]*?```/g)
+    const titleMatch = generated.match(/^#\s+(.+)$/m)
+    const title = titleMatch ? titleMatch[1].replace(/[*_#]/g, '').trim() : `Didático: ${topic}`
+
+    return {
+      title,
+      markdown: generated,
+      diagramCount: matches ? matches.length : 0,
     }
   }
 
@@ -163,11 +269,10 @@ Idioma: ${userLanguage}.`
 
     const userPrompt = promptHint || 'Transcribe exclusively all written and handwritten text in this image. Do not add any conversational text or formatting.'
 
-    const candidateModels = [GEMINI_MODEL, 'gemini-3.5-flash', 'gemini-3.5-flash-lite']
-    const modelsToTry = [...new Set(candidateModels.filter(Boolean))]
+    const candidateModels = [...new Set([GEMINI_MODEL, ...GEMINI_MODEL_CASCADE].filter(Boolean))]
 
     let lastError: any = null
-    for (const modelName of modelsToTry) {
+    for (const modelName of candidateModels) {
       try {
         const model = genAI.getGenerativeModel({
           model: modelName,
@@ -189,7 +294,7 @@ Idioma: ${userLanguage}.`
         return { text: cleanedText }
       } catch (err: any) {
         lastError = err
-        console.warn(`[AiService] Tentativa com modelo ${modelName} falhou:`, err.message)
+        console.warn(`[AiService] Tentativa com modelo ${modelName} falhou:`, err?.message || err)
       }
     }
 
