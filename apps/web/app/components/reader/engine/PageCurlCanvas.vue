@@ -279,8 +279,8 @@ const pageStackDepth = computed(() => {
 
 const activeTheme = computed(() => store.readerTheme || 'sepia')
 const themeBgColor = computed(() => {
-  if (activeTheme.value === 'white') return '#ffffff'
-  if (activeTheme.value === 'black') return '#121214'
+  if (activeTheme.value === 'white') return '#f8f9fa'
+  if (activeTheme.value === 'black') return '#0c0c0e'
   return '#f5eedc'
 })
 
@@ -1414,27 +1414,56 @@ defineExpose({
 
 .theme-black .page-curl-wrapper,
 .theme-black .book-3d-stage,
-.theme-black .spread-container,
+.theme-black .spread-container {
+  background-color: #0c0c0e !important;
+}
+
 .theme-black .page-sheet {
-  background-color: #121214 !important;
+  background-color: #19181d !important;
+}
+
+.theme-black .page-sheet--left {
+  box-shadow: inset -14px 0 20px -8px rgba(0, 0, 0, 0.8), -6px 8px 24px rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-right: 2px solid rgba(0, 0, 0, 0.7);
+  border-top-left-radius: 6px;
+  border-bottom-left-radius: 6px;
+}
+
+.theme-black .page-sheet--right {
+  box-shadow: inset 14px 0 20px -8px rgba(0, 0, 0, 0.8), 6px 8px 24px rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: 2px solid rgba(0, 0, 0, 0.7);
+  border-top-right-radius: 6px;
+  border-bottom-right-radius: 6px;
+}
+
+.theme-black .page-sheet--single {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
 }
 
 .page-sheet--left {
   box-shadow: inset -7px 0 12px -8px rgba(0, 0, 0, 0.5), -4px 0 20px rgba(0, 0, 0, 0.45);
   border-left: 1px solid rgba(255, 255, 255, 0.04);
   border-right: 1px solid rgba(0, 0, 0, 0.12);
+  border-top-left-radius: 6px;
+  border-bottom-left-radius: 6px;
 }
 
 .page-sheet--right {
   box-shadow: inset 7px 0 12px -8px rgba(0, 0, 0, 0.5), 4px 0 20px rgba(0, 0, 0, 0.45);
   border-left: 1px solid rgba(0, 0, 0, 0.12);
   border-right: 1px solid rgba(255, 255, 255, 0.04);
+  border-top-right-radius: 6px;
+  border-bottom-right-radius: 6px;
 }
 
 .page-sheet--single {
   box-shadow: 0 0 24px rgba(0, 0, 0, 0.5);
-  border-left: 1px solid rgba(255, 255, 255, 0.04);
-  border-right: 1px solid rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 6px;
 }
 
 .theme-sepia .page-sheet--left,

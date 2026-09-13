@@ -1,9 +1,9 @@
 # Checklist
 
 ## 🔄 Em Andamento
-- [13/09/2026 17:12] [Fazendo] Aprimorar layout e demonstrações do livreto: glassmorphism, bordas, profundidade e acentos coloridos
 
 ## ✅ Concluído
+- [13/09/2026 17:22] [Concluído] Modernizar layout do livreto: glassmorphism nas demonstrações, profundidade das páginas, contrastes e respiros nas margens e centro
 - [13/09/2026 17:14] [Concluído] Suavizar transição e reorganização dos nós no Grafo com interpolação fluida (easeOutCubic) e duração de 1400ms
 - [13/09/2026 17:10] [Concluído] Corrigir detecção de tipo de livreto didático no cache local para evitar erro invalid zip data
 - [13/09/2026 17:05] [Concluído] Corrigir redirecionamento e carregamento imediato do livreto gerado no ReaderShell e ReaderCreateBookletModal

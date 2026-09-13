@@ -272,7 +272,7 @@ const { fetchAnnotations, annotations, createAnnotation } = useAnnotations()
 const activeTheme = computed(() => store.readerTheme || 'sepia')
 const themeBgColor = computed(() => {
   if (activeTheme.value === 'white') return '#ffffff'
-  if (activeTheme.value === 'black') return '#121214'
+  if (activeTheme.value === 'black') return '#0c0c0e'
   return '#f5eedc'
 })
 
@@ -1014,7 +1014,7 @@ onUnmounted(() => {
 }
 
 .reader-viewer--theme-black .reader-viewer__content-column {
-  background-color: #121214 !important;
+  background-color: #0c0c0e !important;
 }
 
 .reader-viewer__stage-container {
@@ -1139,7 +1139,7 @@ onUnmounted(() => {
 .reader-viewer--theme-black :deep(.page-curl-wrapper),
 .reader-viewer--theme-black :deep(.book-viewport-track),
 .reader-viewer--theme-black :deep(.spread-container) {
-  background-color: #121214 !important;
+  background-color: #0c0c0e !important;
 }
 
 /* Botões de Navegação adaptados a cada tema */

@@ -67,7 +67,7 @@ const route = useRoute()
 const activeTheme = computed(() => store.readerTheme || 'sepia')
 const themeBgColor = computed(() => {
   if (activeTheme.value === 'white') return '#ffffff'
-  if (activeTheme.value === 'black') return '#121214'
+  if (activeTheme.value === 'black') return '#0c0c0e'
   return '#f5eedc'
 })
 

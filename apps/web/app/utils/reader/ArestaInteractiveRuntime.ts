@@ -94,6 +94,46 @@ export class ArestaInteractiveRuntime {
 
       let currentStepIndex = 0
 
+      // Injeta cabeçalho visual e dots se ainda não existirem
+      let dotsContainer = stepper.querySelector<HTMLElement>('.aresta-stepper-dots')
+      if (!stepper.querySelector('.aresta-stepper-header')) {
+        const titleText = stepper.dataset.title || 'Demonstração Interativa'
+        const header = document.createElement('div')
+        header.className = 'aresta-stepper-header'
+
+        let dotsHtml = ''
+        for (let i = 0; i < steps.length; i++) {
+          dotsHtml += `<button type="button" class="aresta-stepper-dot${i === 0 ? ' is-active' : ''}" data-step-index="${i}" aria-label="Ir para etapa ${i + 1}"></button>`
+        }
+
+        header.innerHTML = `
+          <div class="aresta-stepper-title-wrap">
+            <span class="aresta-stepper-pill">
+              <span class="aresta-stepper-pulse"></span>
+              <span class="aresta-stepper-title-text">${titleText}</span>
+            </span>
+          </div>
+          <div class="aresta-stepper-dots">${dotsHtml}</div>
+        `
+        stepper.insertBefore(header, stepper.firstChild)
+        dotsContainer = header.querySelector<HTMLElement>('.aresta-stepper-dots')
+      }
+
+      // Injeta barra de progresso visual
+      let progressFill = stepper.querySelector<HTMLElement>('.aresta-stepper-progress-fill')
+      if (!stepper.querySelector('.aresta-stepper-progress-track')) {
+        const track = document.createElement('div')
+        track.className = 'aresta-stepper-progress-track'
+        track.innerHTML = `<div class="aresta-stepper-progress-fill" style="width: ${(1 / steps.length) * 100}%"></div>`
+        const header = stepper.querySelector('.aresta-stepper-header')
+        if (header && header.nextSibling) {
+          stepper.insertBefore(track, header.nextSibling)
+        } else {
+          stepper.insertBefore(track, stepper.firstChild)
+        }
+        progressFill = track.querySelector<HTMLElement>('.aresta-stepper-progress-fill')
+      }
+
       const updateStepsVisibility = () => {
         steps.forEach((step, idx) => {
           if (idx === currentStepIndex) {
@@ -104,6 +144,26 @@ export class ArestaInteractiveRuntime {
             step.style.display = 'none'
           }
         })
+
+        if (progressFill) {
+          progressFill.style.width = `${((currentStepIndex + 1) / steps.length) * 100}%`
+        }
+
+        if (dotsContainer) {
+          const dots = dotsContainer.querySelectorAll('.aresta-stepper-dot')
+          dots.forEach((dot, idx) => {
+            if (idx === currentStepIndex) {
+              dot.classList.add('is-active')
+              dot.classList.add('is-current')
+            } else if (idx < currentStepIndex) {
+              dot.classList.add('is-active')
+              dot.classList.remove('is-current')
+            } else {
+              dot.classList.remove('is-active')
+              dot.classList.remove('is-current')
+            }
+          })
+        }
 
         const indicator = stepper.querySelector<HTMLElement>('.aresta-stepper-indicator')
         if (indicator) {
@@ -151,6 +211,19 @@ export class ArestaInteractiveRuntime {
       nextBtn?.addEventListener('click', handleNext)
       if (prevBtn) cleanupFns.push(() => prevBtn.removeEventListener('click', handlePrev))
       if (nextBtn) cleanupFns.push(() => nextBtn.removeEventListener('click', handleNext))
+
+      if (dotsContainer) {
+        const handleDotsClick = (e: MouseEvent) => {
+          const target = (e.target as HTMLElement).closest<HTMLElement>('.aresta-stepper-dot')
+          if (target && target.dataset.stepIndex !== undefined) {
+            e.stopPropagation()
+            currentStepIndex = parseInt(target.dataset.stepIndex, 10)
+            updateStepsVisibility()
+          }
+        }
+        dotsContainer.addEventListener('click', handleDotsClick)
+        cleanupFns.push(() => dotsContainer?.removeEventListener('click', handleDotsClick))
+      }
 
       // Inicia exibição no primeiro passo
       updateStepsVisibility()
