@@ -3,6 +3,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [13/09/2026 13:25] [Concluído] Instalar OpenSSL nos containers da API para compatibilidade do Prisma na AWS
 - [13/09/2026 13:03] [Concluído] Corrigir Docker Compose para a arquitetura monolítica apps/api e apps/web na AWS
 - [13/09/2026 12:53] [Concluído] Criar documentação completa de deploy e configuração na AWS EC2 em docs/guides/aws-deploy-guide.md
 - [13/09/2026 12:45] [Concluído] Configurar armazenamento seguro da chave SSH da AWS em ~/.aresta/chave-ssh-aws e script npm run connect-aws
