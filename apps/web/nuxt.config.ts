@@ -1,5 +1,17 @@
 // @ts-nocheck
+import fs from 'node:fs'
+import path from 'node:path'
 import { defineNuxtConfig } from 'nuxt/config'
+
+const envCandidates = [
+  path.resolve(process.cwd(), '.env'),
+  path.resolve(process.cwd(), '../.env'),
+  path.resolve(process.cwd(), '../../.env'),
+]
+const rootEnvPath = envCandidates.find((candidate) => fs.existsSync(candidate))
+if (rootEnvPath && typeof process.loadEnvFile === 'function') {
+  process.loadEnvFile(rootEnvPath)
+}
 
 export default defineNuxtConfig({
   telemetry: false,
@@ -92,4 +104,3 @@ export default defineNuxtConfig({
     },
   },
 }) as any
-

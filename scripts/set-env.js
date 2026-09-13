@@ -3,8 +3,7 @@
 /**
  * Aresta Monolith — Environment Variable Manager
  * 
- * Permite definir, consultar e listar variáveis de ambiente nos arquivos .env
- * do monólito (raiz, apps/api e apps/web).
+ * Permite definir, consultar e listar variáveis de ambiente no .env raiz.
  *
  * Sintaxe de uso:
  *   npm run set-env [VARIAVEL] [VALOR]
@@ -12,11 +11,7 @@
  *   npm run set-env --get [VARIAVEL]
  *   npm run set-env --list
  * 
- * Opções de alvo:
- *   --target=api | --api      Apenas apps/api/.env
- *   --target=web | --web      Apenas apps/web/.env
- *   --target=root | --root    Apenas .env na raiz
- *   --target=all | --all      Em todos os arquivos .env
+ * O monólito usa um único arquivo de ambiente na raiz.
  */
 
 const fs = require('fs');
@@ -30,18 +25,6 @@ const TARGETS = [
     name: 'Raiz (.env)',
     envPath: path.join(ROOT_DIR, '.env'),
     examplePath: path.join(ROOT_DIR, '.env.example')
-  },
-  {
-    id: 'api',
-    name: 'Backend (apps/api/.env)',
-    envPath: path.join(ROOT_DIR, 'apps', 'api', '.env'),
-    examplePath: path.join(ROOT_DIR, 'apps', 'api', '.env.example')
-  },
-  {
-    id: 'web',
-    name: 'Frontend (apps/web/.env)',
-    envPath: path.join(ROOT_DIR, 'apps', 'web', '.env'),
-    examplePath: path.join(ROOT_DIR, 'apps', 'web', '.env.example')
   }
 ];
 
@@ -208,12 +191,6 @@ function showHelp() {
 \x1b[1mConsultar e Listar:\x1b[0m
   npm run set-env --get [VARIAVEL]     Consultar valor atual
   npm run set-env --list               Listar todas as variáveis configuradas
-
-\x1b[1mFiltrar por Alvo:\x1b[0m
-  --api   ou --target=api    Apenas apps/api/.env
-  --web   ou --target=web    Apenas apps/web/.env
-  --root  ou --target=root   Apenas .env raiz
-  --all   ou --target=all    Forçar atualização em todos os .env
 `);
 }
 
@@ -230,18 +207,10 @@ function main() {
     process.exit(0);
   }
 
-  // Parse target flags
-  let targetFilter = null;
   const filteredArgs = [];
 
   for (const arg of rawArgs) {
-    if (arg === '--api' || arg === '-a') targetFilter = 'api';
-    else if (arg === '--web' || arg === '-w') targetFilter = 'web';
-    else if (arg === '--root' || arg === '-r') targetFilter = 'root';
-    else if (arg === '--all') targetFilter = 'all';
-    else if (arg.startsWith('--target=')) {
-      targetFilter = arg.split('=')[1].trim().toLowerCase();
-    } else {
+    if (!['--api', '-a', '--web', '-w', '--root', '-r', '--all'].includes(arg) && !arg.startsWith('--target=')) {
       filteredArgs.push(arg);
     }
   }
@@ -279,58 +248,7 @@ function main() {
     process.exit(1);
   }
 
-  // Resolve which targets to update
-  let selectedTargets = [];
-
-  if (targetFilter && targetFilter !== 'all') {
-    const matched = TARGETS.find(t => t.id === targetFilter);
-    if (!matched) {
-      console.error(`\x1b[31mErro:\x1b[0m Alvo inválido "${targetFilter}". Use 'api', 'web', 'root' ou 'all'.`);
-      process.exit(1);
-    }
-    selectedTargets = [matched];
-  } else if (targetFilter === 'all') {
-    selectedTargets = TARGETS;
-  } else {
-    // Smart target resolution:
-    // 1. Where does it already exist in existing .env files?
-    const existingIn = TARGETS.filter(t => {
-      if (!fs.existsSync(t.envPath)) return false;
-      const parsed = parseEnvFile(t.envPath);
-      return parsed.some(p => p.type === 'var' && p.key === key);
-    });
-
-    if (existingIn.length > 0) {
-      selectedTargets = existingIn;
-    } else {
-      // 2. Check in .env.example files
-      const exampleIn = TARGETS.filter(t => {
-        if (!fs.existsSync(t.examplePath)) return false;
-        const parsed = parseEnvFile(t.examplePath);
-        return parsed.some(p => p.type === 'var' && p.key === key);
-      });
-
-      if (exampleIn.length > 0) {
-        selectedTargets = exampleIn;
-      } else {
-        // 3. Heuristics based on key prefix
-        if (key.startsWith('NUXT_') || key.startsWith('VITE_')) {
-          selectedTargets = [TARGETS.find(t => t.id === 'web')];
-        } else if (
-          key.startsWith('PORT') ||
-          key.startsWith('DATABASE_') ||
-          key.startsWith('JWT_') ||
-          key.startsWith('STORAGE_') ||
-          key.startsWith('GEMINI_')
-        ) {
-          selectedTargets = [TARGETS.find(t => t.id === 'api')];
-        } else {
-          // Default to root
-          selectedTargets = [TARGETS.find(t => t.id === 'root')];
-        }
-      }
-    }
-  }
+  const selectedTargets = TARGETS;
 
   console.log(`\n⚙  Atualizando \x1b[36m${key}\x1b[0m = \x1b[32m${maskValue(key, value)}\x1b[0m\n`);
 
