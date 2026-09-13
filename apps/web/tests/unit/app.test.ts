@@ -9,6 +9,7 @@ describe('App Root (app.vue)', () => {
         stubs: {
           NuxtPage: { template: '<div data-testid="nuxt-page-stub">Page Content</div>' },
           BottomNavbar: { template: '<div data-testid="bottom-navbar-stub">Navbar</div>' },
+          NavbarPageConnector: { template: '<div data-testid="navbar-page-connector-stub" />' },
           CommandPalette: { template: '<div data-testid="command-palette-stub" />' },
           SettingsModal: { template: '<div data-testid="settings-modal-stub" />' },
           StreakCelebrationModal: { template: '<div data-testid="streak-celebration-stub" />' },
