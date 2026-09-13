@@ -1,4 +1,24 @@
 <template>
+  <!-- Camada 1 (z-[40]): Fundo preenchido da navbar com cantos curvados para fora (atrás dos botões) -->
+  <div
+    v-if="isVisible"
+    class="navbar-page-bg fixed inset-y-0 left-0 pointer-events-none z-[40] hidden lg:block md:landscape:block overflow-visible select-none"
+    aria-hidden="true"
+  >
+    <svg
+      :width="svgWidth"
+      :height="viewportHeight"
+      class="w-full h-full overflow-visible"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        :d="fillPathD"
+        fill="var(--bg-panel, #121315)"
+      />
+    </svg>
+  </div>
+
+  <!-- Camada 2 (z-[60]): Linhas e gradiente de contorno unificados (acima da navbar, sem sobreposição) -->
   <div
     v-if="isVisible"
     class="navbar-page-connector fixed inset-y-0 left-0 pointer-events-none z-[60] hidden lg:block md:landscape:block overflow-visible select-none"
@@ -34,7 +54,27 @@
         </filter>
       </defs>
 
-      <!-- Linha de contorno orgânica contínua (renderizada acima da navbar) -->
+      <!-- Prateleira superior da navbar (visível quando o item 0 não estiver ativo) -->
+      <path
+        v-if="topShelfPathD"
+        :d="topShelfPathD"
+        fill="none"
+        stroke="var(--divider, rgba(255, 255, 255, 0.08))"
+        stroke-width="1.5"
+        stroke-linecap="round"
+      />
+
+      <!-- Prateleira inferior da navbar (visível quando o item 4 não estiver ativo) -->
+      <path
+        v-if="bottomShelfPathD"
+        :d="bottomShelfPathD"
+        fill="none"
+        stroke="var(--divider, rgba(255, 255, 255, 0.08))"
+        stroke-width="1.5"
+        stroke-linecap="round"
+      />
+
+      <!-- Linha contínua principal da página com curva côncava envolvendo o ícone ativo -->
       <path
         :d="strokePathD"
         fill="none"
@@ -43,6 +83,16 @@
         stroke-linecap="round"
         stroke-linejoin="round"
         filter="url(#connector-accent-glow)"
+      />
+
+      <!-- Extensão da prateleira até a borda da tela x=0 quando o item 0 ou 4 está ativo -->
+      <path
+        v-if="edgeShelfExtensionD"
+        :d="edgeShelfExtensionD"
+        fill="none"
+        stroke="url(#connector-stroke-gradient)"
+        stroke-width="1.5"
+        stroke-linecap="round"
       />
     </svg>
   </div>
@@ -57,21 +107,21 @@ import { getNavIndexFromPath } from '~/composables/useBottomNavbar'
 const route = useRoute()
 const auth = useAuth()
 
-const svgWidth = 72
+const svgWidth = 80
 const viewportHeight = ref(800)
 
-// Geometria de contorno: quadrado com cantos arredondados envolvendo o ícone ativo (navbar em left: 0)
-const X_PAGE = 62 // Linha vertical conectada à borda da página
-const X_LEFT = 6 // Borda esquerda do quadrado envolvente (deixa margem para o botão de 44px)
-const Y_HALF = 24 // Meia-altura do quadrado envolvente (48px de altura total)
-const R = 8 // Raio das bordas arredondadas (fillets de entrada/saída e cantos)
+// Geometria da navbar colada na tela (left: 0):
+const X_PAGE = 60 // Linha vertical da página e borda direita da navbar (60px)
+const X_LEFT = 6 // Borda esquerda do abraço do ícone (deixa margem para o botão de 44px)
+const Y_HALF = 24 // Meia-altura do abraço (48px total de altura)
+const R = 10 // Raio das curvas côncavas e cantos arredondados
 
 // Offsets verticais de cada botão em relação ao centro vertical (50vh):
-// Índice 0 (Home): -108px
+// Índice 0 (Home): -108px -> topo = -132px
 // Índice 1 (Livros): -54px
 // Índice 2 (Canvas / Notas): 0px
 // Índice 3 (Revisão): +54px
-// Índice 4 (Conta): +108px
+// Índice 4 (Conta): +108px -> base = +132px
 const ITEM_OFFSETS = [-108, -54, 0, 54, 108]
 
 const isVisible = computed(() => {
@@ -137,13 +187,73 @@ watch(
   { immediate: true }
 )
 
-// Caminho do quadrado com bordas arredondadas estendendo-se da página
+// Fundo preenchido da navbar com cantos curvados para fora (concavos)
+const fillPathD = computed(() => {
+  const H = viewportHeight.value
+  const Y_CENTER = H / 2
+  const Y_NAV_TOP = Y_CENTER - 132
+  const Y_NAV_BOTTOM = Y_CENTER + 132
+
+  return [
+    `M 0 ${Y_NAV_TOP}`,
+    `L ${X_PAGE - R} ${Y_NAV_TOP}`,
+    `Q ${X_PAGE} ${Y_NAV_TOP}, ${X_PAGE} ${Y_NAV_TOP - R}`,
+    `L ${X_PAGE} ${Y_NAV_BOTTOM + R}`,
+    `Q ${X_PAGE} ${Y_NAV_BOTTOM}, ${X_PAGE - R} ${Y_NAV_BOTTOM}`,
+    `L 0 ${Y_NAV_BOTTOM}`,
+    `Z`
+  ].join(' ')
+})
+
+// Prateleira superior (quando item 0 não está ativo)
+const topShelfPathD = computed(() => {
+  if (activeIndex.value === 0) return ''
+  const H = viewportHeight.value
+  const Y_CENTER = H / 2
+  const Y_NAV_TOP = Y_CENTER - 132
+
+  return [
+    `M 0 ${Y_NAV_TOP}`,
+    `L ${X_PAGE - R} ${Y_NAV_TOP}`,
+    `Q ${X_PAGE} ${Y_NAV_TOP}, ${X_PAGE} ${Y_NAV_TOP - R}`
+  ].join(' ')
+})
+
+// Prateleira inferior (quando item 4 não está ativo)
+const bottomShelfPathD = computed(() => {
+  if (activeIndex.value === 4) return ''
+  const H = viewportHeight.value
+  const Y_CENTER = H / 2
+  const Y_NAV_BOTTOM = Y_CENTER + 132
+
+  return [
+    `M 0 ${Y_NAV_BOTTOM}`,
+    `L ${X_PAGE - R} ${Y_NAV_BOTTOM}`,
+    `Q ${X_PAGE} ${Y_NAV_BOTTOM}, ${X_PAGE} ${Y_NAV_BOTTOM + R}`
+  ].join(' ')
+})
+
+// Extensão até a borda da tela x=0 para unificar perfeitamente a linha quando o item da ponta estiver ativo
+const edgeShelfExtensionD = computed(() => {
+  const H = viewportHeight.value
+  const Y_CENTER = H / 2
+  if (activeIndex.value === 0) {
+    const Y_NAV_TOP = Y_CENTER - 132
+    return `M 0 ${Y_NAV_TOP} L ${X_LEFT + R} ${Y_NAV_TOP}`
+  }
+  if (activeIndex.value === 4) {
+    const Y_NAV_BOTTOM = Y_CENTER + 132
+    return `M 0 ${Y_NAV_BOTTOM} L ${X_LEFT + R} ${Y_NAV_BOTTOM}`
+  }
+  return null
+})
+
+// Linha de contorno contínua que envolve o ícone ativo
 const strokePathD = computed(() => {
   const H = viewportHeight.value
   const y = currentY.value
 
   if (y === null || activeIndex.value < 0) {
-    // Linha reta vertical se nenhum item estiver ativo
     return `M ${X_PAGE} 0 L ${X_PAGE} ${H}`
   }
 
@@ -152,9 +262,9 @@ const strokePathD = computed(() => {
 
   return [
     `M ${X_PAGE} 0`,
-    // Reta vertical superior até o início da curva de entrada
+    // Reta vertical da página até a curva superior
     `L ${X_PAGE} ${yTop - R}`,
-    // Curva de entrada superior conectando a vertical à horizontal superior
+    // Curva côncava superior conectando a vertical à horizontal superior
     `Q ${X_PAGE} ${yTop}, ${X_PAGE - R} ${yTop}`,
     // Borda superior horizontal
     `L ${X_LEFT + R} ${yTop}`,
@@ -166,7 +276,7 @@ const strokePathD = computed(() => {
     `Q ${X_LEFT} ${yBottom}, ${X_LEFT + R} ${yBottom}`,
     // Borda inferior horizontal
     `L ${X_PAGE - R} ${yBottom}`,
-    // Curva de saída inferior conectando a horizontal de volta à vertical da página
+    // Curva côncava inferior conectando a horizontal de volta à vertical da página
     `Q ${X_PAGE} ${yBottom}, ${X_PAGE} ${yBottom + R}`,
     // Reta vertical inferior até o fim da tela
     `L ${X_PAGE} ${H}`
@@ -240,7 +350,8 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.navbar-page-bg,
 .navbar-page-connector {
-  width: 72px;
+  width: 80px;
 }
 </style>

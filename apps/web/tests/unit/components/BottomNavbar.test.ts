@@ -287,11 +287,11 @@ describe('BottomNavbar Component', () => {
     expect(navWrapper.classes()).toContain('lg:top-1/2')
     expect(navWrapper.classes()).toContain('lg:-translate-y-1/2')
     expect(navWrapper.classes()).toContain('lg:left-0')
-    expect(navWrapper.classes()).toContain('lg:rounded-r-3xl')
+    expect(navWrapper.classes()).toContain('lg:bg-transparent')
     expect(navWrapper.classes()).toContain('md:landscape:top-1/2')
     expect(navWrapper.classes()).toContain('md:landscape:-translate-y-1/2')
     expect(navWrapper.classes()).toContain('md:landscape:left-0')
-    expect(navWrapper.classes()).toContain('md:landscape:rounded-r-3xl')
+    expect(navWrapper.classes()).toContain('md:landscape:bg-transparent')
 
     const nav = wrapper.find('.app-nav')
     expect(nav.exists()).toBe(true)

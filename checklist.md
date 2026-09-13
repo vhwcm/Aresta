@@ -1,8 +1,14 @@
 # Checklist
 
 ## 🔄 Em Andamento
+- [13/09/2026 16:19] [Fazendo] Aumentar a logo do Aresta na aba do navegador (favicon SVG e PNGs de alta definição)
+
 
 ## ✅ Concluído
+- [13/09/2026 16:21] [Concluído] Corrigir orientação da curvatura côncava para fora da navbar, elevar z-index da linha e unificar borda nos ícones das pontas
+- [13/09/2026 16:19] [Concluído] Desacoplar pan/zoom do canvas ao puxar arestas magnéticas em nós (d3.zoom filter estrito)
+- [13/09/2026 16:18] [Concluído] Implementar expansão radial hierárquica estrita: descendentes (livretos/filhos) posicionam-se sempre para fora na mesma direção radial
+- [13/09/2026 16:13] [Concluído] Corrigir desaparecimento de nós no Grafo: sincronizar DATABASE_URL do Prisma e ancorar layout radial no D3
 - [13/09/2026 15:58] [Concluído] Otimizar layout radial clusterizado, auto-fit na tela, micro-balanço sutil e conexões por arestas magnéticas no Grafo
 - [13/09/2026 15:53] [Concluído] Criar regra inegociável de migrations Prisma em .agent/rules/database-migrations.md e AGENTS.md
 - [13/09/2026 15:51] [Concluído] Criar migration e tabela accounts no PostgreSQL para autenticação OAuth 2.0

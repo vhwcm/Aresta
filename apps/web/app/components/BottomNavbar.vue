@@ -1,7 +1,7 @@
 <template>
   <div
     v-if="isVisible"
-    class="app-navbar-wrapper fixed z-50 transition-all duration-300 pointer-events-auto bottom-0 left-0 right-0 w-full bg-bgPanel border-t border-divider shadow-[0_-4px_24px_rgba(0,0,0,0.12)] lg:bottom-auto lg:right-auto lg:top-1/2 lg:-translate-y-1/2 lg:left-0 lg:w-auto lg:h-auto lg:rounded-r-3xl lg:rounded-l-none lg:border-y lg:border-r lg:border-l-0 lg:shadow-2xl md:landscape:bottom-auto md:landscape:right-auto md:landscape:top-1/2 md:landscape:-translate-y-1/2 md:landscape:left-0 md:landscape:w-auto md:landscape:h-auto md:landscape:rounded-r-3xl md:landscape:rounded-l-none md:landscape:border-y md:landscape:border-r md:landscape:border-l-0 md:landscape:shadow-2xl"
+    class="app-navbar-wrapper fixed z-50 transition-all duration-300 pointer-events-auto bottom-0 left-0 right-0 w-full bg-bgPanel border-t border-divider shadow-[0_-4px_24px_rgba(0,0,0,0.12)] lg:bottom-auto lg:right-auto lg:top-1/2 lg:-translate-y-1/2 lg:left-0 lg:w-auto lg:h-auto lg:bg-transparent lg:border-none lg:shadow-none lg:rounded-none md:landscape:bottom-auto md:landscape:right-auto md:landscape:top-1/2 md:landscape:-translate-y-1/2 md:landscape:left-0 md:landscape:w-auto md:landscape:h-auto md:landscape:bg-transparent md:landscape:border-none md:landscape:shadow-none md:landscape:rounded-none"
     role="navigation"
     aria-label="Navegação Principal"
   >
@@ -282,11 +282,10 @@ onUnmounted(() => {
     transform: translateY(-50%) !important;
     width: auto !important;
     height: auto !important;
-    border-radius: 0 1.5rem 1.5rem 0 !important;
-    border: 1px solid var(--divider, rgba(255, 255, 255, 0.08)) !important;
-    border-left: none !important;
-    box-shadow: 0 20px 40px -8px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.06) !important;
-    background-color: var(--bg-panel, #121315) !important;
+    border-radius: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background-color: transparent !important;
   }
 
   .app-nav {
@@ -297,6 +296,7 @@ onUnmounted(() => {
     padding: 0.625rem 0.5rem !important;
     gap: 0.625rem !important;
     margin: 0 !important;
+    background-color: transparent !important;
   }
 
   .app-dropdown-books {
