@@ -3,6 +3,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [13/09/2026 16:49] [Concluído] Garantir renderização imediata e persistente de arestas e reorganização radial dos nós conectados no Grafo
 - [13/09/2026 16:40] [Concluído] Aplicar supressão universal de barras de rolagem no main.css do Nuxt 4 (app/assets) e no feed da home
 - [13/09/2026 16:35] [Concluído] Persistir conexões de livros e temas na API e IndexedDB com reorganização imediata e aproximação dos nós no Grafo
 - [13/09/2026 16:35] [Concluído] Ocultar barra de scroll visualmente em toda a interface mantendo navegação por roda do mouse

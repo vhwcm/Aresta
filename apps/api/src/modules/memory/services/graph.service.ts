@@ -32,6 +32,38 @@ export class GraphService {
       },
     })
 
+    const userBookIds = new Set(userBooks.map((ub) => ub.book.id))
+    const referencedBookIds = new Set<number>()
+    for (const t of themes) {
+      for (const bt of t.bookThemes || []) {
+        if (!userBookIds.has(bt.book_id)) {
+          referencedBookIds.add(bt.book_id)
+        }
+      }
+    }
+
+    const additionalBooks = referencedBookIds.size > 0
+      ? await prisma.book.findMany({
+          where: { id: { in: Array.from(referencedBookIds) } },
+          include: {
+            publicInfo: true,
+            bookThemes: { include: { theme: true } },
+          },
+        })
+      : []
+
+    const allBooksMap = new Map<number, any>()
+    for (const ub of userBooks) {
+      allBooksMap.set(ub.book.id, ub.book)
+    }
+    for (const b of additionalBooks) {
+      if (!allBooksMap.has(b.id)) {
+        allBooksMap.set(b.id, b)
+      }
+    }
+    const allBooks = Array.from(allBooksMap.values())
+
+
     const notes = await prisma.note.findMany({
       where: { user_id: userId },
       include: {
@@ -115,17 +147,17 @@ export class GraphService {
     })
 
     // 2. Nós de Livros
-    const bookNodes = userBooks.map((ub) => ({
-      id: `book-${ub.book.id}`,
-      rawId: ub.book.id,
+    const bookNodes = allBooks.map((b) => ({
+      id: `book-${b.id}`,
+      rawId: b.id,
       type: 'book' as const,
-      name: ub.book.title,
-      title: ub.book.title,
-      fullTitle: ub.book.title,
-      coverPath: ub.book.cover_path,
-      filePath: ub.book.file_path,
-      author: ub.book.publicInfo?.author || 'Autor Desconhecido',
-      summary: ub.book.publicInfo?.summary || null,
+      name: b.title,
+      title: b.title,
+      fullTitle: b.title,
+      coverPath: b.cover_path,
+      filePath: b.file_path,
+      author: b.publicInfo?.author || 'Autor Desconhecido',
+      summary: b.publicInfo?.summary || null,
       color: '#3B82F6',
     }))
 
@@ -207,10 +239,15 @@ export class GraphService {
     }
 
     // Arestas: Livro com Tema
-    for (const ub of userBooks) {
-      for (const bt of ub.book.bookThemes || []) {
+    const processedBookThemePairs = new Set<string>()
+    for (const b of allBooks) {
+      for (const bt of b.bookThemes || []) {
         if (activeThemeIds.has(bt.theme_id)) {
-          addEdge(`edge-bt-${ub.book.id}-${bt.theme_id}`, `book-${ub.book.id}`, bt.theme_id, 'book-theme')
+          const pairKey = `${b.id}-${bt.theme_id}`
+          if (!processedBookThemePairs.has(pairKey)) {
+            processedBookThemePairs.add(pairKey)
+            addEdge(`edge-bt-${b.id}-${bt.theme_id}`, `book-${b.id}`, bt.theme_id, 'book-theme')
+          }
         }
       }
     }
@@ -379,7 +416,58 @@ export class GraphService {
       where: { id },
     })
   }
+
+  async linkBook(themeId: number, bookId: number) {
+    return prisma.bookTheme.upsert({
+      where: {
+        book_id_theme_id: {
+          book_id: bookId,
+          theme_id: themeId,
+        },
+      },
+      create: {
+        book_id: bookId,
+        theme_id: themeId,
+      },
+      update: {},
+    })
+  }
+
+  async unlinkBook(themeId: number, bookId: number) {
+    return prisma.bookTheme.deleteMany({
+      where: {
+        book_id: bookId,
+        theme_id: themeId,
+      },
+    })
+  }
+
+  async createConnection(sourceId: number, targetId: number) {
+    return prisma.themeHierarchy.upsert({
+      where: {
+        parent_theme_id_child_theme_id: {
+          parent_theme_id: sourceId,
+          child_theme_id: targetId,
+        },
+      },
+      create: {
+        parent_theme_id: sourceId,
+        child_theme_id: targetId,
+      },
+      update: {},
+    })
+  }
+
+  async deleteConnection(sourceId: number, targetId: number) {
+    return prisma.themeHierarchy.deleteMany({
+      where: {
+        parent_theme_id: sourceId,
+        child_theme_id: targetId,
+      },
+    })
+  }
 }
 
 export const graphService = new GraphService()
+
 

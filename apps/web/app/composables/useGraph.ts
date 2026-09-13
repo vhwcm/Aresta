@@ -178,10 +178,43 @@ export const useGraph = () => {
           return hasBook || hasNote
         })
 
-        const activeNodeIds = new Set(nodes.map((n) => String(n.id)))
+        const activeNodeIds = new Set<string>()
+        for (const n of nodes) {
+          activeNodeIds.add(String(n.id))
+          if (n.rawId !== undefined && n.rawId !== null) {
+            activeNodeIds.add(String(n.rawId))
+            activeNodeIds.add(`${n.type || 'theme'}-${n.rawId}`)
+          }
+        }
+
+        const isNodeActive = (id: any) => {
+          if (!id && id !== 0) return false
+          const s = String(id)
+          if (activeNodeIds.has(s)) return true
+          const stripped = s.replace(/^(book-|theme-|note-|canvas-|annotation-)/, '')
+          if (activeNodeIds.has(stripped)) return true
+          for (const prefix of ['book-', 'theme-', 'note-', 'canvas-', 'annotation-']) {
+            if (activeNodeIds.has(`${prefix}${stripped}`)) return true
+          }
+          return false
+        }
+
         edges = edges.filter(
-          (e) => activeNodeIds.has(String(e.source)) && activeNodeIds.has(String(e.target))
+          (e) => isNodeActive(e.source) && isNodeActive(e.target)
         )
+
+        // Preservar arestas recém-criadas no frontend que conectam nós válidos
+        const serverEdgeKeys = new Set(
+          edges.map((e) => `${String(e.source)}---${String(e.target)}`)
+        )
+        const currentEdges = graphData.value?.edges || []
+        for (const ce of currentEdges) {
+          const k1 = `${String(ce.source)}---${String(ce.target)}`
+          const k2 = `${String(ce.target)}---${String(ce.source)}`
+          if (!serverEdgeKeys.has(k1) && !serverEdgeKeys.has(k2) && isNodeActive(ce.source) && isNodeActive(ce.target)) {
+            edges.push(ce)
+          }
+        }
 
         graphData.value = {
           nodes,

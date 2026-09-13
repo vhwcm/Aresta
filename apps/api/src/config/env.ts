@@ -33,3 +33,9 @@ export const env = {
   FALLBACK_AI_API_KEY: process.env.FALLBACK_AI_API_KEY || process.env.OPENAI_API_KEY || process.env.GROQ_API_KEY || '',
   FALLBACK_AI_MODEL: process.env.FALLBACK_AI_MODEL || 'gpt-4o-mini',
 }
+
+// Garantir que process.env seja populado para o Prisma Client e dependências
+if (!process.env.DATABASE_URL) {
+  process.env.DATABASE_URL = env.DATABASE_URL
+}
+

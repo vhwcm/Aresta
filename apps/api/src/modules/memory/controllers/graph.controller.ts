@@ -96,7 +96,68 @@ export class GraphController {
       res.status(500).json({ error: err.message })
     }
   }
+
+  async linkBook(req: Request, res: Response): Promise<void> {
+    try {
+      const themeId = parseInt(String(req.params.id), 10)
+      const bookId = parseInt(String(req.body.bookId), 10)
+      if (isNaN(themeId) || isNaN(bookId)) {
+        res.status(400).json({ error: 'IDs de tema e livro inválidos' })
+        return
+      }
+      const link = await graphService.linkBook(themeId, bookId)
+      res.status(201).json(link)
+    } catch (err: any) {
+      res.status(500).json({ error: err.message })
+    }
+  }
+
+  async unlinkBook(req: Request, res: Response): Promise<void> {
+    try {
+      const themeId = parseInt(String(req.params.id), 10)
+      const bookId = parseInt(String(req.params.bookId), 10)
+      if (isNaN(themeId) || isNaN(bookId)) {
+        res.status(400).json({ error: 'IDs de tema e livro inválidos' })
+        return
+      }
+      await graphService.unlinkBook(themeId, bookId)
+      res.json({ success: true })
+    } catch (err: any) {
+      res.status(500).json({ error: err.message })
+    }
+  }
+
+  async createConnection(req: Request, res: Response): Promise<void> {
+    try {
+      const sourceId = parseInt(String(req.body.sourceId), 10)
+      const targetId = parseInt(String(req.body.targetId), 10)
+      if (isNaN(sourceId) || isNaN(targetId)) {
+        res.status(400).json({ error: 'IDs de origem e destino inválidos' })
+        return
+      }
+      const conn = await graphService.createConnection(sourceId, targetId)
+      res.status(201).json(conn)
+    } catch (err: any) {
+      res.status(500).json({ error: err.message })
+    }
+  }
+
+  async deleteConnection(req: Request, res: Response): Promise<void> {
+    try {
+      const sourceId = parseInt(String(req.params.sourceId), 10)
+      const targetId = parseInt(String(req.params.targetId), 10)
+      if (isNaN(sourceId) || isNaN(targetId)) {
+        res.status(400).json({ error: 'IDs de origem e destino inválidos' })
+        return
+      }
+      await graphService.deleteConnection(sourceId, targetId)
+      res.json({ success: true })
+    } catch (err: any) {
+      res.status(500).json({ error: err.message })
+    }
+  }
 }
 
 export const graphController = new GraphController()
+
 

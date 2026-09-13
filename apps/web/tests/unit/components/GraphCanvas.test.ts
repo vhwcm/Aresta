@@ -266,4 +266,125 @@ describe('GraphCanvas Component', () => {
       expect(emittedPayload.name).toBe('Filosofia')
     }
   })
+
+  it('positions child and grandchild nodes strictly further outward from center than their parent', () => {
+    const wrapper = mount(GraphCanvas, {
+      props: {
+        nodes: [
+          { id: 'theme-1', rawId: 1, type: 'theme', name: 'Tecnologia' },
+          { id: 'book-1', rawId: 1, type: 'book', name: 'Livro Base' },
+          { id: 'book-2', rawId: 2, type: 'book', name: 'Livreto Filho' },
+          { id: 'note-1', rawId: 1, type: 'note', name: 'Nota Neta' },
+        ],
+        edges: [
+          { id: 'e-1', source: 'theme-1', target: 'book-1', type: 'book-theme' },
+          { id: 'e-2', source: 'book-1', target: 'book-2', type: 'book-hierarchy' },
+          { id: 'e-3', source: 'book-2', target: 'note-1', type: 'note-book' },
+        ],
+      },
+    })
+
+    const nodeElements = wrapper.findAll('g.node')
+    expect(nodeElements.length).toBe(5) // root + 4 nós
+
+    // Extrair coordenadas transform translate(x, y) de cada nó
+    const getPos = (elem: any) => {
+      const transform = elem.attributes('transform') || ''
+      const match = transform.match(/translate\(([^,]+),([^)]+)\)/)
+      if (!match) return { x: 0, y: 0 }
+      return { x: parseFloat(match[1]), y: parseFloat(match[2]) }
+    }
+
+    const rootPos = getPos(nodeElements[0])
+    const themePos = getPos(nodeElements[1])
+    const book1Pos = getPos(nodeElements[2])
+    const book2Pos = getPos(nodeElements[3])
+    const ann1Pos = getPos(nodeElements[4])
+
+    const distFromRoot = (pos: { x: number; y: number }) => Math.hypot(pos.x - rootPos.x, pos.y - rootPos.y)
+
+    const dTheme = distFromRoot(themePos)
+    const dBook1 = distFromRoot(book1Pos)
+    const dBook2 = distFromRoot(book2Pos)
+    const dAnn1 = distFromRoot(ann1Pos)
+
+    // Cada nível na hierarquia deve estar estritamente mais distante do centro que seu pai
+    expect(dTheme).toBeGreaterThan(0)
+    expect(dBook1).toBeGreaterThan(dTheme)
+    expect(dBook2).toBeGreaterThan(dBook1)
+    expect(dAnn1).toBeGreaterThan(dBook2)
+  })
+
+  it('renders newly added edge dynamically and resolves flexible node IDs', async () => {
+    const wrapper = mount(GraphCanvas, {
+      props: {
+        nodes: [
+          { id: 3, rawId: 3, type: 'theme', name: 'Technology' },
+          { id: 'book-7', rawId: 7, type: 'book', name: 'Dokumen.Pub' },
+        ],
+        edges: [],
+      },
+    })
+
+    // Inicialmente a aresta ainda não existe
+    expect(wrapper.find('[data-edge-id="edge-live-book-7-3"]').exists()).toBe(false)
+
+    // Conexão dinâmica adicionada via props com IDs flexíveis (source: 'book-7', target: 3)
+    await wrapper.setProps({
+      edges: [
+        { id: 'edge-live-book-7-3', source: 'book-7', target: 3, type: 'book-theme' },
+      ],
+    })
+
+    // Deve renderizar a nova linha no SVG com o id e tipo corretos
+    const line = wrapper.find('[data-edge-id="edge-live-book-7-3"]')
+    expect(line.exists()).toBe(true)
+    expect(line.attributes('data-edge-type')).toBe('book-theme')
+
+    // Também deve resolver se target for especificado com prefixo 'theme-3' ou source numérico 7
+    await wrapper.setProps({
+      edges: [
+        { id: 'edge-flex-1', source: 7, target: 'theme-3', type: 'book-theme' },
+      ],
+    })
+    expect(wrapper.find('[data-edge-id="edge-flex-1"]').exists()).toBe(true)
+  })
+
+  it('reorganizes newly connected node to be close to its target theme node', async () => {
+    const wrapper = mount(GraphCanvas, {
+      props: {
+        nodes: [
+          { id: 3, rawId: 3, type: 'theme', name: 'Technology' },
+          { id: 'book-7', rawId: 7, type: 'book', name: 'Dokumen.Pub' },
+        ],
+        edges: [],
+      },
+    })
+
+    const getPos = (elem: any) => {
+      const transform = elem.attributes('transform') || ''
+      const match = transform.match(/translate\(([^,]+),([^)]+)\)/)
+      if (!match) return { x: 0, y: 0 }
+      return { x: parseFloat(match[1]), y: parseFloat(match[2]) }
+    }
+
+    // Ao conectar o livro ao tema, o livro deve se posicionar próximo ao tema (~95px de distância)
+    await wrapper.setProps({
+      edges: [
+        { id: 'edge-live-book-7-3', source: 'book-7', target: 3, type: 'book-theme' },
+      ],
+    })
+
+    const nodes = wrapper.findAll('g.node')
+    const themeNode = nodes.find((n) => n.text().includes('Technology'))!
+    const bookNode = nodes.find((n) => n.text().includes('Dokumen'))!
+
+    const themePos = getPos(themeNode)
+    const bookPos = getPos(bookNode)
+    const distance = Math.hypot(bookPos.x - themePos.x, bookPos.y - themePos.y)
+
+    // A distância entre o tema e o livro filho deve estar no feixe de proximidade (~95px)
+    expect(distance).toBeGreaterThan(60)
+    expect(distance).toBeLessThan(140)
+  })
 })

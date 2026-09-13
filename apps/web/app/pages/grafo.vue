@@ -148,6 +148,7 @@ import { ref, onMounted } from 'vue'
 import { NetworkIcon, RotateCwIcon, SparklesIcon, BookOpenIcon } from 'lucide-vue-next'
 import type { GraphNode, BookItem } from '~/interfaces/graph'
 import { useGraph } from '~/composables/useGraph'
+import { bookRepo } from '~/adapters/database/repositories/BookRepository'
 
 import GraphCanvas from '~/components/GraphCanvas.vue'
 import ThemeCanvasOverlay from '~/components/graph/ThemeCanvasOverlay.vue'
@@ -229,35 +230,134 @@ const handleConnectNodes = async (payload: { sourceId: number; targetId: number 
 const handleDirectConnect = async (payload: {
   sourceId: number | string
   targetId: number | string
+  sourceRawId?: number | string
+  targetRawId?: number | string
   sourceType?: string
   targetType?: string
 }) => {
   try {
-    const isSourceBook = payload.sourceType === 'book' || String(payload.sourceId).startsWith('book-')
-    const isTargetBook = payload.targetType === 'book' || String(payload.targetId).startsWith('book-')
-    const isSourceTheme = payload.sourceType === 'theme' || !isNaN(Number(payload.sourceId))
-    const isTargetTheme = payload.targetType === 'theme' || !isNaN(Number(payload.targetId))
+    const currentNodes = graphData.value?.nodes || []
 
+    const findNode = (id: any, rawId?: any, type?: string) => {
+      const strId = String(id)
+      const stripped = strId.replace(/^(book-|theme-|note-|canvas-|annotation-)/, '')
+      return currentNodes.find((n) => {
+        if (String(n.id) === strId || String(n.id) === stripped) return true
+        if (rawId !== undefined && rawId !== null && String(n.rawId) === String(rawId)) return true
+        if (n.rawId !== undefined && (String(n.rawId) === strId || String(n.rawId) === stripped)) {
+          if (!type || n.type === type) return true
+        }
+        if (type && n.type === type && (String(n.id).endsWith(stripped) || String(n.rawId) === stripped)) {
+          return true
+        }
+        return false
+      })
+    }
+
+    const sourceNode = findNode(payload.sourceId, payload.sourceRawId, payload.sourceType)
+    const targetNode = findNode(payload.targetId, payload.targetRawId, payload.targetType)
+
+    const isSourceBook = (sourceNode?.type === 'book') || payload.sourceType === 'book' || String(payload.sourceId).startsWith('book-')
+    const isTargetBook = (targetNode?.type === 'book') || payload.targetType === 'book' || String(payload.targetId).startsWith('book-')
+    const isSourceTheme = (sourceNode?.type === 'theme') || payload.sourceType === 'theme' || (!isSourceBook && !String(payload.sourceId).startsWith('note-') && !String(payload.sourceId).startsWith('canvas-'))
+    const isTargetTheme = (targetNode?.type === 'theme') || payload.targetType === 'theme' || (!isTargetBook && !String(payload.targetId).startsWith('note-') && !String(payload.targetId).startsWith('canvas-'))
+
+    // Formatar IDs no formato canônico do grafo
+    const formattedSourceId = sourceNode ? sourceNode.id : (isSourceBook && !String(payload.sourceId).startsWith('book-') ? `book-${payload.sourceId}` : payload.sourceId)
+    const formattedTargetId = targetNode ? targetNode.id : (isTargetBook && !String(payload.targetId).startsWith('book-') ? `book-${payload.targetId}` : payload.targetId)
+
+    // 1. Atualização Otimista Imediata da Aresta no Grafo
+    // Adiciona a aresta no mesmo milissegundo: a aresta aparece e o grafo se reorganiza aproximando os nós!
+    const optimisticEdgeId = `edge-live-${formattedSourceId}-${formattedTargetId}`
+    const existingEdges = graphData.value?.edges || []
+    const alreadyConnected = existingEdges.some(
+      (e) =>
+        (String(e.source) === String(formattedSourceId) && String(e.target) === String(formattedTargetId)) ||
+        (String(e.source) === String(formattedTargetId) && String(e.target) === String(formattedSourceId))
+    )
+
+    let edgeType = 'theme-hierarchy'
+    if (isSourceBook || isTargetBook) edgeType = 'book-theme'
+
+    if (!alreadyConnected) {
+      graphData.value = {
+        ...graphData.value,
+        edges: [
+          ...existingEdges,
+          {
+            id: optimisticEdgeId,
+            source: formattedSourceId,
+            target: formattedTargetId,
+            type: edgeType,
+          },
+        ],
+      }
+    }
+
+    // 2. Persistência de Livro com Tema (Local e Remota)
     if (isSourceBook && isTargetTheme) {
-      const bookId = Number(String(payload.sourceId).replace('book-', ''))
-      const themeId = Number(String(payload.targetId).replace('theme-', ''))
-      if (!isNaN(bookId) && !isNaN(themeId)) {
-        await linkBookToNode(themeId, bookId)
-        await fetchGraph()
+      const rawBookId = sourceNode?.rawId ?? payload.sourceRawId ?? Number(String(payload.sourceId).replace('book-', ''))
+      const rawThemeId = targetNode?.rawId ?? payload.targetRawId ?? Number(String(payload.targetId).replace('theme-', ''))
+      const numBookId = Number(rawBookId)
+      const numThemeId = Number(rawThemeId)
+
+      if (!isNaN(numBookId) && !isNaN(numThemeId)) {
+        try {
+          const localBook = await bookRepo.getById(numBookId)
+          if (localBook) {
+            const currentThemes = Array.isArray(localBook.themes) ? [...localBook.themes] : []
+            if (!currentThemes.includes(numThemeId)) {
+              currentThemes.push(numThemeId)
+              await bookRepo.save({ ...localBook, themes: currentThemes })
+            }
+          }
+        } catch (e) {
+          console.warn('[Grafo] Falha ao salvar tema no bookRepo local:', e)
+        }
+
+        try {
+          await linkBookToNode(numThemeId, numBookId)
+        } catch (apiErr) {
+          console.warn('[Grafo] Aviso ao vincular livro na API:', apiErr)
+        }
       }
     } else if (isSourceTheme && isTargetBook) {
-      const themeId = Number(String(payload.sourceId).replace('theme-', ''))
-      const bookId = Number(String(payload.targetId).replace('book-', ''))
-      if (!isNaN(bookId) && !isNaN(themeId)) {
-        await linkBookToNode(themeId, bookId)
-        await fetchGraph()
+      const rawThemeId = sourceNode?.rawId ?? payload.sourceRawId ?? Number(String(payload.sourceId).replace('theme-', ''))
+      const rawBookId = targetNode?.rawId ?? payload.targetRawId ?? Number(String(payload.targetId).replace('book-', ''))
+      const numBookId = Number(rawBookId)
+      const numThemeId = Number(rawThemeId)
+
+      if (!isNaN(numBookId) && !isNaN(numThemeId)) {
+        try {
+          const localBook = await bookRepo.getById(numBookId)
+          if (localBook) {
+            const currentThemes = Array.isArray(localBook.themes) ? [...localBook.themes] : []
+            if (!currentThemes.includes(numThemeId)) {
+              currentThemes.push(numThemeId)
+              await bookRepo.save({ ...localBook, themes: currentThemes })
+            }
+          }
+        } catch (e) {
+          console.warn('[Grafo] Falha ao salvar tema no bookRepo local:', e)
+        }
+
+        try {
+          await linkBookToNode(numThemeId, numBookId)
+        } catch (apiErr) {
+          console.warn('[Grafo] Aviso ao vincular livro na API:', apiErr)
+        }
       }
     } else {
-      const sId = Number(String(payload.sourceId).replace('theme-', ''))
-      const tId = Number(String(payload.targetId).replace('theme-', ''))
-      if (!isNaN(sId) && !isNaN(tId)) {
-        await createConnection(sId, tId)
-        await fetchGraph()
+      const sId = sourceNode?.rawId ?? payload.sourceRawId ?? Number(String(payload.sourceId).replace('theme-', ''))
+      const tId = targetNode?.rawId ?? payload.targetRawId ?? Number(String(payload.targetId).replace('theme-', ''))
+      const numSId = Number(sId)
+      const numTId = Number(tId)
+      if (!isNaN(numSId) && !isNaN(numTId)) {
+        try {
+          await createConnection(numSId, numTId)
+        } catch (apiErr) {
+          console.warn('[Grafo] Aviso ao criar conexão na API:', apiErr)
+        }
       }
     }
   } catch (err) {

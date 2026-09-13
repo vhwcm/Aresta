@@ -249,6 +249,8 @@ const emit = defineEmits<{
     payload: {
       sourceId: number | string
       targetId: number | string
+      sourceRawId?: number | string
+      targetRawId?: number | string
       sourceType?: string
       targetType?: string
     }
@@ -588,20 +590,38 @@ const initGraph = () => {
     }
   }
 
+  const resolveNode = (id: any): GraphNode | undefined => {
+    if (!id && id !== 0) return undefined
+    const str = String(typeof id === 'object' ? (id as any).id : id)
+    if (nodeMap.has(str)) return nodeMap.get(str)
+
+    // Tenta remover prefixos conhecidos
+    const stripped = str.replace(/^(book-|theme-|note-|canvas-|annotation-)/, '')
+    if (nodeMap.has(stripped)) return nodeMap.get(stripped)
+
+    // Tenta prefixos conhecidos
+    for (const prefix of ['book-', 'theme-', 'note-', 'canvas-', 'annotation-']) {
+      if (nodeMap.has(`${prefix}${str}`)) return nodeMap.get(`${prefix}${str}`)
+      if (nodeMap.has(`${prefix}${stripped}`)) return nodeMap.get(`${prefix}${stripped}`)
+    }
+
+    return undefined
+  }
+
   // 2. Links explícitos entre nós válidos
   const explicitLinks = props.edges
     .map((e) => {
-      const sourceId = String(typeof e.source === 'object' ? (e.source as any).id : e.source)
-      const targetId = String(typeof e.target === 'object' ? (e.target as any).id : e.target)
+      const sourceNode = resolveNode(e.source)
+      const targetNode = resolveNode(e.target)
       return {
         id: String(e.id),
-        source: nodeMap.get(sourceId),
-        target: nodeMap.get(targetId),
+        source: sourceNode,
+        target: targetNode,
         type: e.type || 'theme-hierarchy',
         isRootEdge: false,
       }
     })
-    .filter((link) => link.source && link.target)
+    .filter((link) => Boolean(link.source && link.target))
 
   // 3. Links conectando Nós de Temas ao Nó Raiz
   const themeNodes = inputNodes.filter((n) => n.type === 'theme')
@@ -836,6 +856,12 @@ const initGraph = () => {
     .selectAll<SVGLineElement, any>('line')
     .data(simulationLinks, (d: any) => d.id)
     .join('line')
+    .attr('data-edge-id', (d: any) => d.id)
+    .attr('data-edge-type', (d: any) => d.type)
+    .attr('x1', (d: any) => d.source.currentX ?? d.source.x ?? centerX)
+    .attr('y1', (d: any) => d.source.currentY ?? d.source.y ?? centerY)
+    .attr('x2', (d: any) => d.target.currentX ?? d.target.x ?? centerX)
+    .attr('y2', (d: any) => d.target.currentY ?? d.target.y ?? centerY)
     .attr('stroke', (d: any) => {
       if (d.isRootEdge) {
         return isSepiaMode.value
@@ -1246,8 +1272,10 @@ const initGraph = () => {
         showConnectionFeedback(`Conectando "${sourceLabel}" a "${targetLabel}"...`)
 
         emit('connectNodes', {
-          sourceId: dragSourceNode.rawId || dragSourceNode.id,
-          targetId: snapTargetNode.rawId || snapTargetNode.id,
+          sourceId: dragSourceNode.id,
+          targetId: snapTargetNode.id,
+          sourceRawId: dragSourceNode.rawId,
+          targetRawId: snapTargetNode.rawId,
           sourceType: dragSourceNode.type,
           targetType: snapTargetNode.type,
         })
