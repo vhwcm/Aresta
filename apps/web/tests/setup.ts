@@ -1,4 +1,6 @@
 import { vi } from 'vitest'
+import { config } from '@vue/test-utils'
+import { renderInlineMarkdown, renderMarkdown } from '../app/utils/markdownFormat'
 
 const g = (typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : global) as any
 
@@ -18,5 +20,20 @@ if (g) {
     back: vi.fn()
   })
   g.$fetch = vi.fn()
+  g.renderInlineMarkdown = renderInlineMarkdown
+  g.renderMarkdown = renderMarkdown
+}
+
+config.global.mocks = {
+  ...config.global.mocks,
+  renderInlineMarkdown,
+  renderMarkdown,
+}
+
+config.global.config = config.global.config || {}
+config.global.config.globalProperties = {
+  ...config.global.config.globalProperties,
+  renderInlineMarkdown,
+  renderMarkdown,
 }
 

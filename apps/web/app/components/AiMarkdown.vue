@@ -143,13 +143,13 @@ onUpdated(() => {
 }
 
 .ai-markdown-content :deep(strong) {
-  color: #FFFFFF;
+  color: var(--text-primary, inherit);
   font-weight: 600;
 }
 
 .ai-markdown-content :deep(em) {
   font-style: italic;
-  color: #A0A3A8;
+  color: inherit;
 }
 
 .ai-markdown-content :deep(a) {

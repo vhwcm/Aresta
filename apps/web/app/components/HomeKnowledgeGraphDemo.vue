@@ -140,7 +140,7 @@
                   <span class="font-technical text-[10px] text-accent font-semibold">{{ b.author }}</span>
                 </div>
                 <p class="font-editorial italic text-[11px] text-textSecondary/90 leading-tight">
-                  "{{ b.quote }}"
+                  "<span v-html="renderInlineMarkdown(b.quote)"></span>"
                 </p>
               </div>
             </div>

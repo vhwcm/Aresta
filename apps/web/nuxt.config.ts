@@ -34,8 +34,11 @@ export default defineNuxtConfig({
 
   googleFonts: {
     families: {
-      Inter: [300, 400, 500, 600],
-      Newsreader: [300, 400],
+      Inter: [300, 400, 500, 600, 700],
+      Newsreader: {
+        wght: [300, 400, 500, 600, 700],
+        ital: [300, 400, 500, 600, 700],
+      },
       'JetBrains+Mono': [400, 600],
       MedievalSharp: [400],
       Almendra: [400, 700],

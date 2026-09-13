@@ -1,6 +1,7 @@
 # Checklist
 
 ## 🔄 Em Andamento
+- [13/09/2026 11:21] [Fazendo] Implementar conector orgânico fluido (SVG Bézier/GPU) integrando a navbar lateral e aproximando o layout da página
 
 ## ✅ Concluído
 - [13/09/2026 11:17] [Concluído] Redesenhar layout do FolderTagSidebar com estética moderna, hierarquia visual suave e micro-badges elegantes

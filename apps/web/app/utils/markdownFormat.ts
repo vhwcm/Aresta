@@ -1,7 +1,41 @@
+import { marked } from 'marked';
+
 export interface MarkdownFormatResult {
   newText: string;
   selectionStart: number;
   selectionEnd: number;
+}
+
+/**
+ * Escapa caracteres HTML inseguros para mitigar vulnerabilidades XSS ao renderizar HTML dinâmico.
+ */
+export function escapeHtml(unsafe: string): string {
+  return unsafe
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+/**
+ * Renderiza markdown inline (negrito, itálico, código, links) de forma segura sem envolver em tag <p>.
+ */
+export function renderInlineMarkdown(text: string | null | undefined): string {
+  if (!text) return '';
+  const safe = escapeHtml(text);
+  const parsed = marked.parseInline(safe, { gfm: true, breaks: true });
+  return typeof parsed === 'string' ? parsed : text;
+}
+
+/**
+ * Renderiza markdown completo com quebras de linha e blocos de forma segura.
+ */
+export function renderMarkdown(text: string | null | undefined): string {
+  if (!text) return '';
+  const safe = escapeHtml(text);
+  const parsed = marked.parse(safe, { gfm: true, breaks: true });
+  return typeof parsed === 'string' ? parsed : text;
 }
 
 /**

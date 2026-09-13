@@ -55,6 +55,26 @@
 }
 
 /* ==========================================================================
+   Tipografia Base & Formatação Rica (Negrito e Itálico)
+   ========================================================================== */
+
+strong, b {
+  font-weight: 600;
+  color: inherit;
+}
+
+/* Em títulos ou elementos com classe font-light (font-weight: 300), garantir contraste do negrito */
+.font-light strong,
+.font-light b {
+  font-weight: 600;
+}
+
+em, i {
+  font-style: italic;
+  color: inherit;
+}
+
+/* ==========================================================================
    Estilos dos Livretos Didáticos com IA (Callouts & Mermaid)
    ========================================================================== */
 

@@ -278,9 +278,10 @@
             <div v-if="hasDailyFlashcard && dailyFlashcard" class="flex items-center justify-between gap-4">
               <!-- Pergunta e Capítulo com espaço livre reservando área da seta -->
               <div class="flex flex-col gap-1.5 flex-1 min-w-0 pr-2">
-                <h3 class="font-editorial text-xl sm:text-2xl 2xl:text-3xl font-light text-textPrimary group-hover/flashcard:text-accent leading-relaxed transition-colors">
-                  {{ dailyFlashcard.question }}
-                </h3>
+                <h3
+                  class="font-editorial text-xl sm:text-2xl 2xl:text-3xl font-light text-textPrimary group-hover/flashcard:text-accent leading-relaxed transition-colors"
+                  v-html="renderInlineMarkdown(dailyFlashcard.question)"
+                ></h3>
               </div>
 
               <!-- Seta Lateral Reservada com Efeito Hover Suave -->
@@ -344,12 +345,10 @@
                 </div>
 
                 <blockquote v-if="note.quote" class="border-l-2 border-accent pl-3.5 text-sm sm:text-base 2xl:text-lg font-interface italic text-textPrimary/90 leading-relaxed group-hover/notes:text-textPrimary transition-colors line-clamp-3">
-                  "{{ note.quote }}"
+                  "<span v-html="renderInlineMarkdown(note.quote)"></span>"
                 </blockquote>
 
-                <p v-if="note.insight" class="font-interface text-xs sm:text-sm 2xl:text-base text-textSecondary leading-relaxed pl-3.5 line-clamp-2">
-                  {{ note.insight }}
-                </p>
+                <p v-if="note.insight" class="font-interface text-xs sm:text-sm 2xl:text-base text-textSecondary leading-relaxed pl-3.5 line-clamp-2" v-html="renderInlineMarkdown(note.insight)"></p>
               </div>
             </div>
             <div v-else class="p-6 rounded-2xl border border-dashed border-divider bg-black/[0.01] dark:bg-white/[0.01] flex flex-col items-center justify-center text-center gap-2 py-8">

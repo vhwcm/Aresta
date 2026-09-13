@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { applyMarkdownFormat } from '../../../app/utils/markdownFormat';
+import {
+  applyMarkdownFormat,
+  renderInlineMarkdown,
+  renderMarkdown,
+  escapeHtml,
+} from '../../../app/utils/markdownFormat';
 
 describe('applyMarkdownFormat utility', () => {
   describe('Formatação de Negrito (bold)', () => {
@@ -104,4 +109,70 @@ describe('applyMarkdownFormat utility', () => {
       expect(res.selectionEnd).toBe(12);
     });
   });
+
+  describe('escapeHtml', () => {
+    it('escapa tags e caracteres perigosos', () => {
+      const raw = '<script>alert("xss")</script> & "aspas"';
+      expect(escapeHtml(raw)).toBe(
+        '&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt; &amp; &quot;aspas&quot;'
+      );
+    });
+  });
+
+  describe('renderInlineMarkdown', () => {
+    it('retorna string vazia para valores nulos ou vazios', () => {
+      expect(renderInlineMarkdown(null)).toBe('');
+      expect(renderInlineMarkdown(undefined)).toBe('');
+      expect(renderInlineMarkdown('')).toBe('');
+    });
+
+    it('renderiza itálico com asterisco simples', () => {
+      const input = 'Segundo *O Programador Pragmático*';
+      const output = renderInlineMarkdown(input);
+      expect(output).toContain('<em>O Programador Pragmático</em>');
+      expect(output).not.toContain('<p>');
+    });
+
+    it('renderiza negrito com asterisco duplo', () => {
+      const input = 'manter a **ortogonalidade** do código';
+      const output = renderInlineMarkdown(input);
+      expect(output).toContain('<strong>ortogonalidade</strong>');
+      expect(output).not.toContain('<p>');
+    });
+
+    it('renderiza negrito e itálico combinados no mesmo texto', () => {
+      const input =
+        'Segundo *O Programador Pragmático*, quais são as principais práticas para manter a **ortogonalidade** do código durante o desenvolvimento?';
+      const output = renderInlineMarkdown(input);
+      expect(output).toContain('<em>O Programador Pragmático</em>');
+      expect(output).toContain('<strong>ortogonalidade</strong>');
+      expect(output).not.toContain('*O Programador');
+      expect(output).not.toContain('**ortogonalidade**');
+    });
+
+    it('renderiza código inline com crase', () => {
+      const input = 'Use a função `renderInlineMarkdown()`';
+      const output = renderInlineMarkdown(input);
+      expect(output).toContain('<code>renderInlineMarkdown()</code>');
+    });
+
+    it('escapa injeções de script preservando a formatação markdown', () => {
+      const input = '**Negrito** <script>alert("hack")</script>';
+      const output = renderInlineMarkdown(input);
+      expect(output).toContain('<strong>Negrito</strong>');
+      expect(output).not.toContain('<script>');
+      expect(output).toContain('&lt;script&gt;');
+    });
+  });
+
+  describe('renderMarkdown', () => {
+    it('renderiza markdown em múltiplos parágrafos e preserva negrito/itálico', () => {
+      const input = 'Parágrafo 1 com **negrito**.\n\nParágrafo 2 com *itálico*.';
+      const output = renderMarkdown(input);
+      expect(output).toContain('<p>');
+      expect(output).toContain('<strong>negrito</strong>');
+      expect(output).toContain('<em>itálico</em>');
+    });
+  });
 });
+
