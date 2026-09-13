@@ -1,6 +1,14 @@
 import type { Request, Response } from 'express'
 import { aiService } from '../services/ai.service'
-import { GenerateSchema, EmbedSchema, FlashcardSchema, TranslateSchema, SummarizeSchema, DidacticExplanationSchema } from '../schemas/ai.schema'
+import {
+  GenerateSchema,
+  EmbedSchema,
+  FlashcardSchema,
+  TranslateSchema,
+  SummarizeSchema,
+  DidacticExplanationSchema,
+  ShortExplanationSchema,
+} from '../schemas/ai.schema'
 
 export class AiController {
   async generate(req: Request, res: Response): Promise<void> {
