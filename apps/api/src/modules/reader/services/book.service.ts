@@ -56,6 +56,8 @@ export class BookService {
       filePath: book.file_path,
       coverPath: book.cover_path,
       fileType: book.file_type,
+      format_type: book.file_type === 'didactic' ? 'DIDACTIC' : undefined,
+      is_ai_generated: book.file_type === 'didactic',
       createdAt: book.created_at,
       themes: book.bookThemes.map((bt) => ({
         id: bt.theme.id,
@@ -64,6 +66,25 @@ export class BookService {
         description: bt.theme.description,
       })),
     }
+  }
+
+  async getDidacticBooklet(id: number) {
+    const book = await prisma.book.findUnique({
+      where: { id },
+      include: {
+        didacticBooklets: {
+          include: {
+            chapters: {
+              orderBy: { order_index: 'asc' },
+            },
+          },
+        },
+      },
+    })
+    if (book && book.didacticBooklets && book.didacticBooklets.length > 0) {
+      return book.didacticBooklets[0]
+    }
+    return null
   }
 
   async getFilePath(id: number): Promise<string> {

@@ -25,6 +25,16 @@ vi.mock('../src/modules/memory/config/database', () => {
       annotation: {
         findUnique: vi.fn().mockResolvedValue(null),
       },
+      book: {
+        create: vi.fn().mockImplementation(({ data }) => {
+          return Promise.resolve({
+            id: bookletIdCounter + 500,
+            title: data.title,
+            file_path: data.file_path,
+            file_type: data.file_type || 'didactic',
+          })
+        }),
+      },
       didacticBooklet: {
         create: vi.fn().mockImplementation(({ data }) => {
           const newBooklet: any = {

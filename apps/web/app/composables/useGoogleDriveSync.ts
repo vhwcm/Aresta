@@ -10,7 +10,7 @@ export interface GoogleDriveSyncResult {
 }
 
 export const useGoogleDriveSync = () => {
-  const { googleDriveToken, isGoogleDriveConnected, ensureGoogleDriveToken, refreshGoogleToken } = useOAuth()
+  const { googleDriveToken, isGoogleDriveConnected, ensureGoogleDriveToken, refreshGoogleToken, setGoogleDriveToken } = useOAuth()
   const isSyncing = ref(false)
   const syncError = ref<string | null>(null)
 
@@ -81,11 +81,32 @@ export const useGoogleDriveSync = () => {
   }
 
   const listDriveBooks = async (): Promise<Array<{ title: string; folderId: string }>> => {
-    const token = await ensureGoogleDriveToken()
+    let token = await ensureGoogleDriveToken()
     if (!token) return []
     try {
-      const provider = new GoogleDriveStorageProvider(() => token)
-      return await provider.listBooks()
+      let provider = new GoogleDriveStorageProvider(() => token)
+      try {
+        return await provider.listBooks()
+      } catch (firstErr: any) {
+        const isAuthError =
+          firstErr?.message?.includes('401') ||
+          firstErr?.message?.includes('Unauthorized') ||
+          firstErr?.message?.includes('Invalid Credentials')
+
+        if (isAuthError) {
+          const refreshed = await refreshGoogleToken()
+          if (refreshed) {
+            token = refreshed
+            provider = new GoogleDriveStorageProvider(() => token)
+            return await provider.listBooks()
+          } else {
+            // Se o token expirou e não pode ser renovado, limpa o token stale para cessar erros 401
+            setGoogleDriveToken(null)
+            return []
+          }
+        }
+        throw firstErr
+      }
     } catch (err) {
       console.warn('[GoogleDriveSync] Falha ao listar livros do Google Drive:', err)
       return []

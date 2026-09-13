@@ -2,9 +2,9 @@
 
 ## 🔄 Em Andamento
 - [12/09/2026 21:00] [Fazendo] Carregar anotações locais e da API do livro na gaveta BookAnnotationsDrawer desempacotando lista e autenticação
-- [12/09/2026 20:55] [Fazendo] Corrigir criação de livreto didático, layout do leitor e rotas do monólito
 
 ## ✅ Concluído
+- [12/09/2026 20:55] [Concluído] Corrigir criação de livreto didático, layout do leitor e rotas do monólito
 - [12/09/2026 20:54] [Concluído] Remover títulos Central de Revisão, Retenção & Síntese e subtítulo descritivo da Central de Revisão
 - [12/09/2026 20:52] [Concluído] Permitir deletar temas e editar nome de temas com modal dedicado e botão na estante de livros
 - [12/09/2026 20:49] [Concluído] Corrigir scrollbar nativa, alinhamento, campo de busca e desduplicar títulos de livros no AppSelect

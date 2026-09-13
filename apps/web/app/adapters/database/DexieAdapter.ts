@@ -61,7 +61,16 @@ export class DexieAdapter implements IDatabaseAdapter {
 
   async saveBook(book: LocalBook): Promise<void> {
     await this.init();
-    await this.db.books.put(book);
+    if (!book || book.id === undefined || book.id === null || isNaN(Number(book.id))) {
+      console.warn('[DexieAdapter] Tentativa de salvar livro com ID inválido:', book);
+      return;
+    }
+    const cleanBook: LocalBook = {
+      ...book,
+      id: Number(book.id),
+      bookId: Number(book.bookId || book.id),
+    };
+    await this.db.books.put(cleanBook);
   }
 
   async deleteBook(id: number): Promise<void> {

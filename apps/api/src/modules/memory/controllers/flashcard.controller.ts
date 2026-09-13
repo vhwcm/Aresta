@@ -11,6 +11,16 @@ export class FlashcardController {
     }
   }
 
+  async getDailyDeck(req: Request, res: Response): Promise<void> {
+    try {
+      const dateStr = req.query.date as string | undefined
+      const deck = await flashcardService.getDailyDeck(req.user!.userId, dateStr)
+      res.json(deck)
+    } catch (err: any) {
+      res.status(500).json({ error: err.message })
+    }
+  }
+
   async review(req: Request, res: Response): Promise<void> {
     try {
       const id = parseInt(String(req.params.id))

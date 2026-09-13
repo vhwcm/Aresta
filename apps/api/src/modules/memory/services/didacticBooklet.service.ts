@@ -129,13 +129,36 @@ flowchart TD
 
     const title = input.title || generated.title || `Didático: ${input.topic.slice(0, 40)}`
 
-    // ID virtual de livro gerado para compatibilidade com leitor e estante
-    const virtualBookId = Date.now()
+    // Cria registro de Book e UserBook para persistência real e compatibilidade com estante e leitor
+    const book = await prisma.book.create({
+      data: {
+        title,
+        file_path: `virtual://didactic/${title}`,
+        file_type: 'didactic',
+        userBooks: {
+          create: {
+            user_id: userId,
+            status: 'LENDO',
+            current_page: 0,
+            last_accessed_at: new Date(),
+          },
+        },
+        ...(input.theme_id
+          ? {
+              bookThemes: {
+                create: {
+                  theme_id: input.theme_id,
+                },
+              },
+            }
+          : {}),
+      },
+    })
 
     const booklet = await prisma.didacticBooklet.create({
       data: {
         user_id: userId,
-        book_id: virtualBookId,
+        book_id: book.id,
         theme_id: input.theme_id || null,
         title,
         description: `Livreto gerado por IA sobre "${input.topic}"`,

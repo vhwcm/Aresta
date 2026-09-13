@@ -40,6 +40,50 @@ export class FlashcardService {
     })
   }
 
+  async getDailyDeck(userId: number, dateStr?: string) {
+    const todayStr = dateStr || new Date().toISOString().split('T')[0]
+    const cards = await prisma.flashcard.findMany({
+      where: { user_id: userId },
+      include: {
+        annotation: {
+          include: { book: true },
+        },
+      },
+      orderBy: { next_review_at: 'asc' },
+      take: 50,
+    })
+
+    const formatted = cards.map((c, idx) => ({
+      id: c.id,
+      userId: c.user_id,
+      annotationId: c.annotation_id,
+      bookId: c.book_id,
+      bookTitle: c.annotation?.book?.title || 'Livro',
+      bookCover: c.annotation?.book?.cover_path || null,
+      chapterTitle: c.annotation?.chapter_title || null,
+      selectedText: c.annotation?.selected_text || null,
+      note: c.annotation?.note || null,
+      cardType: c.card_type,
+      question: c.question,
+      answer: c.answer,
+      contextSummary: c.context_summary,
+      repetitionLevel: c.repetition_level,
+      nextReviewAt: c.next_review_at.toISOString(),
+      lastReviewedAt: c.last_reviewed_at?.toISOString() || null,
+      reviewCount: c.review_count,
+      difficulty: c.difficulty,
+      isReviewed: false,
+      position: idx + 1,
+    }))
+
+    return {
+      date: todayStr,
+      totalCards: formatted.length,
+      reviewedCount: 0,
+      cards: formatted,
+    }
+  }
+
   async review(flashcardId: number, userId: number, rating: 'hard' | 'good' | 'easy') {
     const card = await prisma.flashcard.findFirst({ where: { id: flashcardId, user_id: userId } })
     if (!card) throw new Error('Flashcard not found')

@@ -434,40 +434,49 @@ export const useUserBooks = () => {
   }
 
   const recordBookAccess = async (userBookOrBookId: number) => {
+    if (!userBookOrBookId || isNaN(Number(userBookOrBookId))) return
+    const numericId = Number(userBookOrBookId)
     const nowIso = new Date().toISOString()
-    const existing = userBooks.value.find((b: UserBookItem) => b.userBookId === userBookOrBookId || b.bookId === userBookOrBookId)
+    const existing = userBooks.value.find((b: UserBookItem) => b.userBookId === numericId || b.bookId === numericId)
     if (existing) {
       existing.lastAccessedAt = nowIso
       // Move para a primeira posição otimisticamente
       const rest = userBooks.value.filter(b => b !== existing)
       userBooks.value = [existing, ...rest]
 
-      try {
-        await bookRepo.save({
-          id: existing.userBookId,
-          bookId: existing.bookId,
-          title: existing.title,
-          author: existing.author,
-          coverPath: existing.coverPath || undefined,
-          filePath: existing.filePath,
-          status: existing.status,
-          currentPage: existing.currentPage,
-          lastAccessedAt: nowIso,
-          themes: existing.themes
-        })
-      } catch (repoErr) {
-        console.warn('[useUserBooks] Erro ao salvar acesso no bookRepo:', repoErr)
+      const targetId = Number(existing.userBookId || existing.bookId || numericId)
+      const targetBookId = Number(existing.bookId || existing.userBookId || numericId)
+
+      if (!isNaN(targetId) && !isNaN(targetBookId)) {
+        try {
+          await bookRepo.save({
+            id: targetId,
+            bookId: targetBookId,
+            title: existing.title || 'Livro',
+            author: existing.author,
+            coverPath: existing.coverPath || undefined,
+            filePath: existing.filePath,
+            status: existing.status || 'QUERO_LER',
+            currentPage: existing.currentPage || 0,
+            lastAccessedAt: nowIso,
+            themes: existing.themes || []
+          })
+        } catch (repoErr) {
+          console.warn('[useUserBooks] Erro ao salvar acesso no bookRepo:', repoErr)
+        }
       }
     } else {
       try {
-        const local = await bookRepo.getById(userBookOrBookId)
-        if (local) {
+        const local = await bookRepo.getById(numericId)
+        if (local && local.id && !isNaN(Number(local.id))) {
           await bookRepo.save({
             ...local,
             lastAccessedAt: nowIso
           })
         }
-      } catch {}
+      } catch (err) {
+        console.warn('[useUserBooks] Erro ao buscar livro local:', err)
+      }
     }
 
     if (typeof window !== 'undefined') {

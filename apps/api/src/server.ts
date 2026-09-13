@@ -69,6 +69,7 @@ app.use('/api/notes', noteRouter)
 // Memory Routes
 app.use('/api/annotations', annotationRouter)
 app.use('/api/flashcards', flashcardRouter)
+app.use('/api/v1/flashcards', flashcardRouter)
 app.use('/api/graph', graphRouter)
 app.use('/api/didactic', didacticRouter)
 

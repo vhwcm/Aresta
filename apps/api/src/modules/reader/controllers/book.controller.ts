@@ -23,7 +23,19 @@ export class BookController {
 
   async getFile(req: Request, res: Response): Promise<void> {
     try {
-      const filePath = await bookService.getFilePath(parseInt(String(req.params.id)))
+      const id = parseInt(String(req.params.id))
+      const didacticBooklet = await bookService.getDidacticBooklet(id)
+      if (didacticBooklet) {
+        res.setHeader('Content-Type', 'application/json')
+        res.json({
+          title: didacticBooklet.title,
+          chapters: didacticBooklet.chapters,
+          booklet: didacticBooklet,
+        })
+        return
+      }
+
+      const filePath = await bookService.getFilePath(id)
       res.sendFile(filePath)
     } catch (err: any) {
       res.status(404).json({ error: err.message })
