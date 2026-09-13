@@ -4,7 +4,7 @@
     <div class="w-full max-w-5xl rounded-3xl bg-bgPanel border border-divider shadow-2xl backdrop-blur-xl p-6 sm:p-10 lg:p-12 relative overflow-hidden">
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
         <!-- Coluna da Esquerda: Copywriting, Benefícios & Chamada de Conversão -->
-        <div class="lg:col-span-7 flex flex-col gap-6 text-left">
+        <div class="hidden lg:flex lg:col-span-7 flex-col gap-6 text-left">
           <!-- Ação Voltar ao Início na mesma altura da aba Acessar Conta -->
           <div>
             <NuxtLink
@@ -49,6 +49,16 @@
 
       <!-- Coluna da Direita: Card de Autenticação com Abas Login / Cadastro -->
       <div class="lg:col-span-5 w-full bg-bgPanel/90 dark:bg-bgApp/60 border border-divider backdrop-blur-xl rounded-3xl p-6 sm:p-8 shadow-2xl flex flex-col gap-6 shrink-0">
+        <NuxtLink
+          to="/"
+          data-testid="mobile-back-to-home-link"
+          class="lg:hidden inline-flex items-center gap-2 text-textSecondary hover:text-textPrimary transition-colors font-interface text-xs group py-1"
+          title="Voltar para a página inicial"
+        >
+          <ArrowLeftIcon class="w-4 h-4 transition-transform group-hover:-translate-x-1 text-accent" />
+          <span>Voltar ao Início</span>
+        </NuxtLink>
+
         <!-- Alternador de Abas: Login / Cadastro -->
         <div class="flex items-center p-1 rounded-2xl bg-black/5 dark:bg-white/5 border border-divider">
           <button

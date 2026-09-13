@@ -61,6 +61,7 @@ describe('Onboarding Carousel Page', () => {
     const input = wrapper.find('[data-testid="onboarding-display-name-input"]')
     expect(input.exists()).toBe(true)
     expect(input.attributes('maxlength')).toBe('30')
+    expect(wrapper.find('.onboarding-page').classes()).toContain('bg-white')
   })
 
   it('navigates through carousel steps with Continuar and Voltar buttons', async () => {

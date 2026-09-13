@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-[#07090E] text-textPrimary flex flex-col justify-between p-4 sm:p-6 md:p-10 relative overflow-hidden font-interface select-none">
+  <div class="onboarding-page min-h-screen bg-white text-[#18191B] flex flex-col justify-between p-4 sm:p-6 md:p-10 relative overflow-hidden font-interface select-none">
     <!-- Efeito de Iluminação de Fundo -->
     <div class="absolute -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[500px] bg-gradient-to-b from-accent/15 via-accent/5 to-transparent rounded-full blur-3xl pointer-events-none"></div>
     <div class="absolute bottom-0 -left-20 w-[400px] h-[400px] bg-emerald-500/5 rounded-full blur-3xl pointer-events-none"></div>
@@ -678,6 +678,77 @@ const finishOnboarding = async () => {
 </script>
 
 <style scoped>
+.onboarding-page .text-white {
+  color: #18191b !important;
+}
+
+.onboarding-page .text-white\/30 {
+  color: rgba(24, 25, 27, 0.3) !important;
+}
+
+.onboarding-page .text-white\/40 {
+  color: rgba(24, 25, 27, 0.45) !important;
+}
+
+.onboarding-page .text-white\/50 {
+  color: rgba(24, 25, 27, 0.55) !important;
+}
+
+.onboarding-page .text-white\/60 {
+  color: rgba(24, 25, 27, 0.65) !important;
+}
+
+.onboarding-page .text-white\/70 {
+  color: rgba(24, 25, 27, 0.75) !important;
+}
+
+.onboarding-page .text-white\/80 {
+  color: rgba(24, 25, 27, 0.85) !important;
+}
+
+.onboarding-page .bg-zinc-900\/60,
+.onboarding-page .bg-zinc-900\/70,
+.onboarding-page .bg-black\/40,
+.onboarding-page .bg-black\/50 {
+  background-color: rgba(248, 249, 250, 0.9) !important;
+}
+
+.onboarding-page .bg-white\/5 {
+  background-color: rgba(24, 25, 27, 0.04) !important;
+}
+
+.onboarding-page .bg-white\/10 {
+  background-color: rgba(24, 25, 27, 0.08) !important;
+}
+
+.onboarding-page .border-white\/5 {
+  border-color: rgba(24, 25, 27, 0.08) !important;
+}
+
+.onboarding-page .border-white\/10 {
+  border-color: rgba(24, 25, 27, 0.12) !important;
+}
+
+.onboarding-page .border-white\/15 {
+  border-color: rgba(24, 25, 27, 0.18) !important;
+}
+
+.onboarding-page .hover\:border-white\/20:hover {
+  border-color: rgba(24, 25, 27, 0.24) !important;
+}
+
+.onboarding-page .placeholder\:text-white\/30::placeholder {
+  color: rgba(24, 25, 27, 0.4) !important;
+}
+
+.onboarding-page input {
+  color: #18191b !important;
+}
+
+.onboarding-page input:focus {
+  background-color: #ffffff !important;
+}
+
 .carousel-enter-active,
 .carousel-leave-active {
   transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);

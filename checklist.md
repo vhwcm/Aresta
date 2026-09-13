@@ -3,6 +3,8 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [13/09/2026 14:14] [Concluído] Simplificar login mobile ocultando textos institucionais e exibindo o formulário imediatamente
+- [13/09/2026 14:10] [Concluído] Ajustar tela de perguntas iniciais para ocupar a viewport, ocultar navbar e iniciar com tema branco
 - [13/09/2026 14:03] [Concluído] Centralizar configurações de ambiente no .env raiz e remover arquivos dos subprojetos
 - [13/09/2026 13:56] [Concluído] Aplicar migrations Prisma automaticamente antes de iniciar a API na produção
 - [13/09/2026 13:52] [Concluído] Corrigir geração e fallback das páginas estáticas do frontend no Nginx

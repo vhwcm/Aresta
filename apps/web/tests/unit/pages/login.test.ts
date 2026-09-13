@@ -64,6 +64,7 @@ describe('Login & Register Dedicated Page Component', () => {
 
     // Navegação e ausência de logo externo
     expect(wrapper.find('[data-testid="back-to-home-link"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="mobile-back-to-home-link"]').exists()).toBe(true)
     expect(wrapper.text()).toContain('Voltar ao Início')
     expect(wrapper.find('[data-testid="aresta-logo"]').exists()).toBe(false)
 
@@ -75,6 +76,7 @@ describe('Login & Register Dedicated Page Component', () => {
     expect(wrapper.text()).toContain('Grafo de conexões conceituais navegável')
     expect(wrapper.text()).toContain('Flashcards inteligentes e repetição espaçada')
     expect(wrapper.text()).toContain('100% livre de distrações, anúncios e algoritmos viciantes')
+    expect(wrapper.find('.hidden.lg\\:flex').exists()).toBe(true)
 
     // Coluna direita: Card com abas e formulário de login
     expect(wrapper.find('[data-testid="tab-login"]').exists()).toBe(true)
