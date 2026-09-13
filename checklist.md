@@ -1,8 +1,11 @@
 # Checklist
 
 ## 🔄 Em Andamento
+- [12/09/2026 20:55] [Fazendo] Corrigir criação de livreto didático, layout do leitor e rotas do monólito
 
 ## ✅ Concluído
+- [12/09/2026 20:54] [Concluído] Remover títulos Central de Revisão, Retenção & Síntese e subtítulo descritivo da Central de Revisão
+- [12/09/2026 20:52] [Concluído] Permitir deletar temas e editar nome de temas com modal dedicado e botão na estante de livros
 - [12/09/2026 20:49] [Concluído] Corrigir scrollbar nativa, alinhamento, campo de busca e desduplicar títulos de livros no AppSelect
 - [12/09/2026 20:36] [Concluído] Criar componente customizado de seleção (AppSelect) com design do Aresta e aplicar na página de revisão
 - [12/09/2026 20:35] [Concluído] Excluir anotações e flashcards ao deletar livro e alertar no modal de confirmação se houver notas

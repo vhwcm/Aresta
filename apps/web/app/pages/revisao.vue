@@ -1,20 +1,7 @@
 <template>
-  <div class="flex flex-col gap-12 pb-16">
-    <!-- Cabeçalho Editorial -->
-    <header class="flex flex-col md:flex-row md:items-end justify-between gap-6">
-      <div class="flex flex-col gap-3">
-        <div class="flex items-center gap-2 font-technical text-[10px] uppercase font-semibold tracking-widest text-accent">
-          Retenção & Síntese
-        </div>
-        <h1 class="font-editorial text-4xl md:text-5xl font-light text-textPrimary leading-tight">
-          Central de Revisão
-        </h1>
-        <p class="font-interface text-textSecondary text-base max-w-2xl leading-relaxed">
-          Fixe conceitos essenciais com repetição espaçada e consulte resumos inteligentes estruturados a partir das suas anotações e destaques de leitura.
-        </p>
-      </div>
-
-      <!-- Abas Internas da Revisão -->
+  <div class="flex flex-col gap-8 pb-16">
+    <!-- Abas Internas da Revisão -->
+    <header class="flex items-center justify-between gap-4">
       <div class="flex items-center bg-black/5 dark:bg-white/5 p-1 rounded-2xl border border-divider">
         <button
           @click="activeTab = 'flashcards'"

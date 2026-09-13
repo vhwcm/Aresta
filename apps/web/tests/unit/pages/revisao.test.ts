@@ -78,7 +78,6 @@ describe('Revisao Page (/revisao)', () => {
       },
     })
 
-    expect(wrapper.text()).toContain('Central de Revisão')
     expect(wrapper.text()).toContain('Flashcards')
     expect(wrapper.text()).toContain('Resumos & Anotações')
   })
