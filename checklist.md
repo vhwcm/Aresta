@@ -3,6 +3,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [12/09/2026 21:11] [Concluído] Normalizar selected_text e exibir texto de citações e notas em todas as anotações da gaveta
 - [12/09/2026 21:04] [Concluído] Carregar anotações locais e da API do livro na gaveta BookAnnotationsDrawer desempacotando lista e autenticação
 - [12/09/2026 20:55] [Concluído] Corrigir criação de livreto didático, layout do leitor e rotas do monólito
 - [12/09/2026 20:54] [Concluído] Remover títulos Central de Revisão, Retenção & Síntese e subtítulo descritivo da Central de Revisão

@@ -189,4 +189,43 @@ describe('BookAnnotationsDrawer Component', () => {
       expect(wrapper.text()).toContain('Anotações deste livro (1)')
     })
   })
+
+  it('renderiza o texto da citação quando a anotação vem com snake_case (selected_text) e sem nota escrita (destaque puro)', async () => {
+    mockFetchBookAnnotations.mockResolvedValue([
+      {
+        id: 401,
+        bookId: 5,
+        cfi: 'page:3#color=F59E0B',
+        chapter_title: 'Página 3',
+        selected_text: 'O Santo Graal apareceu sobre a távola redonda.',
+        note: null,
+      },
+    ])
+
+    const wrapper = mount(BookAnnotationsDrawer, {
+      props: {
+        isOpen: true,
+        book: {
+          id: 'book-5',
+          rawId: 5,
+          name: 'Rei Artur',
+        },
+      },
+      global: {
+        stubs: {
+          Teleport: true,
+          NuxtLink: {
+            props: ['to'],
+            template: '<a :href="to"><slot /></a>',
+          },
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(wrapper.text()).toContain('O Santo Graal apareceu sobre a távola redonda.')
+      expect(wrapper.text()).toContain('Página 3')
+      expect(wrapper.text()).toContain('Anotações deste livro (1)')
+    })
+  })
 })

@@ -232,7 +232,32 @@ export const useGraph = () => {
         headers: getHeaders(),
       })
       const list = Array.isArray(res) ? res : (Array.isArray(res?.annotations) ? res.annotations : [])
-      return list
+      return list.map((item: any) => {
+        let color = item.color || null
+        if (!color && item.cfi && item.cfi.includes('#color=')) {
+          const match = item.cfi.match(/#color=([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})/)
+          if (match && match[1]) {
+            color = `#${match[1]}`
+          }
+        }
+        return {
+          id: Number(item.id),
+          userId: item.userId ?? item.user_id ?? 0,
+          bookId: Number(item.bookId ?? item.book_id ?? bookId),
+          bookTitle: item.bookTitle || item.book?.title,
+          bookCover: item.bookCover || item.book?.cover_path,
+          cfi: item.cfi || null,
+          selectedText: item.selectedText || item.selected_text || item.text || null,
+          note: item.note || item.comment || null,
+          color,
+          chapterTitle: item.chapterTitle || item.chapter_title || null,
+          progress: item.progress ?? null,
+          themes: Array.isArray(item.themes)
+            ? item.themes
+            : (Array.isArray(item.annotationThemes) ? item.annotationThemes.map((at: any) => at.theme || at).filter(Boolean) : []),
+          createdAt: item.createdAt || item.created_at || '',
+        }
+      })
     } catch (e: any) {
       console.error(`Erro ao buscar anotações do livro ${bookId}:`, e)
       return []

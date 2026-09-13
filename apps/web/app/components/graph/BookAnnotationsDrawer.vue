@@ -135,32 +135,46 @@
           <div
             v-for="anno in annotations"
             :key="anno.id"
-            class="p-4 rounded-2xl bg-white/[0.02] border border-divider flex flex-col gap-2"
+            class="p-4 rounded-2xl bg-white/[0.02] border border-divider flex flex-col gap-2.5 transition-all hover:border-accent/40"
           >
             <!-- Badge de Tipo: Solta vs Leitor -->
             <div class="flex items-center justify-between text-[10px] text-textSecondary font-technical">
-              <span v-if="anno.cfi" class="text-accent font-semibold flex items-center gap-1">
+              <span v-if="anno.cfi && !anno.cfi.startsWith('note:')" class="text-accent font-semibold flex items-center gap-1">
                 <BookmarkIcon class="w-3 h-3" />
                 <span>{{ anno.chapterTitle || 'Destaque no Leitor' }}</span>
               </span>
               <span v-else class="text-amber-400 font-semibold flex items-center gap-1">
                 <SparklesIcon class="w-3 h-3" />
-                <span>Anotação Solta</span>
+                <span>{{ anno.chapterTitle || 'Anotação Solta' }}</span>
               </span>
+
+              <span
+                v-if="anno.color"
+                class="w-2.5 h-2.5 rounded-full shrink-0 shadow-xs"
+                :style="{ backgroundColor: anno.color }"
+                title="Cor do destaque"
+              ></span>
             </div>
 
-            <!-- Citação -->
+            <!-- Citação (Texto Selecionado / Marcado) -->
             <blockquote
               v-if="anno.selectedText"
-              class="border-l-2 border-accent/60 pl-2.5 text-xs italic font-serif text-textPrimary/90"
+              class="border-l-4 pl-3 py-1.5 text-xs italic font-serif text-textPrimary leading-relaxed bg-white/[0.02] rounded-r-lg"
+              :style="{ borderLeftColor: anno.color || '#E57B55' }"
             >
               "{{ anno.selectedText }}"
             </blockquote>
 
-            <!-- Nota -->
-            <p v-if="anno.note" class="text-xs font-interface text-textPrimary">
-              {{ anno.note }}
-            </p>
+            <!-- Nota Pessoal -->
+            <div v-if="anno.note" class="text-xs font-interface text-textPrimary leading-relaxed whitespace-pre-wrap">
+              <span v-if="anno.selectedText" class="text-[10px] font-technical uppercase text-accent font-semibold block mb-0.5">Sua Nota:</span>
+              <p>{{ anno.note }}</p>
+            </div>
+
+            <!-- Fallback se não houver selectedText nem note -->
+            <div v-if="!anno.selectedText && !anno.note" class="text-xs text-textSecondary italic">
+              (Destaque sem texto adicional registrado)
+            </div>
 
             <!-- Tags e Ação de Leitura -->
             <div class="flex items-center justify-between flex-wrap gap-1.5 pt-1">
@@ -275,6 +289,43 @@ const onCoverError = (event: Event) => {
   target.style.display = 'none'
 }
 
+const normalizeAnnotation = (item: any) => {
+  if (!item) return item
+  let color = item.color || null
+  if (!color && item.cfi && item.cfi.includes('#color=')) {
+    const match = item.cfi.match(/#color=([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})/)
+    if (match && match[1]) {
+      color = `#${match[1]}`
+    }
+  }
+
+  let chapterTitle = item.chapterTitle || item.chapter_title || null
+  if (!chapterTitle && item.cfi) {
+    const pageMatch = item.cfi.match(/page:(\d+)/)
+    if (pageMatch && pageMatch[1]) {
+      chapterTitle = `Página ${pageMatch[1]}`
+    }
+  }
+
+  const selectedText = item.selectedText || item.selected_text || item.text || item.quote || null
+  const note = item.note || item.comment || item.content || null
+
+  return {
+    id: Number(item.id),
+    userId: item.userId ?? item.user_id ?? 0,
+    bookId: Number(item.bookId ?? item.book_id ?? 0),
+    cfi: item.cfi || null,
+    selectedText,
+    note,
+    color,
+    chapterTitle,
+    themes: Array.isArray(item.themes)
+      ? item.themes
+      : (Array.isArray(item.annotationThemes) ? item.annotationThemes.map((at: any) => at.theme || at).filter(Boolean) : []),
+    createdAt: item.createdAt || item.created_at || '',
+  }
+}
+
 const loadBookData = async () => {
   const bookId = resolveBookId(props.book)
   if (!bookId) {
@@ -289,18 +340,7 @@ const loadBookData = async () => {
     try {
       const local = await annotationRepo.getAll({ bookId })
       if (local && local.length > 0) {
-        localNotes = local.map((l: any) => ({
-          ...l,
-          id: Number(l.id),
-          bookId: Number(l.bookId),
-          cfi: l.cfi || '',
-          selectedText: l.selectedText || null,
-          note: l.note || '',
-          color: l.color || null,
-          chapterTitle: l.chapterTitle || null,
-          themes: l.themes || [],
-          createdAt: l.createdAt || '',
-        }))
+        localNotes = local.map(normalizeAnnotation)
         annotations.value = localNotes
       }
     } catch (e) {
@@ -311,8 +351,9 @@ const loadBookData = async () => {
     try {
       const remote = await fetchBookAnnotations(bookId)
       if (Array.isArray(remote) && remote.length > 0) {
+        const normalizedRemote = remote.map(normalizeAnnotation)
         // Combina anotações remotas com anotações locais que ainda não foram sincronizadas
-        const merged = [...remote]
+        const merged = [...normalizedRemote]
         for (const loc of localNotes) {
           if (!merged.some((m: any) => Number(m.id) === Number(loc.id))) {
             merged.push(loc)
