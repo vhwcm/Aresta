@@ -144,4 +144,18 @@ describe('useGraph Composable', () => {
     expect(result).toHaveLength(1)
     expect(result[0]?.id).toBe(3)
   })
+
+  it('createNode rejeita nomes com mais de 30 caracteres', async () => {
+    const { createNode } = useGraph()
+    await expect(
+      createNode('Este nome de tema tem mais de trinta caracteres com certeza')
+    ).rejects.toThrow('30 caracteres')
+  })
+
+  it('updateNode rejeita nomes com mais de 30 caracteres', async () => {
+    const { updateNode } = useGraph()
+    await expect(
+      updateNode(1, 'Este nome de tema tem mais de trinta caracteres com certeza')
+    ).rejects.toThrow('30 caracteres')
+  })
 })

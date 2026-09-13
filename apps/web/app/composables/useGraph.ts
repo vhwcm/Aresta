@@ -286,7 +286,25 @@ export const useGraph = () => {
     }
   }
 
-  const createNode = async (name: string, color = '#E57B55', description = '') => {
+  const createNode = async (
+    nameOrPayload: string | { name?: string; label?: string; color?: string; description?: string },
+    colorParam = '#E57B55',
+    descriptionParam = ''
+  ) => {
+    const rawName = typeof nameOrPayload === 'string'
+      ? nameOrPayload
+      : (nameOrPayload?.name || nameOrPayload?.label || '')
+    const color = typeof nameOrPayload === 'object' && nameOrPayload.color ? nameOrPayload.color : colorParam
+    const description = typeof nameOrPayload === 'object' && nameOrPayload.description ? nameOrPayload.description : descriptionParam
+
+    const name = (rawName || '').trim()
+    if (!name) {
+      throw new Error('Nome do nó/tema é obrigatório')
+    }
+    if (name.length > 30) {
+      throw new Error('O nome do tema deve ter no máximo 30 caracteres')
+    }
+
     try {
       const newNode = await $fetch<GraphNode>(`${getApiBase()}/graph/nodes`, {
         method: 'POST',
@@ -314,11 +332,21 @@ export const useGraph = () => {
   }
 
   const updateNode = async (id: number | string, name: string, color?: string, description?: string) => {
+    const trimmed = name !== undefined ? name.trim() : ''
+    if (name !== undefined) {
+      if (!trimmed) {
+        throw new Error('Nome do tema não pode ser vazio')
+      }
+      if (trimmed.length > 30) {
+        throw new Error('O nome do tema deve ter no máximo 30 caracteres')
+      }
+    }
+
     try {
       const updated = await $fetch<GraphNode>(`${getApiBase()}/graph/nodes/${id}`, {
         method: 'PUT',
         headers: getHeaders(),
-        body: { name, color, description },
+        body: { name: trimmed || name, color, description },
       })
       await fetchGraph()
       return updated
@@ -330,7 +358,7 @@ export const useGraph = () => {
         const existing = currentNodes[index]!
         const updatedNode: GraphNode = {
           ...existing,
-          name: name || existing.name,
+          name: trimmed || existing.name,
           color: color || existing.color,
           description: description !== undefined ? description : existing.description,
         }

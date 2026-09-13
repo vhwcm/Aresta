@@ -158,6 +158,7 @@
                 <input
                   v-model="newThemeName"
                   type="text"
+                  maxlength="30"
                   placeholder="Nome do novo tema..."
                   class="bg-transparent text-xs text-textPrimary placeholder:text-textSecondary/50 focus:outline-none flex-1 px-2"
                   @keydown.enter.prevent="handleCreateQuickTheme"
@@ -336,7 +337,14 @@ const isSubmitting = ref(false)
 const errorMessage = ref<string | null>(null)
 
 const availableThemes = computed(() => {
-  return (graphData.value?.nodes || []).filter((n) => !n.isRoot && n.id !== -999)
+  return (graphData.value?.nodes || []).filter((n: any) => {
+    if (n.isRoot || n.id === -999) return false
+    if (n.type && n.type !== 'theme') return false
+    if (typeof n.id === 'string' && (n.id.startsWith('book-') || n.id.startsWith('note-') || n.id.startsWith('canvas-'))) {
+      return false
+    }
+    return true
+  })
 })
 
 watch(
@@ -371,7 +379,7 @@ const toggleThemeSelection = (themeId: number | string) => {
 
 const handleCreateQuickTheme = async () => {
   const name = newThemeName.value.trim()
-  if (!name || isCreatingTheme.value) return
+  if (!name || isCreatingTheme.value || name.length > 30) return
 
   isCreatingTheme.value = true
   try {
@@ -381,7 +389,7 @@ const handleCreateQuickTheme = async () => {
       color: '#E57B55',
     })
     if (node && node.id) {
-      selectedThemeIds.value.push(node.id)
+      selectedThemeIds.value.push(Number(node.id))
     }
     newThemeName.value = ''
     showNewThemeInput.value = false

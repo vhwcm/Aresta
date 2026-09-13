@@ -170,4 +170,46 @@ describe('ManageThemesModal.vue', () => {
 
     expect(wrapper.emitted('close')).toBeTruthy()
   })
+
+  it('impede criação de tema com mais de 30 caracteres e exibe erro', async () => {
+    const wrapper = mount(ManageThemesModal, {
+      props: {
+        isOpen: true,
+        themes: sampleThemes,
+      }
+    })
+
+    const nameInput = wrapper.find('input[placeholder="Nome do novo tema..."]')
+    await nameInput.setValue('Este nome de tema tem mais de trinta caracteres com certeza')
+
+    const createBtn = wrapper.find('[data-testid="create-theme-submit-btn"]')
+    await createBtn.trigger('click')
+    await flushPromises()
+
+    expect(mockCreateNode).not.toHaveBeenCalled()
+    expect(wrapper.text()).toContain('30 caracteres')
+  })
+
+  it('impede edição de tema com mais de 30 caracteres e exibe erro', async () => {
+    const wrapper = mount(ManageThemesModal, {
+      props: {
+        isOpen: true,
+        themes: sampleThemes,
+      }
+    })
+
+    const editBtn = wrapper.findAll('[data-testid="edit-theme-btn"]')[0]
+    await editBtn?.trigger('click')
+    await nextTick()
+
+    const editInput = wrapper.find('[data-testid="edit-theme-input"]')
+    await editInput.setValue('Nome de tema com mais de trinta caracteres com certeza')
+
+    const saveBtn = wrapper.find('[data-testid="save-edit-theme-btn"]')
+    await saveBtn.trigger('click')
+    await flushPromises()
+
+    expect(mockUpdateNode).not.toHaveBeenCalled()
+    expect(wrapper.text()).toContain('30 caracteres')
+  })
 })

@@ -29,12 +29,13 @@ describe('MemoryService & GraphService', () => {
   })
 
   it('permite criar, editar nome e deletar temas via graphService', async () => {
-    const uniqueName = `Tema Teste ${Date.now()}`
+    const uniqueSuffix = Date.now().toString().slice(-6)
+    const uniqueName = `Tema ${uniqueSuffix}`
     const created = await graphService.createNode(uniqueName, '#123456', 'Descrição inicial')
     expect(created.name).toBe(uniqueName)
     expect(created.color).toBe('#123456')
 
-    const updatedName = `${uniqueName} Editado`
+    const updatedName = `Tema ${uniqueSuffix} Edit`
     const updated = await graphService.updateNode(created.id, updatedName, '#654321', 'Nova descrição')
     expect(updated.name).toBe(updatedName)
     expect(updated.color).toBe('#654321')
@@ -44,10 +45,9 @@ describe('MemoryService & GraphService', () => {
     expect(deleted.id).toBe(created.id)
   })
 
-  it('valida parâmetros no graphController para updateNode e deleteNode', async () => {
+  it('valida parâmetros no graphController para createNode, updateNode e deleteNode', async () => {
     const { graphController } = await import('../src/modules/memory/controllers/graph.controller')
 
-    // Teste de ID inválido em updateNode
     let statusSent = 0
     let jsonSent: any = null
     const mockRes: any = {
@@ -61,6 +61,12 @@ describe('MemoryService & GraphService', () => {
       },
     }
 
+    // Teste de nome com mais de 30 caracteres em createNode
+    await graphController.createNode({ body: { name: 'Este é um nome de tema excessivamente longo com mais de 30 chars' } } as any, mockRes)
+    expect(statusSent).toBe(400)
+    expect(jsonSent.error).toContain('30 caracteres')
+
+    // Teste de ID inválido em updateNode
     await graphController.updateNode({ params: { id: 'invalido' }, body: { name: 'Novo' } } as any, mockRes)
     expect(statusSent).toBe(400)
     expect(jsonSent.error).toContain('ID do nó/tema inválido')
@@ -69,6 +75,11 @@ describe('MemoryService & GraphService', () => {
     await graphController.updateNode({ params: { id: '1' }, body: { name: '   ' } } as any, mockRes)
     expect(statusSent).toBe(400)
     expect(jsonSent.error).toContain('não pode ser vazio')
+
+    // Teste de nome com mais de 30 caracteres em updateNode
+    await graphController.updateNode({ params: { id: '1' }, body: { name: 'Nome de tema com mais de 30 caracteres com certeza' } } as any, mockRes)
+    expect(statusSent).toBe(400)
+    expect(jsonSent.error).toContain('30 caracteres')
 
     // Teste de ID inválido em deleteNode
     await graphController.deleteNode({ params: { id: '0' } } as any, mockRes)

@@ -10,6 +10,9 @@ const mockPush = vi.fn()
 vi.mock('vue-router', () => ({
   useRouter: () => ({
     push: mockPush
+  }),
+  useRoute: () => ({
+    query: {}
   })
 }))
 
@@ -334,6 +337,49 @@ describe('Library Page', () => {
     // Ao clicar novamente, a lista colapsa
     await toggleMobileBtn.trigger('click')
     expect(wrapper.find('[data-testid="mobile-themes-dropdown"]').exists()).toBe(false)
+  })
+
+  it('não cria nem exibe tags de tema com nomes de livros ao carregar nós do grafo', async () => {
+    mockFetch.mockImplementation((url: string) => {
+      if (url.includes('/api/user-books')) {
+        return Promise.resolve([
+          { id: 10, bookId: 1, title: 'Dom Casmurro', themes: [{ id: 1, name: 'Clássicos' }], status: 'LENDO', currentPage: 10 }
+        ])
+      }
+      if (url.includes('/graph')) {
+        return Promise.resolve({
+          nodes: [
+            { id: 1, rawId: 1, type: 'theme', name: 'Clássicos', color: '#E57B55', bookCount: 1 },
+            { id: 'book-1', rawId: 1, type: 'book', name: 'Dom Casmurro', fullTitle: 'Dom Casmurro' },
+            { id: 'note-100', rawId: 100, type: 'note', name: 'Minha Nota Solta' }
+          ],
+          edges: [
+            { id: 'e1', source: 'book-1', target: 1, type: 'book-theme' }
+          ]
+        })
+      }
+      return Promise.resolve([])
+    })
+
+    const wrapper = mount(LibraryPage, {
+      global: {
+        stubs: {
+          NuxtLink: { template: '<a><slot /></a>' }
+        }
+      }
+    })
+    await flushPromises()
+
+    // Deve exibir o tema real
+    expect(wrapper.text()).toContain('Clássicos')
+    // O livro 'Dom Casmurro' deve ser renderizado como livro na estante
+    expect(wrapper.find('[data-testid="user-book-card"]').text()).toContain('Dom Casmurro')
+    // Mas NÃO deve existir como botão de tag de tema
+    const themeButtons = wrapper.findAll('header button')
+    const themeButtonTexts = themeButtons.map((b) => b.text())
+    expect(themeButtonTexts.some((t) => t.includes('Clássicos'))).toBe(true)
+    expect(themeButtonTexts.some((t) => t.includes('Dom Casmurro'))).toBe(false)
+    expect(themeButtonTexts.some((t) => t.includes('Minha Nota Solta'))).toBe(false)
   })
 })
 

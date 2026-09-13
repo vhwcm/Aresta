@@ -416,6 +416,7 @@
             <input
               v-model="newThemeName"
               type="text"
+              maxlength="30"
               placeholder="Nome do tema (ex: Estoicismo)"
               class="flex-1 w-full bg-bgApp border border-divider rounded-xl px-3 py-2 text-xs text-textPrimary focus:outline-none focus:border-accent"
               @keyup.enter="handleCreateThemeInline"
@@ -546,7 +547,7 @@
             v-if="didacticError"
             class="p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-xs font-interface text-red-400 flex items-start gap-2.5 animate-fadeIn"
           >
-            <span class="text-base leading-none">⚠️</span>
+            <AlertCircleIcon class="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
             <div class="flex-1 leading-relaxed">
               {{ didacticError }}
             </div>
@@ -618,7 +619,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import {
   BookIcon,
   LibraryIcon,
@@ -636,7 +637,8 @@ import {
   SparklesIcon,
   ChevronRightIcon,
   ChevronDownIcon,
-  AlertTriangleIcon
+  AlertTriangleIcon,
+  AlertCircleIcon
 } from 'lucide-vue-next'
 import { useDidacticBooklet } from '~/composables/useDidacticBooklet'
 
@@ -661,12 +663,14 @@ const isLoginModalOpen = ref(false)
 const isManageThemesModalOpen = ref(false)
 
 const router = useRouter()
+const route = useRoute()
 const didactic = useDidacticBooklet()
 const isCreateDidacticModalOpen = ref(false)
 const didacticError = ref<string | null>(null)
 const newBookletTitle = ref('')
 const newBookletTopic = ref('')
 const newBookletThemeId = ref<number | null>(null)
+const newBookletParentBookId = ref<number | null>(null)
 const newBookletDepth = ref<'quick_summary' | 'standard' | 'deep_dive'>('standard')
 
 watch(isCreateDidacticModalOpen, (isOpen) => {
@@ -683,12 +687,14 @@ const handleCreateDidacticBooklet = async () => {
       title: newBookletTitle.value.trim() || undefined,
       topic: newBookletTopic.value.trim(),
       theme_id: newBookletThemeId.value || undefined,
+      parent_book_id: newBookletParentBookId.value || undefined,
       depth_level: newBookletDepth.value,
     })
     isCreateDidacticModalOpen.value = false
     newBookletTitle.value = ''
     newBookletTopic.value = ''
     newBookletThemeId.value = null
+    newBookletParentBookId.value = null
     didacticError.value = null
     if (auth.isLoggedIn.value) {
       await fetchUserBooks()
@@ -752,7 +758,15 @@ const {
 } = useUserBooks()
 const { graphData, fetchGraph, createNode } = useGraph()
 
-const availableThemes = computed(() => graphData.value.nodes || [])
+const availableThemes = computed(() => {
+  return (graphData.value.nodes || []).filter((node: any) => {
+    if (node.type && node.type !== 'theme') return false
+    if (typeof node.id === 'string' && (node.id.startsWith('book-') || node.id.startsWith('note-') || node.id.startsWith('canvas-'))) {
+      return false
+    }
+    return true
+  })
+})
 
 const selectedTheme = computed(() => {
   if (selectedThemeId.value === null) return null
@@ -937,7 +951,7 @@ const toggleModalTheme = (themeId: number | string) => {
 
 const handleCreateThemeInline = async () => {
   const name = newThemeName.value.trim()
-  if (!name) return null
+  if (!name || name.length > 30) return null
   creatingTheme.value = true
   try {
     const created = await createNode(name, newThemeColor.value)
@@ -1002,6 +1016,16 @@ onMounted(() => {
   if (auth.isLoggedIn.value) {
     fetchUserBooks()
     fetchGraph()
+  }
+
+  if (route.query.createBooklet === 'true') {
+    if (route.query.topic) {
+      newBookletTopic.value = String(route.query.topic)
+    }
+    if (route.query.parentBookId) {
+      newBookletParentBookId.value = Number(route.query.parentBookId)
+    }
+    isCreateDidacticModalOpen.value = true
   }
 })
 </script>

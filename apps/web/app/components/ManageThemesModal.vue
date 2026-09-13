@@ -55,7 +55,7 @@
             v-model="newThemeName"
             type="text"
             placeholder="Nome do novo tema..."
-            maxlength="40"
+            maxlength="30"
             class="flex-1 bg-bgApp border border-divider rounded-xl px-3 py-2 text-xs text-textPrimary placeholder:text-textSecondary/50 focus:outline-none focus:border-accent"
             @keyup.enter="handleCreateTheme"
           />
@@ -113,7 +113,7 @@
                 v-model="editThemeName"
                 data-testid="edit-theme-input"
                 type="text"
-                maxlength="40"
+                maxlength="30"
                 class="flex-1 bg-bgApp border border-accent rounded-xl px-3 py-1.5 text-xs text-textPrimary focus:outline-none"
                 @keyup.enter="handleSaveEdit(theme)"
                 @keyup.esc="cancelEdit"
@@ -337,6 +337,10 @@ const handleClose = () => {
 const handleCreateTheme = async () => {
   const name = newThemeName.value.trim()
   if (!name) return
+  if (name.length > 30) {
+    createError.value = 'O nome do tema deve ter no máximo 30 caracteres'
+    return
+  }
   isCreating.value = true
   createError.value = null
   try {
@@ -374,6 +378,10 @@ const handleSaveEdit = async (theme: ThemeItem) => {
   const name = editThemeName.value.trim()
   if (!name) {
     editError.value = 'O nome não pode ser vazio'
+    return
+  }
+  if (name.length > 30) {
+    editError.value = 'O nome do tema deve ter no máximo 30 caracteres'
     return
   }
   isSaving.value = true

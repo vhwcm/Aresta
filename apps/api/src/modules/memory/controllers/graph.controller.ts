@@ -27,9 +27,17 @@ export class GraphController {
         res.status(400).json({ error: 'Nome do nó/tema é obrigatório' })
         return
       }
+      if (name.trim().length > 30) {
+        res.status(400).json({ error: 'O nome do tema deve ter no máximo 30 caracteres' })
+        return
+      }
       const node = await graphService.createNode(name, color, description)
       res.status(201).json(node)
     } catch (err: any) {
+      if (err.message && err.message.includes('30 caracteres')) {
+        res.status(400).json({ error: err.message })
+        return
+      }
       res.status(500).json({ error: err.message })
     }
   }
@@ -42,13 +50,23 @@ export class GraphController {
         return
       }
       const { name, color, description } = req.body
-      if (name !== undefined && (typeof name !== 'string' || !name.trim())) {
-        res.status(400).json({ error: 'Nome do tema não pode ser vazio' })
-        return
+      if (name !== undefined) {
+        if (typeof name !== 'string' || !name.trim()) {
+          res.status(400).json({ error: 'Nome do tema não pode ser vazio' })
+          return
+        }
+        if (name.trim().length > 30) {
+          res.status(400).json({ error: 'O nome do tema deve ter no máximo 30 caracteres' })
+          return
+        }
       }
       const node = await graphService.updateNode(id, name, color, description)
       res.json(node)
     } catch (err: any) {
+      if (err.message && err.message.includes('30 caracteres')) {
+        res.status(400).json({ error: err.message })
+        return
+      }
       if (err.code === 'P2002') {
         res.status(409).json({ error: 'Já existe um tema com este nome' })
         return

@@ -10,14 +10,18 @@
 
       <form @submit.prevent="handleSubmit" class="space-y-4">
         <div>
-          <label class="block text-xs font-technical text-textSecondary mb-1">Nome do Tema *</label>
+          <label class="block text-xs font-technical text-textSecondary mb-1">Nome do Tema * (máx. 30 caracteres)</label>
           <input
             v-model="name"
             type="text"
             required
-            placeholder="Ex: Filosofia Stoica, Algoritmos, IA"
+            maxlength="30"
+            placeholder="Ex: Filosofia Stoica, Algoritmos"
             class="w-full bg-bgApp border border-divider rounded-xl px-3 py-2.5 text-sm text-textPrimary placeholder:text-textSecondary/40 focus:outline-none focus:border-accent"
           />
+          <p v-if="errorMessage" class="text-xs text-rose-400 mt-1">
+            {{ errorMessage }}
+          </p>
         </div>
 
         <div>
@@ -73,12 +77,19 @@ const emit = defineEmits<{
 const name = ref('')
 const color = ref('#E57B55')
 const description = ref('')
+const errorMessage = ref<string | null>(null)
 
 const presetColors = ['#E57B55', '#F59E0B', '#3B82F6', '#EC4899', '#8B5CF6', '#10B981', '#06B6D4']
 
 const handleSubmit = () => {
-  if (!name.value.trim()) return
-  emit('create', { name: name.value.trim(), color: color.value, description: description.value.trim() })
+  const trimmed = name.value.trim()
+  if (!trimmed) return
+  if (trimmed.length > 30) {
+    errorMessage.value = 'O nome do tema deve ter no máximo 30 caracteres'
+    return
+  }
+  errorMessage.value = null
+  emit('create', { name: trimmed, color: color.value, description: description.value.trim() })
   name.value = ''
   description.value = ''
   color.value = '#E57B55'

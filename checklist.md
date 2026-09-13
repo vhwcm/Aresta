@@ -3,6 +3,8 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [13/09/2026 10:33] [Concluído] Filtrar temas estritos na estante (remover nós de livros) e limitar nome de temas a 30 caracteres no front e back
+- [13/09/2026 10:18] [Concluído] Implementar livretos em HTML com componentes interativos (flashcards/stepper), explicação curta contextual e conexão no grafo
 - [13/09/2026 09:51] [Concluído] Implementar cascata Gemini 3.7/3.6/3.5 e APIs externas, eliminando fallback offline de livretos
 - [13/09/2026 09:40] [Concluído] Corrigir integração do DidacticBookletService com aiService no monólito eliminando fallback indevido
 - [13/09/2026 09:35] [Concluído] Explorar e documentar a arquitetura de livretos de IA com diagramas ASCII

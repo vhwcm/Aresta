@@ -215,6 +215,25 @@ export class GraphService {
       }
     }
 
+    // Arestas: Livreto Didático vinculado ao Livro de Origem
+    for (const ann of annotations) {
+      if (ann.note && ann.note.includes('didactic_booklet')) {
+        try {
+          const parsed = JSON.parse(ann.note)
+          if (parsed.type === 'didactic_booklet' && parsed.bookletBookId) {
+            addEdge(
+              `edge-booklet-${ann.book_id}-${parsed.bookletBookId}`,
+              `book-${ann.book_id}`,
+              `book-${parsed.bookletBookId}`,
+              'book-booklet'
+            )
+          }
+        } catch {
+          // ignore
+        }
+      }
+    }
+
     // Arestas: Nota com Livros, Quadros e outras Notas
     for (const n of notes) {
       const noteKey = `note-${n.id}`
@@ -294,10 +313,18 @@ export class GraphService {
   }
 
   async createNode(name: string, color = '#E57B55', description = '') {
+    const trimmed = (name || '').trim()
+    if (!trimmed) {
+      throw new Error('Nome do nó/tema é obrigatório')
+    }
+    if (trimmed.length > 30) {
+      throw new Error('O nome do tema deve ter no máximo 30 caracteres')
+    }
+
     const theme = await prisma.theme.upsert({
-      where: { name: name.trim() },
+      where: { name: trimmed },
       create: {
-        name: name.trim(),
+        name: trimmed,
         color: color || '#E57B55',
         description: description || '',
       },
@@ -318,6 +345,16 @@ export class GraphService {
   }
 
   async updateNode(id: number, name?: string, color?: string, description?: string) {
+    if (name !== undefined) {
+      const trimmed = name.trim()
+      if (!trimmed) {
+        throw new Error('Nome do tema não pode ser vazio')
+      }
+      if (trimmed.length > 30) {
+        throw new Error('O nome do tema deve ter no máximo 30 caracteres')
+      }
+    }
+
     const theme = await prisma.theme.update({
       where: { id },
       data: {
