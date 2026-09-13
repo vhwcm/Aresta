@@ -49,6 +49,7 @@
         @select-node="handleSelectNode"
         @open-create-node="isCreateModalOpen = true"
         @open-connect-modal="isConnectModalOpen = true"
+        @connect-nodes="handleDirectConnect"
       />
 
       <!-- 1. Canvas Overlay Deslizante do Tema (Carrossel Horizontal de Livros + Feed de Anotações) -->
@@ -154,7 +155,7 @@ import BookAnnotationsDrawer from '~/components/graph/BookAnnotationsDrawer.vue'
 import CreateNodeModal from '~/components/CreateNodeModal.vue'
 import ConnectNodesModal from '~/components/ConnectNodesModal.vue'
 
-const { graphData, loading, fetchGraph, createNode, createConnection } = useGraph()
+const { graphData, loading, fetchGraph, createNode, createConnection, linkBookToNode } = useGraph()
 
 const selectedNode = ref<GraphNode | null>(null)
 const selectedThemeNode = ref<GraphNode | null>(null)
@@ -223,6 +224,45 @@ const handleCreateNode = async (payload: { name: string; color: string; descript
 
 const handleConnectNodes = async (payload: { sourceId: number; targetId: number }) => {
   await createConnection(payload.sourceId, payload.targetId)
+}
+
+const handleDirectConnect = async (payload: {
+  sourceId: number | string
+  targetId: number | string
+  sourceType?: string
+  targetType?: string
+}) => {
+  try {
+    const isSourceBook = payload.sourceType === 'book' || String(payload.sourceId).startsWith('book-')
+    const isTargetBook = payload.targetType === 'book' || String(payload.targetId).startsWith('book-')
+    const isSourceTheme = payload.sourceType === 'theme' || !isNaN(Number(payload.sourceId))
+    const isTargetTheme = payload.targetType === 'theme' || !isNaN(Number(payload.targetId))
+
+    if (isSourceBook && isTargetTheme) {
+      const bookId = Number(String(payload.sourceId).replace('book-', ''))
+      const themeId = Number(String(payload.targetId).replace('theme-', ''))
+      if (!isNaN(bookId) && !isNaN(themeId)) {
+        await linkBookToNode(themeId, bookId)
+        await fetchGraph()
+      }
+    } else if (isSourceTheme && isTargetBook) {
+      const themeId = Number(String(payload.sourceId).replace('theme-', ''))
+      const bookId = Number(String(payload.targetId).replace('book-', ''))
+      if (!isNaN(bookId) && !isNaN(themeId)) {
+        await linkBookToNode(themeId, bookId)
+        await fetchGraph()
+      }
+    } else {
+      const sId = Number(String(payload.sourceId).replace('theme-', ''))
+      const tId = Number(String(payload.targetId).replace('theme-', ''))
+      if (!isNaN(sId) && !isNaN(tId)) {
+        await createConnection(sId, tId)
+        await fetchGraph()
+      }
+    }
+  } catch (err) {
+    console.error('Falha ao conectar nós diretamente no grafo:', err)
+  }
 }
 
 onMounted(() => {

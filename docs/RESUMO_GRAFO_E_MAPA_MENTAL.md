@@ -31,7 +31,21 @@ O endpoint canônico `GET /api/graph` agrega as seguintes entidades do usuário:
 
 ## 2. Componente Visual D3 (`GraphCanvas.vue`)
 
-- **Simulação de Forças D3**: `forceSimulation`, `forceLink`, `forceManyBody`, `forceCollide` com distâncias balanceadas para cada categoria de nó.
+- **Layout Radial Clusterizado em Árvore**:
+  - **Nó Raiz ("Meu Conhecimento")**: Fixo no centro geométrico da tela.
+  - **Nível 1 (Temas)**: Dispersão angular ampla (~230px do centro) dividida de forma harmônica entre os temas.
+  - **Nível 2 (Livros, Notas, Quadros)**: Dispostos em leque no corredor angular do respectivo tema pai (~420px do centro).
+  - **Nível 3 (Anotações)**: Ramificam-se na periferia externa (~580px) em torno dos livros.
+  - **Eliminação de Clamping Restrito**: Removido o raio fixo de 42% que esmagava os nós no centro, permitindo espaçamento confortável e `forceCollide` com 22px de respiro.
+- **Auto-Fit Inteligente Inicial & Reenquadramento**:
+  - Função `fitToScreen(animate)` calcula a bounding box real dos nós visíveis com 75px de margem e ajusta a escala D3 (`zoom.transform`) para caber 100% na viewport no carregamento, ao filtrar camadas ou pesquisar.
+- **Imobilização com Micro-Balanço Harmônico (2.8px)**:
+  - Nós imobilizados contra arrasto acidental para preservar a ordem geométrica.
+  - Oscilação harmônica contínua em `requestAnimationFrame` sincronizada entre posições de nós e extremidades de arestas.
+- **Arestas Magnéticas Interativas (Wire Dragging)**:
+  - Arrastar a partir de um nó (>5px) puxa uma linha elástica tracejada com brilho (`#wire-glow`).
+  - Ao sobrevoar outro nó elegível, aplica snap magnético e highlight pulsante (`.node-snap-highlight`).
+  - Ao soltar, conecta diretamente Temas com Temas (`createConnection`) ou Livros com Temas (`linkBookToNode`) com feedback por toast flutuante.
 - **Filtros de Camadas Visuais**: Chips interativos para ligar/desligar visualmente Temas, Livros, Anotações, Notas e Quadros.
 - **Interatividade Especializada**:
   - **Livro**: Abre a gaveta lateral `BookAnnotationsDrawer` com as anotações do livro e botão para continuar a leitura no Leitor (`/reader/:id`).

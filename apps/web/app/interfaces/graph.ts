@@ -87,6 +87,14 @@ export interface GraphNode {
   vy?: number
   fx?: number | null
   fy?: number | null
+  // Layout e Animação Flutuante
+  baseX?: number
+  baseY?: number
+  currentX?: number
+  currentY?: number
+  phaseX?: number
+  phaseY?: number
+  targetAngle?: number
 }
 
 export interface GraphEdge {

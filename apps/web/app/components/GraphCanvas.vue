@@ -18,10 +18,34 @@
         <filter id="node-shadow" x="-20%" y="-20%" width="140%" height="140%">
           <feDropShadow dx="0" dy="4" stdDeviation="6" flood-opacity="0.25" />
         </filter>
+        <!-- Filtro para brilho da aresta magnética em conexão -->
+        <filter id="wire-glow" x="-30%" y="-30%" width="160%" height="160%">
+          <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#E57B55" flood-opacity="0.85" />
+        </filter>
       </defs>
       <g ref="gRef">
         <!-- Links/Arestas -->
         <g class="links-group"></g>
+        <!-- Aresta magnética temporária puxada pelo usuário -->
+        <g class="temp-wire-group">
+          <line
+            class="drag-wire"
+            stroke="#E57B55"
+            stroke-width="2.5"
+            stroke-dasharray="6,4"
+            stroke-linecap="round"
+            filter="url(#wire-glow)"
+            style="display: none; pointer-events: none;"
+          />
+          <circle
+            class="drag-wire-tip"
+            r="5"
+            fill="#E57B55"
+            stroke="#ffffff"
+            stroke-width="1.5"
+            style="display: none; pointer-events: none;"
+          />
+        </g>
         <!-- Nós/Temas, Livros, Anotações, Notas e Quadros -->
         <g class="nodes-group"></g>
       </g>
@@ -167,6 +191,17 @@
         <span class="text-[10px] ml-0.5 opacity-75 font-mono">({{ getLayerCount(layer.type) }})</span>
       </button>
     </div>
+
+    <!-- Toast de Feedback de Conexão -->
+    <Transition name="fade">
+      <div
+        v-if="connectionToast"
+        class="absolute bottom-8 left-1/2 -translate-x-1/2 z-40 px-4 py-2 rounded-xl bg-accent text-white text-xs font-semibold shadow-2xl flex items-center gap-2 border border-accent/40 backdrop-blur-md"
+      >
+        <SparklesIcon class="w-4 h-4 text-white" />
+        <span>{{ connectionToast }}</span>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -174,7 +209,7 @@
 import { ref, computed, onMounted, watch, onBeforeUnmount } from 'vue'
 import * as d3 from 'd3'
 import type { GraphNode, GraphEdge, GraphNodeType } from '~/interfaces/graph'
-import { PlusIcon, SearchIcon, LinkIcon, TagIcon, BookOpenIcon, FileTextIcon, LayoutGridIcon } from 'lucide-vue-next'
+import { PlusIcon, SearchIcon, LinkIcon, TagIcon, BookOpenIcon, FileTextIcon, LayoutGridIcon, SparklesIcon } from 'lucide-vue-next'
 import { useSettings } from '~/composables/useSettings'
 import { getCoverUrl } from '~/utils/cover'
 
@@ -201,6 +236,15 @@ const emit = defineEmits<{
   (e: 'selectNode', node: GraphNode): void
   (e: 'openCreateNode'): void
   (e: 'openConnectModal'): void
+  (
+    e: 'connectNodes',
+    payload: {
+      sourceId: number | string
+      targetId: number | string
+      sourceType?: string
+      targetType?: string
+    }
+  ): void
 }>()
 
 const { themeMode } = useSettings()
@@ -297,8 +341,71 @@ const getNodeBadgeClass = (type?: GraphNodeType) => {
   }
 }
 
+const connectionToast = ref<string | null>(null)
+let connectionToastTimeout: any = null
+
+const showConnectionFeedback = (text: string) => {
+  connectionToast.value = text
+  clearTimeout(connectionToastTimeout)
+  connectionToastTimeout = setTimeout(() => {
+    connectionToast.value = null
+  }, 2500)
+}
+
 let simulation: any = null
 let zoomBehavior: any = null
+let animFrameId: number | null = null
+let currentSimulationNodes: any[] = []
+
+const fitToScreen = (animate = true) => {
+  if (!svgRef.value || !containerRef.value || currentSimulationNodes.length === 0) return
+
+  const containerWidth = containerRef.value.clientWidth
+  const containerHeight = containerRef.value.clientHeight
+  if (containerWidth === 0 || containerHeight === 0) return
+
+  let minX = Infinity
+  let maxX = -Infinity
+  let minY = Infinity
+  let maxY = -Infinity
+
+  for (const d of currentSimulationNodes) {
+    const x = d.baseX ?? d.x ?? containerWidth / 2
+    const y = d.baseY ?? d.y ?? containerHeight / 2
+    const r = getNodeRadius(d) + 36
+    if (x - r < minX) minX = x - r
+    if (x + r > maxX) maxX = x + r
+    if (y - r < minY) minY = y - r
+    if (y + r + 24 > maxY) maxY = y + r + 24
+  }
+
+  if (minX === Infinity || maxX === -Infinity || minX >= maxX || minY >= maxY) return
+
+  const graphW = maxX - minX
+  const graphH = maxY - minY
+  const padding = 75
+
+  const scaleX = containerWidth / (graphW + padding * 2)
+  const scaleY = containerHeight / (graphH + padding * 2)
+  const scale = Math.max(0.15, Math.min(Math.min(scaleX, scaleY), 1.0))
+
+  const midX = (minX + maxX) / 2
+  const midY = (minY + maxY) / 2
+
+  const tx = containerWidth / 2 - midX * scale
+  const ty = containerHeight / 2 - midY * scale
+
+  if (!zoomBehavior) return
+
+  const targetTransform = d3.zoomIdentity.translate(tx, ty).scale(scale)
+  const svg = d3.select(svgRef.value)
+
+  if (animate) {
+    svg.transition().duration(500).ease(d3.easeCubicOut).call(zoomBehavior.transform as any, targetTransform)
+  } else {
+    svg.call(zoomBehavior.transform as any, targetTransform)
+  }
+}
 
 const getMonochromeIconColor = () => {
   if (isSepiaMode.value) return '#4A3E31'
@@ -527,10 +634,117 @@ const initGraph = () => {
   const validIslandLinks = islandLinks.filter((link) => link.target)
   const simulationLinks = [...rootLinks, ...validIslandLinks, ...explicitLinks]
 
-  // Raio máximo de dispersão ao redor do centro do canvas
-  const maxDispersalRadius = Math.min(width, height) * 0.42
+  const centerX = width / 2
+  const centerY = height / 2
+  rootNode.x = centerX
+  rootNode.y = centerY
+  rootNode.fx = centerX
+  rootNode.fy = centerY
 
-  // Criar Simulação de Forças D3 com contenção e limites
+  currentSimulationNodes = simulationNodes
+
+  const numThemes = Math.max(themeNodes.length, 1)
+  const themeChildrenMap = new Map<string, any[]>()
+  for (const t of themeNodes) {
+    themeChildrenMap.set(String(t.id), [])
+  }
+
+  const assignedNodes = new Set<string>(['root'])
+  for (const t of themeNodes) {
+    assignedNodes.add(String(t.id))
+  }
+
+  for (const link of explicitLinks) {
+    if (link.source && link.target) {
+      const sId = String(link.source.id)
+      const tId = String(link.target.id)
+      if (themeChildrenMap.has(sId) && !themeChildrenMap.has(tId)) {
+        themeChildrenMap.get(sId)!.push(link.target)
+        assignedNodes.add(tId)
+      } else if (themeChildrenMap.has(tId) && !themeChildrenMap.has(sId)) {
+        themeChildrenMap.get(tId)!.push(link.source)
+        assignedNodes.add(sId)
+      }
+    }
+  }
+
+  // Raio Nível 1: Temas (~230px)
+  const R1 = 230
+  themeNodes.forEach((theme, i) => {
+    const baseAngle = (2 * Math.PI * i) / numThemes - Math.PI / 2
+    ;(theme as any).targetAngle = baseAngle
+    theme.x = centerX + R1 * Math.cos(baseAngle)
+    theme.y = centerY + R1 * Math.sin(baseAngle)
+
+    // Nível 2: Filhos diretos (Livros, Notas, Quadros)
+    const children = themeChildrenMap.get(String(theme.id)) || []
+    const K = children.length
+    if (K > 0) {
+      const R2 = R1 + 190 // ~420px
+      const arcSpan = Math.min(Math.PI * 0.75, Math.max(0.35, K * 0.28))
+      children.forEach((child, k) => {
+        const childAngle = K > 1
+          ? baseAngle + (k / (K - 1) - 0.5) * arcSpan
+          : baseAngle
+        ;(child as any).targetAngle = childAngle
+        child.x = centerX + R2 * Math.cos(childAngle)
+        child.y = centerY + R2 * Math.sin(childAngle)
+      })
+    }
+  })
+
+  // Nível 3: Anotações vinculadas a Livros
+  const bookNodes = inputNodes.filter((n) => n.type === 'book')
+  for (const book of bookNodes) {
+    const bId = String(book.id)
+    const annLinks = explicitLinks.filter(
+      (l) => l.source && l.target &&
+        ((String(l.source.id) === bId && l.target.type === 'annotation') ||
+         (String(l.target.id) === bId && l.source.type === 'annotation'))
+    )
+    const annotations = annLinks
+      .map((l) => (l.source && String(l.source.id) === bId ? l.target : l.source))
+      .filter((a): a is GraphNode => Boolean(a))
+    const M = annotations.length
+    if (M > 0) {
+      const bookAngle = (book as any).targetAngle ?? 0
+      const R3 = R1 + 190 + 160 // ~580px
+      const arcSpan = Math.min(Math.PI * 0.55, M * 0.22)
+      annotations.forEach((ann, m) => {
+        if (ann) {
+          const annAngle = M > 1 ? bookAngle + (m / (M - 1) - 0.5) * arcSpan : bookAngle
+          ann.x = centerX + R3 * Math.cos(annAngle)
+          ann.y = centerY + R3 * Math.sin(annAngle)
+          assignedNodes.add(String(ann.id))
+        }
+      })
+    }
+  }
+
+  // Nós órfãos ou avulsos
+  const unassigned = inputNodes.filter((n) => !assignedNodes.has(String(n.id)))
+  if (unassigned.length > 0) {
+    const orphanR = 340
+    unassigned.forEach((node, idx) => {
+      const angle = (2 * Math.PI * idx) / unassigned.length + Math.PI / 4
+      node.x = centerX + orphanR * Math.cos(angle)
+      node.y = centerY + orphanR * Math.sin(angle)
+    })
+  }
+
+  // Inicializar sementes de fase para oscilação harmônica
+  simulationNodes.forEach((node, idx) => {
+    node.baseX = node.x ?? centerX
+    node.baseY = node.y ?? centerY
+    node.currentX = node.baseX
+    node.currentY = node.baseY
+    const seed = ((node.rawId as number) || (typeof node.id === 'number' ? node.id : idx + 1)) * 1.61803398875
+    node.phaseX = seed
+    node.phaseY = seed + Math.PI / 2
+  })
+
+  // Criar Simulação de Forças D3
+  if (simulation) simulation.stop()
   simulation = d3
     .forceSimulation(simulationNodes)
     .force(
@@ -539,26 +753,36 @@ const initGraph = () => {
         .forceLink(simulationLinks as any)
         .id((d: any) => String(d.id))
         .distance((d: any) => {
-          if (d.isRootEdge) return 130
-          if (d.type === 'book-theme') return 80
-          if (d.type === 'annotation-book') return 50
-          if (d.type === 'annotation-theme') return 60
-          if (d.type === 'note-book' || d.type === 'note-canvas') return 70
-          return 80
+          if (d.isRootEdge) return 220
+          if (d.type === 'book-theme') return 180
+          if (d.type === 'annotation-book') return 130
+          if (d.type === 'annotation-theme') return 150
+          if (d.type === 'note-book' || d.type === 'note-canvas') return 140
+          return 160
         })
-        .strength(0.8)
+        .strength(0.65)
     )
     .force('charge', d3.forceManyBody().strength((d: any) => {
-      if (d.isRoot) return -300
-      if (d.type === 'book') return -140
-      if (d.type === 'annotation') return -60
-      if (d.type === 'note') return -90
-      if (d.type === 'canvas') return -110
-      return -180
+      if (d.isRoot) return -500
+      if (d.type === 'book') return -280
+      if (d.type === 'annotation') return -100
+      if (d.type === 'note') return -140
+      if (d.type === 'canvas') return -180
+      return -320
     }))
-    .force('center', d3.forceCenter(width / 2, height / 2))
-    .force('radial', d3.forceRadial(maxDispersalRadius * 0.55, width / 2, height / 2).strength(0.18))
-    .force('collide', d3.forceCollide().radius((d: any) => getNodeRadius(d) + 14))
+    .force('collide', d3.forceCollide().radius((d: any) => getNodeRadius(d) + 22).strength(0.95))
+
+  // Pré-aquecer simulação para estabilização instantânea
+  for (let i = 0; i < 40; ++i) {
+    simulation.tick()
+  }
+
+  for (const d of simulationNodes) {
+    d.baseX = d.x
+    d.baseY = d.y
+    d.currentX = d.x
+    d.currentY = d.y
+  }
 
   // Renderizar Links (Arestas)
   const linkGroup = g.select('.links-group')
@@ -611,26 +835,6 @@ const initGraph = () => {
     .data(simulationNodes, (d: any) => String(d.id))
     .join('g')
     .attr('class', 'node cursor-pointer')
-    .call(
-      d3
-        .drag<SVGGElement, any>()
-        .on('start', (event, d) => {
-          if (!event.active && simulation) simulation.alphaTarget(0.3).restart()
-          d.fx = d.x
-          d.fy = d.y
-        })
-        .on('drag', (event, d) => {
-          d.fx = event.x
-          d.fy = event.y
-        })
-        .on('end', (event, d) => {
-          if (!event.active && simulation) simulation.alphaTarget(0)
-          if (!d.isRoot) {
-            d.fx = null
-            d.fy = null
-          }
-        })
-    )
 
   nodesSelection.html('') // Limpar renderização anterior
 
@@ -909,10 +1113,124 @@ const initGraph = () => {
     .text((d: any) => d.name)
 
   // ----------------------------------------------------
-  // INTERAÇÕES, TOOLTIPS & EVENTOS
+  // INTERAÇÕES, ARESTA MAGNÉTICA, TOOLTIPS & EVENTOS
   // ----------------------------------------------------
+  let dragSourceNode: any = null
+  let isDraggingWire = false
+  let snapTargetNode: any = null
+  let startClientPos = { x: 0, y: 0 }
+  let didJustDrag = false
+
+  const tempWire = g.select<SVGLineElement>('.drag-wire')
+  const tempWireTip = g.select<SVGCircleElement>('.drag-wire-tip')
+
+  const onWindowPointerMove = (e: PointerEvent) => {
+    if (!dragSourceNode || !svgRef.value) return
+
+    const dx = e.clientX - startClientPos.x
+    const dy = e.clientY - startClientPos.y
+    const dist = Math.hypot(dx, dy)
+
+    if (!isDraggingWire && dist > 6) {
+      isDraggingWire = true
+      didJustDrag = true
+      tempWire.style('display', null)
+      tempWireTip.style('display', null)
+    }
+
+    if (isDraggingWire) {
+      const rect = svgRef.value.getBoundingClientRect()
+      const mouseCanvasX = e.clientX - rect.left
+      const mouseCanvasY = e.clientY - rect.top
+      const transform = d3.zoomTransform(svgRef.value)
+      const [svgX, svgY] = transform.invert([mouseCanvasX, mouseCanvasY])
+
+      const srcX = dragSourceNode.currentX ?? dragSourceNode.x
+      const srcY = dragSourceNode.currentY ?? dragSourceNode.y
+
+      snapTargetNode = null
+      let closestDist = Infinity
+
+      for (const target of simulationNodes) {
+        if (target.id === dragSourceNode.id || target.isRoot) continue
+        const tX = target.currentX ?? target.x
+        const tY = target.currentY ?? target.y
+        const d = Math.hypot(svgX - tX, svgY - tY)
+        const snapThreshold = getNodeRadius(target) + 24
+        if (d < snapThreshold && d < closestDist) {
+          closestDist = d
+          snapTargetNode = target
+        }
+      }
+
+      nodesSelection.classed('node-snap-highlight', (d: any) => Boolean(snapTargetNode && d.id === snapTargetNode.id))
+
+      let endX = svgX
+      let endY = svgY
+      if (snapTargetNode) {
+        endX = snapTargetNode.currentX ?? snapTargetNode.x
+        endY = snapTargetNode.currentY ?? snapTargetNode.y
+      }
+
+      tempWire
+        .attr('x1', srcX)
+        .attr('y1', srcY)
+        .attr('x2', endX)
+        .attr('y2', endY)
+
+      tempWireTip
+        .attr('cx', endX)
+        .attr('cy', endY)
+    }
+  }
+
+  const onWindowPointerUp = () => {
+    window.removeEventListener('pointermove', onWindowPointerMove)
+    window.removeEventListener('pointerup', onWindowPointerUp)
+
+    if (isDraggingWire) {
+      tempWire.style('display', 'none')
+      tempWireTip.style('display', 'none')
+      nodesSelection.classed('node-snap-highlight', false)
+
+      if (snapTargetNode && snapTargetNode.id !== dragSourceNode.id) {
+        const sourceLabel = dragSourceNode.name || dragSourceNode.title || 'Nó'
+        const targetLabel = snapTargetNode.name || snapTargetNode.title || 'Nó'
+        showConnectionFeedback(`Conectando "${sourceLabel}" a "${targetLabel}"...`)
+
+        emit('connectNodes', {
+          sourceId: dragSourceNode.rawId || dragSourceNode.id,
+          targetId: snapTargetNode.rawId || snapTargetNode.id,
+          sourceType: dragSourceNode.type,
+          targetType: snapTargetNode.type,
+        })
+      }
+      setTimeout(() => {
+        didJustDrag = false
+      }, 60)
+    }
+
+    dragSourceNode = null
+    isDraggingWire = false
+    snapTargetNode = null
+  }
+
+  nodesSelection.on('pointerdown', (event, d) => {
+    if (event.button !== 0) return
+    event.stopPropagation()
+    dragSourceNode = d
+    isDraggingWire = false
+    snapTargetNode = null
+    didJustDrag = false
+    startClientPos = { x: event.clientX, y: event.clientY }
+
+    window.addEventListener('pointermove', onWindowPointerMove)
+    window.addEventListener('pointerup', onWindowPointerUp)
+  })
+
   nodesSelection.on('click', (event, d) => {
     event.stopPropagation()
+    if (didJustDrag) return
     if (d.isRoot) {
       emit('selectNode', rootNode)
     } else {
@@ -986,33 +1304,66 @@ const initGraph = () => {
         .attr('stroke-opacity', 1)
     })
 
-  // Tick da simulação com contenção estrita de distância máxima
-  const centerX = width / 2
-  const centerY = height / 2
+  // Atualização de posições de nós e arestas sincronizadas
+  const updatePositions = () => {
+    links
+      .attr('x1', (d: any) => d.source.currentX ?? d.source.x)
+      .attr('y1', (d: any) => d.source.currentY ?? d.source.y)
+      .attr('x2', (d: any) => d.target.currentX ?? d.target.x)
+      .attr('y2', (d: any) => d.target.currentY ?? d.target.y)
 
-  simulation.on('tick', () => {
-    // Clamping de distância máxima em relação ao centro
-    for (const d of simulationNodes) {
-      if (!d.isRoot && d.x != null && d.y != null) {
-        const dx = d.x - centerX
-        const dy = d.y - centerY
-        const dist = Math.sqrt(dx * dx + dy * dy)
-        if (dist > maxDispersalRadius) {
-          const ratio = maxDispersalRadius / dist
-          d.x = centerX + dx * ratio
-          d.y = centerY + dy * ratio
+    nodesSelection.attr('transform', (d: any) => {
+      const cx = d.currentX ?? d.x
+      const cy = d.currentY ?? d.y
+      return `translate(${cx},${cy})`
+    })
+  }
+
+  // Animação contínua de micro-balanço suave (amplitude 2.8px)
+  const startFloatingAnimation = () => {
+    if (animFrameId) cancelAnimationFrame(animFrameId)
+
+    const tickFloating = (time: number) => {
+      const speed = 0.0016
+      const amplitude = 2.8
+
+      for (const d of simulationNodes) {
+        if (d.isRoot) {
+          d.currentX = d.baseX ?? d.x
+          d.currentY = d.baseY ?? d.y
+        } else {
+          const offX = Math.sin(time * speed + (d.phaseX || 0)) * amplitude
+          const offY = Math.cos(time * speed + (d.phaseY || 0)) * amplitude
+          d.currentX = (d.baseX ?? d.x ?? 0) + offX
+          d.currentY = (d.baseY ?? d.y ?? 0) + offY
         }
       }
+
+      updatePositions()
+      animFrameId = requestAnimationFrame(tickFloating)
     }
 
-    links
-      .attr('x1', (d: any) => d.source.x)
-      .attr('y1', (d: any) => d.source.y)
-      .attr('x2', (d: any) => d.target.x)
-      .attr('y2', (d: any) => d.target.y)
+    animFrameId = requestAnimationFrame(tickFloating)
+  }
 
-    nodesSelection.attr('transform', (d: any) => `translate(${d.x},${d.y})`)
+  simulation.on('tick', () => {
+    for (const d of simulationNodes) {
+      d.baseX = d.x
+      d.baseY = d.y
+    }
   })
+
+  simulation.on('end', () => {
+    for (const d of simulationNodes) {
+      d.baseX = d.x
+      d.baseY = d.y
+    }
+    fitToScreen(false)
+  })
+
+  updatePositions()
+  startFloatingAnimation()
+  fitToScreen(false)
 }
 
 let resizeObserver: ResizeObserver | null = null
@@ -1021,6 +1372,7 @@ watch(
   () => [props.nodes, props.edges, currentSearchQuery.value],
   () => {
     initGraph()
+    fitToScreen(true)
   },
   { deep: true }
 )
@@ -1036,11 +1388,8 @@ onMounted(() => {
   initGraph()
   if (containerRef.value) {
     resizeObserver = new ResizeObserver(() => {
-      if (simulation && containerRef.value) {
-        const width = containerRef.value.clientWidth
-        const height = containerRef.value.clientHeight
-        simulation.force('center', d3.forceCenter(width / 2, height / 2))
-        simulation.alpha(0.2).restart()
+      if (containerRef.value) {
+        fitToScreen(true)
       }
     })
     resizeObserver.observe(containerRef.value)
@@ -1048,7 +1397,28 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  if (animFrameId) cancelAnimationFrame(animFrameId)
   if (simulation) simulation.stop()
   if (resizeObserver) resizeObserver.disconnect()
+  clearTimeout(connectionToastTimeout)
 })
 </script>
+
+<style scoped>
+:deep(.node-snap-highlight circle),
+:deep(.node-snap-highlight rect) {
+  stroke: #E57B55 !important;
+  stroke-width: 3px !important;
+  filter: drop-shadow(0 0 10px rgba(229, 123, 85, 0.95)) !important;
+  transition: all 0.15s ease-out;
+}
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translate(-50%, 8px);
+}
+</style>

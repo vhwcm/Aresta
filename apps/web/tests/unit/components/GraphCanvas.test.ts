@@ -225,4 +225,45 @@ describe('GraphCanvas Component', () => {
     expect(nodesGroup()).toContain('Resumo')
     expect(nodesGroup()).toContain('Quadro')
   })
+
+  it('renders magnetic wire elements and glow filter for interactive edge pulling', () => {
+    const wrapper = mount(GraphCanvas, {
+      props: {
+        nodes: [
+          { id: 'theme-1', rawId: 1, type: 'theme', name: 'Filosofia' },
+          { id: 'book-1', rawId: 1, type: 'book', name: 'Hobbit' },
+        ],
+        edges: [],
+      },
+    })
+
+    // Deve conter def de brilho da aresta magnética
+    expect(wrapper.find('#wire-glow').exists()).toBe(true)
+    // Deve conter linha guia e ponta da aresta temporária
+    expect(wrapper.find('.drag-wire').exists()).toBe(true)
+    expect(wrapper.find('.drag-wire-tip').exists()).toBe(true)
+  })
+
+  it('emits selectNode when clicking a node without dragging', async () => {
+    const wrapper = mount(GraphCanvas, {
+      props: {
+        nodes: [
+          { id: 'theme-1', rawId: 1, type: 'theme', name: 'Filosofia' },
+        ],
+        edges: [],
+      },
+    })
+
+    const nodeG = wrapper.findAll('g.node')
+    // O segundo nó é o nó do tema (o primeiro é a raiz 'Meu Conhecimento')
+    const themeG = nodeG.find((g) => g.text().includes('Filosofia'))
+    expect(themeG).toBeDefined()
+
+    if (themeG) {
+      await themeG.trigger('click')
+      expect(wrapper.emitted('selectNode')).toBeTruthy()
+      const emittedPayload = wrapper.emitted('selectNode')?.[0]?.[0] as any
+      expect(emittedPayload.name).toBe('Filosofia')
+    }
+  })
 })
