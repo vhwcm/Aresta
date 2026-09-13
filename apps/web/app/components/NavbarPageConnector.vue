@@ -66,11 +66,11 @@ const auth = useAuth()
 const svgWidth = 84
 const viewportHeight = ref(800)
 
-// Geometria de encaixe com a navbar e o início da página
-const X_PAGE = 74 // Linha vertical alinhada à borda esquerda do conteúdo/painel
-const X_NAV_OUTER = 11 // Linha externa abraçando a pill da navbar
-const R_NOTCH = 40 // Amplitude vertical da transição curva superior/inferior
-const R_BTN = 24 // Altura do contorno abraçando o botão
+// Geometria de encaixe estritamente ENTRE a navbar e o início da página:
+const X_PAGE = 74 // Linha vertical da borda da página
+const X_ACTIVE_TAB = 56 // Ponto de encaixe com o botão ativo da navbar
+const R_NOTCH = 32 // Amplitude vertical suave da transição
+const R_BTN = 20 // Meia-altura do botão ativo
 
 // Offsets verticais de cada botão em relação ao centro vertical (50vh):
 // Navbar vertical com 5 botões (44px altura + 10px gap):
@@ -147,7 +147,7 @@ watch(
 // Caminho do preenchimento da aba física fundindo botão e painel
 const fillPathD = computed(() => {
   const y = currentY.value
-  if (y === null) return ''
+  if (y === null || activeIndex.value < 0) return ''
 
   const yTop = y - R_NOTCH
   const yBtnTop = y - R_BTN
@@ -156,9 +156,9 @@ const fillPathD = computed(() => {
 
   return [
     `M ${X_PAGE} ${yTop}`,
-    `C ${X_PAGE} ${y - 18}, ${X_NAV_OUTER} ${y - 30}, ${X_NAV_OUTER} ${yBtnTop}`,
-    `A 16 16 0 0 0 ${X_NAV_OUTER} ${yBtnBottom}`,
-    `C ${X_NAV_OUTER} ${y + 30}, ${X_PAGE} ${y + 18}, ${X_PAGE} ${yBottom}`,
+    `C ${X_PAGE} ${y - 16}, ${X_ACTIVE_TAB} ${yBtnTop - 8}, ${X_ACTIVE_TAB} ${yBtnTop}`,
+    `L ${X_ACTIVE_TAB} ${yBtnBottom}`,
+    `C ${X_ACTIVE_TAB} ${yBtnBottom + 8}, ${X_PAGE} ${y + 16}, ${X_PAGE} ${yBottom}`,
     `Z`
   ].join(' ')
 })
@@ -181,9 +181,9 @@ const strokePathD = computed(() => {
   return [
     `M ${X_PAGE} 0`,
     `L ${X_PAGE} ${yTop}`,
-    `C ${X_PAGE} ${y - 18}, ${X_NAV_OUTER} ${y - 30}, ${X_NAV_OUTER} ${yBtnTop}`,
-    `A 16 16 0 0 0 ${X_NAV_OUTER} ${yBtnBottom}`,
-    `C ${X_NAV_OUTER} ${y + 30}, ${X_PAGE} ${y + 18}, ${X_PAGE} ${yBottom}`,
+    `C ${X_PAGE} ${y - 16}, ${X_ACTIVE_TAB} ${yBtnTop - 8}, ${X_ACTIVE_TAB} ${yBtnTop}`,
+    `L ${X_ACTIVE_TAB} ${yBtnBottom}`,
+    `C ${X_ACTIVE_TAB} ${yBtnBottom + 8}, ${X_PAGE} ${y + 16}, ${X_PAGE} ${yBottom}`,
     `L ${X_PAGE} ${H}`
   ].join(' ')
 })
