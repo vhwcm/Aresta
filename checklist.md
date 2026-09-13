@@ -3,6 +3,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [13/09/2026 13:38] [Concluído] Sincronizar lockfile do frontend para permitir npm ci no build Docker
 - [13/09/2026 13:28] [Concluído] Corrigir import ausente do ShortExplanationSchema no build da API
 - [13/09/2026 13:25] [Concluído] Instalar OpenSSL nos containers da API para compatibilidade do Prisma na AWS
 - [13/09/2026 13:03] [Concluído] Corrigir Docker Compose para a arquitetura monolítica apps/api e apps/web na AWS
