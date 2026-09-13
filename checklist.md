@@ -3,6 +3,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [13/09/2026 11:48] [Concluído] Ajustar contorno para quadrado de cantos arredondados e estender gradiente laranja para metade da página
 - [13/09/2026 11:45] [Concluído] Aumentar o tamanho do ícone do Aresta na navbar lateral e inferior
 - [13/09/2026 11:44] [Concluído] Suavizar a curvatura do conector da navbar com transição mais ampla e formato de sino orgânico
 - [13/09/2026 11:42] [Concluído] Remover quadradão do botão ativo no desktop e envolver o ícone com a linha de contorno única

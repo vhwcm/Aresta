@@ -11,7 +11,7 @@
       xmlns="http://www.w3.org/2000/svg"
     >
       <defs>
-        <!-- Gradiente linear que acende e destaca o contorno ao redor do botão ativo -->
+        <!-- Gradiente linear que distribui o laranja da curva ao longo de metade da página -->
         <linearGradient
           id="connector-stroke-gradient"
           x1="0%"
@@ -20,9 +20,11 @@
           y2="100%"
         >
           <stop offset="0%" stop-color="var(--divider, rgba(255, 255, 255, 0.06))" />
-          <stop :offset="gradientStart" stop-color="var(--divider, rgba(255, 255, 255, 0.08))" />
-          <stop :offset="gradientCenter" stop-color="var(--accent, #E57B55)" stop-opacity="0.95" />
-          <stop :offset="gradientEnd" stop-color="var(--divider, rgba(255, 255, 255, 0.08))" />
+          <stop :offset="gradientFadeStart" stop-color="var(--divider, rgba(255, 255, 255, 0.08))" />
+          <stop :offset="gradientOrangeStart" stop-color="var(--accent, #E57B55)" stop-opacity="0.45" />
+          <stop :offset="gradientCenter" stop-color="var(--accent, #E57B55)" stop-opacity="1" />
+          <stop :offset="gradientOrangeEnd" stop-color="var(--accent, #E57B55)" stop-opacity="0.45" />
+          <stop :offset="gradientFadeEnd" stop-color="var(--divider, rgba(255, 255, 255, 0.08))" />
           <stop offset="100%" stop-color="var(--divider, rgba(255, 255, 255, 0.06))" />
         </linearGradient>
 
@@ -58,11 +60,11 @@ const auth = useAuth()
 const svgWidth = 84
 const viewportHeight = ref(800)
 
-// Geometria de contorno: curva suave e orgânica em formato de sino envolvendo o ícone ativo
+// Geometria de contorno: quadrado com cantos arredondados envolvendo o ícone ativo
 const X_PAGE = 74 // Linha vertical conectada à borda da página
-const X_APEX = 20 // Ponto ápice à esquerda envolvendo o ícone ativo
-const Y_SPAN = 52 // Alcance vertical amplo para uma transição suave e fluida
-const K_CP = 26 // Ponto de controle harmônico para curvatura ampla sem bicos
+const X_LEFT = 18 // Borda esquerda do quadrado envolvente (deixa margem para o botão de 44px)
+const Y_HALF = 24 // Meia-altura do quadrado envolvente (48px de altura total)
+const R = 10 // Raio das bordas arredondadas (fillets de entrada/saída e cantos)
 
 // Offsets verticais de cada botão em relação ao centro vertical (50vh):
 // Índice 0 (Home): -108px
@@ -135,7 +137,7 @@ watch(
   { immediate: true }
 )
 
-// Caminho da linha contínua que envolve o ícone ativo em uma única curva suave
+// Caminho do quadrado com bordas arredondadas estendendo-se da página
 const strokePathD = computed(() => {
   const H = viewportHeight.value
   const y = currentY.value
@@ -145,36 +147,66 @@ const strokePathD = computed(() => {
     return `M ${X_PAGE} 0 L ${X_PAGE} ${H}`
   }
 
-  const yTop = y - Y_SPAN
-  const yBottom = y + Y_SPAN
+  const yTop = y - Y_HALF
+  const yBottom = y + Y_HALF
 
   return [
     `M ${X_PAGE} 0`,
-    `L ${X_PAGE} ${yTop}`,
-    // Curva suave superior (sino harmônico): desce da reta da página e contorna amplamente sobre o ícone
-    `C ${X_PAGE} ${yTop + K_CP}, ${X_APEX} ${y - K_CP}, ${X_APEX} ${y}`,
-    // Curva suave inferior (sino harmônico): sai do ápice, contorna por baixo e retorna suavemente à reta da página
-    `C ${X_APEX} ${y + K_CP}, ${X_PAGE} ${yBottom - K_CP}, ${X_PAGE} ${yBottom}`,
+    // Reta vertical superior até o início da curva de entrada
+    `L ${X_PAGE} ${yTop - R}`,
+    // Curva de entrada superior conectando a vertical à horizontal superior
+    `Q ${X_PAGE} ${yTop}, ${X_PAGE - R} ${yTop}`,
+    // Borda superior horizontal
+    `L ${X_LEFT + R} ${yTop}`,
+    // Canto arredondado superior-esquerdo
+    `Q ${X_LEFT} ${yTop}, ${X_LEFT} ${yTop + R}`,
+    // Borda lateral esquerda vertical
+    `L ${X_LEFT} ${yBottom - R}`,
+    // Canto arredondado inferior-esquerdo
+    `Q ${X_LEFT} ${yBottom}, ${X_LEFT + R} ${yBottom}`,
+    // Borda inferior horizontal
+    `L ${X_PAGE - R} ${yBottom}`,
+    // Curva de saída inferior conectando a horizontal de volta à vertical da página
+    `Q ${X_PAGE} ${yBottom}, ${X_PAGE} ${yBottom + R}`,
+    // Reta vertical inferior até o fim da tela
     `L ${X_PAGE} ${H}`
   ].join(' ')
 })
 
-// Paradas dinâmicas do gradiente de cor para acender ao redor do item ativo
+// Paradas dinâmicas do gradiente: o laranja dura ~50% da altura da página (25% acima, 25% abaixo)
+const HALF_PAGE_SPAN_PCT = 25
+
 const gradientCenter = computed(() => {
   if (currentY.value === null || viewportHeight.value === 0) return '50%'
   const pct = Math.max(0, Math.min(100, (currentY.value / viewportHeight.value) * 100))
   return `${pct.toFixed(1)}%`
 })
 
-const gradientStart = computed(() => {
-  if (currentY.value === null || viewportHeight.value === 0) return '42%'
-  const pct = Math.max(0, Math.min(100, ((currentY.value - 60) / viewportHeight.value) * 100))
+const gradientOrangeStart = computed(() => {
+  if (currentY.value === null || viewportHeight.value === 0) return '37.5%'
+  const centerPct = (currentY.value / viewportHeight.value) * 100
+  const pct = Math.max(0, Math.min(100, centerPct - (HALF_PAGE_SPAN_PCT * 0.5)))
   return `${pct.toFixed(1)}%`
 })
 
-const gradientEnd = computed(() => {
-  if (currentY.value === null || viewportHeight.value === 0) return '58%'
-  const pct = Math.max(0, Math.min(100, ((currentY.value + 60) / viewportHeight.value) * 100))
+const gradientFadeStart = computed(() => {
+  if (currentY.value === null || viewportHeight.value === 0) return '25%'
+  const centerPct = (currentY.value / viewportHeight.value) * 100
+  const pct = Math.max(0, Math.min(100, centerPct - HALF_PAGE_SPAN_PCT))
+  return `${pct.toFixed(1)}%`
+})
+
+const gradientOrangeEnd = computed(() => {
+  if (currentY.value === null || viewportHeight.value === 0) return '62.5%'
+  const centerPct = (currentY.value / viewportHeight.value) * 100
+  const pct = Math.max(0, Math.min(100, centerPct + (HALF_PAGE_SPAN_PCT * 0.5)))
+  return `${pct.toFixed(1)}%`
+})
+
+const gradientFadeEnd = computed(() => {
+  if (currentY.value === null || viewportHeight.value === 0) return '75%'
+  const centerPct = (currentY.value / viewportHeight.value) * 100
+  const pct = Math.max(0, Math.min(100, centerPct + HALF_PAGE_SPAN_PCT))
   return `${pct.toFixed(1)}%`
 })
 
