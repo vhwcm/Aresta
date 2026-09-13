@@ -27,7 +27,9 @@ export class TauriFsStorageAdapter implements IBinaryStorageAdapter {
     } catch (e) {
       console.warn('[TauriFsStorageAdapter] Erro ao gravar via plugin-fs, usando fallback bookCache:', e);
       const arrayBuffer = data instanceof ArrayBuffer ? data : (data.buffer as ArrayBuffer);
-      const fileType = key.toLowerCase().endsWith('.pdf') ? 'pdf' : (key.toLowerCase().endsWith('.json') ? 'didactic' : 'epub');
+      const fileType = key.toLowerCase().endsWith('.pdf')
+        ? 'pdf'
+        : (key.toLowerCase().endsWith('.json') || key.toLowerCase().includes('didactic') ? 'didactic' : 'epub');
       await saveCachedBook(key, arrayBuffer, key, fileType);
       return `cached://${key}`;
     }

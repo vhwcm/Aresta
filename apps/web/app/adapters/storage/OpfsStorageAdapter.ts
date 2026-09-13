@@ -33,7 +33,10 @@ export class OpfsStorageAdapter implements IBinaryStorageAdapter {
       }
     }
 
-    const savedInCache = await saveCachedBook(key, arrayBuffer, key, mimeType.includes('pdf') ? 'pdf' : 'epub');
+    const fileType = mimeType.includes('pdf')
+      ? 'pdf'
+      : (mimeType.includes('json') || mimeType.includes('didactic') ? 'didactic' : 'epub');
+    const savedInCache = await saveCachedBook(key, arrayBuffer, key, fileType);
     if (!savedInCache) {
       this.memoryFallback.set(key, arrayBuffer);
       return `memory://${key}`;

@@ -142,21 +142,48 @@ const loadBookFromQuery = async () => {
     }
 
     // 1. Tentar carregar instantaneamente do armazenamento local (Tauri FS / OPFS / IndexedDB)
+    let cachedType: SupportedFileType | null = null
+    let cachedTitle: string | null = null
     const localBytes = await readerProfiler.measureAsync('1. Buscar no Armazenamento Local (FS/OPFS/IndexedDB)', async () => {
       const storage = getBinaryStorage()
       let direct = await storage.getFile(cacheKey)
       if (!direct && localBookMeta?.filePath) {
         direct = await storage.getFile(localBookMeta.filePath)
       }
-      if (direct && direct.byteLength > 0) return direct
       const cached = await getCachedBook(cacheKey)
+      if (cached) {
+        cachedType = cached.type
+        cachedTitle = cached.title
+      }
+      if (direct && direct.byteLength > 0) return direct
       return cached?.arrayBuffer || null
     }, 'io')
 
     if (localBytes && localBytes.byteLength > 0) {
       arrayBuffer = localBytes
-      if (localBookMeta?.filePath?.toLowerCase().endsWith('.pdf') || (bookPath && bookPath.toLowerCase().endsWith('.pdf'))) {
+      if (cachedTitle && (!title || title === 'Livro')) {
+        title = cachedTitle
+      }
+      const metaAny = localBookMeta as any
+      if (
+        cachedType === 'didactic' ||
+        metaAny?.format_type === 'DIDACTIC' ||
+        metaAny?.formatType === 'DIDACTIC' ||
+        metaAny?.is_ai_generated ||
+        metaAny?.isAiGenerated ||
+        metaAny?.fileType === 'didactic' ||
+        metaAny?.filePath?.includes('didactic') ||
+        (bookPath && bookPath.includes('didactic'))
+      ) {
+        type = 'didactic'
+      } else if (
+        localBookMeta?.filePath?.toLowerCase().endsWith('.pdf') ||
+        (bookPath && bookPath.toLowerCase().endsWith('.pdf')) ||
+        cachedType === 'pdf'
+      ) {
         type = 'pdf'
+      } else if (cachedType === 'epub') {
+        type = 'epub'
       } else {
         type = detectFileTypeFromArrayBuffer(localBytes, 'epub')
       }
@@ -210,7 +237,8 @@ const loadBookFromQuery = async () => {
       }
 
       // Salvar em background no storage manager / IndexedDB para as próximas aberturas serem instantâneas
-      void getBinaryStorage().saveFile(cacheKey, arrayBuffer, contentType || (type === 'pdf' ? 'application/pdf' : 'application/epub+zip'))
+      const mimeToSave = contentType || (type === 'pdf' ? 'application/pdf' : (type === 'didactic' ? 'application/json' : 'application/epub+zip'))
+      void getBinaryStorage().saveFile(cacheKey, arrayBuffer, mimeToSave)
       void saveCachedBook(cacheKey, arrayBuffer, title, type)
     }
 
@@ -225,7 +253,7 @@ const loadBookFromQuery = async () => {
     }, 'parse', { type, sizeMB: (arrayBuffer!.byteLength / (1024 * 1024)).toFixed(2) })
 
     readerProfiler.measureSync('5. Atualizar ReaderStore', () => {
-      store.setDocument(doc, title, validBookId)
+      store.setDocument(doc, doc.metadata?.title || title, validBookId)
 
       const targetPage = pageParam
         ? parseInt(pageParam, 10)

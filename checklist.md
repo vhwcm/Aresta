@@ -1,8 +1,10 @@
 # Checklist
 
 ## 🔄 Em Andamento
+- [13/09/2026 17:08] [Fazendo] Suavizar transição e reorganização dos nós no Grafo com interpolação fluida (easeOutCubic)
 
 ## ✅ Concluído
+- [13/09/2026 17:10] [Concluído] Corrigir detecção de tipo de livreto didático no cache local para evitar erro invalid zip data
 - [13/09/2026 17:05] [Concluído] Corrigir redirecionamento e carregamento imediato do livreto gerado no ReaderShell e ReaderCreateBookletModal
 - [13/09/2026 17:02] [Concluído] Renderizar aresta instantaneamente no GraphCanvas via localCustomEdges e sincronizar persistência e eventos
 - [13/09/2026 17:02] [Concluído] Implementar modal sobreposto de livreto IA no leitor, suprimir balão e redesenhar caixinhas de anotação e flashcard com laranja ativo

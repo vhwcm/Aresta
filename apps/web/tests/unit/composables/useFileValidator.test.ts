@@ -192,6 +192,15 @@ describe('detectFileTypeFromArrayBuffer', () => {
     expect(detectFileTypeFromArrayBuffer(buffer, 'epub')).toBe('epub')
   })
 
+  it('detecta livreto didático através do ArrayBuffer em formato JSON', () => {
+    const jsonStr = JSON.stringify({
+      title: 'Livreto de Algoritmos',
+      chapters: [{ order_index: 1, title: 'Capítulo 1', raw_markdown: '# Intro' }],
+    })
+    const buffer = new TextEncoder().encode(jsonStr).buffer
+    expect(detectFileTypeFromArrayBuffer(buffer)).toBe('didactic')
+  })
+
   it('retorna fallback para buffers menores que 4 bytes', () => {
     const smallBuffer = new Uint8Array([0x25, 0x50]).buffer
     expect(detectFileTypeFromArrayBuffer(smallBuffer, 'epub')).toBe('epub')

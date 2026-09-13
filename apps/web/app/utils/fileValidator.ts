@@ -101,7 +101,35 @@ export function detectFileTypeFromArrayBuffer(
 ): SupportedFileType {
   if (!buffer || buffer.byteLength < 4) return fallback
   const header = new Uint8Array(buffer.slice(0, 8))
-  return detectFileTypeFromBytes(header) || fallback
+  const detected = detectFileTypeFromBytes(header)
+  if (detected) return detected
+
+  // Detectar livreto didático / JSON (ou ardoc)
+  try {
+    const textSample = new TextDecoder('utf-8').decode(buffer.slice(0, 1024)).trimStart()
+    if (textSample.startsWith('{') || textSample.startsWith('[')) {
+      if (
+        textSample.includes('"chapters"') ||
+        textSample.includes('"booklet"') ||
+        textSample.includes('"didactic"') ||
+        textSample.includes('"topic"') ||
+        textSample.includes('"title"') ||
+        textSample.includes('"raw_markdown"')
+      ) {
+        return 'didactic'
+      }
+      try {
+        JSON.parse(textSample.slice(0, textSample.lastIndexOf('}') + 1) || textSample)
+        return 'didactic'
+      } catch {
+        return 'didactic'
+      }
+    }
+  } catch {
+    // Falha na decodificação de texto
+  }
+
+  return fallback
 }
 
 export { readFileHeader, matchesSignature, detectFileTypeFromBytes, MAX_FILE_SIZE_BYTES }
