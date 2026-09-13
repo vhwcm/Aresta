@@ -1,7 +1,7 @@
 <template>
   <div
     v-if="isVisible"
-    class="navbar-page-connector fixed inset-y-0 left-0 pointer-events-none z-30 hidden lg:block md:landscape:block overflow-visible select-none"
+    class="navbar-page-connector fixed inset-y-0 left-0 pointer-events-none z-[60] hidden lg:block md:landscape:block overflow-visible select-none"
     aria-hidden="true"
   >
     <svg
@@ -28,19 +28,11 @@
 
         <!-- Brilho e reflexo luminoso sutil no abraço do ícone -->
         <filter id="connector-accent-glow" x="-30%" y="-30%" width="160%" height="160%">
-          <feDropShadow dx="0" dy="0" stdDeviation="3.5" flood-color="var(--accent, #E57B55)" flood-opacity="0.35" />
+          <feDropShadow dx="0" dy="0" stdDeviation="3.5" flood-color="var(--accent, #E57B55)" flood-opacity="0.45" />
         </filter>
       </defs>
 
-      <!-- 1. Preenchimento de fusão (mesma cor da navbar e do painel, criando a aba contínua) -->
-      <path
-        v-if="currentY !== null && activeIndex >= 0"
-        :d="fillPathD"
-        fill="var(--bg-panel, #121315)"
-        class="transition-opacity duration-200"
-      />
-
-      <!-- 2. Linha de contorno orgânica contínua (exatamente como no desenho) -->
+      <!-- Linha de contorno orgânica contínua (renderizada acima da navbar) -->
       <path
         :d="strokePathD"
         fill="none"
@@ -68,12 +60,11 @@ const viewportHeight = ref(800)
 
 // Geometria de encaixe estritamente ENTRE a navbar e o início da página:
 const X_PAGE = 74 // Linha vertical da borda da página
-const X_ACTIVE_TAB = 56 // Ponto de encaixe com o botão ativo da navbar
-const R_NOTCH = 32 // Amplitude vertical suave da transição
-const R_BTN = 20 // Meia-altura do botão ativo
+const X_ACTIVE_TAB = 63 // Ponto de encaixe no contorno do botão ativo da navbar
+const R_NOTCH = 26 // Amplitude vertical da transição (garante que fique dentro dos limites da navbar no topo e base)
+const R_BTN = 16 // Meia-altura do trecho de abraço do botão
 
 // Offsets verticais de cada botão em relação ao centro vertical (50vh):
-// Navbar vertical com 5 botões (44px altura + 10px gap):
 // Índice 0 (Home): -108px
 // Índice 1 (Livros): -54px
 // Índice 2 (Canvas / Notas): 0px
@@ -144,25 +135,6 @@ watch(
   { immediate: true }
 )
 
-// Caminho do preenchimento da aba física fundindo botão e painel
-const fillPathD = computed(() => {
-  const y = currentY.value
-  if (y === null || activeIndex.value < 0) return ''
-
-  const yTop = y - R_NOTCH
-  const yBtnTop = y - R_BTN
-  const yBtnBottom = y + R_BTN
-  const yBottom = y + R_NOTCH
-
-  return [
-    `M ${X_PAGE} ${yTop}`,
-    `C ${X_PAGE} ${y - 16}, ${X_ACTIVE_TAB} ${yBtnTop - 8}, ${X_ACTIVE_TAB} ${yBtnTop}`,
-    `L ${X_ACTIVE_TAB} ${yBtnBottom}`,
-    `C ${X_ACTIVE_TAB} ${yBtnBottom + 8}, ${X_PAGE} ${y + 16}, ${X_PAGE} ${yBottom}`,
-    `Z`
-  ].join(' ')
-})
-
 // Caminho da linha contínua de contorno externa
 const strokePathD = computed(() => {
   const H = viewportHeight.value
@@ -181,9 +153,9 @@ const strokePathD = computed(() => {
   return [
     `M ${X_PAGE} 0`,
     `L ${X_PAGE} ${yTop}`,
-    `C ${X_PAGE} ${y - 16}, ${X_ACTIVE_TAB} ${yBtnTop - 8}, ${X_ACTIVE_TAB} ${yBtnTop}`,
+    `C ${X_PAGE} ${y - 12}, ${X_ACTIVE_TAB} ${yBtnTop - 6}, ${X_ACTIVE_TAB} ${yBtnTop}`,
     `L ${X_ACTIVE_TAB} ${yBtnBottom}`,
-    `C ${X_ACTIVE_TAB} ${yBtnBottom + 8}, ${X_PAGE} ${y + 16}, ${X_PAGE} ${yBottom}`,
+    `C ${X_ACTIVE_TAB} ${yBtnBottom + 6}, ${X_PAGE} ${y + 12}, ${X_PAGE} ${yBottom}`,
     `L ${X_PAGE} ${H}`
   ].join(' ')
 })
