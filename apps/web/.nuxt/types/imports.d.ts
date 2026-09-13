@@ -50,7 +50,10 @@ declare global {
   const easeInOutCubic: typeof import('../../app/utils/pageCurlMath').easeInOutCubic
   const effect: typeof import('vue').effect
   const effectScope: typeof import('vue').effectScope
+  const escapeHtml: typeof import('../../app/utils/markdownFormat').escapeHtml
   const formatErrorMessage: typeof import('../../app/utils/logger').formatErrorMessage
+  const generateDidacticCoverDataUri: typeof import('../../app/utils/cover').generateDidacticCoverDataUri
+  const generateDidacticCoverSvg: typeof import('../../app/utils/cover').generateDidacticCoverSvg
   const getAnchorPoint: typeof import('../../app/utils/canvasGeometry').getAnchorPoint
   const getAnnotationPageNumber: typeof import('../../app/utils/readerHighlight').getAnnotationPageNumber
   const getAppManifest: typeof import('../../node_modules/nuxt/dist/app/composables/manifest').getAppManifest
@@ -60,6 +63,7 @@ declare global {
   const getCoverUrl: typeof import('../../app/utils/cover').getCoverUrl
   const getCurrentInstance: typeof import('vue').getCurrentInstance
   const getCurrentScope: typeof import('vue').getCurrentScope
+  const getNavIndexFromPath: typeof import('../../app/composables/useBottomNavbar').getNavIndexFromPath
   const getRouteRules: typeof import('../../node_modules/nuxt/dist/app/composables/manifest').getRouteRules
   const getVectorForSide: typeof import('../../app/utils/canvasGeometry').getVectorForSide
   const getVisibleTextChunks: typeof import('../../app/utils/readerHighlight').getVisibleTextChunks
@@ -122,9 +126,12 @@ declare global {
   const refreshCookie: typeof import('../../node_modules/nuxt/dist/app/composables/cookie').refreshCookie
   const refreshNuxtData: typeof import('../../node_modules/nuxt/dist/app/composables/asyncData').refreshNuxtData
   const reloadNuxtApp: typeof import('../../node_modules/nuxt/dist/app/composables/chunk').reloadNuxtApp
+  const renderInlineMarkdown: typeof import('../../app/utils/markdownFormat').renderInlineMarkdown
+  const renderMarkdown: typeof import('../../app/utils/markdownFormat').renderMarkdown
   const renderPageCurl: typeof import('../../app/utils/pageCurlMath').renderPageCurl
   const requestIdleCallback: typeof import('../../node_modules/nuxt/dist/app/compat/idle-callback').requestIdleCallback
   const resetSettingsForTesting: typeof import('../../app/composables/useSettings').resetSettingsForTesting
+  const resolveBookCover: typeof import('../../app/utils/cover').resolveBookCover
   const resolveComponent: typeof import('vue').resolveComponent
   const saveCachedBook: typeof import('../../app/utils/bookCache').saveCachedBook
   const setInterval: typeof import('../../node_modules/nuxt/dist/app/compat/interval').setInterval
@@ -321,7 +328,7 @@ declare global {
   export type { CachedBookEntry } from '../../app/utils/bookCache'
   import('../../app/utils/bookCache')
   // @ts-ignore
-  export type { BookFormat } from '../../app/utils/cover'
+  export type { DidacticCoverParams, BookFormat } from '../../app/utils/cover'
   import('../../app/utils/cover')
   // @ts-ignore
   export type { MarkdownFormatResult } from '../../app/utils/markdownFormat'
@@ -392,7 +399,10 @@ declare module 'vue' {
     readonly easeInOutCubic: UnwrapRef<typeof import('../../app/utils/pageCurlMath')['easeInOutCubic']>
     readonly effect: UnwrapRef<typeof import('vue')['effect']>
     readonly effectScope: UnwrapRef<typeof import('vue')['effectScope']>
+    readonly escapeHtml: UnwrapRef<typeof import('../../app/utils/markdownFormat')['escapeHtml']>
     readonly formatErrorMessage: UnwrapRef<typeof import('../../app/utils/logger')['formatErrorMessage']>
+    readonly generateDidacticCoverDataUri: UnwrapRef<typeof import('../../app/utils/cover')['generateDidacticCoverDataUri']>
+    readonly generateDidacticCoverSvg: UnwrapRef<typeof import('../../app/utils/cover')['generateDidacticCoverSvg']>
     readonly getAnchorPoint: UnwrapRef<typeof import('../../app/utils/canvasGeometry')['getAnchorPoint']>
     readonly getAnnotationPageNumber: UnwrapRef<typeof import('../../app/utils/readerHighlight')['getAnnotationPageNumber']>
     readonly getAppManifest: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/manifest')['getAppManifest']>
@@ -402,6 +412,7 @@ declare module 'vue' {
     readonly getCoverUrl: UnwrapRef<typeof import('../../app/utils/cover')['getCoverUrl']>
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
     readonly getCurrentScope: UnwrapRef<typeof import('vue')['getCurrentScope']>
+    readonly getNavIndexFromPath: UnwrapRef<typeof import('../../app/composables/useBottomNavbar')['getNavIndexFromPath']>
     readonly getRouteRules: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/manifest')['getRouteRules']>
     readonly getVectorForSide: UnwrapRef<typeof import('../../app/utils/canvasGeometry')['getVectorForSide']>
     readonly getVisibleTextChunks: UnwrapRef<typeof import('../../app/utils/readerHighlight')['getVisibleTextChunks']>
@@ -464,9 +475,12 @@ declare module 'vue' {
     readonly refreshCookie: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/cookie')['refreshCookie']>
     readonly refreshNuxtData: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/asyncData')['refreshNuxtData']>
     readonly reloadNuxtApp: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/chunk')['reloadNuxtApp']>
+    readonly renderInlineMarkdown: UnwrapRef<typeof import('../../app/utils/markdownFormat')['renderInlineMarkdown']>
+    readonly renderMarkdown: UnwrapRef<typeof import('../../app/utils/markdownFormat')['renderMarkdown']>
     readonly renderPageCurl: UnwrapRef<typeof import('../../app/utils/pageCurlMath')['renderPageCurl']>
     readonly requestIdleCallback: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/compat/idle-callback')['requestIdleCallback']>
     readonly resetSettingsForTesting: UnwrapRef<typeof import('../../app/composables/useSettings')['resetSettingsForTesting']>
+    readonly resolveBookCover: UnwrapRef<typeof import('../../app/utils/cover')['resolveBookCover']>
     readonly resolveComponent: UnwrapRef<typeof import('vue')['resolveComponent']>
     readonly saveCachedBook: UnwrapRef<typeof import('../../app/utils/bookCache')['saveCachedBook']>
     readonly setInterval: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/compat/interval')['setInterval']>

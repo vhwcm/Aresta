@@ -30,6 +30,7 @@ export const HomeCanvasNotesDemo: typeof import("../app/components/HomeCanvasNot
 export const HomeKnowledgeGraphDemo: typeof import("../app/components/HomeKnowledgeGraphDemo.vue")['default']
 export const ManageThemesModal: typeof import("../app/components/ManageThemesModal.vue")['default']
 export const MilkdownEditor: typeof import("../app/components/MilkdownEditor.vue")['default']
+export const NavbarPageConnector: typeof import("../app/components/NavbarPageConnector.vue")['default']
 export const NodeDrawer: typeof import("../app/components/NodeDrawer.vue")['default']
 export const ReadingStreak: typeof import("../app/components/ReadingStreak.vue")['default']
 export const SettingsModal: typeof import("../app/components/SettingsModal.vue")['default']
@@ -55,6 +56,7 @@ export const GraphBookAnnotationsDrawer: typeof import("../app/components/graph/
 export const GraphThemeCanvasOverlay: typeof import("../app/components/graph/ThemeCanvasOverlay.vue")['default']
 export const NotesNoteCompositeRenderer: typeof import("../app/components/notes/NoteCompositeRenderer.vue")['default']
 export const NotesNoteEditorPane: typeof import("../app/components/notes/NoteEditorPane.vue")['default']
+export const ReaderAiOverlayCard: typeof import("../app/components/reader/ReaderAiOverlayCard.vue")['default']
 export const ReaderAnnotationModal: typeof import("../app/components/reader/ReaderAnnotationModal.vue")['default']
 export const ReaderBookNotesPanel: typeof import("../app/components/reader/ReaderBookNotesPanel.vue")['default']
 export const ReaderBottomBar: typeof import("../app/components/reader/ReaderBottomBar.vue")['default']
@@ -108,6 +110,7 @@ export const LazyHomeCanvasNotesDemo: LazyComponent<typeof import("../app/compon
 export const LazyHomeKnowledgeGraphDemo: LazyComponent<typeof import("../app/components/HomeKnowledgeGraphDemo.vue")['default']>
 export const LazyManageThemesModal: LazyComponent<typeof import("../app/components/ManageThemesModal.vue")['default']>
 export const LazyMilkdownEditor: LazyComponent<typeof import("../app/components/MilkdownEditor.vue")['default']>
+export const LazyNavbarPageConnector: LazyComponent<typeof import("../app/components/NavbarPageConnector.vue")['default']>
 export const LazyNodeDrawer: LazyComponent<typeof import("../app/components/NodeDrawer.vue")['default']>
 export const LazyReadingStreak: LazyComponent<typeof import("../app/components/ReadingStreak.vue")['default']>
 export const LazySettingsModal: LazyComponent<typeof import("../app/components/SettingsModal.vue")['default']>
@@ -133,6 +136,7 @@ export const LazyGraphBookAnnotationsDrawer: LazyComponent<typeof import("../app
 export const LazyGraphThemeCanvasOverlay: LazyComponent<typeof import("../app/components/graph/ThemeCanvasOverlay.vue")['default']>
 export const LazyNotesNoteCompositeRenderer: LazyComponent<typeof import("../app/components/notes/NoteCompositeRenderer.vue")['default']>
 export const LazyNotesNoteEditorPane: LazyComponent<typeof import("../app/components/notes/NoteEditorPane.vue")['default']>
+export const LazyReaderAiOverlayCard: LazyComponent<typeof import("../app/components/reader/ReaderAiOverlayCard.vue")['default']>
 export const LazyReaderAnnotationModal: LazyComponent<typeof import("../app/components/reader/ReaderAnnotationModal.vue")['default']>
 export const LazyReaderBookNotesPanel: LazyComponent<typeof import("../app/components/reader/ReaderBookNotesPanel.vue")['default']>
 export const LazyReaderBottomBar: LazyComponent<typeof import("../app/components/reader/ReaderBottomBar.vue")['default']>

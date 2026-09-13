@@ -22,20 +22,19 @@
     <!-- Área Central / Workspace Hub -->
     <div class="flex-1 flex flex-col h-full overflow-hidden">
       <!-- Top Header & Ações Globais -->
-      <header class="border-b border-divider bg-bgPanel/80 backdrop-blur-md px-3.5 sm:px-6 py-2.5 sm:py-3 flex-shrink-0 z-10">
-        <div class="max-w-7xl w-full mx-auto flex flex-col md:flex-row md:items-center justify-between gap-2.5 sm:gap-3">
-          <!-- Lado Esquerdo: Botão Sidebar (Mobile) + Busca Unificada + Alternador Grafo/Grade -->
-          <div class="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-            <!-- Botão Sidebar Drawer no Mobile -->
-            <button
-              v-if="isSidebarCollapsed"
-              class="md:hidden p-2 rounded-xl bg-bgPanel hover:bg-bgSurface text-textSecondary hover:text-textPrimary border border-divider transition-all cursor-pointer flex-shrink-0"
-              title="Abrir pastas & tags"
-              @click="isSidebarCollapsed = false"
-            >
-              <SidebarIcon class="w-4 h-4" />
-            </button>
+      <header class="border-b border-divider bg-bgPanel/80 backdrop-blur-md px-2.5 sm:px-6 py-2 sm:py-3 flex-shrink-0 z-10">
+        <input
+          ref="fileInputRef"
+          type="file"
+          accept=".canvas,.json"
+          class="hidden"
+          @change="handleFileImport"
+        />
 
+        <!-- DESKTOP / TABLET (>= md): Layout Espaçoso -->
+        <div class="hidden md:flex items-center justify-between gap-3 max-w-7xl w-full mx-auto">
+          <!-- Lado Esquerdo: Busca Unificada + Alternador Grafo/Grade -->
+          <div class="flex items-center gap-3 flex-1 min-w-0">
             <!-- Campo de Busca em Tempo Real Unificado -->
             <div class="flex-1 max-w-sm sm:max-w-md relative">
               <SearchIcon class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-textSecondary pointer-events-none" />
@@ -55,51 +54,43 @@
             </div>
 
             <!-- Alternador de Visualização: Grafo de Conhecimento vs. Grade -->
-            <div class="flex-shrink-0 flex items-center gap-0.5 sm:gap-1 p-0.5 sm:p-1 rounded-xl bg-bgRoot border border-divider text-xs">
+            <div class="flex-shrink-0 flex items-center gap-1 p-1 rounded-xl bg-bgRoot border border-divider text-xs">
               <button
-                class="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer"
+                class="px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer"
                 :class="viewLayout === 'graph' ? 'bg-accent text-white font-semibold shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
                 title="Exibir Grafo de Conhecimento interativo"
                 @click="viewLayout = 'graph'"
               >
                 <NetworkIcon class="w-3.5 h-3.5" />
-                <span class="hidden sm:inline">Grafo</span>
+                <span>Grafo</span>
               </button>
               <button
-                class="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer"
+                class="px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer"
                 :class="viewLayout === 'grid' ? 'bg-accent text-white font-semibold shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
                 title="Exibir como galeria em grade"
                 @click="viewLayout = 'grid'"
               >
                 <LayoutGridIcon class="w-3.5 h-3.5" />
-                <span class="hidden sm:inline">Grade</span>
+                <span>Grade</span>
               </button>
             </div>
           </div>
 
           <!-- Lado Direito: Botões de Ação Rápida -->
-          <div class="flex items-center gap-1.5 sm:gap-2.5 flex-shrink-0 self-end md:self-auto">
-            <input
-              ref="fileInputRef"
-              type="file"
-              accept=".canvas,.json"
-              class="hidden"
-              @change="handleFileImport"
-            />
-
+          <div class="flex items-center gap-2.5 flex-shrink-0">
             <!-- Importar .canvas -->
             <button
-              class="inline-flex items-center gap-1.5 p-2 sm:px-3.5 sm:py-2 rounded-xl bg-bgSurface hover:bg-bgElevated text-textSecondary hover:text-textPrimary border border-divider text-xs font-medium transition-all shadow-xs cursor-pointer"
+              class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-bgSurface hover:bg-bgElevated text-textSecondary hover:text-textPrimary border border-divider text-xs font-medium transition-all shadow-xs cursor-pointer"
               title="Importar quadro no formato JSON .canvas do Obsidian"
               @click="triggerImport"
             >
               <UploadCloudIcon class="w-3.5 h-3.5" />
-              <span class="hidden sm:inline">Importar .canvas</span>
+              <span>Importar .canvas</span>
             </button>
 
             <!-- Nova Nota -->
             <button
-              class="inline-flex items-center gap-1.5 px-2.5 py-2 sm:px-3.5 sm:py-2 rounded-xl bg-bgSurface hover:bg-accent/10 text-textPrimary hover:text-accent border border-divider hover:border-accent/40 text-xs font-semibold transition-all shadow-xs cursor-pointer"
+              class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-bgSurface hover:bg-accent/10 text-textPrimary hover:text-accent border border-divider hover:border-accent/40 text-xs font-semibold transition-all shadow-xs cursor-pointer"
               title="Criar nova anotação em Markdown"
               @click="handleCreateNewNote()"
             >
@@ -109,7 +100,7 @@
 
             <!-- Novo Quadro -->
             <button
-              class="inline-flex items-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2 rounded-xl bg-accent hover:bg-accent/90 text-white text-xs font-semibold transition-all shadow-sm shadow-accent/20 hover:scale-102 cursor-pointer disabled:opacity-50"
+              class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-accent hover:bg-accent/90 text-white text-xs font-semibold transition-all shadow-sm shadow-accent/20 hover:scale-102 cursor-pointer disabled:opacity-50"
               :disabled="isCreating"
               title="Criar novo quadro infinito"
               @click="newCanvasModalOpen = true"
@@ -117,6 +108,116 @@
               <PlusIcon class="w-3.5 h-3.5" />
               <span>Novo Quadro</span>
             </button>
+          </div>
+        </div>
+
+        <!-- MOBILE (< md): Linha Única com Busca Expansível por Ícone de Lupa -->
+        <div class="flex md:hidden items-center justify-between gap-1 w-full max-w-7xl mx-auto">
+          <!-- Estado A: Busca Expansível Aberta -->
+          <div v-if="isMobileSearchOpen" class="flex items-center gap-2 w-full animate-in fade-in duration-150">
+            <div class="flex-1 relative">
+              <SearchIcon class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-textSecondary pointer-events-none" />
+              <input
+                ref="mobileSearchInputRef"
+                v-model="searchQuery"
+                type="text"
+                placeholder="Buscar livros, notas, quadros..."
+                class="w-full pl-9 pr-8 py-1.5 rounded-xl bg-bgRoot border border-accent/50 text-xs text-textPrimary focus:outline-none focus:border-accent placeholder:text-textSecondary/50 font-interface shadow-inner"
+                @keydown.esc="isMobileSearchOpen = false"
+              />
+              <button
+                v-if="searchQuery"
+                class="absolute right-2.5 top-1/2 -translate-y-1/2 text-textSecondary hover:text-textPrimary text-xs cursor-pointer p-0.5"
+                @click="searchQuery = ''"
+              >
+                ✕
+              </button>
+            </div>
+            <button
+              class="px-3 py-1.5 rounded-xl bg-bgSurface hover:bg-bgElevated text-textSecondary hover:text-textPrimary border border-divider text-xs font-medium transition-all cursor-pointer shrink-0"
+              @click="isMobileSearchOpen = false"
+            >
+              Fechar
+            </button>
+          </div>
+
+          <!-- Estado B: Linha Única com Todos os Itens -->
+          <div v-else class="flex items-center justify-between gap-1 w-full overflow-x-auto no-scrollbar py-0.5">
+            <!-- Grupo Esquerdo: Sidebar + Busca (Ícone) + Alternador Grafo/Grade -->
+            <div class="flex items-center gap-1 shrink-0">
+              <!-- Botão Sidebar Drawer (Mobile) -->
+              <button
+                v-if="isSidebarCollapsed"
+                class="p-2 rounded-xl bg-bgPanel hover:bg-bgSurface text-textSecondary hover:text-textPrimary border border-divider transition-all cursor-pointer shrink-0"
+                title="Abrir pastas & tags"
+                @click="isSidebarCollapsed = false"
+              >
+                <SidebarIcon class="w-4 h-4" />
+              </button>
+
+              <!-- Botão de Lupa (Expande a Busca) -->
+              <button
+                class="p-2 rounded-xl bg-bgPanel hover:bg-bgSurface border border-divider transition-all cursor-pointer shrink-0"
+                :class="searchQuery ? 'text-accent border-accent/40 bg-accent/10' : 'text-textSecondary hover:text-textPrimary'"
+                title="Buscar"
+                @click="openMobileSearch"
+              >
+                <SearchIcon class="w-4 h-4" />
+              </button>
+
+              <!-- Alternador Grafo/Grade -->
+              <div class="flex items-center gap-0.5 p-0.5 rounded-xl bg-bgRoot border border-divider text-xs shrink-0">
+                <button
+                  class="p-1.5 rounded-lg transition-all flex items-center cursor-pointer"
+                  :class="viewLayout === 'graph' ? 'bg-accent text-white font-semibold shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
+                  title="Grafo"
+                  @click="viewLayout = 'graph'"
+                >
+                  <NetworkIcon class="w-3.5 h-3.5" />
+                </button>
+                <button
+                  class="p-1.5 rounded-lg transition-all flex items-center cursor-pointer"
+                  :class="viewLayout === 'grid' ? 'bg-accent text-white font-semibold shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
+                  title="Grade"
+                  @click="viewLayout = 'grid'"
+                >
+                  <LayoutGridIcon class="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            <!-- Grupo Direito: Importar + Nova Nota + Novo Quadro -->
+            <div class="flex items-center gap-1 shrink-0">
+              <!-- Importar .canvas -->
+              <button
+                class="p-2 rounded-xl bg-bgSurface hover:bg-bgElevated text-textSecondary hover:text-textPrimary border border-divider text-xs font-medium transition-all shadow-xs cursor-pointer shrink-0"
+                title="Importar .canvas"
+                @click="triggerImport"
+              >
+                <UploadCloudIcon class="w-3.5 h-3.5" />
+              </button>
+
+              <!-- Nova Nota -->
+              <button
+                class="inline-flex items-center gap-1 px-2 py-1.5 rounded-xl bg-bgSurface hover:bg-accent/10 text-textPrimary hover:text-accent border border-divider hover:border-accent/40 text-xs font-semibold transition-all shadow-xs cursor-pointer shrink-0 whitespace-nowrap"
+                title="Criar nova anotação em Markdown"
+                @click="handleCreateNewNote()"
+              >
+                <FileTextIcon class="w-3.5 h-3.5 text-accent" />
+                <span>Nova Nota</span>
+              </button>
+
+              <!-- Novo Quadro -->
+              <button
+                class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-accent hover:bg-accent/90 text-white text-xs font-semibold transition-all shadow-sm shadow-accent/20 hover:scale-102 cursor-pointer disabled:opacity-50 shrink-0 whitespace-nowrap"
+                :disabled="isCreating"
+                title="Criar novo quadro infinito"
+                @click="newCanvasModalOpen = true"
+              >
+                <PlusIcon class="w-3.5 h-3.5" />
+                <span>Novo Quadro</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -177,7 +278,7 @@
           :search-query="searchQuery"
           :show-controls="false"
           @select-node="handleSelectGraphNode"
-          @open-create-node="openNewCanvasModal"
+          @open-create-node="newCanvasModalOpen = true"
         />
       </div>
 
@@ -459,7 +560,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   SearchIcon,
@@ -494,6 +595,16 @@ const isSidebarCollapsed = ref(false)
 const searchQuery = ref('')
 const activeFolder = ref<string | null>((route?.query?.folder as string) || null)
 const activeTag = ref<string | null>((route?.query?.tag as string) || null)
+
+// Busca expansível no mobile
+const isMobileSearchOpen = ref(false)
+const mobileSearchInputRef = ref<HTMLInputElement | null>(null)
+
+const openMobileSearch = async () => {
+  isMobileSearchOpen.value = true
+  await nextTick()
+  mobileSearchInputRef.value?.focus()
+}
 
 // Controle de abas: 'all' | 'canvases' | 'notes'
 const activeTab = ref<'all' | 'canvases' | 'notes'>('all')
@@ -1076,5 +1187,13 @@ const formatDate = (dateStr?: string) => {
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background-color: var(--divider, rgba(255, 255, 255, 0.1));
   border-radius: 4px;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 </style>

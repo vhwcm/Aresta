@@ -30,6 +30,7 @@ interface _GlobalComponents {
   HomeKnowledgeGraphDemo: typeof import("../../app/components/HomeKnowledgeGraphDemo.vue")['default']
   ManageThemesModal: typeof import("../../app/components/ManageThemesModal.vue")['default']
   MilkdownEditor: typeof import("../../app/components/MilkdownEditor.vue")['default']
+  NavbarPageConnector: typeof import("../../app/components/NavbarPageConnector.vue")['default']
   NodeDrawer: typeof import("../../app/components/NodeDrawer.vue")['default']
   ReadingStreak: typeof import("../../app/components/ReadingStreak.vue")['default']
   SettingsModal: typeof import("../../app/components/SettingsModal.vue")['default']
@@ -55,6 +56,7 @@ interface _GlobalComponents {
   GraphThemeCanvasOverlay: typeof import("../../app/components/graph/ThemeCanvasOverlay.vue")['default']
   NotesNoteCompositeRenderer: typeof import("../../app/components/notes/NoteCompositeRenderer.vue")['default']
   NotesNoteEditorPane: typeof import("../../app/components/notes/NoteEditorPane.vue")['default']
+  ReaderAiOverlayCard: typeof import("../../app/components/reader/ReaderAiOverlayCard.vue")['default']
   ReaderAnnotationModal: typeof import("../../app/components/reader/ReaderAnnotationModal.vue")['default']
   ReaderBookNotesPanel: typeof import("../../app/components/reader/ReaderBookNotesPanel.vue")['default']
   ReaderBottomBar: typeof import("../../app/components/reader/ReaderBottomBar.vue")['default']
@@ -108,6 +110,7 @@ interface _GlobalComponents {
   LazyHomeKnowledgeGraphDemo: LazyComponent<typeof import("../../app/components/HomeKnowledgeGraphDemo.vue")['default']>
   LazyManageThemesModal: LazyComponent<typeof import("../../app/components/ManageThemesModal.vue")['default']>
   LazyMilkdownEditor: LazyComponent<typeof import("../../app/components/MilkdownEditor.vue")['default']>
+  LazyNavbarPageConnector: LazyComponent<typeof import("../../app/components/NavbarPageConnector.vue")['default']>
   LazyNodeDrawer: LazyComponent<typeof import("../../app/components/NodeDrawer.vue")['default']>
   LazyReadingStreak: LazyComponent<typeof import("../../app/components/ReadingStreak.vue")['default']>
   LazySettingsModal: LazyComponent<typeof import("../../app/components/SettingsModal.vue")['default']>
@@ -133,6 +136,7 @@ interface _GlobalComponents {
   LazyGraphThemeCanvasOverlay: LazyComponent<typeof import("../../app/components/graph/ThemeCanvasOverlay.vue")['default']>
   LazyNotesNoteCompositeRenderer: LazyComponent<typeof import("../../app/components/notes/NoteCompositeRenderer.vue")['default']>
   LazyNotesNoteEditorPane: LazyComponent<typeof import("../../app/components/notes/NoteEditorPane.vue")['default']>
+  LazyReaderAiOverlayCard: LazyComponent<typeof import("../../app/components/reader/ReaderAiOverlayCard.vue")['default']>
   LazyReaderAnnotationModal: LazyComponent<typeof import("../../app/components/reader/ReaderAnnotationModal.vue")['default']>
   LazyReaderBookNotesPanel: LazyComponent<typeof import("../../app/components/reader/ReaderBookNotesPanel.vue")['default']>
   LazyReaderBottomBar: LazyComponent<typeof import("../../app/components/reader/ReaderBottomBar.vue")['default']>

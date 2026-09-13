@@ -33,7 +33,8 @@
     "set-env": "node scripts/set-env.js",
     "get-env": "node scripts/set-env.js --get",
     "env:set": "node scripts/set-env.js",
-    "env:get": "node scripts/set-env.js --get"
+    "env:get": "node scripts/set-env.js --get",
+    "connect-aws": "node scripts/connect-aws.js"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",
