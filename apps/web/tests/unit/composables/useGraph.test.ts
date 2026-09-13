@@ -112,4 +112,36 @@ describe('useGraph Composable', () => {
     expect(nodeNames).toContain('Livro Teste')
     expect(nodeNames).not.toContain('Tema Isolado Sem Nada')
   })
+
+  it('fetchBookAnnotations desempacota resposta quando a API retorna { annotations: [...] }', async () => {
+    const mockResponse = {
+      annotations: [
+        { id: 1, bookId: 10, note: 'Nota importante sobre Rei Artur', selectedText: 'Excalibur' },
+        { id: 2, bookId: 10, note: 'Távola redonda', selectedText: 'Cavaleiros' },
+      ],
+    }
+    mockFetch.mockResolvedValueOnce(mockResponse)
+
+    const { fetchBookAnnotations } = useGraph()
+    const result = await fetchBookAnnotations(10)
+
+    expect(mockFetch).toHaveBeenCalledWith('http://localhost:3001/api/annotations?bookId=10', expect.any(Object))
+    expect(Array.isArray(result)).toBe(true)
+    expect(result).toHaveLength(2)
+    expect(result[0]?.note).toBe('Nota importante sobre Rei Artur')
+  })
+
+  it('fetchBookAnnotations retorna lista direta quando a API retorna array puro', async () => {
+    const mockArray = [
+      { id: 3, bookId: 10, note: 'Nota direta', selectedText: 'Trecho' },
+    ]
+    mockFetch.mockResolvedValueOnce(mockArray)
+
+    const { fetchBookAnnotations } = useGraph()
+    const result = await fetchBookAnnotations(10)
+
+    expect(Array.isArray(result)).toBe(true)
+    expect(result).toHaveLength(1)
+    expect(result[0]?.id).toBe(3)
+  })
 })

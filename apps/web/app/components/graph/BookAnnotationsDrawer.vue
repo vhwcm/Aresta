@@ -42,7 +42,8 @@
                 {{ book.author || 'Autor desconhecido' }}
               </p>
               <NuxtLink
-                :to="`/reader?bookId=${book.rawId || (typeof book.id === 'number' ? book.id : parseInt(String(book.id).replace('book-', ''), 10))}`"
+                v-if="currentBookId"
+                :to="`/reader?bookId=${currentBookId}`"
                 class="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-accent text-white text-xs font-semibold hover:bg-accent/90 transition-all shadow-md w-fit active:scale-95"
                 title="Abrir livro no leitor"
               >
@@ -173,8 +174,8 @@
                 </span>
               </div>
               <NuxtLink
-                v-if="anno.cfi"
-                :to="`/reader?bookId=${book.rawId || (typeof book.id === 'number' ? book.id : parseInt(String(book.id).replace('book-', ''), 10))}&cfi=${encodeURIComponent(anno.cfi)}`"
+                v-if="anno.cfi && currentBookId"
+                :to="`/reader?bookId=${currentBookId}&cfi=${encodeURIComponent(anno.cfi)}`"
                 class="text-accent hover:underline inline-flex items-center gap-1 text-[11px] font-technical ml-auto"
                 title="Abrir trecho no leitor"
               >
@@ -196,7 +197,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import {
   XIcon,
   BookOpenIcon,
@@ -209,6 +210,8 @@ import {
 } from 'lucide-vue-next'
 import type { GraphNode, AnnotationThemeItem, BookThemeItem } from '~/interfaces/graph'
 import { useGraph } from '~/composables/useGraph'
+import { annotationRepo } from '~/adapters/database/repositories/AnnotationRepository'
+import { getCoverUrl as resolveCoverUrl } from '~/utils/cover'
 
 const getApiBase = () => {
   if (typeof useRuntimeConfig === 'function') {
@@ -226,7 +229,6 @@ const getApiBase = () => {
   }
   return 'http://localhost:3001'
 }
-import { getCoverUrl as resolveCoverUrl } from '~/utils/cover'
 
 const props = defineProps<{
   isOpen: boolean
@@ -240,15 +242,32 @@ defineEmits<{
 
 const { fetchBookAnnotations, createLooseAnnotation } = useGraph()
 
-const annotations = ref<AnnotationThemeItem[]>([])
+const annotations = ref<any[]>([])
 const loading = ref(false)
 const newLooseNote = ref('')
 const selectedThemeIds = ref<number[]>([])
 const creatingNote = ref(false)
 const availableThemes = ref<BookThemeItem[]>([])
 
+const resolveBookId = (b: any): number | null => {
+  if (!b) return null
+  const candidates = [b.bookId, b.rawId, b.id]
+  for (const c of candidates) {
+    if (typeof c === 'number' && !isNaN(c) && c > 0) return c
+    if (typeof c === 'string') {
+      const clean = c.replace(/^book-/, '')
+      const parsed = parseInt(clean, 10)
+      if (!isNaN(parsed) && parsed > 0) return parsed
+    }
+  }
+  return null
+}
+
+const currentBookId = computed(() => resolveBookId(props.book))
+
 const getCoverUrl = (b: any) => {
-  return resolveCoverUrl(b.coverPath, b.rawId || b.id)
+  const id = resolveBookId(b)
+  return resolveCoverUrl(b?.coverPath, id || undefined)
 }
 
 const onCoverError = (event: Event) => {
@@ -257,18 +276,69 @@ const onCoverError = (event: Event) => {
 }
 
 const loadBookData = async () => {
-  if (!props.book) return
-  const bookId = props.book.rawId || (typeof props.book.id === 'number' ? props.book.id : parseInt(String(props.book.id).replace('book-', ''), 10))
-  if (!bookId) return
+  const bookId = resolveBookId(props.book)
+  if (!bookId) {
+    annotations.value = []
+    return
+  }
 
   loading.value = true
   try {
-    annotations.value = await fetchBookAnnotations(bookId)
+    // 1. Carrega imediatamente do IndexedDB local (Offline / Local-First)
+    let localNotes: any[] = []
+    try {
+      const local = await annotationRepo.getAll({ bookId })
+      if (local && local.length > 0) {
+        localNotes = local.map((l: any) => ({
+          ...l,
+          id: Number(l.id),
+          bookId: Number(l.bookId),
+          cfi: l.cfi || '',
+          selectedText: l.selectedText || null,
+          note: l.note || '',
+          color: l.color || null,
+          chapterTitle: l.chapterTitle || null,
+          themes: l.themes || [],
+          createdAt: l.createdAt || '',
+        }))
+        annotations.value = localNotes
+      }
+    } catch (e) {
+      console.warn('[BookAnnotationsDrawer] Erro ao carregar do banco local:', e)
+    }
 
-    // Buscar os temas que pertencem a este livro
-    const res = await $fetch<any>(`${getApiBase()}/api/books/${bookId}`)
-    availableThemes.value = res.themes || []
-    selectedThemeIds.value = availableThemes.value.map((t: any) => t.id)
+    // 2. Busca anotações sincronizadas da API
+    try {
+      const remote = await fetchBookAnnotations(bookId)
+      if (Array.isArray(remote) && remote.length > 0) {
+        // Combina anotações remotas com anotações locais que ainda não foram sincronizadas
+        const merged = [...remote]
+        for (const loc of localNotes) {
+          if (!merged.some((m: any) => Number(m.id) === Number(loc.id))) {
+            merged.push(loc)
+          }
+        }
+        annotations.value = merged
+      } else if (localNotes.length > 0) {
+        annotations.value = localNotes
+      } else {
+        annotations.value = []
+      }
+    } catch (e) {
+      console.warn('[BookAnnotationsDrawer] Erro ao buscar da API:', e)
+      if (localNotes.length > 0) {
+        annotations.value = localNotes
+      }
+    }
+
+    // 3. Buscar os temas que pertencem a este livro
+    try {
+      const res = await $fetch<any>(`${getApiBase()}/api/books/${bookId}`)
+      availableThemes.value = res.themes || []
+      selectedThemeIds.value = availableThemes.value.map((t: any) => t.id)
+    } catch {
+      availableThemes.value = []
+    }
   } catch (e) {
     console.error('Erro ao carregar anotações do livro:', e)
   } finally {
@@ -285,14 +355,14 @@ function toggleThemeSelection(themeId: number) {
 }
 
 async function handleCreateLooseNote() {
-  if (!props.book || !newLooseNote.value.trim()) return
-  const bookId = props.book.rawId || (typeof props.book.id === 'number' ? props.book.id : parseInt(String(props.book.id).replace('book-', ''), 10))
-  if (!bookId) return
+  const bookId = resolveBookId(props.book)
+  if (!bookId || !newLooseNote.value.trim()) return
 
   creatingNote.value = true
   try {
     const created = await createLooseAnnotation(bookId, newLooseNote.value.trim(), selectedThemeIds.value)
-    annotations.value.unshift(created)
+    const noteObj = (created as any)?.annotation || created
+    annotations.value.unshift(noteObj)
     newLooseNote.value = ''
     selectedThemeIds.value = []
   } catch (e) {
