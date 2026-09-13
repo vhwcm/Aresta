@@ -20,6 +20,8 @@ export class GraphService {
       },
     })
 
+    const themeHierarchies = await prisma.themeHierarchy.findMany()
+
     const userBooks = await prisma.userBook.findMany({
       where: { user_id: userId },
       include: {
@@ -111,15 +113,8 @@ export class GraphService {
       }
     }
 
-    // Filtrar temas: devem estar anexados a ao menos um livro, anotação ou tag de nota
-    const activeThemes = themes.filter((t) => {
-      const hasUserBook = userBookThemeIds.has(t.id)
-      const hasBook = hasUserBook || (userBooks.length === 0 && Boolean(t.bookThemes && t.bookThemes.length > 0))
-      const hasAnnotation = annotationThemeIds.has(t.id) || Boolean(t.annotationThemes && t.annotationThemes.length > 0)
-      const hasNoteTag = noteThemeIds.has(t.id)
-      return hasBook || hasAnnotation || hasNoteTag
-    })
-
+    // No Grafo de Conhecimento, todos os temas cadastrados estão disponíveis para visualização e conexão
+    const activeThemes = themes
     const activeThemeIds = new Set(activeThemes.map((t) => t.id))
 
     // 1. Nós de Temas
@@ -230,11 +225,9 @@ export class GraphService {
     }
 
     // Arestas: Hierarquia de Temas
-    for (const t of activeThemes) {
-      for (const ch of t.childHierarchies || []) {
-        if (activeThemeIds.has(ch.child_theme_id)) {
-          addEdge(`edge-th-${t.id}-${ch.child_theme_id}`, t.id, ch.child_theme_id, 'theme-hierarchy')
-        }
+    for (const th of themeHierarchies) {
+      if (activeThemeIds.has(th.parent_theme_id) && activeThemeIds.has(th.child_theme_id)) {
+        addEdge(`edge-th-${th.parent_theme_id}-${th.child_theme_id}`, th.parent_theme_id, th.child_theme_id, 'theme-hierarchy')
       }
     }
 

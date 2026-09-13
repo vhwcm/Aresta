@@ -1221,6 +1221,7 @@ const initGraph = () => {
       const srcX = dragSourceNode.currentX ?? dragSourceNode.x
       const srcY = dragSourceNode.currentY ?? dragSourceNode.y
 
+      const currentScale = transform.k || 1
       snapTargetNode = null
       let closestDist = Infinity
 
@@ -1229,7 +1230,7 @@ const initGraph = () => {
         const tX = target.currentX ?? target.x
         const tY = target.currentY ?? target.y
         const d = Math.hypot(svgX - tX, svgY - tY)
-        const snapThreshold = getNodeRadius(target) + 24
+        const snapThreshold = Math.max(getNodeRadius(target) + 36, 65 / currentScale)
         if (d < snapThreshold && d < closestDist) {
           closestDist = d
           snapTargetNode = target
@@ -1257,7 +1258,7 @@ const initGraph = () => {
     }
   }
 
-  const onWindowPointerUp = () => {
+  const onWindowPointerUp = (e: PointerEvent) => {
     window.removeEventListener('pointermove', onWindowPointerMove)
     window.removeEventListener('pointerup', onWindowPointerUp)
 
@@ -1266,18 +1267,42 @@ const initGraph = () => {
       tempWireTip.style('display', 'none')
       nodesSelection.classed('node-snap-highlight', false)
 
-      if (snapTargetNode && snapTargetNode.id !== dragSourceNode.id) {
+      let finalTarget = snapTargetNode
+      // Fallback de snap magnético no momento do release caso o ponteiro esteja no limiar do nó
+      if (!finalTarget && dragSourceNode && svgRef.value) {
+        const rect = svgRef.value.getBoundingClientRect()
+        const mouseCanvasX = e.clientX - rect.left
+        const mouseCanvasY = e.clientY - rect.top
+        const transform = d3.zoomTransform(svgRef.value)
+        const [svgX, svgY] = transform.invert([mouseCanvasX, mouseCanvasY])
+        const currentScale = transform.k || 1
+        let closestDist = Infinity
+
+        for (const target of simulationNodes) {
+          if (target.id === dragSourceNode.id || target.isRoot) continue
+          const tX = target.currentX ?? target.x
+          const tY = target.currentY ?? target.y
+          const d = Math.hypot(svgX - tX, svgY - tY)
+          const threshold = Math.max(getNodeRadius(target) + 40, 75 / currentScale)
+          if (d < threshold && d < closestDist) {
+            closestDist = d
+            finalTarget = target
+          }
+        }
+      }
+
+      if (finalTarget && finalTarget.id !== dragSourceNode.id) {
         const sourceLabel = dragSourceNode.name || dragSourceNode.title || 'Nó'
-        const targetLabel = snapTargetNode.name || snapTargetNode.title || 'Nó'
+        const targetLabel = finalTarget.name || finalTarget.title || 'Nó'
         showConnectionFeedback(`Conectando "${sourceLabel}" a "${targetLabel}"...`)
 
         emit('connectNodes', {
           sourceId: dragSourceNode.id,
-          targetId: snapTargetNode.id,
+          targetId: finalTarget.id,
           sourceRawId: dragSourceNode.rawId,
-          targetRawId: snapTargetNode.rawId,
+          targetRawId: finalTarget.rawId,
           sourceType: dragSourceNode.type,
-          targetType: snapTargetNode.type,
+          targetType: finalTarget.type,
         })
       }
       setTimeout(() => {

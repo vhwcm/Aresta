@@ -162,21 +162,7 @@ export const useGraph = () => {
           }
         }
 
-        nodes = nodes.filter((node) => {
-          if (node.type !== 'theme' || node.isRoot) return true
-          const idStr = String(node.id)
-          const rawIdStr = String(node.rawId || '')
-          const hasBook =
-            Boolean(node.bookCount && node.bookCount > 0) ||
-            connectedThemeIds.has(idStr) ||
-            (Boolean(rawIdStr) && connectedThemeIds.has(rawIdStr))
-          const hasNote =
-            Boolean(node.annotationCount && node.annotationCount > 0) ||
-            Boolean(node.noteCount && node.noteCount > 0) ||
-            noteConnectedThemeIds.has(idStr) ||
-            (Boolean(rawIdStr) && noteConnectedThemeIds.has(rawIdStr))
-          return hasBook || hasNote
-        })
+        // Todos os temas e nós existentes permanecem ativos no grafo para conexão
 
         const activeNodeIds = new Set<string>()
         for (const n of nodes) {

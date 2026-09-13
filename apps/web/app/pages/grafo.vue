@@ -277,7 +277,8 @@ const handleDirectConnect = async (payload: {
     )
 
     let edgeType = 'theme-hierarchy'
-    if (isSourceBook || isTargetBook) edgeType = 'book-theme'
+    if (isSourceBook && isTargetBook) edgeType = 'book-hierarchy'
+    else if (isSourceBook || isTargetBook) edgeType = 'book-theme'
 
     if (!alreadyConnected) {
       graphData.value = {
@@ -294,7 +295,7 @@ const handleDirectConnect = async (payload: {
       }
     }
 
-    // 2. Persistência de Livro com Tema (Local e Remota)
+    // 2. Persistência Conforme Tipo dos Nós
     if (isSourceBook && isTargetTheme) {
       const rawBookId = sourceNode?.rawId ?? payload.sourceRawId ?? Number(String(payload.sourceId).replace('book-', ''))
       const rawThemeId = targetNode?.rawId ?? payload.targetRawId ?? Number(String(payload.targetId).replace('theme-', ''))
@@ -347,7 +348,7 @@ const handleDirectConnect = async (payload: {
           console.warn('[Grafo] Aviso ao vincular livro na API:', apiErr)
         }
       }
-    } else {
+    } else if (isSourceTheme && isTargetTheme) {
       const sId = sourceNode?.rawId ?? payload.sourceRawId ?? Number(String(payload.sourceId).replace('theme-', ''))
       const tId = targetNode?.rawId ?? payload.targetRawId ?? Number(String(payload.targetId).replace('theme-', ''))
       const numSId = Number(sId)
