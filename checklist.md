@@ -3,6 +3,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [13/09/2026 13:40] [Concluído] Ajustar instalação de dependências do frontend para compatibilidade do build Docker na AWS
 - [13/09/2026 13:38] [Concluído] Sincronizar lockfile do frontend para permitir npm ci no build Docker
 - [13/09/2026 13:28] [Concluído] Corrigir import ausente do ShortExplanationSchema no build da API
 - [13/09/2026 13:25] [Concluído] Instalar OpenSSL nos containers da API para compatibilidade do Prisma na AWS

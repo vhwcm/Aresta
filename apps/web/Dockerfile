@@ -2,7 +2,7 @@ FROM node:22-alpine AS build
 
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci
+RUN npm install --ignore-scripts
 COPY . .
 
 ARG NUXT_PUBLIC_API_URL=http://localhost:3001
