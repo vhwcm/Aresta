@@ -261,12 +261,10 @@
           </div>
 
           <blockquote class="font-editorial italic text-sm sm:text-base text-textPrimary border-l-2 border-accent pl-4 leading-relaxed">
-            "{{ activeHighlight.text }}"
+            "<span v-html="renderInlineMarkdown(activeHighlight.text)"></span>"
           </blockquote>
 
-          <p class="font-interface text-xs sm:text-sm text-textSecondary leading-relaxed pl-4">
-            {{ activeHighlight.insight }}
-          </p>
+          <p class="font-interface text-xs sm:text-sm text-textSecondary leading-relaxed pl-4" v-html="renderInlineMarkdown(activeHighlight.insight)"></p>
 
           <div class="flex flex-col sm:flex-row sm:items-center justify-between pt-3 border-t border-divider/60 gap-3">
             <div class="flex items-center gap-2 flex-wrap">
@@ -359,9 +357,10 @@
             <RotateCcwIcon class="w-4 h-4 text-accent group-hover:rotate-180 transition-transform duration-500" />
           </div>
 
-          <p class="font-editorial text-base sm:text-lg text-textPrimary leading-relaxed py-4">
-            {{ isFlashcardFlipped ? currentFlashcardData.answer : currentFlashcardData.question }}
-          </p>
+          <div
+            class="font-editorial text-base sm:text-lg text-textPrimary leading-relaxed py-4"
+            v-html="renderInlineMarkdown(isFlashcardFlipped ? currentFlashcardData.answer : currentFlashcardData.question)"
+          ></div>
 
           <span class="font-technical text-[11px] text-accent">
             {{ isFlashcardFlipped ? '✓ Resposta revelada · Selecione a dificuldade:' : '💡 Clique para verificar sua recordação ativa' }}

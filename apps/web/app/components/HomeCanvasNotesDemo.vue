@@ -220,9 +220,7 @@
               <h5 class="font-editorial text-sm font-medium text-textPrimary">
                 {{ node.title }}
               </h5>
-              <p class="font-interface text-xs text-textSecondary leading-relaxed">
-                {{ node.content }}
-              </p>
+              <p class="font-interface text-xs text-textSecondary leading-relaxed" v-html="renderInlineMarkdown(node.content)"></p>
               <div class="flex items-center gap-1.5 flex-wrap pt-1">
                 <span
                   v-for="tag in node.tags"
@@ -246,9 +244,7 @@
               <h5 class="font-editorial text-sm font-medium text-textPrimary">
                 {{ node.title }}
               </h5>
-              <p class="font-interface text-xs text-textSecondary leading-relaxed">
-                {{ node.content }}
-              </p>
+              <p class="font-interface text-xs text-textSecondary leading-relaxed" v-html="renderInlineMarkdown(node.content)"></p>
             </div>
 
             <!-- 5. TIPO: FLASHCARD DE RETENÇÃO ESPAÇADA -->
@@ -263,13 +259,13 @@
                 </span>
               </div>
               <div class="font-editorial text-xs sm:text-sm text-textPrimary leading-snug">
-                <strong>P:</strong> {{ node.question }}
+                <strong>P:</strong> <span v-html="renderInlineMarkdown(node.question)"></span>
               </div>
               <div
                 v-if="revealedFlashcards[node.id]"
                 class="font-interface text-xs text-textSecondary bg-black/5 dark:bg-white/5 p-2 rounded-xl border border-divider/60 mt-1 animate-in fade-in duration-200"
               >
-                <strong>R:</strong> {{ node.answer }}
+                <strong>R:</strong> <span v-html="renderInlineMarkdown(node.answer)"></span>
               </div>
               <button
                 @click.stop="toggleFlashcard(node.id)"

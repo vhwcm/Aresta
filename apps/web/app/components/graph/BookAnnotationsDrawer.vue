@@ -162,13 +162,13 @@
               class="border-l-4 pl-3 py-1.5 text-xs italic font-serif text-textPrimary leading-relaxed bg-white/[0.02] rounded-r-lg"
               :style="{ borderLeftColor: anno.color || '#E57B55' }"
             >
-              "{{ anno.selectedText }}"
+              "<span v-html="renderInlineMarkdown(anno.selectedText)"></span>"
             </blockquote>
 
             <!-- Nota Pessoal -->
             <div v-if="anno.note" class="text-xs font-interface text-textPrimary leading-relaxed whitespace-pre-wrap">
               <span v-if="anno.selectedText" class="text-[10px] font-technical uppercase text-accent font-semibold block mb-0.5">Sua Nota:</span>
-              <p>{{ anno.note }}</p>
+              <p v-html="renderInlineMarkdown(anno.note)"></p>
             </div>
 
             <!-- Fallback se não houver selectedText nem note -->

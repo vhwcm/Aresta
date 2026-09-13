@@ -1,9 +1,12 @@
 # Checklist
 
 ## 🔄 Em Andamento
-- [13/09/2026 11:04] [Fazendo] Ajustar espaçamento da navbar lateral (aproximar da borda da tela e afastar do conteúdo)
 
 ## ✅ Concluído
+- [13/09/2026 11:17] [Concluído] Redesenhar layout do FolderTagSidebar com estética moderna, hierarquia visual suave e micro-badges elegantes
+- [13/09/2026 11:13] [Concluído] Alinhar cabeçalho do canvas em linha única no mobile com busca expansível por ícone de lupa
+- [13/09/2026 11:05] [Concluído] Corrigir renderização de negrito e itálico em flashcards, anotações e textos markdown na interface
+- [13/09/2026 11:05] [Concluído] Ajustar espaçamento da navbar lateral (aproximar da borda da tela e afastar do conteúdo)
 - [13/09/2026 11:03] [Concluído] Definir capa visual do livreto na estante e renderizar como primeira pagina no leitor
 - [13/09/2026 11:03] [Concluído] Posicionar navbar na lateral esquerda no desktop e tablet horizontal com apenas ícones e cantos arredondados
 - [13/09/2026 10:57] [Concluído] Integrar registro de ofensiva em flashcard review e barra de progresso visual com chama meia-preenchida

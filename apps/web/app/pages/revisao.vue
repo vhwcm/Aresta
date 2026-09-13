@@ -147,9 +147,10 @@
                 <span class="font-technical text-xs uppercase tracking-widest text-textSecondary mb-2 block font-medium">
                   {{ formatCardType(currentCard.cardType) }}
                 </span>
-                <h3 class="font-editorial text-2xl md:text-3xl font-light text-textPrimary leading-snug">
-                  {{ currentCard.question }}
-                </h3>
+                <h3
+                  class="font-editorial text-2xl md:text-3xl font-light text-textPrimary leading-snug"
+                  v-html="renderInlineMarkdown(currentCard.question)"
+                ></h3>
               </div>
 
               <div class="flex items-center justify-between text-xs text-textSecondary font-interface">
@@ -186,9 +187,10 @@
               </div>
 
               <div class="my-auto text-center px-4 overflow-y-auto max-h-44">
-                <p class="font-interface text-sm md:text-base text-textPrimary leading-relaxed font-normal">
-                  {{ currentCard.answer }}
-                </p>
+                <p
+                  class="font-interface text-sm md:text-base text-textPrimary leading-relaxed font-normal"
+                  v-html="renderInlineMarkdown(currentCard.answer)"
+                ></p>
               </div>
 
               <div class="flex items-center justify-between text-[11px] text-textSecondary font-technical border-t border-divider pt-2">
@@ -405,14 +407,15 @@
               </div>
 
               <div class="flex flex-col gap-2">
-                <h4 class="font-editorial text-xl font-light text-textPrimary">
-                  {{ summary.topic }}
-                </h4>
+                <h4
+                  class="font-editorial text-xl font-light text-textPrimary"
+                  v-html="renderInlineMarkdown(summary.topic)"
+                ></h4>
                 <blockquote
                   v-if="summary.highlightQuote"
                   class="p-4 rounded-xl bg-white/5 border-l-2 border-accent text-xs font-interface italic text-textPrimary/90 leading-relaxed"
                 >
-                  "{{ summary.highlightQuote }}"
+                  "<span v-html="renderInlineMarkdown(summary.highlightQuote)"></span>"
                 </blockquote>
               </div>
 
@@ -422,9 +425,10 @@
                   <SparklesIcon class="w-3.5 h-3.5" />
                   {{ summary.isUserNote ? 'Anotação / Reflexão' : 'Síntese Aresta IA' }}
                 </span>
-                <p class="font-interface text-xs text-textSecondary leading-relaxed whitespace-pre-wrap">
-                  {{ summary.aiSynthesis }}
-                </p>
+                <p
+                  class="font-interface text-xs text-textSecondary leading-relaxed whitespace-pre-wrap"
+                  v-html="renderInlineMarkdown(summary.aiSynthesis)"
+                ></p>
               </div>
 
               <div class="flex flex-wrap items-center justify-between gap-3 pt-2 text-xs">
@@ -523,7 +527,7 @@
           </p>
 
           <div class="p-3.5 rounded-xl bg-black/5 dark:bg-white/5 border border-divider text-xs font-interface text-textPrimary">
-            <strong>Tópico:</strong> {{ currentCard?.question }}
+            <strong>Tópico:</strong> <span v-html="renderInlineMarkdown(currentCard?.question)"></span>
           </div>
 
           <!-- Seleção de Modo: Novo Livreto vs Appendar em Livreto Existente -->
@@ -620,6 +624,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { renderInlineMarkdown } from '~/utils/markdownFormat'
 import {
   LayersIcon,
   FileTextIcon,
