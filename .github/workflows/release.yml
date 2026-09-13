@@ -60,10 +60,12 @@ jobs:
           if [ ! -d "src-tauri/gen/android" ]; then
             npx tauri android init
           fi
+          node scripts/copy-android-icons.mjs
 
       - name: Build Android APK
         working-directory: ./apps/web
         run: |
+          node scripts/copy-android-icons.mjs
           if [ -f "src-tauri/gen/android/gradlew" ]; then
             chmod +x src-tauri/gen/android/gradlew
           fi

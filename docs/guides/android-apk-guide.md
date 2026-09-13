@@ -101,7 +101,7 @@ npm run android:open
 Após a execução bem-sucedida de `npm run android:apk`, os arquivos de instalação estarão localizados em:
 
 ```
-front/src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk
+apps/web/src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk
 ```
 *(ou divididos por arquitetura dentro de `outputs/apk/.../release/`)*
 
@@ -113,7 +113,7 @@ front/src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universa
    - Ative a **Depuração USB** nas *Opções do Desenvolvedor* do celular.
    - Conecte o cabo e rode:
      ```bash
-     adb install front/src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk
+     adb install apps/web/src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk
      ```
 
 2. **Via Envio Direto**:
@@ -140,7 +140,7 @@ Clique em **Apply**.
 ### Erro no build estático do Nuxt (`nuxt generate`)
 Certifique-se de que todas as dependências do frontend estão instaladas e sem conflito:
 ```bash
-cd front
+cd apps/web
 npm install
 npm run generate
 ```

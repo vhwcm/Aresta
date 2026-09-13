@@ -6,7 +6,7 @@ const os = require('node:os');
 const fs = require('node:fs');
 
 const action = process.argv[2] || 'dev';
-const frontDir = path.join(__dirname, '..', 'front');
+const frontDir = path.join(__dirname, '..', 'apps', 'web');
 
 // Assegura Cargo no PATH
 const cargoHome = process.env.CARGO_HOME || path.join(os.homedir(), '.cargo');

@@ -5,7 +5,7 @@ const path = require('node:path');
 
 const isWindows = process.platform === 'win32';
 const npmCmd = isWindows ? 'npm.cmd' : 'npm';
-const frontDir = path.join(__dirname, '..', 'front');
+const frontDir = path.join(__dirname, '..', 'apps', 'web');
 
 console.log('\x1b[34m======================================================\x1b[0m');
 console.log('\x1b[1m\x1b[34m     Aresta Android - Configuração do Ambiente        \x1b[0m');
