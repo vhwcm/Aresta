@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col gap-8 pb-16">
+  <div class="flex flex-col flex-1 min-h-[calc(100vh-7.5rem)] md:min-h-[calc(100vh-8.5rem)] gap-8 pb-16">
     <!-- Abas Internas da Revisão -->
     <header class="flex items-center justify-between gap-4">
       <div class="flex items-center bg-black/5 dark:bg-white/5 p-1 rounded-2xl border border-divider">
@@ -25,9 +25,9 @@
     <div class="h-px bg-divider w-full"></div>
 
     <!-- SEÇÃO 1: FLASHCARDS (Repetição Espaçada 3D) -->
-    <section v-if="activeTab === 'flashcards'" class="flex flex-col gap-8">
+    <section v-if="activeTab === 'flashcards'" class="flex flex-col flex-1 gap-6 sm:gap-8 justify-center max-w-xl md:max-w-2xl mx-auto w-full my-auto">
       <!-- Barra de Controle e Filtro de Livros -->
-      <div class="flex flex-wrap items-center justify-between gap-4">
+      <div class="flex flex-wrap items-center justify-between gap-4 w-full">
         <div class="flex items-center gap-2">
           <span class="font-technical text-xs text-textSecondary">Filtrar por Obra:</span>
           <AppSelect
@@ -53,7 +53,7 @@
       <!-- ESTADO VAZIO: Sem flashcards -->
       <div
         v-if="filteredCards.length === 0 && !flashcards.isLoading.value"
-        class="flex flex-col items-center justify-center p-12 rounded-3xl bg-bgPanel/60 border border-divider text-center gap-4 max-w-xl mx-auto"
+        class="flex flex-col items-center justify-center p-12 rounded-3xl bg-bgPanel/60 border border-divider text-center gap-4 w-full mx-auto"
       >
         <div class="w-12 h-12 rounded-full bg-accent/15 flex items-center justify-center text-accent">
           <BrainIcon class="w-6 h-6" />
@@ -72,9 +72,9 @@
       </div>
 
       <!-- Container do Flashcard Interativo (Flip 3D) -->
-      <div v-else-if="currentCard" class="flex flex-col items-center gap-6">
+      <div v-else-if="currentCard" class="flex flex-col items-center gap-6 w-full">
         <div
-          class="card-scene w-full max-w-xl h-80 cursor-pointer select-none"
+          class="card-scene w-full max-w-xl md:max-w-2xl h-80 md:h-[340px] cursor-pointer select-none"
           @click="isFlipped = !isFlipped"
         >
           <div class="card-object" :class="{ 'is-flipped': isFlipped }">

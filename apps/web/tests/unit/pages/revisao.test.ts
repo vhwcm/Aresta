@@ -319,4 +319,44 @@ describe('Revisao Page (/revisao)', () => {
     expect(reiArturOptions).toHaveLength(1)
     expect(reiArturOptions[0]?.count).toBe(3)
   })
+
+  it('centraliza o container e os controles de flashcard no desktop', async () => {
+    mockDailyDeck.value = [
+      { id: 1, bookId: 42, bookTitle: 'O Livro', question: 'Pergunta 1', answer: 'Resposta 1' },
+    ]
+
+    const wrapper = mount(RevisaoPage, {
+      global: {
+        stubs: {
+          NuxtLink: { template: '<a><slot /></a>' },
+          LayersIcon: true,
+          FileTextIcon: true,
+          RotateCwIcon: true,
+          ChevronLeftIcon: true,
+          ChevronRightIcon: true,
+          PlusIcon: true,
+          Trash2Icon: true,
+          BookOpenIcon: true,
+          SparklesIcon: true,
+          ExternalLinkIcon: true,
+          CheckCircle2Icon: true,
+          TagIcon: true,
+          BookMarkedIcon: true,
+          ReaderAnnotationModal: true,
+          AppSelect: true,
+        },
+      },
+    })
+
+    const section = wrapper.find('section')
+    expect(section.exists()).toBe(true)
+    expect(section.classes()).toContain('justify-center')
+    expect(section.classes()).toContain('mx-auto')
+    expect(section.classes()).toContain('my-auto')
+
+    const cardScene = wrapper.find('.card-scene')
+    expect(cardScene.exists()).toBe(true)
+    expect(cardScene.classes()).toContain('w-full')
+  })
 })
+
