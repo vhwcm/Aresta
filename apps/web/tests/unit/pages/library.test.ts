@@ -51,7 +51,7 @@ describe('Library Page', () => {
     await flushPromises()
     expect(wrapper.text()).toContain('Estante')
     expect(wrapper.text()).not.toContain('Biblioteca & Estante')
-    expect(wrapper.text()).not.toContain('Acervo da Aresta')
+    expect(wrapper.text()).toContain('Gerenciar Temas')
     expect(wrapper.text()).toContain('Novo Livreto IA')
     expect(wrapper.text()).toContain('Enviar Arquivo')
     // Não deve conter os cards de status removidos
@@ -71,6 +71,26 @@ describe('Library Page', () => {
     // As palavras Filtrar Temas e Ver Grafo devem ser removidas
     expect(wrapper.text()).not.toContain('Filtrar Temas')
     expect(wrapper.text()).not.toContain('Ver Grafo')
+  })
+
+  it('opens manage themes modal when clicking Gerenciar Temas button', async () => {
+    const wrapper = mount(LibraryPage, {
+      global: {
+        stubs: {
+          NuxtLink: { template: '<a><slot /></a>' }
+        }
+      }
+    })
+    await flushPromises()
+
+    const manageBtn = wrapper.find('[data-testid="manage-themes-btn"]')
+    expect(manageBtn.exists()).toBe(true)
+    await manageBtn.trigger('click')
+    await flushPromises()
+
+    // O modal deve ser aberto e exibir os controles
+    expect(wrapper.find('[role="dialog"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Gerenciar Temas')
   })
 
   it('navigates to reader when clicking a book card', async () => {

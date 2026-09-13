@@ -129,7 +129,17 @@
         </div>
 
         <!-- Actions -->
-        <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+        <div class="flex items-center gap-2 sm:gap-3 shrink-0 flex-wrap sm:flex-nowrap">
+          <button
+            @click="isManageThemesModalOpen = true"
+            data-testid="manage-themes-btn"
+            class="flex-1 sm:flex-initial px-4 sm:px-5 py-2 sm:py-2.5 rounded-full bg-white/5 hover:bg-white/10 text-textSecondary hover:text-white border border-divider text-xs font-interface font-semibold transition-all flex items-center justify-center gap-2"
+            title="Gerenciar e Editar Temas da Estante"
+          >
+            <TagIcon class="w-4 h-4 shrink-0" />
+            <span>Gerenciar Temas</span>
+          </button>
+
           <button
             @click="isCreateDidacticModalOpen = true"
             class="flex-1 sm:flex-initial px-4 sm:px-5 py-2 sm:py-2.5 rounded-full bg-purple-500/20 hover:bg-purple-500 text-purple-300 hover:text-white border border-purple-500/40 text-xs font-interface font-semibold transition-all flex items-center justify-center gap-2"
@@ -581,6 +591,17 @@
         </div>
       </template>
     </ConfirmModal>
+
+    <!-- Modal para Gerenciar Temas da Estante -->
+    <ManageThemesModal
+      :is-open="isManageThemesModalOpen"
+      :themes="availableThemes"
+      :books-count-by-theme="countByTheme"
+      @close="isManageThemesModalOpen = false"
+      @theme-created="handleThemeCreated"
+      @theme-updated="handleThemeUpdated"
+      @theme-deleted="handleThemeDeleted"
+    />
   </div>
 </template>
 
@@ -619,12 +640,14 @@ import { flashcardRepo } from '~/adapters/database/repositories/FlashcardReposit
 import { getCoverUrl, getBookFormat } from '~/utils/cover'
 
 import ConfirmModal from '~/components/ConfirmModal.vue'
+import ManageThemesModal from '~/components/ManageThemesModal.vue'
 
 const auth = useAuth()
 const statusFilter = ref('TODOS')
 const selectedThemeId = ref<number | string | null>(null)
 const isMobileThemeListOpen = ref(false)
 const isLoginModalOpen = ref(false)
+const isManageThemesModalOpen = ref(false)
 
 const router = useRouter()
 const didactic = useDidacticBooklet()
@@ -928,6 +951,27 @@ const handleSaveBookThemes = async () => {
     tagModalBook.value = null
   } finally {
     savingThemes.value = false
+  }
+}
+
+const handleThemeCreated = async () => {
+  await fetchGraph()
+}
+
+const handleThemeUpdated = async () => {
+  await fetchGraph()
+  if (auth.isLoggedIn.value) {
+    await fetchUserBooks()
+  }
+}
+
+const handleThemeDeleted = async (deletedId: number | string) => {
+  if (String(selectedThemeId.value) === String(deletedId)) {
+    selectedThemeId.value = null
+  }
+  await fetchGraph()
+  if (auth.isLoggedIn.value) {
+    await fetchUserBooks()
   }
 }
 

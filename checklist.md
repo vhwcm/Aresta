@@ -1,6 +1,7 @@
 # Checklist
 
 ## 🔄 Em Andamento
+- [12/09/2026 21:00] [Fazendo] Carregar anotações locais e da API do livro na gaveta BookAnnotationsDrawer desempacotando lista e autenticação
 - [12/09/2026 20:55] [Fazendo] Corrigir criação de livreto didático, layout do leitor e rotas do monólito
 
 ## ✅ Concluído

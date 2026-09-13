@@ -27,9 +27,18 @@ export const useGraph = () => {
   const auth = useAuth()
 
   const getHeaders = () => {
+    let token: string | null = auth.token.value ?? null
+    if (!token && typeof useCookie === 'function') {
+      try {
+        const cookieVal = useCookie<string | null | undefined>('aresta_token').value
+        token = cookieVal ?? null
+      } catch {
+        token = null
+      }
+    }
     const headers: Record<string, string> = {}
-    if (auth.token.value) {
-      headers['Authorization'] = `Bearer ${auth.token.value}`
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`
     }
     return headers
   }
@@ -219,9 +228,11 @@ export const useGraph = () => {
 
   const fetchBookAnnotations = async (bookId: number): Promise<AnnotationThemeItem[]> => {
     try {
-      return await $fetch<AnnotationThemeItem[]>(`${getApiBase()}/annotations?bookId=${bookId}`, {
+      const res = await $fetch<any>(`${getApiBase()}/annotations?bookId=${bookId}`, {
         headers: getHeaders(),
       })
+      const list = Array.isArray(res) ? res : (Array.isArray(res?.annotations) ? res.annotations : [])
+      return list
     } catch (e: any) {
       console.error(`Erro ao buscar anotações do livro ${bookId}:`, e)
       return []
@@ -234,7 +245,7 @@ export const useGraph = () => {
     themeIds: number[] = []
   ): Promise<AnnotationThemeItem> => {
     try {
-      const res = await $fetch<AnnotationThemeItem>(`${getApiBase()}/annotations`, {
+      const res = await $fetch<any>(`${getApiBase()}/annotations`, {
         method: 'POST',
         headers: getHeaders(),
         body: {
@@ -243,7 +254,7 @@ export const useGraph = () => {
           themeIds,
         },
       })
-      return res
+      return res?.annotation || res
     } catch (e: any) {
       console.error('Erro ao criar anotação solta:', e)
       throw e
@@ -277,7 +288,7 @@ export const useGraph = () => {
     }
   }
 
-  const updateNode = async (id: number, name: string, color: string, description: string) => {
+  const updateNode = async (id: number | string, name: string, color?: string, description?: string) => {
     try {
       const updated = await $fetch<GraphNode>(`${getApiBase()}/graph/nodes/${id}`, {
         method: 'PUT',
@@ -287,12 +298,29 @@ export const useGraph = () => {
       await fetchGraph()
       return updated
     } catch (e: any) {
-      console.error('Erro ao atualizar nó:', e)
+      console.warn('Erro ao atualizar nó na API, aplicando fallback local se possível:', e)
+      const currentNodes = graphData.value?.nodes || []
+      const index = currentNodes.findIndex((n) => String(n.id) === String(id))
+      if (index !== -1) {
+        const existing = currentNodes[index]!
+        const updatedNode: GraphNode = {
+          ...existing,
+          name: name || existing.name,
+          color: color || existing.color,
+          description: description !== undefined ? description : existing.description,
+        }
+        const newNodes = [...currentNodes]
+        newNodes[index] = updatedNode
+        graphData.value = {
+          ...graphData.value,
+          nodes: newNodes,
+        }
+      }
       throw e
     }
   }
 
-  const deleteNode = async (id: number) => {
+  const deleteNode = async (id: number | string) => {
     try {
       await $fetch(`${getApiBase()}/graph/nodes/${id}`, {
         method: 'DELETE',
@@ -300,7 +328,15 @@ export const useGraph = () => {
       })
       await fetchGraph()
     } catch (e: any) {
-      console.error('Erro ao deletar nó:', e)
+      console.warn('Erro ao deletar nó na API, aplicando fallback local:', e)
+      const currentNodes = graphData.value?.nodes || []
+      graphData.value = {
+        ...graphData.value,
+        nodes: currentNodes.filter((n) => String(n.id) !== String(id)),
+        edges: (graphData.value?.edges || []).filter(
+          (edge) => String(edge.source) !== String(id) && String(edge.target) !== String(id)
+        ),
+      }
       throw e
     }
   }

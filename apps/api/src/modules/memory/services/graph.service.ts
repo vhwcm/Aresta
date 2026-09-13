@@ -25,6 +25,7 @@ export class GraphService {
       include: {
         book: {
           include: {
+            publicInfo: true,
             bookThemes: { include: { theme: true } },
           },
         },
@@ -123,8 +124,8 @@ export class GraphService {
       fullTitle: ub.book.title,
       coverPath: ub.book.cover_path,
       filePath: ub.book.file_path,
-      author: ub.book.author,
-      summary: ub.book.summary,
+      author: ub.book.publicInfo?.author || 'Autor Desconhecido',
+      summary: ub.book.publicInfo?.summary || null,
       color: '#3B82F6',
     }))
 
