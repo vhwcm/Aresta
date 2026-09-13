@@ -3,6 +3,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [13/09/2026 11:44] [Concluído] Suavizar a curvatura do conector da navbar com transição mais ampla e formato de sino orgânico
 - [13/09/2026 11:42] [Concluído] Remover quadradão do botão ativo no desktop e envolver o ícone com a linha de contorno única
 - [13/09/2026 11:26] [Concluído] Implementar conector orgânico fluido (SVG Bézier/GPU) integrando a navbar lateral e aproximando o layout da página
 - [13/09/2026 11:17] [Concluído] Redesenhar layout do FolderTagSidebar com estética moderna, hierarquia visual suave e micro-badges elegantes

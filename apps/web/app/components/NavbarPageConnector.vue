@@ -58,11 +58,11 @@ const auth = useAuth()
 const svgWidth = 84
 const viewportHeight = ref(800)
 
-// Geometria de contorno: uma única curva orgânica contínua envolvendo o ícone ativo
+// Geometria de contorno: curva suave e orgânica em formato de sino envolvendo o ícone ativo
 const X_PAGE = 74 // Linha vertical conectada à borda da página
-const X_LEFT = 18 // Ponto ápice à esquerda envolvendo o ícone ativo
-const Y_SPAN = 34 // Alcance vertical para uma curva única e contínua
-const K_CP = 17 // Deslocamento vertical dos pontos de controle para tangência vertical perfeita (C1)
+const X_APEX = 20 // Ponto ápice à esquerda envolvendo o ícone ativo
+const Y_SPAN = 52 // Alcance vertical amplo para uma transição suave e fluida
+const K_CP = 26 // Ponto de controle harmônico para curvatura ampla sem bicos
 
 // Offsets verticais de cada botão em relação ao centro vertical (50vh):
 // Índice 0 (Home): -108px
@@ -151,10 +151,10 @@ const strokePathD = computed(() => {
   return [
     `M ${X_PAGE} 0`,
     `L ${X_PAGE} ${yTop}`,
-    // Curva única contínua (metade superior): desce da linha da página e arqueia suavemente sobre e à esquerda do ícone
-    `C ${X_PAGE} ${yTop + K_CP}, ${X_LEFT} ${y - K_CP}, ${X_LEFT} ${y}`,
-    // Curva única contínua (metade inferior): sai do ápice à esquerda, passa por baixo do ícone e retorna à linha da página
-    `C ${X_LEFT} ${y + K_CP}, ${X_PAGE} ${yBottom - K_CP}, ${X_PAGE} ${yBottom}`,
+    // Curva suave superior (sino harmônico): desce da reta da página e contorna amplamente sobre o ícone
+    `C ${X_PAGE} ${yTop + K_CP}, ${X_APEX} ${y - K_CP}, ${X_APEX} ${y}`,
+    // Curva suave inferior (sino harmônico): sai do ápice, contorna por baixo e retorna suavemente à reta da página
+    `C ${X_APEX} ${y + K_CP}, ${X_PAGE} ${yBottom - K_CP}, ${X_PAGE} ${yBottom}`,
     `L ${X_PAGE} ${H}`
   ].join(' ')
 })
