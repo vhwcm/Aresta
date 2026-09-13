@@ -1,8 +1,8 @@
+@import './milkdown-aresta-theme.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import './milkdown-aresta-theme.css';
 
 /* ==========================================================================
    Design Tokens dos Temas (Escuro, Claro, Sépia / Estilo Livro)

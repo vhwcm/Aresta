@@ -3,6 +3,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [13/09/2026 09:31] [Concluído] Corrigir ordem de @import do CSS para eliminar warning do PostCSS/Vite
 - [12/09/2026 21:22] [Concluído] Desacoplar URLs locais e viabilizar autenticação OAuth e conexões de API no Android e mobile
 - [12/09/2026 21:18] [Concluído] Atualizar ícones do Android com a logo oficial branca do Aresta e sincronizar build e CI
 - [12/09/2026 21:11] [Concluído] Normalizar selected_text e exibir texto de citações e notas em todas as anotações da gaveta
