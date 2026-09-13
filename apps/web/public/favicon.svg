@@ -8,18 +8,18 @@
 
   <g filter="url(#tabShadow)" fill="#CF7754" stroke="#CF7754">
     <!-- Base horizontal -->
-    <line x1="9.4" y1="26.2" x2="22.6" y2="26.2" stroke-width="1.1" stroke-linecap="round" />
+    <line x1="5.6" y1="26.8" x2="26.4" y2="26.8" stroke-width="1.6" stroke-linecap="round" />
 
     <!-- Hastes principais do A -->
-    <line x1="16" y1="6.5" x2="9.4" y2="26.2" stroke-width="2.4" stroke-linecap="round" />
-    <line x1="16" y1="6.5" x2="22.6" y2="26.2" stroke-width="2.4" stroke-linecap="round" />
+    <line x1="16.0" y1="4.5" x2="5.6" y2="26.8" stroke-width="2.8" stroke-linecap="round" />
+    <line x1="16.0" y1="4.5" x2="26.4" y2="26.8" stroke-width="2.8" stroke-linecap="round" />
 
     <!-- Traço transversal característico da Aresta -->
-    <polygon points="1.2,20.8 16,18.0 30.8,14.2 16,16.8" stroke-width="0.3" stroke-linejoin="round" />
+    <polygon points="1.0,21.0 16.0,18.0 31.0,12.8 16.0,16.2" stroke-width="0.3" stroke-linejoin="round" />
 
     <!-- 3 Nós nos vértices do triângulo da marca -->
-    <circle cx="16" cy="6.5" r="2.6" stroke-width="0" />
-    <circle cx="9.4" cy="26.2" r="2.6" stroke-width="0" />
-    <circle cx="22.6" cy="26.2" r="2.6" stroke-width="0" />
+    <circle cx="16.0" cy="4.5" r="2.8" stroke-width="0" />
+    <circle cx="5.6" cy="26.8" r="2.8" stroke-width="0" />
+    <circle cx="26.4" cy="26.8" r="2.8" stroke-width="0" />
   </g>
 </svg>

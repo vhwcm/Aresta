@@ -1,10 +1,10 @@
 # Checklist
 
 ## 🔄 Em Andamento
-- [13/09/2026 16:19] [Fazendo] Aumentar a logo do Aresta na aba do navegador (favicon SVG e PNGs de alta definição)
-
 
 ## ✅ Concluído
+- [13/09/2026 16:24] [Concluído] Aumentar a logo do Aresta na aba do navegador (favicon SVG e PNGs de alta definição)
+
 - [13/09/2026 16:21] [Concluído] Corrigir orientação da curvatura côncava para fora da navbar, elevar z-index da linha e unificar borda nos ícones das pontas
 - [13/09/2026 16:19] [Concluído] Desacoplar pan/zoom do canvas ao puxar arestas magnéticas em nós (d3.zoom filter estrito)
 - [13/09/2026 16:18] [Concluído] Implementar expansão radial hierárquica estrita: descendentes (livretos/filhos) posicionam-se sempre para fora na mesma direção radial
