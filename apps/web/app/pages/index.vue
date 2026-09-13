@@ -13,6 +13,7 @@
       <div
         class="w-full flex flex-col gap-5 sm:gap-6"
         :class="{ 'xl:h-full xl:overflow-y-auto xl:pr-4 xl:pb-12 xl:overscroll-contain custom-scrollbar': !isGraphCollapsed }"
+        style="scrollbar-width: none; -ms-overflow-style: none;"
       >
         <!-- BLOCO 1: ÚLTIMA LEITURA ATIVA OU ESTADO COMECE UMA LEITURA -->
         <section class="relative flex flex-row items-start gap-5 sm:gap-7 pt-1 sm:pt-2">
@@ -1458,3 +1459,17 @@ const dailyFlashcard = computed(() => {
 
 const hasDailyFlashcard = computed(() => !!dailyFlashcard.value)
 </script>
+
+<style scoped>
+.custom-scrollbar {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+</style>
+
