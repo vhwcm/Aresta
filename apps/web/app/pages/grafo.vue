@@ -50,6 +50,7 @@
         @open-create-node="isCreateModalOpen = true"
         @open-connect-modal="isConnectModalOpen = true"
         @connect-nodes="handleDirectConnect"
+        @connectNodes="handleDirectConnect"
       />
 
       <!-- 1. Canvas Overlay Deslizante do Tema (Carrossel Horizontal de Livros + Feed de Anotações) -->

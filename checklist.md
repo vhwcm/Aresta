@@ -3,6 +3,8 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [13/09/2026 17:02] [Concluído] Renderizar aresta instantaneamente no GraphCanvas via localCustomEdges e sincronizar persistência e eventos
+- [13/09/2026 17:02] [Concluído] Implementar modal sobreposto de livreto IA no leitor, suprimir balão e redesenhar caixinhas de anotação e flashcard com laranja ativo
 - [13/09/2026 16:54] [Concluído] Ampliar tolerância magnética de conexão, liberar todos os nós de temas e suportar conexões arbitrárias no Grafo
 - [13/09/2026 16:49] [Concluído] Garantir renderização imediata e persistente de arestas e reorganização radial dos nós conectados no Grafo
 - [13/09/2026 16:40] [Concluído] Aplicar supressão universal de barras de rolagem no main.css do Nuxt 4 (app/assets) e no feed da home

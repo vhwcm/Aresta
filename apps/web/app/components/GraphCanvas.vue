@@ -255,6 +255,17 @@ const emit = defineEmits<{
       targetType?: string
     }
   ): void
+  (
+    e: 'connect-nodes',
+    payload: {
+      sourceId: number | string
+      targetId: number | string
+      sourceRawId?: number | string
+      targetRawId?: number | string
+      sourceType?: string
+      targetType?: string
+    }
+  ): void
 }>()
 
 const { themeMode } = useSettings()
@@ -270,6 +281,26 @@ const isLightMode = computed(() => effectiveTheme.value === 'light' || effective
 const containerRef = ref<HTMLElement | null>(null)
 const svgRef = ref<SVGSVGElement | null>(null)
 const gRef = ref<SVGGElement | null>(null)
+
+// Arestas locais criadas interativamente na tela (renderizadas no mesmo milissegundo)
+const localCustomEdges = ref<GraphEdge[]>([])
+
+watch(
+  () => props.edges,
+  (newEdges) => {
+    const propEdgeKeys = new Set(newEdges.map((e) => `${String(e.source)}---${String(e.target)}`))
+    localCustomEdges.value = localCustomEdges.value.filter((le) => {
+      const k1 = `${String(le.source)}---${String(le.target)}`
+      const k2 = `${String(le.target)}---${String(le.source)}`
+      return !propEdgeKeys.has(k1) && !propEdgeKeys.has(k2)
+    })
+  },
+  { deep: true }
+)
+
+const allEdges = computed(() => {
+  return [...props.edges, ...localCustomEdges.value]
+})
 
 const internalSearchQuery = ref('')
 const currentSearchQuery = computed({
@@ -608,8 +639,8 @@ const initGraph = () => {
     return undefined
   }
 
-  // 2. Links explícitos entre nós válidos
-  const explicitLinks = props.edges
+  // 2. Links explícitos entre nós válidos (props + conexões interativas locais)
+  const explicitLinks = allEdges.value
     .map((e) => {
       const sourceNode = resolveNode(e.source)
       const targetNode = resolveNode(e.target)
@@ -1296,7 +1327,40 @@ const initGraph = () => {
         const targetLabel = finalTarget.name || finalTarget.title || 'Nó'
         showConnectionFeedback(`Conectando "${sourceLabel}" a "${targetLabel}"...`)
 
+        let edgeType = 'theme-hierarchy'
+        const isSrcBook = dragSourceNode.type === 'book'
+        const isTgtBook = finalTarget.type === 'book'
+        if (isSrcBook && isTgtBook) edgeType = 'book-hierarchy'
+        else if (isSrcBook || isTgtBook) edgeType = 'book-theme'
+
+        const optimisticEdgeId = `edge-live-${dragSourceNode.id}-${finalTarget.id}`
+        const alreadyExists = allEdges.value.some((e) => {
+          const s = String(e.source)
+          const t = String(e.target)
+          const ns = String(dragSourceNode.id)
+          const nt = String(finalTarget.id)
+          return (s === ns && t === nt) || (s === nt && t === ns)
+        })
+
+        if (!alreadyExists) {
+          localCustomEdges.value.push({
+            id: optimisticEdgeId,
+            source: dragSourceNode.id,
+            target: finalTarget.id,
+            type: edgeType,
+          })
+          initGraph()
+        }
+
         emit('connectNodes', {
+          sourceId: dragSourceNode.id,
+          targetId: finalTarget.id,
+          sourceRawId: dragSourceNode.rawId,
+          targetRawId: finalTarget.rawId,
+          sourceType: dragSourceNode.type,
+          targetType: finalTarget.type,
+        })
+        emit('connect-nodes' as any, {
           sourceId: dragSourceNode.id,
           targetId: finalTarget.id,
           sourceRawId: dragSourceNode.rawId,
@@ -1462,7 +1526,7 @@ const initGraph = () => {
 let resizeObserver: ResizeObserver | null = null
 
 watch(
-  () => [props.nodes, props.edges, currentSearchQuery.value],
+  () => [props.nodes, allEdges.value, currentSearchQuery.value],
   () => {
     initGraph()
     nextTick(() => {
