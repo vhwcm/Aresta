@@ -199,7 +199,7 @@ export class DidacticDocumentAdapter implements IBookDocument {
         if (isNativeHtml) {
           html = raw
           const titleMatch = raw.match(/data-title="([^"]+)"/i) || raw.match(/<h[1-3][^>]*>([^<]+)<\/h[1-3]>/i)
-          if (titleMatch) {
+          if (titleMatch && titleMatch[1]) {
             pageTitle = titleMatch[1].trim()
           }
           plainText = raw.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
