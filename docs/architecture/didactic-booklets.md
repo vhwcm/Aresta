@@ -13,9 +13,10 @@ O subsistema de **Livretos Didáticos com IA** do Aresta é responsável por ger
 
     [ PONTOS DE ENTRADA (FRONTEND) ]
     ┌───────────────────────────┐  ┌───────────────────────────┐  ┌───────────────────────────┐
-    │     Estante / Acervo      │  │    Central de Revisão     │  │   Grafo de Conhecimento   │
-    │      (/library.vue)       │  │       (/revisao.vue)      │  │     (NodeDrawer.vue)      │
-    │  "Novo Livreto Didático"  │  │   "Explicar com IA Tutor" │  │   "Aprofundar Tópico"     │
+    │     Estante / Acervo      │  │    Central de Revisão     │  │   Leitor Imersivo (Texto) │
+    │      (/library.vue)       │  │       (/revisao.vue)      │  │      (Viewer.vue Tooltip) │
+    │  "Novo Livreto Didático"  │  │   "Explicar com IA Tutor" │  │   "IA" -> Explicação /    │
+    │                           │  │                           │  │   "Livreto Estruturado"   │
     └─────────────┬─────────────┘  └─────────────┬─────────────┘  └─────────────┬─────────────┘
                   │                              │                              │
                   └──────────────────────┬───────┴──────────────────────────────┘
@@ -33,29 +34,27 @@ O subsistema de **Livretos Didáticos com IA** do Aresta é responsável por ger
                                          │
                                          ▼
     ┌───────────────────────────────────────────────────────────────────────────────────────────┐
-    │  didacticRouter (/api/didactic)                                                           │
-    │  ├─► POST   /booklets             -> didacticController.create                           │
-    │  ├─► POST   /booklets/:id/append  -> didacticController.append                           │
-    │  ├─► GET    /booklets             -> didacticController.list                             │
-    │  ├─► GET    /booklets/:id         -> didacticController.getById                          │
-    │  └─► DELETE /booklets/:id         -> didacticController.delete                          │
+    │  didacticRouter (/api/didactic) & aiRouter (/api/ai)                                      │
+    │  ├─► POST   /api/didactic/booklets           -> Criação de Livreto (parent_book_id)       │
+    │  ├─► POST   /api/ai/short-explanation        -> Explicação Curta para Overlay             │
+    │  ├─► POST   /api/didactic/booklets/:id/append-> Adição de capítulo incremental            │
+    │  └─► GET    /api/graph                       -> Conexões e arestas no Grafo               │
     └────────────────────────────────────┬──────────────────────────────────────────────────────┘
                                          ▼
     ┌───────────────────────────────────────────────────────────────────────────────────────────┐
-    │  DidacticBookletService                                                                   │
-    │  ├─► 1. Validação de Regras (Append exclusivo "Livreto em Livreto")                       │
-    │  ├─► 2. Orquestração de Prompt & Síntese Pedagógica                                       │
-    │  │       │                                                                                │
-    │  │       ▼                                                                                │
-    │  │   [ AIService / Gemini Flash ] ──► Cascata: gemini-3.7 -> 3.6 -> 3.5 -> APIs externas  │
-    │  │                                    - Analogia Visual                                   │
-    │  │                                    - Princípio Fundamental (First Principles)          │
-    │  │                                    - Diagramas Mermaid.js                              │
-    │  │                                    - Callouts Didáticos Pedagógicos                    │
-    │  │                                    - Perguntas Active Recall                           │
-    │  │                                                                                        │
-    │  ├─► 3. Tratamento Estrito de Erro (SEM fallback offline mockado: HTTP 503 com mensagem) │
-    │  └─► 4. Transações Prisma (Book, UserBook, DidacticBooklet, DidacticBookletChapter)       │
+    │  DidacticBookletService & AiService (Cascata: 3.7 -> 3.6 -> 3.5 -> Provedores Externos)   │
+    │  ├─► 1. Geração em HTML Semântico Aresta (<section class="didactic-page">)                │
+    │  ├─► 2. Ordem Pedagógica Estrita:                                                        │
+    │  │       1. Capa e Visão Geral                                                            │
+    │  │       2. Contexto e Fundamentos                                                        │
+    │  │       3. Explicação Mecânica Profunda (com Stepper interativo / diagramas)             │
+    │  │       4. Analogia Prática & Casos Reais (DEPOIS da explicação técnica)                 │
+    │  │       5. Síntese e Pontos-Chave                                                        │
+    │  │       6. Subtemas Relacionados (botões "Explicar" e "Criar Livreto")                   │
+    │  │       7. Flashcards Interativos de Fixação (com Flip 3D e "Adicionar ao Deck")         │
+    │  ├─► 3. Tratamento Estrito de Erro (SEM fallback offline mockado: HTTP 503 genérico)     │
+    │  ├─► 4. Vínculo no Grafo de Conhecimento e Marcador no Livro Pai                         │
+    │  └─► 5. Design Editorial Minimalista: SEM EMOJIS em cabeçalhos, botões ou ações           │
     └────────────────────────────────────┬──────────────────────────────────────────────────────┘
                                          ▼
     ┌───────────────────────────────────────────────────────────────────────────────────────────┐
@@ -63,7 +62,8 @@ O subsistema de **Livretos Didáticos com IA** do Aresta é responsável por ger
     │  ├─► books: { file_type: 'didactic', file_path: 'virtual://didactic/...' }                │
     │  ├─► user_books: { status: 'LENDO', current_page: 0 }                                    │
     │  ├─► didactic_booklets: { title, target_audience, theme_id }                              │
-    │  └─► didactic_booklet_chapters: { order_index, raw_markdown, diagram_count }              │
+    │  ├─► didactic_booklet_chapters: { order_index, raw_markdown (HTML), diagram_count }       │
+    │  └─► annotations: { note: '{"type":"didactic_booklet"}' / '{"type":"ai_explanation"}' }  │
     └───────────────────────────────────────────────────────────────────────────────────────────┘
                                          │
 ════════════════════════════════════════════════════════════════════════════════════════════════════════
@@ -71,23 +71,19 @@ O subsistema de **Livretos Didáticos com IA** do Aresta é responsável por ger
                                          │
                                          ▼
     ┌───────────────────────────────────────────────────────────────────────────────────────────┐
-    │  GET /api/books/:id/file (Entrega JSON estruturado com metadados e capítulos ordenados)  │
+    │  DidacticDocumentAdapter & ArestaInteractiveRuntime                                       │
+    │  ├─► 1. Paginação nativa por <section class="didactic-page"> e fallback para markdown    │
+    │  ├─► 2. Flip 3D de Flashcards com persistência direta na API (/api/flashcards)            │
+    │  ├─► 3. Controlador de etapas de Steppers interativos (Anterior/Próximo)                  │
+    │  ├─► 4. Disparo de Subtemas ("Explicar" -> Overlay flutuante / "Criar Livreto" -> Grafo)  │
+    │  └─► 5. ReaderAiOverlayCard (popover glassmorphism sobre o texto marcado)                 │
     └────────────────────────────────────┬──────────────────────────────────────────────────────┘
                                          ▼
     ┌───────────────────────────────────────────────────────────────────────────────────────────┐
-    │  DidacticDocumentAdapter (Strategy Pattern: IBookDocument)                                │
-    │  ├─► 1. Parse JSON -> DidacticBookletData                                                 │
-    │  ├─► 2. Paginação Virtual Inteligente (split por '---' e densidade de texto)             │
-    │  ├─► 3. Compilação Markdown + Callouts (<div class="didactic-callout callout-*">)        │
-    │  ├─► 4. Injeção de Âncoras Textuais: data-anchor="didactic://c{chap}/p{page}#b{block}"   │
-    │  └─► 5. Renderização Client-side de Diagramas Mermaid (SVG responsivo)                   │
-    └────────────────────────────────────┬──────────────────────────────────────────────────────┘
-                                         ▼
-    ┌───────────────────────────────────────────────────────────────────────────────────────────┐
-    │  Leitor Imersivo Aresta (/reader/[id].vue)                                                │
-    │  ├─► Motor de Virada de Página Física 2D/3D (Three.js / Turn / Swipe Mobile)              │
-    │  ├─► Sistema de Anotações & Grifos Coloridos Integrado                                    │
-    │  └─► Sumário Dinâmico por Capítulos & Sincronização de Progresso                          │
+    │  Leitor Imersivo Aresta (/reader?bookId=X)                                                │
+    │  ├─► Motor de Virada de Página Física 2D/3D (Three.js WebGL)                              │
+    │  ├─► Cliques em destaques: abre livreto filho ou abre card contextual com IA              │
+    │  └─► Conexão bidirecional com o Grafo de Conhecimento                                     │
     └───────────────────────────────────────────────────────────────────────────────────────────┘
 ========================================================================================================
 ```

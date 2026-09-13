@@ -40,3 +40,10 @@ export const DidacticExplanationSchema = z.object({
   depthLevel: z.enum(['quick_summary', 'standard', 'deep_dive']).default('standard'),
   userLanguage: z.string().default('pt-BR'),
 })
+
+export const ShortExplanationSchema = z.object({
+  text: z.string().min(1),
+  prompt: z.string().optional(),
+  bookTitle: z.string().optional(),
+  userLanguage: z.string().default('pt-BR'),
+})

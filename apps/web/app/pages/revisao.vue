@@ -523,7 +523,7 @@
             v-if="didacticError"
             class="p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-xs font-interface text-red-400 flex items-start gap-2.5 animate-in fade-in"
           >
-            <span class="text-base leading-none">⚠️</span>
+            <AlertCircleIcon class="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
             <div class="flex-1 leading-relaxed">
               {{ didacticError }}
             </div>

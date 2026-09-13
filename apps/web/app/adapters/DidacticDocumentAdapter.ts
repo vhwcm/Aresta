@@ -1,5 +1,6 @@
 import type { IBookDocument, BookMetadata, PageData, PageViewport } from '~/interfaces/reader/IBookDocument'
 import { marked } from 'marked'
+import { ArestaInteractiveRuntime } from '~/utils/reader/ArestaInteractiveRuntime'
 
 export interface DidacticChapterData {
   id?: string
@@ -133,6 +134,8 @@ export class DidacticDocumentAdapter implements IBookDocument {
     this._isLoaded = true
   }
 
+  private _runtimeCleanup: (() => void) | null = null
+
   /**
    * Divide os capítulos em páginas virtuais equilibradas para leitura móvel
    */
@@ -141,22 +144,44 @@ export class DidacticDocumentAdapter implements IBookDocument {
     let pageCounter = 1
 
     for (const chapter of booklet.chapters) {
-      // Divide o markdown por separadores horizontais '---' ou por blocos grandes
-      const sections = chapter.raw_markdown.split(/\n---\n/).map((s) => s.trim()).filter(Boolean)
+      const rawContent = chapter.raw_markdown || ''
+      const pageSectionsMatch = rawContent.match(/<section class="didactic-page"[\s\S]*?<\/section>/gi)
 
-      if (sections.length === 0) {
-        sections.push(chapter.raw_markdown)
+      let sections: string[] = []
+      let isNativeHtml = false
+
+      if (pageSectionsMatch && pageSectionsMatch.length > 0) {
+        sections = pageSectionsMatch
+        isNativeHtml = true
+      } else {
+        sections = rawContent.split(/\n---\n/).map((s) => s.trim()).filter(Boolean)
+        if (sections.length === 0) {
+          sections.push(rawContent)
+        }
       }
 
       for (let i = 0; i < sections.length; i++) {
         const raw = sections[i] || ''
-        const html = this.convertMarkdownToHtml(raw, chapter.order_index, pageCounter)
-        const plainText = raw.replace(/[#*`_>[\]]/g, '').trim()
+        let html: string
+        let plainText: string
+        let pageTitle = chapter.title
+
+        if (isNativeHtml) {
+          html = raw
+          const titleMatch = raw.match(/data-title="([^"]+)"/i) || raw.match(/<h[1-3][^>]*>([^<]+)<\/h[1-3]>/i)
+          if (titleMatch) {
+            pageTitle = titleMatch[1].trim()
+          }
+          plainText = raw.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+        } else {
+          html = this.convertMarkdownToHtml(raw, chapter.order_index, pageCounter)
+          plainText = raw.replace(/[#*`_>[\]]/g, '').trim()
+        }
 
         pages.push({
           pageNumber: pageCounter,
           chapterIndex: chapter.order_index,
-          chapterTitle: chapter.title,
+          chapterTitle: pageTitle,
           rawContent: raw,
           htmlContent: html,
           plainText,
@@ -175,7 +200,7 @@ export class DidacticDocumentAdapter implements IBookDocument {
   private convertMarkdownToHtml(markdown: string, chapterIndex: number, pageNumber: number): string {
     let processed = markdown
 
-    // Transformação de Callouts GitHub / Didáticos
+    // Transformação de Callouts GitHub / Didáticos (sem emojis)
     processed = processed.replace(
       />\s*\[!(ANALOGY|KEY_CONCEPT|TIP|WARNING|NOTE)\]\s*\n([\s\S]*?)(?=(?:\n\s*>\s*\[!|\n\n|$))/gi,
       (_match, type, content) => {
@@ -183,11 +208,11 @@ export class DidacticDocumentAdapter implements IBookDocument {
         const upperType = type.toUpperCase()
 
         const titles: Record<string, string> = {
-          ANALOGY: '💡 Analogia Visual',
-          KEY_CONCEPT: '⭐ Conceito Central',
-          TIP: '🚀 Dica Prática',
-          WARNING: '⚠️ Cuidado & Armadilhas',
-          NOTE: '📌 Nota Didática',
+          ANALOGY: 'Analogia Visual',
+          KEY_CONCEPT: 'Conceito Central',
+          TIP: 'Dica Prática',
+          WARNING: 'Cuidado & Armadilhas',
+          NOTE: 'Nota Didática',
         }
 
         const typeClasses: Record<string, string> = {
@@ -283,6 +308,16 @@ export class DidacticDocumentAdapter implements IBookDocument {
       </div>
     `
 
+    // Executa e registra o runtime de componentes interativos (Flashcards 3D, Steppers, Subtemas)
+    if (this._runtimeCleanup) {
+      this._runtimeCleanup()
+      this._runtimeCleanup = null
+    }
+    this._runtimeCleanup = ArestaInteractiveRuntime.mount(container, {
+      bookTitle: this._metadata.title,
+      pageNumber: page.pageNumber,
+    })
+
     // Renderiza Mermaid se disponível no escopo do navegador real (com suporte completo a SVG)
     if (
       typeof window !== 'undefined' &&
@@ -311,6 +346,10 @@ export class DidacticDocumentAdapter implements IBookDocument {
   }
 
   destroy(): void {
+    if (this._runtimeCleanup) {
+      this._runtimeCleanup()
+      this._runtimeCleanup = null
+    }
     this._virtualPages = []
     this._bookletData = null
     this._isLoaded = false

@@ -94,4 +94,62 @@ describe('AiService - Model Cascade & Error Handling', () => {
       message: 'Não foi possível obter resposta da Inteligência Artificial no momento. Por favor, tente novamente em instantes.',
     })
   })
+
+  it('4. Deve gerar livreto em HTML semântico com flashcards declarativos e steppers', async () => {
+    vi.spyOn(didacticAI, 'getGenerativeModel').mockImplementation(() => {
+      return {
+        generateContent: vi.fn().mockResolvedValue({
+          response: {
+            text: () => `<section class="didactic-page" data-page="1" data-title="Capa">
+              <header class="didactic-cover"><h1>Arquitetura de Software</h1></header>
+            </section>
+            <section class="didactic-page" data-page="2" data-title="Passos">
+              <div class="aresta-stepper" data-title="Execução">
+                <div class="aresta-step" data-step="1">Passo 1</div>
+              </div>
+            </section>
+            <section class="didactic-page" data-page="3" data-title="Flashcards">
+              <div class="aresta-flashcard" data-question="O que é SOLID?" data-answer="Cinco princípios de design">
+                <button type="button" class="aresta-btn-add-deck">Adicionar ao meu Deck</button>
+              </div>
+            </section>`,
+          },
+        }),
+      } as any
+    })
+
+    const result = await aiService.generateDidacticExplanation({
+      topic: 'Arquitetura de Software',
+    })
+
+    expect(result.title).toBe('Arquitetura de Software')
+    expect(result.html).toContain('class="didactic-page"')
+    expect(result.html).toContain('class="aresta-stepper"')
+    expect(result.html).toContain('class="aresta-flashcard"')
+    expect(result.diagramCount).toBe(1)
+  })
+
+  it('5. Deve gerar explicação curta contextual (generateShortExplanation) em HTML limpo sem emojis', async () => {
+    vi.spyOn(didacticAI, 'getGenerativeModel').mockImplementation(() => {
+      return {
+        generateContent: vi.fn().mockResolvedValue({
+          response: {
+            text: () => `<div class="aresta-short-explanation">
+              <div class="aresta-short-header"><strong>Explicação Contextual</strong></div>
+              <div class="aresta-short-body"><p>Conceito explicado de forma direta.</p></div>
+            </div>`,
+          },
+        }),
+      } as any
+    })
+
+    const result = await aiService.generateShortExplanation({
+      text: 'O princípio da responsabilidade única dita que uma classe deve ter apenas um motivo para mudar.',
+      prompt: 'Explique de forma simples',
+    })
+
+    expect(result.html).toContain('class="aresta-short-explanation"')
+    expect(result.html).toContain('Conceito explicado de forma direta')
+    expect(result.textSnippet).toContain('O princípio da responsabilidade única')
+  })
 })

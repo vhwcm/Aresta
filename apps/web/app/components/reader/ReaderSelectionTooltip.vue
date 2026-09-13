@@ -38,6 +38,49 @@
           <HighlighterIcon class="w-4 h-4 text-accent" />
           <span>Anotar</span>
         </button>
+
+        <div class="reader-selection-tooltip__divider" role="separator" />
+
+        <!-- Botão IA com Submenu -->
+        <div class="relative">
+          <button
+            type="button"
+            class="reader-selection-tooltip__btn reader-selection-tooltip__btn--ai"
+            :class="{ 'is-active': isAiMenuOpen }"
+            @click="isAiMenuOpen = !isAiMenuOpen"
+            title="Recursos de Inteligência Artificial"
+            aria-label="Opções de Inteligência Artificial"
+          >
+            <SparklesIcon class="w-4 h-4 text-orange-400" />
+            <span>IA</span>
+          </button>
+
+          <!-- Submenu Dropdown de IA -->
+          <Transition name="fade">
+            <div
+              v-if="isAiMenuOpen"
+              class="reader-selection-tooltip__ai-menu"
+              :class="isAbove ? 'ai-menu--above' : 'ai-menu--below'"
+            >
+              <button
+                type="button"
+                class="reader-selection-tooltip__ai-item"
+                @click="handleShortExplanation"
+              >
+                <ZapIcon class="w-3.5 h-3.5 text-orange-400 flex-shrink-0" />
+                <span>Explicação Rápida</span>
+              </button>
+              <button
+                type="button"
+                class="reader-selection-tooltip__ai-item"
+                @click="handleBooklet"
+              >
+                <BookOpenIcon class="w-3.5 h-3.5 text-orange-400 flex-shrink-0" />
+                <span>Livreto Estruturado</span>
+              </button>
+            </div>
+          </Transition>
+        </div>
       </div>
 
       <!-- Seta indicadora (Arrow) -->
@@ -50,8 +93,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { HighlighterIcon, BookOpenIcon } from 'lucide-vue-next'
+import { ref, computed, watch } from 'vue'
+import { HighlighterIcon, BookOpenIcon, SparklesIcon, ZapIcon } from 'lucide-vue-next'
 
 const props = withDefaults(
   defineProps<{
@@ -75,10 +118,17 @@ const props = withDefaults(
 const emit = defineEmits<{
   (e: 'annotate', payload: { text: string; pageNumber?: number }): void
   (e: 'open-dictionary', payload: { word: string; pageNumber?: number }): void
+  (e: 'request-short-explanation', payload: { text: string; pageNumber?: number; x: number; y: number }): void
+  (e: 'request-booklet', payload: { text: string; pageNumber?: number }): void
   (e: 'close'): void
 }>()
 
 const tooltipRef = ref<HTMLElement | null>(null)
+const isAiMenuOpen = ref(false)
+
+watch(() => props.visible, (val) => {
+  if (!val) isAiMenuOpen.value = false
+})
 
 const isSingleWord = computed(() => {
   const text = props.selectedText.trim()
@@ -86,6 +136,7 @@ const isSingleWord = computed(() => {
 })
 
 function handleOpenDictionary() {
+  isAiMenuOpen.value = false
   emit('open-dictionary', {
     word: props.selectedText.trim(),
     pageNumber: props.pageNumber,
@@ -93,7 +144,26 @@ function handleOpenDictionary() {
 }
 
 function handleAnnotate() {
+  isAiMenuOpen.value = false
   emit('annotate', {
+    text: props.selectedText,
+    pageNumber: props.pageNumber,
+  })
+}
+
+function handleShortExplanation() {
+  isAiMenuOpen.value = false
+  emit('request-short-explanation', {
+    text: props.selectedText,
+    pageNumber: props.pageNumber,
+    x: props.x,
+    y: props.y,
+  })
+}
+
+function handleBooklet() {
+  isAiMenuOpen.value = false
+  emit('request-booklet', {
     text: props.selectedText,
     pageNumber: props.pageNumber,
   })
@@ -177,6 +247,67 @@ function handleAnnotate() {
 
 .reader-selection-tooltip__btn--dictionary:hover {
   background: rgba(229, 123, 85, 0.28);
+}
+
+.reader-selection-tooltip__btn--ai {
+  background: rgba(249, 115, 22, 0.12);
+  color: #f97316;
+  font-weight: 600;
+}
+
+.reader-selection-tooltip__btn--ai:hover,
+.reader-selection-tooltip__btn--ai.is-active {
+  background: rgba(249, 115, 22, 0.25);
+  color: #ffedd5;
+}
+
+.reader-selection-tooltip__ai-menu {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 170px;
+  background: rgba(18, 19, 21, 0.98);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(249, 115, 22, 0.35);
+  border-radius: 0.75rem;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.6);
+  z-index: 70;
+}
+
+.ai-menu--above {
+  bottom: calc(100% + 8px);
+}
+
+.ai-menu--below {
+  top: calc(100% + 8px);
+}
+
+.reader-selection-tooltip__ai-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 0.5rem;
+  background: transparent;
+  border: none;
+  color: #f4f4f5;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+  text-align: left;
+  width: 100%;
+}
+
+.reader-selection-tooltip__ai-item:hover {
+  background: rgba(249, 115, 22, 0.18);
+  color: #ffffff;
 }
 
 .reader-selection-tooltip__divider {

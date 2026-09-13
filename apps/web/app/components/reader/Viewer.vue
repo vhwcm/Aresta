@@ -203,6 +203,8 @@
       :is-above="isSelectionTooltipAbove"
       @annotate="handleAnnotateFromTooltip"
       @open-dictionary="handleOpenDictionaryFromTooltip"
+      @request-short-explanation="handleRequestShortExplanationFromTooltip"
+      @request-booklet="handleRequestBookletFromTooltip"
       @close="isSelectionTooltipVisible = false"
     />
 
@@ -216,6 +218,20 @@
       :page-number="dictionaryCardPage"
       :is-above="dictionaryCardIsAbove"
       @close="isDictionaryCardVisible = false"
+    />
+
+    <!-- Card Flutuante de Explicação Contextual com IA (Glassmorphism Overlay) -->
+    <ReaderAiOverlayCard
+      :visible="isAiOverlayVisible"
+      :x="aiOverlayX"
+      :y="aiOverlayY"
+      :selected-text="aiOverlayText"
+      :html-content="aiOverlayHtml"
+      :is-loading="isAiOverlayLoading"
+      :error-message="aiOverlayError"
+      @close="isAiOverlayVisible = false"
+      @save-note="handleSaveAiExplanationAsAnnotation"
+      @create-booklet="handleRequestBooklet"
     />
   </div>
 </template>
@@ -236,11 +252,12 @@ import ReaderBookNotesPanel from '~/components/reader/ReaderBookNotesPanel.vue'
 import ReaderSelectionTooltip from '~/components/reader/ReaderSelectionTooltip.vue'
 import ReaderDictionaryCard from '~/components/reader/ReaderDictionaryCard.vue'
 import ReaderTypographyPopover from '~/components/reader/ReaderTypographyPopover.vue'
+import ReaderAiOverlayCard from '~/components/reader/ReaderAiOverlayCard.vue'
 
 const store = useReaderStore()
 const router = useRouter()
 const typography = useReaderTypography()
-const { fetchAnnotations } = useAnnotations()
+const { fetchAnnotations, annotations, createAnnotation } = useAnnotations()
 
 const activeTheme = computed(() => store.readerTheme || 'sepia')
 const themeBgColor = computed(() => {
@@ -278,6 +295,19 @@ const dictionaryCardY = ref(0)
 const dictionaryCardWord = ref('')
 const dictionaryCardPage = ref(1)
 const dictionaryCardIsAbove = ref(true)
+
+// Estado do Card de Explicação Contextual com IA (Glassmorphism Overlay)
+const isAiOverlayVisible = ref(false)
+const aiOverlayX = ref(0)
+const aiOverlayY = ref(0)
+const aiOverlayText = ref('')
+const aiOverlayHtml = ref('')
+const isAiOverlayLoading = ref(false)
+const aiOverlayError = ref<string | null>(null)
+
+let handleAddFlashcardEvent: ((e: Event) => void) | null = null
+let handleExplainSubtopicEvent: ((e: Event) => void) | null = null
+let handleCreateSubtopicBookletEvent: ((e: Event) => void) | null = null
 
 const bookDetectedLanguage = computed(() => {
   const doc: any = store.document
@@ -451,6 +481,84 @@ function handleOpenDictionaryFromTooltip(payload: { word: string; pageNumber?: n
   isDictionaryCardVisible.value = true
 }
 
+async function handleRequestShortExplanationFromTooltip(payload: { text: string; pageNumber?: number; x: number; y: number }) {
+  isSelectionTooltipVisible.value = false
+  isDictionaryCardVisible.value = false
+  aiOverlayX.value = payload.x
+  aiOverlayY.value = payload.y
+  aiOverlayText.value = payload.text
+  aiOverlayHtml.value = ''
+  aiOverlayError.value = null
+  isAiOverlayLoading.value = true
+  isAiOverlayVisible.value = true
+
+  try {
+    const config = useRuntimeConfig()
+    const base = config?.public?.apiUrl || 'http://localhost:3001/api'
+    const token = typeof useCookie === 'function' ? useCookie('aresta_token').value : null
+
+    const res: any = await $fetch(`${base}/ai/short-explanation`, {
+      method: 'POST',
+      headers: {
+        Authorization: token ? `Bearer ${token}` : '',
+      },
+      body: {
+        text: payload.text,
+        bookTitle: store.title || undefined,
+      },
+    })
+
+    if (res?.html) {
+      aiOverlayHtml.value = res.html
+    } else {
+      throw new Error('Resposta vazia da IA')
+    }
+  } catch (err: any) {
+    console.error('Erro ao gerar explicação curta:', err)
+    aiOverlayError.value = 'Não foi possível obter a explicação da IA no momento. Tente novamente em instantes.'
+  } finally {
+    isAiOverlayLoading.value = false
+  }
+}
+
+function handleRequestBookletFromTooltip(payload: { text: string; pageNumber?: number }) {
+  handleRequestBooklet(payload.text)
+}
+
+function handleRequestBooklet(topic: string) {
+  isSelectionTooltipVisible.value = false
+  isAiOverlayVisible.value = false
+  router.push({
+    path: '/library',
+    query: {
+      createBooklet: 'true',
+      topic: topic.slice(0, 300),
+      parentBookId: String(store.bookId || ''),
+    },
+  })
+}
+
+async function handleSaveAiExplanationAsAnnotation(payload: { text: string; explanation: string }) {
+  try {
+    await createAnnotation({
+      bookId: Number(store.bookId),
+      cfi: `page-${annotationPage.value}`,
+      selectedText: payload.text,
+      note: JSON.stringify({
+        type: 'ai_explanation',
+        html: payload.explanation,
+      }),
+      color: '#f97316',
+      chapterTitle: store.document?.metadata?.title || 'Explicação IA',
+      progress: (store.currentPage / (store.totalPages || 1)) * 100,
+    })
+    handleAnnotationCreated()
+    isAiOverlayVisible.value = false
+  } catch (err) {
+    console.error('Erro ao salvar anotação de IA:', err)
+  }
+}
+
 function onDocumentSelectionChange() {
   if (typeof window === 'undefined') return
   const selection = window.getSelection()
@@ -484,6 +592,31 @@ function handleAnnotationCreated() {
 }
 
 function handleHighlightSelected(annotationId: number) {
+  const ann = (annotations.value || []).find((a: any) => a.id === annotationId)
+  if (ann?.note) {
+    try {
+      const parsed = JSON.parse(ann.note)
+      if (parsed.type === 'didactic_booklet' && parsed.bookletBookId) {
+        // Redireciona diretamente para o leitor do livreto!
+        router.push(`/reader?bookId=${parsed.bookletBookId}`)
+        return
+      }
+      if (parsed.type === 'ai_explanation' && parsed.html) {
+        // Abre o card flutuante sobreposto com o conteúdo salvo da explicação
+        aiOverlayHtml.value = parsed.html
+        aiOverlayText.value = ann.selected_text || ''
+        aiOverlayError.value = null
+        isAiOverlayLoading.value = false
+        aiOverlayX.value = typeof window !== 'undefined' ? window.innerWidth / 2 - 180 : 100
+        aiOverlayY.value = typeof window !== 'undefined' ? window.innerHeight / 3 : 150
+        isAiOverlayVisible.value = true
+        return
+      }
+    } catch {
+      // Anotação textual padrão
+    }
+  }
+
   if (isDesktop.value) {
     store.setNotesOpen(true)
     notesPanelRef.value?.focusAnnotation?.(annotationId)
@@ -655,6 +788,49 @@ onMounted(() => {
     })
     resizeObserver.observe(canvasAreaRef.value)
   }
+  handleAddFlashcardEvent = async (e: Event) => {
+    const detail = (e as CustomEvent).detail
+    if (!detail) return
+    try {
+      const config = useRuntimeConfig()
+      const base = config?.public?.apiUrl || 'http://localhost:3001/api'
+      const token = typeof useCookie === 'function' ? useCookie('aresta_token').value : null
+      await $fetch(`${base}/flashcards`, {
+        method: 'POST',
+        headers: { Authorization: token ? `Bearer ${token}` : '' },
+        body: {
+          bookId: detail.bookId || Number(store.bookId),
+          question: detail.question,
+          answer: detail.answer,
+          cardType: detail.cardType || 'CONCEPT_RECALL',
+          difficulty: detail.difficulty || 2.5,
+        },
+      })
+    } catch (err) {
+      console.warn('Erro ao salvar flashcard do livreto:', err)
+    }
+  }
+
+  handleExplainSubtopicEvent = (e: Event) => {
+    const detail = (e as CustomEvent).detail
+    if (!detail?.topic) return
+    handleRequestShortExplanationFromTooltip({
+      text: detail.topic,
+      x: typeof window !== 'undefined' ? window.innerWidth / 2 - 180 : 100,
+      y: typeof window !== 'undefined' ? window.innerHeight / 3 : 150,
+    })
+  }
+
+  handleCreateSubtopicBookletEvent = (e: Event) => {
+    const detail = (e as CustomEvent).detail
+    if (!detail?.topic) return
+    handleRequestBooklet(detail.topic)
+  }
+
+  window.addEventListener('aresta:add-flashcard', handleAddFlashcardEvent)
+  window.addEventListener('aresta:explain-subtopic', handleExplainSubtopicEvent)
+  window.addEventListener('aresta:create-subtopic-booklet', handleCreateSubtopicBookletEvent)
+
   if (store.bookId) {
     void fetchAnnotations({ bookId: Number(store.bookId) }).then(() => {
       pageRenderer.value?.refreshHighlights?.()
@@ -671,6 +847,9 @@ onUnmounted(() => {
   window.removeEventListener('popstate', onPopState)
   window.removeEventListener('mouseup', handleTextSelectionCheck)
   document.removeEventListener('selectionchange', onDocumentSelectionChange)
+  if (handleAddFlashcardEvent) window.removeEventListener('aresta:add-flashcard', handleAddFlashcardEvent)
+  if (handleExplainSubtopicEvent) window.removeEventListener('aresta:explain-subtopic', handleExplainSubtopicEvent)
+  if (handleCreateSubtopicBookletEvent) window.removeEventListener('aresta:create-subtopic-booklet', handleCreateSubtopicBookletEvent)
   store.setGraphOpen(false)
   store.setMobileGraphOpen(false)
   if (store.isZenMode) {

@@ -6,6 +6,8 @@ export const createBookletSchema = z.object({
   theme_id: z.number().int().positive().optional().nullable(),
   flashcard_id: z.number().int().positive().optional().nullable(),
   annotation_id: z.number().int().positive().optional().nullable(),
+  parent_book_id: z.number().int().positive().optional().nullable(),
+  source_highlight: z.string().optional().nullable(),
   target_audience: z.string().default('student'),
   depth_level: z.enum(['quick_summary', 'standard', 'deep_dive']).default('standard'),
 })

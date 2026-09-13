@@ -107,6 +107,8 @@ export const useDidacticBooklet = () => {
     theme_id?: number
     flashcard_id?: number
     annotation_id?: number
+    parent_book_id?: number
+    source_highlight?: string
     depth_level?: 'quick_summary' | 'standard' | 'deep_dive'
   }) => {
     isGenerating.value = true

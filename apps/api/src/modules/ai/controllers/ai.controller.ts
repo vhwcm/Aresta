@@ -63,6 +63,16 @@ export class AiController {
     }
   }
 
+  async shortExplanation(req: Request, res: Response): Promise<void> {
+    try {
+      const params = ShortExplanationSchema.parse(req.body)
+      const result = await aiService.generateShortExplanation(params)
+      res.json(result)
+    } catch (err: any) {
+      res.status(400).json({ error: err.message })
+    }
+  }
+
   async transcribe(req: Request, res: Response): Promise<void> {
     try {
       const { imageBase64, mimeType, promptHint } = req.body

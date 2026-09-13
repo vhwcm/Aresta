@@ -105,13 +105,20 @@ export class DidacticBookletService {
       annotationNote = ann?.note || undefined
     }
 
+    let parentBookTitle: string | undefined
+    if (input.parent_book_id) {
+      const parentBook = await prisma.book.findUnique({ where: { id: input.parent_book_id } })
+      parentBookTitle = parentBook?.title
+    }
+
     const generated = await this.generateContent({
       topic: input.topic,
       token,
       themeName,
+      bookTitle: parentBookTitle,
       flashcardQuestion: flashcardQ,
       flashcardAnswer: flashcardA,
-      annotationQuote,
+      annotationQuote: annotationQuote || input.source_highlight || undefined,
       annotationNote,
       depthLevel: input.depth_level,
     })
@@ -172,6 +179,28 @@ export class DidacticBookletService {
         theme: true,
       },
     })
+
+    // Se tiver livro pai e destaque, cria o marcador no livro de origem apontando para o livreto
+    if (input.parent_book_id) {
+      try {
+        await prisma.annotation.create({
+          data: {
+            user_id: userId,
+            book_id: input.parent_book_id,
+            selected_text: input.source_highlight || input.topic,
+            note: JSON.stringify({
+              type: 'didactic_booklet',
+              bookletBookId: book.id,
+              bookletId: booklet.id,
+              title: booklet.title,
+            }),
+            progress: 0,
+          },
+        })
+      } catch (annErr) {
+        console.warn('[DidacticBookletService] Aviso ao criar anotação de vínculo no livro pai:', annErr)
+      }
+    }
 
     return booklet
   }

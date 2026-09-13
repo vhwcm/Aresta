@@ -204,7 +204,7 @@ Respond ONLY with valid JSON in this exact format:
   }
 
   /**
-   * Generate rich didactic explanation (Markdown + Mermaid + Callouts) using dedicated Didactic / Tutor AI API.
+   * Generate rich didactic explanation in standard Aresta Semantic HTML with interactive elements.
    * SEM FALLBACK OFFLINE: Se a IA falhar em todos os modelos e provedores, propaga o erro.
    */
   async generateDidacticExplanation(params: {
@@ -217,41 +217,126 @@ Respond ONLY with valid JSON in this exact format:
     annotationNote?: string
     depthLevel?: 'quick_summary' | 'standard' | 'deep_dive'
     userLanguage?: string
-  }): Promise<{ title: string; markdown: string; diagramCount: number }> {
+  }): Promise<{ title: string; html: string; markdown: string; diagramCount: number }> {
     const { topic, themeName, bookTitle, flashcardQuestion, flashcardAnswer, annotationQuote, annotationNote, depthLevel = 'standard', userLanguage = 'pt-BR' } = params
 
-    const systemPrompt = `Você é o Didactic AI Tutor do ecossistema Aresta, um comunicador de elite especializado em ensinar conceitos complexos de forma extraordinariamente clara, intuitiva, visual e memorável para leitura em smartphones.
-DIRETRIZES:
-1. Use Markdown Estendido com seções separadas por --- para paginação mobile.
-2. Analogia Âncora no início: > [!ANALOGY]
-3. Princípios Primeiros: > [!KEY_CONCEPT]
-4. Diagrama Mermaid Válido (OBRIGATÓRIO): \`\`\`mermaid flowchart TD/LR ... \`\`\`
-5. Dica e Cuidado: > [!TIP] e > [!WARNING]
-6. Autoavaliação rápida com <details><summary>...</summary>...</details>.
+    const systemPrompt = `Você é o Didactic AI Tutor do ecossistema Aresta, um comunicador de elite especializado em ensinar conceitos complexos de forma extraordinariamente clara, intuitiva, visual e memorável para leitura digital.
+
+DIRETRIZES ESTRITAS DE ARQUITETURA E FORMATO:
+1. Retorne HTML Semântico padronizado do Aresta, SEM blocos de código markdown como \`\`\`html.
+2. Cada página/seção do livreto DEVE ser encapsulada em:
+   <section class="didactic-page" data-page="NUMERO" data-title="TITULO_DA_PAGINA">
+3. FLUXO PEDAGÓGICO OBRIGATÓRIO (Analogia estritamente DEPOIS da explicação mecânica):
+   - Página 1: Capa e Visão Geral (<header class="didactic-cover"> com <h1> e resumo conceitual).
+   - Página 2: Contexto e Fundamentos (Por que isso existe, problemas que resolve).
+   - Página 3: Explicação Mecânica Profunda (Como funciona nos bastidores/mecanismos).
+     * Quando aplicável a passos/algoritmos/processos, use:
+       <div class="aresta-stepper" data-title="Passo a Passo">
+         <div class="aresta-step" data-step="1" data-step-title="...">...</div>
+         <div class="aresta-step" data-step="2" data-step-title="...">...</div>
+       </div>
+     * Ou utilize <div class="aresta-slides"> ou diagramas conceituais estruturados.
+   - Página 4: Analogia Central e Casos Práticos do Mundo Real (Fixação intuitiva após o entendimento técnico).
+   - Página 5: Síntese e Aplicações Críticas (Lições práticas e armadilhas a evitar).
+   - Página 6: Subtemas Relacionados para expansão de conhecimento:
+     <div class="aresta-subtopics">
+       <div class="aresta-subtopic" data-topic="Nome do Subtema">
+         <span class="aresta-subtopic-title">Nome do Subtema</span>
+         <p class="aresta-subtopic-desc">Breve descrição do subtema.</p>
+         <div class="aresta-subtopic-actions">
+           <button type="button" class="aresta-btn-explain" data-action="explain" data-topic="Nome do Subtema">Explicar</button>
+           <button type="button" class="aresta-btn-booklet" data-action="booklet" data-topic="Nome do Subtema">Criar Livreto</button>
+         </div>
+       </div>
+     </div>
+   - Página 7 (Final): Flashcards Interativos de Fixação Ativa:
+     <div class="aresta-flashcards-deck">
+       <div class="aresta-flashcard" data-question="..." data-answer="..." data-type="CONCEPT_RECALL" data-difficulty="2.5">
+         <div class="aresta-flashcard-inner">
+           <div class="aresta-flashcard-front"><p class="aresta-card-q">Pergunta do Flashcard</p></div>
+           <div class="aresta-flashcard-back"><p class="aresta-card-a">Resposta do Flashcard</p></div>
+         </div>
+         <button type="button" class="aresta-btn-add-deck" data-action="add-deck">Adicionar ao meu Deck</button>
+       </div>
+     </div>
+4. REGRA VISUAL INEGOCIÁVEL: NÃO UTILIZE NENHUM EMOJI nos títulos, cabeçalhos ou botões. O Aresta adota um design editorial minimalista e limpo.
+5. Utilize classes preparadas para variáveis CSS dinâmicas (Dark/Light mode) com acentos em laranja (#f97316).
 Idioma: ${userLanguage}.`
 
-    let userPrompt = `Crie uma explicação didática estruturada para o tópico: "${topic}"\n`
+    let userPrompt = `Gere o livreto didático estruturado em HTML para o tópico: "${topic}"\n`
     if (themeName) userPrompt += `Tema: ${themeName}\n`
-    if (bookTitle) userPrompt += `Livro: ${bookTitle}\n`
-    if (flashcardQuestion && flashcardAnswer) userPrompt += `Flashcard Q: ${flashcardQuestion} / A: ${flashcardAnswer}\n`
-    if (annotationQuote) userPrompt += `Trecho grifado: "${annotationQuote}" (${annotationNote ?? ''})\n`
+    if (bookTitle) userPrompt += `Livro de Origem: ${bookTitle}\n`
+    if (flashcardQuestion && flashcardAnswer) userPrompt += `Flashcard Contexto: Q: ${flashcardQuestion} / A: ${flashcardAnswer}\n`
+    if (annotationQuote) userPrompt += `Trecho grifado de referência: "${annotationQuote}" (${annotationNote ?? ''})\n`
     userPrompt += `Profundidade: ${depthLevel}`
 
     // Executa em cascata (3.7 -> 3.6 -> 3.5 -> APIs externas). Lança erro se falhar.
-    const generated = await this.executeChatCascade({
+    const rawGenerated = await this.executeChatCascade({
       userPrompt,
       systemInstruction: systemPrompt,
       clientType: 'didactic',
     })
 
-    const matches = generated.match(/```mermaid[\s\S]*?```/g)
-    const titleMatch = generated.match(/^#\s+(.+)$/m)
+    const cleanHtml = rawGenerated.replace(/^```[a-z]*\n?/i, '').replace(/\n?```$/i, '').trim()
+
+    const titleMatch = cleanHtml.match(/<h1[^>]*>([^<]+)<\/h1>/i) || cleanHtml.match(/^#\s+(.+)$/m)
     const title = titleMatch ? titleMatch[1].replace(/[*_#]/g, '').trim() : `Didático: ${topic}`
+
+    const diagramCount = (cleanHtml.match(/class="aresta-stepper"/g) || []).length +
+      (cleanHtml.match(/class="aresta-slides"/g) || []).length +
+      (cleanHtml.match(/```mermaid|<svg/g) || []).length
 
     return {
       title,
-      markdown: generated,
-      diagramCount: matches ? matches.length : 0,
+      html: cleanHtml,
+      markdown: cleanHtml,
+      diagramCount,
+    }
+  }
+
+  /**
+   * Gera uma explicação curta e contextual em HTML limpo para popovers/overlays de anotação.
+   */
+  async generateShortExplanation(params: {
+    text: string
+    prompt?: string
+    bookTitle?: string
+    userLanguage?: string
+  }): Promise<{ html: string; textSnippet: string }> {
+    const { text, prompt, bookTitle, userLanguage = 'pt-BR' } = params
+
+    const systemPrompt = `Você é o assistente didático pontual do Aresta. O leitor selecionou um trecho de um livro e solicitou uma explicação rápida e objetiva.
+
+DIRETRIZES:
+1. Retorne HTML semântico conciso e estruturado, SEM blocos de código como \`\`\`html.
+2. Formato:
+   <div class="aresta-short-explanation">
+     <div class="aresta-short-header"><strong>Explicação Contextual</strong></div>
+     <div class="aresta-short-body">
+       <p>1 a 2 parágrafos claros explicando o trecho selecionado de forma direta.</p>
+     </div>
+     <div class="aresta-short-highlight">
+       <p>Ponto prático de fixação ou exemplo conciso.</p>
+     </div>
+   </div>
+3. NÃO UTILIZE NENHUM EMOJI em botões ou cabeçalhos.
+4. Linguagem concisa, elegante e didática em ${userLanguage}.`
+
+    let userPrompt = `Trecho selecionado: "${text}"\n`
+    if (bookTitle) userPrompt += `Obra: ${bookTitle}\n`
+    if (prompt) userPrompt += `Instrução do usuário: ${prompt}\n`
+
+    const rawGenerated = await this.executeChatCascade({
+      userPrompt,
+      systemInstruction: systemPrompt,
+      clientType: 'didactic',
+    })
+
+    const cleanHtml = rawGenerated.replace(/^```[a-z]*\n?/i, '').replace(/\n?```$/i, '').trim()
+
+    return {
+      html: cleanHtml,
+      textSnippet: text.slice(0, 100),
     }
   }
 

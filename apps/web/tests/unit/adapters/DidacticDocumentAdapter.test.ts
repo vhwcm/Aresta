@@ -131,4 +131,50 @@ flowchart TD
     expect(adapter.isLoaded).toBe(false)
     expect(adapter.totalPages).toBe(1)
   })
+
+  it('8. Deve carregar e paginar seções HTML nativas com flashcards e steppers', async () => {
+    const nativeHtmlBooklet = JSON.stringify({
+      title: 'Livro HTML Nativo',
+      chapters: [
+        {
+          order_index: 1,
+          title: 'Capítulo HTML',
+          raw_markdown: `
+            <section class="didactic-page" data-page="1" data-title="Introdução">
+              <h1>Introdução aos Sistemas</h1>
+              <p>Texto inicial.</p>
+            </section>
+            <section class="didactic-page" data-page="2" data-title="Passos do Algoritmo">
+              <div class="aresta-stepper" data-title="Fluxo">
+                <div class="aresta-step" data-step="1">Etapa A</div>
+                <div class="aresta-step" data-step="2">Etapa B</div>
+              </div>
+            </section>
+            <section class="didactic-page" data-page="3" data-title="Flashcards">
+              <div class="aresta-flashcard" data-question="O que é X?" data-answer="X é Y">
+                <div class="aresta-flashcard-inner">
+                  <div class="aresta-flashcard-front">O que é X?</div>
+                  <div class="aresta-flashcard-back">X é Y</div>
+                </div>
+                <button type="button" class="aresta-btn-add-deck">Adicionar ao meu Deck</button>
+              </div>
+            </section>
+          `,
+        },
+      ],
+    })
+
+    await adapter.load(nativeHtmlBooklet)
+    expect(adapter.totalPages).toBe(3)
+
+    const containerP3 = document.createElement('div')
+    await adapter.renderTextLayer(3, containerP3)
+    expect(containerP3.innerHTML).toContain('aresta-flashcard')
+
+    // Testa se o runtime montou o listener de clique para flip
+    const cardEl = containerP3.querySelector('.aresta-flashcard') as HTMLElement
+    expect(cardEl).not.toBeNull()
+    cardEl.click()
+    expect(cardEl.classList.contains('is-flipped')).toBe(true)
+  })
 })
