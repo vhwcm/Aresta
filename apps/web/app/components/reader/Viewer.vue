@@ -233,6 +233,15 @@
       @save-note="handleSaveAiExplanationAsAnnotation"
       @create-booklet="handleRequestBooklet"
     />
+
+    <!-- Modal Sobreposto de Criação de Livreto Didático com IA -->
+    <ReaderCreateBookletModal
+      :is-open="isCreateBookletModalOpen"
+      :initial-topic="createBookletTopic"
+      :parent-book-id="store.bookId"
+      :parent-book-title="store.title"
+      @close="isCreateBookletModalOpen = false"
+    />
   </div>
 </template>
 
@@ -253,6 +262,7 @@ import ReaderSelectionTooltip from '~/components/reader/ReaderSelectionTooltip.v
 import ReaderDictionaryCard from '~/components/reader/ReaderDictionaryCard.vue'
 import ReaderTypographyPopover from '~/components/reader/ReaderTypographyPopover.vue'
 import ReaderAiOverlayCard from '~/components/reader/ReaderAiOverlayCard.vue'
+import ReaderCreateBookletModal from '~/components/reader/ReaderCreateBookletModal.vue'
 
 const store = useReaderStore()
 const router = useRouter()
@@ -270,9 +280,17 @@ const isTypographyOpen = ref(false)
 
 const isSavedPagesOpen = ref(false)
 const isAnnotationModalOpen = ref(false)
+const isCreateBookletModalOpen = ref(false)
+const createBookletTopic = ref('')
 const capturedSelectionText = ref('')
 const annotationPage = ref(1)
 const isDesktop = ref(true)
+
+watch([isAnnotationModalOpen, isCreateBookletModalOpen], ([annOpen, bookOpen]) => {
+  if (annOpen || bookOpen) {
+    isSelectionTooltipVisible.value = false
+  }
+})
 const canvasAreaRef = ref<HTMLElement | null>(null)
 let resizeObserver: ResizeObserver | null = null
 
@@ -407,6 +425,10 @@ async function handleOpenAnnotation() {
 
 function handleTextSelectionCheck() {
   if (typeof window === 'undefined') return
+  if (isAnnotationModalOpen.value || isCreateBookletModalOpen.value) {
+    isSelectionTooltipVisible.value = false
+    return
+  }
   const selection = window.getSelection()
   if (!selection || selection.isCollapsed) {
     isSelectionTooltipVisible.value = false
@@ -528,14 +550,8 @@ function handleRequestBookletFromTooltip(payload: { text: string; pageNumber?: n
 function handleRequestBooklet(topic: string) {
   isSelectionTooltipVisible.value = false
   isAiOverlayVisible.value = false
-  router.push({
-    path: '/library',
-    query: {
-      createBooklet: 'true',
-      topic: topic.slice(0, 300),
-      parentBookId: String(store.bookId || ''),
-    },
-  })
+  createBookletTopic.value = topic
+  isCreateBookletModalOpen.value = true
 }
 
 async function handleSaveAiExplanationAsAnnotation(payload: { text: string; explanation: string }) {
@@ -583,6 +599,7 @@ function handleTouchEnd() {
 }
 
 function handleAnnotationCreated() {
+  isSelectionTooltipVisible.value = false
   notesPanelRef.value?.refresh?.()
   mobileNotesPanelRef.value?.refresh?.()
   if (typeof window !== 'undefined') {

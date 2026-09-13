@@ -7,7 +7,9 @@
       :class="isAbove ? 'reader-selection-tooltip--above' : 'reader-selection-tooltip--below'"
       :style="{ left: `${Math.round(x)}px`, top: `${Math.round(y)}px` }"
       @mousedown.stop
+      @mouseup.stop
       @touchstart.stop
+      @touchend.stop
       role="toolbar"
       aria-label="Ações de seleção de texto"
     >

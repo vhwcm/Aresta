@@ -86,12 +86,12 @@ describe('useGraph Composable', () => {
     expect(result.name).toBe('Filosofia')
   })
 
-  it('não exibe no grafo tags que não estão anexadas a nenhum livro nem nenhuma nota', async () => {
+  it('exibe todos os nós de temas no grafo para permitir conexões magnéticas', async () => {
     const mockGraphData = {
       nodes: [
-        { id: 'theme-attached-book', rawId: 10, type: 'theme', name: 'Tema Com Livro', color: '#E57B55', bookCount: 1 },
-        { id: 'theme-attached-note', rawId: 20, type: 'theme', name: 'Tema Com Nota', color: '#3B82F6', annotationCount: 1 },
-        { id: 'theme-orphan', rawId: 30, type: 'theme', name: 'Tema Isolado Sem Nada', color: '#64748B', bookCount: 0, annotationCount: 0 },
+        { id: 10, name: 'Tema Com Livro', type: 'theme' },
+        { id: 20, name: 'Tema Com Nota', type: 'theme' },
+        { id: 30, name: 'Tema Disponível Para Conexão', type: 'theme' },
         { id: 'book-1', rawId: 1, type: 'book', name: 'Livro Teste', fullTitle: 'Livro Teste' },
       ],
       edges: [
@@ -110,7 +110,7 @@ describe('useGraph Composable', () => {
     expect(nodeNames).toContain('Tema Com Livro')
     expect(nodeNames).toContain('Tema Com Nota')
     expect(nodeNames).toContain('Livro Teste')
-    expect(nodeNames).not.toContain('Tema Isolado Sem Nada')
+    expect(nodeNames).toContain('Tema Disponível Para Conexão')
   })
 
   it('fetchBookAnnotations desempacota resposta quando a API retorna { annotations: [...] }', async () => {

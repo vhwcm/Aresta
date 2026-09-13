@@ -47,7 +47,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { BookOpenIcon, UploadIcon } from 'lucide-vue-next'
 import { useReaderStore } from '~/stores/readerStore'
@@ -256,10 +256,19 @@ const loadBookFromQuery = async () => {
 onMounted(() => {
   store.setGraphOpen(false)
   store.setMobileGraphOpen(false)
-  if (!store.hasDocument) {
+  if (!store.hasDocument || (route.query.bookId && String(store.bookId) !== String(route.query.bookId))) {
     loadBookFromQuery()
   }
 })
+
+watch(
+  () => [route.query.bookId, route.query.book],
+  ([newId, newPath], [oldId, oldPath]) => {
+    if ((newId && newId !== oldId) || (newPath && newPath !== oldPath)) {
+      void loadBookFromQuery()
+    }
+  }
+)
 </script>
 
 <style scoped>

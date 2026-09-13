@@ -66,40 +66,40 @@
           </div>
         </div>
 
-        <!-- Opção: Desejo fazer uma anotação escrita -->
-        <div
-          class="flex items-center justify-between p-3.5 rounded-xl bg-bgApp/60 border border-divider hover:border-accent/40 transition-all cursor-pointer select-none"
-          @click="wantNote = !wantNote"
-          role="button"
-          tabindex="0"
-          data-testid="toggle-want-note"
-          @keydown.space.prevent="wantNote = !wantNote"
-          @keydown.enter.prevent="wantNote = !wantNote"
-        >
-          <div class="flex items-center gap-3">
-            <div
-              class="p-2 rounded-lg transition-colors"
-              :class="wantNote ? 'bg-accent/15 text-accent' : 'bg-white/5 text-textSecondary'"
-            >
-              <MessageSquareIcon class="w-4 h-4" />
-            </div>
-            <div>
-              <span class="text-xs font-semibold text-textPrimary">Fazer uma anotação</span>
-              <p class="text-[11px] text-textSecondary">
-                {{ wantNote ? 'Escreva suas reflexões ou notas pessoais abaixo' : 'Salvar apenas o trecho destacado com a cor escolhida' }}
-              </p>
-            </div>
+        <!-- Caixinhas Minimalistas: Anotação e Flashcard -->
+        <div class="grid grid-cols-2 gap-3 pt-1">
+          <!-- Caixinha Anotação -->
+          <div
+            class="flex items-center justify-center gap-2.5 p-3 rounded-xl border transition-all duration-200 cursor-pointer select-none"
+            :class="wantNote
+              ? 'bg-accent/15 border-accent text-orange-400 font-semibold shadow-[0_0_12px_rgba(229,123,85,0.25)] ring-1 ring-accent/40'
+              : 'bg-white/[0.03] border-white/10 text-zinc-500 hover:border-white/20 hover:text-zinc-400'"
+            @click="wantNote = !wantNote"
+            role="button"
+            tabindex="0"
+            data-testid="toggle-want-note"
+            @keydown.space.prevent="wantNote = !wantNote"
+            @keydown.enter.prevent="wantNote = !wantNote"
+          >
+            <MessageSquareIcon class="w-4 h-4 transition-colors" :class="wantNote ? 'text-accent' : 'text-zinc-500'" />
+            <span class="text-xs">Anotação</span>
           </div>
 
-          <!-- Toggle Switch -->
+          <!-- Caixinha Flashcard -->
           <div
-            class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out"
-            :class="wantNote ? 'bg-accent' : 'bg-white/10'"
+            class="flex items-center justify-center gap-2.5 p-3 rounded-xl border transition-all duration-200 cursor-pointer select-none"
+            :class="wantFlashcard
+              ? 'bg-accent/15 border-accent text-orange-400 font-semibold shadow-[0_0_12px_rgba(229,123,85,0.25)] ring-1 ring-accent/40'
+              : 'bg-white/[0.03] border-white/10 text-zinc-500 hover:border-white/20 hover:text-zinc-400'"
+            @click="wantFlashcard = !wantFlashcard"
+            role="button"
+            tabindex="0"
+            data-testid="toggle-want-flashcard"
+            @keydown.space.prevent="wantFlashcard = !wantFlashcard"
+            @keydown.enter.prevent="wantFlashcard = !wantFlashcard"
           >
-            <span
-              class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out"
-              :class="wantNote ? 'translate-x-4' : 'translate-x-0'"
-            />
+            <SparklesIcon class="w-4 h-4 transition-colors" :class="wantFlashcard ? 'text-accent' : 'text-zinc-500'" />
+            <span class="text-xs">Flashcard</span>
           </div>
         </div>
 
@@ -204,45 +204,6 @@
                 Nenhum tema criado ainda.
               </p>
             </div>
-          </div>
-        </div>
-
-        <!-- Opção: Transformar em Flashcard com IA -->
-        <div
-          class="flex items-center justify-between p-3.5 rounded-xl bg-bgApp/60 border border-divider hover:border-accent/40 transition-all cursor-pointer select-none"
-          @click="wantFlashcard = !wantFlashcard"
-          role="button"
-          tabindex="0"
-          data-testid="toggle-want-flashcard"
-          @keydown.space.prevent="wantFlashcard = !wantFlashcard"
-          @keydown.enter.prevent="wantFlashcard = !wantFlashcard"
-        >
-          <div class="flex items-center gap-3">
-            <div
-              class="p-2 rounded-lg transition-colors"
-              :class="wantFlashcard ? 'bg-accent/15 text-accent' : 'bg-white/5 text-textSecondary'"
-            >
-              <SparklesIcon class="w-4 h-4" />
-            </div>
-            <div>
-              <div class="flex items-center gap-1.5">
-                <span class="text-xs font-semibold text-textPrimary">Gerar flashcard</span>
-              </div>
-              <p class="text-[11px] text-textSecondary">
-                {{ wantFlashcard ? 'A IA criará um cartão de estudo em segundo plano' : 'Salvar apenas como anotação' }}
-              </p>
-            </div>
-          </div>
-
-          <!-- Toggle Switch -->
-          <div
-            class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out"
-            :class="wantFlashcard ? 'bg-accent' : 'bg-white/10'"
-          >
-            <span
-              class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out"
-              :class="wantFlashcard ? 'translate-x-4' : 'translate-x-0'"
-            />
           </div>
         </div>
 

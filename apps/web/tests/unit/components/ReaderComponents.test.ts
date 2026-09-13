@@ -409,6 +409,43 @@ describe('Reader Components', () => {
         noteId: undefined,
       })
     })
+
+    it('alterna as caixinhas minimalistas de anotação e flashcard entre apagado e laranja nítido', async () => {
+      const wrapper = mount(ReaderAnnotationModal, {
+        props: {
+          isOpen: true,
+          initialText: 'Trecho para caixinhas minimalistas',
+          currentPage: 2,
+          bookId: 1,
+        },
+      })
+
+      const noteBox = wrapper.find('[data-testid="toggle-want-note"]')
+      const flashcardBox = wrapper.find('[data-testid="toggle-want-flashcard"]')
+
+      expect(noteBox.exists()).toBe(true)
+      expect(flashcardBox.exists()).toBe(true)
+
+      // Inicialmente ambas estão com estilo sutil/apagado
+      expect(noteBox.classes()).toContain('text-zinc-500')
+      expect(flashcardBox.classes()).toContain('text-zinc-500')
+      expect(noteBox.classes()).not.toContain('text-orange-400')
+
+      // Clica na caixinha de Anotação -> fica nítida em laranja
+      await noteBox.trigger('click')
+      expect(noteBox.classes()).toContain('text-orange-400')
+      expect(noteBox.classes()).toContain('border-accent')
+
+      // Clica na caixinha de Flashcard -> fica nítida em laranja
+      await flashcardBox.trigger('click')
+      expect(flashcardBox.classes()).toContain('text-orange-400')
+      expect(flashcardBox.classes()).toContain('border-accent')
+
+      // Clica novamente na caixinha de Anotação -> desativa e volta para cores apagadas
+      await noteBox.trigger('click')
+      expect(noteBox.classes()).toContain('text-zinc-500')
+      expect(noteBox.classes()).not.toContain('text-orange-400')
+    })
   })
 
   describe('ReaderSelectionTooltip', () => {

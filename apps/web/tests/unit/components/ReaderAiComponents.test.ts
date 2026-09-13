@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import ReaderSelectionTooltip from '../../../app/components/reader/ReaderSelectionTooltip.vue'
 import ReaderAiOverlayCard from '../../../app/components/reader/ReaderAiOverlayCard.vue'
+import ReaderCreateBookletModal from '../../../app/components/reader/ReaderCreateBookletModal.vue'
 
 describe('Reader AI Components (ReaderSelectionTooltip & ReaderAiOverlayCard)', () => {
   it('1. ReaderSelectionTooltip renderiza botão IA sem emojis e emite eventos de Explicação Rápida e Livreto', async () => {
@@ -82,5 +83,28 @@ describe('Reader AI Components (ReaderSelectionTooltip & ReaderAiOverlayCard)', 
     await bookletBtn.trigger('click')
     expect(wrapper.emitted('create-booklet')).toBeTruthy()
     expect(wrapper.emitted('create-booklet')![0][0]).toBe('Injeção de Dependência')
+  })
+
+  it('3. ReaderCreateBookletModal renderiza caixa sobreposta com tópico preenchido e fecha ou cria livreto', async () => {
+    const wrapper = mount(ReaderCreateBookletModal, {
+      props: {
+        isOpen: true,
+        initialTopic: 'Conceito sobre grafos e repetição espaçada',
+        parentBookId: 5,
+        parentBookTitle: 'Livro de Algoritmos',
+      },
+    })
+
+    expect(wrapper.text()).toContain('Criar Livreto Didático com IA')
+    expect(wrapper.text()).toContain('Contexto: Livro de Algoritmos')
+
+    const textarea = wrapper.find('textarea')
+    expect(textarea.element.value).toBe('Conceito sobre grafos e repetição espaçada')
+
+    // Testa botão de fechar / cancelar
+    const cancelBtn = wrapper.findAll('button').find((b) => b.text().includes('Cancelar'))
+    expect(cancelBtn?.exists()).toBe(true)
+    await cancelBtn?.trigger('click')
+    expect(wrapper.emitted('close')).toBeTruthy()
   })
 })

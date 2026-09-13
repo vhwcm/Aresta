@@ -3,6 +3,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [13/09/2026 17:05] [Concluído] Corrigir redirecionamento e carregamento imediato do livreto gerado no ReaderShell e ReaderCreateBookletModal
 - [13/09/2026 17:02] [Concluído] Renderizar aresta instantaneamente no GraphCanvas via localCustomEdges e sincronizar persistência e eventos
 - [13/09/2026 17:02] [Concluído] Implementar modal sobreposto de livreto IA no leitor, suprimir balão e redesenhar caixinhas de anotação e flashcard com laranja ativo
 - [13/09/2026 16:54] [Concluído] Ampliar tolerância magnética de conexão, liberar todos os nós de temas e suportar conexões arbitrárias no Grafo
