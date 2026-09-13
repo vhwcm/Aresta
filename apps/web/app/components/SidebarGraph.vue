@@ -2,7 +2,7 @@
   <div class="w-full h-full flex flex-col relative overflow-hidden bg-transparent text-textPrimary">
 
     <!-- VISUALIZAÇÃO 1: GRAFO INTERATIVO -->
-    <div v-if="!selectedNode" class="w-full h-full flex flex-col relative">
+    <div v-if="!selectedNode" class="w-full h-full flex flex-col relative overflow-hidden">
       <!-- State de Carregamento -->
       <div v-if="loading && (!graphData.nodes || graphData.nodes.length === 0)" class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-bgApp/90">
         <div class="w-10 h-10 rounded-full border-2 border-accent border-t-transparent animate-spin mb-3"></div>

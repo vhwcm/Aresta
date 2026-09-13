@@ -487,3 +487,31 @@ em, i {
   pointer-events: none;
 }
 
+/* Ocultar barra de rolagem visualmente em toda a aplicação mantendo navegação limpa com mouse/trackpad */
+html,
+body,
+* {
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important; /* IE e Edge */
+}
+
+*::-webkit-scrollbar {
+  display: none !important; /* Chrome, Safari, Opera e Edge Chromium */
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
+.custom-scrollbar {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+
+

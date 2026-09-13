@@ -4,11 +4,16 @@
     <div
       v-if="auth.isLoggedIn.value"
       data-testid="auth-home"
-      class="w-full pb-20 animate-in fade-in duration-500 transition-all"
-      :class="isGraphCollapsed ? 'max-w-3xl xl:max-w-4xl mx-auto' : 'grid grid-cols-1 xl:grid-cols-2 gap-8 2xl:gap-14 items-start'"
+      class="w-full animate-in fade-in duration-500 transition-all"
+      :class="isGraphCollapsed
+        ? 'max-w-3xl xl:max-w-4xl mx-auto pb-20'
+        : 'grid grid-cols-1 xl:grid-cols-2 gap-8 2xl:gap-14 items-start pb-20 xl:pb-0 xl:h-[calc(100vh-3.25rem)] xl:max-h-[calc(100vh-3.25rem)] xl:overflow-hidden'"
     >
       <!-- COLUNA PRINCIPAL: FEED DE LEITURA (Leitura Ativa, Flashcards e Anotações) -->
-      <div class="w-full flex flex-col gap-5 sm:gap-6">
+      <div
+        class="w-full flex flex-col gap-5 sm:gap-6"
+        :class="{ 'xl:h-full xl:overflow-y-auto xl:pr-4 xl:pb-12 xl:overscroll-contain custom-scrollbar': !isGraphCollapsed }"
+      >
         <!-- BLOCO 1: ÚLTIMA LEITURA ATIVA OU ESTADO COMECE UMA LEITURA -->
         <section class="relative flex flex-row items-start gap-5 sm:gap-7 pt-1 sm:pt-2">
           <!-- CASO 1: USUÁRIO JÁ POSSUI LIVRO NA ESTANTE -->
@@ -369,9 +374,9 @@
       <div
         v-if="!isGraphCollapsed"
         data-testid="home-graph-section"
-        class="hidden xl:flex sticky top-8 flex-col gap-3.5 h-[calc(100vh-6.5rem)] min-h-[660px] 2xl:min-h-[760px] w-full"
+        class="hidden xl:flex flex-col gap-3.5 h-full w-full overflow-hidden select-none"
       >
-        <div class="flex items-center justify-between px-1">
+        <div class="flex items-center justify-between px-1 shrink-0">
           <div class="font-technical text-xs sm:text-sm uppercase font-semibold tracking-widest text-textSecondary flex items-center gap-2.5">
             <NetworkIcon class="w-4 h-4 text-accent" />
             <span>Grafo de Conhecimento</span>
@@ -397,7 +402,7 @@
         </div>
 
         <!-- Renderização Direta do Grafo (Sem Caixa) -->
-        <div class="flex-1 w-full h-full relative overflow-hidden">
+        <div class="flex-1 w-full h-full min-h-0 relative overflow-hidden">
           <SidebarGraph />
         </div>
       </div>

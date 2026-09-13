@@ -3,6 +3,9 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [13/09/2026 16:35] [Concluído] Persistir conexões de livros e temas na API e IndexedDB com reorganização imediata e aproximação dos nós no Grafo
+- [13/09/2026 16:35] [Concluído] Ocultar barra de scroll visualmente em toda a interface mantendo navegação por roda do mouse
+- [13/09/2026 16:32] [Concluído] Desacoplar scroll vertical da home no desktop isolando feed e permitir mover grafo sem scrollar a página
 - [13/09/2026 16:24] [Concluído] Aumentar a logo do Aresta na aba do navegador (favicon SVG e PNGs de alta definição)
 
 - [13/09/2026 16:21] [Concluído] Corrigir orientação da curvatura côncava para fora da navbar, elevar z-index da linha e unificar borda nos ícones das pontas

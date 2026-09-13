@@ -1,5 +1,9 @@
 <template>
-  <div class="relative w-full h-full overflow-hidden bg-transparent select-none" ref="containerRef">
+  <div
+    class="relative w-full h-full overflow-hidden bg-transparent select-none touch-none"
+    style="touch-action: none; overscroll-behavior: contain;"
+    ref="containerRef"
+  >
     <!-- Overlay de Grid de Fundo -->
     <div
       class="absolute inset-0 bg-grid-size pointer-events-none transition-opacity duration-300"
@@ -12,7 +16,11 @@
     ></div>
 
     <!-- Canvas D3 / SVG do Grafo -->
-    <svg ref="svgRef" class="w-full h-full cursor-grab active:cursor-grabbing">
+    <svg
+      ref="svgRef"
+      class="w-full h-full cursor-grab active:cursor-grabbing touch-none select-none"
+      style="touch-action: none; overscroll-behavior: contain;"
+    >
       <defs>
         <!-- Filtro para sombra dos nós de livros -->
         <filter id="node-shadow" x="-20%" y="-20%" width="140%" height="140%">
@@ -206,7 +214,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, watch, onBeforeUnmount, nextTick } from 'vue'
 import * as d3 from 'd3'
 import type { GraphNode, GraphEdge, GraphNodeType } from '~/interfaces/graph'
 import { PlusIcon, SearchIcon, LinkIcon, TagIcon, BookOpenIcon, FileTextIcon, LayoutGridIcon, SparklesIcon } from 'lucide-vue-next'
@@ -360,9 +368,20 @@ let currentSimulationNodes: any[] = []
 const fitToScreen = (animate = true) => {
   if (!svgRef.value || !containerRef.value || currentSimulationNodes.length === 0) return
 
-  const containerWidth = containerRef.value.clientWidth
-  const containerHeight = containerRef.value.clientHeight
+  const containerWidth = containerRef.value.clientWidth || (typeof window !== 'undefined' ? window.innerWidth : 1200)
+  const containerHeight = containerRef.value.clientHeight || (typeof window !== 'undefined' ? window.innerHeight : 800)
   if (containerWidth === 0 || containerHeight === 0) return
+
+  if (currentSimulationNodes.length <= 1) {
+    const targetTransform = d3.zoomIdentity.translate(0, 0).scale(1.0)
+    const svg = d3.select(svgRef.value)
+    if (animate) {
+      svg.transition().duration(400).ease(d3.easeCubicOut).call(zoomBehavior.transform as any, targetTransform)
+    } else {
+      svg.call(zoomBehavior.transform as any, targetTransform)
+    }
+    return
+  }
 
   let minX = Infinity
   let maxX = -Infinity
@@ -483,16 +502,42 @@ const getTruncatedTitle = (title?: string, max = 12) => {
 const initGraph = () => {
   if (!svgRef.value || !gRef.value || !containerRef.value) return
 
-  const width = containerRef.value.clientWidth
-  const height = containerRef.value.clientHeight
+  const width = containerRef.value.clientWidth || (typeof window !== 'undefined' ? window.innerWidth : 1200)
+  const height = containerRef.value.clientHeight || (typeof window !== 'undefined' ? window.innerHeight : 800)
 
   const svg = d3.select(svgRef.value)
   const g = d3.select(gRef.value)
 
-  // Configurar Zoom
+  // Configurar Zoom e Pan com filtro estrito (ignorar pan quando clicar/arrastar a partir de um nó)
   zoomBehavior = d3
     .zoom<SVGSVGElement, unknown>()
     .scaleExtent([0.1, 4])
+    .filter((event) => {
+      // Bloquear pan do canvas se o ponteiro estiver sobre um nó
+      const target = event.target as HTMLElement | SVGElement | null
+      if (target && typeof target.closest === 'function' && target.closest('.node')) {
+        return false
+      }
+
+      // Tratar evento de roda do mouse/trackpad:
+      if (event.type === 'wheel') {
+        if (event.cancelable) {
+          event.preventDefault()
+        }
+        event.stopPropagation()
+
+        // No modo compacto (Home do desktop), o scrolling vertical não afeta o grafo.
+        // O zoom só é ativado se segurar Ctrl (ou gesto de pinça no trackpad).
+        // Em tela cheia (!isCompact), o zoom livre com a roda continua funcionando normalmente.
+        if (props.isCompact && !event.ctrlKey) {
+          return false
+        }
+        return true
+      }
+
+      // Permitir pan (mover o grafo como um todo) com botão esquerdo ou toque no fundo
+      return !event.button
+    })
     .on('zoom', (event) => {
       g.attr('transform', event.transform)
     })
@@ -534,7 +579,14 @@ const initGraph = () => {
 
   const inputNodes = filteredPropsNodes.map((n) => ({ ...n }))
   const simulationNodes = [rootNode, ...inputNodes]
-  const nodeMap = new Map(simulationNodes.map((n) => [String(n.id), n]))
+  const nodeMap = new Map<string, GraphNode>()
+  for (const n of simulationNodes) {
+    nodeMap.set(String(n.id), n)
+    if (n.rawId !== undefined && n.rawId !== null) {
+      nodeMap.set(String(n.rawId), n)
+      nodeMap.set(`${n.type || 'theme'}-${n.rawId}`, n)
+    }
+  }
 
   // 2. Links explícitos entre nós válidos
   const explicitLinks = props.edges
@@ -643,92 +695,105 @@ const initGraph = () => {
 
   currentSimulationNodes = simulationNodes
 
+  // ----------------------------------------------------
+  // LAYOUT RADIAL HIERÁRQUICO COM EXPANSÃO PARA FORA
+  // (Pai -> Filho -> Neto SEMPRE aumentam a distância do centro na mesma direção radial)
+  // ----------------------------------------------------
+  const visited = new Set<string>(['root'])
+  const nodeRadius = new Map<string, number>()
+  const nodeAngle = new Map<string, number>()
+  nodeRadius.set('root', 0)
+  nodeAngle.set('root', 0)
+
+  // Nível 1: Temas distribuídos radialmente em torno do centro (R1 ~ 135px)
   const numThemes = Math.max(themeNodes.length, 1)
-  const themeChildrenMap = new Map<string, any[]>()
-  for (const t of themeNodes) {
-    themeChildrenMap.set(String(t.id), [])
-  }
+  const R1 = Math.min(150, Math.max(120, 105 + numThemes * 10))
+  const bfsQueue: string[] = []
 
-  const assignedNodes = new Set<string>(['root'])
-  for (const t of themeNodes) {
-    assignedNodes.add(String(t.id))
-  }
-
-  for (const link of explicitLinks) {
-    if (link.source && link.target) {
-      const sId = String(link.source.id)
-      const tId = String(link.target.id)
-      if (themeChildrenMap.has(sId) && !themeChildrenMap.has(tId)) {
-        themeChildrenMap.get(sId)!.push(link.target)
-        assignedNodes.add(tId)
-      } else if (themeChildrenMap.has(tId) && !themeChildrenMap.has(sId)) {
-        themeChildrenMap.get(tId)!.push(link.source)
-        assignedNodes.add(sId)
-      }
-    }
-  }
-
-  // Raio Nível 1: Temas (~230px)
-  const R1 = 230
   themeNodes.forEach((theme, i) => {
+    const tId = String(theme.id)
     const baseAngle = (2 * Math.PI * i) / numThemes - Math.PI / 2
+    visited.add(tId)
+    nodeRadius.set(tId, R1)
+    nodeAngle.set(tId, baseAngle)
     ;(theme as any).targetAngle = baseAngle
     theme.x = centerX + R1 * Math.cos(baseAngle)
     theme.y = centerY + R1 * Math.sin(baseAngle)
+    bfsQueue.push(tId)
+  })
 
-    // Nível 2: Filhos diretos (Livros, Notas, Quadros)
-    const children = themeChildrenMap.get(String(theme.id)) || []
-    const K = children.length
-    if (K > 0) {
-      const R2 = R1 + 190 // ~420px
-      const arcSpan = Math.min(Math.PI * 0.75, Math.max(0.35, K * 0.28))
-      children.forEach((child, k) => {
-        const childAngle = K > 1
-          ? baseAngle + (k / (K - 1) - 0.5) * arcSpan
-          : baseAngle
-        ;(child as any).targetAngle = childAngle
-        child.x = centerX + R2 * Math.cos(childAngle)
-        child.y = centerY + R2 * Math.sin(childAngle)
-      })
+  // Representantes de ilhas conectadas à raiz
+  validIslandLinks.forEach((iLink, idx) => {
+    const iId = String(iLink.target.id)
+    if (!visited.has(iId)) {
+      visited.add(iId)
+      const islandAngle = ((2 * Math.PI * (idx + 0.5)) / Math.max(validIslandLinks.length, 1)) - Math.PI / 2
+      const islandR = R1 + 10
+      nodeRadius.set(iId, islandR)
+      nodeAngle.set(iId, islandAngle)
+      const targetNode = nodeMap.get(iId)
+      if (targetNode) {
+        ;(targetNode as any).targetAngle = islandAngle
+        targetNode.x = centerX + islandR * Math.cos(islandAngle)
+        targetNode.y = centerY + islandR * Math.sin(islandAngle)
+      }
+      bfsQueue.push(iId)
     }
   })
 
-  // Nível 3: Anotações vinculadas a Livros
-  const bookNodes = inputNodes.filter((n) => n.type === 'book')
-  for (const book of bookNodes) {
-    const bId = String(book.id)
-    const annLinks = explicitLinks.filter(
-      (l) => l.source && l.target &&
-        ((String(l.source.id) === bId && l.target.type === 'annotation') ||
-         (String(l.target.id) === bId && l.source.type === 'annotation'))
-    )
-    const annotations = annLinks
-      .map((l) => (l.source && String(l.source.id) === bId ? l.target : l.source))
-      .filter((a): a is GraphNode => Boolean(a))
-    const M = annotations.length
-    if (M > 0) {
-      const bookAngle = (book as any).targetAngle ?? 0
-      const R3 = R1 + 190 + 160 // ~580px
-      const arcSpan = Math.min(Math.PI * 0.55, M * 0.22)
-      annotations.forEach((ann, m) => {
-        if (ann) {
-          const annAngle = M > 1 ? bookAngle + (m / (M - 1) - 0.5) * arcSpan : bookAngle
-          ann.x = centerX + R3 * Math.cos(annAngle)
-          ann.y = centerY + R3 * Math.sin(annAngle)
-          assignedNodes.add(String(ann.id))
-        }
+  // BFS para posicionar todos os descendentes (Livros, Livretos, Anotações, Sub-notas)
+  // Cada nível propaga na MESMA direção radial do pai e AUMENTA a distância em relação ao centro
+  while (bfsQueue.length > 0) {
+    const parentId = bfsQueue.shift()!
+    const parentR = nodeRadius.get(parentId) ?? R1
+    const parentAngle = nodeAngle.get(parentId) ?? 0
+
+    // Vizinhos conectados diretamente que ainda não foram posicionados
+    const unvisitedNeighbors = (adj.get(parentId) || []).filter((id) => !visited.has(id))
+    const K = unvisitedNeighbors.length
+    if (K > 0) {
+      // Se houver múltiplos filhos, abre um leque estreito simétrico em torno da direção do pai
+      const arcSpan = K > 1 ? Math.min(0.55, Math.max(0.2, K * 0.16)) : 0
+
+      unvisitedNeighbors.forEach((childId, k) => {
+        visited.add(childId)
+        const childNode = nodeMap.get(childId)
+        if (!childNode) return
+
+        // Distância radial incremental para fora:
+        // Livro/Livreto: +95px, Anotação: +75px, Nota: +85px
+        let deltaR = 95
+        if (childNode.type === 'annotation') deltaR = 75
+        else if (childNode.type === 'note') deltaR = 85
+
+        const childR = parentR + deltaR
+        // Se 1 filho: EXATAMENTE no mesmo ângulo (para fora!). Se K > 1: cone estreito apontando para fora
+        const childAngle = K > 1
+          ? parentAngle + (k / (K - 1) - 0.5) * arcSpan
+          : parentAngle
+
+        nodeRadius.set(childId, childR)
+        nodeAngle.set(childId, childAngle)
+        ;(childNode as any).targetAngle = childAngle
+
+        childNode.x = centerX + childR * Math.cos(childAngle)
+        childNode.y = centerY + childR * Math.sin(childAngle)
+
+        bfsQueue.push(childId)
       })
     }
   }
 
-  // Nós órfãos ou avulsos
-  const unassigned = inputNodes.filter((n) => !assignedNodes.has(String(n.id)))
+  // Nós órfãos ou avulsos (sem conexão a ninguém)
+  const unassigned = inputNodes.filter((n) => !visited.has(String(n.id)))
   if (unassigned.length > 0) {
-    const orphanR = 340
+    const orphanR = R1 + 35
     unassigned.forEach((node, idx) => {
       const angle = (2 * Math.PI * idx) / unassigned.length + Math.PI / 4
       node.x = centerX + orphanR * Math.cos(angle)
       node.y = centerY + orphanR * Math.sin(angle)
+      nodeRadius.set(String(node.id), orphanR)
+      nodeAngle.set(String(node.id), angle)
     })
   }
 
@@ -743,39 +808,20 @@ const initGraph = () => {
     node.phaseY = seed + Math.PI / 2
   })
 
-  // Criar Simulação de Forças D3
+  // Criar Simulação de Forças D3: preserva alinhamento radial outward e previne sobreposição
   if (simulation) simulation.stop()
   simulation = d3
     .forceSimulation(simulationNodes)
-    .force(
-      'link',
-      d3
-        .forceLink(simulationLinks as any)
-        .id((d: any) => String(d.id))
-        .distance((d: any) => {
-          if (d.isRootEdge) return 220
-          if (d.type === 'book-theme') return 180
-          if (d.type === 'annotation-book') return 130
-          if (d.type === 'annotation-theme') return 150
-          if (d.type === 'note-book' || d.type === 'note-canvas') return 140
-          return 160
-        })
-        .strength(0.65)
-    )
-    .force('charge', d3.forceManyBody().strength((d: any) => {
-      if (d.isRoot) return -500
-      if (d.type === 'book') return -280
-      if (d.type === 'annotation') return -100
-      if (d.type === 'note') return -140
-      if (d.type === 'canvas') return -180
-      return -320
-    }))
-    .force('collide', d3.forceCollide().radius((d: any) => getNodeRadius(d) + 22).strength(0.95))
+    .force('x', d3.forceX((d: any) => d.baseX).strength(0.8))
+    .force('y', d3.forceY((d: any) => d.baseY).strength(0.8))
+    .force('collide', d3.forceCollide().radius((d: any) => getNodeRadius(d) + 12).strength(0.95))
 
-  // Pré-aquecer simulação para estabilização instantânea
-  for (let i = 0; i < 40; ++i) {
+  // 25 ticks de acomodação de colisão suave
+  for (let i = 0; i < 25; ++i) {
     simulation.tick()
   }
+  // Parar imediatamente para garantir fidelidade estrita à progressão radial para fora
+  simulation.stop()
 
   for (const d of simulationNodes) {
     d.baseX = d.x
@@ -1139,6 +1185,7 @@ const initGraph = () => {
     }
 
     if (isDraggingWire) {
+      e.preventDefault()
       const rect = svgRef.value.getBoundingClientRect()
       const mouseCanvasX = e.clientX - rect.left
       const mouseCanvasY = e.clientY - rect.top
@@ -1218,14 +1265,19 @@ const initGraph = () => {
   nodesSelection.on('pointerdown', (event, d) => {
     if (event.button !== 0) return
     event.stopPropagation()
+    event.preventDefault()
     dragSourceNode = d
     isDraggingWire = false
     snapTargetNode = null
     didJustDrag = false
     startClientPos = { x: event.clientX, y: event.clientY }
 
-    window.addEventListener('pointermove', onWindowPointerMove)
+    window.addEventListener('pointermove', onWindowPointerMove, { passive: false })
     window.addEventListener('pointerup', onWindowPointerUp)
+  })
+
+  nodesSelection.on('mousedown', (event) => {
+    event.stopPropagation()
   })
 
   nodesSelection.on('click', (event, d) => {
@@ -1346,24 +1398,12 @@ const initGraph = () => {
     animFrameId = requestAnimationFrame(tickFloating)
   }
 
-  simulation.on('tick', () => {
-    for (const d of simulationNodes) {
-      d.baseX = d.x
-      d.baseY = d.y
-    }
-  })
-
-  simulation.on('end', () => {
-    for (const d of simulationNodes) {
-      d.baseX = d.x
-      d.baseY = d.y
-    }
-    fitToScreen(false)
-  })
-
   updatePositions()
   startFloatingAnimation()
-  fitToScreen(false)
+
+  nextTick(() => {
+    fitToScreen(false)
+  })
 }
 
 let resizeObserver: ResizeObserver | null = null
@@ -1372,7 +1412,9 @@ watch(
   () => [props.nodes, props.edges, currentSearchQuery.value],
   () => {
     initGraph()
-    fitToScreen(true)
+    nextTick(() => {
+      fitToScreen(true)
+    })
   },
   { deep: true }
 )
@@ -1384,8 +1426,21 @@ watch(
   }
 )
 
+const handleNativeWheel = (e: WheelEvent) => {
+  e.stopPropagation()
+  if (props.isCompact && !e.ctrlKey) {
+    if (e.cancelable) e.preventDefault()
+  }
+}
+
 onMounted(() => {
   initGraph()
+  nextTick(() => {
+    fitToScreen(false)
+  })
+  if (svgRef.value) {
+    svgRef.value.addEventListener('wheel', handleNativeWheel, { passive: false })
+  }
   if (containerRef.value) {
     resizeObserver = new ResizeObserver(() => {
       if (containerRef.value) {
@@ -1399,6 +1454,9 @@ onMounted(() => {
 onBeforeUnmount(() => {
   if (animFrameId) cancelAnimationFrame(animFrameId)
   if (simulation) simulation.stop()
+  if (svgRef.value) {
+    svgRef.value.removeEventListener('wheel', handleNativeWheel)
+  }
   if (resizeObserver) resizeObserver.disconnect()
   clearTimeout(connectionToastTimeout)
 })
