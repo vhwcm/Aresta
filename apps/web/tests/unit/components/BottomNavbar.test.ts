@@ -29,11 +29,15 @@ describe('BottomNavbar Component', () => {
 
     expect(wrapper.find('nav').exists()).toBe(true)
     expect(wrapper.find('a[title="Início"]').exists()).toBe(true)
+    expect(wrapper.find('button[title="Menu de Livros"]').exists()).toBe(true)
+    expect(wrapper.find('a[title="Anotações"]').exists()).toBe(true)
+    expect(wrapper.find('a[title="Revisão (Flashcards & Resumos)"]').exists()).toBe(true)
+    expect(wrapper.find('a[title="Sua Conta & Status Pro"]').exists()).toBe(true)
     expect(wrapper.text()).not.toContain('Início')
-    expect(wrapper.text()).toContain('Livros')
-    expect(wrapper.text()).toContain('Anotações')
-    expect(wrapper.text()).toContain('Revisão')
-    expect(wrapper.text()).toContain('Conta')
+    expect(wrapper.text()).not.toContain('Livros')
+    expect(wrapper.text()).not.toContain('Anotações')
+    expect(wrapper.text()).not.toContain('Revisão')
+    expect(wrapper.text()).not.toContain('Conta')
   })
 
   it('toggles book menu and has direct link to canvas in Anotações', async () => {
@@ -64,7 +68,6 @@ describe('BottomNavbar Component', () => {
     const anotaçõesLink = wrapper.find('a[title="Anotações"]')
     expect(anotaçõesLink.exists()).toBe(true)
     expect(anotaçõesLink.attributes('href')).toBe('/canvas')
-    expect(wrapper.text()).toContain('Anotações')
   })
 
   it('is always open without collapse button and renders all navigation items', async () => {
@@ -85,13 +88,17 @@ describe('BottomNavbar Component', () => {
     const collapseBtn = wrapper.find('button[aria-label="Colapsar barra de navegação"]')
     expect(collapseBtn.exists()).toBe(false)
 
-    // A barra está sempre aberta e exibe todos os itens
+    // A barra está sempre aberta e exibe todos os itens sem rótulos de texto
     expect(wrapper.find('a[title="Início"]').exists()).toBe(true)
+    expect(wrapper.find('button[title="Menu de Livros"]').exists()).toBe(true)
+    expect(wrapper.find('a[title="Anotações"]').exists()).toBe(true)
+    expect(wrapper.find('a[title="Revisão (Flashcards & Resumos)"]').exists()).toBe(true)
+    expect(wrapper.find('a[title="Sua Conta & Status Pro"]').exists()).toBe(true)
     expect(wrapper.text()).not.toContain('Início')
-    expect(wrapper.text()).toContain('Livros')
-    expect(wrapper.text()).toContain('Anotações')
-    expect(wrapper.text()).toContain('Revisão')
-    expect(wrapper.text()).toContain('Conta')
+    expect(wrapper.text()).not.toContain('Livros')
+    expect(wrapper.text()).not.toContain('Anotações')
+    expect(wrapper.text()).not.toContain('Revisão')
+    expect(wrapper.text()).not.toContain('Conta')
   })
 
   it('highlights the current active route properly', () => {
@@ -263,5 +270,32 @@ describe('BottomNavbar Component', () => {
 
     expect(wrapper.find('nav').exists()).toBe(false)
     expect(wrapper.find('[role="navigation"]').exists()).toBe(false)
+  })
+
+  it('contains desktop and tablet horizontal positioning classes for vertical left alignment and rounded styling', () => {
+    const wrapper = mount(BottomNavbar, {
+      global: {
+        stubs: {
+          NuxtLink: { template: '<a><slot /></a>' },
+          ArestaLogoGraph: { template: '<div class="aresta-logo-mock" />' }
+        }
+      }
+    })
+
+    const navWrapper = wrapper.find('.app-navbar-wrapper')
+    expect(navWrapper.exists()).toBe(true)
+    expect(navWrapper.classes()).toContain('lg:top-1/2')
+    expect(navWrapper.classes()).toContain('lg:-translate-y-1/2')
+    expect(navWrapper.classes()).toContain('lg:left-3')
+    expect(navWrapper.classes()).toContain('lg:rounded-3xl')
+    expect(navWrapper.classes()).toContain('md:landscape:top-1/2')
+    expect(navWrapper.classes()).toContain('md:landscape:-translate-y-1/2')
+    expect(navWrapper.classes()).toContain('md:landscape:left-3')
+    expect(navWrapper.classes()).toContain('md:landscape:rounded-3xl')
+
+    const nav = wrapper.find('.app-nav')
+    expect(nav.exists()).toBe(true)
+    expect(nav.classes()).toContain('lg:flex-col')
+    expect(nav.classes()).toContain('md:landscape:flex-col')
   })
 })

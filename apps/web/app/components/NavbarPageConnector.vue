@@ -58,11 +58,11 @@ const auth = useAuth()
 const svgWidth = 84
 const viewportHeight = ref(800)
 
-// Geometria de encaixe estritamente ENTRE a navbar e o início da página:
-const X_PAGE = 74 // Linha vertical da borda da página
-const X_ACTIVE_TAB = 63 // Ponto de encaixe no contorno do botão ativo da navbar
-const R_NOTCH = 26 // Amplitude vertical da transição (garante que fique dentro dos limites da navbar no topo e base)
-const R_BTN = 16 // Meia-altura do trecho de abraço do botão
+// Geometria de contorno: uma única curva orgânica contínua envolvendo o ícone ativo
+const X_PAGE = 74 // Linha vertical conectada à borda da página
+const X_LEFT = 18 // Ponto ápice à esquerda envolvendo o ícone ativo
+const Y_SPAN = 34 // Alcance vertical para uma curva única e contínua
+const K_CP = 17 // Deslocamento vertical dos pontos de controle para tangência vertical perfeita (C1)
 
 // Offsets verticais de cada botão em relação ao centro vertical (50vh):
 // Índice 0 (Home): -108px
@@ -135,7 +135,7 @@ watch(
   { immediate: true }
 )
 
-// Caminho da linha contínua de contorno externa
+// Caminho da linha contínua que envolve o ícone ativo em uma única curva suave
 const strokePathD = computed(() => {
   const H = viewportHeight.value
   const y = currentY.value
@@ -145,17 +145,16 @@ const strokePathD = computed(() => {
     return `M ${X_PAGE} 0 L ${X_PAGE} ${H}`
   }
 
-  const yTop = y - R_NOTCH
-  const yBtnTop = y - R_BTN
-  const yBtnBottom = y + R_BTN
-  const yBottom = y + R_NOTCH
+  const yTop = y - Y_SPAN
+  const yBottom = y + Y_SPAN
 
   return [
     `M ${X_PAGE} 0`,
     `L ${X_PAGE} ${yTop}`,
-    `C ${X_PAGE} ${y - 12}, ${X_ACTIVE_TAB} ${yBtnTop - 6}, ${X_ACTIVE_TAB} ${yBtnTop}`,
-    `L ${X_ACTIVE_TAB} ${yBtnBottom}`,
-    `C ${X_ACTIVE_TAB} ${yBtnBottom + 6}, ${X_PAGE} ${y + 12}, ${X_PAGE} ${yBottom}`,
+    // Curva única contínua (metade superior): desce da linha da página e arqueia suavemente sobre e à esquerda do ícone
+    `C ${X_PAGE} ${yTop + K_CP}, ${X_LEFT} ${y - K_CP}, ${X_LEFT} ${y}`,
+    // Curva única contínua (metade inferior): sai do ápice à esquerda, passa por baixo do ícone e retorna à linha da página
+    `C ${X_LEFT} ${y + K_CP}, ${X_PAGE} ${yBottom - K_CP}, ${X_PAGE} ${yBottom}`,
     `L ${X_PAGE} ${H}`
   ].join(' ')
 })

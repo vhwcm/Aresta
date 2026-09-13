@@ -1,37 +1,48 @@
 <template>
   <div
     v-if="isVisible"
-    class="fixed bottom-0 left-0 right-0 w-full z-50 bg-bgPanel border-t border-divider shadow-[0_-4px_24px_rgba(0,0,0,0.12)] transition-all pointer-events-auto"
+    class="app-navbar-wrapper fixed z-50 transition-all duration-300 pointer-events-auto bottom-0 left-0 right-0 w-full bg-bgPanel border-t border-divider shadow-[0_-4px_24px_rgba(0,0,0,0.12)] lg:bottom-auto lg:right-auto lg:top-1/2 lg:-translate-y-1/2 lg:left-3 lg:w-auto lg:h-auto lg:rounded-3xl lg:border lg:shadow-2xl md:landscape:bottom-auto md:landscape:right-auto md:landscape:top-1/2 md:landscape:-translate-y-1/2 md:landscape:left-3 md:landscape:w-auto md:landscape:h-auto md:landscape:rounded-3xl md:landscape:border md:landscape:shadow-2xl"
     role="navigation"
     aria-label="Navegação Principal"
   >
     <!-- Container Principal da Navbar Fixa -->
     <nav
-      class="relative flex items-center justify-around md:justify-center md:gap-8 lg:gap-12 h-14 md:h-16 max-w-4xl mx-auto px-2 sm:px-4"
+      class="app-nav relative flex items-center justify-around md:justify-center md:gap-6 h-14 md:h-16 max-w-4xl mx-auto px-2 sm:px-4 lg:flex-col lg:h-auto lg:w-auto lg:p-2 lg:gap-2.5 lg:mx-0 md:landscape:flex-col md:landscape:h-auto md:landscape:w-auto md:landscape:p-2 md:landscape:gap-2.5 md:landscape:mx-0"
     >
-      <!-- Item 1: Livros (Dropdown: Meus Livros, Conversor, Loja) -->
+      <!-- Item: Início (Logo Oficial Aresta -> Home) - topo no modo lateral -->
+      <NuxtLink
+        to="/"
+        class="nav-item group app-nav-logo lg:order-first md:landscape:order-first"
+        :class="{ 'nav-item-active': isHomeActive }"
+        title="Início"
+        aria-label="Ir para o Início"
+      >
+        <ArestaLogoGraph :size="26" class="transition-transform duration-200 group-hover:scale-110" use-image :to="null" />
+      </NuxtLink>
+
+      <!-- Item: Livros (Dropdown: Meus Livros, Conversor, Loja) -->
       <div class="relative" ref="booksMenuRef">
         <button
-          @click="isBooksOpen = !isBooksOpen; isNotesOpen = false"
+          @click="isBooksOpen = !isBooksOpen"
           class="nav-item group focus:outline-none"
           :class="{
             'nav-item-active': isBooksActive || isBooksOpen
           }"
           title="Menu de Livros"
+          aria-label="Menu de Livros"
           aria-haspopup="true"
           :aria-expanded="isBooksOpen"
         >
           <BookOpenIcon
-            class="w-4 h-4 md:w-4.5 md:h-4.5 transition-transform duration-200 group-hover:scale-110"
+            class="w-5 h-5 transition-transform duration-200 group-hover:scale-110"
             :class="(isBooksActive || isBooksOpen) ? 'text-accent' : 'text-textSecondary group-hover:text-textPrimary'"
           />
-          <span class="hidden md:inline font-interface text-xs md:text-sm font-medium tracking-tight">Livros</span>
         </button>
 
         <!-- Dropdown Flutuante de Livros -->
         <div
           v-if="isBooksOpen"
-          class="absolute bottom-full mb-3 left-0 sm:left-1/2 sm:-translate-x-1/2 w-60 md:w-64 p-2 rounded-2xl bg-bgPanel border border-divider shadow-2xl flex flex-col gap-1 z-50 animate-in fade-in zoom-in-95 duration-200"
+          class="app-dropdown-books absolute bottom-full mb-3 left-0 sm:left-1/2 sm:-translate-x-1/2 lg:bottom-auto lg:top-0 lg:left-full lg:ml-3 lg:translate-x-0 lg:mb-0 md:landscape:bottom-auto md:landscape:top-0 md:landscape:left-full md:landscape:ml-3 md:landscape:translate-x-0 md:landscape:mb-0 w-60 md:w-64 p-2 rounded-2xl bg-bgPanel border border-divider shadow-2xl flex flex-col gap-1 z-50 animate-in fade-in zoom-in-95 duration-200"
         >
           <!-- 1. Meus Livros -->
           <NuxtLink
@@ -83,7 +94,7 @@
         </div>
       </div>
 
-      <!-- Item 2: Anotações (Link direto para /canvas) -->
+      <!-- Item: Anotações (Link direto para /canvas) -->
       <NuxtLink
         to="/canvas"
         class="nav-item group focus:outline-none"
@@ -91,27 +102,15 @@
           'nav-item-active': isCanvasActive
         }"
         title="Anotações"
+        aria-label="Anotações"
       >
         <FileTextIcon
-          class="w-4 h-4 md:w-4.5 md:h-4.5 transition-transform duration-200 group-hover:scale-110"
+          class="w-5 h-5 transition-transform duration-200 group-hover:scale-110"
           :class="isCanvasActive ? 'text-accent' : 'text-textSecondary group-hover:text-textPrimary'"
         />
-        <span class="hidden md:inline font-interface text-xs md:text-sm font-medium tracking-tight">Anotações</span>
       </NuxtLink>
 
-      <!-- Item 3: Início (Logo Oficial Aresta -> Home) -->
-      <NuxtLink
-        to="/"
-        class="nav-item group p-1.5 md:p-2"
-        :class="{ 'nav-item-active': isHomeActive }"
-        title="Início"
-        aria-label="Ir para o Início"
-      >
-        <ArestaLogoGraph :size="28" class="sm:hidden" use-image :to="null" />
-        <ArestaLogoGraph :size="32" class="hidden sm:inline-flex" use-image :to="null" />
-      </NuxtLink>
-
-      <!-- Item 4: Revisão -->
+      <!-- Item: Revisão -->
       <NuxtLink
         to="/revisao"
         class="nav-item group"
@@ -120,13 +119,12 @@
         aria-label="Revisão"
       >
         <LayersIcon
-          class="w-4 h-4 md:w-4.5 md:h-4.5 transition-transform duration-200 group-hover:scale-110"
+          class="w-5 h-5 transition-transform duration-200 group-hover:scale-110"
           :class="isReviewActive ? 'text-accent' : 'text-textSecondary group-hover:text-textPrimary'"
         />
-        <span class="hidden md:inline font-interface text-xs md:text-sm font-medium tracking-tight">Revisão</span>
       </NuxtLink>
 
-      <!-- Item 5: Conta -->
+      <!-- Item: Conta -->
       <NuxtLink
         to="/conta"
         class="nav-item group"
@@ -135,10 +133,9 @@
         aria-label="Conta"
       >
         <UserIcon
-          class="w-4 h-4 md:w-4.5 md:h-4.5 transition-transform duration-200 group-hover:scale-110"
+          class="w-5 h-5 transition-transform duration-200 group-hover:scale-110"
           :class="isAccountActive ? 'text-accent' : 'text-textSecondary group-hover:text-textPrimary'"
         />
-        <span class="hidden md:inline font-interface text-xs md:text-sm font-medium tracking-tight">Conta</span>
       </NuxtLink>
     </nav>
   </div>
@@ -151,9 +148,7 @@ import {
   FileTextIcon,
   BookOpenIcon,
   BookIcon,
-  NetworkIcon,
   ShoppingBagIcon,
-  LayoutGridIcon,
   LayersIcon,
   UserIcon,
 } from 'lucide-vue-next'
@@ -245,33 +240,75 @@ onUnmounted(() => {
 .nav-item {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.75rem;
-  color: var(--text-secondary, #6B7280);
-  transition: all 0.25s ease;
-  font-family: 'Inter', sans-serif;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0.5rem;
+  border-radius: 0.875rem;
+  color: var(--text-secondary, #7A7D84);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   user-select: none;
   border: 1px solid transparent;
   cursor: pointer;
 }
 
-@media (max-width: 767px) {
-  .nav-item {
-    padding: 0.5rem;
-  }
-}
-
 .nav-item:hover {
   color: var(--text-primary);
-  background-color: rgba(125, 125, 125, 0.08);
+  background-color: rgba(125, 125, 125, 0.12);
+  transform: scale(1.06);
 }
 
 .nav-item-active {
   color: var(--accent, #E57B55) !important;
-  background-color: rgba(229, 123, 85, 0.12);
-  border: 1px solid rgba(229, 123, 85, 0.35);
-  box-shadow: 0 0 14px rgba(229, 123, 85, 0.18);
-  font-weight: 600;
+  background-color: rgba(229, 123, 85, 0.14) !important;
+  border: 1px solid rgba(229, 123, 85, 0.4) !important;
+  box-shadow: 0 0 16px rgba(229, 123, 85, 0.22) !important;
+}
+
+@media (min-width: 1024px), ((min-width: 768px) and (orientation: landscape)) {
+  .nav-item-active,
+  .nav-item-active:hover {
+    border: none !important;
+    box-shadow: none !important;
+    background-color: transparent !important;
+    outline: none !important;
+  }
+
+  .app-navbar-wrapper {
+    top: 50% !important;
+    bottom: auto !important;
+    left: 0.75rem !important;
+    right: auto !important;
+    transform: translateY(-50%) !important;
+    width: auto !important;
+    height: auto !important;
+    border-radius: 1.5rem !important;
+    border: 1px solid var(--divider, rgba(255, 255, 255, 0.08)) !important;
+    box-shadow: 0 20px 40px -8px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.06) !important;
+    background-color: var(--bg-panel, #121315) !important;
+  }
+
+  .app-nav {
+    flex-direction: column !important;
+    width: auto !important;
+    height: auto !important;
+    max-width: none !important;
+    padding: 0.625rem 0.5rem !important;
+    gap: 0.625rem !important;
+    margin: 0 !important;
+  }
+
+  .app-dropdown-books {
+    bottom: auto !important;
+    top: 0 !important;
+    left: 100% !important;
+    margin-left: 0.75rem !important;
+    margin-bottom: 0 !important;
+    transform: none !important;
+  }
+
+  .app-nav-logo {
+    order: -1 !important;
+  }
 }
 </style>
