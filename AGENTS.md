@@ -64,6 +64,13 @@ Este projeto adota o **modelo mental do Kiro**, onde o conhecimento estruturado,
 - **Sem visão geral**: Não incluir blocos de estatísticas ou tabelas de métricas.
 - **Histórico cumulativo**: Jamais apagar itens concluídos, mantendo a integridade do contexto do usuário.
 
+### 3.2. Versionamento Obrigatório de Migrations Prisma
+Toda alteração em `apps/api/prisma/schema.prisma` **EXIGE OBRIGATORIAMENTE** a geração e versionamento da migration SQL correspondente em `apps/api/prisma/migrations/`:
+- O container em produção executa `npx prisma migrate deploy` na inicialização, que apenas aplica arquivos `.sql` existentes.
+- Qualquer alteração de schema sem migration SQL quebra o ambiente de produção/deploy.
+- Consultar detalhes e fluxo completo em [.agent/rules/database-migrations.md](file:///c:/Users/vichw/Aresta/.agent/rules/database-migrations.md).
+
+
 
 
 

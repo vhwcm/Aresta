@@ -1,8 +1,12 @@
 # Checklist
 
 ## 🔄 Em Andamento
+- [13/09/2026 15:51] [Fazendo] Otimizar layout radial clusterizado, auto-fit na tela, micro-balanço sutil e conexões por arestas magnéticas no Grafo
 
 ## ✅ Concluído
+- [13/09/2026 15:53] [Concluído] Criar regra inegociável de migrations Prisma em .agent/rules/database-migrations.md e AGENTS.md
+- [13/09/2026 15:51] [Concluído] Criar migration e tabela accounts no PostgreSQL para autenticação OAuth 2.0
+- [13/09/2026 15:38] [Concluído] Configurar credenciais do banco e rebuild do frontend com URLs da AWS EC2 via SSH remoto
 - [13/09/2026 14:14] [Concluído] Simplificar login mobile ocultando textos institucionais e exibindo o formulário imediatamente
 - [13/09/2026 14:10] [Concluído] Ajustar tela de perguntas iniciais para ocupar a viewport, ocultar navbar e iniciar com tema branco
 - [13/09/2026 14:03] [Concluído] Centralizar configurações de ambiente no .env raiz e remover arquivos dos subprojetos
