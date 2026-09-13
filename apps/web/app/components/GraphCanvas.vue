@@ -398,7 +398,13 @@ let zoomBehavior: any = null
 let animFrameId: number | null = null
 let currentSimulationNodes: any[] = []
 
-const fitToScreen = (animate = true) => {
+// Cache persistente de posições anteriores dos nós para interpolação orgânica e suave
+const persistentNodePositions = new Map<string, { x: number; y: number }>()
+let transitionStartTime = 0
+let isTransitioning = false
+const TRANSITION_DURATION = 1400 // 1.4s para deslizamento lento, suave e orgânico
+
+const fitToScreen = (animate = true, duration = 500) => {
   if (!svgRef.value || !containerRef.value || currentSimulationNodes.length === 0) return
 
   const containerWidth = containerRef.value.clientWidth || (typeof window !== 'undefined' ? window.innerWidth : 1200)
@@ -409,7 +415,7 @@ const fitToScreen = (animate = true) => {
     const targetTransform = d3.zoomIdentity.translate(0, 0).scale(1.0)
     const svg = d3.select(svgRef.value)
     if (animate) {
-      svg.transition().duration(400).ease(d3.easeCubicOut).call(zoomBehavior.transform as any, targetTransform)
+      svg.transition().duration(duration).ease(d3.easeCubicOut).call(zoomBehavior.transform as any, targetTransform)
     } else {
       svg.call(zoomBehavior.transform as any, targetTransform)
     }
@@ -422,8 +428,9 @@ const fitToScreen = (animate = true) => {
   let maxY = -Infinity
 
   for (const d of currentSimulationNodes) {
-    const x = d.baseX ?? d.x ?? containerWidth / 2
-    const y = d.baseY ?? d.y ?? containerHeight / 2
+    // Utiliza a posição de destino final prevista para que o enquadramento acompanhe o destino
+    const x = d.targetX ?? d.baseX ?? d.x ?? containerWidth / 2
+    const y = d.targetY ?? d.baseY ?? d.y ?? containerHeight / 2
     const r = getNodeRadius(d) + 36
     if (x - r < minX) minX = x - r
     if (x + r > maxX) maxX = x + r
@@ -453,7 +460,7 @@ const fitToScreen = (animate = true) => {
   const svg = d3.select(svgRef.value)
 
   if (animate) {
-    svg.transition().duration(500).ease(d3.easeCubicOut).call(zoomBehavior.transform as any, targetTransform)
+    svg.transition().duration(duration).ease(d3.easeCubicOut).call(zoomBehavior.transform as any, targetTransform)
   } else {
     svg.call(zoomBehavior.transform as any, targetTransform)
   }
@@ -532,7 +539,7 @@ const getTruncatedTitle = (title?: string, max = 12) => {
   return title.length > max ? `${title.slice(0, max - 2)}...` : title
 }
 
-const initGraph = () => {
+const initGraph = (animateTransition = true) => {
   if (!svgRef.value || !gRef.value || !containerRef.value) return
 
   const width = containerRef.value.clientWidth || (typeof window !== 'undefined' ? window.innerWidth : 1200)
@@ -874,11 +881,39 @@ const initGraph = () => {
   // Parar imediatamente para garantir fidelidade estrita à progressão radial para fora
   simulation.stop()
 
+  const isTestEnv = typeof process !== 'undefined' && process.env?.NODE_ENV === 'test'
+  const shouldAnimate = !isTestEnv && animateTransition && persistentNodePositions.size > 0
+
   for (const d of simulationNodes) {
-    d.baseX = d.x
-    d.baseY = d.y
-    d.currentX = d.x
-    d.currentY = d.y
+    const nKey = String(d.id)
+    d.targetX = d.x ?? centerX
+    d.targetY = d.y ?? centerY
+
+    if (persistentNodePositions.has(nKey) && shouldAnimate) {
+      const prev = persistentNodePositions.get(nKey)!
+      d.startX = prev.x
+      d.startY = prev.y
+      d.baseX = prev.x
+      d.baseY = prev.y
+      d.currentX = prev.x
+      d.currentY = prev.y
+    } else {
+      d.startX = d.targetX
+      d.startY = d.targetY
+      d.baseX = d.targetX
+      d.baseY = d.targetY
+      d.currentX = d.targetX
+      d.currentY = d.targetY
+    }
+
+    persistentNodePositions.set(nKey, { x: d.targetX, y: d.targetY })
+  }
+
+  if (shouldAnimate) {
+    transitionStartTime = typeof performance !== 'undefined' ? performance.now() : Date.now()
+    isTransitioning = true
+  } else {
+    isTransitioning = false
   }
 
   // Renderizar Links (Arestas)
@@ -1476,19 +1511,19 @@ const initGraph = () => {
   // Atualização de posições de nós e arestas sincronizadas
   const updatePositions = () => {
     links
-      .attr('x1', (d: any) => d.source.currentX ?? d.source.x)
-      .attr('y1', (d: any) => d.source.currentY ?? d.source.y)
-      .attr('x2', (d: any) => d.target.currentX ?? d.target.x)
-      .attr('y2', (d: any) => d.target.currentY ?? d.target.y)
+      .attr('x1', (d: any) => d.source.currentX ?? d.source.baseX ?? d.source.x)
+      .attr('y1', (d: any) => d.source.currentY ?? d.source.baseY ?? d.source.y)
+      .attr('x2', (d: any) => d.target.currentX ?? d.target.baseX ?? d.target.x)
+      .attr('y2', (d: any) => d.target.currentY ?? d.target.baseY ?? d.target.y)
 
     nodesSelection.attr('transform', (d: any) => {
-      const cx = d.currentX ?? d.x
-      const cy = d.currentY ?? d.y
+      const cx = d.currentX ?? d.baseX ?? d.x
+      const cy = d.currentY ?? d.baseY ?? d.y
       return `translate(${cx},${cy})`
     })
   }
 
-  // Animação contínua de micro-balanço suave (amplitude 2.8px)
+  // Animação contínua de micro-balanço suave e interpolação lenta de transição
   const startFloatingAnimation = () => {
     if (animFrameId) cancelAnimationFrame(animFrameId)
 
@@ -1496,7 +1531,27 @@ const initGraph = () => {
       const speed = 0.0016
       const amplitude = 2.8
 
+      let ease = 1
+      if (isTransitioning) {
+        const now = typeof performance !== 'undefined' ? performance.now() : Date.now()
+        const elapsed = now - transitionStartTime
+        const progress = Math.min(1, Math.max(0, elapsed / TRANSITION_DURATION))
+        // easeOutCubic: movimento inicial rápido desacelerando suavemente até o repouso
+        ease = 1 - Math.pow(1 - progress, 3)
+        if (progress >= 1) {
+          isTransitioning = false
+        }
+      }
+
       for (const d of simulationNodes) {
+        if (isTransitioning && d.startX !== undefined && d.targetX !== undefined) {
+          d.baseX = d.startX + (d.targetX - d.startX) * ease
+          d.baseY = d.startY + (d.targetY - d.startY) * ease
+        } else if (d.targetX !== undefined) {
+          d.baseX = d.targetX
+          d.baseY = d.targetY
+        }
+
         if (d.isRoot) {
           d.currentX = d.baseX ?? d.x
           d.currentY = d.baseY ?? d.y
@@ -1505,6 +1560,13 @@ const initGraph = () => {
           const offY = Math.cos(time * speed + (d.phaseY || 0)) * amplitude
           d.currentX = (d.baseX ?? d.x ?? 0) + offX
           d.currentY = (d.baseY ?? d.y ?? 0) + offY
+        }
+
+        if (d.id !== undefined && d.id !== null) {
+          persistentNodePositions.set(String(d.id), {
+            x: d.baseX ?? d.x,
+            y: d.baseY ?? d.y,
+          })
         }
       }
 
@@ -1519,7 +1581,7 @@ const initGraph = () => {
   startFloatingAnimation()
 
   nextTick(() => {
-    fitToScreen(false)
+    fitToScreen(shouldAnimate, shouldAnimate ? TRANSITION_DURATION : 500)
   })
 }
 
@@ -1528,10 +1590,7 @@ let resizeObserver: ResizeObserver | null = null
 watch(
   () => [props.nodes, allEdges.value, currentSearchQuery.value],
   () => {
-    initGraph()
-    nextTick(() => {
-      fitToScreen(true)
-    })
+    initGraph(true)
   },
   { deep: true }
 )
@@ -1539,7 +1598,7 @@ watch(
 watch(
   () => effectiveTheme.value,
   () => {
-    initGraph()
+    initGraph(false)
   }
 )
 
@@ -1551,7 +1610,7 @@ const handleNativeWheel = (e: WheelEvent) => {
 }
 
 onMounted(() => {
-  initGraph()
+  initGraph(false)
   nextTick(() => {
     fitToScreen(false)
   })
