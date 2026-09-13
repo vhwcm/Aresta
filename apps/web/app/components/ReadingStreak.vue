@@ -90,10 +90,10 @@
         </div>
       </div>
 
-      <!-- Progresso de Hoje (10 min Leitura + 5 Flashcards) -->
+      <!-- Progresso de Hoje (10 min Leitura OU 5 Flashcards) -->
       <div class="flex flex-col gap-3 bg-white/5 p-3.5 rounded-xl border border-divider/50">
         <span class="font-technical text-[10px] uppercase tracking-widest text-textSecondary font-semibold">
-          Meta diária (Reset às 00:00 UTC)
+          Meta diária: 10 min de leitura OU 5 flashcards (Reset às 00:00 UTC)
         </span>
 
         <!-- Meta 1: Leitura (10 min) -->
@@ -140,7 +140,7 @@
           Ofensiva de hoje mantida com sucesso!
         </p>
         <p v-else class="font-interface text-[11px] text-textSecondary mt-0.5">
-          Faltam {{ Math.max(0, 10 - todayActivity.readingMinutes) }} min e {{ Math.max(0, 5 - todayActivity.flashcardsReviewed) }} cards para avançar.
+          Faltam {{ Math.max(0, 10 - todayActivity.readingMinutes) }} min ou {{ Math.max(0, 5 - todayActivity.flashcardsReviewed) }} cards para avançar.
         </p>
       </div>
 

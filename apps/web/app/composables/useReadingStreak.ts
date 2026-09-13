@@ -175,7 +175,7 @@ export const useReadingStreak = () => {
       todayActivity.value.readingSeconds = (todayActivity.value.readingSeconds ?? 0) + seconds
       todayActivity.value.readingMinutes = Math.floor(todayActivity.value.readingSeconds / 60)
       todayActivity.value.isReadingCompleted = todayActivity.value.readingSeconds >= 600
-      if (todayActivity.value.isReadingCompleted && todayActivity.value.isFlashcardsCompleted && !isGoalReachedToday.value) {
+      if ((todayActivity.value.isReadingCompleted || todayActivity.value.isFlashcardsCompleted) && !isGoalReachedToday.value) {
         isGoalReachedToday.value = true
         currentStreak.value += 1
         longestStreak.value = Math.max(longestStreak.value, currentStreak.value)
@@ -204,7 +204,7 @@ export const useReadingStreak = () => {
       console.error('Erro ao registrar flashcard:', e)
       todayActivity.value.flashcardsReviewed = (todayActivity.value.flashcardsReviewed ?? 0) + count
       todayActivity.value.isFlashcardsCompleted = todayActivity.value.flashcardsReviewed >= 5
-      if (todayActivity.value.isReadingCompleted && todayActivity.value.isFlashcardsCompleted && !isGoalReachedToday.value) {
+      if ((todayActivity.value.isReadingCompleted || todayActivity.value.isFlashcardsCompleted) && !isGoalReachedToday.value) {
         isGoalReachedToday.value = true
         currentStreak.value += 1
         longestStreak.value = Math.max(longestStreak.value, currentStreak.value)

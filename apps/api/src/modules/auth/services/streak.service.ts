@@ -125,6 +125,18 @@ export class StreakService {
 
     const isReadingCompleted = todayActivity.reading_seconds >= StreakService.REQUIRED_READING_SECONDS
     const isFlashcardsCompleted = todayActivity.flashcards_reviewed >= StreakService.REQUIRED_FLASHCARDS
+    const isGoalReached = isReadingCompleted || isFlashcardsCompleted
+
+    if (!todayActivity.is_completed && isGoalReached) {
+      await this.completeTodayStreak(userId, todayStr)
+      todayActivity.is_completed = true
+      user = await prisma.user.findUnique({ where: { id: userId } })
+      if (user) {
+        currentStreak = user.current_streak
+        longestStreak = user.longest_streak
+        streakFreezeCount = user.streak_freeze_count
+      }
+    }
 
     return {
       currentStreak,
@@ -148,6 +160,23 @@ export class StreakService {
     }
   }
 
+  private async completeTodayStreak(userId: number, todayStr: string): Promise<void> {
+    await prisma.dailyActivity.update({
+      where: { user_id_date: { user_id: userId, date: todayStr } },
+      data: { is_completed: true },
+    })
+
+    const user = await prisma.user.findUnique({ where: { id: userId } })
+    const newStreak = (user?.current_streak || 0) + 1
+    const newLongest = Math.max(user?.longest_streak || 0, newStreak)
+    let freezeCount = user?.streak_freeze_count || 0
+    if (newStreak % 7 === 0 && freezeCount < 2) freezeCount = Math.min(2, freezeCount + 1)
+    await prisma.user.update({
+      where: { id: userId },
+      data: { current_streak: newStreak, longest_streak: newLongest, streak_freeze_count: freezeCount, last_active_date: todayStr },
+    })
+  }
+
   public async recordReadingTime(userId: number, seconds: number): Promise<{ status: StreakStatusDTO; justCompleted: boolean }> {
     await this.getStreakStatus(userId)
     const todayStr = this.getUtcDateString()
@@ -155,7 +184,7 @@ export class StreakService {
     const newReadingSeconds = (current?.reading_seconds || 0) + seconds
     const flashcardsCount = current?.flashcards_reviewed || 0
     const wasCompleted = current?.is_completed || false
-    const isNowCompleted = newReadingSeconds >= StreakService.REQUIRED_READING_SECONDS && flashcardsCount >= StreakService.REQUIRED_FLASHCARDS
+    const isNowCompleted = newReadingSeconds >= StreakService.REQUIRED_READING_SECONDS || flashcardsCount >= StreakService.REQUIRED_FLASHCARDS
     const justCompleted = !wasCompleted && isNowCompleted
 
     await prisma.dailyActivity.update({
@@ -164,12 +193,7 @@ export class StreakService {
     })
 
     if (justCompleted) {
-      const user = await prisma.user.findUnique({ where: { id: userId } })
-      const newStreak = (user?.current_streak || 0) + 1
-      const newLongest = Math.max(user?.longest_streak || 0, newStreak)
-      let freezeCount = user?.streak_freeze_count || 0
-      if (newStreak % 7 === 0 && freezeCount < 2) freezeCount = Math.min(2, freezeCount + 1)
-      await prisma.user.update({ where: { id: userId }, data: { current_streak: newStreak, longest_streak: newLongest, streak_freeze_count: freezeCount, last_active_date: todayStr } })
+      await this.completeTodayStreak(userId, todayStr)
     }
 
     const updatedStatus = await this.getStreakStatus(userId)
@@ -183,7 +207,7 @@ export class StreakService {
     const readingSecs = current?.reading_seconds || 0
     const newFlashcardsCount = (current?.flashcards_reviewed || 0) + count
     const wasCompleted = current?.is_completed || false
-    const isNowCompleted = readingSecs >= StreakService.REQUIRED_READING_SECONDS && newFlashcardsCount >= StreakService.REQUIRED_FLASHCARDS
+    const isNowCompleted = readingSecs >= StreakService.REQUIRED_READING_SECONDS || newFlashcardsCount >= StreakService.REQUIRED_FLASHCARDS
     const justCompleted = !wasCompleted && isNowCompleted
 
     await prisma.dailyActivity.update({
@@ -192,12 +216,7 @@ export class StreakService {
     })
 
     if (justCompleted) {
-      const user = await prisma.user.findUnique({ where: { id: userId } })
-      const newStreak = (user?.current_streak || 0) + 1
-      const newLongest = Math.max(user?.longest_streak || 0, newStreak)
-      let freezeCount = user?.streak_freeze_count || 0
-      if (newStreak % 7 === 0 && freezeCount < 2) freezeCount = Math.min(2, freezeCount + 1)
-      await prisma.user.update({ where: { id: userId }, data: { current_streak: newStreak, longest_streak: newLongest, streak_freeze_count: freezeCount, last_active_date: todayStr } })
+      await this.completeTodayStreak(userId, todayStr)
     }
 
     const updatedStatus = await this.getStreakStatus(userId)

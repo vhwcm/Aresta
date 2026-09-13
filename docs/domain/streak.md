@@ -56,13 +56,13 @@ model DailyActivity {
     └────────────────────────────────────────────────────────────────────────┘
 ```
 
-1. **Meta Diária**: O usuário completa a meta ao acumular tempo mínimo de leitura ou número de flashcards revisados no dia.
+1. **Meta Diária (Disjuntiva / OU)**: O usuário completa a meta diária ao acumular **10 minutos de leitura ativa** (600s) **OU** revisar **5 flashcards** no dia. Ao atingir qualquer uma das metas pela primeira vez no dia, a ofensiva (`current_streak`) incrementa em +1.
 2. **Streak Freeze**: Protege a ofensiva em caso de ausência por até N dias conforme saldo em `streak_freeze_count`.
 
 ---
 
 ## 4. Código Relacionado
 - **Backend**:
-  - `src/controllers/streak.controller.ts`, `src/services/streak.service.ts`, `src/schemas/streak.schema.ts`
+  - `apps/api/src/modules/auth/controllers/streak.controller.ts`, `apps/api/src/modules/auth/services/streak.service.ts`, `apps/api/src/modules/auth/routes/streak.routes.ts`
 - **Frontend**:
-  - `front/app/composables/useStreak.ts`, `front/app/components/StreakBadge.vue`
+  - `apps/web/app/composables/useReadingStreak.ts`, `apps/web/app/components/ReadingStreak.vue`, `apps/web/app/components/StreakCelebrationModal.vue`

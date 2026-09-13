@@ -3,6 +3,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [13/09/2026 10:46] [Concluído] Alterar critério de ofensiva diária para OU (10 minutos de leitura OU 5 flashcards) com reconciliação automática
 - [13/09/2026 10:42] [Concluído] Centralizar visualização e controles do flashcard vertical e horizontalmente no desktop
 - [13/09/2026 10:33] [Concluído] Filtrar temas estritos na estante (remover nós de livros) e limitar nome de temas a 30 caracteres no front e back
 - [13/09/2026 10:18] [Concluído] Implementar livretos em HTML com componentes interativos (flashcards/stepper), explicação curta contextual e conexão no grafo
