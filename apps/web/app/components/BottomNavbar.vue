@@ -17,7 +17,7 @@
         title="Início"
         aria-label="Ir para o Início"
       >
-        <ArestaLogoGraph :size="26" class="transition-transform duration-200 group-hover:scale-110" use-image :to="null" />
+        <ArestaLogoGraph :size="32" class="!p-0 transition-transform duration-200 group-hover:scale-110" use-image :to="null" />
       </NuxtLink>
 
       <!-- Item: Livros (Dropdown: Meus Livros, Conversor, Loja) -->
