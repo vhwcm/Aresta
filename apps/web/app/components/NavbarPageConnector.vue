@@ -57,14 +57,14 @@ import { getNavIndexFromPath } from '~/composables/useBottomNavbar'
 const route = useRoute()
 const auth = useAuth()
 
-const svgWidth = 84
+const svgWidth = 72
 const viewportHeight = ref(800)
 
-// Geometria de contorno: quadrado com cantos arredondados envolvendo o ícone ativo
-const X_PAGE = 74 // Linha vertical conectada à borda da página
-const X_LEFT = 18 // Borda esquerda do quadrado envolvente (deixa margem para o botão de 44px)
+// Geometria de contorno: quadrado com cantos arredondados envolvendo o ícone ativo (navbar em left: 0)
+const X_PAGE = 62 // Linha vertical conectada à borda da página
+const X_LEFT = 6 // Borda esquerda do quadrado envolvente (deixa margem para o botão de 44px)
 const Y_HALF = 24 // Meia-altura do quadrado envolvente (48px de altura total)
-const R = 10 // Raio das bordas arredondadas (fillets de entrada/saída e cantos)
+const R = 8 // Raio das bordas arredondadas (fillets de entrada/saída e cantos)
 
 // Offsets verticais de cada botão em relação ao centro vertical (50vh):
 // Índice 0 (Home): -108px
@@ -241,6 +241,6 @@ onUnmounted(() => {
 
 <style scoped>
 .navbar-page-connector {
-  width: 84px;
+  width: 72px;
 }
 </style>
