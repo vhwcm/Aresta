@@ -7,13 +7,12 @@
 
 <script setup lang="ts">
 import { onMounted } from 'vue'
-import { useRoute } from 'vue-router'
 import ArestaLogoGraph from '~/components/ArestaLogoGraph.vue'
 
-const route = useRoute()
+const route = typeof useRoute === 'function' ? useRoute() : undefined
 
 onMounted(() => {
-  const query = { ...route.query, tab: 'notes' }
+  const query = { ...(route?.query || {}), tab: 'notes' }
   navigateTo({ path: '/canvas', query }, { replace: true })
 })
 </script>

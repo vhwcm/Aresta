@@ -149,7 +149,7 @@
 
         <!-- Botão de Ação -->
         <NuxtLink
-          to="/grafo"
+          to="/canvas?tab=notes"
           class="w-full py-2.5 rounded-xl bg-accent text-white font-interface text-xs font-semibold hover:bg-accent/90 transition-all flex items-center justify-center gap-2 shadow-md shadow-accent/20 cursor-pointer"
         >
           <span>Abrir no Grafo Completo</span>
@@ -196,10 +196,10 @@
         </div>
 
         <NuxtLink
-          to="/grafo"
+          to="/canvas?tab=notes"
           class="inline-flex items-center justify-between text-xs text-accent font-interface hover:underline pt-3 border-t border-divider/60"
         >
-          <span>Explorar Tela Cheia</span>
+          <span>Explorar no Espaço de Notas</span>
           <ArrowRightIcon class="w-3.5 h-3.5" />
         </NuxtLink>
       </div>

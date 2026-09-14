@@ -379,8 +379,13 @@
               <span>Retrair</span>
             </button>
 
-            <!-- Link Tela Cheia -->
-            <NuxtLink to="/grafo" class="font-technical text-xs sm:text-sm font-medium text-accent hover:underline flex items-center gap-1" title="Ver grafo em tela cheia">
+            <!-- Link Tela Cheia / Espaço de Anotações com Grafo -->
+            <NuxtLink
+              to="/canvas?tab=notes"
+              data-testid="expand-graph-btn"
+              class="font-technical text-xs sm:text-sm font-medium text-accent hover:underline flex items-center gap-1"
+              title="Ver grafo no Espaço Criativo e Notas"
+            >
               <span>Expandir →</span>
             </NuxtLink>
           </div>

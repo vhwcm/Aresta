@@ -81,7 +81,7 @@
           </button>
 
           <NuxtLink
-            to="/grafo"
+            to="/canvas?tab=notes"
             class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-bgElevated hover:bg-bgSurface text-xs text-textSecondary hover:text-textPrimary border border-divider transition-colors"
           >
             <span>🌌</span>

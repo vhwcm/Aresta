@@ -71,7 +71,10 @@ describe('Index Page (Landing Page & Home)', () => {
   })
 
   const commonStubs = {
-    NuxtLink: { template: '<a><slot /></a>' },
+    NuxtLink: {
+      template: '<a :href="to" :to="to"><slot /></a>',
+      props: ['to']
+    },
     ReadingStreak: { template: '<div data-testid="reading-streak">5</div>' },
     EbbinghausChart: { template: '<div data-testid="ebbinghaus-chart">Gráfico Ebbinghaus D3</div>' },
     SidebarGraph: { template: '<div data-testid="sidebar-graph">Grafo de Conhecimento</div>' },
@@ -395,6 +398,7 @@ describe('Index Page (Landing Page & Home)', () => {
     // Inicialmente o grafo está aberto por padrão
     expect(wrapper.find('[data-testid="home-graph-section"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="retract-graph-btn"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="expand-graph-btn"]').attributes('to')).toBe('/canvas?tab=notes')
     expect(wrapper.find('[data-testid="toggle-graph-open-btn"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="auth-home"]').classes()).toContain('grid')
 

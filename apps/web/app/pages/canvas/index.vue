@@ -650,8 +650,12 @@ const handleSelectGraphNode = async (node: any) => {
     if (node.bookId) {
       navigateTo(`/reader?bookId=${node.bookId}${node.cfi ? '&cfi=' + encodeURIComponent(node.cfi) : ''}`)
     }
+  } else if (node.type === 'folder') {
+    const folderName = node.rawId || String(node.id).replace(/^folder-/, '')
+    activeFolder.value = decodeURIComponent(folderName)
+    viewLayout.value = 'grid'
   } else if (node.type === 'theme') {
-    navigateTo(`/grafo`)
+    viewLayout.value = 'graph'
   }
 }
 

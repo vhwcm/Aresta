@@ -1,9 +1,12 @@
 # Checklist
 
 ## 🔄 Em Andamento
+- [13/09/2026 21:55] [Fazendo] Integrar pastas como nós no Grafo de Conhecimento e ligar notas e quadros a elas
+- [13/09/2026 21:52] [Fazendo] Implementar notas de desenho paginadas com rejeição de palma e síntese em HTML semântico via IA
 - [13/09/2026 21:40] [Fazendo] Sanitizar e capturar erros em produção no frontend e backend com mensagens amigáveis ao usuário
 
 ## ✅ Concluído
+- [13/09/2026 22:02] [Concluído] Redirecionar botão expandir grafo na home para as notas (/canvas?tab=notes) e descontinuar rota dedicada /grafo
 - [13/09/2026 21:47] [Concluído] Remover a opção 'Importar .canvas' do cabeçalho do Espaço Criativo (canvas/index.vue)
 - [13/09/2026 21:39] [Concluído] Implementar arquitetura de páginas estritas sem scroll e contrato de rigor prévio por página para livretos didáticos com IA
 - [13/09/2026 21:38] [Concluído] Respeitar fontes e tamanhos originais do EPUB e remover opções de escolha de fonte e tamanho no leitor

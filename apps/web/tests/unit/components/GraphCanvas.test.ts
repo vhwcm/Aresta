@@ -163,9 +163,9 @@ describe('GraphCanvas Component', () => {
     expect(chipsBar.text()).not.toContain('📄')
     expect(chipsBar.text()).not.toContain('🖼️')
 
-    // Deve conter ícones SVG limpos da Lucide dentro dos botões de chip
+    // Deve conter ícones SVG limpos da Lucide dentro dos botões de chip (Temas, Livros, Notas, Quadros, Pastas)
     const chipButtons = chipsBar.findAll('button')
-    expect(chipButtons.length).toBe(4)
+    expect(chipButtons.length).toBe(5)
     for (const btn of chipButtons) {
       expect(btn.find('svg').exists()).toBe(true)
     }
@@ -386,5 +386,26 @@ describe('GraphCanvas Component', () => {
     // A distância entre o tema e o livro filho deve estar no feixe de proximidade (~95px)
     expect(distance).toBeGreaterThan(60)
     expect(distance).toBeLessThan(140)
+  })
+
+  it('renders folder nodes and Pastas layer button correctly', () => {
+    const wrapper = mount(GraphCanvas, {
+      props: {
+        nodes: [
+          { id: 'folder-Projetos', rawId: 'Projetos', type: 'folder', name: 'Projetos' },
+          { id: 'note-1', rawId: '1', type: 'note', name: 'Nota 1', folder: 'Projetos' },
+        ],
+        edges: [
+          { id: 'edge-nf-1', source: 'note-1', target: 'folder-Projetos', type: 'note-folder' },
+        ],
+      },
+    })
+
+    // Deve conter botão da camada Pastas
+    expect(wrapper.text()).toContain('Pastas')
+    // Deve renderizar nó de pasta
+    const folderG = wrapper.findAll('g.node').find((n) => n.text().includes('Projetos'))
+    expect(folderG).toBeDefined()
+    expect(folderG?.find('.folder-icon').exists()).toBe(true)
   })
 })

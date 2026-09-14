@@ -117,7 +117,7 @@
             <p class="text-xs text-textSecondary mt-1">Este mapa mental ainda não possui livros vinculados.</p>
           </div>
           <NuxtLink
-            to="/grafo"
+            to="/canvas?tab=notes"
             class="text-xs sm:text-sm text-accent font-semibold hover:underline inline-flex items-center gap-1"
           >
             <span>Gerenciar Conexões em Mapa Mental</span>
@@ -199,6 +199,12 @@ const handleSelectNode = (node: GraphNode) => {
 
   if (node.type === 'canvas') {
     navigateTo(`/canvas/${node.rawId}`)
+    return
+  }
+
+  if (node.type === 'folder') {
+    const folderName = node.rawId || node.name
+    navigateTo(`/canvas?folder=${encodeURIComponent(String(folderName))}`)
     return
   }
 
