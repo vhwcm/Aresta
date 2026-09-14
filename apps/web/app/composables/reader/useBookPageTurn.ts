@@ -98,12 +98,21 @@ export function useBookPageTurn(
     const defaultAspectRatio = isEpub ? 0.72 : 0.72
     const aspectRatio = defaultAspectRatio
     const isWide = store.readerWidthMode === 'wide'
+    const isZen = store.isZenMode
 
     if (isTwoPage) {
       let targetWidth: number
       let targetHeight: number
 
-      if (isWide) {
+      if (isZen) {
+        // Modo Zen: Ocupa 100% da tela do notebook
+        targetWidth = Math.floor(hostWidth / 2)
+        if (isEpub) {
+          targetHeight = hostHeight
+        } else {
+          targetHeight = Math.min(hostHeight, Math.round(targetWidth / aspectRatio))
+        }
+      } else if (isWide) {
         // Modo Expandido: Ocupa 100% da área útil disponível
         const availableWidth = Math.max(300, hostWidth - 32)
         targetWidth = Math.floor(availableWidth / 2)
@@ -162,12 +171,16 @@ export function useBookPageTurn(
 
       const isMobile = hostWidth < 768
 
-      if (isMobile) {
-        // No mobile: sem bordas ou margens externas, 100% de largura e altura uniforme com o fundo
+      if (isMobile || isZen) {
+        // No mobile ou no Modo Zen: sem bordas ou margens externas, 100% de largura e altura uniforme
         targetWidth = hostWidth
-        targetHeight = hostHeight
-        startX = 0
-        startY = 0
+        if (isEpub || isMobile) {
+          targetHeight = hostHeight
+        } else {
+          targetHeight = Math.min(hostHeight, Math.round(targetWidth / aspectRatio))
+        }
+        startX = Math.max(0, (hostWidth - targetWidth) / 2)
+        startY = Math.max(0, (hostHeight - targetHeight) / 2)
       } else if (isWide) {
         // Modo Expandido no Desktop/Tablet: 1 folha ocupando quase 100% da largura útil
         targetWidth = Math.max(300, Math.round(hostWidth - 32))
@@ -436,7 +449,7 @@ export function useBookPageTurn(
   })
 
   watch(
-    [() => store.currentPage, () => store.document, () => store.isTwoPageMode, () => store.readerWidthMode, () => store.isNotesOpen, () => store.isGraphOpen],
+    [() => store.currentPage, () => store.document, () => store.isTwoPageMode, () => store.readerWidthMode, () => store.isNotesOpen, () => store.isGraphOpen, () => store.isZenMode],
     () => {
       updateLayout()
     },

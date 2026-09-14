@@ -650,6 +650,78 @@ describe('Reader Components', () => {
       expect(titleBar.exists()).toBe(false)
     })
 
+    it('sai do Modo Zen ao pressionar a tecla Escape no ReaderViewer', async () => {
+      const store = useReaderStore()
+      store.setDocument({
+        type: 'epub',
+        metadata: { title: 'Livro Zen' },
+        totalPages: 10,
+        isLoaded: true,
+        load: vi.fn(),
+        getPage: vi.fn(),
+        destroy: vi.fn(),
+      } as any, 'livro.epub')
+      store.isZenMode = true
+
+      mount(ReaderViewer, {
+        global: {
+          stubs: {
+            ReaderEnginePageCurlCanvas: true,
+            ReaderBookNotesPanel: true,
+            ReaderBottomBar: true,
+            ReaderSavedPagesModal: true,
+            ReaderAnnotationModal: true,
+            ReaderSelectionTooltip: true,
+            ReaderDictionaryCard: true,
+            ReaderAiOverlayCard: true,
+            ReaderCreateBookletModal: true,
+          },
+        },
+      })
+
+      expect(store.isZenMode).toBe(true)
+
+      // Dispara evento Escape no window
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+      expect(store.isZenMode).toBe(false)
+    })
+
+    it('sai do Modo Zen ao detectar evento fullscreenchange sem fullscreenElement ativo', async () => {
+      const store = useReaderStore()
+      store.setDocument({
+        type: 'epub',
+        metadata: { title: 'Livro Zen' },
+        totalPages: 10,
+        isLoaded: true,
+        load: vi.fn(),
+        getPage: vi.fn(),
+        destroy: vi.fn(),
+      } as any, 'livro.epub')
+      store.isZenMode = true
+
+      mount(ReaderViewer, {
+        global: {
+          stubs: {
+            ReaderEnginePageCurlCanvas: true,
+            ReaderBookNotesPanel: true,
+            ReaderBottomBar: true,
+            ReaderSavedPagesModal: true,
+            ReaderAnnotationModal: true,
+            ReaderSelectionTooltip: true,
+            ReaderDictionaryCard: true,
+            ReaderAiOverlayCard: true,
+            ReaderCreateBookletModal: true,
+          },
+        },
+      })
+
+      expect(store.isZenMode).toBe(true)
+
+      // Simula término do Fullscreen no navegador
+      document.dispatchEvent(new Event('fullscreenchange'))
+      expect(store.isZenMode).toBe(false)
+    })
+
     it('exibe o tooltip de seleção e abre o modal de anotação com o texto selecionado', async () => {
       const store = useReaderStore()
       store.setDocument({

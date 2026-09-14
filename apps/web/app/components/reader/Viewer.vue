@@ -346,6 +346,9 @@ function handleClose() {
 function exitZenMode() {
   if (!store.isZenMode) return
   store.setZenMode(false)
+  if (typeof document !== 'undefined' && document.fullscreenElement && document.exitFullscreen) {
+    document.exitFullscreen().catch(() => {})
+  }
   if (typeof window !== 'undefined' && window.history.state?.arestaZenMode) {
     window.history.back()
   }
@@ -655,10 +658,19 @@ function onPopState() {
   }
 }
 
+function onFullscreenChange() {
+  if (typeof document !== 'undefined' && !document.fullscreenElement && store.isZenMode) {
+    store.setZenMode(false)
+  }
+}
+
 watch(
   () => store.isZenMode,
   (isZen) => {
     if (isZen) {
+      if (typeof document !== 'undefined' && !document.fullscreenElement && document.documentElement?.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(() => {})
+      }
       showZenToast.value = true
       if (zenToastTimeout) clearTimeout(zenToastTimeout)
       zenToastTimeout = setTimeout(() => {
@@ -669,6 +681,9 @@ watch(
         window.history.pushState({ arestaZenMode: true }, '')
       }
     } else {
+      if (typeof document !== 'undefined' && document.fullscreenElement && document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {})
+      }
       showZenToast.value = false
     }
     updateDeviceType()
@@ -709,8 +724,20 @@ function onKeyDown(event: KeyboardEvent) {
       isAnnotationModalOpen.value = false
       return
     }
-    if (isAnnotationDrawerOpen.value) {
-      isAnnotationDrawerOpen.value = false
+    if (isCreateBookletModalOpen.value) {
+      isCreateBookletModalOpen.value = false
+      return
+    }
+    if (isAiOverlayVisible.value) {
+      isAiOverlayVisible.value = false
+      return
+    }
+    if (isDictionaryCardVisible.value) {
+      isDictionaryCardVisible.value = false
+      return
+    }
+    if (isSelectionTooltipVisible.value) {
+      isSelectionTooltipVisible.value = false
       return
     }
     if (isSavedPagesOpen.value) {
@@ -781,6 +808,7 @@ onMounted(() => {
   window.addEventListener('popstate', onPopState)
   window.addEventListener('mouseup', handleTextSelectionCheck)
   document.addEventListener('selectionchange', onDocumentSelectionChange)
+  document.addEventListener('fullscreenchange', onFullscreenChange)
   if (canvasAreaRef.value && typeof ResizeObserver !== 'undefined') {
     resizeObserver = new ResizeObserver(() => {
       updateDeviceType()
@@ -846,11 +874,15 @@ onUnmounted(() => {
   window.removeEventListener('popstate', onPopState)
   window.removeEventListener('mouseup', handleTextSelectionCheck)
   document.removeEventListener('selectionchange', onDocumentSelectionChange)
+  document.removeEventListener('fullscreenchange', onFullscreenChange)
   if (handleAddFlashcardEvent) window.removeEventListener('aresta:add-flashcard', handleAddFlashcardEvent)
   if (handleExplainSubtopicEvent) window.removeEventListener('aresta:explain-subtopic', handleExplainSubtopicEvent)
   if (handleCreateSubtopicBookletEvent) window.removeEventListener('aresta:create-subtopic-booklet', handleCreateSubtopicBookletEvent)
   store.setGraphOpen(false)
   store.setMobileGraphOpen(false)
+  if (typeof document !== 'undefined' && document.fullscreenElement && document.exitFullscreen) {
+    document.exitFullscreen().catch(() => {})
+  }
   if (store.isZenMode) {
     store.setZenMode(false)
   }

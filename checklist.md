@@ -1,9 +1,13 @@
 # Checklist
 
 ## 🔄 Em Andamento
-- [13/09/2026 21:40] [Fazendo] Sanitizar e capturar erros em produção no frontend e backend com mensagens amigáveis ao usuário
 
 ## ✅ Concluído
+- [14/09/2026 09:34] [Concluído] Fazer modo Zen ocupar 100% da tela do notebook em tela cheia (Fullscreen) e permitir sair com a tecla Esc
+- [14/09/2026 09:34] [Concluído] Aplicar a cor definida do tema nos nós do Grafo de Conhecimento com estilo clean e leve do Aresta
+- [14/09/2026 09:33] [Concluído] Remover configurações globais de fonte e tamanho tornando-as por livro, manter grafo na tela inicial sempre ativo e unificar toggle de folhear 3D com vinco
+- [14/09/2026 09:31] [Concluído] Remover banner toast flutuante de feedback de conexão entre nós no Grafo de Conhecimento
+- [14/09/2026 09:30] [Concluído] Corrigir erro HTTP 401 ao baixar livro ou livreto adicionando headers de autenticação Bearer token nas requisições do ReaderShell e gavetas
 - [13/09/2026 22:38] [Concluído] Centralizar horizontalmente a folha de desenho na inicialização mantendo o fluxo lateral
 - [13/09/2026 22:36] [Concluído] Colar folha no topo da tela e implementar criação de páginas laterais (horizontal) com botão de seta e mais (+)
 - [13/09/2026 22:30] [Concluído] Simplificar ferramentas do editor para caneta, marcador e borracha, e posicionar barra à esquerda no desktop e no topo no mobile
