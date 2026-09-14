@@ -4,6 +4,7 @@
 - [13/09/2026 21:40] [Fazendo] Sanitizar e capturar erros em produção no frontend e backend com mensagens amigáveis ao usuário
 
 ## ✅ Concluído
+- [13/09/2026 22:30] [Concluído] Simplificar ferramentas do editor para caneta, marcador e borracha, e posicionar barra à esquerda no desktop e no topo no mobile
 - [13/09/2026 22:26] [Concluído] Ajustar editor de desenho: folha branca lisa sem linhas, auto-ajuste inicial à tela, zoom com mouse e suprimir indicador visual de rejeição de palma
 - [13/09/2026 22:22] [Concluído] Padronizar o background de todas as páginas da aplicação com a mesma cor da navbar (bgPanel)
 - [13/09/2026 22:18] [Concluído] Manter última aba da navbar selecionada em rotas indiretas, harmonizar fundo de benefícios com a navbar e remover CTA de adicionar livros

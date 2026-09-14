@@ -76,7 +76,7 @@
     <!-- Main Viewport: Vertical Continuous Pages -->
     <main
       ref="viewportRef"
-      class="flex-1 relative w-full h-full overflow-y-auto overflow-x-hidden p-4 sm:p-8 flex flex-col items-center gap-8 bg-bgRoot/60"
+      class="flex-1 relative w-full h-full overflow-y-auto overflow-x-hidden pt-20 pb-8 px-4 md:pt-8 md:pb-8 md:pl-24 md:pr-8 flex flex-col items-center gap-8 bg-bgRoot/60"
     >
       <!-- Loading State -->
       <div v-if="isLoading" class="flex-1 flex flex-col items-center justify-center text-textSecondary gap-3">
@@ -136,9 +136,13 @@
       </template>
     </main>
 
-    <!-- Floating Docked Toolbar -->
-    <div class="fixed bottom-4 inset-x-0 flex justify-center pointer-events-none z-30 px-3">
-      <div class="pointer-events-auto">
+    <!-- Floating Docked Toolbar: Top on mobile, Left on desktop -->
+    <div
+      class="fixed z-30 pointer-events-none transition-all duration-200
+             top-14 inset-x-0 flex justify-center px-2 py-1.5
+             md:top-1/2 md:-translate-y-1/2 md:left-4 md:right-auto md:bottom-auto md:inset-x-auto md:p-0 md:flex md:flex-col"
+    >
+      <div class="pointer-events-auto max-w-[96vw] overflow-x-auto md:overflow-visible">
         <DrawingToolbar
           v-model:tool="activeTool"
           v-model:color="strokeColor"
@@ -240,8 +244,10 @@ const pageScale = ref(0.7);
 
 function calculateFitScale(): number {
   if (typeof window === 'undefined') return 1;
-  const availableWidth = window.innerWidth - 64;
-  const availableHeight = window.innerHeight - 150; // cabeçalho + padding + toolbar inferior
+  const isDesktop = window.innerWidth >= 768;
+  // No desktop desconta barra lateral esquerda (~80px) + margens; no mobile desconta header + barra superior (~130px)
+  const availableWidth = isDesktop ? window.innerWidth - 130 : window.innerWidth - 32;
+  const availableHeight = isDesktop ? window.innerHeight - 80 : window.innerHeight - 150;
   const scaleW = availableWidth / 794;
   const scaleH = availableHeight / 1123;
   const fit = Math.min(scaleW, scaleH);
