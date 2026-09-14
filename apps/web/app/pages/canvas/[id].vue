@@ -1,5 +1,5 @@
 <template>
-  <div class="fixed inset-0 h-screen w-screen flex overflow-hidden bg-bgRoot text-textPrimary select-none z-10">
+  <div class="fixed inset-0 h-screen w-screen flex overflow-hidden bg-bgPanel text-textPrimary select-none z-10">
     <!-- Sidebar de Pastas & Tags (Samsung Notes Style) -->
     <FolderTagSidebar
       :items="canvasesList"

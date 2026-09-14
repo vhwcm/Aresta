@@ -1,9 +1,11 @@
 # Checklist
 
 ## 🔄 Em Andamento
+- [13/09/2026 22:21] [Fazendo] Ajustar editor de desenho: folha branca lisa sem linhas, auto-ajuste à tela, zoom com mouse e suprimir indicador de rejeição de palma
 - [13/09/2026 21:40] [Fazendo] Sanitizar e capturar erros em produção no frontend e backend com mensagens amigáveis ao usuário
 
 ## ✅ Concluído
+- [13/09/2026 22:22] [Concluído] Padronizar o background de todas as páginas da aplicação com a mesma cor da navbar (bgPanel)
 - [13/09/2026 22:18] [Concluído] Manter última aba da navbar selecionada em rotas indiretas, harmonizar fundo de benefícios com a navbar e remover CTA de adicionar livros
 - [13/09/2026 22:18] [Concluído] Implementar notas de desenho paginadas com rejeição de palma e síntese em HTML semântico via IA
 - [13/09/2026 22:12] [Concluído] Implementar ícones de benefícios e feedback com página dedicada, offcanvas lateral e persistência no banco via Prisma

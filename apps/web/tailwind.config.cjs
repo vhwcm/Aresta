@@ -12,8 +12,8 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        bgApp: 'var(--bg-app, #0A0A0B)',
-        bgRoot: 'var(--bg-app, #0A0A0B)',
+        bgApp: 'var(--bg-app, #121315)',
+        bgRoot: 'var(--bg-panel, #121315)',
         bgPanel: 'var(--bg-panel, #121315)',
         bgElevated: 'var(--bg-panel, #121315)',
         bgSurface: 'var(--bg-panel, #121315)',

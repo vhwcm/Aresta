@@ -1,5 +1,5 @@
 <template>
-  <div class="fixed inset-0 h-screen w-screen flex flex-col bg-bgRoot text-textPrimary select-none overflow-hidden font-interface">
+  <div class="fixed inset-0 h-screen w-screen flex flex-col bg-bgPanel text-textPrimary select-none overflow-hidden font-interface">
     <!-- Top Header -->
     <header class="h-14 shrink-0 px-3 sm:px-6 border-b border-divider bg-bgPanel/90 backdrop-blur-md flex items-center justify-between z-30">
       <div class="flex items-center gap-2 sm:gap-3 min-w-0">

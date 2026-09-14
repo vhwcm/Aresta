@@ -1,5 +1,5 @@
 <template>
-  <div class="h-screen w-full flex bg-bgRoot text-textPrimary overflow-hidden font-interface select-none">
+  <div class="h-screen w-full flex bg-bgPanel text-textPrimary overflow-hidden font-interface select-none">
     <!-- Sidebar Unificada com Árvore de Pastas & Arquivos -->
     <FolderTagSidebar
       :items="unifiedSidebarItems"

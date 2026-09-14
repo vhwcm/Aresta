@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen flex flex-col items-center justify-center p-6 bg-bgApp text-textPrimary">
+  <div class="min-h-screen flex flex-col items-center justify-center p-6 bg-bgPanel text-textPrimary">
     <div class="flex flex-col items-center gap-4 text-center max-w-sm">
       <span class="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin"></span>
       <h1 class="font-editorial text-2xl font-light">Conectando sua conta...</h1>

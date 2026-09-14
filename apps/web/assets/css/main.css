@@ -11,7 +11,7 @@
 :root,
 [data-theme="dark"],
 .dark-theme {
-  --bg-app: #0A0A0B;
+  --bg-app: #121315;
   --bg-panel: #121315;
   --text-primary: #F2F2F2;
   --text-secondary: #7A7D84;
@@ -26,7 +26,7 @@
 
 [data-theme="light"],
 .light-theme {
-  --bg-app: #F8F9FA;
+  --bg-app: #FFFFFF;
   --bg-panel: #FFFFFF;
   --text-primary: #18191B;
   --text-secondary: #6B7280;
@@ -41,7 +41,7 @@
 
 [data-theme="sepia"],
 .sepia-theme {
-  --bg-app: #F5EEDC;
+  --bg-app: #EFE6D1;
   --bg-panel: #EFE6D1;
   --text-primary: #2A2521;
   --text-secondary: #786C5E;
@@ -52,6 +52,11 @@
   --color-text-secondary: #786C5E;
   --color-accent: #C96538;
   color-scheme: light;
+}
+
+html,
+body {
+  background-color: var(--bg-panel, #121315);
 }
 
 /* ==========================================================================

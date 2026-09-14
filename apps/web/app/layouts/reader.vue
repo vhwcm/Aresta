@@ -1,5 +1,5 @@
 <template>
-  <div class="h-screen w-screen overflow-hidden bg-bgApp">
+  <div class="h-screen w-screen overflow-hidden bg-bgPanel">
     <slot />
   </div>
 </template>
