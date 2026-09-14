@@ -1,7 +1,14 @@
 import { prisma } from '../config/database'
+import { cacheManager } from '../../../shared/cache/cache.manager'
 
 export class GraphService {
   async getGraph(userId: number) {
+    const cacheKey = `user:${userId}:graph`
+    const cached = cacheManager.get<any>(cacheKey)
+    if (cached) {
+      return cached
+    }
+
     const annotations = await prisma.annotation.findMany({
       where: { user_id: userId },
       include: {
@@ -378,7 +385,7 @@ export class GraphService {
       (e) => activeNodeIdSet.has(String(e.source)) && activeNodeIdSet.has(String(e.target))
     )
 
-    return {
+    const result = {
       nodes: allNodes,
       edges: validEdges,
       annotations,
@@ -392,6 +399,9 @@ export class GraphService {
         folders: folderNodes.length,
       },
     }
+
+    cacheManager.set(cacheKey, result, 600, [`user:${userId}:graph`, 'graph', `user:${userId}`])
+    return result
   }
 
   async getThemes() {
@@ -419,6 +429,8 @@ export class GraphService {
         ...(description ? { description } : {}),
       },
     })
+
+    cacheManager.invalidateTag('graph')
 
     return {
       id: theme.id,
@@ -450,6 +462,8 @@ export class GraphService {
       },
     })
 
+    cacheManager.invalidateTag('graph')
+
     return {
       id: theme.id,
       rawId: theme.id,
@@ -461,13 +475,15 @@ export class GraphService {
   }
 
   async deleteNode(id: number) {
-    return prisma.theme.delete({
+    const result = await prisma.theme.delete({
       where: { id },
     })
+    cacheManager.invalidateTag('graph')
+    return result
   }
 
   async linkBook(themeId: number, bookId: number) {
-    return prisma.bookTheme.upsert({
+    const result = await prisma.bookTheme.upsert({
       where: {
         book_id_theme_id: {
           book_id: bookId,
@@ -480,19 +496,23 @@ export class GraphService {
       },
       update: {},
     })
+    cacheManager.invalidateTag('graph')
+    return result
   }
 
   async unlinkBook(themeId: number, bookId: number) {
-    return prisma.bookTheme.deleteMany({
+    const result = await prisma.bookTheme.deleteMany({
       where: {
         book_id: bookId,
         theme_id: themeId,
       },
     })
+    cacheManager.invalidateTag('graph')
+    return result
   }
 
   async createConnection(sourceId: number, targetId: number) {
-    return prisma.themeHierarchy.upsert({
+    const result = await prisma.themeHierarchy.upsert({
       where: {
         parent_theme_id_child_theme_id: {
           parent_theme_id: sourceId,
@@ -505,18 +525,23 @@ export class GraphService {
       },
       update: {},
     })
+    cacheManager.invalidateTag('graph')
+    return result
   }
 
   async deleteConnection(sourceId: number, targetId: number) {
-    return prisma.themeHierarchy.deleteMany({
+    const result = await prisma.themeHierarchy.deleteMany({
       where: {
         parent_theme_id: sourceId,
         child_theme_id: targetId,
       },
     })
+    cacheManager.invalidateTag('graph')
+    return result
   }
 }
 
 export const graphService = new GraphService()
+
 
 

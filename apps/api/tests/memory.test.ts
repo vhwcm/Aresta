@@ -1,7 +1,12 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { graphService } from '../src/modules/memory/services/graph.service'
+import { cacheManager } from '../src/shared/cache/cache.manager'
 
 describe('MemoryService & GraphService', () => {
+  beforeEach(() => {
+    cacheManager.clear()
+  })
+
   it('should calculate SM-2 next review correctly', () => {
     // Basic sanity test
     expect(true).toBe(true)

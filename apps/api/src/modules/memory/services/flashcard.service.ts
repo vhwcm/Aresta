@@ -1,4 +1,5 @@
 import { prisma } from '../config/database'
+import { cacheManager } from '../../../shared/cache/cache.manager'
 
 // SM-2 Algorithm constants
 const SM2_MIN_DIFFICULTY = 1.3
@@ -42,6 +43,12 @@ export class FlashcardService {
 
   async getDailyDeck(userId: number, dateStr?: string) {
     const todayStr = dateStr || new Date().toISOString().split('T')[0]
+    const cacheKey = `user:${userId}:daily_deck:${todayStr}`
+    const cached = cacheManager.get<any>(cacheKey)
+    if (cached) {
+      return cached
+    }
+
     const cards = await prisma.flashcard.findMany({
       where: { user_id: userId },
       include: {
@@ -76,12 +83,15 @@ export class FlashcardService {
       position: idx + 1,
     }))
 
-    return {
+    const result = {
       date: todayStr,
       totalCards: formatted.length,
       reviewedCount: 0,
       cards: formatted,
     }
+
+    cacheManager.set(cacheKey, result, 600, [`user:${userId}:flashcards`, `user:${userId}`])
+    return result
   }
 
   async review(flashcardId: number, userId: number, rating: 'hard' | 'good' | 'easy') {
@@ -92,7 +102,7 @@ export class FlashcardService {
       card.difficulty, card.repetition_level, rating
     )
 
-    return prisma.flashcard.update({
+    const updated = await prisma.flashcard.update({
       where: { id: flashcardId },
       data: {
         difficulty: newDifficulty,
@@ -102,6 +112,8 @@ export class FlashcardService {
         review_count: { increment: 1 },
       },
     })
+    cacheManager.invalidateTag(`user:${userId}:flashcards`)
+    return updated
   }
 
   async create(data: {
@@ -113,7 +125,7 @@ export class FlashcardService {
     contextSummary?: string
     cardType?: string
   }) {
-    return prisma.flashcard.create({
+    const created = await prisma.flashcard.create({
       data: {
         user_id: data.userId,
         annotation_id: data.annotationId,
@@ -125,6 +137,8 @@ export class FlashcardService {
         difficulty: SM2_INITIAL_DIFFICULTY,
       },
     })
+    cacheManager.invalidateTag(`user:${data.userId}:flashcards`)
+    return created
   }
 
   async findByUser(userId: number) {
@@ -136,16 +150,21 @@ export class FlashcardService {
   }
 
   async delete(flashcardId: number, userId: number) {
-    return prisma.flashcard.deleteMany({
+    const result = await prisma.flashcard.deleteMany({
       where: { id: flashcardId, user_id: userId },
     })
+    cacheManager.invalidateTag(`user:${userId}:flashcards`)
+    return result
   }
 
   async deleteByAnnotation(annotationId: number, userId: number) {
-    return prisma.flashcard.deleteMany({
+    const result = await prisma.flashcard.deleteMany({
       where: { annotation_id: annotationId, user_id: userId },
     })
+    cacheManager.invalidateTag(`user:${userId}:flashcards`)
+    return result
   }
 }
 
 export const flashcardService = new FlashcardService()
+

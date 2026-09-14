@@ -1,8 +1,15 @@
 import { prisma } from '../config/database'
+import { cacheManager } from '../../../shared/cache/cache.manager'
 
 export class UserBookService {
   async findByUser(userId: number) {
-    return prisma.userBook.findMany({
+    const cacheKey = `user:${userId}:books`
+    const cached = cacheManager.get<any[]>(cacheKey)
+    if (cached) {
+      return cached
+    }
+
+    const books = await prisma.userBook.findMany({
       where: { user_id: userId },
       include: {
         book: {
@@ -17,10 +24,13 @@ export class UserBookService {
         { updated_at: 'desc' },
       ],
     })
+
+    cacheManager.set(cacheKey, books, 600, [`user:${userId}:books`, `user:${userId}`])
+    return books
   }
 
   async upsert(userId: number, bookId: number, data: { status?: string; currentPage?: number }) {
-    return prisma.userBook.upsert({
+    const result = await prisma.userBook.upsert({
       where: { user_id_book_id: { user_id: userId, book_id: bookId } },
       create: {
         user_id: userId,
@@ -43,10 +53,12 @@ export class UserBookService {
         },
       },
     })
+    cacheManager.invalidateTags([`user:${userId}:books`, `user:${userId}:graph`])
+    return result
   }
 
   async update(userId: number, idOrBookId: number, data: { status?: string; currentPage?: number }) {
-    return prisma.userBook.updateMany({
+    const result = await prisma.userBook.updateMany({
       where: {
         user_id: userId,
         OR: [{ id: idOrBookId }, { book_id: idOrBookId }],
@@ -57,6 +69,8 @@ export class UserBookService {
         last_accessed_at: new Date(),
       },
     })
+    cacheManager.invalidateTags([`user:${userId}:books`, `user:${userId}:graph`])
+    return result
   }
 
   async delete(userId: number, idOrBookId: number) {
@@ -89,22 +103,26 @@ export class UserBookService {
     })
 
     // 3. Excluir o registro de userBook
-    return prisma.userBook.deleteMany({
+    const result = await prisma.userBook.deleteMany({
       where: {
         user_id: userId,
         OR: [{ id: idOrBookId }, { book_id: idOrBookId }],
       },
     })
+    cacheManager.invalidateUser(userId)
+    return result
   }
 
   async recordAccess(userId: number, idOrBookId: number) {
-    return prisma.userBook.updateMany({
+    const result = await prisma.userBook.updateMany({
       where: {
         user_id: userId,
         OR: [{ id: idOrBookId }, { book_id: idOrBookId }],
       },
       data: { last_accessed_at: new Date() },
     })
+    cacheManager.invalidateTags([`user:${userId}:books`, `user:${userId}:graph`])
+    return result
   }
 
   async registerUploadedBook(
@@ -134,7 +152,7 @@ export class UserBookService {
       },
     })
 
-    return prisma.userBook.create({
+    const userBook = await prisma.userBook.create({
       data: {
         user_id: userId,
         book_id: book.id,
@@ -151,6 +169,8 @@ export class UserBookService {
         },
       },
     })
+    cacheManager.invalidateTags([`user:${userId}:books`, `user:${userId}:graph`])
+    return userBook
   }
 
   async setThemes(userId: number, idOrBookId: number, themeIds: number[]) {
@@ -186,7 +206,7 @@ export class UserBookService {
       }
     }
 
-    return prisma.userBook.findUnique({
+    const updated = await prisma.userBook.findUnique({
       where: { id: userBook.id },
       include: {
         book: {
@@ -197,6 +217,8 @@ export class UserBookService {
         },
       },
     })
+    cacheManager.invalidateTags([`user:${userId}:books`, `user:${userId}:graph`])
+    return updated
   }
 
   async addTheme(userId: number, idOrBookId: number, themeId: number) {
@@ -225,7 +247,7 @@ export class UserBookService {
       update: {},
     })
 
-    return prisma.userBook.findUnique({
+    const updated = await prisma.userBook.findUnique({
       where: { id: userBook.id },
       include: {
         book: {
@@ -236,6 +258,8 @@ export class UserBookService {
         },
       },
     })
+    cacheManager.invalidateTags([`user:${userId}:books`, `user:${userId}:graph`])
+    return updated
   }
 
   async removeTheme(userId: number, idOrBookId: number, themeId: number) {
@@ -257,7 +281,7 @@ export class UserBookService {
       },
     })
 
-    return prisma.userBook.findUnique({
+    const updated = await prisma.userBook.findUnique({
       where: { id: userBook.id },
       include: {
         book: {
@@ -268,8 +292,11 @@ export class UserBookService {
         },
       },
     })
+    cacheManager.invalidateTags([`user:${userId}:books`, `user:${userId}:graph`])
+    return updated
   }
 }
 
 export const userBookService = new UserBookService()
+
 

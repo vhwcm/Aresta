@@ -2,6 +2,7 @@ import { prisma } from '../config/database'
 import axios from 'axios'
 import { SERVICES } from '../config/services.config'
 import { aiService } from '../../ai/services/ai.service'
+import { cacheManager } from '../../../shared/cache/cache.manager'
 
 export class AnnotationService {
   async create(data: {
@@ -61,6 +62,9 @@ export class AnnotationService {
       },
     })
 
+    // Invalida cache de anotações e grafo do usuário
+    cacheManager.invalidateTags([`user:${rest.userId}:annotations`, `user:${rest.userId}:graph`, `user:${rest.userId}:books`])
+
     // Generate embedding asynchronously (fire and forget)
     if (rest.selectedText) {
       this.generateAndSaveEmbedding(annotation.id, rest.selectedText, token).catch(console.error)
@@ -99,7 +103,13 @@ export class AnnotationService {
   }
 
   async findByUser(userId: number) {
-    return prisma.annotation.findMany({
+    const cacheKey = `user:${userId}:annotations`
+    const cached = cacheManager.get<any[]>(cacheKey)
+    if (cached) {
+      return cached
+    }
+
+    const annotations = await prisma.annotation.findMany({
       where: { user_id: userId },
       include: {
         book: { select: { id: true, title: true, cover_path: true } },
@@ -108,6 +118,9 @@ export class AnnotationService {
       },
       orderBy: { created_at: 'desc' },
     })
+
+    cacheManager.set(cacheKey, annotations, 600, [`user:${userId}:annotations`, `user:${userId}`])
+    return annotations
   }
 
   async findByBook(userId: number, bookId: number) {
@@ -139,8 +152,11 @@ export class AnnotationService {
   }
 
   async delete(id: number, userId: number) {
-    return prisma.annotation.delete({ where: { id, user_id: userId } })
+    const result = await prisma.annotation.delete({ where: { id, user_id: userId } })
+    cacheManager.invalidateTags([`user:${userId}:annotations`, `user:${userId}:graph`])
+    return result
   }
 }
 
 export const annotationService = new AnnotationService()
+

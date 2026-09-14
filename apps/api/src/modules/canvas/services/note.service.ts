@@ -1,4 +1,5 @@
 import { prisma } from '../config/database'
+import { cacheManager } from '../../../shared/cache/cache.manager'
 
 export interface CreateNoteInput {
   title?: string
@@ -45,6 +46,12 @@ function extractNoteLinks(content: string): Array<{ target_type: 'CANVAS' | 'BOO
 
 export class NoteService {
   async getAllByUser(userId: number, query: NoteQueryInput = {}) {
+    const cacheKey = `user:${userId}:notes:${JSON.stringify(query)}`
+    const cached = cacheManager.get<any>(cacheKey)
+    if (cached) {
+      return cached
+    }
+
     const page = Number(query.page) || 1
     const limit = Number(query.limit) || 50
     const skip = (page - 1) * limit
@@ -102,13 +109,16 @@ export class NoteService {
       ? formattedNotes.filter((n) => n.tags.includes(query.tag!))
       : formattedNotes
 
-    return {
+    const result = {
       notes: filtered,
       total,
       page,
       limit,
       totalPages: Math.ceil(total / limit),
     }
+
+    cacheManager.set(cacheKey, result, 600, [`user:${userId}:notes`, `user:${userId}`])
+    return result
   }
 
   async getById(id: string, userId: number) {
@@ -193,6 +203,8 @@ export class NoteService {
       parsedTags = []
     }
 
+    cacheManager.invalidateTags([`user:${userId}:notes`, `user:${userId}:graph`])
+
     return {
       id: note.id,
       userId: note.user_id,
@@ -270,6 +282,8 @@ export class NoteService {
       parsedTags = []
     }
 
+    cacheManager.invalidateTags([`user:${userId}:notes`, `user:${userId}:graph`])
+
     return {
       id: updated.id,
       userId: updated.user_id,
@@ -305,8 +319,11 @@ export class NoteService {
       where: { id },
     })
 
+    cacheManager.invalidateTags([`user:${userId}:notes`, `user:${userId}:graph`])
+
     return { message: 'Nota excluída com sucesso' }
   }
+
 
   async getFolders(userId: number) {
     const notes = await prisma.note.findMany({
