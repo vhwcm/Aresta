@@ -49,6 +49,12 @@ export const useGraph = () => {
   }
 
   const fetchGraph = async () => {
+    if (!auth.isLoggedIn.value) {
+      graphData.value = { nodes: [], edges: [] }
+      loading.value = false
+      return
+    }
+
     // SWR: Apenas exibe loading se o grafo ainda não tiver nós carregados
     if (!graphData.value.nodes || graphData.value.nodes.length === 0) {
       loading.value = true
@@ -72,7 +78,7 @@ export const useGraph = () => {
             }))
         let edges: GraphEdge[] = Array.isArray(data.edges) ? [...data.edges] : []
 
-        // Enriquecer nós de livros com capas salvas localmente e adicionar possíveis conexões locais
+        // Enriquecer nós de livros com capas salvas localmente
         try {
           const localBooks = await bookRepo.getAll()
           if (localBooks && localBooks.length > 0) {
@@ -90,65 +96,12 @@ export const useGraph = () => {
                   if (!node.author && found.author) {
                     node.author = found.author
                   }
-                  // Se o livro tiver temas locais cadastrados, assegurar arestas locais
-                  if (found.themes && Array.isArray(found.themes) && found.themes.length > 0) {
-                    for (const theme of found.themes) {
-                      const themeId = typeof theme === 'object' ? theme.id : theme
-                      const edgeId = `edge-bt-local-${node.rawId}-${themeId}`
-                      const alreadyConnected = edges.some((e: any) =>
-                        (String(e.source) === String(node.id) || String(e.source) === `book-${node.rawId}`) &&
-                        (String(e.target) === String(themeId) || Number(e.target) === Number(themeId))
-                      )
-                      if (themeId && !alreadyConnected) {
-                        edges.push({
-                          id: edgeId,
-                          source: `book-${node.rawId}`,
-                          target: themeId,
-                          type: 'book-theme',
-                        })
-                      }
-                    }
-                  }
-                }
-              }
-            }
-
-            // Adicionar livros locais que possam não ter sido retornados pelo backend ainda
-            for (const lb of localBooks) {
-              const bookId = lb.bookId || lb.id
-              const exists = nodes.some((n: any) => n.rawId === bookId || n.id === `book-${bookId}`)
-              if (!exists && lb.title) {
-                const newBookNode: GraphNode = {
-                  id: `book-${bookId}`,
-                  rawId: bookId,
-                  type: 'book',
-                  name: lb.title,
-                  title: lb.title,
-                  fullTitle: lb.title,
-                  author: lb.author,
-                  coverPath: lb.coverPath,
-                  filePath: lb.filePath,
-                }
-                nodes.push(newBookNode)
-
-                if (lb.themes && Array.isArray(lb.themes)) {
-                  for (const theme of lb.themes) {
-                    const themeId = typeof theme === 'object' ? theme.id : theme
-                    if (themeId) {
-                      edges.push({
-                        id: `edge-bt-local-${bookId}-${themeId}`,
-                        source: `book-${bookId}`,
-                        target: themeId,
-                        type: 'book-theme',
-                      })
-                    }
-                  }
                 }
               }
             }
           }
         } catch (repoErr) {
-          console.warn('[useGraph] Falha ao sincronizar dados locais de livros no grafo:', repoErr)
+          console.warn('[useGraph] Falha ao sincronizar capas locais de livros no grafo:', repoErr)
         }
 
         // Garantir que tags/temas que não estão anexadas a nenhum livro, anotação ou nota não apareçam no grafo

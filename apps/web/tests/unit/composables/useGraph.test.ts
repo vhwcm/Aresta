@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { ref } from 'vue'
 import { useGraph } from '~/composables/useGraph'
+import * as authComposable from '~/composables/useAuth'
 
 // Mock global fetch / $fetch
 const mockFetch = vi.fn()
@@ -8,6 +10,12 @@ const mockFetch = vi.fn()
 describe('useGraph Composable', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.spyOn(authComposable, 'useAuth').mockReturnValue({
+      token: ref('fake-token'),
+      user: ref({ id: 1, name: 'viktor', email: 'viktor@aresta.org' }),
+      isLoggedIn: ref(true),
+      isAdmin: ref(true),
+    } as any)
   })
 
   it('fetchGraph carrega nós e arestas com sucesso', async () => {

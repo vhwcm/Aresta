@@ -22,7 +22,15 @@ export class GraphService {
       include: {
         parentHierarchies: true,
         childHierarchies: true,
-        bookThemes: true,
+        bookThemes: {
+          where: {
+            book: {
+              userBooks: {
+                some: { user_id: userId },
+              },
+            },
+          },
+        },
         annotationThemes: { where: { annotation: { user_id: userId } } },
       },
     })
@@ -41,36 +49,7 @@ export class GraphService {
       },
     })
 
-    const userBookIds = new Set(userBooks.map((ub) => ub.book.id))
-    const referencedBookIds = new Set<number>()
-    for (const t of themes) {
-      for (const bt of t.bookThemes || []) {
-        if (!userBookIds.has(bt.book_id)) {
-          referencedBookIds.add(bt.book_id)
-        }
-      }
-    }
-
-    const additionalBooks = referencedBookIds.size > 0
-      ? await prisma.book.findMany({
-          where: { id: { in: Array.from(referencedBookIds) } },
-          include: {
-            publicInfo: true,
-            bookThemes: { include: { theme: true } },
-          },
-        })
-      : []
-
-    const allBooksMap = new Map<number, any>()
-    for (const ub of userBooks) {
-      allBooksMap.set(ub.book.id, ub.book)
-    }
-    for (const b of additionalBooks) {
-      if (!allBooksMap.has(b.id)) {
-        allBooksMap.set(b.id, b)
-      }
-    }
-    const allBooks = Array.from(allBooksMap.values())
+    const allBooks = userBooks.map((ub) => ub.book)
 
 
     const notes = await prisma.note.findMany({
@@ -142,7 +121,7 @@ export class GraphService {
         title: t.name,
         color: t.color || '#E57B55',
         description: t.description || '',
-        bookCount: t.bookThemes?.filter((bt) => userBooks.some((ub) => ub.book.id === bt.book_id)).length || (userBooks.length === 0 ? t.bookThemes?.length || 0 : 0),
+        bookCount: t.bookThemes?.length || 0,
         annotationCount: t.annotationThemes?.length || 0,
         noteCount: matchingNotesCount,
       }

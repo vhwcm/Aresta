@@ -29,11 +29,9 @@ export class PdfDocumentAdapter implements IBookDocument {
       return await import('pdfjs-dist')
     }, 'parse')
 
+    const pdfjsVersion = pdfjsLib.version || '6.1.200'
     if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-      pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-        'pdfjs-dist/build/pdf.worker.min.mjs',
-        import.meta.url,
-      ).href
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsVersion}/build/pdf.worker.min.mjs`
     }
 
     let arrayBuffer: ArrayBuffer

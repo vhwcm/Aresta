@@ -10,11 +10,9 @@ export class PdfCoverExtractor implements ICoverExtractor {
     try {
       const pdfjsLib = await import('pdfjs-dist')
 
+      const pdfjsVersion = pdfjsLib.version || '6.1.200'
       if (!pdfjsLib.GlobalWorkerOptions.workerSrc && typeof window !== 'undefined') {
-        pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-          'pdfjs-dist/build/pdf.worker.min.mjs',
-          import.meta.url,
-        ).href
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsVersion}/build/pdf.worker.min.mjs`
       }
 
       let arrayBuffer: ArrayBuffer
@@ -25,7 +23,6 @@ export class PdfCoverExtractor implements ICoverExtractor {
       }
 
       const typedArray = new Uint8Array(arrayBuffer)
-      const pdfjsVersion = pdfjsLib.version || '6.1.200'
       const loadingTask = pdfjsLib.getDocument({
         data: typedArray,
         cMapUrl: `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsVersion}/cmaps/`,

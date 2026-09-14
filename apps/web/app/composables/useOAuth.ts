@@ -221,11 +221,9 @@ export const useOAuth = () => {
       const tokenCookie = useCookie<string | null>('aresta_token', { path: '/', maxAge: 60 * 60 * 24 * 7, sameSite: 'lax' })
       const userCookie = useCookie<AuthUser | null>('aresta_user', { path: '/', maxAge: 60 * 60 * 24 * 7, sameSite: 'lax' })
 
-      if (userCookie.value && userCookie.value.id !== response.user.id) {
-        try {
-          await bookRepo.clear()
-        } catch {}
-      }
+      try {
+        await bookRepo.clear()
+      } catch {}
 
       tokenCookie.value = response.token
       userCookie.value = response.user

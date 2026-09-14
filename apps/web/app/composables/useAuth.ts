@@ -75,11 +75,9 @@ export const useAuth = () => {
         }
       })
 
-      if (userCookie.value?.id !== response.user.id) {
-        try {
-          await bookRepo.clear()
-        } catch {}
-      }
+      try {
+        await bookRepo.clear()
+      } catch {}
       tokenCookie.value = response.token
       userCookie.value = response.user
       return { success: true, user: response.user, isNewUser: response.isNewUser ?? false }
@@ -102,11 +100,9 @@ export const useAuth = () => {
         }
       })
 
-      if (userCookie.value?.id !== response.user.id) {
-        try {
-          await bookRepo.clear()
-        } catch {}
-      }
+      try {
+        await bookRepo.clear()
+      } catch {}
       tokenCookie.value = response.token
       userCookie.value = response.user
       return { success: true, user: response.user, isNewUser: response.isNewUser ?? true }
@@ -121,6 +117,9 @@ export const useAuth = () => {
     tokenCookie.value = null
     userCookie.value = null
     clearAllAuthCookies()
+    try {
+      await bookRepo.clear()
+    } catch {}
     if (typeof navigateTo === 'function') {
       await navigateTo('/', { replace: true })
     }
