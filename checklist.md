@@ -4,6 +4,7 @@
 - [13/09/2026 21:40] [Fazendo] Sanitizar e capturar erros em produção no frontend e backend com mensagens amigáveis ao usuário
 
 ## ✅ Concluído
+- [13/09/2026 22:38] [Concluído] Centralizar horizontalmente a folha de desenho na inicialização mantendo o fluxo lateral
 - [13/09/2026 22:36] [Concluído] Colar folha no topo da tela e implementar criação de páginas laterais (horizontal) com botão de seta e mais (+)
 - [13/09/2026 22:30] [Concluído] Simplificar ferramentas do editor para caneta, marcador e borracha, e posicionar barra à esquerda no desktop e no topo no mobile
 - [13/09/2026 22:26] [Concluído] Ajustar editor de desenho: folha branca lisa sem linhas, auto-ajuste inicial à tela, zoom com mouse e suprimir indicador visual de rejeição de palma

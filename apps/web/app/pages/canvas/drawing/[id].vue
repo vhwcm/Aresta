@@ -73,19 +73,23 @@
       </div>
     </header>
 
-    <!-- Main Viewport: Horizontal Pages (Colado no topo) -->
+    <!-- Main Viewport: Horizontal Pages (Colado no topo e centralizado horizontalmente) -->
     <main
       ref="viewportRef"
-      class="flex-1 relative w-full h-full overflow-x-auto overflow-y-auto pt-0 pb-4 px-4 md:pt-0 md:pb-4 md:pl-24 md:pr-16 flex flex-row items-start gap-8 bg-bgRoot/60"
+      class="flex-1 relative w-full h-full overflow-x-auto overflow-y-auto pt-0 pb-4 bg-bgRoot/60"
     >
       <!-- Loading State -->
-      <div v-if="isLoading" class="flex-1 flex flex-col items-center justify-center text-textSecondary gap-3">
+      <div v-if="isLoading" class="h-full flex flex-col items-center justify-center text-textSecondary gap-3">
         <div class="w-8 h-8 border-2 border-primary/20 border-t-primary rounded-full animate-spin"></div>
         <p class="text-xs">Carregando páginas de desenho...</p>
       </div>
 
-      <!-- Pages Container (Horizontal lado a lado) -->
-      <template v-else-if="currentDrawing">
+      <!-- Centering Track -->
+      <div
+        v-else-if="currentDrawing"
+        class="min-w-full w-max mx-auto px-6 md:pl-24 md:pr-16 flex flex-row items-start justify-center gap-8"
+      >
+        <!-- Pages Container (Horizontal lado a lado) -->
         <div
           v-for="(page, idx) in currentDrawing.pages"
           :key="page.id"
@@ -139,7 +143,7 @@
             Nova página
           </span>
         </div>
-      </template>
+      </div>
     </main>
 
     <!-- Floating Docked Toolbar: Top on mobile, Left on desktop -->
