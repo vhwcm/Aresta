@@ -202,9 +202,46 @@ export class GraphService {
       }
     })
 
+    // 5. Nós de Pastas (Agrupadores de Notas e Quadros)
+    const folderStatsMap = new Map<string, { noteCount: number; canvasCount: number }>()
+
+    for (const n of notes) {
+      if (n.folder && n.folder.trim()) {
+        const folderName = n.folder.trim()
+        const stats = folderStatsMap.get(folderName) || { noteCount: 0, canvasCount: 0 }
+        stats.noteCount++
+        folderStatsMap.set(folderName, stats)
+      }
+    }
+
+    for (const c of canvases) {
+      if (c.folder && c.folder.trim()) {
+        const folderName = c.folder.trim()
+        const stats = folderStatsMap.get(folderName) || { noteCount: 0, canvasCount: 0 }
+        stats.canvasCount++
+        folderStatsMap.set(folderName, stats)
+      }
+    }
+
+    const folderNodes = Array.from(folderStatsMap.entries()).map(([folderName, stats]) => ({
+      id: `folder-${encodeURIComponent(folderName)}`,
+      rawId: folderName,
+      type: 'folder' as const,
+      name: folderName,
+      title: folderName,
+      description: `${stats.noteCount} nota(s), ${stats.canvasCount} quadro(s)`,
+      folder: null,
+      tags: [] as string[],
+      color: '#F59E0B',
+      noteCount: stats.noteCount,
+      canvasCount: stats.canvasCount,
+      itemCount: stats.noteCount + stats.canvasCount,
+    }))
+
     const allNodes = [
       ...themeNodes,
       ...bookNodes,
+      ...folderNodes,
       ...noteNodes,
       ...canvasNodes,
     ]
@@ -317,6 +354,24 @@ export class GraphService {
       } catch {}
     }
 
+    // Arestas: Notas vinculadas à respectiva Pasta
+    for (const n of notes) {
+      if (n.folder && n.folder.trim()) {
+        const folderName = n.folder.trim()
+        const folderKey = `folder-${encodeURIComponent(folderName)}`
+        addEdge(`edge-nf-${n.id}-${encodeURIComponent(folderName)}`, `note-${n.id}`, folderKey, 'note-folder')
+      }
+    }
+
+    // Arestas: Quadros vinculados à respectiva Pasta
+    for (const c of canvases) {
+      if (c.folder && c.folder.trim()) {
+        const folderName = c.folder.trim()
+        const folderKey = `folder-${encodeURIComponent(folderName)}`
+        addEdge(`edge-cf-${c.id}-${encodeURIComponent(folderName)}`, `canvas-${c.id}`, folderKey, 'canvas-folder')
+      }
+    }
+
     // Filtrar arestas cujos nós de origem ou destino não estejam nos nós retornados
     const activeNodeIdSet = new Set(allNodes.map((n) => String(n.id)))
     const validEdges = edges.filter(
@@ -334,6 +389,7 @@ export class GraphService {
         annotations: annotations.length,
         notes: noteNodes.length,
         canvases: canvasNodes.length,
+        folders: folderNodes.length,
       },
     }
   }

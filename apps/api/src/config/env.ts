@@ -20,9 +20,12 @@ try {
   // Ignora erro se .env não existir
 }
 
+const rawDatabaseUrl = process.env.DATABASE_URL || 'postgresql://aresta:password@localhost:5432/aresta_db'
+const sanitizedDatabaseUrl = rawDatabaseUrl.trim().replace(/^["']|["']$/g, '')
+
 export const env = {
   PORT: process.env.PORT ? parseInt(process.env.PORT, 10) : 3001,
-  DATABASE_URL: process.env.DATABASE_URL || 'postgresql://aresta:password@localhost:5432/aresta_db',
+  DATABASE_URL: sanitizedDatabaseUrl,
   JWT_SECRET: process.env.JWT_SECRET || 'sua-chave-jwt-secreta-compartilhada',
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '7d',
   STORAGE_PATH: path.resolve(process.env.STORAGE_PATH || './storage'),
@@ -34,8 +37,6 @@ export const env = {
   FALLBACK_AI_MODEL: process.env.FALLBACK_AI_MODEL || 'gpt-4o-mini',
 }
 
-// Garantir que process.env seja populado para o Prisma Client e dependências
-if (!process.env.DATABASE_URL) {
-  process.env.DATABASE_URL = env.DATABASE_URL
-}
+// Garantir que process.env seja populado para o Prisma Client e dependências sem aspas
+process.env.DATABASE_URL = sanitizedDatabaseUrl
 

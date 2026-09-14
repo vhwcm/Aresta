@@ -19,13 +19,56 @@ describe('MemoryService & GraphService', () => {
     expect(graph.counts).toHaveProperty('annotations')
     expect(graph.counts).toHaveProperty('notes')
     expect(graph.counts).toHaveProperty('canvases')
+    expect(graph.counts).toHaveProperty('folders')
 
     const nodeTypes = new Set(graph.nodes.map((n: any) => n.type))
-    // Os nós retornados devem ser de temas, livros, notas e quadros (anotações de livros ficam no drawer do livro)
+    // Os nós retornados devem ser de temas, livros, notas, quadros e pastas
     for (const type of nodeTypes) {
-      expect(['theme', 'book', 'note', 'canvas']).toContain(type)
+      expect(['theme', 'book', 'note', 'canvas', 'folder']).toContain(type)
     }
     expect(nodeTypes.has('annotation')).toBe(false)
+  })
+
+  it('cria nó de pasta e arestas note-folder / canvas-folder quando há notas e quadros em pastas', async () => {
+    const { prisma } = await import('../src/modules/memory/config/database')
+    const testFolder = `PastaTeste-${Date.now()}`
+
+    const note = await prisma.note.create({
+      data: {
+        user_id: 1,
+        title: 'Nota em Pasta',
+        content: 'Conteúdo de teste',
+        folder: testFolder,
+      },
+    })
+
+    const canvas = await prisma.canvas.create({
+      data: {
+        user_id: 1,
+        title: 'Quadro em Pasta',
+        folder: testFolder,
+        data: '{}',
+      },
+    })
+
+    try {
+      const graph = await graphService.getGraph(1)
+      const folderNode = graph.nodes.find((n: any) => n.type === 'folder' && n.name === testFolder)
+      expect(folderNode).toBeDefined()
+      expect(folderNode?.noteCount).toBeGreaterThanOrEqual(1)
+      expect(folderNode?.canvasCount).toBeGreaterThanOrEqual(1)
+
+      const noteEdge = graph.edges.find((e: any) => e.source === `note-${note.id}` && e.target === folderNode?.id)
+      expect(noteEdge).toBeDefined()
+      expect(noteEdge?.type).toBe('note-folder')
+
+      const canvasEdge = graph.edges.find((e: any) => e.source === `canvas-${canvas.id}` && e.target === folderNode?.id)
+      expect(canvasEdge).toBeDefined()
+      expect(canvasEdge?.type).toBe('canvas-folder')
+    } finally {
+      await prisma.note.delete({ where: { id: note.id } })
+      await prisma.canvas.delete({ where: { id: canvas.id } })
+    }
   })
 
   it('permite criar, editar nome e deletar temas via graphService', async () => {
