@@ -1,9 +1,9 @@
 # Checklist
 
 ## 🔄 Em Andamento
-- [13/09/2026 21:29] [Fazendo] Implementar arquitetura de páginas estritas sem scroll e contrato de rigor prévio por página para livretos didáticos com IA
 
 ## ✅ Concluído
+- [13/09/2026 21:39] [Concluído] Implementar arquitetura de páginas estritas sem scroll e contrato de rigor prévio por página para livretos didáticos com IA
 - [13/09/2026 21:38] [Concluído] Respeitar fontes e tamanhos originais do EPUB e remover opções de escolha de fonte e tamanho no leitor
 - [13/09/2026 21:35] [Concluído] Centralizar horizontalmente o conteúdo e estrutura do canvas de upload de livros
 - [13/09/2026 21:32] [Concluído] Remover badge Módulo de Importação e texto descritivo na tela de upload de livros

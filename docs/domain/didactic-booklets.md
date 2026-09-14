@@ -63,3 +63,8 @@ model DidacticBookletChapter {
    - Apenas livretos didáticos existentes podem receber novos capítulos (`POST /api/didactic/booklets/:id/append`). Tentativas de anexar capítulos a livros regulares (.epub/.pdf) retornam erro 422 com código `CANNOT_APPEND_TO_NON_BOOKLET`.
 4. **Layout Dedicado no Frontend**:
    - As páginas de leitura utilizam o layout `reader` (`apps/web/app/layouts/reader.vue`) para garantir viewport total sem paddings da navbar global.
+5. **Arquitetura de Páginas Físicas Estritas & Zero Scroll**:
+   - Livretos didáticos simulam folhas de um livro físico no motor 2D/3D (`PageCurlCanvas`). Rolagem vertical interna é terminantemente proibida (`overflow: hidden !important`).
+   - A IA é orientada por um contrato editorial rígido com arquétipos estruturados (`cover`, `foundation`, `mechanism`, `analogy`, `nuances`, `subtopics`, `flashcards`) e orçamento restrito de palavras (~100 a 160 palavras por folha).
+   - O `DidacticDocumentAdapter` realiza particionamento inteligente preventivo de seções longas para evitar quebra de layout mesmo com fontes ampliadas.
+

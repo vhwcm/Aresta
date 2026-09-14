@@ -152,4 +152,30 @@ describe('AiService - Model Cascade & Error Handling', () => {
     expect(result.html).toContain('Conceito explicado de forma direta')
     expect(result.textSnippet).toContain('O princípio da responsabilidade única')
   })
+
+  it('6. Deve garantir que o systemPrompt impõe contrato rigoroso de livro físico sem scroll e arquétipos de página', async () => {
+    let capturedSystemInstruction = ''
+    vi.spyOn(didacticAI, 'getGenerativeModel').mockImplementation(({ systemInstruction }: any) => {
+      capturedSystemInstruction = typeof systemInstruction === 'string' ? systemInstruction : JSON.stringify(systemInstruction)
+      return {
+        generateContent: vi.fn().mockResolvedValue({
+          response: {
+            text: () => `<section class="didactic-page" data-page="1" data-title="Capa" data-layout="cover"><h1>Padrões de Projeto</h1></section>`,
+          },
+        }),
+      } as any
+    })
+
+    await aiService.generateDidacticExplanation({
+      topic: 'Padrões de Projeto',
+    })
+
+    expect(capturedSystemInstruction).toContain('ZERO SCROLL')
+    expect(capturedSystemInstruction).toContain('PÁGINAS NUNCA DEVEM TER BARRA DE ROLAGEM')
+    expect(capturedSystemInstruction).toContain('data-layout="cover"')
+    expect(capturedSystemInstruction).toContain('data-layout="foundation"')
+    expect(capturedSystemInstruction).toContain('data-layout="flashcards"')
+    expect(capturedSystemInstruction).toContain('EXATAMENTE 2 flashcards')
+  })
 })
+

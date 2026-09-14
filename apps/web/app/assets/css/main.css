@@ -60,34 +60,37 @@
 
 .didactic-page-wrapper {
   color: inherit;
-  line-height: 1.8;
+  line-height: 1.65;
   box-sizing: border-box;
   width: 100%;
   height: 100%;
-  overflow-y: auto;
-  padding: 2.75rem 2.75rem 3rem 2.75rem;
+  overflow: hidden !important; /* Zero scroll: página de livro é uma superfície física delimitada */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 2.25rem 2.5rem 2.5rem 2.5rem;
 }
 
 /* Margens equilibradas e arejadas no modo de 2 páginas */
 .page-text-layer--left .didactic-page-wrapper {
-  padding-left: 3.75rem;   /* Folga generosa para a seta de navegação anterior (<) e margem exterior */
-  padding-right: 3rem;     /* Distância elegante da lombada central */
-  padding-top: 2.75rem;
-  padding-bottom: 3rem;
+  padding-left: 3.5rem;   /* Folga para a seta de navegação anterior (<) e margem exterior */
+  padding-right: 2.5rem;  /* Distância elegante da lombada central */
+  padding-top: 2.25rem;
+  padding-bottom: 2.5rem;
 }
 
 .page-text-layer--right .didactic-page-wrapper {
-  padding-left: 3rem;      /* Distância elegante da lombada central */
-  padding-right: 3.75rem;  /* Folga generosa para a seta de navegação próxima (>) e margem exterior */
-  padding-top: 2.75rem;
-  padding-bottom: 3rem;
+  padding-left: 2.5rem;   /* Distância elegante da lombada central */
+  padding-right: 3.5rem;  /* Folga para a seta de navegação próxima (>) e margem exterior */
+  padding-top: 2.25rem;
+  padding-bottom: 2.5rem;
 }
 
 .page-text-layer--single .didactic-page-wrapper {
-  padding-left: 3.75rem;
-  padding-right: 3.75rem;
-  padding-top: 2.75rem;
-  padding-bottom: 3rem;
+  padding-left: 3rem;
+  padding-right: 3rem;
+  padding-top: 2.25rem;
+  padding-bottom: 2.5rem;
 }
 
 @media (max-width: 768px) {
@@ -130,6 +133,15 @@
   border: 1px solid rgba(249, 115, 22, 0.35);
   color: #FB923C;
   font-weight: 600;
+}
+
+.didactic-article-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  overflow: hidden;
 }
 
 .didactic-article-body h1 {
@@ -215,24 +227,24 @@
 }
 
 .didactic-callout {
-  margin: 1.25rem 0;
-  padding: 1rem 1.25rem;
-  border-radius: 1rem;
+  margin: 0.85rem 0;
+  padding: 0.85rem 1.15rem;
+  border-radius: 0.85rem;
   border: 1px solid transparent;
   backdrop-filter: blur(8px);
 }
 
 .didactic-callout .callout-header {
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
 }
 
 .didactic-callout .callout-body {
-  font-size: 0.95em;
-  line-height: 1.6;
+  font-size: 0.9em;
+  line-height: 1.55;
 }
 
 .callout-analogy {
@@ -266,11 +278,11 @@
 }
 
 .didactic-mermaid-container {
-  margin: 1.5rem 0;
-  padding: 1.25rem;
+  margin: 1rem 0;
+  padding: 1rem;
   background-color: rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 1rem;
+  border-radius: 0.85rem;
   overflow-x: auto;
   display: flex;
   justify-content: center;
@@ -284,8 +296,8 @@
 .aresta-flashcards-deck {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  margin: 2rem 0;
+  gap: 0.85rem;
+  margin: 0.85rem 0;
 }
 
 .aresta-flashcard {
@@ -293,19 +305,19 @@
   cursor: pointer;
   user-select: none;
   background: transparent;
-  border-radius: 1rem;
-  min-height: 200px;
+  border-radius: 0.85rem;
+  min-height: 135px;
   position: relative;
 }
 
 .aresta-flashcard-inner {
   position: relative;
   width: 100%;
-  min-height: 200px;
+  min-height: 135px;
   transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
   transform-style: preserve-3d;
-  border-radius: 1rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  border-radius: 0.85rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
 }
 
 .aresta-flashcard.is-flipped .aresta-flashcard-inner {
@@ -320,8 +332,8 @@
   width: 100%;
   height: 100%;
   backface-visibility: hidden;
-  border-radius: 1rem;
-  padding: 1.5rem;
+  border-radius: 0.85rem;
+  padding: 1rem 1.25rem;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -342,16 +354,18 @@
 }
 
 .aresta-card-q {
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   font-weight: 600;
-  line-height: 1.5;
+  line-height: 1.4;
   color: #F97316;
+  margin: 0;
 }
 
 .aresta-card-a {
-  font-size: 1rem;
-  line-height: 1.6;
+  font-size: 0.9rem;
+  line-height: 1.45;
   color: #E2E8F0;
+  margin: 0;
 }
 
 .aresta-btn-add-deck {

@@ -25,6 +25,7 @@ interface VirtualDidacticPage {
   rawContent: string
   htmlContent: string
   plainText: string
+  layout?: string
 }
 
 export class DidacticDocumentAdapter implements IBookDocument {
@@ -181,9 +182,26 @@ export class DidacticDocumentAdapter implements IBookDocument {
         sections = pageSectionsMatch
         isNativeHtml = true
       } else {
-        sections = rawContent.split(/\n---\n/).map((s) => s.trim()).filter(Boolean)
-        if (sections.length === 0) {
-          sections.push(rawContent)
+        const rawSplits = rawContent.split(/\n---\n/).map((s) => s.trim()).filter(Boolean)
+        const initialSections = rawSplits.length > 0 ? rawSplits : [rawContent]
+        sections = []
+        for (const sec of initialSections) {
+          // Particionamento preventivo para garantir páginas estritas sem estouro de altura
+          if (sec.length > 1100 && sec.includes('\n\n')) {
+            const paragraphs = sec.split(/\n\n+/).map((p) => p.trim()).filter(Boolean)
+            let currentChunk = ''
+            for (const p of paragraphs) {
+              if (currentChunk && currentChunk.length + p.length > 850) {
+                sections.push(currentChunk)
+                currentChunk = p
+              } else {
+                currentChunk = currentChunk ? `${currentChunk}\n\n${p}` : p
+              }
+            }
+            if (currentChunk) sections.push(currentChunk)
+          } else {
+            sections.push(sec)
+          }
         }
       }
 
@@ -195,9 +213,14 @@ export class DidacticDocumentAdapter implements IBookDocument {
         let html: string
         let plainText: string
         let pageTitle = chapter.title
+        let layout: string | undefined
 
         if (isNativeHtml) {
           html = raw
+          const layoutMatch = raw.match(/data-layout="([^"]+)"/i)
+          if (layoutMatch && layoutMatch[1]) {
+            layout = layoutMatch[1].trim()
+          }
           const titleMatch = raw.match(/data-title="([^"]+)"/i) || raw.match(/<h[1-3][^>]*>([^<]+)<\/h[1-3]>/i)
           if (titleMatch && titleMatch[1]) {
             pageTitle = titleMatch[1].trim()
@@ -215,6 +238,7 @@ export class DidacticDocumentAdapter implements IBookDocument {
           rawContent: raw,
           htmlContent: html,
           plainText,
+          layout,
         })
 
         pageCounter++
@@ -335,8 +359,10 @@ export class DidacticDocumentAdapter implements IBookDocument {
       return
     }
 
+    const layoutClass = page.layout ? `layout-${page.layout}` : ''
+
     container.innerHTML = `
-      <div class="didactic-page-wrapper font-${this._fontFamily}" style="font-size: ${this._fontSize}px;">
+      <div class="didactic-page-wrapper font-${this._fontFamily} ${layoutClass}" style="font-size: ${this._fontSize}px; overflow: hidden !important;">
         <header class="didactic-page-header">
           <span class="chapter-badge" title="${page.chapterTitle}">${page.chapterTitle}</span>
           <span class="page-badge">${page.pageNumber} / ${this.totalPages}</span>
