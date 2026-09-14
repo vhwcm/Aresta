@@ -1,6 +1,6 @@
 <template>
   <div
-    class="relative select-none touch-none shadow-md rounded-lg overflow-hidden border border-divider/60 transition-all duration-200"
+    class="relative select-none touch-none shadow-md rounded-b-xl overflow-hidden border border-t-0 border-divider/60 transition-all duration-200"
     :class="[
       isActive ? 'ring-2 ring-primary/40' : 'opacity-95 hover:opacity-100',
     ]"

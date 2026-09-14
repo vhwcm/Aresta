@@ -73,10 +73,10 @@
       </div>
     </header>
 
-    <!-- Main Viewport: Vertical Continuous Pages -->
+    <!-- Main Viewport: Horizontal Pages (Colado no topo) -->
     <main
       ref="viewportRef"
-      class="flex-1 relative w-full h-full overflow-y-auto overflow-x-hidden pt-20 pb-8 px-4 md:pt-8 md:pb-8 md:pl-24 md:pr-8 flex flex-col items-center gap-8 bg-bgRoot/60"
+      class="flex-1 relative w-full h-full overflow-x-auto overflow-y-auto pt-0 pb-4 px-4 md:pt-0 md:pb-4 md:pl-24 md:pr-16 flex flex-row items-start gap-8 bg-bgRoot/60"
     >
       <!-- Loading State -->
       <div v-if="isLoading" class="flex-1 flex flex-col items-center justify-center text-textSecondary gap-3">
@@ -84,25 +84,25 @@
         <p class="text-xs">Carregando páginas de desenho...</p>
       </div>
 
-      <!-- Pages Container -->
+      <!-- Pages Container (Horizontal lado a lado) -->
       <template v-else-if="currentDrawing">
         <div
           v-for="(page, idx) in currentDrawing.pages"
           :key="page.id"
-          class="relative flex flex-col items-center group"
+          class="relative flex flex-col items-center group shrink-0"
         >
-          <!-- Controles de Página Flutuantes na lateral -->
-          <div class="absolute -top-3 sm:-top-4 right-0 flex items-center gap-1 z-20">
-            <span class="text-[10px] font-mono font-medium px-2 py-0.5 rounded bg-bgPanel border border-divider text-textSecondary shadow-xs">
-              Página {{ idx + 1 }} de {{ currentDrawing.pages.length }}
+          <!-- Controles de Página Flutuantes no topo da folha -->
+          <div class="absolute top-2 right-2 flex items-center gap-1.5 z-20">
+            <span class="text-[10px] font-mono font-medium px-2 py-0.5 rounded-md bg-bgPanel/85 backdrop-blur-sm border border-divider/60 text-textSecondary shadow-xs">
+              {{ idx + 1 }} / {{ currentDrawing.pages.length }}
             </span>
             <button
               v-if="currentDrawing.pages.length > 1"
-              @click="handleRemovePage(idx)"
-              class="p-1 rounded bg-bgPanel hover:bg-red-500/10 text-textSecondary hover:text-red-500 border border-divider transition-all shadow-xs cursor-pointer"
+              @click.stop="handleRemovePage(idx)"
+              class="p-1 rounded-md bg-bgPanel/85 hover:bg-red-500/15 text-textSecondary hover:text-red-500 border border-divider/60 transition-all shadow-xs cursor-pointer opacity-40 hover:opacity-100"
               title="Excluir esta página"
             >
-              <TrashIcon class="w-3 h-3" />
+              <TrashIcon class="w-3.5 h-3.5" />
             </button>
           </div>
 
@@ -123,15 +123,21 @@
           />
         </div>
 
-        <!-- Botão Adicionar Página no Final -->
-        <div class="pb-24 pt-2 flex flex-col items-center gap-2">
+        <!-- Botão Adicionar Página ao Lado: Seta com + -->
+        <div class="self-center flex flex-col items-center justify-center px-4 shrink-0">
           <button
             @click="handleAddPage"
-            class="px-5 py-2.5 rounded-2xl bg-bgPanel hover:bg-bgElevated text-textPrimary border border-divider shadow-md hover:shadow-lg transition-all flex items-center gap-2 text-xs font-semibold cursor-pointer"
+            class="w-14 h-14 rounded-full bg-bgPanel hover:bg-primary text-textSecondary hover:text-white border-2 border-divider hover:border-primary shadow-xl hover:shadow-2xl transition-all duration-200 flex items-center justify-center cursor-pointer hover:scale-110 active:scale-95 group"
+            title="Adicionar página ao lado"
           >
-            <PlusIcon class="w-4 h-4 text-primary" />
-            <span>Adicionar Página</span>
+            <div class="flex items-center gap-0.5">
+              <PlusIcon class="w-5 h-5 transition-transform group-hover:rotate-90 duration-200" />
+              <ArrowRightIcon class="w-4 h-4 transition-transform group-hover:translate-x-0.5 duration-200" />
+            </div>
           </button>
+          <span class="text-[11px] font-semibold text-textSecondary mt-2 tracking-wide group-hover:text-primary transition-colors">
+            Nova página
+          </span>
         </div>
       </template>
     </main>
@@ -179,6 +185,7 @@ import {
   Sun as SunIcon,
   Moon as MoonIcon,
   Plus as PlusIcon,
+  ArrowRight as ArrowRightIcon,
   Trash as TrashIcon,
 } from 'lucide-vue-next';
 import { useDrawing } from '~/composables/useDrawing';
@@ -245,8 +252,9 @@ const pageScale = ref(0.7);
 function calculateFitScale(): number {
   if (typeof window === 'undefined') return 1;
   const isDesktop = window.innerWidth >= 768;
-  // No desktop desconta barra lateral esquerda (~80px) + margens; no mobile desconta header + barra superior (~130px)
-  const availableWidth = isDesktop ? window.innerWidth - 130 : window.innerWidth - 32;
+  // No desktop desconta barra lateral esquerda (~80px) + botão de adicionar página à direita (~120px)
+  const availableWidth = isDesktop ? window.innerWidth - 200 : window.innerWidth - 32;
+  // Colado no topo: altura total menos o header (56px) e respiro inferior suave (24px)
   const availableHeight = isDesktop ? window.innerHeight - 80 : window.innerHeight - 150;
   const scaleW = availableWidth / 794;
   const scaleH = availableHeight / 1123;
@@ -272,6 +280,17 @@ function handleWheel(e: WheelEvent) {
     e.preventDefault();
     const zoomFactor = e.deltaY < 0 ? 1.08 : 0.92;
     pageScale.value = Math.max(0.25, Math.min(2.5, Number((pageScale.value * zoomFactor).toFixed(2))));
+    return;
+  }
+
+  // Navegação horizontal suave entre páginas ao rolar a roda do mouse normalmente
+  if (viewportRef.value && Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+    const canScrollH = viewportRef.value.scrollWidth > viewportRef.value.clientWidth;
+    const canScrollV = viewportRef.value.scrollHeight > viewportRef.value.clientHeight;
+    if (canScrollH && !canScrollV) {
+      e.preventDefault();
+      viewportRef.value.scrollLeft += e.deltaY;
+    }
   }
 }
 
@@ -305,6 +324,15 @@ function handleErase(pageIndex: number, pt: DrawingPoint, radius: number) {
 
 function handleAddPage() {
   addPage('blank');
+  nextTick(() => {
+    activePageIndex.value = (currentDrawing.value?.pages.length || 1) - 1;
+    if (viewportRef.value) {
+      viewportRef.value.scrollTo({
+        left: viewportRef.value.scrollWidth,
+        behavior: 'smooth',
+      });
+    }
+  });
 }
 
 function handleRemovePage(idx: number) {
