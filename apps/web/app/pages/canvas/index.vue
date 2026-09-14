@@ -23,14 +23,6 @@
     <div class="flex-1 flex flex-col h-full overflow-hidden">
       <!-- Top Header & Ações Globais -->
       <header class="border-b border-divider bg-bgPanel/80 backdrop-blur-md px-2.5 sm:px-6 py-2 sm:py-3 flex-shrink-0 z-10">
-        <input
-          ref="fileInputRef"
-          type="file"
-          accept=".canvas,.json"
-          class="hidden"
-          @change="handleFileImport"
-        />
-
         <!-- DESKTOP / TABLET (>= md): Layout Espaçoso -->
         <div class="hidden md:flex items-center justify-between gap-3 max-w-7xl w-full mx-auto">
           <!-- Lado Esquerdo: Busca Unificada + Alternador Grafo/Grade -->
@@ -78,16 +70,6 @@
 
           <!-- Lado Direito: Botões de Ação Rápida -->
           <div class="flex items-center gap-2.5 flex-shrink-0">
-            <!-- Importar .canvas -->
-            <button
-              class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-bgSurface hover:bg-bgElevated text-textSecondary hover:text-textPrimary border border-divider text-xs font-medium transition-all shadow-xs cursor-pointer"
-              title="Importar quadro no formato JSON .canvas do Obsidian"
-              @click="triggerImport"
-            >
-              <UploadCloudIcon class="w-3.5 h-3.5" />
-              <span>Importar .canvas</span>
-            </button>
-
             <!-- Nova Nota -->
             <button
               class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-bgSurface hover:bg-accent/10 text-textPrimary hover:text-accent border border-divider hover:border-accent/40 text-xs font-semibold transition-all shadow-xs cursor-pointer"
@@ -186,17 +168,8 @@
               </div>
             </div>
 
-            <!-- Grupo Direito: Importar + Nova Nota + Novo Quadro -->
+            <!-- Grupo Direito: Nova Nota + Novo Quadro -->
             <div class="flex items-center gap-1 shrink-0">
-              <!-- Importar .canvas -->
-              <button
-                class="p-2 rounded-xl bg-bgSurface hover:bg-bgElevated text-textSecondary hover:text-textPrimary border border-divider text-xs font-medium transition-all shadow-xs cursor-pointer shrink-0"
-                title="Importar .canvas"
-                @click="triggerImport"
-              >
-                <UploadCloudIcon class="w-3.5 h-3.5" />
-              </button>
-
               <!-- Nova Nota -->
               <button
                 class="inline-flex items-center gap-1 px-2 py-1.5 rounded-xl bg-bgSurface hover:bg-accent/10 text-textPrimary hover:text-accent border border-divider hover:border-accent/40 text-xs font-semibold transition-all shadow-xs cursor-pointer shrink-0 whitespace-nowrap"
@@ -565,7 +538,6 @@ import { useRoute, useRouter } from 'vue-router'
 import {
   SearchIcon,
   PlusIcon,
-  UploadCloudIcon,
   FolderIcon,
   FolderInputIcon,
   TagIcon,
@@ -622,7 +594,6 @@ const viewLayout = ref<'graph' | 'grid' | 'note-editor'>(
 const activeNote = ref<NoteItem | null>(null)
 let noteSaveTimeout: any = null
 
-const fileInputRef = ref<HTMLInputElement | null>(null)
 const isCreating = ref(false)
 const errorMessage = ref<string | null>(null)
 
@@ -643,7 +614,6 @@ const {
   updateCanvasMetadata,
   deleteCanvas,
   duplicateCanvas,
-  importJsonCanvas,
 } = useCanvas()
 
 const {
@@ -1078,26 +1048,6 @@ const handleDeleteCanvas = async (id: string) => {
       await deleteCanvas(id)
     } catch (err) {
       console.error('Erro ao excluir quadro:', err)
-    }
-  }
-}
-
-const triggerImport = () => {
-  fileInputRef.value?.click()
-}
-
-const handleFileImport = async (e: Event) => {
-  const target = e.target as HTMLInputElement
-  if (target.files && target.files[0]) {
-    const file = target.files[0]
-    try {
-      const created = await importJsonCanvas(file)
-      if (created?.id) {
-        await navigateTo(`/canvas/${created.id}`)
-      }
-    } catch (err) {
-      console.error('Erro ao importar quadro:', err)
-      errorMessage.value = 'Falha ao importar o arquivo .canvas.'
     }
   }
 }
