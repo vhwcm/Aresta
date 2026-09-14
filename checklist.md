@@ -6,6 +6,7 @@
 
 
 ## ✅ Concluído
+- [14/09/2026 09:50] [Concluído] Remover texto do botão de largura no leitor mantendo ícone fixo de setas para fora e alternância visual ativo/inativo
 - [14/09/2026 09:41] [Concluído] Exibir nomes dos temas com cores customizadas e vibrantes no Grafo de Conhecimento para máxima legibilidade no modo claro
 - [14/09/2026 09:34] [Concluído] Fazer modo Zen ocupar 100% da tela do notebook em tela cheia (Fullscreen) e permitir sair com a tecla Esc
 - [14/09/2026 09:34] [Concluído] Aplicar a cor definida do tema nos nós do Grafo de Conhecimento com estilo clean e leve do Aresta

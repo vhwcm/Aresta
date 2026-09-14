@@ -289,23 +289,22 @@
       <!-- Botão Alternar Largura: Centralizado vs 100% Largo (Desktop/Tablet) -->
       <button
         @click="store.toggleReaderWidthMode()"
-        class="hidden md:flex flex-col items-center justify-center md:w-11 md:h-11 rounded-xl border text-xs font-semibold transition-all active:scale-95 group"
+        class="hidden md:flex items-center justify-center md:w-11 md:h-11 rounded-xl border text-xs font-semibold transition-all active:scale-95 group"
         :class="store.readerWidthMode === 'wide'
-          ? 'bg-accent/15 border-accent text-accent shadow-sm'
+          ? 'bg-accent/20 border-accent text-accent shadow-sm'
           : (store.readerTheme === 'sepia'
-            ? 'bg-[#f5eedc] border-[#dfd5c0] text-[#5c4d3c] hover:text-[#2a2521] hover:bg-[#EBE2CE]'
+            ? 'bg-[#f5eedc] border-[#dfd5c0] text-[#786C5E] hover:text-[#2a2521] hover:bg-[#EBE2CE]'
             : (store.readerTheme === 'white'
-              ? 'bg-gray-100 border-gray-200 text-gray-700 hover:text-black hover:bg-gray-200'
-              : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary hover:bg-white/10'))"
-        :title="store.readerWidthMode === 'wide' ? 'Modo 100% Largo ativo (Clique para Modo Centralizado)' : 'Modo Centralizado ativo (Clique para 100% Largo)'"
+              ? 'bg-gray-100 border-gray-200 text-gray-400 hover:text-gray-700 hover:bg-gray-200'
+              : 'bg-white/5 border-divider text-textSecondary/60 hover:text-textPrimary hover:bg-white/10'))"
+        :title="store.readerWidthMode === 'wide' ? 'Modo 100% Largo ativo (Clique para desativar)' : 'Modo 100% Largo inativo (Clique para ativar)'"
         aria-label="Alternar largura de leitura"
         id="btn-toggle-width-mode"
       >
-        <Maximize2Icon v-if="store.readerWidthMode === 'wide'" class="w-4 h-4 text-accent" />
-        <Minimize2Icon v-else class="w-4 h-4 text-textSecondary group-hover:text-textPrimary" />
-        <span class="text-[8px] font-technical font-medium leading-none mt-0.5">
-          {{ store.readerWidthMode === 'wide' ? '100% Largo' : 'Centro' }}
-        </span>
+        <Maximize2Icon
+          class="w-4 h-4 transition-transform group-hover:scale-110"
+          :class="store.readerWidthMode === 'wide' ? 'text-accent' : 'opacity-70 group-hover:opacity-100'"
+        />
       </button>
     </div>
 
