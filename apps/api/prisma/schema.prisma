@@ -32,11 +32,13 @@ model User {
   userBooks           UserBook[]
   canvases            Canvas[]
   notes               Note[]
+  drawingNotes        DrawingNote[]
   annotations         Annotation[]
   flashcards          Flashcard[]
   dailyDeckCards      DailyDeckCard[]
   didacticBooklets    DidacticBooklet[]
   accounts            Account[]
+  feedbacks           Feedback[]
 
   @@map("users")
 }
@@ -365,3 +367,37 @@ model NoteLink {
   @@index([source_note_id, target_type, target_id])
   @@map("note_links")
 }
+
+model DrawingNote {
+  id          String   @id @default(uuid())
+  user_id     Int
+  title       String   @default("Desenho sem título")
+  folder      String?
+  tags        String   @default("[]")
+  pages_data  String   @db.Text
+  preview_url String?  @db.Text
+  created_at  DateTime @default(now())
+  updated_at  DateTime @default(now()) @updatedAt
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, updated_at])
+  @@index([user_id, folder])
+  @@map("drawing_notes")
+}
+
+// ==========================================
+// 8. USER FEEDBACK & APP IMPROVEMENTS
+// ==========================================
+
+model Feedback {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  message    String   @db.Text
+  type       String   @default("FEEDBACK") // 'FEEDBACK' | 'IMPROVEMENT' | 'BUG'
+  created_at DateTime @default(now())
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@map("feedbacks")
+}
+

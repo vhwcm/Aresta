@@ -66,6 +66,28 @@
                       <PanelRightOpenIcon class="w-3.5 h-3.5 text-accent" />
                       <span>Mostrar Grafo</span>
                     </button>
+                    <!-- Informações / Benefícios do Aresta -->
+                    <NuxtLink
+                      to="/beneficios"
+                      data-testid="header-benefits-btn"
+                      class="p-2 sm:px-2.5 sm:py-2 rounded-full bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 border border-divider hover:border-accent/40 text-textSecondary hover:text-textPrimary transition-all cursor-pointer shadow-sm focus:outline-none flex items-center justify-center"
+                      title="Benefícios do Aresta"
+                      aria-label="Conhecer todos os benefícios do Aresta"
+                    >
+                      <InfoIcon class="w-4 h-4 text-textSecondary hover:text-accent transition-colors" />
+                    </NuxtLink>
+
+                    <!-- Feedback / Sugestões (Canvas Lateral) -->
+                    <button
+                      @click="isFeedbackCanvasOpen = true"
+                      data-testid="header-feedback-btn"
+                      class="p-2 sm:px-2.5 sm:py-2 rounded-full bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 border border-divider hover:border-accent/40 text-textSecondary hover:text-textPrimary transition-all cursor-pointer shadow-sm focus:outline-none flex items-center justify-center"
+                      title="Enviar feedback ou sugestão de melhoria"
+                      aria-label="Enviar feedback ou melhoria"
+                    >
+                      <MessageSquareIcon class="w-4 h-4 text-textSecondary hover:text-accent transition-colors" />
+                    </button>
+
                     <!-- Alternar Tema -->
                     <button
                       @click="toggleThemeMode"
@@ -159,6 +181,28 @@
                       <PanelRightOpenIcon class="w-3.5 h-3.5 text-accent" />
                       <span>Mostrar Grafo</span>
                     </button>
+                    <!-- Informações / Benefícios do Aresta -->
+                    <NuxtLink
+                      to="/beneficios"
+                      data-testid="header-benefits-btn"
+                      class="p-2 sm:px-2.5 sm:py-2 rounded-full bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 border border-divider hover:border-accent/40 text-textSecondary hover:text-textPrimary transition-all cursor-pointer shadow-sm focus:outline-none flex items-center justify-center"
+                      title="Benefícios do Aresta"
+                      aria-label="Conhecer todos os benefícios do Aresta"
+                    >
+                      <InfoIcon class="w-4 h-4 text-textSecondary hover:text-accent transition-colors" />
+                    </NuxtLink>
+
+                    <!-- Feedback / Sugestões (Canvas Lateral) -->
+                    <button
+                      @click="isFeedbackCanvasOpen = true"
+                      data-testid="header-feedback-btn"
+                      class="p-2 sm:px-2.5 sm:py-2 rounded-full bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 border border-divider hover:border-accent/40 text-textSecondary hover:text-textPrimary transition-all cursor-pointer shadow-sm focus:outline-none flex items-center justify-center"
+                      title="Enviar feedback ou sugestão de melhoria"
+                      aria-label="Enviar feedback ou melhoria"
+                    >
+                      <MessageSquareIcon class="w-4 h-4 text-textSecondary hover:text-accent transition-colors" />
+                    </button>
+
                     <!-- Alternar Tema -->
                     <button
                       @click="toggleThemeMode"
@@ -1155,6 +1199,12 @@
         </div>
       </section>
     </div>
+
+    <!-- Canvas Lateral de Feedback & Sugestões de Melhoria -->
+    <FeedbackCanvas
+      v-model:is-open="isFeedbackCanvasOpen"
+      @close="isFeedbackCanvasOpen = false"
+    />
   </div>
 </template>
 
@@ -1192,8 +1242,10 @@ import {
   UploadIcon,
   SunIcon,
   MoonIcon,
-  PaletteIcon
+  PaletteIcon,
+  MessageSquareIcon
 } from 'lucide-vue-next'
+import FeedbackCanvas from '~/components/FeedbackCanvas.vue'
 import ReadingStreak from '~/components/ReadingStreak.vue'
 import EbbinghausChart from '~/components/EbbinghausChart.vue'
 import SidebarGraph from '~/components/SidebarGraph.vue'
@@ -1262,6 +1314,7 @@ const { annotations, fetchAnnotations } = useAnnotations()
 
 const coverError = ref(false)
 const isGraphCollapsed = ref(!desktopHomeGraphOpen.value)
+const isFeedbackCanvasOpen = ref(false)
 
 const toggleGraph = () => {
   isGraphCollapsed.value = !isGraphCollapsed.value

@@ -82,6 +82,7 @@ describe('Index Page (Landing Page & Home)', () => {
     HomeBookReaderDemo: { template: '<div data-testid="home-book-reader-demo">Demonstração do Leitor</div>' },
     HomeCanvasNotesDemo: { template: '<div data-testid="home-canvas-notes-demo">Demonstração do Canvas e Notas</div>' },
     HomeKnowledgeGraphDemo: { template: '<div data-testid="home-knowledge-graph-demo">Demonstração do Grafo</div>' },
+    FeedbackCanvas: { template: '<div data-testid="feedback-canvas-stub" :data-open="isOpen" />', props: ['isOpen'] },
     ArrowRightIcon: true,
     LibraryIcon: true,
     BrainIcon: true,
@@ -95,6 +96,7 @@ describe('Index Page (Landing Page & Home)', () => {
     KeyIcon: true,
     AlertCircleIcon: true,
     InfoIcon: true,
+    MessageSquareIcon: true,
     PanelRightCloseIcon: true,
     PanelRightOpenIcon: true,
     SparklesIcon: true,
@@ -417,5 +419,39 @@ describe('Index Page (Landing Page & Home)', () => {
     expect(wrapper.find('[data-testid="home-graph-section"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="retract-graph-btn"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="toggle-graph-open-btn"]').exists()).toBe(false)
+  })
+
+  it('renderiza os botões de benefícios e feedback no cabeçalho e abre o canvas de feedback', async () => {
+    vi.spyOn(authComposable, 'useAuth').mockReturnValue({
+      token: ref('valid-jwt-token'),
+      user: ref({ id: 1, name: 'viktor', email: 'viktor@aresta.org', role: 'ADMIN', isActive: true }),
+      isLoggedIn: ref(true),
+      isAdmin: ref(true),
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+      deleteAccount: vi.fn(),
+      fetchCurrentUser: vi.fn()
+    } as any)
+
+    const wrapper = mount(IndexPage, {
+      global: {
+        stubs: commonStubs
+      }
+    })
+
+    const benefitsBtn = wrapper.find('[data-testid="header-benefits-btn"]')
+    expect(benefitsBtn.exists()).toBe(true)
+    expect(benefitsBtn.attributes('to') || benefitsBtn.attributes('href')).toBe('/beneficios')
+
+    const feedbackBtn = wrapper.find('[data-testid="header-feedback-btn"]')
+    expect(feedbackBtn.exists()).toBe(true)
+
+    const canvasStub = wrapper.find('[data-testid="feedback-canvas-stub"]')
+    expect(canvasStub.exists()).toBe(true)
+    expect(canvasStub.attributes('data-open')).toBe('false')
+
+    await feedbackBtn.trigger('click')
+    expect(canvasStub.attributes('data-open')).toBe('true')
   })
 })

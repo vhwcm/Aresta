@@ -18,6 +18,7 @@ import { syncRouter } from './modules/reader/routes/sync.routes'
 // Canvas Module
 import { canvasRouter } from './modules/canvas/routes/canvas.routes'
 import { noteRouter } from './modules/canvas/routes/note.routes'
+import { drawingRouter } from './modules/canvas/routes/drawing.routes'
 
 // Memory Module
 import { annotationRouter } from './modules/memory/routes/annotation.routes'
@@ -28,6 +29,9 @@ import { didacticRouter } from './modules/memory/routes/didactic.routes'
 // AI Module
 import { aiRouter } from './modules/ai/routes/ai.routes'
 import { aiController } from './modules/ai/controllers/ai.controller'
+
+// Feedback Module
+import { feedbackRouter } from './modules/feedback/routes/feedback.routes'
 
 const app = express()
 
@@ -65,6 +69,7 @@ app.use('/api/sync', syncRouter)
 app.use('/api/canvas', canvasRouter)
 app.use('/api/canvases', canvasRouter)
 app.use('/api/notes', noteRouter)
+app.use('/api/drawings', drawingRouter)
 
 // Memory Routes
 app.use('/api/annotations', annotationRouter)
@@ -76,6 +81,9 @@ app.use('/api/didactic', didacticRouter)
 // AI & OCR Routes
 app.use('/api/ai', aiRouter)
 app.post('/api/ocr/transcribe', (req, res) => aiController.transcribe(req, res))
+
+// Feedback Routes
+app.use('/api/feedback', feedbackRouter)
 
 // Global Error Handler
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
