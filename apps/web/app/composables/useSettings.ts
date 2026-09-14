@@ -332,18 +332,14 @@ export function useSettings() {
 
   const setPageAnimationEnabled = (enabled: boolean) => {
     settings.pageAnimationEnabled = enabled
-    if (!enabled) {
-      settings.pageCreaseEnabled = false
-    }
+    settings.pageCreaseEnabled = enabled
     saveLocally()
     void persistToServer()
   }
 
   const setPageCreaseEnabled = (enabled: boolean) => {
-    if (enabled && !settings.pageAnimationEnabled) {
-      return
-    }
     settings.pageCreaseEnabled = enabled
+    settings.pageAnimationEnabled = enabled
     saveLocally()
     void persistToServer()
   }

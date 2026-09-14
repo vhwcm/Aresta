@@ -92,7 +92,7 @@ describe('Conta Page (/conta)', () => {
     expect(localStorage.getItem('aresta_reader_theme')).toBe('white')
   })
 
-  it('permite alternar o switch de Virada de Página 3D (Efeito Folhear)', async () => {
+  it('permite alternar o switch unificado de Virada de Página 3D e Efeitos de Livro Físico', async () => {
     const wrapper = mount(ContaPage, {
       global: {
         stubs: defaultStubs,
@@ -104,7 +104,7 @@ describe('Conta Page (/conta)', () => {
 
     // Inicia como ativado por padrão
     expect(pageAnimationToggle.attributes('aria-checked')).toBe('true')
-    expect(wrapper.text()).toContain('Ativado (Kindle / 3D)')
+    expect(wrapper.text()).toContain('Ativado (3D & Livro Físico)')
 
     // Alterna para desativado
     await pageAnimationToggle.trigger('click')
@@ -112,107 +112,27 @@ describe('Conta Page (/conta)', () => {
     expect(wrapper.text()).toContain('Desativado (Instantâneo)')
     let saved = JSON.parse(localStorage.getItem('aresta_settings') || '{}')
     expect(saved.pageAnimationEnabled).toBe(false)
+    expect(saved.pageCreaseEnabled).toBe(false)
 
     // Alterna de volta para ativado
     await pageAnimationToggle.trigger('click')
     expect(pageAnimationToggle.attributes('aria-checked')).toBe('true')
-    expect(wrapper.text()).toContain('Ativado (Kindle / 3D)')
+    expect(wrapper.text()).toContain('Ativado (3D & Livro Físico)')
     saved = JSON.parse(localStorage.getItem('aresta_settings') || '{}')
     expect(saved.pageAnimationEnabled).toBe(true)
-  })
-
-  it('permite alternar o switch de Vinco Central (Modo 2 Páginas)', async () => {
-    const wrapper = mount(ContaPage, {
-      global: {
-        stubs: defaultStubs,
-      },
-    })
-
-    const pageCreaseToggle = wrapper.find('[data-testid="toggle-page-crease"]')
-    expect(pageCreaseToggle.exists()).toBe(true)
-
-    // Inicia como ativado por padrão
-    expect(pageCreaseToggle.attributes('aria-checked')).toBe('true')
-    expect(wrapper.text()).toContain('Ativado (Visível)')
-
-    // Alterna para desativado
-    await pageCreaseToggle.trigger('click')
-    expect(pageCreaseToggle.attributes('aria-checked')).toBe('false')
-    expect(wrapper.text()).toContain('Desativado (Oculto)')
-    let saved = JSON.parse(localStorage.getItem('aresta_settings') || '{}')
-    expect(saved.pageCreaseEnabled).toBe(false)
-    expect(localStorage.getItem('aresta_reader_page_crease')).toBe('false')
-
-    // Alterna de volta para ativado
-    await pageCreaseToggle.trigger('click')
-    expect(pageCreaseToggle.attributes('aria-checked')).toBe('true')
-    expect(wrapper.text()).toContain('Ativado (Visível)')
-    saved = JSON.parse(localStorage.getItem('aresta_settings') || '{}')
     expect(saved.pageCreaseEnabled).toBe(true)
   })
 
-  it('permite alternar o switch de Grafo na Tela Inicial (Desktop)', async () => {
+  it('não exibe configurações globais de grafo na tela inicial e fontes na página de conta', () => {
     const wrapper = mount(ContaPage, {
       global: {
         stubs: defaultStubs,
       },
     })
 
-    const homeGraphToggle = wrapper.find('[data-testid="toggle-desktop-home-graph"]')
-    expect(homeGraphToggle.exists()).toBe(true)
-
-    // Inicia como true
-    expect(homeGraphToggle.attributes('aria-checked')).toBe('true')
-
-    // Alterna para false
-    await homeGraphToggle.trigger('click')
-    expect(homeGraphToggle.attributes('aria-checked')).toBe('false')
-
-    // Alterna de volta para true
-    await homeGraphToggle.trigger('click')
-    expect(homeGraphToggle.attributes('aria-checked')).toBe('true')
-  })
-
-  it('permite ajustar o tamanho da fonte padrão do EPUB', async () => {
-    const wrapper = mount(ContaPage, {
-      global: {
-        stubs: defaultStubs,
-      },
-    })
-
-    const decreaseBtn = wrapper.find('[data-testid="decrease-font-btn"]')
-    const increaseBtn = wrapper.find('[data-testid="increase-font-btn"]')
-    const indicator = wrapper.find('[data-testid="font-size-indicator"]')
-
-    expect(indicator.text()).toBe('18px')
-
-    await increaseBtn.trigger('click')
-    expect(indicator.text()).toBe('20px')
-
-    await decreaseBtn.trigger('click')
-    expect(indicator.text()).toBe('18px')
-  })
-
-  it('permite selecionar a fonte padrão do EPUB', async () => {
-    const wrapper = mount(ContaPage, {
-      global: {
-        stubs: defaultStubs,
-      },
-    })
-
-    const merriweatherBtn = wrapper.find('[data-testid="font-option-merriweather"]')
-    const interBtn = wrapper.find('[data-testid="font-option-inter"]')
-
-    expect(merriweatherBtn.exists()).toBe(true)
-    expect(interBtn.exists()).toBe(true)
-
-    await merriweatherBtn.trigger('click')
-    const saved = JSON.parse(localStorage.getItem('aresta_settings') || '{}')
-    expect(saved.epubFontFamily).toBe('merriweather')
-
-    await interBtn.trigger('click')
-    const saved2 = JSON.parse(localStorage.getItem('aresta_settings') || '{}')
-    expect(saved2.epubFontFamily).toBe('inter')
+    expect(wrapper.find('[data-testid="toggle-desktop-home-graph"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="decrease-font-btn"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="font-option-merriweather"]').exists()).toBe(false)
   })
 
   it('opens delete modal and enables delete button only when phrase is correctly typed', async () => {

@@ -1307,13 +1307,13 @@ if (typeof useHead === 'function') {
 }
 
 const auth = useAuth()
-const { loadFromServer, desktopHomeGraphOpen, themeMode, toggleThemeMode } = useSettings()
+const { loadFromServer, themeMode, toggleThemeMode } = useSettings()
 const { userBooks, fetchUserBooks } = useUserBooks()
 const flashcards = useFlashcards()
 const { annotations, fetchAnnotations } = useAnnotations()
 
 const coverError = ref(false)
-const isGraphCollapsed = ref(!desktopHomeGraphOpen.value)
+const isGraphCollapsed = ref(false)
 const isFeedbackCanvasOpen = ref(false)
 
 const toggleGraph = () => {
@@ -1351,20 +1351,13 @@ watch(
   }
 )
 
-watch(
-  () => desktopHomeGraphOpen.value,
-  (val) => {
-    isGraphCollapsed.value = !val
-  }
-)
-
 onMounted(async () => {
   if (typeof window !== 'undefined') {
     const saved = localStorage.getItem('aresta_home_graph_collapsed')
     if (saved !== null) {
       isGraphCollapsed.value = saved === 'true'
     } else {
-      isGraphCollapsed.value = !desktopHomeGraphOpen.value
+      isGraphCollapsed.value = false
     }
   }
 

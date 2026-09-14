@@ -244,6 +244,8 @@ const getApiBase = () => {
   return 'http://localhost:3001'
 }
 
+import { useAuth } from '~/composables/useAuth'
+
 const props = defineProps<{
   isOpen: boolean
   book: GraphNode | null
@@ -254,6 +256,7 @@ defineEmits<{
   (e: 'close'): void
 }>()
 
+const auth = useAuth()
 const { fetchBookAnnotations, createLooseAnnotation } = useGraph()
 
 const annotations = ref<any[]>([])
@@ -374,7 +377,12 @@ const loadBookData = async () => {
 
     // 3. Buscar os temas que pertencem a este livro
     try {
-      const res = await $fetch<any>(`${getApiBase()}/api/books/${bookId}`)
+      const headers: Record<string, string> = {}
+      const token = auth.token.value || (typeof useCookie === 'function' ? useCookie<string | null>('aresta_token').value : null)
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`
+      }
+      const res = await $fetch<any>(`${getApiBase()}/api/books/${bookId}`, { headers })
       availableThemes.value = res.themes || []
       selectedThemeIds.value = availableThemes.value.map((t: any) => t.id)
     } catch {

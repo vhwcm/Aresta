@@ -52,6 +52,7 @@ import { useRoute } from 'vue-router'
 import { BookOpenIcon, UploadIcon } from 'lucide-vue-next'
 import { useReaderStore } from '~/stores/readerStore'
 import { useUserBooks } from '~/composables/useUserBooks'
+import { useAuth } from '~/composables/useAuth'
 import { createBookDocument } from '~/adapters/BookDocumentFactory'
 
 import { readerProfiler } from '~/utils/readerProfiler'
@@ -63,6 +64,7 @@ import type { SupportedFileType } from '~/interfaces/reader/IValidationResult'
 
 const store = useReaderStore()
 const route = useRoute()
+const auth = useAuth()
 
 const activeTheme = computed(() => store.readerTheme || 'sepia')
 const themeBgColor = computed(() => {
@@ -75,6 +77,15 @@ const loadingLabel = computed(() => {
   if (store.documentType === 'didactic') return 'Livreto Didático IA'
   return store.documentType === 'epub' ? 'EPUB' : 'PDF'
 })
+
+function getAuthHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {}
+  const token = auth.token.value || (typeof useCookie === 'function' ? useCookie<string | null>('aresta_token').value : null)
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+  return headers
+}
 
 function resolveBookFileUrl(bookId?: string, bookPath?: string): string {
   const config = useRuntimeConfig()
@@ -97,7 +108,8 @@ async function fetchBookMetadata(bookId: string) {
   try {
     const config = useRuntimeConfig()
     const readerApi = config.public.readerApiUrl || config.public.apiUrl || 'http://localhost:3001'
-    const metaRes = await fetch(`${readerApi}/api/books/${bookId}`)
+    const headers = getAuthHeaders()
+    const metaRes = await fetch(`${readerApi}/api/books/${bookId}`, { headers })
     return metaRes.ok ? await metaRes.json() : null
   } catch (e) {
     console.warn('[ReaderShell] Falha ao buscar metadados do livro:', e)
@@ -190,8 +202,9 @@ const loadBookFromQuery = async () => {
     } else {
       // 2. Buscar da API / Network
       const fileUrl = resolveBookFileUrl(bookId, bookPath)
+      const headers = getAuthHeaders()
       const response = await readerProfiler.measureAsync('2. Network Fetch do Arquivo', async () => {
-        return await fetch(fileUrl)
+        return await fetch(fileUrl, { headers })
       }, 'network')
 
       if (!response.ok) {

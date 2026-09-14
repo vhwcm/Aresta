@@ -138,31 +138,8 @@ export const useReaderStore = defineStore('reader', {
           if (parsed.readerWidthMode === 'centered' || parsed.readerWidthMode === 'wide') {
             this.readerWidthMode = parsed.readerWidthMode
           }
-          if (typeof parsed.epubFontSize === 'number') {
-            const parsedSize = Math.max(12, Math.min(36, Math.round(parsed.epubFontSize)))
-            this.fontSize = parsedSize
-            if (this.document && typeof this.document.setFontSize === 'function') {
-              this.document.setFontSize(parsedSize, this.currentPage)
-            }
-          }
           if (parsed.readerTheme === 'white' || parsed.readerTheme === 'sepia' || parsed.readerTheme === 'black') {
             this.readerTheme = parsed.readerTheme
-          }
-          if (parsed.epubFontFamily) {
-            const fontMap: Record<string, string> = {
-              newsreader: "'Newsreader', Georgia, serif",
-              literata: "'Literata', Georgia, serif",
-              lora: "'Lora', Georgia, serif",
-              merriweather: "'Merriweather', Georgia, serif",
-              inter: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-            }
-            if (fontMap[parsed.epubFontFamily]) {
-              const fontFam = fontMap[parsed.epubFontFamily]!
-              this.fontFamily = fontFam
-              if (this.document && typeof this.document.setFontFamily === 'function') {
-                this.document.setFontFamily(fontFam, this.currentPage)
-              }
-            }
           }
         }
         const savedTheme = localStorage.getItem('aresta_reader_theme')
@@ -182,6 +159,57 @@ export const useReaderStore = defineStore('reader', {
       }
     },
 
+    getBookStorageKey(): string | null {
+      if (this.bookId) return `aresta_book_${this.bookId}`
+      if (this.fileName) return `aresta_book_${this.fileName}`
+      return null
+    },
+
+    loadBookTypography() {
+      if (typeof window === 'undefined') return
+      const key = this.getBookStorageKey()
+      if (!key) {
+        this.fontSize = 18
+        this.fontFamily = "'Newsreader', Georgia, serif"
+        return
+      }
+
+      try {
+        let savedSize = localStorage.getItem(`${key}_fontsize`)
+        if (savedSize === null && this.fileName) {
+          savedSize = localStorage.getItem(`aresta_book_${this.fileName}_fontsize`)
+        }
+        if (savedSize !== null) {
+          const parsed = Number(savedSize)
+          if (!isNaN(parsed)) {
+            this.fontSize = Math.max(12, Math.min(36, Math.round(parsed)))
+          }
+        } else {
+          this.fontSize = 18
+        }
+
+        let savedFont = localStorage.getItem(`${key}_fontfamily`)
+        if (!savedFont && this.fileName) {
+          savedFont = localStorage.getItem(`aresta_book_${this.fileName}_fontfamily`)
+        }
+        if (savedFont) {
+          const fontMap: Record<string, string> = {
+            newsreader: "'Newsreader', Georgia, serif",
+            literata: "'Literata', Georgia, serif",
+            lora: "'Lora', Georgia, serif",
+            merriweather: "'Merriweather', Georgia, serif",
+            inter: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+          }
+          this.fontFamily = fontMap[savedFont] || savedFont
+        } else {
+          this.fontFamily = "'Newsreader', Georgia, serif"
+        }
+      } catch {
+        this.fontSize = 18
+        this.fontFamily = "'Newsreader', Georgia, serif"
+      }
+    },
+
     setBookId(id: number | null) {
       this.bookId = id
       this.loadBookmarks()
@@ -193,17 +221,14 @@ export const useReaderStore = defineStore('reader', {
       }
       this.document = markRaw(doc)
       this.fileName = fileName
-      if (bookId !== null) {
-        this.bookId = bookId
-      } else if (!this.bookId) {
-        this.bookId = 1
-      }
+      this.bookId = bookId
       this.currentPage = 1
       this.isLoading = false
       this.error = null
       this.isGraphOpen = false
       this.isMobileGraphOpen = false
       this.syncSettings()
+      this.loadBookTypography()
       if (doc.type === 'epub') {
         if (typeof doc.setFontSize === 'function') {
           const preferredSize = this.fontSize || 18
@@ -222,21 +247,10 @@ export const useReaderStore = defineStore('reader', {
       this.fontFamily = family
       if (typeof window !== 'undefined') {
         try {
-          const fontMapRev: Record<string, string> = {
-            "'Newsreader', Georgia, serif": 'newsreader',
-            "'Literata', Georgia, serif": 'literata',
-            "'Lora', Georgia, serif": 'lora',
-            "'Merriweather', Georgia, serif": 'merriweather',
-            "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif": 'inter',
+          const key = this.getBookStorageKey()
+          if (key) {
+            localStorage.setItem(`${key}_fontfamily`, family)
           }
-          const fontId = fontMapRev[family]
-          const saved = localStorage.getItem('aresta_settings')
-          const settings = saved ? JSON.parse(saved) : {}
-          if (fontId) {
-            settings.epubFontFamily = fontId
-            localStorage.setItem('aresta_reader_font', fontId)
-          }
-          localStorage.setItem('aresta_settings', JSON.stringify(settings))
         } catch {
           // ignorar erro
         }
@@ -252,10 +266,10 @@ export const useReaderStore = defineStore('reader', {
       this.fontSize = clamped
       if (typeof window !== 'undefined') {
         try {
-          const saved = localStorage.getItem('aresta_settings')
-          const settings = saved ? JSON.parse(saved) : {}
-          settings.epubFontSize = clamped
-          localStorage.setItem('aresta_settings', JSON.stringify(settings))
+          const key = this.getBookStorageKey()
+          if (key) {
+            localStorage.setItem(`${key}_fontsize`, String(clamped))
+          }
         } catch {
           // ignorar erro
         }
@@ -501,8 +515,9 @@ export const useReaderStore = defineStore('reader', {
       try {
         const config = typeof useRuntimeConfig === 'function' ? useRuntimeConfig() : null
         const apiUrl = config?.public?.apiUrl || 'http://localhost:3001'
-        const authData = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
-        const token = authData ? (authData.startsWith('"') ? JSON.parse(authData) : authData) : null
+        const cookieToken = typeof useCookie === 'function' ? useCookie<string | null>('aresta_token').value : null
+        const authData = typeof window !== 'undefined' ? (localStorage.getItem('aresta_token') || localStorage.getItem('auth_token')) : null
+        const token = cookieToken || (authData ? (authData.startsWith('"') ? JSON.parse(authData) : authData) : null)
         if (token && typeof fetch !== 'undefined') {
           fetch(`${apiUrl}/api/user-books/${this.bookId}`, {
             method: 'PATCH',

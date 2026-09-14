@@ -331,8 +331,8 @@ describe('useReaderStore', () => {
       expect(store.fontSize).toBe(18)
     })
 
-    it('sincroniza tamanho da fonte configurado nas preferências da conta ao carregar documento', () => {
-      localStorage.setItem('aresta_settings', JSON.stringify({ epubFontSize: 26 }))
+    it('sincroniza tamanho da fonte configurado especificamente para o livro ao carregar documento', () => {
+      localStorage.setItem('aresta_book_livro.epub_fontsize', '26')
       const store = useReaderStore()
       const mockDoc = createMockDocument({
         type: 'epub',

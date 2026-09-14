@@ -192,7 +192,7 @@
           </div>
         </div>
 
-        <!-- 2. Virada de Página 3D (Efeito Folhear) -->
+        <!-- 2. Virada de Página 3D & Efeitos de Livro Físico -->
         <div class="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div class="flex items-start sm:items-center gap-4 min-w-0">
             <div class="p-3 rounded-2xl bg-accent/10 border border-accent/20 text-accent shrink-0">
@@ -200,16 +200,16 @@
             </div>
             <div class="flex flex-col gap-0.5">
               <div class="font-interface text-sm font-medium text-textPrimary flex items-center gap-2">
-                <span>Virada de Página 3D (Efeito Folhear)</span>
+                <span>Virada de Página 3D & Efeitos de Livro Físico</span>
                 <span
                   class="px-2 py-0.5 rounded-full font-technical text-[10px] font-semibold"
                   :class="pageAnimationEnabled ? 'bg-accent/15 text-accent border border-accent/30' : 'bg-black/5 dark:bg-white/10 text-textSecondary'"
                 >
-                  {{ pageAnimationEnabled ? 'Ativado (Kindle / 3D)' : 'Desativado (Instantâneo)' }}
+                  {{ pageAnimationEnabled ? 'Ativado (3D & Livro Físico)' : 'Desativado (Instantâneo)' }}
                 </span>
               </div>
               <p class="font-interface text-xs text-textSecondary">
-                Efeito visual 3D de folhear páginas em livros e PDFs, semelhante à experiência do Kindle e Google Play Livros.
+                Efeito visual 3D de folhear páginas em livros e PDFs, com sombra de vinco central e camadas laterais de páginas lidas e restantes.
               </p>
             </div>
           </div>
@@ -222,207 +222,13 @@
             @click="setPageAnimationEnabled(!pageAnimationEnabled)"
             class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-accent/50"
             :class="pageAnimationEnabled ? 'bg-accent' : 'bg-black/10 dark:bg-white/10'"
-            title="Alternar animação de virada de página 3D"
+            title="Alternar animação de virada 3D e efeitos de livro físico"
           >
             <span
               class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
               :class="pageAnimationEnabled ? 'translate-x-5' : 'translate-x-0'"
             />
           </button>
-        </div>
-
-        <!-- 2.5. Efeitos de Livro Físico: Vinco e Pilha de Páginas -->
-        <div
-          class="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-opacity duration-200"
-          :class="{ 'opacity-60': !canEnablePageCrease }"
-        >
-          <div class="flex items-start sm:items-center gap-4 min-w-0">
-            <div class="p-3 rounded-2xl bg-accent/10 border border-accent/20 text-accent shrink-0">
-              <BookOpenIcon class="w-5 h-5" />
-            </div>
-            <div class="flex flex-col gap-0.5">
-              <div class="font-interface text-sm font-medium text-textPrimary flex flex-wrap items-center gap-2">
-                <span>Efeitos de Livro Físico (Vinco e Pilha de Páginas)</span>
-                <span
-                  v-if="!canEnablePageCrease"
-                  class="px-2 py-0.5 rounded-full font-technical text-[10px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
-                >
-                  Requer Virada 3D Ativada
-                </span>
-                <span
-                  v-else
-                  class="px-2 py-0.5 rounded-full font-technical text-[10px] font-semibold"
-                  :class="pageCreaseEnabled ? 'bg-accent/15 text-accent border border-accent/30' : 'bg-black/5 dark:bg-white/10 text-textSecondary'"
-                >
-                  {{ pageCreaseEnabled ? 'Ativado (Visível)' : 'Desativado (Oculto)' }}
-                </span>
-              </div>
-              <p class="font-interface text-xs text-textSecondary">
-                Exibe a sombra de vinco central e as camadas de páginas nas laterais indicando o progresso do livro lido e restante.
-              </p>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            role="switch"
-            :disabled="!canEnablePageCrease"
-            :aria-checked="pageCreaseEnabled"
-            data-testid="toggle-page-crease"
-            @click="canEnablePageCrease && setPageCreaseEnabled(!pageCreaseEnabled)"
-            class="relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-accent/50"
-            :class="[
-              pageCreaseEnabled && canEnablePageCrease ? 'bg-accent' : 'bg-black/10 dark:bg-white/10',
-              canEnablePageCrease ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'
-            ]"
-            :title="canEnablePageCrease ? 'Alternar efeitos de livro físico' : 'Ative a Virada de Página 3D para habilitar os efeitos de livro físico'"
-          >
-            <span
-              class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
-              :class="pageCreaseEnabled && canEnablePageCrease ? 'translate-x-5' : 'translate-x-0'"
-            />
-          </button>
-        </div>
-
-        <!-- 3. Grafo na Tela Inicial (Desktop) -->
-        <div class="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div class="flex items-start sm:items-center gap-4 min-w-0">
-            <div class="p-3 rounded-2xl bg-accent/10 border border-accent/20 text-accent shrink-0">
-              <NetworkIcon class="w-5 h-5" />
-            </div>
-            <div class="flex flex-col gap-0.5">
-              <div class="font-interface text-sm font-medium text-textPrimary">
-                Grafo na Tela Inicial (Desktop)
-              </div>
-              <p class="font-interface text-xs text-textSecondary">
-                Iniciar automaticamente com a barra lateral de grafo de conexões aberta na página inicial.
-              </p>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            role="switch"
-            :aria-checked="desktopHomeGraphOpen"
-            data-testid="toggle-desktop-home-graph"
-            @click="setDesktopHomeGraphOpen(!desktopHomeGraphOpen)"
-            class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-accent/50"
-            :class="desktopHomeGraphOpen ? 'bg-accent' : 'bg-black/10 dark:bg-white/10'"
-            title="Alternar início com grafo na tela inicial"
-          >
-            <span
-              class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
-              :class="desktopHomeGraphOpen ? 'translate-x-5' : 'translate-x-0'"
-            />
-          </button>
-        </div>
-
-
-
-        <!-- 4. Tamanho Padrão da Fonte (EPUB) -->
-        <div class="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div class="flex items-start sm:items-center gap-4 min-w-0">
-            <div class="p-3 rounded-2xl bg-accent/10 border border-accent/20 text-accent shrink-0">
-              <TypeIcon class="w-5 h-5" />
-            </div>
-            <div class="flex flex-col gap-0.5">
-              <div class="font-interface text-sm font-medium text-textPrimary">
-                Tamanho Padrão do Texto (EPUB)
-              </div>
-              <p class="font-interface text-xs text-textSecondary">
-                Tamanho da tipografia padrão aplicada ao abrir novos e-books.
-              </p>
-            </div>
-          </div>
-
-          <div class="flex items-center gap-3 shrink-0">
-            <button
-              type="button"
-              data-testid="decrease-font-btn"
-              @click="setEpubFontSize(epubFontSize - 2)"
-              :disabled="epubFontSize <= 12"
-              class="px-3 py-2 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/15 disabled:opacity-30 disabled:cursor-not-allowed border border-divider text-xs font-semibold transition-all text-textPrimary active:scale-95 flex items-center gap-1"
-              title="Diminuir tamanho da fonte padrão"
-            >
-              <span class="font-editorial text-sm">A-</span>
-              <span>Menor</span>
-            </button>
-
-            <span
-              data-testid="font-size-indicator"
-              class="font-technical text-sm font-bold text-accent min-w-[52px] text-center px-2 py-1 rounded-lg bg-accent/10 border border-accent/20"
-            >
-              {{ epubFontSize }}px
-            </span>
-
-            <button
-              type="button"
-              data-testid="increase-font-btn"
-              @click="setEpubFontSize(epubFontSize + 2)"
-              :disabled="epubFontSize >= 36"
-              class="px-3 py-2 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/15 disabled:opacity-30 disabled:cursor-not-allowed border border-divider text-xs font-semibold transition-all text-textPrimary active:scale-95 flex items-center gap-1"
-              title="Aumentar tamanho da fonte padrão"
-            >
-              <span class="font-editorial text-base font-bold">A+</span>
-              <span>Maior</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- 5. Família Tipográfica Padrão (EPUB) -->
-        <div class="p-6 flex flex-col gap-4">
-          <div class="flex items-start sm:items-center gap-4 min-w-0">
-            <div class="p-3 rounded-2xl bg-accent/10 border border-accent/20 text-accent shrink-0">
-              <TypeIcon class="w-5 h-5" />
-            </div>
-            <div class="flex flex-col gap-0.5">
-              <div class="font-interface text-sm font-medium text-textPrimary">
-                Fonte Padrão (EPUB)
-              </div>
-              <p class="font-interface text-xs text-textSecondary">
-                Família tipográfica inicial utilizada na renderização dos livros em formato EPUB.
-              </p>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-2">
-            <button
-              v-for="font in availableFonts"
-              :key="font.id"
-              type="button"
-              :data-testid="`font-option-${font.id}`"
-              @click="setEpubFontFamily(font.id as any)"
-              class="flex flex-col justify-between p-4 rounded-2xl border text-left transition-all relative overflow-hidden group"
-              :class="epubFontFamily === font.id
-                ? 'bg-accent/10 border-accent text-textPrimary shadow-lg shadow-accent/5'
-                : 'bg-black/[0.02] dark:bg-white/[0.02] border-divider hover:bg-black/[0.04] dark:hover:bg-white/[0.05] text-textSecondary hover:text-textPrimary'"
-            >
-              <div class="flex items-start justify-between gap-2">
-                <span
-                  class="text-lg font-medium leading-tight"
-                  :style="{ fontFamily: font.fontFamily }"
-                  :class="epubFontFamily === font.id ? 'text-accent' : 'text-textPrimary'"
-                >
-                  {{ font.name }}
-                </span>
-                <div
-                  v-if="epubFontFamily === font.id"
-                  class="w-5 h-5 rounded-full bg-accent text-white flex items-center justify-center shrink-0"
-                >
-                  <CheckIcon class="w-3.5 h-3.5 stroke-[3]" />
-                </div>
-              </div>
-
-              <div class="mt-2 flex flex-col gap-1">
-                <span class="font-technical text-[10px] text-textSecondary uppercase tracking-wider">
-                  {{ font.category }}
-                </span>
-                <p class="font-interface text-[11px] text-textSecondary line-clamp-2 leading-relaxed">
-                  {{ font.description }}
-                </p>
-              </div>
-            </button>
-          </div>
         </div>
 
         <!-- 6. Idiomas & Dicionário Offline -->
@@ -889,8 +695,6 @@ import {
   MoonIcon,
   PaletteIcon,
   SlidersIcon,
-  TypeIcon,
-  CheckIcon,
   LanguagesIcon,
   CloudIcon,
   SparklesIcon
@@ -898,7 +702,6 @@ import {
 import { useAuth } from '~/composables/useAuth'
 import { useSettings } from '~/composables/useSettings'
 import { useOAuth } from '~/composables/useOAuth'
-import { READER_FONTS } from '~/composables/useReaderTypography'
 import ConfirmModal from '~/components/ConfirmModal.vue'
 
 const auth = useAuth()
@@ -914,24 +717,14 @@ const {
 const {
   pageAnimationEnabled,
   pageCreaseEnabled,
-  canEnablePageCrease,
-  desktopHomeGraphOpen,
   themeMode,
   nativeLanguage,
   targetTranslationLanguage,
-  epubFontSize,
-  epubFontFamily,
   setPageAnimationEnabled,
-  setPageCreaseEnabled,
-  setDesktopHomeGraphOpen,
   setThemeMode,
   setNativeLanguage,
-  setTargetTranslationLanguage,
-  setEpubFontSize,
-  setEpubFontFamily
+  setTargetTranslationLanguage
 } = settings
-
-const availableFonts = READER_FONTS
 
 const isPro = ref(false)
 const showUpgradeModal = ref(false)
