@@ -4,6 +4,16 @@ import { renderInlineMarkdown, renderMarkdown } from '../app/utils/markdownForma
 
 const g = (typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : global) as any
 
+if (typeof document !== 'undefined') {
+  try {
+    Object.defineProperty(document, 'compatMode', {
+      value: 'CSS1Compat',
+      configurable: true,
+      writable: true,
+    })
+  } catch {}
+}
+
 if (g) {
   g.definePageMeta = vi.fn()
   g.navigateTo = vi.fn().mockResolvedValue(undefined)

@@ -1,10 +1,10 @@
 # Checklist
 
 ## 🔄 Em Andamento
-- [14/09/2026 09:48] [Fazendo] Suportar renderização de fórmulas matemáticas e LaTeX (KaTeX) no HTML do leitor de livretos didáticos
 
 
 ## ✅ Concluído
+- [14/09/2026 09:54] [Concluído] Suportar renderização de fórmulas matemáticas e LaTeX (KaTeX) no HTML do leitor de livretos didáticos
 - [14/09/2026 09:53] [Concluído] Garantir compatibilidade 100% do livreto de IA HTML com temas claro e sépia (títulos, negritos, tabelas, callouts e componentes)
 - [14/09/2026 09:52] [Concluído] Limitar título de livros a 30 caracteres no upload com campo opcional e fallback truncado para o nome do arquivo
 - [14/09/2026 09:50] [Concluído] Remover texto do botão de largura no leitor mantendo ícone fixo de setas para fora e alternância visual ativo/inativo

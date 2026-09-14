@@ -393,6 +393,16 @@ export class DidacticDocumentAdapter implements IBookDocument {
 
     // Renderiza fórmulas matemáticas e equações LaTeX via KaTeX
     try {
+      if (typeof document !== 'undefined' && document.compatMode !== 'CSS1Compat') {
+        try {
+          Object.defineProperty(document, 'compatMode', {
+            value: 'CSS1Compat',
+            configurable: true,
+            writable: true,
+          })
+        } catch {}
+      }
+
       renderMathInElement(container, {
         delimiters: [
           { left: '$$', right: '$$', display: true },
