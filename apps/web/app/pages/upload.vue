@@ -31,6 +31,28 @@
           O arquivo será processado localmente com validação de bytes e extração automática de capa.
         </p>
 
+        <!-- Campo Opcional de Título do Livro -->
+        <div class="w-full max-w-lg mb-6 flex flex-col items-start gap-2 text-left">
+          <label for="upload-book-title" class="text-xs font-technical uppercase tracking-wider text-textSecondary flex items-center justify-between w-full">
+            <span class="flex items-center gap-1.5">
+              <BookmarkIcon class="w-3.5 h-3.5 text-accent" />
+              Título do Livro (Opcional)
+            </span>
+            <span class="text-[10px] text-textSecondary/70 font-mono">{{ customTitle.length }}/30</span>
+          </label>
+          <input
+            id="upload-book-title"
+            v-model="customTitle"
+            type="text"
+            maxlength="30"
+            placeholder="Ex: Título personalizado (máx. 30 caracteres)"
+            class="w-full bg-bgApp/60 border border-divider/80 rounded-xl px-4 py-3 text-sm text-textPrimary placeholder:text-textSecondary/40 focus:outline-none focus:border-accent transition-all"
+          />
+          <p class="text-[11px] text-textSecondary/70 font-interface">
+            Se deixar em branco, usará o nome do arquivo truncado para até 30 caracteres.
+          </p>
+        </div>
+
         <ReaderUploadDropZone
           id="drop-zone-area"
           @file-validated="onFileValidated"
@@ -111,7 +133,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { ArrowLeftIcon, AlertTriangleIcon, CheckCircle2Icon } from 'lucide-vue-next'
+import { ArrowLeftIcon, AlertTriangleIcon, CheckCircle2Icon, BookmarkIcon } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import { useReaderStore } from '~/stores/readerStore'
 import { useLocalBookUpload } from '~/composables/useLocalBookUpload'
@@ -122,6 +144,7 @@ const store = useReaderStore()
 const router = useRouter()
 const { uploadBookLocally } = useLocalBookUpload()
 
+const customTitle = ref<string>('')
 const lastExtractedCover = ref<string | null>(null)
 const lastBookTitle = ref<string>('')
 const driveSyncStatus = ref<'idle' | 'syncing' | 'success' | 'error'>('idle')
@@ -137,6 +160,7 @@ async function onFileValidated({ file, type }: { file: File; type: SupportedFile
     const result = await uploadBookLocally({
       file,
       type,
+      customTitle: customTitle.value,
       initialFontSize: store.fontSize,
       initialFontFamily: store.fontFamily,
     })

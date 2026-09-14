@@ -37,8 +37,9 @@ export class UserBookController {
       const { bookId, title, author, summary, coverPath, filePath, fileType, status, currentPage } = req.body
 
       if (title) {
+        const sanitizedTitle = String(title).trim().slice(0, 30)
         const userBook = await userBookService.registerUploadedBook(userId, {
-          title,
+          title: sanitizedTitle,
           author,
           summary,
           coverPath,

@@ -44,6 +44,39 @@ describe('Upload Page', () => {
     expect(wrapper.text()).not.toContain('Ir para Biblioteca')
     expect(wrapper.text()).not.toContain('Formatos Suportados')
     expect(wrapper.text()).not.toContain('Recursos Aresta')
+
+    // Input de título opcional com limite de 30 caracteres
+    const titleInput = wrapper.find('#upload-book-title')
+    expect(titleInput.exists()).toBe(true)
+    expect(titleInput.attributes('maxlength')).toBe('30')
+  })
+
+  it('permite definir título personalizado pelo input antes do upload', async () => {
+    const fakeFile = new File([new Uint8Array([1, 2, 3])], 'dom-casmurro.epub', { type: 'application/epub+zip' })
+
+    const wrapper = mount(UploadPage, {
+      global: {
+        stubs: {
+          NuxtLink: true,
+          ReaderUploadDropZone: {
+            name: 'ReaderUploadDropZone',
+            template: '<div id="drop-zone-area"></div>'
+          }
+        }
+      }
+    })
+
+    const titleInput = wrapper.find('#upload-book-title')
+    await titleInput.setValue('Meu Livro Especial')
+
+    const dropzone = wrapper.findComponent('#drop-zone-area')
+    ;(dropzone as any).vm.$emit('file-validated', { file: fakeFile, type: 'epub' })
+
+    await new Promise((r) => setTimeout(r, 100))
+
+    const store = useReaderStore()
+    expect(store.hasDocument).toBe(true)
+    expect(store.fileName).toBe('Meu Livro Especial')
   })
 
   it('ao validar arquivo na dropzone, salva no banco local e navega para /reader com bookId', async () => {

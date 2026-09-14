@@ -39,6 +39,36 @@ describe('BookService & UserBookService', () => {
     expect(result.book.title).toBe('O Pequeno Príncipe')
   })
 
+  it('deve truncar titulo para no maximo 30 caracteres ao registrar livro enviado', async () => {
+    const bookCreateSpy = vi.spyOn(prisma.book, 'create').mockImplementation(async (args: any) => ({
+      id: 1000,
+      title: args.data.title,
+      file_path: args.data.file_path,
+      cover_path: args.data.cover_path,
+      file_type: args.data.file_type,
+    } as any))
+
+    vi.spyOn(prisma.userBook, 'create').mockResolvedValue({
+      id: 1002,
+      user_id: 1,
+      book_id: 1000,
+      status: 'LENDO',
+      current_page: 1,
+      book: { id: 1000, title: 'Um Livro com Titulo Extremame' },
+    } as any)
+
+    await userBookService.registerUploadedBook(1, {
+      title: 'Um Livro com Titulo Extremamente Longo Que Passa Dos Limites',
+      author: 'Autor Teste',
+    })
+
+    expect(bookCreateSpy).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        title: 'Um Livro com Titulo Extremamen',
+      }),
+    }))
+  })
+
   it('deve excluir flashcards e anotacoes associadas ao livro ao deletar userBook', async () => {
     vi.spyOn(prisma.userBook, 'findFirst').mockResolvedValue({
       id: 50,

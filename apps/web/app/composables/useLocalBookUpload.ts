@@ -15,6 +15,7 @@ export interface UploadLocalBookOptions {
   file: File | Blob
   type: SupportedFileType
   fileName?: string
+  customTitle?: string
   initialFontSize?: number
   initialFontFamily?: string
 }
@@ -41,15 +42,17 @@ export const useLocalBookUpload = () => {
     uploadError.value = null
 
     try {
-      const { file, type, initialFontSize, initialFontFamily } = options
+      const { file, type, initialFontSize, initialFontFamily, customTitle } = options
       const rawFileName = options.fileName || (file instanceof File ? file.name : 'livro')
+      const fileNameWithoutExt = rawFileName.replace(/\.[^/.]+$/, '')
 
       // 1. Carrega o documento para parsing e extração de metadados
       const doc = createBookDocument(type)
       const loadPayload = file instanceof File ? file : await file.arrayBuffer()
       await doc.load(loadPayload, rawFileName, initialFontSize, initialFontFamily)
 
-      const title = doc.metadata?.title?.trim() || rawFileName.replace(/\.[^/.]+$/, '')
+      const rawTitle = customTitle?.trim() || fileNameWithoutExt
+      const title = rawTitle.slice(0, 30)
       const author = doc.metadata?.author?.trim() || 'Autor Desconhecido'
       let coverUrl = doc.metadata?.coverUrl || ''
 

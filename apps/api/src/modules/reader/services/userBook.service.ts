@@ -120,9 +120,11 @@ export class UserBookService {
       currentPage?: number
     }
   ) {
+    const sanitizedTitle = (data.title || 'Sem título').trim().slice(0, 30)
+
     const book = await prisma.book.create({
       data: {
-        title: data.title,
+        title: sanitizedTitle,
         file_path: data.filePath || `${Date.now()}.${data.fileType || 'epub'}`,
         cover_path: data.coverPath,
         file_type: data.fileType || 'epub',
