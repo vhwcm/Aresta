@@ -4,6 +4,8 @@
 
 
 ## ✅ Concluído
+- [14/09/2026 10:08] [Concluído] Implementar cache híbrido em memória no Backend e estratégia SWR no Frontend para Grafo, Estante, Leitura, Notas e Flashcards
+
 - [14/09/2026 09:54] [Concluído] Suportar renderização de fórmulas matemáticas e LaTeX (KaTeX) no HTML do leitor de livretos didáticos
 - [14/09/2026 09:53] [Concluído] Garantir compatibilidade 100% do livreto de IA HTML com temas claro e sépia (títulos, negritos, tabelas, callouts e componentes)
 - [14/09/2026 09:52] [Concluído] Limitar título de livros a 30 caracteres no upload com campo opcional e fallback truncado para o nome do arquivo
