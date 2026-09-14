@@ -248,9 +248,7 @@ describe('Index Page (Landing Page & Home)', () => {
 
     // Verifica que informa a falta de flashcards e de anotações
     expect(wrapper.text()).toContain('Nenhum flashcard disponível')
-    expect(wrapper.text()).toContain('Faltam anotações e destaques nas suas leituras')
     expect(wrapper.text()).toContain('Nenhuma anotação disponível')
-    expect(wrapper.text()).toContain('Faltam anotações. Destaque trechos e faça anotações durante a leitura')
 
     // Verifica a ordem dos tópicos: Leitura -> Canvas/Notas -> Flashcards -> Anotações
     const text = wrapper.text()

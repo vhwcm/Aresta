@@ -217,14 +217,9 @@
             <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-accent/15 text-accent flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
               <PlusIcon class="w-4 h-4 sm:w-4.5 sm:h-4.5" />
             </div>
-            <div class="flex flex-col min-w-0">
-              <span class="font-interface text-xs sm:text-sm font-medium text-textPrimary group-hover:text-accent transition-colors truncate">
-                Novo Canvas
-              </span>
-              <span class="font-interface text-[11px] text-textSecondary truncate hidden sm:inline">
-                Criar quadro em branco
-              </span>
-            </div>
+            <span class="font-interface text-xs sm:text-sm font-medium text-textPrimary group-hover:text-accent transition-colors truncate">
+              Novo Canvas
+            </span>
           </NuxtLink>
 
           <!-- Ação 2: Ir para as Notas -->
@@ -237,14 +232,9 @@
             <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-accent/15 text-accent flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
               <FileTextIcon class="w-4 h-4 sm:w-4.5 sm:h-4.5" />
             </div>
-            <div class="flex flex-col min-w-0">
-              <span class="font-interface text-xs sm:text-sm font-medium text-textPrimary group-hover:text-accent transition-colors truncate">
-                Notas
-              </span>
-              <span class="font-interface text-[11px] text-textSecondary truncate hidden sm:inline">
-                Ver anotações de leitura
-              </span>
-            </div>
+            <span class="font-interface text-xs sm:text-sm font-medium text-textPrimary group-hover:text-accent transition-colors truncate">
+              Notas
+            </span>
           </NuxtLink>
         </section>
 
@@ -298,9 +288,6 @@
             <div v-else class="p-6 rounded-2xl border border-dashed border-divider bg-black/[0.01] dark:bg-white/[0.01] flex flex-col items-center justify-center text-center gap-2 py-8">
               <BrainIcon class="w-8 h-8 text-textSecondary/40" />
               <p class="font-editorial text-base text-textPrimary font-light">Nenhum flashcard disponível</p>
-              <p class="font-interface text-xs text-textSecondary max-w-sm">
-                Faltam anotações e destaques nas suas leituras para gerar cards de repetição espaçada.
-              </p>
               <span class="mt-2 text-xs font-interface text-accent flex items-center gap-1 font-medium">
                 <span>{{ hasActiveBook ? 'Continuar lendo para anotar →' : 'Comece uma leitura enviando um livro →' }}</span>
               </span>
@@ -360,9 +347,6 @@
             <div v-else class="p-6 rounded-2xl border border-dashed border-divider bg-black/[0.01] dark:bg-white/[0.01] flex flex-col items-center justify-center text-center gap-2 py-8">
               <FileTextIcon class="w-8 h-8 text-textSecondary/40" />
               <p class="font-editorial text-base text-textPrimary font-light">Nenhuma anotação disponível</p>
-              <p class="font-interface text-xs text-textSecondary max-w-sm">
-                Faltam anotações. Destaque trechos e faça anotações durante a leitura para que suas notas apareçam aqui.
-              </p>
               <span class="mt-2 text-xs font-interface text-accent flex items-center gap-1 font-medium">
                 <span>{{ hasActiveBook ? 'Continuar lendo para anotar →' : 'Comece uma leitura enviando um livro →' }}</span>
               </span>

@@ -3,6 +3,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [13/09/2026 21:18] [Concluído] Remover subtítulos dos cards de ações rápidas e descrições dos estados vazios de flashcards e anotações na Home
 - [13/09/2026 18:06] [Concluído] Integrar Caddy Reverse Proxy com SSL/HTTPS automático no Docker Compose e roteamento para web e api
 - [13/09/2026 17:52] [Concluído] Resolver falha de migration pendente no banco da AWS e restabelecer container da API para fluxo OAuth
 - [13/09/2026 17:22] [Concluído] Modernizar layout do livreto: glassmorphism nas demonstrações, profundidade das páginas, contrastes e respiros nas margens e centro
