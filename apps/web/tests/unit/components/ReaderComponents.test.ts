@@ -594,7 +594,7 @@ describe('Reader Components', () => {
   })
 
   describe('ReaderViewer', () => {
-    it('renderiza o título do livro com fonte medieval quando houver documento carregado', async () => {
+    it('renderiza o título do livro com fonte editorial quando houver documento carregado', async () => {
       const store = useReaderStore()
       store.setDocument({
         type: 'pdf',
@@ -629,7 +629,7 @@ describe('Reader Components', () => {
 
       const titleText = wrapper.find('.reader-viewer__book-title-text')
       expect(titleText.exists()).toBe(true)
-      expect(titleText.classes()).toContain('font-medieval')
+      expect(titleText.classes()).toContain('font-editorial')
     })
 
     it('oculta a barra de título no modo Zen', async () => {

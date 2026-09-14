@@ -64,7 +64,7 @@
             </div>
           </main>
 
-          <!-- Título do Livro em Fonte Medieval com Porcentagem ao lado -->
+          <!-- Título do Livro em Fonte Editorial com Porcentagem ao lado -->
           <footer
             v-if="store.title && !store.isZenMode"
             class="reader-viewer__book-title-bar"
@@ -77,7 +77,7 @@
             aria-label="Título do livro"
           >
             <div class="flex items-center justify-center gap-2 max-w-[95%]">
-              <h2 class="reader-viewer__book-title-text font-medieval">
+              <h2 class="reader-viewer__book-title-text font-editorial font-normal">
                 {{ store.title }}
               </h2>
               <span
@@ -965,15 +965,16 @@ onUnmounted(() => {
   padding: 0.35rem 1rem 0.5rem 1rem;
   user-select: none;
   z-index: 10;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  background-color: transparent;
+  transition: color 0.2s ease;
 }
 
 .reader-viewer__book-title-text {
-  font-family: 'MedievalSharp', 'Almendra', '"Cinzel Decorative"', Georgia, serif;
-  font-size: 1.25rem;
-  font-weight: 600;
-  line-height: 1.25;
-  letter-spacing: 0.04em;
+  font-family: 'Newsreader', serif;
+  font-size: 1.15rem;
+  font-weight: 400;
+  line-height: 1.3;
+  letter-spacing: 0.01em;
   max-width: 92%;
   white-space: nowrap;
   overflow: hidden;
@@ -985,23 +986,23 @@ onUnmounted(() => {
     padding: 0.5rem 1.5rem 0.65rem 1.5rem;
   }
   .reader-viewer__book-title-text {
-    font-size: 1.5rem;
-    letter-spacing: 0.05em;
+    font-size: 1.35rem;
+    letter-spacing: 0.015em;
   }
 }
 
 .reader-viewer__book-title-bar--sepia {
-  background-color: #f5eedc;
+  background-color: transparent;
   color: #3e3328;
 }
 
 .reader-viewer__book-title-bar--white {
-  background-color: #ffffff;
+  background-color: transparent;
   color: #1a1a1a;
 }
 
 .reader-viewer__book-title-bar--black {
-  background-color: #121214;
+  background-color: transparent;
   color: #e4e4e7;
 }
 
