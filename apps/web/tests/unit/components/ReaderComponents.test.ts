@@ -142,7 +142,7 @@ describe('Reader Components', () => {
       expect(store.isTwoPageMode).toBe(false)
     })
 
-    it('exibe controle de tamanho de fonte para EPUB e permite alterar tamanho via popover', async () => {
+    it('não exibe opções de alterar tamanho de fonte ou tipografia no leitor para respeitar o estilo original do EPUB', async () => {
       const store = useReaderStore()
       store.setDocument({
         type: 'epub',
@@ -154,7 +154,6 @@ describe('Reader Components', () => {
         setFontSize: vi.fn((size: number) => 1),
         destroy: vi.fn(),
       } as any, 'livro.epub')
-      store.fontSize = 18
 
       const wrapper = mount(ReaderBottomBar, {
         props: { isGraphActive: false },
@@ -163,31 +162,16 @@ describe('Reader Components', () => {
       const fontBtn = wrapper.find('#btn-appearance-toggle')
       expect(fontBtn.exists()).toBe(true)
 
-      // Abre o popover
+      // Abre o popover de aparência
       await fontBtn.trigger('click')
       expect(wrapper.find('[aria-label="Controle de aparência e fundo de leitura"]').exists()).toBe(true)
 
-      // Clica em A+
-      const increaseBtn = wrapper.find('button[aria-label="Aumentar tamanho da fonte"]')
-      expect(increaseBtn.exists()).toBe(true)
-      await increaseBtn.trigger('click')
-      expect(store.fontSize).toBe(20)
-
-      // Clica em A-
-      const decreaseBtn = wrapper.find('button[aria-label="Diminuir tamanho da fonte"]')
-      expect(decreaseBtn.exists()).toBe(true)
-      await decreaseBtn.trigger('click')
-      expect(store.fontSize).toBe(18)
-
-      // Clica em A+ novamente
-      await increaseBtn.trigger('click')
-      expect(store.fontSize).toBe(20)
-
-      // Clica em Padrão
-      const resetBtn = wrapper.findAll('button').find((b) => b.text() === 'Padrão')
-      expect(resetBtn?.exists()).toBe(true)
-      await resetBtn?.trigger('click')
-      expect(store.fontSize).toBe(18)
+      // Garante que não existem botões de alteração de tamanho de fonte nem botão de mais fontes
+      expect(wrapper.find('button[aria-label="Aumentar tamanho da fonte"]').exists()).toBe(false)
+      expect(wrapper.find('button[aria-label="Diminuir tamanho da fonte"]').exists()).toBe(false)
+      expect(wrapper.find('#btn-quick-font-increase').exists()).toBe(false)
+      expect(wrapper.find('#btn-quick-font-decrease').exists()).toBe(false)
+      expect(wrapper.text()).not.toContain('Mais Fontes & Tipografia')
     })
 
     it('possui tema amarelado (sepia) por padrão e permite alternar entre Branco, Amarelado e Preto', async () => {

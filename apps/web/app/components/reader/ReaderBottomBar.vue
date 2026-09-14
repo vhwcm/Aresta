@@ -260,128 +260,7 @@
               </button>
             </div>
           </div>
-
-          <!-- Seção de Tamanho de Texto e Fonte (Apenas EPUB) -->
-          <div
-            v-if="store.documentType === 'epub'"
-            class="flex flex-col gap-2 pt-2 border-t"
-            :class="store.readerTheme === 'sepia' ? 'border-[#dfd5c0]' : (store.readerTheme === 'white' ? 'border-gray-200' : 'border-white/10')"
-          >
-            <div class="flex items-center justify-between">
-              <span
-                class="text-[11px] font-technical uppercase tracking-wider font-semibold"
-                :class="store.readerTheme === 'sepia' ? 'text-[#786C5E]' : (store.readerTheme === 'white' ? 'text-gray-500' : 'text-textSecondary')"
-              >
-                Tamanho da Fonte
-              </span>
-              <button
-                @click="store.resetFontSize()"
-                class="text-[10px] text-accent hover:underline font-technical font-bold"
-                title="Redefinir para 18px"
-              >
-                Padrão
-              </button>
-            </div>
-
-            <!-- Controles A- e A+ -->
-            <div
-              class="flex items-center justify-between gap-2 rounded-xl p-1.5 border"
-              :class="store.readerTheme === 'sepia'
-                ? 'bg-[#f0e7d3] border-[#dfd5c0]'
-                : (store.readerTheme === 'white'
-                  ? 'bg-gray-50 border-gray-200'
-                  : 'bg-white/5 border-white/10')"
-            >
-              <button
-                @click="store.decreaseFontSize(2)"
-                :disabled="store.fontSize <= 12"
-                class="flex items-center justify-center w-8 h-8 rounded-lg disabled:opacity-30 disabled:hover:bg-transparent text-sm font-semibold transition-all active:scale-95"
-                :class="store.readerTheme === 'sepia'
-                  ? 'bg-[#ebe0c8] text-[#2a2521] hover:bg-[#dfd5c0]'
-                  : (store.readerTheme === 'white'
-                    ? 'bg-gray-200 text-gray-900 hover:bg-gray-300'
-                    : 'bg-white/10 hover:bg-white/20 text-textPrimary')"
-                title="Diminuir tamanho da fonte"
-                aria-label="Diminuir tamanho da fonte"
-              >
-                A-
-              </button>
-              <span
-                class="font-technical font-bold text-sm px-2"
-                :class="store.readerTheme === 'sepia' ? 'text-[#2a2521]' : (store.readerTheme === 'white' ? 'text-gray-900' : 'text-textPrimary')"
-              >
-                {{ store.fontSize }} px
-              </span>
-              <button
-                @click="store.increaseFontSize(2)"
-                :disabled="store.fontSize >= 36"
-                class="flex items-center justify-center w-8 h-8 rounded-lg disabled:opacity-30 disabled:hover:bg-transparent text-base font-semibold transition-all active:scale-95"
-                :class="store.readerTheme === 'sepia'
-                  ? 'bg-[#ebe0c8] text-[#2a2521] hover:bg-[#dfd5c0]'
-                  : (store.readerTheme === 'white'
-                    ? 'bg-gray-200 text-gray-900 hover:bg-gray-300'
-                    : 'bg-white/10 hover:bg-white/20 text-textPrimary')"
-                title="Aumentar tamanho da fonte"
-                aria-label="Aumentar tamanho da fonte"
-              >
-                A+
-              </button>
-            </div>
-
-            <!-- Botão Mais Tipografia -->
-            <button
-              @click="$emit('openTypography'); isAppearancePopoverOpen = false"
-              class="w-full py-1.5 px-2 rounded-xl border text-xs flex items-center justify-center gap-1.5 transition-all mt-1 font-medium"
-              :class="store.readerTheme === 'sepia'
-                ? 'bg-[#f0e7d3] border-[#dfd5c0] text-[#5c4d3c] hover:text-[#2a2521] hover:bg-[#ebe0c8]'
-                : (store.readerTheme === 'white'
-                  ? 'bg-gray-100 border-gray-200 text-gray-700 hover:text-black hover:bg-gray-200'
-                  : 'bg-white/5 hover:bg-white/10 border-white/10 text-textSecondary hover:text-textPrimary')"
-            >
-              <TypeIcon class="w-3.5 h-3.5 text-accent" />
-              <span>Mais Fontes & Tipografia</span>
-            </button>
-          </div>
         </div>
-      </div>
-
-      <!-- Botão Rápido de Ajuste de Tamanho da Fonte (A- / A+) (Apenas Desktop/Tablet) -->
-      <div
-        v-if="store.documentType === 'epub'"
-        class="hidden md:flex md:flex-col items-center justify-center rounded-xl border p-0.5"
-        :class="store.readerTheme === 'sepia'
-          ? 'bg-[#f5eedc] border-[#dfd5c0]'
-          : (store.readerTheme === 'white'
-            ? 'bg-gray-100 border-gray-200'
-            : 'bg-white/5 border-divider')"
-        title="Ajustar tamanho da fonte diretamente na leitura"
-      >
-        <button
-          @click="store.increaseFontSize(2)"
-          :disabled="store.fontSize >= 36"
-          class="w-6 h-6 md:w-10 md:h-5 flex items-center justify-center rounded-lg text-xs font-bold hover:bg-accent/20 hover:text-accent transition-all active:scale-95 disabled:opacity-30"
-          title="Aumentar tamanho da fonte (A+)"
-          aria-label="Aumentar fonte"
-          id="btn-quick-font-increase"
-        >
-          A+
-        </button>
-        <span
-          class="text-[10px] md:text-[8px] font-technical font-bold px-1 select-none"
-          :class="store.readerTheme === 'sepia' ? 'text-[#786C5E]' : (store.readerTheme === 'white' ? 'text-gray-500' : 'text-textSecondary')"
-        >
-          {{ store.fontSize }}
-        </span>
-        <button
-          @click="store.decreaseFontSize(2)"
-          :disabled="store.fontSize <= 12"
-          class="w-6 h-6 md:w-10 md:h-5 flex items-center justify-center rounded-lg text-[11px] md:text-[10px] font-bold hover:bg-accent/20 hover:text-accent transition-all active:scale-95 disabled:opacity-30"
-          title="Diminuir tamanho da fonte (A-)"
-          aria-label="Diminuir fonte"
-          id="btn-quick-font-decrease"
-        >
-          A-
-        </button>
       </div>
 
       <!-- Botão Alternar 1 Folha / 2 Folhas (Desktop/Tablet) -->
@@ -572,7 +451,6 @@ import {
   Maximize2Icon,
   Minimize2Icon,
   PaletteIcon,
-  TypeIcon,
 } from 'lucide-vue-next'
 import { useReaderStore } from '~/stores/readerStore'
 
@@ -585,7 +463,6 @@ const emit = defineEmits<{
   (_e: 'openSavedPages'): void
   (_e: 'openAnnotation'): void
   (_e: 'toggleNotes'): void
-  (_e: 'openTypography'): void
 }>()
 
 const isNotesActiveComputed = computed(() => {

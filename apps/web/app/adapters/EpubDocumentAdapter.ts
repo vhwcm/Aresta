@@ -379,6 +379,10 @@ const EPUB_TYPOGRAPHY_STYLES = `
     max-width: none !important;
     min-width: 0 !important;
     overflow: visible !important;
+    font-family: 'Newsreader', Georgia, serif;
+    font-size: 18px;
+    line-height: 1.6;
+    color: #2a2521;
   }
   .epub-text-layer-viewport {
     display: block !important;
@@ -387,119 +391,119 @@ const EPUB_TYPOGRAPHY_STYLES = `
     box-sizing: border-box !important;
   }
   .epub-text-layer-content h1, .epub-text-layer-content .chapter-title, .epub-text-layer-content .book-title, .epub-text-layer-content .title {
-    font-size: 2em !important;
-    font-weight: 700 !important;
-    line-height: 1.25 !important;
-    margin-top: 0.8em !important;
-    margin-bottom: 0.5em !important;
-    display: block !important;
+    font-size: 2em;
+    font-weight: 700;
+    line-height: 1.25;
+    margin-top: 0.8em;
+    margin-bottom: 0.5em;
+    display: block;
     break-inside: avoid !important;
     page-break-inside: avoid !important;
     break-before: auto !important;
     page-break-before: auto !important;
   }
   .epub-text-layer-content h2, .epub-text-layer-content .chapter-subtitle, .epub-text-layer-content .book-subtitle, .epub-text-layer-content .subtitle {
-    font-size: 1.5em !important;
-    font-weight: 700 !important;
-    line-height: 1.3 !important;
-    margin-top: 0.75em !important;
-    margin-bottom: 0.4em !important;
-    display: block !important;
+    font-size: 1.5em;
+    font-weight: 700;
+    line-height: 1.3;
+    margin-top: 0.75em;
+    margin-bottom: 0.4em;
+    display: block;
     break-inside: avoid !important;
     page-break-inside: avoid !important;
   }
   .epub-text-layer-content h3 {
-    font-size: 1.25em !important;
-    font-weight: 600 !important;
-    line-height: 1.35 !important;
-    margin-top: 0.7em !important;
-    margin-bottom: 0.35em !important;
-    display: block !important;
+    font-size: 1.25em;
+    font-weight: 600;
+    line-height: 1.35;
+    margin-top: 0.7em;
+    margin-bottom: 0.35em;
+    display: block;
     break-inside: avoid !important;
     page-break-inside: avoid !important;
   }
   .epub-text-layer-content h4 {
-    font-size: 1.1em !important;
-    font-weight: 600 !important;
-    line-height: 1.4 !important;
-    margin-top: 0.6em !important;
-    margin-bottom: 0.3em !important;
-    display: block !important;
+    font-size: 1.1em;
+    font-weight: 600;
+    line-height: 1.4;
+    margin-top: 0.6em;
+    margin-bottom: 0.3em;
+    display: block;
   }
   .epub-text-layer-content h5 {
-    font-size: 1em !important;
-    font-weight: 600 !important;
-    margin-top: 0.55em !important;
-    margin-bottom: 0.25em !important;
-    display: block !important;
+    font-size: 1em;
+    font-weight: 600;
+    margin-top: 0.55em;
+    margin-bottom: 0.25em;
+    display: block;
   }
   .epub-text-layer-content h6 {
-    font-size: 0.9em !important;
-    font-weight: 600 !important;
-    margin-top: 0.5em !important;
-    margin-bottom: 0.2em !important;
-    display: block !important;
+    font-size: 0.9em;
+    font-weight: 600;
+    margin-top: 0.5em;
+    margin-bottom: 0.2em;
+    display: block;
   }
   .epub-text-layer-content p {
-    margin-top: 0 !important;
-    margin-bottom: 0.85em !important;
-    line-height: 1.7 !important;
-    text-align: justify !important;
-    text-justify: inter-word !important;
+    margin-top: 0;
+    margin-bottom: 0.85em;
+    line-height: 1.6;
+    text-align: justify;
+    text-justify: inter-word;
   }
-  .epub-text-layer-content strong, .epub-text-layer-content b { font-weight: 700 !important; }
-  .epub-text-layer-content em, .epub-text-layer-content i { font-style: italic !important; }
+  .epub-text-layer-content strong, .epub-text-layer-content b { font-weight: 700; }
+  .epub-text-layer-content em, .epub-text-layer-content i { font-style: italic; }
   .epub-text-layer-content blockquote {
-    margin: 1em 1.5em !important;
-    padding-left: 1em !important;
-    border-left: 2px solid rgba(0, 0, 0, 0.15) !important;
-    font-style: italic !important;
+    margin: 1em 1.5em;
+    padding-left: 1em;
+    border-left: 2px solid rgba(0, 0, 0, 0.15);
+    font-style: italic;
   }
   .epub-text-layer-content hr {
-    margin: 1.5em auto !important;
-    border: none !important;
-    border-top: 1px solid rgba(0, 0, 0, 0.15) !important;
-    width: 60% !important;
+    margin: 1.5em auto;
+    border: none;
+    border-top: 1px solid rgba(0, 0, 0, 0.15);
+    width: 60%;
   }
   .epub-text-layer-content ul, .epub-text-layer-content ol {
-    margin: 0.75em 0 0.75em 1.5em !important;
-    padding-left: 1em !important;
+    margin: 0.75em 0 0.75em 1.5em;
+    padding-left: 1em;
   }
-  .epub-text-layer-content li { margin-bottom: 0.35em !important; line-height: 1.6 !important; }
-  .epub-text-layer-content sub { font-size: 0.75em !important; vertical-align: sub !important; }
-  .epub-text-layer-content sup { font-size: 0.75em !important; vertical-align: super !important; }
+  .epub-text-layer-content li { margin-bottom: 0.35em; line-height: 1.6; }
+  .epub-text-layer-content sub { font-size: 0.75em; vertical-align: sub; }
+  .epub-text-layer-content sup { font-size: 0.75em; vertical-align: super; }
   .epub-text-layer-content figure {
-    margin: 0.6em auto !important;
-    text-align: center !important;
-    max-width: 100% !important;
+    margin: 0.6em auto;
+    text-align: center;
+    max-width: 100%;
     break-inside: avoid !important;
     page-break-inside: avoid !important;
   }
   .epub-text-layer-content img {
-    max-width: 100% !important;
-    max-height: 85vh !important;
-    height: auto !important;
-    object-fit: contain !important;
-    display: inline-block !important;
-    margin: 0.4em auto !important;
+    max-width: 100%;
+    max-height: 85vh;
+    height: auto;
+    object-fit: contain;
+    display: inline-block;
+    margin: 0.4em auto;
     break-inside: avoid !important;
     page-break-inside: avoid !important;
   }
   .epub-text-layer-content svg {
-    max-width: 100% !important;
-    max-height: 100% !important;
-    height: auto !important;
-    display: block !important;
-    margin: 0.4em auto !important;
+    max-width: 100%;
+    max-height: 100%;
+    height: auto;
+    display: block;
+    margin: 0.4em auto;
   }
   .epub-text-layer-content svg image {
-    max-width: 100% !important;
-    max-height: 100% !important;
+    max-width: 100%;
+    max-height: 100%;
   }
   .epub-text-layer-content table {
-    width: 100% !important;
-    border-collapse: collapse !important;
-    margin: 1em 0 !important;
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1em 0;
     break-inside: avoid !important;
     page-break-inside: avoid !important;
   }
@@ -671,13 +675,12 @@ function calculateSectionPages(
     container.style.columnGap = `${colGap}px`
     container.style.columnFill = 'auto'
     container.style.overflow = 'hidden'
-    container.style.fontFamily = fontFamily
-    container.style.fontSize = `${fontSize}px`
-    container.style.lineHeight = '1.7'
-    container.style.wordWrap = 'break-word'
+    const docStyles = doc && typeof doc.querySelectorAll === 'function'
+      ? Array.from(doc.querySelectorAll('style')).map((s) => s.innerHTML).join('\n')
+      : ''
 
     const styleTag = document.createElement('style')
-    styleTag.innerHTML = EPUB_TYPOGRAPHY_STYLES
+    styleTag.innerHTML = `${EPUB_TYPOGRAPHY_STYLES}\n${docStyles}`
     container.appendChild(styleTag)
 
     const contentDiv = document.createElement('div')
@@ -1040,7 +1043,7 @@ export class EpubDocumentAdapter implements IBookDocument {
       viewportWrapper.style.pointerEvents = 'auto'
 
       const styleTag = document.createElement('style')
-      styleTag.innerHTML = `${docStyles}\n${EPUB_TYPOGRAPHY_STYLES}`
+      styleTag.innerHTML = `${EPUB_TYPOGRAPHY_STYLES}\n${docStyles}`
       viewportWrapper.appendChild(styleTag)
 
       const contentWrapper = document.createElement('div')
@@ -1063,7 +1066,6 @@ export class EpubDocumentAdapter implements IBookDocument {
       contentWrapper.style.boxSizing = 'border-box'
       contentWrapper.style.fontFamily = this._fontFamily
       contentWrapper.style.fontSize = `${this._fontSize}px`
-      contentWrapper.style.lineHeight = '1.7'
       contentWrapper.style.wordWrap = 'break-word'
       contentWrapper.style.userSelect = 'text'
       contentWrapper.style.webkitUserSelect = 'text'
@@ -1147,7 +1149,7 @@ export class EpubDocumentAdapter implements IBookDocument {
 
       const contentStyle = isCover
         ? 'width: 100%; height: 100%; padding: 12px; display: flex; align-items: center; justify-content: center; box-sizing: border-box;'
-        : `width: ${width}px; height: ${height}px; padding: ${paddingY}px ${paddingX}px; column-width: ${colWidth}px; column-gap: ${colGap}px; column-fill: auto; margin-left: -${colOffset}px; box-sizing: border-box; font-family: ${this._fontFamily}; font-size: ${this._fontSize}px; line-height: 1.7; word-wrap: break-word; color: #2a2521;`
+        : `width: ${width}px; height: ${height}px; padding: ${paddingY}px ${paddingX}px; column-width: ${colWidth}px; column-gap: ${colGap}px; column-fill: auto; margin-left: -${colOffset}px; box-sizing: border-box; word-wrap: break-word;`
 
       // Garante que entidades HTML sejam válidas para XML/SVG
       const safeBodyHtml = bodyHtml.replace(/&nbsp;/g, '&#160;')
@@ -1156,8 +1158,8 @@ export class EpubDocumentAdapter implements IBookDocument {
   <foreignObject width="100%" height="100%">
     <div xmlns="http://www.w3.org/1999/xhtml" style="width:${width}px;height:${height}px;overflow:hidden;transform:scale(${dpr});transform-origin:0 0;background-color:#f5eedc;">
       <style>
-        ${docStyles}
         ${EPUB_TYPOGRAPHY_STYLES}
+        ${docStyles}
       </style>
       <div class="epub-text-layer-content ${isCover ? 'epub-cover-page' : ''} ${bodyClasses}" style="${contentStyle}">
         ${safeBodyHtml}

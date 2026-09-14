@@ -21,7 +21,6 @@
           @open-saved-pages="isSavedPagesOpen = true"
           @open-annotation="handleOpenAnnotation"
           @toggle-notes="handleToggleNotes"
-          @open-typography="isTypographyOpen = true"
         />
 
         <!-- Coluna de Leitura e Título do Livro -->
@@ -187,12 +186,6 @@
       @created="handleAnnotationCreated"
     />
 
-    <!-- Modal de Tipografia (EPUB) -->
-    <ReaderTypographyPopover
-      :is-open="isTypographyOpen"
-      @close="isTypographyOpen = false"
-    />
-
     <!-- Tooltip de Sugestão na Seleção de Texto (Kindle / Google Play Livros) -->
     <ReaderSelectionTooltip
       :visible="isSelectionTooltipVisible"
@@ -260,13 +253,11 @@ import ReaderAnnotationModal from '~/components/reader/ReaderAnnotationModal.vue
 import ReaderBookNotesPanel from '~/components/reader/ReaderBookNotesPanel.vue'
 import ReaderSelectionTooltip from '~/components/reader/ReaderSelectionTooltip.vue'
 import ReaderDictionaryCard from '~/components/reader/ReaderDictionaryCard.vue'
-import ReaderTypographyPopover from '~/components/reader/ReaderTypographyPopover.vue'
 import ReaderAiOverlayCard from '~/components/reader/ReaderAiOverlayCard.vue'
 import ReaderCreateBookletModal from '~/components/reader/ReaderCreateBookletModal.vue'
 
 const store = useReaderStore()
 const router = useRouter()
-const typography = useReaderTypography()
 const { fetchAnnotations, annotations, createAnnotation } = useAnnotations()
 
 const activeTheme = computed(() => store.readerTheme || 'sepia')
@@ -275,8 +266,6 @@ const themeBgColor = computed(() => {
   if (activeTheme.value === 'black') return '#0c0c0e'
   return '#f5eedc'
 })
-
-const isTypographyOpen = ref(false)
 
 const isSavedPagesOpen = ref(false)
 const isAnnotationModalOpen = ref(false)
@@ -728,10 +717,6 @@ function onKeyDown(event: KeyboardEvent) {
       isSavedPagesOpen.value = false
       return
     }
-    if (isTypographyOpen.value) {
-      isTypographyOpen.value = false
-      return
-    }
     if (store.isNotesOpen || store.isGraphOpen) {
       store.setNotesOpen(false)
       return
@@ -790,9 +775,6 @@ function onKeyDown(event: KeyboardEvent) {
 onMounted(() => {
   store.setGraphOpen(false)
   store.setMobileGraphOpen(false)
-  if (typography.currentFont.value) {
-    store.setFontFamily(typography.currentFont.value.fontFamily)
-  }
   updateDeviceType()
   window.addEventListener('resize', updateDeviceType)
   window.addEventListener('keydown', onKeyDown)

@@ -19,10 +19,10 @@
             </div>
             <div>
               <h3 id="typography-modal-title" class="text-sm font-bold uppercase tracking-wider text-textPrimary">
-                Tipografia do Livro
+                Aparência do Livro
               </h3>
               <p class="text-[11px] text-textSecondary">
-                Personalize a fonte e o tamanho do texto para leitura confortável
+                Personalize o fundo de leitura para maior conforto visual
               </p>
             </div>
           </div>
@@ -90,91 +90,6 @@
             </button>
           </div>
         </div>
-
-        <!-- Seletor de Família de Fontes -->
-        <div class="space-y-2 border-t border-divider pt-4">
-          <label class="text-[11px] font-semibold text-textSecondary uppercase tracking-wider block">
-            Família Tipográfica (EPUB)
-          </label>
-          <div class="grid grid-cols-1 gap-2">
-            <button
-              v-for="font in fonts"
-              :key="font.id"
-              @click="handleSelectFont(font)"
-              class="flex items-center justify-between p-3 rounded-xl border transition-all text-left group"
-              :class="activeFontId === font.id
-                ? 'bg-accent/15 border-accent text-white shadow-sm'
-                : 'bg-white/[0.03] border-divider hover:bg-white/[0.07] text-textSecondary hover:text-textPrimary'"
-            >
-              <div class="flex flex-col gap-0.5">
-                <div class="flex items-center gap-2">
-                  <span
-                    class="text-base font-medium transition-colors"
-                    :style="{ fontFamily: font.fontFamily }"
-                    :class="activeFontId === font.id ? 'text-white' : 'text-textPrimary'"
-                  >
-                    {{ font.name }}
-                  </span>
-                  <span
-                    class="text-[10px] px-1.5 py-0.5 rounded border border-divider text-textSecondary font-technical"
-                  >
-                    {{ font.category }}
-                  </span>
-                </div>
-                <span class="text-[11px] text-textSecondary/80 line-clamp-1">
-                  {{ font.description }}
-                </span>
-              </div>
-
-              <div
-                v-if="activeFontId === font.id"
-                class="w-5 h-5 rounded-full bg-accent text-white flex items-center justify-center shrink-0 ml-2"
-              >
-                <CheckIcon class="w-3.5 h-3.5 stroke-[3]" />
-              </div>
-            </button>
-          </div>
-        </div>
-
-        <!-- Controle de Tamanho de Fonte (Apenas EPUB) -->
-        <div class="space-y-2 border-t border-divider pt-4">
-          <div class="flex items-center justify-between">
-            <label class="text-[11px] font-semibold text-textSecondary uppercase tracking-wider">
-              Tamanho do Texto
-            </label>
-            <span class="text-xs font-technical text-accent font-bold">
-              {{ store.fontSize }}px
-            </span>
-          </div>
-
-          <div class="flex items-center gap-2">
-            <button
-              @click="store.decreaseFontSize(2)"
-              :disabled="store.fontSize <= 12"
-              class="flex-1 py-2 px-3 rounded-xl bg-white/5 border border-divider hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-semibold text-textPrimary flex items-center justify-center gap-1.5 transition-all active:scale-95"
-            >
-              <span class="text-sm font-serif">A-</span>
-              <span>Menor</span>
-            </button>
-
-            <button
-              @click="store.resetFontSize()"
-              class="py-2 px-3 rounded-xl bg-white/5 border border-divider hover:bg-white/10 text-xs font-semibold text-textSecondary hover:text-textPrimary transition-all active:scale-95"
-              title="Redefinir tamanho para 18px"
-            >
-              Padrão
-            </button>
-
-            <button
-              @click="store.increaseFontSize(2)"
-              :disabled="store.fontSize >= 36"
-              class="flex-1 py-2 px-3 rounded-xl bg-white/5 border border-divider hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-semibold text-textPrimary flex items-center justify-center gap-1.5 transition-all active:scale-95"
-            >
-              <span class="text-base font-serif font-bold">A+</span>
-              <span>Maior</span>
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   </Teleport>
@@ -182,7 +97,6 @@
 
 <script setup lang="ts">
 import { CheckIcon, TypeIcon, XIcon } from 'lucide-vue-next'
-import { useReaderTypography, type TypographyFont } from '~/composables/useReaderTypography'
 import { useSettings } from '~/composables/useSettings'
 import { useReaderStore, type ReaderColorTheme } from '~/stores/readerStore'
 
@@ -190,22 +104,16 @@ defineProps<{
   isOpen: boolean
 }>()
 
-const emit = defineEmits<{
+defineEmits<{
   (e: 'close'): void
 }>()
 
 const store = useReaderStore()
 const { setReaderTheme } = useSettings()
-const { fonts, activeFontId, setFont } = useReaderTypography()
 
 function handleThemeSelect(theme: ReaderColorTheme) {
   setReaderTheme(theme)
   store.setReaderTheme(theme)
-}
-
-function handleSelectFont(font: TypographyFont) {
-  setFont(font.id)
-  store.setFontFamily(font.fontFamily)
 }
 </script>
 
