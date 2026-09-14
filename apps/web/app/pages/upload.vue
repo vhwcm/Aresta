@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col gap-6 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
+  <div class="max-w-4xl mx-auto w-full flex flex-col gap-6 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
     <!-- Cabeçalho da Página -->
     <header class="flex flex-col gap-3">
       <div class="flex items-center justify-between flex-wrap gap-2">
@@ -28,7 +28,7 @@
     </header>
 
     <!-- Área Principal de DropZone -->
-    <div class="w-full max-w-4xl flex flex-col gap-6">
+    <div class="w-full flex flex-col gap-6">
       <div class="bg-bgPanel/40 border border-divider rounded-3xl p-8 shadow-2xl backdrop-blur-sm relative overflow-hidden">
         <div class="absolute -right-12 -top-12 w-40 h-40 bg-accent/10 rounded-full blur-3xl pointer-events-none"></div>
 
