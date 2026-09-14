@@ -199,17 +199,6 @@
         <span class="text-[10px] ml-0.5 opacity-75 font-mono">({{ getLayerCount(layer.type) }})</span>
       </button>
     </div>
-
-    <!-- Toast de Feedback de Conexão -->
-    <Transition name="fade">
-      <div
-        v-if="connectionToast"
-        class="absolute bottom-8 left-1/2 -translate-x-1/2 z-40 px-4 py-2 rounded-xl bg-accent text-white text-xs font-semibold shadow-2xl flex items-center gap-2 border border-accent/40 backdrop-blur-md"
-      >
-        <SparklesIcon class="w-4 h-4 text-white" />
-        <span>{{ connectionToast }}</span>
-      </div>
-    </Transition>
   </div>
 </template>
 
@@ -217,7 +206,7 @@
 import { ref, computed, onMounted, watch, onBeforeUnmount, nextTick } from 'vue'
 import * as d3 from 'd3'
 import type { GraphNode, GraphEdge, GraphNodeType } from '~/interfaces/graph'
-import { PlusIcon, SearchIcon, LinkIcon, TagIcon, BookOpenIcon, FileTextIcon, LayoutGridIcon, FolderIcon, SparklesIcon } from 'lucide-vue-next'
+import { PlusIcon, SearchIcon, LinkIcon, TagIcon, BookOpenIcon, FileTextIcon, LayoutGridIcon, FolderIcon } from 'lucide-vue-next'
 import { useSettings } from '~/composables/useSettings'
 import { getCoverUrl } from '~/utils/cover'
 
@@ -385,17 +374,6 @@ const getNodeBadgeClass = (type?: GraphNodeType) => {
   }
 }
 
-const connectionToast = ref<string | null>(null)
-let connectionToastTimeout: any = null
-
-const showConnectionFeedback = (text: string) => {
-  connectionToast.value = text
-  clearTimeout(connectionToastTimeout)
-  connectionToastTimeout = setTimeout(() => {
-    connectionToast.value = null
-  }, 2500)
-}
-
 let simulation: any = null
 let zoomBehavior: any = null
 let animFrameId: number | null = null
@@ -469,29 +447,61 @@ const fitToScreen = (animate = true, duration = 500) => {
   }
 }
 
-const getMonochromeIconColor = () => {
-  if (isSepiaMode.value) return '#4A3E31'
-  if (isLightMode.value) return '#1E293B'
-  return '#F1F5F9'
+const parseColorRgb = (hex?: string) => {
+  if (!hex) return { r: 229, g: 123, b: 85 } // #E57B55
+  try {
+    const c = d3.color(hex)
+    if (c) {
+      const rgb = c.rgb()
+      return { r: rgb.r, g: rgb.g, b: rgb.b }
+    }
+  } catch {
+    // fallback
+  }
+  return { r: 229, g: 123, b: 85 }
 }
 
-const getNodeFill = (isRoot = false) => {
-  if (isSepiaMode.value) return isRoot ? '#F5EEDC' : '#FAF5E8'
-  if (isLightMode.value) return isRoot ? '#F8FAFC' : '#FFFFFF'
-  return isRoot ? '#232329' : '#1A1A1F'
-}
-
-const getNodeStroke = (colorHex?: string, isRoot = false) => {
+const getThemeNodeStroke = (colorHex?: string, isRoot = false) => {
   if (isRoot) return '#E57B55'
-  if (isSepiaMode.value) return '#C4B59D'
-  if (isLightMode.value) return '#CBD5E1'
-  return '#3F3F46'
+  return colorHex || '#E57B55'
 }
 
-const getNodeInnerBorderStroke = () => {
-  if (isSepiaMode.value) return 'rgba(120, 108, 94, 0.28)'
-  if (isLightMode.value) return 'rgba(0, 0, 0, 0.12)'
-  return 'rgba(255, 255, 255, 0.16)'
+const getThemeNodeFill = (colorHex?: string, isRoot = false) => {
+  const hex = isRoot ? '#E57B55' : (colorHex || '#E57B55')
+  const { r, g, b } = parseColorRgb(hex)
+  if (isSepiaMode.value) {
+    return `rgb(${Math.round(r * 0.14 + 250 * 0.86)}, ${Math.round(g * 0.14 + 245 * 0.86)}, ${Math.round(b * 0.14 + 232 * 0.86)})`
+  }
+  if (isLightMode.value) {
+    return `rgb(${Math.round(r * 0.10 + 255 * 0.90)}, ${Math.round(g * 0.10 + 255 * 0.90)}, ${Math.round(b * 0.10 + 255 * 0.90)})`
+  }
+  return `rgb(${Math.round(r * 0.16 + 24 * 0.84)}, ${Math.round(g * 0.16 + 24 * 0.84)}, ${Math.round(b * 0.16 + 29 * 0.84)})`
+}
+
+const getThemeNodeOuterRingStroke = (colorHex?: string, isRoot = false) => {
+  const hex = isRoot ? '#E57B55' : (colorHex || '#E57B55')
+  const { r, g, b } = parseColorRgb(hex)
+  return `rgba(${r}, ${g}, ${b}, 0.35)`
+}
+
+const getThemeNodeInnerBorderStroke = (colorHex?: string, isRoot = false) => {
+  const hex = isRoot ? '#E57B55' : (colorHex || '#E57B55')
+  const { r, g, b } = parseColorRgb(hex)
+  return `rgba(${r}, ${g}, ${b}, 0.25)`
+}
+
+const getThemeNodeIconColor = (colorHex?: string, isRoot = false) => {
+  if (isRoot) return '#E57B55'
+  return colorHex || '#E57B55'
+}
+
+const getThemeNodeTextColor = (colorHex?: string, isRoot = false) => {
+  if (isRoot) {
+    if (isSepiaMode.value) return '#8B4513'
+    if (isLightMode.value) return '#EA580C'
+    return '#F59E0B'
+  }
+  return colorHex || (isSepiaMode.value ? '#8B4513' : (isLightMode.value ? '#EA580C' : '#F59E0B'))
 }
 
 const getThemeIconSvg = (name?: string, category?: string, isRoot = false): string => {
@@ -1245,16 +1255,16 @@ const initGraph = (animateTransition = true) => {
     .append('circle')
     .attr('r', (d: any) => getNodeRadius(d) + 4)
     .attr('fill', 'none')
-    .attr('stroke', (d: any) => (d.isRoot ? 'rgba(229, 123, 85, 0.35)' : getNodeInnerBorderStroke()))
+    .attr('stroke', (d: any) => getThemeNodeOuterRingStroke(d.color, d.isRoot))
     .attr('stroke-width', 1)
     .attr('stroke-dasharray', (d: any) => (d.isRoot ? 'none' : '2,2'))
-    .attr('opacity', 0.7)
+    .attr('opacity', 0.8)
 
   themeAndRootNodesSelection
     .append('circle')
     .attr('r', (d: any) => getNodeRadius(d))
-    .attr('fill', (d: any) => getNodeFill(d.isRoot))
-    .attr('stroke', (d: any) => (d.isRoot ? '#E57B55' : getNodeStroke(d.color, d.isRoot)))
+    .attr('fill', (d: any) => getThemeNodeFill(d.color, d.isRoot))
+    .attr('stroke', (d: any) => getThemeNodeStroke(d.color, d.isRoot))
     .attr('stroke-width', (d: any) => (d.isRoot ? 2 : 1.5))
     .attr('class', 'transition-all duration-300 shadow-md')
 
@@ -1262,14 +1272,14 @@ const initGraph = (animateTransition = true) => {
     .append('circle')
     .attr('r', (d: any) => Math.max(getNodeRadius(d) - 5, 12))
     .attr('fill', 'none')
-    .attr('stroke', getNodeInnerBorderStroke())
+    .attr('stroke', (d: any) => getThemeNodeInnerBorderStroke(d.color, d.isRoot))
     .attr('stroke-width', 1)
     .attr('pointer-events', 'none')
 
   themeAndRootNodesSelection.each(function (d: any) {
     const nodeEl = d3.select(this)
     const iconMarkup = getThemeIconSvg(d.name, (d as any).category, d.isRoot)
-    const iconColor = getMonochromeIconColor()
+    const iconColor = getThemeNodeIconColor(d.color, d.isRoot)
     const scale = d.isRoot ? 0.85 : 0.66
     const offset = -(24 * scale) / 2
 
@@ -1292,13 +1302,7 @@ const initGraph = (animateTransition = true) => {
     .append('text')
     .attr('text-anchor', 'middle')
     .attr('dy', (d: any) => getNodeRadius(d) + 18)
-    .attr('fill', (d: any) =>
-      isSepiaMode.value
-        ? '#2C2621'
-        : isLightMode.value
-        ? '#1E293B'
-        : '#E2E8F0'
-    )
+    .attr('fill', (d: any) => getThemeNodeTextColor(d.color, d.isRoot))
     .attr('font-size', '12px')
     .attr('font-weight', '600')
     .attr('font-family', 'system-ui, -apple-system, sans-serif')
@@ -1413,10 +1417,6 @@ const initGraph = (animateTransition = true) => {
       }
 
       if (finalTarget && finalTarget.id !== dragSourceNode.id) {
-        const sourceLabel = dragSourceNode.name || dragSourceNode.title || 'Nó'
-        const targetLabel = finalTarget.name || finalTarget.title || 'Nó'
-        showConnectionFeedback(`Conectando "${sourceLabel}" a "${targetLabel}"...`)
-
         let edgeType = 'theme-hierarchy'
         const isSrcBook = dragSourceNode.type === 'book'
         const isTgtBook = finalTarget.type === 'book'
@@ -1697,7 +1697,6 @@ onBeforeUnmount(() => {
     svgRef.value.removeEventListener('wheel', handleNativeWheel)
   }
   if (resizeObserver) resizeObserver.disconnect()
-  clearTimeout(connectionToastTimeout)
 })
 </script>
 

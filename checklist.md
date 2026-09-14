@@ -1,8 +1,12 @@
 # Checklist
 
 ## 🔄 Em Andamento
+- [14/09/2026 09:42] [Fazendo] Limitar título de livros a 30 caracteres no upload com campo opcional e fallback truncado para o nome do arquivo
+- [14/09/2026 09:40] [Fazendo] Garantir compatibilidade 100% do livreto de IA HTML com temas claro e sépia (títulos, negritos, tabelas, callouts e componentes)
+
 
 ## ✅ Concluído
+- [14/09/2026 09:41] [Concluído] Exibir nomes dos temas com cores customizadas e vibrantes no Grafo de Conhecimento para máxima legibilidade no modo claro
 - [14/09/2026 09:34] [Concluído] Fazer modo Zen ocupar 100% da tela do notebook em tela cheia (Fullscreen) e permitir sair com a tecla Esc
 - [14/09/2026 09:34] [Concluído] Aplicar a cor definida do tema nos nós do Grafo de Conhecimento com estilo clean e leve do Aresta
 - [14/09/2026 09:33] [Concluído] Remover configurações globais de fonte e tamanho tornando-as por livro, manter grafo na tela inicial sempre ativo e unificar toggle de folhear 3D com vinco

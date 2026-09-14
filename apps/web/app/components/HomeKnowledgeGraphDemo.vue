@@ -362,30 +362,63 @@ const sampleEdges: DemoEdge[] = [
   { id: 'e11', source: 5, target: 1 }
 ]
 
-const getMonochromeIconColor = () => {
-  if (isSepiaMode.value) return '#4A3E31'
-  if (isLightMode.value) return '#1E293B'
-  return '#F1F5F9'
+const parseColorRgb = (hex?: string) => {
+  if (!hex) return { r: 229, g: 123, b: 85 }
+  try {
+    const c = d3.color(hex)
+    if (c) {
+      const rgb = c.rgb()
+      return { r: rgb.r, g: rgb.g, b: rgb.b }
+    }
+  } catch {
+    // fallback
+  }
+  return { r: 229, g: 123, b: 85 }
 }
 
-const getNodeFill = (isRoot = false) => {
-  if (isSepiaMode.value) return isRoot ? '#F5EEDC' : '#FAF5E8'
-  if (isLightMode.value) return isRoot ? '#F8FAFC' : '#FFFFFF'
-  return isRoot ? '#232329' : '#1A1A1F'
-}
-
-const getNodeStroke = (colorHex: string, isRoot = false) => {
+const getThemeNodeStroke = (colorHex?: string, isRoot = false) => {
   if (isRoot) return '#E57B55'
-  if (isSepiaMode.value) return '#C4B59D'
-  if (isLightMode.value) return '#CBD5E1'
-  return '#3F3F46'
+  return colorHex || '#E57B55'
 }
 
-const getNodeInnerBorderStroke = () => {
-  if (isSepiaMode.value) return 'rgba(120, 108, 94, 0.28)'
-  if (isLightMode.value) return 'rgba(0, 0, 0, 0.12)'
-  return 'rgba(255, 255, 255, 0.16)'
+const getThemeNodeFill = (colorHex?: string, isRoot = false) => {
+  const hex = isRoot ? '#E57B55' : (colorHex || '#E57B55')
+  const { r, g, b } = parseColorRgb(hex)
+  if (isSepiaMode.value) {
+    return `rgb(${Math.round(r * 0.14 + 250 * 0.86)}, ${Math.round(g * 0.14 + 245 * 0.86)}, ${Math.round(b * 0.14 + 232 * 0.86)})`
+  }
+  if (isLightMode.value) {
+    return `rgb(${Math.round(r * 0.10 + 255 * 0.90)}, ${Math.round(g * 0.10 + 255 * 0.90)}, ${Math.round(b * 0.10 + 255 * 0.90)})`
+  }
+  return `rgb(${Math.round(r * 0.16 + 24 * 0.84)}, ${Math.round(g * 0.16 + 24 * 0.84)}, ${Math.round(b * 0.16 + 29 * 0.84)})`
 }
+
+const getThemeNodeOuterRingStroke = (colorHex?: string, isRoot = false) => {
+  const hex = isRoot ? '#E57B55' : (colorHex || '#E57B55')
+  const { r, g, b } = parseColorRgb(hex)
+  return `rgba(${r}, ${g}, ${b}, 0.35)`
+}
+
+const getThemeNodeInnerBorderStroke = (colorHex?: string, isRoot = false) => {
+  const hex = isRoot ? '#E57B55' : (colorHex || '#E57B55')
+  const { r, g, b } = parseColorRgb(hex)
+  return `rgba(${r}, ${g}, ${b}, 0.25)`
+}
+
+const getThemeNodeIconColor = (colorHex?: string, isRoot = false) => {
+  if (isRoot) return '#E57B55'
+  return colorHex || '#E57B55'
+}
+
+const getThemeNodeTextColor = (colorHex?: string, isRoot = false) => {
+  if (isRoot) {
+    if (isSepiaMode.value) return '#8B4513'
+    if (isLightMode.value) return '#9A3412'
+    return '#F59E0B'
+  }
+  return colorHex || (isSepiaMode.value ? '#8B4513' : (isLightMode.value ? '#EA580C' : '#F59E0B'))
+}
+
 
 const getThemeIconSvg = (name?: string, category?: string, isRoot = false): string => {
   if (isRoot) {
@@ -501,32 +534,32 @@ const initGraphSimulation = () => {
   nodes.append('circle')
     .attr('r', (d: any) => (d.isRoot ? 35 : 26))
     .attr('fill', 'none')
-    .attr('stroke', (d: any) => (d.isRoot ? 'rgba(229, 123, 85, 0.35)' : getNodeInnerBorderStroke()))
+    .attr('stroke', (d: any) => getThemeNodeOuterRingStroke(d.color, d.isRoot))
     .attr('stroke-width', 1)
     .attr('stroke-dasharray', (d: any) => (d.isRoot ? 'none' : '2,2'))
-    .attr('opacity', 0.7)
+    .attr('opacity', 0.8)
 
-  // 2. Círculo principal do nó (monocromático com borda definida)
+  // 2. Círculo principal do nó (com preenchimento limpo e borda definida na cor do tema)
   nodes.append('circle')
     .attr('r', (d: any) => (d.isRoot ? 30 : 22))
-    .attr('fill', (d: any) => getNodeFill(d.isRoot))
-    .attr('stroke', (d: any) => (d.isRoot ? '#E57B55' : getNodeStroke(d.color, d.isRoot)))
+    .attr('fill', (d: any) => getThemeNodeFill(d.color, d.isRoot))
+    .attr('stroke', (d: any) => getThemeNodeStroke(d.color, d.isRoot))
     .attr('stroke-width', (d: any) => (d.isRoot ? 2 : 1.5))
     .attr('class', 'transition-all duration-300 shadow-md')
 
-  // 3. Borda interna fina para acabamento clean e elegante com bordas
+  // 3. Borda interna fina para acabamento clean e elegante
   nodes.append('circle')
     .attr('r', (d: any) => (d.isRoot ? 25 : 17))
     .attr('fill', 'none')
-    .attr('stroke', getNodeInnerBorderStroke())
+    .attr('stroke', (d: any) => getThemeNodeInnerBorderStroke(d.color, d.isRoot))
     .attr('stroke-width', 1)
     .attr('pointer-events', 'none')
 
-  // 4. Ícone Monocromático Vetorial Clean com Bordas
+  // 4. Ícone Vetorial Clean com a cor do tema
   nodes.each(function (d: any) {
     const nodeEl = d3.select(this)
     const iconMarkup = getThemeIconSvg(d.name, d.category, d.isRoot)
-    const iconColor = getMonochromeIconColor()
+    const iconColor = getThemeNodeIconColor(d.color, d.isRoot)
     const scale = d.isRoot ? 0.85 : 0.64
     const offset = -(24 * scale) / 2
 
@@ -548,7 +581,7 @@ const initGraphSimulation = () => {
   nodes.append('text')
     .attr('text-anchor', 'middle')
     .attr('dy', (d: any) => (d.isRoot ? 30 : 22) + 16)
-    .attr('fill', (d: any) => d.isRoot ? (isSepiaMode.value ? '#8B4513' : (isLightMode.value ? '#9A3412' : '#F59E0B')) : (isSepiaMode.value ? '#2C2621' : (isLightMode.value ? '#1E293B' : '#E2E8F0')))
+    .attr('fill', (d: any) => getThemeNodeTextColor(d.color, d.isRoot))
     .attr('font-size', (d: any) => d.isRoot ? '12.5px' : '11px')
     .attr('font-weight', '600')
     .attr('font-family', 'system-ui, -apple-system, sans-serif')

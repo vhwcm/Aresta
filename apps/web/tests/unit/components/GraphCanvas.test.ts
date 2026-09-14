@@ -408,4 +408,31 @@ describe('GraphCanvas Component', () => {
     expect(folderG).toBeDefined()
     expect(folderG?.find('.folder-icon').exists()).toBe(true)
   })
+
+  it('renders theme nodes with their custom clean colors for stroke, icon, and fill', () => {
+    const customColor = '#3B82F6'
+    const wrapper = mount(GraphCanvas, {
+      props: {
+        nodes: [
+          { id: 'theme-1', rawId: 1, type: 'theme', name: 'Tecnologia', color: customColor },
+        ],
+        edges: [],
+      },
+    })
+
+    const themeNode = wrapper.findAll('g.node').find((n) => n.text().includes('Tecnologia'))
+    expect(themeNode).toBeDefined()
+
+    // O círculo principal deve ter o stroke com a cor customizada do tema
+    const mainCircle = themeNode?.findAll('circle')[1]
+    expect(mainCircle?.attributes('stroke')).toBe(customColor)
+
+    // O ícone deve ter o stroke com a cor customizada do tema
+    const iconG = themeNode?.find('.node-icon-monochrome')
+    expect(iconG?.attributes('stroke')).toBe(customColor)
+
+    // O texto do nó de tema deve ter o fill colorido com a cor customizada do tema
+    const textEl = themeNode?.find('text')
+    expect(textEl?.attributes('fill')).toBe(customColor)
+  })
 })
