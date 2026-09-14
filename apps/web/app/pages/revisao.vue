@@ -565,15 +565,6 @@
             />
           </div>
 
-          <!-- Seletor de Profundidade -->
-          <div class="flex flex-col gap-1.5">
-            <label class="font-technical text-xs text-textSecondary">Profundidade Didática:</label>
-            <AppSelect
-              v-model="selectedDepth"
-              :options="depthOptions"
-              placeholder="Selecione a profundidade"
-            />
-          </div>
 
           <!-- Alerta de Erro de Geração de IA -->
           <div
@@ -905,11 +896,6 @@ const summaryBookFilterOptions = computed(() => {
   return options
 })
 
-const depthOptions = [
-  { value: 'standard', label: 'Padrão Equilibrado (~4 páginas, 1 Mermaid)' },
-  { value: 'quick_summary', label: 'Resumo Rápido (~2 páginas)' },
-  { value: 'deep_dive', label: 'Aprofundamento Completo (~6 páginas, 2 Mermaids)' }
-]
 
 const bookletOptions = computed(() => {
   return didactic.booklets.value.map((b) => ({
@@ -1073,7 +1059,6 @@ const isDidacticModalOpen = ref(false)
 const didacticError = ref<string | null>(null)
 const selectedBookletMode = ref<'new' | 'append'>('new')
 const selectedTargetBookletId = ref<number | null>(null)
-const selectedDepth = ref<'quick_summary' | 'standard' | 'deep_dive'>('standard')
 
 const openDidacticModal = async () => {
   didacticError.value = null
@@ -1096,7 +1081,6 @@ const generateDidacticBooklet = async () => {
       const result = await didactic.appendChapter(selectedTargetBookletId.value, {
         topic,
         flashcard_id: currentCard.value.id,
-        depth_level: selectedDepth.value,
       })
       isDidacticModalOpen.value = false
       const bookId = result.book?.id || selectedTargetBookletId.value
@@ -1106,7 +1090,6 @@ const generateDidacticBooklet = async () => {
         title,
         topic,
         flashcard_id: currentCard.value.id,
-        depth_level: selectedDepth.value,
       })
       isDidacticModalOpen.value = false
       if (result.book?.id) {

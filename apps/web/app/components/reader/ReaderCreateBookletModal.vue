@@ -68,36 +68,20 @@
           />
         </div>
 
-        <!-- Configurações em Grid: Profundidade e Tema -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div class="flex flex-col gap-1.5">
-            <label class="text-xs font-technical text-textSecondary uppercase tracking-wider">
-              Profundidade:
-            </label>
-            <select
-              v-model="depth"
-              class="bg-bgApp/70 border border-divider rounded-xl p-2.5 text-xs text-textPrimary focus:outline-none focus:border-purple-400 transition-colors"
-            >
-              <option value="quick_summary">Resumo (~2 págs)</option>
-              <option value="standard">Padrão (~4 págs, 1 Mermaid)</option>
-              <option value="deep_dive">Aprofundado (~6 págs, 2 Mermaids)</option>
-            </select>
-          </div>
-
-          <div class="flex flex-col gap-1.5">
-            <label class="text-xs font-technical text-textSecondary uppercase tracking-wider">
-              Vincular Tema:
-            </label>
-            <select
-              v-model="selectedThemeId"
-              class="bg-bgApp/70 border border-divider rounded-xl p-2.5 text-xs text-textPrimary focus:outline-none focus:border-purple-400 transition-colors"
-            >
-              <option :value="null">Sem Tema Específico</option>
-              <option v-for="node in availableThemes" :key="node.id" :value="Number(node.id)">
-                {{ node.name }}
-              </option>
-            </select>
-          </div>
+        <!-- Vincular Tema -->
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-technical text-textSecondary uppercase tracking-wider">
+            Vincular Tema:
+          </label>
+          <select
+            v-model="selectedThemeId"
+            class="bg-bgApp/70 border border-divider rounded-xl p-2.5 text-xs text-textPrimary focus:outline-none focus:border-purple-400 transition-colors"
+          >
+            <option :value="null">Sem Tema Específico</option>
+            <option v-for="node in availableThemes" :key="node.id" :value="Number(node.id)">
+              {{ node.name }}
+            </option>
+          </select>
         </div>
 
         <!-- Alerta de Erro -->
@@ -165,7 +149,6 @@ const { graphData, fetchGraph } = useGraph()
 
 const topic = ref('')
 const title = ref('')
-const depth = ref<'quick_summary' | 'standard' | 'deep_dive'>('standard')
 const selectedThemeId = ref<number | null>(null)
 const errorMessage = ref<string | null>(null)
 
@@ -188,7 +171,6 @@ watch(
     if (open) {
       topic.value = props.initialTopic || ''
       title.value = ''
-      depth.value = 'standard'
       selectedThemeId.value = null
       errorMessage.value = null
       fetchGraph()
@@ -213,7 +195,6 @@ async function handleCreate() {
       topic: topic.value.trim(),
       theme_id: selectedThemeId.value || undefined,
       parent_book_id: !isNaN(parentId as number) ? parentId : undefined,
-      depth_level: depth.value,
     })
 
     const newBookId = result?.book?.id || result?.booklet?.book_id

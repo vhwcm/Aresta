@@ -3,6 +3,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [13/09/2026 21:26] [Concluído] Remover a opção de profundidade dos modais de criação de livreto didático com IA
 - [13/09/2026 21:22] [Concluído] Comprimir barra lateral de leitura no desktop para ocupar apenas a altura necessária no estilo navbar
 - [13/09/2026 21:22] [Concluído] Centralizar o canvas e cabeçalho de upload de arquivos no desktop (upload.vue)
 - [13/09/2026 21:18] [Concluído] Remover subtítulos dos cards de ações rápidas e descrições dos estados vazios de flashcards e anotações na Home

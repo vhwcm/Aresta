@@ -515,31 +515,17 @@
             ></textarea>
           </div>
 
-          <div class="grid grid-cols-2 gap-3">
-            <div class="flex flex-col gap-1.5">
-              <label class="text-xs font-technical text-textSecondary uppercase">Vincular Tema do Grafo:</label>
-              <select
-                v-model="newBookletThemeId"
-                class="bg-bgApp border border-divider rounded-xl p-2.5 text-xs text-textPrimary focus:outline-none focus:border-accent"
-              >
-                <option :value="null">Sem Tema Específico</option>
-                <option v-for="node in availableThemes" :key="node.id" :value="Number(node.id)">
-                  {{ node.name }}
-                </option>
-              </select>
-            </div>
-
-            <div class="flex flex-col gap-1.5">
-              <label class="text-xs font-technical text-textSecondary uppercase">Profundidade:</label>
-              <select
-                v-model="newBookletDepth"
-                class="bg-bgApp border border-divider rounded-xl p-2.5 text-xs text-textPrimary focus:outline-none focus:border-accent"
-              >
-                <option value="standard">Padrão (~4 págs, 1 Mermaid)</option>
-                <option value="quick_summary">Resumo (~2 págs)</option>
-                <option value="deep_dive">Aprofundado (~6 págs, 2 Mermaids)</option>
-              </select>
-            </div>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-technical text-textSecondary uppercase">Vincular Tema do Grafo:</label>
+            <select
+              v-model="newBookletThemeId"
+              class="bg-bgApp border border-divider rounded-xl p-2.5 text-xs text-textPrimary focus:outline-none focus:border-accent"
+            >
+              <option :value="null">Sem Tema Específico</option>
+              <option v-for="node in availableThemes" :key="node.id" :value="Number(node.id)">
+                {{ node.name }}
+              </option>
+            </select>
           </div>
 
           <!-- Alerta de Erro de Geração de IA -->
@@ -671,7 +657,6 @@ const newBookletTitle = ref('')
 const newBookletTopic = ref('')
 const newBookletThemeId = ref<number | null>(null)
 const newBookletParentBookId = ref<number | null>(null)
-const newBookletDepth = ref<'quick_summary' | 'standard' | 'deep_dive'>('standard')
 
 watch(isCreateDidacticModalOpen, (isOpen) => {
   if (isOpen) {
@@ -688,7 +673,6 @@ const handleCreateDidacticBooklet = async () => {
       topic: newBookletTopic.value.trim(),
       theme_id: newBookletThemeId.value || undefined,
       parent_book_id: newBookletParentBookId.value || undefined,
-      depth_level: newBookletDepth.value,
     })
     isCreateDidacticModalOpen.value = false
     newBookletTitle.value = ''
