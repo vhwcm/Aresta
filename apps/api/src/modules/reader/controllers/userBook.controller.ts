@@ -6,7 +6,7 @@ export class UserBookController {
     try {
       const userId = (req as any).user?.userId ?? (req as any).user?.id
       const records = await userBookService.findByUser(userId)
-      const books = records.map((ub) => ({
+      const books = records.map((ub: any) => ({
         id: ub.id,
         userBookId: ub.id,
         bookId: ub.book_id,
@@ -18,11 +18,11 @@ export class UserBookController {
         status: ub.status,
         currentPage: ub.current_page,
         lastAccessedAt: ub.last_accessed_at,
-        themes: ub.book?.bookThemes?.map((bt) => ({
-          id: bt.theme.id,
-          name: bt.theme.name,
-          color: bt.theme.color,
-          description: bt.theme.description,
+        themes: ub.book?.bookThemes?.map((bt: any) => ({
+          id: bt.theme?.id ?? bt.theme_id,
+          name: bt.theme?.name,
+          color: bt.theme?.color,
+          description: bt.theme?.description,
         })) || [],
       }))
       res.json(books)

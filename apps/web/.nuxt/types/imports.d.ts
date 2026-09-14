@@ -63,6 +63,7 @@ declare global {
   const getCoverUrl: typeof import('../../app/utils/cover').getCoverUrl
   const getCurrentInstance: typeof import('vue').getCurrentInstance
   const getCurrentScope: typeof import('vue').getCurrentScope
+  const getEffectiveNavIndex: typeof import('../../app/composables/useBottomNavbar').getEffectiveNavIndex
   const getNavIndexFromPath: typeof import('../../app/composables/useBottomNavbar').getNavIndexFromPath
   const getRouteRules: typeof import('../../node_modules/nuxt/dist/app/composables/manifest').getRouteRules
   const getVectorForSide: typeof import('../../app/utils/canvasGeometry').getVectorForSide
@@ -169,6 +170,7 @@ declare global {
   const useCssVars: typeof import('vue').useCssVars
   const useCycleDetector: typeof import('../../app/composables/useCycleDetector').useCycleDetector
   const useDidacticBooklet: typeof import('../../app/composables/useDidacticBooklet').useDidacticBooklet
+  const useDrawing: typeof import('../../app/composables/useDrawing').useDrawing
   const useError: typeof import('../../node_modules/nuxt/dist/app/composables/error').useError
   const useFetch: typeof import('../../node_modules/nuxt/dist/app/composables/fetch').useFetch
   const useFlashcards: typeof import('../../app/composables/useFlashcards').useFlashcards
@@ -412,6 +414,7 @@ declare module 'vue' {
     readonly getCoverUrl: UnwrapRef<typeof import('../../app/utils/cover')['getCoverUrl']>
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
     readonly getCurrentScope: UnwrapRef<typeof import('vue')['getCurrentScope']>
+    readonly getEffectiveNavIndex: UnwrapRef<typeof import('../../app/composables/useBottomNavbar')['getEffectiveNavIndex']>
     readonly getNavIndexFromPath: UnwrapRef<typeof import('../../app/composables/useBottomNavbar')['getNavIndexFromPath']>
     readonly getRouteRules: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/manifest')['getRouteRules']>
     readonly getVectorForSide: UnwrapRef<typeof import('../../app/utils/canvasGeometry')['getVectorForSide']>
@@ -518,6 +521,7 @@ declare module 'vue' {
     readonly useCssVars: UnwrapRef<typeof import('vue')['useCssVars']>
     readonly useCycleDetector: UnwrapRef<typeof import('../../app/composables/useCycleDetector')['useCycleDetector']>
     readonly useDidacticBooklet: UnwrapRef<typeof import('../../app/composables/useDidacticBooklet')['useDidacticBooklet']>
+    readonly useDrawing: UnwrapRef<typeof import('../../app/composables/useDrawing')['useDrawing']>
     readonly useError: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/error')['useError']>
     readonly useFetch: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/fetch')['useFetch']>
     readonly useFlashcards: UnwrapRef<typeof import('../../app/composables/useFlashcards')['useFlashcards']>
