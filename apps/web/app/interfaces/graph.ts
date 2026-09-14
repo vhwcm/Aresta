@@ -45,7 +45,7 @@ export interface AnnotationThemeItem {
   createdAt: string
 }
 
-export type GraphNodeType = 'theme' | 'book' | 'annotation' | 'note' | 'canvas'
+export type GraphNodeType = 'theme' | 'book' | 'annotation' | 'note' | 'canvas' | 'folder'
 
 export interface GraphNode {
   id: string | number
@@ -64,6 +64,8 @@ export interface GraphNode {
   bookCount?: number
   annotationCount?: number
   noteCount?: number
+  canvasCount?: number
+  itemCount?: number
   books?: any[]
   isRoot?: boolean
   // Campos de Anotações do Leitor
@@ -101,7 +103,7 @@ export interface GraphEdge {
   id: string | number
   source: string | number | GraphNode
   target: string | number | GraphNode
-  type?: 'root' | 'theme-hierarchy' | 'book-theme' | 'annotation-book' | 'annotation-theme' | 'note-book' | 'note-canvas' | 'note-note' | 'canvas-note' | 'note-theme' | string
+  type?: 'root' | 'theme-hierarchy' | 'book-theme' | 'annotation-book' | 'annotation-theme' | 'note-book' | 'note-canvas' | 'note-note' | 'canvas-note' | 'note-theme' | 'note-folder' | 'canvas-folder' | string
 }
 
 export interface GraphCounts {
@@ -110,6 +112,7 @@ export interface GraphCounts {
   annotations: number
   notes: number
   canvases: number
+  folders?: number
 }
 
 export interface GraphData {

@@ -177,9 +177,9 @@ export const useGraph = () => {
           if (!id && id !== 0) return false
           const s = String(id)
           if (activeNodeIds.has(s)) return true
-          const stripped = s.replace(/^(book-|theme-|note-|canvas-|annotation-)/, '')
+          const stripped = s.replace(/^(book-|theme-|note-|canvas-|annotation-|folder-)/, '')
           if (activeNodeIds.has(stripped)) return true
-          for (const prefix of ['book-', 'theme-', 'note-', 'canvas-', 'annotation-']) {
+          for (const prefix of ['book-', 'theme-', 'note-', 'canvas-', 'annotation-', 'folder-']) {
             if (activeNodeIds.has(`${prefix}${stripped}`)) return true
           }
           return false
@@ -211,6 +211,7 @@ export const useGraph = () => {
             annotations: nodes.filter((n) => n.type === 'annotation').length,
             notes: nodes.filter((n) => n.type === 'note').length,
             canvases: nodes.filter((n) => n.type === 'canvas').length,
+            folders: nodes.filter((n) => n.type === 'folder').length,
           },
         }
       }

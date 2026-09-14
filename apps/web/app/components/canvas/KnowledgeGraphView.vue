@@ -14,9 +14,9 @@
       <div class="flex items-center gap-1.5 mb-1">
         <span
           class="text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded tracking-wider"
-          :class="hoveredNode.kind === 'canvas' ? 'bg-accent/20 text-accent' : 'bg-indigo-500/20 text-indigo-400'"
+          :class="hoveredNode.kind === 'canvas' ? 'bg-accent/20 text-accent' : (hoveredNode.kind === 'folder' ? 'bg-amber-500/20 text-amber-400' : 'bg-indigo-500/20 text-indigo-400')"
         >
-          {{ hoveredNode.kind === 'canvas' ? 'Quadro' : 'Nota' }}
+          {{ hoveredNode.kind === 'canvas' ? 'Quadro' : (hoveredNode.kind === 'folder' ? 'Pasta' : 'Nota') }}
         </span>
         <span v-if="hoveredNode.folder" class="text-[10px] text-textSecondary truncate">
           📁 {{ hoveredNode.folder }}
@@ -72,7 +72,7 @@ export interface GraphNode extends d3.SimulationNodeDatum {
   id: string
   rawId: string
   title: string
-  kind: 'canvas' | 'note'
+  kind: 'canvas' | 'note' | 'folder'
   description?: string
   folder?: string | null
   tags?: string[]
@@ -98,6 +98,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (_e: 'select-canvas', _id: string): void
   (_e: 'select-note', _note: NoteItem): void
+  (_e: 'select-folder', _folder: string): void
 }>()
 
 const containerRef = ref<HTMLDivElement | null>(null)
@@ -139,6 +140,27 @@ const nodes = computed<GraphNode[]>(() => {
       rawNote: n,
       color: '#6366F1', // Índigo / Violeta
       radius: 14
+    })
+  }
+
+  // 3. Criação de Nós de Pastas
+  const foldersSet = new Set<string>()
+  for (const c of props.canvases) {
+    if (c.folder && c.folder.trim()) foldersSet.add(c.folder.trim())
+  }
+  for (const n of props.notes) {
+    if (n.folder && n.folder.trim()) foldersSet.add(n.folder.trim())
+  }
+
+  for (const f of foldersSet) {
+    list.push({
+      id: `folder-${f}`,
+      rawId: f,
+      title: f,
+      kind: 'folder',
+      description: `Pasta de notas e quadros`,
+      color: '#F59E0B', // Âmbar
+      radius: 16
     })
   }
 
@@ -213,23 +235,12 @@ const links = computed<GraphLink[]>(() => {
     }
   }
 
-  // 3. Conexões semânticas por mesma pasta
-  const folderMap = new Map<string, string[]>()
+  // 3. Conexões de itens com a respectiva Pasta
   for (const n of nodes.value) {
-    if (n.folder) {
-      const arr = folderMap.get(n.folder) || []
-      arr.push(n.id)
-      folderMap.set(n.folder, arr)
-    }
-  }
-
-  for (const [, ids] of folderMap) {
-    if (ids.length <= 1) continue
-    for (let i = 0; i < ids.length - 1; i++) {
-      const src = ids[i]
-      const tgt = ids[i + 1]
-      if (src && tgt) {
-        addLink(src, tgt, 'folder')
+    if (n.kind !== 'folder' && n.folder && n.folder.trim()) {
+      const folderKey = `folder-${n.folder.trim()}`
+      if (nodeMap.has(folderKey)) {
+        addLink(n.id, folderKey, 'folder')
       }
     }
   }
@@ -272,8 +283,9 @@ const initGraph = () => {
   const svg = d3.select(svgRef.value)
   svg.selectAll('*').remove()
 
-  const { width, height } = containerRef.value.getBoundingClientRect()
-  if (width === 0 || height === 0) return
+  const rect = containerRef.value.getBoundingClientRect()
+  const width = rect.width || containerRef.value.clientWidth || 800
+  const height = rect.height || containerRef.value.clientHeight || 600
 
   svg.attr('viewBox', `0 0 ${width} ${height}`)
 
@@ -419,6 +431,8 @@ const initGraph = () => {
     .on('click', (_event, d) => {
       if (d.kind === 'canvas') {
         emit('select-canvas', d.rawId)
+      } else if (d.kind === 'folder') {
+        emit('select-folder', d.rawId || d.title)
       } else if (d.rawNote) {
         emit('select-note', d.rawNote)
       }
@@ -484,6 +498,12 @@ watch([() => props.canvases, () => props.notes], () => {
 onUnmounted(() => {
   if (simulation) simulation.stop()
   if (resizeObserver) resizeObserver.disconnect()
+})
+
+defineExpose({
+  nodes,
+  links,
+  initGraph,
 })
 </script>
 

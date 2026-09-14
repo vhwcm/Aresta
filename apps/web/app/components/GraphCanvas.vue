@@ -217,7 +217,7 @@
 import { ref, computed, onMounted, watch, onBeforeUnmount, nextTick } from 'vue'
 import * as d3 from 'd3'
 import type { GraphNode, GraphEdge, GraphNodeType } from '~/interfaces/graph'
-import { PlusIcon, SearchIcon, LinkIcon, TagIcon, BookOpenIcon, FileTextIcon, LayoutGridIcon, SparklesIcon } from 'lucide-vue-next'
+import { PlusIcon, SearchIcon, LinkIcon, TagIcon, BookOpenIcon, FileTextIcon, LayoutGridIcon, FolderIcon, SparklesIcon } from 'lucide-vue-next'
 import { useSettings } from '~/composables/useSettings'
 import { getCoverUrl } from '~/utils/cover'
 
@@ -314,7 +314,7 @@ const tooltipPos = ref({ x: 0, y: 0 })
 
 // Filtros de camadas ativas (por padrão, todas visíveis)
 const activeLayers = ref<Set<GraphNodeType>>(
-  new Set(['theme', 'book', 'note', 'canvas'])
+  new Set(['theme', 'book', 'folder', 'note', 'canvas'])
 )
 
 const layerDefinitions: Array<{
@@ -326,6 +326,7 @@ const layerDefinitions: Array<{
 }> = [
   { type: 'theme', label: 'Temas', icon: TagIcon, activeBg: 'bg-accent/20 border-accent/40', activeText: 'text-accent' },
   { type: 'book', label: 'Livros', icon: BookOpenIcon, activeBg: 'bg-blue-500/20 border-blue-500/40', activeText: 'text-blue-400' },
+  { type: 'folder', label: 'Pastas', icon: FolderIcon, activeBg: 'bg-amber-500/20 border-amber-500/40', activeText: 'text-amber-400' },
   { type: 'note', label: 'Notas', icon: FileTextIcon, activeBg: 'bg-indigo-500/20 border-indigo-500/40', activeText: 'text-indigo-400' },
   { type: 'canvas', label: 'Quadros', icon: LayoutGridIcon, activeBg: 'bg-emerald-500/20 border-emerald-500/40', activeText: 'text-emerald-400' },
 ]
@@ -365,6 +366,7 @@ const getLayerCount = (type: GraphNodeType) => {
 const getNodeBadgeLabel = (type?: GraphNodeType) => {
   switch (type) {
     case 'book': return 'Livro'
+    case 'folder': return 'Pasta'
     case 'note': return 'Nota'
     case 'canvas': return 'Quadro'
     case 'theme':
@@ -375,6 +377,7 @@ const getNodeBadgeLabel = (type?: GraphNodeType) => {
 const getNodeBadgeClass = (type?: GraphNodeType) => {
   switch (type) {
     case 'book': return 'bg-blue-500/20 text-blue-400'
+    case 'folder': return 'bg-amber-500/20 text-amber-400'
     case 'note': return 'bg-indigo-500/20 text-indigo-400'
     case 'canvas': return 'bg-emerald-500/20 text-emerald-400'
     case 'theme':
@@ -528,6 +531,7 @@ const getNodeRadius = (node: GraphNode) => {
   if (node.isRoot || node.id === -999 || node.id === 'root') return 36
   if (node.type === 'book') return 26
   if (node.type === 'annotation') return 14
+  if (node.type === 'folder') return 18
   if (node.type === 'note') return 17
   if (node.type === 'canvas') return 19
   const count = node.bookCount || 0
@@ -613,6 +617,7 @@ const initGraph = (animateTransition = true) => {
       (n.author && n.author.toLowerCase().includes(query)) ||
       (n.selectedText && n.selectedText.toLowerCase().includes(query)) ||
       (n.note && n.note.toLowerCase().includes(query)) ||
+      (n.folder && n.folder.toLowerCase().includes(query)) ||
       (n.tags && n.tags.some((t) => t.toLowerCase().includes(query)))
     )
   })
@@ -634,11 +639,11 @@ const initGraph = (animateTransition = true) => {
     if (nodeMap.has(str)) return nodeMap.get(str)
 
     // Tenta remover prefixos conhecidos
-    const stripped = str.replace(/^(book-|theme-|note-|canvas-|annotation-)/, '')
+    const stripped = str.replace(/^(book-|theme-|note-|canvas-|annotation-|folder-)/, '')
     if (nodeMap.has(stripped)) return nodeMap.get(stripped)
 
     // Tenta prefixos conhecidos
-    for (const prefix of ['book-', 'theme-', 'note-', 'canvas-', 'annotation-']) {
+    for (const prefix of ['book-', 'theme-', 'note-', 'canvas-', 'annotation-', 'folder-']) {
       if (nodeMap.has(`${prefix}${str}`)) return nodeMap.get(`${prefix}${str}`)
       if (nodeMap.has(`${prefix}${stripped}`)) return nodeMap.get(`${prefix}${stripped}`)
     }
@@ -819,10 +824,12 @@ const initGraph = (animateTransition = true) => {
         if (!childNode) return
 
         // Distância radial incremental para fora:
-        // Livro/Livreto: +95px, Anotação: +75px, Nota: +85px
+        // Livro/Livreto: +95px, Anotação: +75px, Nota: +85px, Pasta: +80px
         let deltaR = 95
         if (childNode.type === 'annotation') deltaR = 75
+        else if (childNode.type === 'folder') deltaR = 80
         else if (childNode.type === 'note') deltaR = 85
+        else if (childNode.type === 'canvas') deltaR = 85
 
         const childR = parentR + deltaR
         // Se 1 filho: EXATAMENTE no mesmo ângulo (para fora!). Se K > 1: cone estreito apontando para fora
@@ -942,6 +949,9 @@ const initGraph = (animateTransition = true) => {
         case 'annotation-book':
         case 'annotation-theme':
           return isLightMode.value ? 'rgba(245, 158, 11, 0.45)' : 'rgba(245, 158, 11, 0.35)'
+        case 'note-folder':
+        case 'canvas-folder':
+          return isLightMode.value ? 'rgba(217, 119, 6, 0.48)' : 'rgba(245, 158, 11, 0.42)'
         case 'note-book':
         case 'note-note':
           return isLightMode.value ? 'rgba(99, 102, 241, 0.45)' : 'rgba(99, 102, 241, 0.35)'
@@ -960,7 +970,7 @@ const initGraph = (animateTransition = true) => {
     })
     .attr('stroke-width', (d: any) => (d.isRootEdge ? 1.4 : 1.2))
     .attr('stroke-dasharray', (d: any) => {
-      if (d.type === 'book-theme' || d.type === 'annotation-theme' || d.type === 'note-theme') return '3,3'
+      if (d.type === 'book-theme' || d.type === 'annotation-theme' || d.type === 'note-theme' || d.type === 'note-folder' || d.type === 'canvas-folder') return '3,3'
       if (d.isRootEdge) return '4,4'
       return 'none'
     })
@@ -1180,7 +1190,52 @@ const initGraph = (animateTransition = true) => {
     .text((d: any) => getTruncatedTitle(d.title || d.name, 12))
 
   // ----------------------------------------------------
-  // E. NÓS DE TEMAS & NÓ RAIZ (TIPO 'theme' / isRoot)
+  // E. NÓS DE PASTAS (TIPO 'folder')
+  // ----------------------------------------------------
+  const folderNodesSelection = nodesSelection.filter((d: any) => d.type === 'folder')
+
+  folderNodesSelection
+    .append('rect')
+    .attr('x', -18)
+    .attr('y', -16)
+    .attr('width', 36)
+    .attr('height', 32)
+    .attr('rx', 8)
+    .attr('ry', 8)
+    .attr('fill', isSepiaMode.value ? '#FEF3C7' : (isLightMode.value ? '#FFFBEB' : '#271F0C'))
+    .attr('stroke', '#F59E0B')
+    .attr('stroke-width', 1.8)
+    .attr('class', 'transition-all duration-300 shadow-md')
+
+  folderNodesSelection.each(function () {
+    const nodeEl = d3.select(this)
+    const iconG = nodeEl
+      .append('g')
+      .attr('class', 'folder-icon')
+      .attr('pointer-events', 'none')
+      .attr('transform', 'translate(-7, -7) scale(0.58)')
+      .attr('fill', 'none')
+      .attr('stroke', '#F59E0B')
+      .attr('stroke-width', '2')
+      .attr('stroke-linecap', 'round')
+      .attr('stroke-linejoin', 'round')
+
+    iconG.html(`<path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/>`)
+  })
+
+  folderNodesSelection
+    .append('text')
+    .attr('text-anchor', 'middle')
+    .attr('dy', 28)
+    .attr('fill', isSepiaMode.value ? '#92400E' : (isLightMode.value ? '#B45309' : '#FBBF24'))
+    .attr('font-size', '10px')
+    .attr('font-weight', '600')
+    .attr('font-family', 'system-ui, -apple-system, sans-serif')
+    .attr('pointer-events', 'none')
+    .text((d: any) => getTruncatedTitle(d.title || d.name, 12))
+
+  // ----------------------------------------------------
+  // F. NÓS DE TEMAS & NÓ RAIZ (TIPO 'theme' / isRoot)
   // ----------------------------------------------------
   const themeAndRootNodesSelection = nodesSelection.filter(
     (d: any) => d.type === 'theme' || d.isRoot
@@ -1365,8 +1420,16 @@ const initGraph = (animateTransition = true) => {
         let edgeType = 'theme-hierarchy'
         const isSrcBook = dragSourceNode.type === 'book'
         const isTgtBook = finalTarget.type === 'book'
+        const isSrcFolder = dragSourceNode.type === 'folder'
+        const isTgtFolder = finalTarget.type === 'folder'
+
         if (isSrcBook && isTgtBook) edgeType = 'book-hierarchy'
         else if (isSrcBook || isTgtBook) edgeType = 'book-theme'
+        else if (isSrcFolder || isTgtFolder) {
+          if (dragSourceNode.type === 'note' || finalTarget.type === 'note') edgeType = 'note-folder'
+          else if (dragSourceNode.type === 'canvas' || finalTarget.type === 'canvas') edgeType = 'canvas-folder'
+          else edgeType = 'theme-hierarchy'
+        }
 
         const optimisticEdgeId = `edge-live-${dragSourceNode.id}-${finalTarget.id}`
         const alreadyExists = allEdges.value.some((e) => {

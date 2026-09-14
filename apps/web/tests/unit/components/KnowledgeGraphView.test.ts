@@ -82,4 +82,51 @@ describe('KnowledgeGraphView Component', () => {
 
     expect(wrapper.find('svg').exists()).toBe(true);
   });
+
+  it('cria nós de pastas e links diretos para notas e quadros pertencentes à pasta', () => {
+    const canvases: CanvasSummary[] = [
+      {
+        id: 'c-1',
+        title: 'Quadro Projetos',
+        folder: 'Projetos',
+        updatedAt: '2026-09-04T10:00:00Z',
+      },
+    ];
+
+    const notes: NoteItem[] = [
+      {
+        id: 'n-1',
+        userId: 1,
+        title: 'Nota Projetos',
+        content: 'Conteúdo',
+        folder: 'Projetos',
+        tags: [],
+        updatedAt: '2026-09-04T10:00:00Z',
+      },
+    ];
+
+    const wrapper = mount(KnowledgeGraphView, {
+      props: {
+        canvases,
+        notes,
+      },
+    });
+
+    expect(wrapper.find('svg').exists()).toBe(true);
+    const vm = wrapper.vm as any;
+    const folderNode = vm.nodes.find((n: any) => n.kind === 'folder' && n.title === 'Projetos');
+    expect(folderNode).toBeDefined();
+    expect(folderNode.id).toBe('folder-Projetos');
+    expect(folderNode.color).toBe('#F59E0B');
+
+    const noteLink = vm.links.find(
+      (l: any) => l.source === 'note-n-1' && l.target === 'folder-Projetos' && l.type === 'folder'
+    );
+    expect(noteLink).toBeDefined();
+
+    const canvasLink = vm.links.find(
+      (l: any) => l.source === 'canvas-c-1' && l.target === 'folder-Projetos' && l.type === 'folder'
+    );
+    expect(canvasLink).toBeDefined();
+  });
 });
