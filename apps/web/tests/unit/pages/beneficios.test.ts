@@ -65,4 +65,19 @@ describe('Beneficios Page', () => {
     const canvasStub = wrapper.find('[data-testid="feedback-canvas-stub"]')
     expect(canvasStub.attributes('data-open')).toBe('true')
   })
+
+  it('não renderiza o card/chamada de adicionar livros', () => {
+    const wrapper = mount(BeneficiosPage, {
+      global: {
+        stubs: {
+          NuxtLink: true,
+          FeedbackCanvas: true,
+        },
+      },
+    })
+
+    expect(wrapper.find('[data-testid="beneficios-cta-upload"]').exists()).toBe(false)
+    expect(wrapper.text()).not.toContain('Pronto para transformar sua experiência de aprendizado?')
+    expect(wrapper.text()).not.toContain('Adicionar Meu Primeiro Livro')
+  })
 })

@@ -70,6 +70,16 @@
 
           <!-- Lado Direito: Botões de Ação Rápida -->
           <div class="flex items-center gap-2.5 flex-shrink-0">
+            <!-- Novo Desenho -->
+            <button
+              class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-bgSurface hover:bg-primary/10 text-textPrimary hover:text-primary border border-divider hover:border-primary/40 text-xs font-semibold transition-all shadow-xs cursor-pointer"
+              title="Criar nova nota de desenho estilo Samsung Notes"
+              @click="handleCreateNewDrawing()"
+            >
+              <PenToolIcon class="w-3.5 h-3.5 text-primary" />
+              <span>Novo Desenho</span>
+            </button>
+
             <!-- Nova Nota -->
             <button
               class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-bgSurface hover:bg-accent/10 text-textPrimary hover:text-accent border border-divider hover:border-accent/40 text-xs font-semibold transition-all shadow-xs cursor-pointer"
@@ -168,8 +178,18 @@
               </div>
             </div>
 
-            <!-- Grupo Direito: Nova Nota + Novo Quadro -->
+            <!-- Grupo Direito: Novo Desenho + Nova Nota + Novo Quadro -->
             <div class="flex items-center gap-1 shrink-0">
+              <!-- Novo Desenho -->
+              <button
+                class="inline-flex items-center gap-1 px-2 py-1.5 rounded-xl bg-bgSurface hover:bg-primary/10 text-textPrimary hover:text-primary border border-divider hover:border-primary/40 text-xs font-semibold transition-all shadow-xs cursor-pointer shrink-0 whitespace-nowrap"
+                title="Criar novo caderno de desenho"
+                @click="handleCreateNewDrawing()"
+              >
+                <PenToolIcon class="w-3.5 h-3.5 text-primary" />
+                <span class="hidden xs:inline">Novo Desenho</span>
+              </button>
+
               <!-- Nova Nota -->
               <button
                 class="inline-flex items-center gap-1 px-2 py-1.5 rounded-xl bg-bgSurface hover:bg-accent/10 text-textPrimary hover:text-accent border border-divider hover:border-accent/40 text-xs font-semibold transition-all shadow-xs cursor-pointer shrink-0 whitespace-nowrap"
@@ -261,7 +281,40 @@
         class="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-8 pb-28"
       >
         <div class="max-w-7xl w-full mx-auto space-y-6">
-          <div class="flex items-center justify-between text-xs text-textSecondary">
+          <div class="flex items-center justify-between text-xs text-textSecondary flex-wrap gap-3">
+            <!-- Abas do Espaço Unificado: Todos / Quadros / Notas / Desenhos -->
+            <div class="flex items-center gap-1 p-1 bg-bgPanel border border-divider rounded-xl">
+              <button
+                @click="setTab('all')"
+                class="px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer"
+                :class="activeTab === 'all' ? 'bg-accent text-white shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
+              >
+                Todos
+              </button>
+              <button
+                @click="setTab('canvases')"
+                class="px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer"
+                :class="activeTab === 'canvases' ? 'bg-accent text-white shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
+              >
+                Quadros
+              </button>
+              <button
+                @click="setTab('notes')"
+                class="px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer"
+                :class="activeTab === 'notes' ? 'bg-accent text-white shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
+              >
+                Notas
+              </button>
+              <button
+                @click="setTab('drawings')"
+                class="px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5"
+                :class="activeTab === 'drawings' ? 'bg-primary text-white shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
+              >
+                <PenToolIcon class="w-3 h-3" />
+                <span>Desenhos</span>
+              </button>
+            </div>
+
             <span class="font-mono">
               {{ displayItems.length }} {{ displayItems.length === 1 ? 'item exibido' : 'itens exibidos' }}
             </span>
@@ -369,7 +422,7 @@
 
               <!-- CARD: ANOTAÇÃO LIVRE (NOTE) -->
               <div
-                v-else
+                v-else-if="item.kind === 'note'"
                 class="group relative flex flex-col justify-between p-5 rounded-2xl bg-bgPanel border border-divider hover:border-indigo-500/60 shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all cursor-pointer overflow-hidden select-none"
                 @click="openNoteEditor(item.rawNote)"
               >
@@ -444,6 +497,63 @@
                   <span class="text-[10px] text-textSecondary/70 font-mono">
                     {{ formatDate(item.updatedAt) }}
                   </span>
+                </div>
+              </div>
+
+              <!-- CARD: NOTA DE DESENHO (DRAWING NOTE) -->
+              <div
+                v-else-if="item.kind === 'drawing'"
+                class="group relative flex flex-col justify-between p-5 rounded-2xl bg-bgPanel border border-divider hover:border-primary/60 shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all cursor-pointer overflow-hidden select-none"
+                @click="openDrawing(item.id)"
+              >
+                <div>
+                  <div class="flex items-center justify-between mb-2.5">
+                    <div class="flex items-center gap-2">
+                      <span class="p-1.5 rounded-lg bg-primary/10 text-primary">
+                        <PenToolIcon class="w-4 h-4" />
+                      </span>
+                      <span class="text-[11px] font-mono text-textSecondary uppercase tracking-wider">Desenho</span>
+                    </div>
+                    <span class="text-[11px] font-mono text-textSecondary/80 px-2 py-0.5 rounded bg-bgElevated">
+                      {{ item.pagesCount }} pág{{ item.pagesCount > 1 ? 's' : '' }}
+                    </span>
+                  </div>
+
+                  <h3 class="text-sm sm:text-base font-bold text-textPrimary group-hover:text-primary transition-colors line-clamp-1 mb-1">
+                    {{ item.title }}
+                  </h3>
+
+                  <!-- Miniatura ou indicação visual de caderno -->
+                  <div class="mt-3 w-full h-28 rounded-xl bg-bgElevated/60 border border-divider/40 flex items-center justify-center overflow-hidden">
+                    <img
+                      v-if="item.preview_url"
+                      :src="item.preview_url"
+                      alt="Preview"
+                      class="w-full h-full object-cover"
+                    />
+                    <div v-else class="flex flex-col items-center gap-1.5 text-textSecondary/60">
+                      <PenToolIcon class="w-6 h-6 text-primary/40" />
+                      <span class="text-[10px] font-mono">Páginas Samsung Notes</span>
+                    </div>
+                  </div>
+
+                  <div v-if="item.folder" class="mt-3 flex items-center gap-1 text-[11px] text-textSecondary">
+                    <FolderIcon class="w-3 h-3" />
+                    <span>{{ item.folder }}</span>
+                  </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-divider/50 flex items-center justify-between text-[11px] text-textSecondary">
+                  <span v-if="item.updatedAt">
+                    {{ formatRelativeTime(item.updatedAt) }}
+                  </span>
+                  <button
+                    class="opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-red-500/10 text-textSecondary hover:text-red-500 transition-all cursor-pointer"
+                    title="Excluir desenho"
+                    @click.stop="handleDeleteDrawing(item.id)"
+                  >
+                    <Trash2Icon class="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
             </template>
@@ -547,7 +657,8 @@ import {
   LayoutGridIcon,
   FileTextIcon,
   Edit3Icon,
-  NetworkIcon
+  NetworkIcon,
+  PenTool as PenToolIcon
 } from 'lucide-vue-next'
 import FolderTagSidebar, { type SidebarTreeItem } from '~/components/FolderTagSidebar.vue'
 import ArestaLogoGraph from '~/components/ArestaLogoGraph.vue'
@@ -556,6 +667,7 @@ import NoteEditorPane from '~/components/notes/NoteEditorPane.vue'
 import GraphCanvas from '~/components/GraphCanvas.vue'
 import { useCanvas } from '~/composables/useCanvas'
 import { useNotes } from '~/composables/useNotes'
+import { useDrawing } from '~/composables/useDrawing'
 import { useGraph } from '~/composables/useGraph'
 import type { CanvasSummary } from '~/interfaces/canvas'
 import type { NoteItem } from '~/interfaces/note'
@@ -578,8 +690,8 @@ const openMobileSearch = async () => {
   mobileSearchInputRef.value?.focus()
 }
 
-// Controle de abas: 'all' | 'canvases' | 'notes'
-const activeTab = ref<'all' | 'canvases' | 'notes'>('all')
+// Controle de abas: 'all' | 'canvases' | 'notes' | 'drawings'
+const activeTab = ref<'all' | 'canvases' | 'notes' | 'drawings'>('all')
 
 // Controle de layout: 'graph' (Grafo de Conhecimento Central) | 'grid' (Galeria) | 'note-editor' (Editor Live Preview)
 const viewLayout = ref<'graph' | 'grid' | 'note-editor'>(
@@ -628,6 +740,14 @@ const {
   loadNote,
 } = useNotes()
 
+const {
+  drawingsList,
+  isLoading: isDrawingsLoading,
+  fetchDrawings,
+  createDrawing,
+  deleteDrawing,
+} = useDrawing()
+
 const { graphData, fetchGraph: fetchUnifiedGraph } = useGraph()
 
 const handleSelectGraphNode = async (node: any) => {
@@ -665,6 +785,7 @@ const syncFromRoute = () => {
     const tabStr = String(route.query.tab).toLowerCase()
     if (tabStr === 'notes' || tabStr === 'note') activeTab.value = 'notes'
     else if (tabStr === 'canvases' || tabStr === 'canvas') activeTab.value = 'canvases'
+    else if (tabStr === 'drawings' || tabStr === 'drawing') activeTab.value = 'drawings'
     else activeTab.value = 'all'
   }
   if (route?.query?.folder !== undefined) {
@@ -695,6 +816,7 @@ onMounted(async () => {
       fetchCanvasFolders(),
       fetchNotes(),
       fetchNoteFolders(),
+      fetchDrawings(),
       fetchUnifiedGraph(),
     ])
 
@@ -717,7 +839,7 @@ watch(viewLayout, (val) => {
   }
 })
 
-const setTab = (tab: 'all' | 'canvases' | 'notes') => {
+const setTab = (tab: 'all' | 'canvases' | 'notes' | 'drawings') => {
   activeTab.value = tab
   router.replace({
     query: {
@@ -733,7 +855,7 @@ const clearAllFilters = () => {
   searchQuery.value = ''
 }
 
-// União de pastas de quadros e de notas
+// União de pastas de quadros, notas e desenhos
 const unifiedFolders = computed(() => {
   const set = new Set<string>([...canvasFolders.value, ...noteFolders.value])
   for (const c of canvasesList.value) {
@@ -741,6 +863,9 @@ const unifiedFolders = computed(() => {
   }
   for (const n of notesList.value) {
     if (n.folder) set.add(n.folder)
+  }
+  for (const d of drawingsList.value) {
+    if (d.folder) set.add(d.folder)
   }
   return Array.from(set).sort((a, b) => a.localeCompare(b))
 })
@@ -761,7 +886,14 @@ const unifiedSidebarItems = computed<SidebarTreeItem[]>(() => {
     folder: n.folder,
     tags: n.tags
   }))
-  return [...cItems, ...nItems]
+  const dItems: SidebarTreeItem[] = drawingsList.value.map((d) => ({
+    id: `drawing-${d.id}`,
+    title: d.title || 'Desenho sem título',
+    kind: 'drawing' as any,
+    folder: d.folder,
+    tags: d.tags
+  }))
+  return [...cItems, ...nItems, ...dItems]
 })
 
 const totalCombinedCount = computed(() => {
@@ -918,6 +1050,32 @@ const filteredNotes = computed(() => {
   })
 })
 
+// Filtros combinados de Busca + Pasta + Tag para Desenhos
+const filteredDrawings = computed(() => {
+  return drawingsList.value.filter((d) => {
+    if (activeFolder.value !== null) {
+      if (activeFolder.value === '__uncategorized__') {
+        if (d.folder) return false
+      } else if (d.folder !== activeFolder.value) {
+        return false
+      }
+    }
+
+    if (activeTag.value !== null) {
+      if (!d.tags || !d.tags.includes(activeTag.value)) return false
+    }
+
+    if (searchQuery.value) {
+      const q = searchQuery.value.toLowerCase()
+      const matchTitle = d.title?.toLowerCase().includes(q)
+      const matchTag = d.tags?.some((t) => t.toLowerCase().includes(q))
+      if (!matchTitle && !matchTag) return false
+    }
+
+    return true
+  })
+})
+
 // Lista combinada de itens unificados para renderização na Grade (ordenada por data mais recente)
 interface DisplayItemBase {
   id: string
@@ -942,7 +1100,14 @@ interface DisplayNoteItem extends DisplayItemBase {
   rawNote: NoteItem
 }
 
-type DisplayItem = DisplayCanvasItem | DisplayNoteItem
+interface DisplayDrawingItem extends DisplayItemBase {
+  kind: 'drawing'
+  pagesCount: number
+  preview_url?: string | null
+  rawDrawing: any
+}
+
+type DisplayItem = DisplayCanvasItem | DisplayNoteItem | DisplayDrawingItem
 
 const displayItems = computed<DisplayItem[]>(() => {
   const items: DisplayItem[] = []
@@ -980,12 +1145,56 @@ const displayItems = computed<DisplayItem[]>(() => {
     }
   }
 
+  if (activeTab.value === 'all' || activeTab.value === 'drawings') {
+    for (const d of filteredDrawings.value) {
+      items.push({
+        kind: 'drawing',
+        id: d.id,
+        title: d.title || 'Desenho sem título',
+        folder: d.folder,
+        tags: d.tags,
+        pagesCount: d.pagesCount || 1,
+        preview_url: d.preview_url,
+        updatedAt: d.updated_at,
+        rawDrawing: d
+      })
+    }
+  }
+
   return items.sort((a, b) => {
     const timeA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0
     const timeB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0
     return timeB - timeA
   })
 })
+
+const openDrawing = async (id: string) => {
+  await navigateTo(`/canvas/drawing/${id}`)
+}
+
+const handleCreateNewDrawing = async () => {
+  try {
+    const created = await createDrawing({
+      title: 'Caderno de Desenho',
+      folder: activeFolder.value !== '__uncategorized__' ? activeFolder.value : null,
+    })
+    if (created?.id) {
+      await navigateTo(`/canvas/drawing/${created.id}`)
+    }
+  } catch (err: any) {
+    errorMessage.value = 'Erro ao criar nota de desenho.'
+  }
+}
+
+const handleDeleteDrawing = async (id: string) => {
+  if (confirm('Deseja excluir esta nota de desenho?')) {
+    try {
+      await deleteDrawing(id)
+    } catch {
+      errorMessage.value = 'Erro ao excluir nota de desenho.'
+    }
+  }
+}
 
 // Operações de Canvas
 const openCanvas = async (id: string) => {

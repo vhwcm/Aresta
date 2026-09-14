@@ -322,42 +322,6 @@
           </table>
         </div>
       </section>
-
-      <!-- Chamada Final para Ação -->
-      <section class="p-8 sm:p-12 rounded-3xl bg-gradient-to-br from-accent/15 via-white/[0.02] to-transparent border border-accent/30 flex flex-col items-center text-center gap-6">
-        <div class="w-12 h-12 rounded-full bg-accent/20 text-accent flex items-center justify-center shadow-lg">
-          <BookOpenIcon class="w-6 h-6" />
-        </div>
-
-        <div class="flex flex-col gap-2 max-w-xl">
-          <h3 class="font-editorial text-3xl sm:text-4xl font-light text-textPrimary">
-            Pronto para transformar sua experiência de aprendizado?
-          </h3>
-          <p class="font-interface text-sm text-textSecondary leading-relaxed">
-            Inicie agora sua estante digital, importe seus livros favoritos e construa um repertório duradouro.
-          </p>
-        </div>
-
-        <div class="flex flex-wrap items-center justify-center gap-3">
-          <NuxtLink
-            to="/upload"
-            data-testid="beneficios-cta-upload"
-            class="px-6 py-3 rounded-2xl bg-accent hover:bg-primaryHover text-white text-sm font-semibold shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
-          >
-            <UploadIcon class="w-4 h-4" />
-            <span>Adicionar Meu Primeiro Livro</span>
-          </NuxtLink>
-
-          <NuxtLink
-            to="/library"
-            data-testid="beneficios-cta-library"
-            class="px-6 py-3 rounded-2xl bg-white/5 hover:bg-white/10 border border-divider text-textPrimary text-sm font-medium hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
-          >
-            <LibraryIcon class="w-4 h-4" />
-            <span>Explorar Minha Estante</span>
-          </NuxtLink>
-        </div>
-      </section>
     </main>
 
     <!-- Componente Offcanvas de Feedback -->
@@ -381,9 +345,7 @@ import {
   LayersIcon,
   NetworkIcon,
   FileTextIcon,
-  CompassIcon,
-  UploadIcon,
-  LibraryIcon
+  CompassIcon
 } from 'lucide-vue-next'
 import FeedbackCanvas from '~/components/FeedbackCanvas.vue'
 

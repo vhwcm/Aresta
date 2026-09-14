@@ -424,6 +424,104 @@ DIRETRIZES:
 
     throw new Error(`Falha ao transcrever imagem com IA: ${lastError?.message || 'Erro desconhecido'}`)
   }
+
+  /**
+   * Sintetiza páginas desenhadas à mão em HTML semântico com CSS moderno via Gemini Vision
+   */
+  async synthesizeDrawingToHtml(params: {
+    images: string[]
+    promptOverride?: string
+  }): Promise<{ html: string; titleSuggested: string; summary: string }> {
+    if (!params.images || params.images.length === 0) {
+      throw new Error('Nenhuma imagem de página fornecida para síntese.')
+    }
+
+    const inlineParts = params.images.map((img) => {
+      let mimeType = 'image/png'
+      let cleanBase64 = img
+      if (img.startsWith('data:')) {
+        const match = img.match(/^data:(image\/[a-zA-Z0-9+.-]+);base64,(.+)$/)
+        if (match) {
+          mimeType = match[1]
+          cleanBase64 = match[2]
+        }
+      }
+      return {
+        inlineData: {
+          data: cleanBase64.trim(),
+          mimeType,
+        },
+      }
+    })
+
+    const systemInstruction = `Você é um compilador de conteúdo visual e arquiteto de anotações da plataforma Aresta.
+Sua missão é interpretar rigorosamente anotações manuscritas, desenhos, fluxogramas, tabelas e diagramas contidos nas imagens das páginas de um caderno e sintetizá-los em HTML semântico puro com CSS moderno embutido e visual premium.
+
+Diretrizes obrigatórias:
+1. SEMÂNTICA E CONTEÚDO:
+   - Identifique títulos, subtítulos, tópicos e anotações. Use <h1>, <h2>, <h3>, <p>, <ul>, <ol>.
+   - Preserve integralmente o significado, fórmulas, termos e conexões conceituais desenhadas.
+2. DIAGRAMAS E FLUXOGRAMAS:
+   - Converta blocos conectados, caixas, setas e árvores desenhadas em estruturas visuais HTML/CSS usando display: flex ou grid, cards com bordas elegantes, badges de etapas e setas em caracteres limpos (→, ↓, ➔).
+   - NÃO utilize blocos brutos de código Markdown ou DSL externa não compilada.
+3. TABELAS:
+   - Converta tabelas desenhadas em elementos <table> semânticos com <thead>, <th>, <tbody>, <td> com bordas sutis e padding equilibrado.
+4. ESTILIZAÇÃO E TEMA:
+   - Todo o conteúdo deve ser envolvido por uma div com classe 'aresta-drawing-synthesis'.
+   - Adicione estilos embutidos <style> dentro ou classes adequadas, com cores sofisticadas (tons de cinza, acentos laranja/âmbar, bordas suaves, tipografia com line-height confortável).
+5. FORMATO DE SAÍDA:
+   - Responda EXCLUSIVAMENTE em formato JSON válido:
+   {
+     "titleSuggested": "Título representativo sintetizado",
+     "summary": "Breve resumo do conteúdo em 1 ou 2 frases",
+     "html": "<div class=\\"aresta-drawing-synthesis\\">...</div>"
+   }`
+
+    const userPrompt = params.promptOverride || 'Converta com máxima fidelidade e beleza visual as anotações e desenhos contidos nestas páginas para a estrutura JSON solicitada.'
+
+    const candidateModels = [...new Set([GEMINI_MODEL, ...GEMINI_MODEL_CASCADE].filter(Boolean))]
+    let lastError: any = null
+
+    for (const modelName of candidateModels) {
+      try {
+        const model = genAI.getGenerativeModel({
+          model: modelName,
+          systemInstruction,
+        })
+
+        const result = await model.generateContent([userPrompt, ...inlineParts])
+        const rawText = result.response.text() || ''
+
+        const jsonMatch = rawText.match(/\{[\s\S]*\}/)?.[0]
+        if (jsonMatch) {
+          try {
+            const parsed = JSON.parse(jsonMatch)
+            if (parsed.html) {
+              return {
+                titleSuggested: parsed.titleSuggested || 'Desenho Sintetizado',
+                summary: parsed.summary || 'Síntese das anotações manuscritas.',
+                html: parsed.html,
+              }
+            }
+          } catch {
+            // Continua para fallback
+          }
+        }
+
+        const cleanedHtml = rawText.replace(/^```(html)?\n?/i, '').replace(/\n?```$/i, '').trim()
+        return {
+          titleSuggested: 'Anotação Sintetizada',
+          summary: 'Conteúdo visual sintetizado com sucesso.',
+          html: cleanedHtml,
+        }
+      } catch (err: any) {
+        lastError = err
+        console.warn(`[AiService:synthesizeDrawingToHtml] Falha com ${modelName}:`, err?.message || err)
+      }
+    }
+
+    throw new Error(`Falha ao sintetizar desenho com IA: ${lastError?.message || 'Erro desconhecido'}`)
+  }
 }
 
 export const aiService = new AiService()

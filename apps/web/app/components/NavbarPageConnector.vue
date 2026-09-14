@@ -102,7 +102,7 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuth } from '~/composables/useAuth'
-import { getNavIndexFromPath } from '~/composables/useBottomNavbar'
+import { getEffectiveNavIndex } from '~/composables/useBottomNavbar'
 
 const route = useRoute()
 const auth = useAuth()
@@ -133,7 +133,7 @@ const isVisible = computed(() => {
 })
 
 const activeIndex = computed(() => {
-  return getNavIndexFromPath(route?.path || '')
+  return getEffectiveNavIndex(route?.path || '')
 })
 
 // Posição alvo calculada com base no índice ativo

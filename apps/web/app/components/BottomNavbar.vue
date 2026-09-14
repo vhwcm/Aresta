@@ -154,6 +154,7 @@ import {
 } from 'lucide-vue-next'
 import ArestaLogoGraph from '~/components/ArestaLogoGraph.vue'
 import { useAuth } from '~/composables/useAuth'
+import { getEffectiveNavIndex } from '~/composables/useBottomNavbar'
 
 const auth = useAuth()
 const route = useRoute()
@@ -178,9 +179,14 @@ watch(
 const isBooksOpen = ref(false)
 const booksMenuRef = ref<HTMLElement | null>(null)
 
+// Índice efetivo com fallback para a última aba direta aberta
+const activeNavIndex = computed(() => {
+  return getEffectiveNavIndex(route?.path || '')
+})
+
 // Rotas ativas com destaque visual
 const isHomeActive = computed(() => {
-  return (route?.path || '') === '/'
+  return activeNavIndex.value === 0
 })
 
 const isMyBooksActive = computed(() => {
@@ -189,23 +195,19 @@ const isMyBooksActive = computed(() => {
 })
 
 const isBooksActive = computed(() => {
-  const path = route?.path || ''
-  return isMyBooksActive.value || path.startsWith('/conversor') || path.startsWith('/loja')
+  return activeNavIndex.value === 1
 })
 
 const isCanvasActive = computed(() => {
-  const path = route?.path || ''
-  return path === '/canvas' || path.startsWith('/notes')
+  return activeNavIndex.value === 2
 })
 
 const isReviewActive = computed(() => {
-  const path = route?.path || ''
-  return path.startsWith('/revisao') || path.startsWith('/curva-do-esquecimento')
+  return activeNavIndex.value === 3
 })
 
 const isAccountActive = computed(() => {
-  const path = route?.path || ''
-  return path.startsWith('/conta') || path.startsWith('/users') || path.startsWith('/admin')
+  return activeNavIndex.value === 4
 })
 
 // Fechar dropdown de livros ao clicar fora

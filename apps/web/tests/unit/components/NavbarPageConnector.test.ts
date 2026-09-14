@@ -46,4 +46,14 @@ describe('NavbarPageConnector Component', () => {
 
     expect(wrapper.find('svg').exists()).toBe(false)
   })
+
+  it('mantém selecionada a última aba direta quando estiver em rota indireta como /beneficios', async () => {
+    mockRoute.path = '/revisao'
+    const wrapper = mount(NavbarPageConnector)
+    expect(wrapper.vm.activeIndex).toBe(3)
+
+    mockRoute.path = '/beneficios'
+    await wrapper.vm.$nextTick()
+    expect(wrapper.vm.activeIndex).toBe(3)
+  })
 })

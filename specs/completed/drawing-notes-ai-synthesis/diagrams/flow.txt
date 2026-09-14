@@ -1,0 +1,80 @@
+================================================================================
+ARESTA MONOLITH — FLUXO DE NOTAS DE DESENHO & SÍNTESE EM HTML SEMÂNTICO (IA)
+================================================================================
+
++------------------------------------------------------------------------------+
+|                            FRONTEND (Nuxt 3 / Tauri)                         |
++------------------------------------------------------------------------------+
+  │
+  ├─► [ Hub /canvas ]
+  │      ├─ [ Aba Quadros ] ──► /canvas/:id
+  │      ├─ [ Aba Notas ]   ──► NoteEditorPane
+  │      └─ [ Aba Desenhos ]──► /canvas/drawing/:id  (NOVO)
+  │
+  ▼
++------------------------------------------------------------------------------+
+|                     PÁGINA DO EDITOR DE DESENHO (DRAWING)                    |
++------------------------------------------------------------------------------+
+| [← Voltar] [Título Editável] [Pág 1/3] [Desfazer/Refazer] [✨ Transformar IA] |
+|                                                                              |
+| +------------------------- BARRA DE FERRAMENTAS --------------------------+ |
+| | [Caneta] [Tinteiro] [Lápis] [Marca-texto] [Borracha] | [Paleta] [Palma: ON] |
+| +-------------------------------------------------------------------------+ |
+|                                                                              |
+|   ┌────────────────────────────────┐ ◄── Rejeição de Palma                   |
+|   │ PÁGINA 1 (A4 - Pautada/Grid)   │     - Stylus: Caneta/Traço perfeito     |
+|   │   # Título Manuscrito          │     - Dedo / Palma: Bloqueado (Scroll)  |
+|   │   [Diagrama / Caixas / Setas]  │                                         |
+|   │   • Tópicos e notas livres     │                                         |
+|   └────────────────────────────────┘                                         |
+|                   │                                                          |
+|   ┌────────────────────────────────┐                                         |
+|   │ PÁGINA 2 (A4 - Liso/Branco)    │                                         |
+|   │   [Tabela comparativa]         │                                         |
+|   └────────────────────────────────┘                                         |
+|                   │                                                          |
+|          [+ Adicionar Página]                                                |
++------------------------------------------------------------------------------+
+       │                                     ▲
+       │ 1. Autosave contínuo (debounce)     │ 2. Retorno das notas/páginas
+       ▼                                     │
++──────────────────────────────────────────────────────────────────────────────+
+|                     BACKEND REST API (Express Modular)                       |
+|   POST/PUT /api/drawings/:id ──► Prisma ORM ──► PostgreSQL (pgvector)        |
++──────────────────────────────────────────────────────────────────────────────+
+       │
+       │ 3. Ação: "✨ Transformar com IA"
+       │    (Renderiza Canvas Pages em PNGs Hi-Res)
+       ▼
++──────────────────────────────────────────────────────────────────────────────+
+|               POST /api/drawings/:id/synthesize                              |
+|                                                                              |
+|   Payload: { images: ["data:image/png;base64,...", ...] }                    |
+|                              │                                               |
+|                              ▼                                               |
+|                   Google Gemini Vision API                                   |
+|   - Análise Multimodal de OCR + Reconhecimento de Diagramas & Tabelas        |
+|   - Geração de HTML Semântico Puro + CSS Moderno Customizado                 |
++──────────────────────────────────────────────────────────────────────────────+
+       │
+       │ 4. Retorno: { html: "<div class='aresta-doc'>...</div>" }
+       ▼
++------------------------------------------------------------------------------+
+|            MODAL SPLIT VIEW: VISUALIZAÇÃO & DECISÃO DE CONVERSÃO             |
++------------------------------------------------------------------------------+
+|  DESENHO ORIGINAL (Páginas)         │  HTML SINTETIZADO (Preview Vivo)       |
+|  [Miniaturas do traço manual]       │  ┌───────────────────────────────────┐ |
+|                                     │  │ <h1>Título Estruturado</h1>       │ |
+|                                     │  │ <div class="grid gap-3">...</div> │ |
+|                                     │  │ <table>...</table>                │ |
+|                                     │  └───────────────────────────────────┘ |
+|                                                                              |
+|  [x] Excluir a nota de desenho original após salvar                          |
+|  [ Descartar ]                                      [ Salvar como Nota 💾 ]  |
++------------------------------------------------------------------------------+
+       │
+       ▼ (Salvar como Nota)
+  - POST /api/notes (Cria nova Nota padrão com o HTML/Markdown gerado)
+  - Se marcado: DELETE /api/drawings/:id (Remove o desenho de origem)
+  - Redireciona com toast elegante de sucesso
+================================================================================
