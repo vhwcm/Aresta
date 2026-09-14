@@ -10,32 +10,24 @@
           <ArrowLeftIcon class="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
           <span>Voltar para a Estante</span>
         </NuxtLink>
-
-        <div class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary flex items-center gap-2">
-          <UploadIcon class="w-3.5 h-3.5 text-accent" />
-          Módulo de Importação
-        </div>
       </div>
 
       <div class="flex flex-col gap-1">
         <h1 class="font-editorial text-4xl sm:text-5xl font-light text-textPrimary leading-tight">
           Upload de Livros
         </h1>
-        <p class="text-xs sm:text-sm font-interface text-textSecondary max-w-xl leading-relaxed">
-          Envie seus livros nos formatos <strong>PDF</strong> ou <strong>EPUB</strong> para leitura imediata no leitor Aresta com animação de páginas.
-        </p>
       </div>
     </header>
 
     <!-- Área Principal de DropZone -->
     <div class="w-full flex flex-col gap-6">
-      <div class="bg-bgPanel/40 border border-divider rounded-3xl p-8 shadow-2xl backdrop-blur-sm relative overflow-hidden">
+      <div class="bg-bgPanel/40 border border-divider rounded-3xl p-8 shadow-2xl backdrop-blur-sm relative overflow-hidden flex flex-col items-center text-center">
         <div class="absolute -right-12 -top-12 w-40 h-40 bg-accent/10 rounded-full blur-3xl pointer-events-none"></div>
 
         <h2 class="font-editorial text-2xl text-textPrimary font-light mb-2">
           Selecione ou Arraste seu Arquivo
         </h2>
-        <p class="text-xs text-textSecondary font-interface mb-6">
+        <p class="text-xs text-textSecondary font-interface mb-6 max-w-md">
           O arquivo será processado localmente com validação de bytes e extração automática de capa.
         </p>
 
@@ -47,7 +39,7 @@
         <!-- Prévia da Capa Extraída -->
         <div
           v-if="lastExtractedCover"
-          class="mt-4 p-4 rounded-2xl bg-white/5 border border-accent/30 flex items-center gap-4 animate-in fade-in"
+          class="mt-4 p-4 rounded-2xl bg-white/5 border border-accent/30 flex items-center gap-4 animate-in fade-in w-full max-w-lg text-left"
         >
           <img
             :src="lastExtractedCover"
@@ -68,7 +60,7 @@
         <!-- Status do Google Drive -->
         <div
           v-if="driveSyncStatus === 'syncing'"
-          class="mt-4 p-4 rounded-2xl bg-sky-500/10 border border-sky-500/30 flex items-center gap-3 text-sky-300 text-xs font-interface animate-in fade-in"
+          class="mt-4 p-4 rounded-2xl bg-sky-500/10 border border-sky-500/30 flex items-center gap-3 text-sky-300 text-xs font-interface animate-in fade-in w-full max-w-lg text-left"
         >
           <span class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin shrink-0"></span>
           <span>Enviando livro e capa para o seu Google Drive (pasta Aresta)...</span>
@@ -76,7 +68,7 @@
 
         <div
           v-else-if="driveSyncStatus === 'success'"
-          class="mt-4 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-3 text-emerald-300 text-xs font-interface animate-in fade-in"
+          class="mt-4 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-3 text-emerald-300 text-xs font-interface animate-in fade-in w-full max-w-lg text-left"
         >
           <CheckCircle2Icon class="w-4 h-4 text-emerald-400 shrink-0" />
           <span>Livro salvo com sucesso no Google Drive (pasta Aresta/{{ lastBookTitle }})!</span>
@@ -84,7 +76,7 @@
 
         <div
           v-else-if="driveSyncStatus === 'error'"
-          class="mt-4 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col gap-2 text-amber-300 text-xs font-interface animate-in fade-in"
+          class="mt-4 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col gap-2 text-amber-300 text-xs font-interface animate-in fade-in w-full max-w-lg text-left"
         >
           <div class="flex items-center gap-3">
             <AlertTriangleIcon class="w-4 h-4 text-amber-400 shrink-0" />
@@ -106,7 +98,7 @@
         <div
           v-if="store.error"
           id="drop-zone-error"
-          class="mt-4 p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-interface flex items-center gap-3 animate-in fade-in"
+          class="mt-4 p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-interface flex items-center gap-3 animate-in fade-in w-full max-w-lg text-left"
           role="alert"
         >
           <AlertTriangleIcon class="w-4 h-4 text-rose-400 shrink-0" />
@@ -119,7 +111,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { ArrowLeftIcon, UploadIcon, AlertTriangleIcon, CheckCircle2Icon } from 'lucide-vue-next'
+import { ArrowLeftIcon, AlertTriangleIcon, CheckCircle2Icon } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import { useReaderStore } from '~/stores/readerStore'
 import { useLocalBookUpload } from '~/composables/useLocalBookUpload'

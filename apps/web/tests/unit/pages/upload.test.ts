@@ -39,7 +39,7 @@ describe('Upload Page', () => {
       }
     })
     expect(wrapper.text()).toContain('Upload de Livros')
-    expect(wrapper.text()).toContain('Módulo de Importação')
+    expect(wrapper.text()).not.toContain('Módulo de Importação')
     expect(wrapper.text()).toContain('Voltar para a Estante')
     expect(wrapper.text()).not.toContain('Ir para Biblioteca')
     expect(wrapper.text()).not.toContain('Formatos Suportados')
