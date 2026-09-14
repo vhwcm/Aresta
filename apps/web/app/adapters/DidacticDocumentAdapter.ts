@@ -1,5 +1,6 @@
 import type { IBookDocument, BookMetadata, PageData, PageViewport } from '~/interfaces/reader/IBookDocument'
 import { marked } from 'marked'
+import renderMathInElement from 'katex/contrib/auto-render'
 import { ArestaInteractiveRuntime } from '~/utils/reader/ArestaInteractiveRuntime'
 import { generateDidacticCoverDataUri } from '~/utils/cover'
 
@@ -249,10 +250,20 @@ export class DidacticDocumentAdapter implements IBookDocument {
   }
 
   /**
-   * Converte Markdown para HTML rico com suporte a Callouts e Mermaid
+   * Converte Markdown para HTML rico com suporte a Callouts, Fórmulas Matemáticas e Mermaid
    */
   private convertMarkdownToHtml(markdown: string, chapterIndex: number, pageNumber: number): string {
     let processed = markdown
+
+    // Protege expressões matemáticas inline ($...$, \(...\)) e de bloco ($$...$$, \[...\]) antes de processar com marked
+    const mathTokens: string[] = []
+    processed = processed.replace(
+      /(\$\$[\s\S]*?\$\$|\\\[[\s\S]*?\\\]|\$(?!\s)[^$\n]+(?<!\s)\$|\\\([\s\S]*?\\\))/g,
+      (match) => {
+        mathTokens.push(match)
+        return `%%ARESTA_MATH_${mathTokens.length - 1}%%`
+      }
+    )
 
     // Transformação de Callouts GitHub / Didáticos (sem emojis)
     processed = processed.replace(
@@ -286,6 +297,11 @@ export class DidacticDocumentAdapter implements IBookDocument {
 
     // Renderiza blocos markdown
     let html = (marked.parse(processed) as string) || ''
+
+    // Restaura as expressões matemáticas protegidas
+    html = html.replace(/%%ARESTA_MATH_(\d+)%%/g, (_m, idx) => {
+      return mathTokens[parseInt(idx, 10)] || ''
+    })
 
     // Transforma blocos ```mermaid em contêineres <div class="mermaid">
     html = html.replace(
@@ -331,9 +347,11 @@ export class DidacticDocumentAdapter implements IBookDocument {
         const renderHeight = viewport ? viewport.height : height
 
         ctx.save()
-        // Fundo padrão escuro papel digital
-        ctx.fillStyle = '#1A1817'
-        ctx.fillRect(0, 0, renderWidth, renderHeight)
+        if (typeof ctx.clearRect === 'function') {
+          ctx.clearRect(0, 0, renderWidth, renderHeight)
+        } else if (typeof ctx.fillRect === 'function') {
+          ctx.fillRect(0, 0, renderWidth, renderHeight)
+        }
         ctx.restore()
       },
     }
@@ -373,6 +391,27 @@ export class DidacticDocumentAdapter implements IBookDocument {
       </div>
     `
 
+    // Renderiza fórmulas matemáticas e equações LaTeX via KaTeX
+    try {
+      renderMathInElement(container, {
+        delimiters: [
+          { left: '$$', right: '$$', display: true },
+          { left: '$', right: '$', display: false },
+          { left: '\\(', right: '\\)', display: false },
+          { left: '\\[', right: '\\]', display: true },
+          { left: '\\begin{equation}', right: '\\end{equation}', display: true },
+          { left: '\\begin{align}', right: '\\end{align}', display: true },
+          { left: '\\begin{alignat}', right: '\\end{alignat}', display: true },
+          { left: '\\begin{gather}', right: '\\end{gather}', display: true },
+          { left: '\\begin{CD}', right: '\\end{CD}', display: true },
+        ],
+        throwOnError: false,
+        errorColor: '#f97316',
+      })
+    } catch (mathErr) {
+      console.warn('[DidacticDocumentAdapter] Aviso KaTeX:', mathErr)
+    }
+
     // Executa e registra o runtime de componentes interativos (Flashcards 3D, Steppers, Subtemas)
     if (this._runtimeCleanup) {
       this._runtimeCleanup()
@@ -393,9 +432,15 @@ export class DidacticDocumentAdapter implements IBookDocument {
     ) {
       try {
         const mermaid = (await import('mermaid')).default
+        const isDarkTheme =
+          document.documentElement.getAttribute('data-theme') === 'dark' ||
+          container.closest('.theme-black') !== null ||
+          container.closest('.reader-viewer--theme-black') !== null ||
+          (!container.closest('.theme-sepia') && !container.closest('.theme-white') && !document.documentElement.getAttribute('data-theme'))
+
         mermaid.initialize({
           startOnLoad: false,
-          theme: 'dark',
+          theme: isDarkTheme ? 'dark' : 'neutral',
           securityLevel: 'loose',
         })
         const mermaidNodes = container.querySelectorAll('.mermaid')

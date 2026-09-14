@@ -196,4 +196,59 @@ flowchart TD
     cardEl.click()
     expect(cardEl.classList.contains('is-flipped')).toBe(true)
   })
+
+  it('9. Deve renderizar fórmulas matemáticas inline ($A \\rightarrow B$) e de bloco em HTML gerado pelo KaTeX', async () => {
+    const mathBooklet = JSON.stringify({
+      title: 'Livro de Grafos e Complexidade',
+      chapters: [
+        {
+          order_index: 1,
+          title: 'Grafos Dirigidos e Complexidade',
+          raw_markdown: `
+            <section class="didactic-page" data-page="1" data-title="Grafos e Fluxo">
+              <h1>Grafos Dirigidos vs. Não-Dirigidos</h1>
+              <p>Define se a conexão possui um fluxo unidirecional ($A \\rightarrow B$) ou bidirecional ($A \\leftrightarrow B$).</p>
+              <p>A complexidade de tempo é dada por $\\mathcal{O}(V + E)$.</p>
+            </section>
+          `,
+        },
+      ],
+    })
+
+    await adapter.load(mathBooklet)
+    // 1 Capa + 1 Seção = 2 páginas
+    expect(adapter.totalPages).toBe(2)
+
+    const containerP2 = document.createElement('div')
+    await adapter.renderTextLayer(2, containerP2)
+
+    // Verifica que KaTeX renderizou as expressões matemáticas e não deixou texto bruto ($A \rightarrow B$)
+    expect(containerP2.innerHTML).toContain('katex')
+    expect(containerP2.innerHTML).toContain('katex-html')
+    expect(containerP2.querySelectorAll('.katex').length).toBeGreaterThanOrEqual(2)
+  })
+
+  it('10. Deve proteger fórmulas LaTeX em Markdown com subscritos (_1) para evitar que o parser corrompa o texto', async () => {
+    const markdownMathBooklet = JSON.stringify({
+      title: 'Equações em Markdown',
+      chapters: [
+        {
+          order_index: 1,
+          title: 'Equações',
+          raw_markdown: `# Fórmulas
+
+A fórmula de distância é $d = \\sqrt{(x_2 - x_1)^2 + (y_2 - y_1)^2}$.
+
+$$E = mc^2$$`,
+        },
+      ],
+    })
+
+    await adapter.load(markdownMathBooklet)
+    const containerP2 = document.createElement('div')
+    await adapter.renderTextLayer(2, containerP2)
+
+    expect(containerP2.innerHTML).toContain('katex')
+    expect(containerP2.querySelectorAll('.katex').length).toBeGreaterThanOrEqual(2)
+  })
 })

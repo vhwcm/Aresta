@@ -1,4 +1,5 @@
 @import './milkdown-aresta-theme.css';
+@import 'katex/dist/katex.min.css';
 
 @tailwind base;
 @tailwind components;
@@ -60,7 +61,7 @@ body {
 }
 
 /* ==========================================================================
-   Estilos dos Livretos Didáticos com IA (Callouts & Mermaid)
+   Estilos dos Livretos Didáticos com IA (Callouts, Tabelas, Interativos & Mermaid)
    ========================================================================== */
 
 .didactic-page-wrapper {
@@ -106,6 +107,9 @@ body {
   }
 }
 
+/* --------------------------------------------------------------------------
+   Cabeçalho de Página do Livreto
+   -------------------------------------------------------------------------- */
 .didactic-page-header {
   display: flex;
   align-items: center;
@@ -114,7 +118,7 @@ body {
   margin-bottom: 1.5rem;
   padding: 0.5rem 0.85rem;
   border-radius: 0.6rem;
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.75rem;
@@ -140,6 +144,52 @@ body {
   font-weight: 600;
 }
 
+/* Variações de Cabeçalho por Tema */
+.theme-sepia .didactic-page-header,
+[data-theme="sepia"] .didactic-page-header,
+.reader-viewer--theme-sepia .didactic-page-header {
+  background: rgba(120, 108, 94, 0.1);
+  border: 1px solid rgba(120, 108, 94, 0.22);
+}
+
+.theme-sepia .didactic-page-header .chapter-badge,
+[data-theme="sepia"] .didactic-page-header .chapter-badge,
+.reader-viewer--theme-sepia .didactic-page-header .chapter-badge {
+  color: #5C4D3C;
+}
+
+.theme-sepia .didactic-page-header .page-badge,
+[data-theme="sepia"] .didactic-page-header .page-badge,
+.reader-viewer--theme-sepia .didactic-page-header .page-badge {
+  background: rgba(201, 101, 56, 0.15);
+  border: 1px solid rgba(201, 101, 56, 0.35);
+  color: #A8481E;
+}
+
+.theme-white .didactic-page-header,
+[data-theme="light"] .didactic-page-header,
+.reader-viewer--theme-white .didactic-page-header {
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.theme-white .didactic-page-header .chapter-badge,
+[data-theme="light"] .didactic-page-header .chapter-badge,
+.reader-viewer--theme-white .didactic-page-header .chapter-badge {
+  color: #4B5563;
+}
+
+.theme-white .didactic-page-header .page-badge,
+[data-theme="light"] .didactic-page-header .page-badge,
+.reader-viewer--theme-white .didactic-page-header .page-badge {
+  background: rgba(234, 88, 12, 0.12);
+  border: 1px solid rgba(234, 88, 12, 0.3);
+  color: #EA580C;
+}
+
+/* --------------------------------------------------------------------------
+   Corpo do Artigo & Tipografia
+   -------------------------------------------------------------------------- */
 .didactic-article-body {
   flex: 1;
   min-height: 0;
@@ -147,6 +197,7 @@ body {
   flex-direction: column;
   justify-content: flex-start;
   overflow: hidden;
+  color: inherit;
 }
 
 .didactic-article-body h1 {
@@ -181,8 +232,18 @@ body {
   background: linear-gradient(180deg, #F97316 0%, #EC4899 100%);
 }
 
+.didactic-article-body h3,
+.didactic-article-body h4 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-top: 1.2rem;
+  margin-bottom: 0.5rem;
+  color: #F1F5F9;
+}
+
 .didactic-article-body p {
   margin-bottom: 1.1rem;
+  color: inherit;
 }
 
 .didactic-article-body strong,
@@ -191,7 +252,103 @@ body {
   font-weight: 600;
 }
 
-/* Tabelas Didáticas Markdown */
+/* Tipografia Didática no Tema Sépia */
+.theme-sepia .didactic-article-body,
+[data-theme="sepia"] .didactic-article-body,
+.reader-viewer--theme-sepia .didactic-article-body {
+  color: #2A2521;
+}
+
+.theme-sepia .didactic-article-body h1,
+[data-theme="sepia"] .didactic-article-body h1,
+.reader-viewer--theme-sepia .didactic-article-body h1 {
+  background: none;
+  -webkit-background-clip: initial;
+  -webkit-text-fill-color: #382415;
+  color: #382415;
+}
+
+.theme-sepia .didactic-article-body h2,
+[data-theme="sepia"] .didactic-article-body h2,
+.reader-viewer--theme-sepia .didactic-article-body h2 {
+  color: #2D241E;
+}
+
+.theme-sepia .didactic-article-body h3,
+.theme-sepia .didactic-article-body h4,
+[data-theme="sepia"] .didactic-article-body h3,
+[data-theme="sepia"] .didactic-article-body h4,
+.reader-viewer--theme-sepia .didactic-article-body h3,
+.reader-viewer--theme-sepia .didactic-article-body h4 {
+  color: #3F332A;
+}
+
+.theme-sepia .didactic-article-body p,
+[data-theme="sepia"] .didactic-article-body p,
+.reader-viewer--theme-sepia .didactic-article-body p {
+  color: #2A2521;
+}
+
+.theme-sepia .didactic-article-body strong,
+.theme-sepia .didactic-article-body b,
+[data-theme="sepia"] .didactic-article-body strong,
+[data-theme="sepia"] .didactic-article-body b,
+.reader-viewer--theme-sepia .didactic-article-body strong,
+.reader-viewer--theme-sepia .didactic-article-body b {
+  color: #1A1512;
+  font-weight: 700;
+}
+
+/* Tipografia Didática no Tema Claro (White) */
+.theme-white .didactic-article-body,
+[data-theme="light"] .didactic-article-body,
+.reader-viewer--theme-white .didactic-article-body {
+  color: #18191B;
+}
+
+.theme-white .didactic-article-body h1,
+[data-theme="light"] .didactic-article-body h1,
+.reader-viewer--theme-white .didactic-article-body h1 {
+  background: none;
+  -webkit-background-clip: initial;
+  -webkit-text-fill-color: #111827;
+  color: #111827;
+}
+
+.theme-white .didactic-article-body h2,
+[data-theme="light"] .didactic-article-body h2,
+.reader-viewer--theme-white .didactic-article-body h2 {
+  color: #1F2937;
+}
+
+.theme-white .didactic-article-body h3,
+.theme-white .didactic-article-body h4,
+[data-theme="light"] .didactic-article-body h3,
+[data-theme="light"] .didactic-article-body h4,
+.reader-viewer--theme-white .didactic-article-body h3,
+.reader-viewer--theme-white .didactic-article-body h4 {
+  color: #374151;
+}
+
+.theme-white .didactic-article-body p,
+[data-theme="light"] .didactic-article-body p,
+.reader-viewer--theme-white .didactic-article-body p {
+  color: #1F2937;
+}
+
+.theme-white .didactic-article-body strong,
+.theme-white .didactic-article-body b,
+[data-theme="light"] .didactic-article-body strong,
+[data-theme="light"] .didactic-article-body b,
+.reader-viewer--theme-white .didactic-article-body strong,
+.reader-viewer--theme-white .didactic-article-body b {
+  color: #0F172A;
+  font-weight: 700;
+}
+
+/* --------------------------------------------------------------------------
+   Tabelas Didáticas Markdown
+   -------------------------------------------------------------------------- */
 .didactic-article-body table {
   width: 100%;
   margin: 1.5rem 0;
@@ -231,6 +388,81 @@ body {
   background: rgba(249, 115, 22, 0.05);
 }
 
+/* Tabelas no Tema Sépia */
+.theme-sepia .didactic-article-body table,
+[data-theme="sepia"] .didactic-article-body table,
+.reader-viewer--theme-sepia .didactic-article-body table {
+  border: 1px solid rgba(120, 108, 94, 0.25);
+  background: rgba(120, 108, 94, 0.06);
+}
+
+.theme-sepia .didactic-article-body th,
+[data-theme="sepia"] .didactic-article-body th,
+.reader-viewer--theme-sepia .didactic-article-body th {
+  background: rgba(201, 101, 56, 0.12);
+  border-bottom: 2px solid rgba(201, 101, 56, 0.35);
+  color: #8A3814;
+  font-weight: 700;
+}
+
+.theme-sepia .didactic-article-body td,
+[data-theme="sepia"] .didactic-article-body td,
+.reader-viewer--theme-sepia .didactic-article-body td {
+  border-bottom: 1px solid rgba(120, 108, 94, 0.15);
+  color: #2A2521;
+}
+
+.theme-sepia .didactic-article-body tr:nth-child(even) td,
+[data-theme="sepia"] .didactic-article-body tr:nth-child(even) td,
+.reader-viewer--theme-sepia .didactic-article-body tr:nth-child(even) td {
+  background: rgba(120, 108, 94, 0.04);
+}
+
+.theme-sepia .didactic-article-body tr:hover td,
+[data-theme="sepia"] .didactic-article-body tr:hover td,
+.reader-viewer--theme-sepia .didactic-article-body tr:hover td {
+  background: rgba(201, 101, 56, 0.08);
+}
+
+/* Tabelas no Tema Claro (White) */
+.theme-white .didactic-article-body table,
+[data-theme="light"] .didactic-article-body table,
+.reader-viewer--theme-white .didactic-article-body table {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.015);
+}
+
+.theme-white .didactic-article-body th,
+[data-theme="light"] .didactic-article-body th,
+.reader-viewer--theme-white .didactic-article-body th {
+  background: rgba(234, 88, 12, 0.1);
+  border-bottom: 2px solid rgba(234, 88, 12, 0.25);
+  color: #C2410C;
+  font-weight: 700;
+}
+
+.theme-white .didactic-article-body td,
+[data-theme="light"] .didactic-article-body td,
+.reader-viewer--theme-white .didactic-article-body td {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  color: #1F2937;
+}
+
+.theme-white .didactic-article-body tr:nth-child(even) td,
+[data-theme="light"] .didactic-article-body tr:nth-child(even) td,
+.reader-viewer--theme-white .didactic-article-body tr:nth-child(even) td {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.theme-white .didactic-article-body tr:hover td,
+[data-theme="light"] .didactic-article-body tr:hover td,
+.reader-viewer--theme-white .didactic-article-body tr:hover td {
+  background: rgba(234, 88, 12, 0.06);
+}
+
+/* --------------------------------------------------------------------------
+   Callouts Didáticos
+   -------------------------------------------------------------------------- */
 .didactic-callout {
   margin: 0.85rem 0;
   padding: 0.85rem 1.15rem;
@@ -252,34 +484,182 @@ body {
   line-height: 1.55;
 }
 
+/* Callouts - Tema Escuro (Padrão) */
 .callout-analogy {
-  background-color: rgba(168, 85, 247, 0.08);
-  border-color: rgba(168, 85, 247, 0.3);
+  background-color: rgba(168, 85, 247, 0.1);
+  border-color: rgba(168, 85, 247, 0.35);
   color: #e9d5ff;
+}
+.callout-analogy .callout-header {
+  color: #d8b4fe;
 }
 
 .callout-key-concept {
-  background-color: rgba(59, 130, 246, 0.08);
-  border-color: rgba(59, 130, 246, 0.3);
+  background-color: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.35);
   color: #bfdbfe;
+}
+.callout-key-concept .callout-header {
+  color: #93c5fd;
 }
 
 .callout-tip {
-  background-color: rgba(16, 185, 129, 0.08);
-  border-color: rgba(16, 185, 129, 0.3);
+  background-color: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.35);
   color: #a7f3d0;
+}
+.callout-tip .callout-header {
+  color: #6ee7b7;
 }
 
 .callout-warning {
-  background-color: rgba(245, 158, 11, 0.08);
-  border-color: rgba(245, 158, 11, 0.3);
+  background-color: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.35);
   color: #fde68a;
+}
+.callout-warning .callout-header {
+  color: #fcd34d;
 }
 
 .callout-note {
   background-color: rgba(255, 255, 255, 0.05);
   border-color: rgba(255, 255, 255, 0.15);
   color: #e5e5e5;
+}
+.callout-note .callout-header {
+  color: #f3f4f6;
+}
+
+/* Callouts - Tema Sépia */
+.theme-sepia .callout-analogy,
+[data-theme="sepia"] .callout-analogy,
+.reader-viewer--theme-sepia .callout-analogy {
+  background-color: rgba(147, 51, 234, 0.08);
+  border-color: rgba(147, 51, 234, 0.3);
+  color: #4a1d6d;
+}
+.theme-sepia .callout-analogy .callout-header,
+[data-theme="sepia"] .callout-analogy .callout-header,
+.reader-viewer--theme-sepia .callout-analogy .callout-header {
+  color: #6b21a8;
+}
+
+.theme-sepia .callout-key-concept,
+[data-theme="sepia"] .callout-key-concept,
+.reader-viewer--theme-sepia .callout-key-concept {
+  background-color: rgba(37, 99, 235, 0.08);
+  border-color: rgba(37, 99, 235, 0.3);
+  color: #1e3a5f;
+}
+.theme-sepia .callout-key-concept .callout-header,
+[data-theme="sepia"] .callout-key-concept .callout-header,
+.reader-viewer--theme-sepia .callout-key-concept .callout-header {
+  color: #1d4ed8;
+}
+
+.theme-sepia .callout-tip,
+[data-theme="sepia"] .callout-tip,
+.reader-viewer--theme-sepia .callout-tip {
+  background-color: rgba(5, 150, 105, 0.08);
+  border-color: rgba(5, 150, 105, 0.3);
+  color: #064e3b;
+}
+.theme-sepia .callout-tip .callout-header,
+[data-theme="sepia"] .callout-tip .callout-header,
+.reader-viewer--theme-sepia .callout-tip .callout-header {
+  color: #047857;
+}
+
+.theme-sepia .callout-warning,
+[data-theme="sepia"] .callout-warning,
+.reader-viewer--theme-sepia .callout-warning {
+  background-color: rgba(217, 119, 6, 0.09);
+  border-color: rgba(217, 119, 6, 0.35);
+  color: #583304;
+}
+.theme-sepia .callout-warning .callout-header,
+[data-theme="sepia"] .callout-warning .callout-header,
+.reader-viewer--theme-sepia .callout-warning .callout-header {
+  color: #b45309;
+}
+
+.theme-sepia .callout-note,
+[data-theme="sepia"] .callout-note,
+.reader-viewer--theme-sepia .callout-note {
+  background-color: rgba(120, 108, 94, 0.12);
+  border-color: rgba(120, 108, 94, 0.3);
+  color: #2A2521;
+}
+.theme-sepia .callout-note .callout-header,
+[data-theme="sepia"] .callout-note .callout-header,
+.reader-viewer--theme-sepia .callout-note .callout-header {
+  color: #44372e;
+}
+
+/* Callouts - Tema Claro (White) */
+.theme-white .callout-analogy,
+[data-theme="light"] .callout-analogy,
+.reader-viewer--theme-white .callout-analogy {
+  background-color: rgba(147, 51, 234, 0.07);
+  border-color: rgba(147, 51, 234, 0.25);
+  color: #581c87;
+}
+.theme-white .callout-analogy .callout-header,
+[data-theme="light"] .callout-analogy .callout-header,
+.reader-viewer--theme-white .callout-analogy .callout-header {
+  color: #7e22ce;
+}
+
+.theme-white .callout-key-concept,
+[data-theme="light"] .callout-key-concept,
+.reader-viewer--theme-white .callout-key-concept {
+  background-color: rgba(37, 99, 235, 0.07);
+  border-color: rgba(37, 99, 235, 0.25);
+  color: #1e40af;
+}
+.theme-white .callout-key-concept .callout-header,
+[data-theme="light"] .callout-key-concept .callout-header,
+.reader-viewer--theme-white .callout-key-concept .callout-header {
+  color: #1d4ed8;
+}
+
+.theme-white .callout-tip,
+[data-theme="light"] .callout-tip,
+.reader-viewer--theme-white .callout-tip {
+  background-color: rgba(5, 150, 105, 0.07);
+  border-color: rgba(5, 150, 105, 0.25);
+  color: #065f46;
+}
+.theme-white .callout-tip .callout-header,
+[data-theme="light"] .callout-tip .callout-header,
+.reader-viewer--theme-white .callout-tip .callout-header {
+  color: #047857;
+}
+
+.theme-white .callout-warning,
+[data-theme="light"] .callout-warning,
+.reader-viewer--theme-white .callout-warning {
+  background-color: rgba(217, 119, 6, 0.08);
+  border-color: rgba(217, 119, 6, 0.3);
+  color: #78350f;
+}
+.theme-white .callout-warning .callout-header,
+[data-theme="light"] .callout-warning .callout-header,
+.reader-viewer--theme-white .callout-warning .callout-header {
+  color: #b45309;
+}
+
+.theme-white .callout-note,
+[data-theme="light"] .callout-note,
+.reader-viewer--theme-white .callout-note {
+  background-color: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.12);
+  color: #1f2937;
+}
+.theme-white .callout-note .callout-header,
+[data-theme="light"] .callout-note .callout-header,
+.reader-viewer--theme-white .callout-note .callout-header {
+  color: #374151;
 }
 
 .didactic-mermaid-container {
@@ -291,6 +671,20 @@ body {
   overflow-x: auto;
   display: flex;
   justify-content: center;
+}
+
+.theme-sepia .didactic-mermaid-container,
+[data-theme="sepia"] .didactic-mermaid-container,
+.reader-viewer--theme-sepia .didactic-mermaid-container {
+  background-color: rgba(120, 108, 94, 0.08);
+  border: 1px solid rgba(120, 108, 94, 0.2);
+}
+
+.theme-white .didactic-mermaid-container,
+[data-theme="light"] .didactic-mermaid-container,
+.reader-viewer--theme-white .didactic-mermaid-container {
+  background-color: rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 /* ==========================================================================
@@ -397,6 +791,92 @@ body {
   border-color: rgba(16, 185, 129, 0.5);
   color: #10B981;
   cursor: default;
+}
+
+/* Flashcards - Tema Sépia */
+.theme-sepia .aresta-flashcard-inner,
+[data-theme="sepia"] .aresta-flashcard-inner,
+.reader-viewer--theme-sepia .aresta-flashcard-inner {
+  box-shadow: 0 4px 14px rgba(80, 60, 30, 0.12);
+}
+
+.theme-sepia .aresta-flashcard-front,
+[data-theme="sepia"] .aresta-flashcard-front,
+.reader-viewer--theme-sepia .aresta-flashcard-front {
+  background: #ece3d3;
+  border: 1px solid rgba(201, 101, 56, 0.35);
+  color: #2A2521;
+}
+
+.theme-sepia .aresta-flashcard-back,
+[data-theme="sepia"] .aresta-flashcard-back,
+.reader-viewer--theme-sepia .aresta-flashcard-back {
+  background: #e5dbca;
+  border: 1px solid rgba(37, 99, 235, 0.35);
+  color: #2A2521;
+}
+
+.theme-sepia .aresta-card-q,
+[data-theme="sepia"] .aresta-card-q,
+.reader-viewer--theme-sepia .aresta-card-q {
+  color: #A8481E;
+}
+
+.theme-sepia .aresta-card-a,
+[data-theme="sepia"] .aresta-card-a,
+.reader-viewer--theme-sepia .aresta-card-a {
+  color: #2A2521;
+}
+
+.theme-sepia .aresta-btn-add-deck,
+[data-theme="sepia"] .aresta-btn-add-deck,
+.reader-viewer--theme-sepia .aresta-btn-add-deck {
+  color: #A8481E;
+  background: rgba(201, 101, 56, 0.12);
+  border: 1px solid rgba(201, 101, 56, 0.35);
+}
+
+/* Flashcards - Tema Claro (White) */
+.theme-white .aresta-flashcard-inner,
+[data-theme="light"] .aresta-flashcard-inner,
+.reader-viewer--theme-white .aresta-flashcard-inner {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.theme-white .aresta-flashcard-front,
+[data-theme="light"] .aresta-flashcard-front,
+.reader-viewer--theme-white .aresta-flashcard-front {
+  background: #ffffff;
+  border: 1px solid rgba(234, 88, 12, 0.3);
+  color: #1F2937;
+}
+
+.theme-white .aresta-flashcard-back,
+[data-theme="light"] .aresta-flashcard-back,
+.reader-viewer--theme-white .aresta-flashcard-back {
+  background: #f8fafc;
+  border: 1px solid rgba(37, 99, 235, 0.3);
+  color: #1F2937;
+}
+
+.theme-white .aresta-card-q,
+[data-theme="light"] .aresta-card-q,
+.reader-viewer--theme-white .aresta-card-q {
+  color: #C2410C;
+}
+
+.theme-white .aresta-card-a,
+[data-theme="light"] .aresta-card-a,
+.reader-viewer--theme-white .aresta-card-a {
+  color: #1F2937;
+}
+
+.theme-white .aresta-btn-add-deck,
+[data-theme="light"] .aresta-btn-add-deck,
+.reader-viewer--theme-white .aresta-btn-add-deck {
+  color: #EA580C;
+  background: rgba(234, 88, 12, 0.1);
+  border: 1px solid rgba(234, 88, 12, 0.3);
 }
 
 /* Stepper Interativo (Passo a Passo) */
@@ -574,6 +1054,128 @@ body {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
+/* Stepper - Tema Sépia */
+.theme-sepia .aresta-stepper,
+[data-theme="sepia"] .aresta-stepper,
+.reader-viewer--theme-sepia .aresta-stepper {
+  background: linear-gradient(135deg, rgba(120, 108, 94, 0.12) 0%, rgba(239, 230, 209, 0.8) 100%);
+  border: 1px solid rgba(201, 101, 56, 0.3);
+  box-shadow: 0 4px 16px rgba(80, 60, 30, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.theme-sepia .aresta-step,
+[data-theme="sepia"] .aresta-step,
+.reader-viewer--theme-sepia .aresta-step {
+  color: #2A2521;
+}
+
+.theme-sepia .aresta-stepper-pill,
+[data-theme="sepia"] .aresta-stepper-pill,
+.reader-viewer--theme-sepia .aresta-stepper-pill {
+  background: rgba(201, 101, 56, 0.12);
+  border-color: rgba(201, 101, 56, 0.35);
+  color: #A8481E;
+}
+
+.theme-sepia .aresta-stepper-dot,
+[data-theme="sepia"] .aresta-stepper-dot,
+.reader-viewer--theme-sepia .aresta-stepper-dot {
+  background: rgba(120, 108, 94, 0.3);
+}
+
+.theme-sepia .aresta-stepper-dot.is-current,
+[data-theme="sepia"] .aresta-stepper-dot.is-current,
+.reader-viewer--theme-sepia .aresta-stepper-dot.is-current {
+  background: #2A2521;
+}
+
+.theme-sepia .aresta-stepper-progress-track,
+[data-theme="sepia"] .aresta-stepper-progress-track,
+.reader-viewer--theme-sepia .aresta-stepper-progress-track {
+  background: rgba(120, 108, 94, 0.2);
+}
+
+.theme-sepia .aresta-stepper-controls,
+[data-theme="sepia"] .aresta-stepper-controls,
+.reader-viewer--theme-sepia .aresta-stepper-controls {
+  border-top: 1px solid rgba(120, 108, 94, 0.2);
+}
+
+.theme-sepia .aresta-stepper-btn,
+[data-theme="sepia"] .aresta-stepper-btn,
+.reader-viewer--theme-sepia .aresta-stepper-btn {
+  background: rgba(201, 101, 56, 0.12);
+  border-color: rgba(201, 101, 56, 0.35);
+  color: #A8481E;
+}
+
+.theme-sepia .aresta-stepper-indicator,
+[data-theme="sepia"] .aresta-stepper-indicator,
+.reader-viewer--theme-sepia .aresta-stepper-indicator {
+  color: #786C5E;
+}
+
+/* Stepper - Tema Claro (White) */
+.theme-white .aresta-stepper,
+[data-theme="light"] .aresta-stepper,
+.reader-viewer--theme-white .aresta-stepper {
+  background: linear-gradient(135deg, #FAFAFA 0%, #F3F4F6 100%);
+  border: 1px solid rgba(234, 88, 12, 0.25);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.theme-white .aresta-step,
+[data-theme="light"] .aresta-step,
+.reader-viewer--theme-white .aresta-step {
+  color: #1F2937;
+}
+
+.theme-white .aresta-stepper-pill,
+[data-theme="light"] .aresta-stepper-pill,
+.reader-viewer--theme-white .aresta-stepper-pill {
+  background: rgba(234, 88, 12, 0.1);
+  border-color: rgba(234, 88, 12, 0.3);
+  color: #EA580C;
+}
+
+.theme-white .aresta-stepper-dot,
+[data-theme="light"] .aresta-stepper-dot,
+.reader-viewer--theme-white .aresta-stepper-dot {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.theme-white .aresta-stepper-dot.is-current,
+[data-theme="light"] .aresta-stepper-dot.is-current,
+.reader-viewer--theme-white .aresta-stepper-dot.is-current {
+  background: #111827;
+}
+
+.theme-white .aresta-stepper-progress-track,
+[data-theme="light"] .aresta-stepper-progress-track,
+.reader-viewer--theme-white .aresta-stepper-progress-track {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.theme-white .aresta-stepper-controls,
+[data-theme="light"] .aresta-stepper-controls,
+.reader-viewer--theme-white .aresta-stepper-controls {
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.theme-white .aresta-stepper-btn,
+[data-theme="light"] .aresta-stepper-btn,
+.reader-viewer--theme-white .aresta-stepper-btn {
+  background: rgba(234, 88, 12, 0.1);
+  border-color: rgba(234, 88, 12, 0.3);
+  color: #C2410C;
+}
+
+.theme-white .aresta-stepper-indicator,
+[data-theme="light"] .aresta-stepper-indicator,
+.reader-viewer--theme-white .aresta-stepper-indicator {
+  color: #6B7280;
+}
+
 /* Subtemas Relacionados */
 .aresta-subtopics {
   display: flex;
@@ -643,6 +1245,62 @@ body {
   color: #FFFFFF;
 }
 
+/* Subtemas - Tema Sépia */
+.theme-sepia .aresta-subtopic,
+[data-theme="sepia"] .aresta-subtopic,
+.reader-viewer--theme-sepia .aresta-subtopic {
+  background: rgba(120, 108, 94, 0.08);
+  border: 1px solid rgba(120, 108, 94, 0.2);
+}
+
+.theme-sepia .aresta-subtopic-title,
+[data-theme="sepia"] .aresta-subtopic-title,
+.reader-viewer--theme-sepia .aresta-subtopic-title {
+  color: #2A2521;
+}
+
+.theme-sepia .aresta-subtopic-desc,
+[data-theme="sepia"] .aresta-subtopic-desc,
+.reader-viewer--theme-sepia .aresta-subtopic-desc {
+  color: #665849;
+}
+
+.theme-sepia .aresta-btn-explain,
+[data-theme="sepia"] .aresta-btn-explain,
+.reader-viewer--theme-sepia .aresta-btn-explain {
+  background: rgba(120, 108, 94, 0.15);
+  border: 1px solid rgba(120, 108, 94, 0.3);
+  color: #2A2521;
+}
+
+/* Subtemas - Tema Claro (White) */
+.theme-white .aresta-subtopic,
+[data-theme="light"] .aresta-subtopic,
+.reader-viewer--theme-white .aresta-subtopic {
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.theme-white .aresta-subtopic-title,
+[data-theme="light"] .aresta-subtopic-title,
+.reader-viewer--theme-white .aresta-subtopic-title {
+  color: #111827;
+}
+
+.theme-white .aresta-subtopic-desc,
+[data-theme="light"] .aresta-subtopic-desc,
+.reader-viewer--theme-white .aresta-subtopic-desc {
+  color: #4B5563;
+}
+
+.theme-white .aresta-btn-explain,
+[data-theme="light"] .aresta-btn-explain,
+.reader-viewer--theme-white .aresta-btn-explain {
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  color: #111827;
+}
+
 /* Explicação Curta Contextual (Glassmorphism Overlay) */
 .aresta-short-explanation {
   background: rgba(18, 19, 21, 0.92);
@@ -677,6 +1335,50 @@ body {
   color: #FED7AA;
 }
 
+.theme-sepia .aresta-short-explanation,
+[data-theme="sepia"] .aresta-short-explanation,
+.reader-viewer--theme-sepia .aresta-short-explanation {
+  background: rgba(239, 230, 209, 0.95);
+  border: 1px solid rgba(201, 101, 56, 0.35);
+  color: #2A2521;
+}
+
+.theme-sepia .aresta-short-header,
+[data-theme="sepia"] .aresta-short-header,
+.reader-viewer--theme-sepia .aresta-short-header {
+  color: #A8481E;
+}
+
+.theme-sepia .aresta-short-highlight,
+[data-theme="sepia"] .aresta-short-highlight,
+.reader-viewer--theme-sepia .aresta-short-highlight {
+  background: rgba(201, 101, 56, 0.1);
+  border-left-color: #C96538;
+  color: #8A3814;
+}
+
+.theme-white .aresta-short-explanation,
+[data-theme="light"] .aresta-short-explanation,
+.reader-viewer--theme-white .aresta-short-explanation {
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(234, 88, 12, 0.3);
+  color: #1F2937;
+}
+
+.theme-white .aresta-short-header,
+[data-theme="light"] .aresta-short-header,
+.reader-viewer--theme-white .aresta-short-header {
+  color: #EA580C;
+}
+
+.theme-white .aresta-short-highlight,
+[data-theme="light"] .aresta-short-highlight,
+.reader-viewer--theme-white .aresta-short-highlight {
+  background: rgba(234, 88, 12, 0.08);
+  border-left-color: #EA580C;
+  color: #9A3412;
+}
+
 /* Didactic Booklet Cover Page */
 .didactic-cover-wrapper {
   padding: 0 !important;
@@ -686,6 +1388,18 @@ body {
   align-items: center !important;
   justify-content: center !important;
   background: #121110 !important;
+}
+
+.theme-sepia .didactic-cover-wrapper,
+[data-theme="sepia"] .didactic-cover-wrapper,
+.reader-viewer--theme-sepia .didactic-cover-wrapper {
+  background: #f5eedc !important;
+}
+
+.theme-white .didactic-cover-wrapper,
+[data-theme="light"] .didactic-cover-wrapper,
+.reader-viewer--theme-white .didactic-cover-wrapper {
+  background: #ffffff !important;
 }
 
 .didactic-cover-container {
