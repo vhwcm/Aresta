@@ -35,10 +35,6 @@
         </button>
       </div>
 
-      <!-- Description / Intro -->
-      <p class="text-xs text-textSecondary font-interface leading-relaxed -mt-1">
-        A IA didática criará um livreto completo paginado com diagramas Mermaid, explicações intuitivas e conceitos estruturados a partir deste trecho.
-      </p>
 
       <!-- Fields -->
       <div class="flex flex-col gap-4">

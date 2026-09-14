@@ -491,10 +491,6 @@
         </div>
 
         <div class="flex flex-col gap-4">
-          <p class="text-xs text-textSecondary font-interface leading-relaxed">
-            A IA didática vai estruturar um livro completo, paginado para celular, com diagramas visuais Mermaid, analogias intuitivas e callouts pedagógicos.
-          </p>
-
           <div class="flex flex-col gap-1.5">
             <label class="text-xs font-technical text-textSecondary uppercase">Título do Livreto (Opcional):</label>
             <input

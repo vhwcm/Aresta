@@ -1,10 +1,10 @@
 # Checklist
 
 ## 🔄 Em Andamento
-- [13/09/2026 21:27] [Fazendo] Remover texto explicativo sobre diagramas e conceitos nos modais de criação de livreto didático
 - [13/09/2026 21:29] [Fazendo] Implementar arquitetura de páginas estritas sem scroll e contrato de rigor prévio por página para livretos didáticos com IA
 
 ## ✅ Concluído
+- [13/09/2026 21:29] [Concluído] Remover texto explicativo sobre diagramas e conceitos nos modais de criação de livreto didático
 - [13/09/2026 21:28] [Concluído] Unificar cor de fundo e alterar fonte do título do livro no leitor para a tipografia editorial do Aresta
 - [13/09/2026 21:26] [Concluído] Remover a opção de profundidade dos modais de criação de livreto didático com IA
 - [13/09/2026 21:22] [Concluído] Comprimir barra lateral de leitura no desktop para ocupar apenas a altura necessária no estilo navbar
