@@ -1,10 +1,10 @@
 <template>
   <footer
-    class="reader-bottom-bar border-t md:border-t-0 md:border-r px-3 py-2 sm:px-4 sm:py-2.5 md:px-2 md:py-3.5 flex flex-row md:flex-col items-center justify-between z-20 shrink-0 gap-2 md:gap-3 order-last md:order-first w-full md:w-16 md:h-full select-none transition-colors duration-200"
+    class="reader-bottom-bar border-t md:border px-3 py-2 sm:px-4 sm:py-2.5 md:p-2 flex flex-row md:flex-col items-center justify-between md:justify-center z-20 shrink-0 gap-2 md:gap-2 md:my-auto md:self-center md:ml-3.5 md:mr-1 md:rounded-2xl md:shadow-xl md:backdrop-blur-md order-last md:order-first w-full md:w-auto md:h-auto select-none transition-all duration-200"
     :class="{
-      'bg-[#f5eedc] border-[#dfd5c0] text-[#2a2521]': store.readerTheme === 'sepia',
-      'bg-white border-gray-200 text-gray-900': store.readerTheme === 'white',
-      'bg-[#121315] border-divider text-textPrimary': store.readerTheme === 'black' || !store.readerTheme,
+      'bg-[#f5eedc] md:bg-[#f5eedc]/95 border-[#dfd5c0] text-[#2a2521] shadow-[#2a2521]/5': store.readerTheme === 'sepia',
+      'bg-white md:bg-white/95 border-gray-200 text-gray-900 shadow-gray-900/5': store.readerTheme === 'white',
+      'bg-[#121315] md:bg-[#121315]/95 border-divider text-textPrimary shadow-black/40': store.readerTheme === 'black' || !store.readerTheme,
     }"
     role="toolbar"
     aria-label="Barra de ferramentas do leitor"
@@ -673,7 +673,7 @@ onUnmounted(() => {
 
 @media (min-width: 768px) {
   .reader-bottom-bar {
-    min-height: 100%;
+    min-height: auto;
   }
 }
 </style>
