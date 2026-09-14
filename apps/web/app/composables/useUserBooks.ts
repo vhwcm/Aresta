@@ -20,11 +20,49 @@ const getApiBase = () => {
   return 'http://localhost:3001/api'
 }
 
+const mapLocalToUserBookItem = (b: any): UserBookItem => ({
+  userBookId: b.id,
+  bookId: b.bookId || b.id,
+  title: b.title,
+  author: b.author,
+  summary: b.summary,
+  coverPath: b.coverPath,
+  filePath: b.filePath,
+  status: b.status || 'QUERO_LER',
+  currentPage: b.currentPage || 0,
+  lastAccessedAt: b.lastAccessedAt || b.updated_at,
+  themes: b.themes || []
+})
+
+// Estado Compartilhado Singleton (SWR - 0ms de latência)
+const sharedUserBooks = ref<UserBookItem[]>([])
+const sharedLoading = ref(false)
+const sharedError = ref<string | null>(null)
+let isInitialized = false
+
+const initFromLocalRepo = async () => {
+  if (isInitialized && sharedUserBooks.value.length > 0) return
+  try {
+    const localBooks = await bookRepo.getAll()
+    if (localBooks && localBooks.length > 0 && sharedUserBooks.value.length === 0) {
+      sharedUserBooks.value = localBooks.map(mapLocalToUserBookItem)
+    }
+  } catch (err) {
+    console.warn('[useUserBooks] Erro na inicialização local:', err)
+  } finally {
+    isInitialized = true
+  }
+}
+
 export const useUserBooks = () => {
-  const userBooks = ref<UserBookItem[]>([])
-  const loading = ref(false)
-  const error = ref<string | null>(null)
+  const userBooks = sharedUserBooks
+  const loading = sharedLoading
+  const error = sharedError
   const auth = useAuth()
+
+  if (typeof window !== 'undefined' && !isInitialized) {
+    initFromLocalRepo()
+  }
 
   const getHeaders = () => {
     const headers: Record<string, string> = {}
@@ -33,20 +71,6 @@ export const useUserBooks = () => {
     }
     return headers
   }
-
-  const mapLocalToUserBookItem = (b: any): UserBookItem => ({
-    userBookId: b.id,
-    bookId: b.bookId || b.id,
-    title: b.title,
-    author: b.author,
-    summary: b.summary,
-    coverPath: b.coverPath,
-    filePath: b.filePath,
-    status: b.status || 'QUERO_LER',
-    currentPage: b.currentPage || 0,
-    lastAccessedAt: b.lastAccessedAt || b.updated_at,
-    themes: b.themes || []
-  })
 
   const clearLocalBooks = async () => {
     userBooks.value = []
@@ -58,8 +82,12 @@ export const useUserBooks = () => {
   }
 
   const fetchUserBooks = async () => {
-    loading.value = true
+    // SWR: Apenas define loading se não houver dados em cache
+    if (userBooks.value.length === 0) {
+      loading.value = true
+    }
     error.value = null
+
 
     // Se o usuário não estiver autenticado, a estante deve ficar vazia
     if (!auth.isLoggedIn.value) {

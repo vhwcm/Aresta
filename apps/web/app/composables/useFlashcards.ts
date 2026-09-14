@@ -117,7 +117,9 @@ export const useFlashcards = () => {
    * Busca o deck de flashcards do dia para o usuário com Local-First
    */
   const fetchDailyDeck = async (dateStr?: string): Promise<DailyDeckResponse | null> => {
-    isLoading.value = true
+    if (dailyDeck.value.length === 0) {
+      isLoading.value = true
+    }
     error.value = null
 
     // 1. Carrega primeiro do banco local

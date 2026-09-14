@@ -20,10 +20,15 @@ const getApiBase = () => {
   return 'http://localhost:3001/api'
 }
 
+// Estado Compartilhado Singleton para o Grafo (SWR - 0ms de latência)
+const sharedGraphData = ref<GraphData>({ nodes: [], edges: [] })
+const sharedLoading = ref(false)
+const sharedError = ref<string | null>(null)
+
 export const useGraph = () => {
-  const graphData = ref<GraphData>({ nodes: [], edges: [] })
-  const loading = ref(false)
-  const error = ref<string | null>(null)
+  const graphData = sharedGraphData
+  const loading = sharedLoading
+  const error = sharedError
   const auth = useAuth()
 
   const getHeaders = () => {
@@ -44,12 +49,16 @@ export const useGraph = () => {
   }
 
   const fetchGraph = async () => {
-    loading.value = true
+    // SWR: Apenas exibe loading se o grafo ainda não tiver nós carregados
+    if (!graphData.value.nodes || graphData.value.nodes.length === 0) {
+      loading.value = true
+    }
     error.value = null
     try {
       const data = await $fetch<any>(`${getApiBase()}/graph`, {
         headers: getHeaders(),
       })
+
       if (data) {
         let nodes: GraphNode[] = Array.isArray(data.nodes)
           ? data.nodes

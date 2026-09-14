@@ -155,7 +155,9 @@ export const useAnnotations = () => {
   }
 
   const fetchAnnotations = async (filters?: { bookId?: number; themeId?: number }) => {
-    loading.value = true
+    if (annotations.value.length === 0) {
+      loading.value = true
+    }
     error.value = null
 
     // 1. Carrega imediatamente do IndexedDB local (Local-First instantâneo)
