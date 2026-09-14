@@ -234,7 +234,7 @@ export function useDrawing() {
               pageNumber: 1,
               width: 794,
               height: 1123,
-              backgroundType: 'ruled',
+              backgroundType: 'blank',
               strokes: [],
             },
           ];
@@ -271,7 +271,7 @@ export function useDrawing() {
           pageNumber: 1,
           width: 794,
           height: 1123,
-          backgroundType: 'ruled',
+          backgroundType: 'blank',
           strokes: [],
         },
       ];
@@ -336,7 +336,7 @@ export function useDrawing() {
     }
   };
 
-  const addPage = (backgroundType: PageBackgroundType = 'ruled') => {
+  const addPage = (backgroundType: PageBackgroundType = 'blank') => {
     if (!currentDrawing.value) return;
     pushHistory();
     const newPageNumber = currentDrawing.value.pages.length + 1;

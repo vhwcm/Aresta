@@ -114,7 +114,7 @@
             :tool="activeTool"
             :color="strokeColor"
             :size="strokeSize"
-            :palm-rejection="palmRejectionEnabled"
+            :palm-rejection="true"
             :is-active="activePageIndex === idx"
             :is-dark-mode="themeMode === 'dark'"
             @select-page="activePageIndex = idx"
@@ -143,10 +143,12 @@
           v-model:tool="activeTool"
           v-model:color="strokeColor"
           v-model:size="strokeSize"
-          v-model:palm-rejection="palmRejectionEnabled"
+          :zoom="pageScale"
           :can-undo="canUndo"
           :can-redo="canRedo"
-          @change-background="handleChangeBackground"
+          @zoom-in="handleZoomIn"
+          @zoom-out="handleZoomOut"
+          @zoom-fit="handleZoomFit"
           @undo="undo"
           @redo="redo"
         />
@@ -166,7 +168,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import {
   Sparkles as SparklesIcon,
@@ -177,7 +179,7 @@ import {
 } from 'lucide-vue-next';
 import { useDrawing } from '~/composables/useDrawing';
 import { useSettings } from '~/composables/useSettings';
-import type { PageBackgroundType, DrawingStroke, DrawingPoint, DrawingSynthesisResult } from '~/interfaces/drawing';
+import type { DrawingStroke, DrawingPoint, DrawingSynthesisResult } from '~/interfaces/drawing';
 import DrawingPageCanvas from '~/components/canvas/drawing/DrawingPageCanvas.vue';
 import DrawingToolbar from '~/components/canvas/drawing/DrawingToolbar.vue';
 import DrawingAiSynthesisModal from '~/components/canvas/drawing/DrawingAiSynthesisModal.vue';
@@ -198,7 +200,6 @@ const {
   activeTool,
   strokeColor,
   strokeSize,
-  palmRejectionEnabled,
   isSaving,
   isSynthesizing,
   isLoading,
@@ -207,7 +208,6 @@ const {
   loadDrawing,
   addPage,
   removePage,
-  changePageBackground,
   addStrokeToActivePage,
   eraseStrokesAtPoint,
   undo,
@@ -226,6 +226,7 @@ const isGeneratingModal = ref(false);
 const synthesisImages = ref<string[]>([]);
 const synthesisResult = ref<DrawingSynthesisResult | null>(null);
 
+const viewportRef = ref<HTMLElement | null>(null);
 const pageCanvasRefs = ref<Record<number, any>>({});
 
 function setPageCanvasRef(idx: number, el: any) {
@@ -234,16 +235,37 @@ function setPageCanvasRef(idx: number, el: any) {
   }
 }
 
-// Escala adaptativa de página conforme largura de tela
-const pageScale = ref(1);
+// Escala adaptativa de página: na inicialização a folha cabe 100% na tela do notebook
+const pageScale = ref(0.7);
 
-function updatePageScale() {
-  if (typeof window === 'undefined') return;
-  const availableWidth = window.innerWidth - 48;
-  if (availableWidth < 794) {
-    pageScale.value = Math.max(0.45, availableWidth / 794);
-  } else {
-    pageScale.value = 1;
+function calculateFitScale(): number {
+  if (typeof window === 'undefined') return 1;
+  const availableWidth = window.innerWidth - 64;
+  const availableHeight = window.innerHeight - 150; // cabeçalho + padding + toolbar inferior
+  const scaleW = availableWidth / 794;
+  const scaleH = availableHeight / 1123;
+  const fit = Math.min(scaleW, scaleH);
+  return Math.max(0.25, Math.min(Number(fit.toFixed(2)), 1.2));
+}
+
+function handleZoomFit() {
+  pageScale.value = calculateFitScale();
+}
+
+function handleZoomIn() {
+  pageScale.value = Math.min(2.5, Number((pageScale.value + 0.1).toFixed(2)));
+}
+
+function handleZoomOut() {
+  pageScale.value = Math.max(0.25, Number((pageScale.value - 0.1).toFixed(2)));
+}
+
+function handleWheel(e: WheelEvent) {
+  // Zoom suave com mouse wheel (Ctrl + Wheel ou trackpad pinch)
+  if (e.ctrlKey || e.metaKey) {
+    e.preventDefault();
+    const zoomFactor = e.deltaY < 0 ? 1.08 : 0.92;
+    pageScale.value = Math.max(0.25, Math.min(2.5, Number((pageScale.value * zoomFactor).toFixed(2))));
   }
 }
 
@@ -276,17 +298,13 @@ function handleErase(pageIndex: number, pt: DrawingPoint, radius: number) {
 }
 
 function handleAddPage() {
-  addPage('ruled');
+  addPage('blank');
 }
 
 function handleRemovePage(idx: number) {
   if (confirm(`Deseja excluir a Página ${idx + 1}?`)) {
     removePage(idx);
   }
-}
-
-function handleChangeBackground(bg: PageBackgroundType) {
-  changePageBackground(activePageIndex.value, bg);
 }
 
 // Fluxo de Síntese com IA (Gemini Vision)
@@ -345,10 +363,20 @@ async function handleSaveAsNote(payload: { title: string; html: string; deleteOr
 }
 
 onMounted(async () => {
-  updatePageScale();
-  window.addEventListener('resize', updatePageScale);
+  handleZoomFit();
+  window.addEventListener('resize', handleZoomFit);
+  if (viewportRef.value) {
+    viewportRef.value.addEventListener('wheel', handleWheel, { passive: false });
+  }
   if (drawingId.value) {
     await loadDrawing(drawingId.value);
+  }
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', handleZoomFit);
+  if (viewportRef.value) {
+    viewportRef.value.removeEventListener('wheel', handleWheel);
   }
 });
 </script>

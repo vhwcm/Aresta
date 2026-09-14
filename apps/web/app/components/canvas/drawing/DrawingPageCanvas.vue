@@ -89,82 +89,17 @@ const isErasing = ref(false);
 const activeStrokePoints = ref<DrawingPoint[]>([]);
 const currentActiveTool = ref<PenToolType>('pen');
 
-const backgroundColor = computed(() => (props.isDarkMode ? '#1e1f22' : '#ffffff'));
+const backgroundColor = '#FFFFFF';
 
-// Gera o traço SVG/Path uniforme e limpo sem sensibilidade de pressão
-function getSvgPathFromStroke(strokePoints: number[][]): string {
-  if (!strokePoints.length) return '';
-  const d = strokePoints.reduce(
-    (acc, [x0, y0], i, arr) => {
-      const [x1, y1] = arr[(i + 1) % arr.length]!;
-      acc.push(x0!, y0!, (x0! + x1!) / 2, (y0! + y1!) / 2);
-      return acc;
-    },
-    ['M', ...strokePoints[0]!, 'Q']
-  );
-  d.push('Z');
-  return d.join(' ');
-}
-
-// Renderiza o fundo pautado, quadriculado ou pontilhado
+// Renderiza o fundo: folha toda branca e lisa sem linhas
 function renderBackground() {
   const canvas = bgCanvasRef.value;
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
-  ctx.clearRect(0, 0, width, height);
-
-  const lineColor = props.isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)';
-  const marginColor = props.isDarkMode ? 'rgba(229, 123, 85, 0.25)' : 'rgba(229, 123, 85, 0.2)';
-
-  if (props.page.backgroundType === 'ruled') {
-    const spacing = 32;
-    const topMargin = 80;
-    const bottomMargin = height - 40;
-
-    // Linha de margem esquerda estilo caderno clássico
-    ctx.strokeStyle = marginColor;
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(85, topMargin - 20);
-    ctx.lineTo(85, bottomMargin);
-    ctx.stroke();
-
-    // Linhas horizontais
-    ctx.strokeStyle = lineColor;
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    for (let y = topMargin; y <= bottomMargin; y += spacing) {
-      ctx.moveTo(40, y);
-      ctx.lineTo(width - 40, y);
-    }
-    ctx.stroke();
-  } else if (props.page.backgroundType === 'grid') {
-    const gridSize = 28;
-    ctx.strokeStyle = lineColor;
-    ctx.lineWidth = 0.75;
-    ctx.beginPath();
-    for (let x = 30; x <= width - 30; x += gridSize) {
-      ctx.moveTo(x, 30);
-      ctx.lineTo(x, height - 30);
-    }
-    for (let y = 30; y <= height - 30; y += gridSize) {
-      ctx.moveTo(30, y);
-      ctx.lineTo(width - 30, y);
-    }
-    ctx.stroke();
-  } else if (props.page.backgroundType === 'dots') {
-    const dotSpacing = 28;
-    ctx.fillStyle = props.isDarkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.18)';
-    for (let x = 35; x <= width - 35; x += dotSpacing) {
-      for (let y = 35; y <= height - 35; y += dotSpacing) {
-        ctx.beginPath();
-        ctx.arc(x, y, 1.2, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-  }
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, width, height);
 }
 
 // Renderiza todos os traços no Canvas principal
@@ -192,6 +127,22 @@ function renderStrokes() {
       currentActiveTool.value === 'highlighter' ? 0.35 : currentActiveTool.value === 'pencil' ? 0.65 : 1
     );
   }
+}
+
+function getSvgPathFromStroke(strokePoints: number[][]): string {
+  if (!strokePoints.length) return '';
+
+  const d = strokePoints.reduce(
+    (acc, [x0, y0], i, arr) => {
+      const [x1, y1] = arr[(i + 1) % arr.length];
+      acc.push(x0, y0, (x0 + x1) / 2, (y0 + y1) / 2);
+      return acc;
+    },
+    ['M', ...strokePoints[0], 'Q']
+  );
+
+  d.push('Z');
+  return d.join(' ');
 }
 
 function drawSingleStroke(

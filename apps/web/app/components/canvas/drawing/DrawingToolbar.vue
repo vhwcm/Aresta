@@ -99,65 +99,36 @@
     <!-- Divisor -->
     <div class="h-6 w-px bg-divider/60 hidden sm:block"></div>
 
-    <!-- Rejeição de Palma & Modos -->
-    <button
-      @click="$emit('update:palmRejection', !palmRejection)"
-      class="px-2.5 py-1.5 rounded-xl text-xs font-medium border transition-all flex items-center gap-1.5 cursor-pointer"
-      :class="
-        palmRejection
-          ? 'bg-primary/15 border-primary text-primary'
-          : 'bg-bgElevated border-divider text-textSecondary hover:text-textPrimary'
-      "
-      :title="palmRejection ? 'Rejeição de Palma: Ativa (Toques acidentais bloqueados)' : 'Rejeição de Palma: Desativada'"
-    >
-      <HandIcon class="w-3.5 h-3.5" />
-      <span class="hidden md:inline">Palma: {{ palmRejection ? 'ON' : 'OFF' }}</span>
-    </button>
-
-    <!-- Fundo da Folha -->
-    <div class="relative">
+    <!-- Controles de Zoom -->
+    <div class="flex items-center gap-1 bg-bgElevated/80 border border-divider/60 rounded-xl px-1.5 py-1 text-xs">
       <button
-        @click="showBgMenu = !showBgMenu"
-        class="p-2 rounded-xl bg-bgElevated hover:bg-bgSurface text-textSecondary hover:text-textPrimary border border-divider transition-all flex items-center justify-center cursor-pointer"
-        title="Estilo da Folha (Pautada, Grid, Lisa)"
+        @click="$emit('zoom-out')"
+        class="p-1 rounded-lg hover:bg-bgSurface text-textSecondary hover:text-textPrimary transition-all cursor-pointer"
+        title="Diminuir Zoom"
       >
-        <FileTextIcon class="w-4 h-4" />
+        <ZoomOutIcon class="w-3.5 h-3.5" />
       </button>
-
-      <!-- Dropdown de Fundos -->
-      <div
-        v-if="showBgMenu"
-        class="absolute bottom-full mb-2 right-0 sm:left-0 bg-bgPanel border border-divider rounded-xl shadow-xl p-1.5 min-w-[140px] flex flex-col gap-1 z-40"
+      <button
+        @click="$emit('zoom-fit')"
+        class="px-1.5 py-0.5 text-[11px] font-mono font-semibold text-textSecondary hover:text-primary transition-colors cursor-pointer"
+        title="Ajustar à tela do notebook"
       >
-        <button
-          @click="$emit('change-background', 'ruled'); showBgMenu = false"
-          class="px-3 py-1.5 text-xs text-left rounded-lg hover:bg-bgElevated flex items-center gap-2 text-textPrimary"
-        >
-          <span>📄</span>
-          <span>Pautada</span>
-        </button>
-        <button
-          @click="$emit('change-background', 'grid'); showBgMenu = false"
-          class="px-3 py-1.5 text-xs text-left rounded-lg hover:bg-bgElevated flex items-center gap-2 text-textPrimary"
-        >
-          <span>📐</span>
-          <span>Quadriculada</span>
-        </button>
-        <button
-          @click="$emit('change-background', 'dots'); showBgMenu = false"
-          class="px-3 py-1.5 text-xs text-left rounded-lg hover:bg-bgElevated flex items-center gap-2 text-textPrimary"
-        >
-          <span>⠤</span>
-          <span>Pontilhada</span>
-        </button>
-        <button
-          @click="$emit('change-background', 'blank'); showBgMenu = false"
-          class="px-3 py-1.5 text-xs text-left rounded-lg hover:bg-bgElevated flex items-center gap-2 text-textPrimary"
-        >
-          <span>⬜</span>
-          <span>Em Branco</span>
-        </button>
-      </div>
+        {{ Math.round(zoom * 100) }}%
+      </button>
+      <button
+        @click="$emit('zoom-in')"
+        class="p-1 rounded-lg hover:bg-bgSurface text-textSecondary hover:text-textPrimary transition-all cursor-pointer"
+        title="Aumentar Zoom"
+      >
+        <ZoomInIcon class="w-3.5 h-3.5" />
+      </button>
+      <button
+        @click="$emit('zoom-fit')"
+        class="p-1 rounded-lg hover:bg-bgSurface text-textSecondary hover:text-textPrimary transition-all cursor-pointer hidden sm:flex items-center justify-center"
+        title="Ajustar página inteira na tela"
+      >
+        <Maximize2Icon class="w-3.5 h-3.5" />
+      </button>
     </div>
 
     <!-- Ações: Desfazer / Refazer -->
@@ -183,40 +154,44 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
 import {
   PenTool as PenToolIcon,
   Feather as FeatherIcon,
   Pencil as PencilIcon,
   Highlighter as HighlighterIcon,
   Eraser as EraserIcon,
-  Hand as HandIcon,
-  FileText as FileTextIcon,
+  ZoomIn as ZoomInIcon,
+  ZoomOut as ZoomOutIcon,
+  Maximize2 as Maximize2Icon,
   Undo2 as UndoIcon,
   Redo2 as RedoIcon,
 } from 'lucide-vue-next';
-import type { PenToolType, PageBackgroundType } from '~/interfaces/drawing';
+import type { PenToolType } from '~/interfaces/drawing';
 
-defineProps<{
-  tool: PenToolType;
-  color: string;
-  size: number;
-  palmRejection: boolean;
-  canUndo: boolean;
-  canRedo: boolean;
-}>();
+withDefaults(
+  defineProps<{
+    tool: PenToolType;
+    color: string;
+    size: number;
+    canUndo: boolean;
+    canRedo: boolean;
+    zoom?: number;
+  }>(),
+  {
+    zoom: 1,
+  }
+);
 
 defineEmits<{
   (e: 'update:tool', tool: PenToolType): void;
   (e: 'update:color', color: string): void;
   (e: 'update:size', size: number): void;
-  (e: 'update:palmRejection', enabled: boolean): void;
-  (e: 'change-background', bg: PageBackgroundType): void;
+  (e: 'zoom-in'): void;
+  (e: 'zoom-out'): void;
+  (e: 'zoom-fit'): void;
   (e: 'undo'): void;
   (e: 'redo'): void;
 }>();
-
-const showBgMenu = ref(false);
 
 const paletteColors = [
   '#18181B', // Preto / Grafite
