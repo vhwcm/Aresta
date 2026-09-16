@@ -23,17 +23,17 @@ try {
 const rawDatabaseUrl = process.env.DATABASE_URL || 'postgresql://aresta:password@localhost:5432/aresta_db'
 const sanitizedDatabaseUrl = rawDatabaseUrl.trim().replace(/^[\"']|[\"']$/g, '')
 
-// Validação do JWT_SECRET — falha rápido se não configurado corretamente
+// Validação do JWT_SECRET — falha estrita em produção e fallback seguro em dev/test
 const resolveJwtSecret = (): string => {
   const secret = process.env.JWT_SECRET
   if (!secret || secret.length < 32) {
-    if (process.env.NODE_ENV === 'test') {
-      return 'test-only-jwt-secret-32chars-minimum-ok'
+    if (process.env.NODE_ENV === 'production' || process.env.IS_PRODUCTION === 'true') {
+      throw new Error(
+        '[Aresta] JWT_SECRET não definido ou inseguro em produção (mínimo 32 caracteres). ' +
+        'Defina a variável de ambiente JWT_SECRET antes de iniciar o servidor.'
+      )
     }
-    throw new Error(
-      '[Aresta] JWT_SECRET não definido ou inseguro (mínimo 32 caracteres). ' +
-      'Defina a variável de ambiente JWT_SECRET antes de iniciar o servidor.'
-    )
+    return secret && secret.length > 0 ? secret : 'aresta-local-dev-jwt-secret-key-min-32chars-ok'
   }
   return secret
 }
