@@ -21,11 +21,6 @@ export const authenticate = (req: Request, res: Response, next: NextFunction): v
   const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : authHeader
 
   if (!token) {
-    if (process.env.NODE_ENV === 'test') {
-      req.user = { userId: 1, email: 'admin@aresta.app', role: 'ADMIN' }
-      next()
-      return
-    }
     res.status(401).json({ error: 'Token required' })
     return
   }
@@ -35,11 +30,6 @@ export const authenticate = (req: Request, res: Response, next: NextFunction): v
     req.user = payload
     next()
   } catch {
-    if (process.env.NODE_ENV === 'test') {
-      req.user = { userId: 1, email: 'admin@aresta.app', role: 'ADMIN' }
-      next()
-      return
-    }
     res.status(401).json({ error: 'Invalid or expired token' })
   }
 }

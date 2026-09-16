@@ -39,7 +39,8 @@ const getAuthApiUrl = () => {
 const COOKIE_OPTS = {
   path: '/',
   maxAge: 60 * 60 * 24 * 7, // 7 dias
-  sameSite: 'lax' as const
+  sameSite: 'strict' as const,
+  secure: process.env.NODE_ENV === 'production',
 }
 
 const getCookieRef = <T>(name: string) => {

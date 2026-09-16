@@ -21,12 +21,27 @@ try {
 }
 
 const rawDatabaseUrl = process.env.DATABASE_URL || 'postgresql://aresta:password@localhost:5432/aresta_db'
-const sanitizedDatabaseUrl = rawDatabaseUrl.trim().replace(/^["']|["']$/g, '')
+const sanitizedDatabaseUrl = rawDatabaseUrl.trim().replace(/^[\"']|[\"']$/g, '')
+
+// Validação do JWT_SECRET — falha rápido se não configurado corretamente
+const resolveJwtSecret = (): string => {
+  const secret = process.env.JWT_SECRET
+  if (!secret || secret.length < 32) {
+    if (process.env.NODE_ENV === 'test') {
+      return 'test-only-jwt-secret-32chars-minimum-ok'
+    }
+    throw new Error(
+      '[Aresta] JWT_SECRET não definido ou inseguro (mínimo 32 caracteres). ' +
+      'Defina a variável de ambiente JWT_SECRET antes de iniciar o servidor.'
+    )
+  }
+  return secret
+}
 
 export const env = {
   PORT: process.env.PORT ? parseInt(process.env.PORT, 10) : 3001,
   DATABASE_URL: sanitizedDatabaseUrl,
-  JWT_SECRET: process.env.JWT_SECRET || 'sua-chave-jwt-secreta-compartilhada',
+  JWT_SECRET: resolveJwtSecret(),
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '7d',
   STORAGE_PATH: path.resolve(process.env.STORAGE_PATH || './storage'),
   GEMINI_API_KEY: process.env.GEMINI_API_KEY || process.env.AI_KEY || '',

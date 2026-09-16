@@ -46,6 +46,8 @@ services:
       APPLE_KEY_ID: ${APPLE_KEY_ID:-}
       APPLE_PRIVATE_KEY: ${APPLE_PRIVATE_KEY:-}
       APPLE_REDIRECT_URI: ${APPLE_REDIRECT_URI:-}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-}
+      DOMAIN: ${DOMAIN:-aresta.duckdns.org}
     volumes:
       - reader-storage:/app/storage
     depends_on:

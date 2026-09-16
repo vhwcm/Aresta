@@ -68,6 +68,44 @@ export class BookService {
     }
   }
 
+  /**
+   * Busca um livro por ID verificando que o usuário tem acesso (ownership via UserBook).
+   * Lança erro 404 se o livro não existir ou não pertencer ao usuário.
+   */
+  async findByIdForUser(id: number, userId: number) {
+    const book = await prisma.book.findFirst({
+      where: {
+        id,
+        userBooks: { some: { user_id: userId } },
+      },
+      include: {
+        publicInfo: true,
+        bookThemes: { include: { theme: true } },
+      },
+    })
+
+    if (!book) throw Object.assign(new Error('Livro não encontrado ou acesso negado'), { status: 404 })
+
+    return {
+      id: book.id,
+      title: book.title,
+      author: book.publicInfo?.author || 'Autor Desconhecido',
+      summary: book.publicInfo?.summary || null,
+      filePath: book.file_path,
+      coverPath: book.cover_path,
+      fileType: book.file_type,
+      format_type: book.file_type === 'didactic' ? 'DIDACTIC' : undefined,
+      is_ai_generated: book.file_type === 'didactic',
+      createdAt: book.created_at,
+      themes: book.bookThemes.map((bt) => ({
+        id: bt.theme.id,
+        name: bt.theme.name,
+        color: bt.theme.color,
+        description: bt.theme.description,
+      })),
+    }
+  }
+
   async getDidacticBooklet(id: number) {
     const book = await prisma.book.findUnique({
       where: { id },
@@ -140,9 +178,16 @@ export class BookService {
     return this.findById(book.id)
   }
 
-  async delete(id: number) {
-    const existing = await prisma.book.findUnique({ where: { id } })
-    if (!existing) throw new Error(`Livro não encontrado para remoção com ID: ${id}`)
+  async delete(id: number, userId?: number) {
+    const where = userId
+      ? { id, userBooks: { some: { user_id: userId } } }
+      : { id }
+
+    const existing = await prisma.book.findFirst({ where })
+    if (!existing) throw Object.assign(
+      new Error('Livro não encontrado ou acesso negado'),
+      { status: userId ? 403 : 404 }
+    )
     await prisma.book.delete({ where: { id } })
     return true
   }

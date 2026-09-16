@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken'
 import { prisma } from '../config/database'
+import { env } from '../../../config/env'
 import { AuthProviderFactory, type SupportedAuthProvider } from '../providers/AuthProviderFactory'
 
 export class OAuthService {
@@ -74,8 +75,8 @@ export class OAuthService {
     // 4. Emite JWT de sessão do Aresta
     const token = jwt.sign(
       { userId: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET || 'sua-chave-jwt-secreta-compartilhada',
-      { expiresIn: (process.env.JWT_EXPIRES_IN ?? '7d') as any }
+      env.JWT_SECRET,
+      { expiresIn: env.JWT_EXPIRES_IN as any }
     )
 
     return {

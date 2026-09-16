@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import { prisma } from '../config/database'
+import { env } from '../../../config/env'
 import type { RegisterDto, LoginDto } from '../schemas/auth.schema'
 
 export class AuthService {
@@ -16,8 +17,8 @@ export class AuthService {
 
     const token = jwt.sign(
       { userId: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET || 'sua-chave-jwt-secreta-compartilhada',
-      { expiresIn: (process.env.JWT_EXPIRES_IN ?? '7d') as any }
+      env.JWT_SECRET,
+      { expiresIn: env.JWT_EXPIRES_IN as any }
     )
 
     return { token, isNewUser: true, user: { id: user.id, name: user.name, email: user.email, role: user.role, isActive: user.is_active } }
@@ -40,8 +41,8 @@ export class AuthService {
 
     const token = jwt.sign(
       { userId: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET || 'sua-chave-jwt-secreta-compartilhada',
-      { expiresIn: (process.env.JWT_EXPIRES_IN ?? '7d') as any }
+      env.JWT_SECRET,
+      { expiresIn: env.JWT_EXPIRES_IN as any }
     )
     return { token, isNewUser: false, user: { id: user.id, name: user.name, email: user.email, role: user.role, isActive: user.is_active } }
   }

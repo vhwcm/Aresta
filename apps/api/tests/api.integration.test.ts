@@ -25,12 +25,14 @@ describe('Unified Monolith API Integration', () => {
     })
   })
 
-  it('GET /health retorna status ok e todos os 5 módulos unificados', async () => {
+  it('GET /health retorna status ok sem expor dados internos', async () => {
     const res = await axios.get(`${baseUrl}/health`)
     expect(res.status).toBe(200)
     expect(res.data.status).toBe('ok')
-    expect(res.data.service).toBe('aresta-api')
-    expect(res.data.modules).toEqual(['auth', 'reader', 'canvas', 'memory', 'ai'])
+    // Healthcheck não deve expor configurações internas (segurança)
+    expect(res.data.service).toBeUndefined()
+    expect(res.data.modules).toBeUndefined()
+    expect(res.data.hasApiKey).toBeUndefined()
   })
 
   it('POST /api/auth/login autentica o usuário admin semeado', async () => {
