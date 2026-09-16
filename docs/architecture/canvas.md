@@ -315,3 +315,13 @@ FLUXO DE DADOS DO GRAFO DE CONHECIMENTO (GRAPH & MENTAL MAP DATA FLOW)
 - `PUT /api/canvases/:id`: Atualiza metadados e payload `data` (autosave debounced 750ms).
 - `DELETE /api/canvases/:id`: Exclui um quadro.
 - `POST /api/canvases/:id/duplicate`: Duplica um quadro existente.
+
+---
+
+## 7. Criação de Anotações e Flashcards por Seleção de Texto em Notas
+
+Ao selecionar qualquer trecho de texto nas notas (seja no editor integrado `NoteEditorPane.vue` com Live Preview Milkdown ou nos nós de nota no canvas `CanvasNodeNote.vue`), uma barra flutuante de ações é exibida com estilo refinado:
+
+- **📝 Anotar**: Aciona o modal de criação de anotações (`ReaderAnnotationModal`) com a caixinha de anotação/reflexão pré-ativada (`initialWantNote = true`), permitindo registrar insights e associar temas do Grafo de Conhecimento vinculados diretamente ao ID da nota (`noteId`).
+- **✨ Flashcard**: Aciona o modal com a caixinha de flashcard pré-ativada (`initialWantFlashcard = true`), permitindo geração socrática inteligente de cartões de repetição espaçada com IA associados à nota (`canvas_note`).
+

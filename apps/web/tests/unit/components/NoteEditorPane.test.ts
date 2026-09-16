@@ -135,4 +135,90 @@ describe('NoteEditorPane Component', () => {
     expect(wrapper.emitted('update:note')).toBeTruthy();
     expect(wrapper.emitted('save')).toBeTruthy();
   });
+
+  it('exibe barra flutuante de anotação e flashcard ao selecionar texto e abre modal com parâmetros corretos', async () => {
+    const originalGetSelection = window.getSelection;
+    window.getSelection = () => ({
+      toString: () => 'trecho selecionado para estudo',
+    } as any);
+
+    const wrapper = mount(NoteEditorPane, {
+      props: {
+        note: sampleNote,
+        folders: ['Geral'],
+        canvases: [],
+      },
+      global: {
+        stubs: {
+          MilkdownEditor: true,
+          ReaderAnnotationModal: {
+            name: 'ReaderAnnotationModal',
+            props: ['isOpen', 'initialText', 'noteId', 'initialWantNote', 'initialWantFlashcard'],
+            template: '<div class="annotation-modal-stub" v-if="isOpen" :data-note="initialWantNote" :data-flashcard="initialWantFlashcard">{{ initialText }}</div>',
+          },
+        },
+      },
+    });
+
+    // Dispara seleção via mouseup na área do editor
+    await wrapper.find('.flex-1.p-4').trigger('mouseup');
+
+    // Barra de ferramentas deve aparecer
+    const toolbar = wrapper.find('[data-testid="note-selection-toolbar"]');
+    expect(toolbar.exists()).toBe(true);
+    expect(toolbar.text()).toContain('Anotar');
+    expect(toolbar.text()).toContain('Flashcard');
+
+    // Clica no botão Anotar
+    const noteBtn = wrapper.find('[data-testid="btn-create-note-from-snippet"]');
+    await noteBtn.trigger('mousedown');
+
+    // Modal deve abrir com initialWantNote = true
+    const modalStub = wrapper.findComponent({ name: 'ReaderAnnotationModal' });
+    expect(modalStub.props('isOpen')).toBe(true);
+    expect(modalStub.props('initialText')).toBe('trecho selecionado para estudo');
+    expect(modalStub.props('noteId')).toBe('note-test-1');
+    expect(modalStub.props('initialWantNote')).toBe(true);
+    expect(modalStub.props('initialWantFlashcard')).toBe(false);
+
+    window.getSelection = originalGetSelection;
+  });
+
+  it('abre modal configurado para flashcard ao clicar no botão Flashcard da barra flutuante', async () => {
+    const originalGetSelection = window.getSelection;
+    window.getSelection = () => ({
+      toString: () => 'conceito para flashcard',
+    } as any);
+
+    const wrapper = mount(NoteEditorPane, {
+      props: {
+        note: sampleNote,
+        folders: ['Geral'],
+        canvases: [],
+      },
+      global: {
+        stubs: {
+          MilkdownEditor: true,
+          ReaderAnnotationModal: {
+            name: 'ReaderAnnotationModal',
+            props: ['isOpen', 'initialText', 'noteId', 'initialWantNote', 'initialWantFlashcard'],
+            template: '<div class="annotation-modal-stub" v-if="isOpen">{{ initialText }}</div>',
+          },
+        },
+      },
+    });
+
+    await wrapper.find('.flex-1.p-4').trigger('mouseup');
+
+    const flashcardBtn = wrapper.find('[data-testid="btn-create-flashcard-from-snippet"]');
+    await flashcardBtn.trigger('mousedown');
+
+    const modalStub = wrapper.findComponent({ name: 'ReaderAnnotationModal' });
+    expect(modalStub.props('isOpen')).toBe(true);
+    expect(modalStub.props('initialText')).toBe('conceito para flashcard');
+    expect(modalStub.props('initialWantNote')).toBe(false);
+    expect(modalStub.props('initialWantFlashcard')).toBe(true);
+
+    window.getSelection = originalGetSelection;
+  });
 });

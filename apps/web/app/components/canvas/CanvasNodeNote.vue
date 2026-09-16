@@ -45,18 +45,31 @@
       >
         <AiMarkdown :content="displayContent" />
 
-        <!-- Botão flutuante de criação de flashcard/anotação a partir do trecho -->
+        <!-- Barra flutuante de criação de anotação e flashcard a partir do trecho -->
         <Transition name="fade">
-          <button
+          <div
             v-if="selectedSnippet"
-            type="button"
-            class="sticky bottom-2 ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-accent text-white font-technical text-[11px] font-semibold shadow-xl hover:bg-accent/90 transition-all animate-in fade-in cursor-pointer z-20"
-            @mousedown.prevent.stop="openModalForSnippet"
-            title="Criar Flashcard com IA a partir do trecho selecionado"
+            class="sticky bottom-2 ml-auto flex items-center gap-1.5 p-1 rounded-xl bg-bgPanel/95 border border-divider shadow-xl backdrop-blur-md transition-all animate-in fade-in z-20"
           >
-            <SparklesIcon class="w-3.5 h-3.5" />
-            <span>Gerar Flashcard com Trecho (IA)</span>
-          </button>
+            <button
+              type="button"
+              class="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/15 text-textPrimary font-technical text-[10px] font-semibold transition-all cursor-pointer"
+              @mousedown.prevent.stop="openModalForAnnotation"
+              title="Criar anotação ou reflexão a partir do trecho selecionado"
+            >
+              <MessageSquareIcon class="w-3 h-3 text-accent" />
+              <span>Anotar</span>
+            </button>
+            <button
+              type="button"
+              class="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-accent text-white font-technical text-[10px] font-semibold hover:bg-accent/90 transition-all cursor-pointer shadow-xs"
+              @mousedown.prevent.stop="openModalForFlashcard"
+              title="Criar Flashcard a partir do trecho selecionado"
+            >
+              <SparklesIcon class="w-3 h-3" />
+              <span>Flashcard</span>
+            </button>
+          </div>
         </Transition>
       </div>
 
@@ -76,6 +89,8 @@
       :chapter-title="`Nota: ${displayTitle}`"
       :cfi="`note:${node.noteId || node.id}`"
       :note-id="String(node.noteId || node.id)"
+      :initial-want-note="modalInitialWantNote"
+      :initial-want-flashcard="modalInitialWantFlashcard"
       @close="isAnnotationModalOpen = false"
       @created="handleSnippetAnnotated"
     />
@@ -84,7 +99,7 @@
 
 <script setup lang="ts">
 import { ref, computed, inject } from 'vue';
-import { SparklesIcon } from 'lucide-vue-next';
+import { SparklesIcon, MessageSquareIcon } from 'lucide-vue-next';
 import type { CanvasNode } from '~/interfaces/canvas';
 import { useCycleDetector, type RenderContextItem } from '~/composables/useCycleDetector';
 import CycleWarningPlaceholder from '~/components/canvas/CycleWarningPlaceholder.vue';
@@ -102,6 +117,8 @@ const { checkCycle } = useCycleDetector(parentStack);
 const selectedSnippet = ref('');
 const currentSelectedSnippet = ref('');
 const isAnnotationModalOpen = ref(false);
+const modalInitialWantNote = ref(false);
+const modalInitialWantFlashcard = ref(false);
 
 const cycleResult = computed(() => {
   if (!props.node.noteId) {
@@ -129,11 +146,26 @@ function handleTextSelection() {
   }
 }
 
-function openModalForSnippet() {
+function openModalForAnnotation() {
   if (!selectedSnippet.value) return;
   currentSelectedSnippet.value = selectedSnippet.value;
+  modalInitialWantNote.value = true;
+  modalInitialWantFlashcard.value = false;
   isAnnotationModalOpen.value = true;
   selectedSnippet.value = '';
+}
+
+function openModalForFlashcard() {
+  if (!selectedSnippet.value) return;
+  currentSelectedSnippet.value = selectedSnippet.value;
+  modalInitialWantNote.value = false;
+  modalInitialWantFlashcard.value = true;
+  isAnnotationModalOpen.value = true;
+  selectedSnippet.value = '';
+}
+
+function openModalForSnippet() {
+  openModalForFlashcard();
 }
 
 function handleSnippetAnnotated() {

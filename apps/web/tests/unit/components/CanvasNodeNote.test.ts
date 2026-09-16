@@ -77,4 +77,58 @@ describe('CanvasNodeNote Component', () => {
     expect(wrapper.find('.cycle-warning-stub').exists()).toBe(true);
     expect(wrapper.find('.cycle-warning-stub').text()).toContain('Referência Cíclica Prevenida');
   });
+
+  it('exibe botões Anotar e Flashcard quando um texto é selecionado no nó de nota', async () => {
+    const originalGetSelection = window.getSelection;
+    window.getSelection = () => ({
+      toString: () => 'Trecho selecionado no nó',
+    } as any);
+
+    const node: CanvasNode = {
+      id: 'node-note-selection',
+      type: 'note_embed',
+      x: 30,
+      y: 30,
+      width: 300,
+      height: 200,
+      noteId: 'note-sel-1',
+      noteTitle: 'Minha Nota',
+      noteContent: 'Texto de estudo selecionável.',
+    };
+
+    const wrapper = mount(CanvasNodeNote, {
+      props: { node },
+      global: {
+        stubs: {
+          NuxtLink: true,
+          AiMarkdown: true,
+          CycleWarningPlaceholder: true,
+          ReaderAnnotationModal: {
+            name: 'ReaderAnnotationModal',
+            props: ['isOpen', 'initialText', 'initialWantNote', 'initialWantFlashcard'],
+            template: '<div class="annotation-modal-stub" v-if="isOpen">Modal Aberto</div>',
+          },
+        },
+      },
+    });
+
+    const proseContainer = wrapper.find('.prose');
+    await proseContainer.trigger('mouseup');
+
+    // Botões devem estar visíveis
+    expect(wrapper.text()).toContain('Anotar');
+    expect(wrapper.text()).toContain('Flashcard');
+
+    // Clica no botão Anotar
+    const annotateBtn = wrapper.findAll('button').find((b) => b.text().includes('Anotar'));
+    await annotateBtn?.trigger('mousedown');
+
+    const modalStub = wrapper.findComponent({ name: 'ReaderAnnotationModal' });
+    expect(modalStub.props('isOpen')).toBe(true);
+    expect(modalStub.props('initialText')).toBe('Trecho selecionado no nó');
+    expect(modalStub.props('initialWantNote')).toBe(true);
+    expect(modalStub.props('initialWantFlashcard')).toBe(false);
+
+    window.getSelection = originalGetSelection;
+  });
 });

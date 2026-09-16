@@ -430,6 +430,40 @@ describe('Reader Components', () => {
       expect(noteBox.classes()).toContain('text-zinc-500')
       expect(noteBox.classes()).not.toContain('text-orange-400')
     })
+
+    it('inicia com caixinha de anotação ou flashcard ativada quando initialWantNote ou initialWantFlashcard for passado', async () => {
+      const wrapper = mount(ReaderAnnotationModal, {
+        props: {
+          isOpen: true,
+          initialText: 'Trecho com abertura pré-ativada',
+          currentPage: 1,
+          bookId: 1,
+          initialWantNote: true,
+          initialWantFlashcard: false,
+        },
+      })
+
+      const noteBox = wrapper.find('[data-testid="toggle-want-note"]')
+      const flashcardBox = wrapper.find('[data-testid="toggle-want-flashcard"]')
+
+      expect(noteBox.classes()).toContain('text-orange-400')
+      expect(flashcardBox.classes()).toContain('text-zinc-500')
+      expect(wrapper.find('[data-testid="annotation-note-textarea"]').exists()).toBe(true)
+
+      const wrapperFlashcard = mount(ReaderAnnotationModal, {
+        props: {
+          isOpen: true,
+          initialText: 'Trecho para flashcard pré-ativado',
+          currentPage: 1,
+          bookId: 1,
+          initialWantNote: false,
+          initialWantFlashcard: true,
+        },
+      })
+
+      const flashcardBoxActive = wrapperFlashcard.find('[data-testid="toggle-want-flashcard"]')
+      expect(flashcardBoxActive.classes()).toContain('text-orange-400')
+    })
   })
 
   describe('ReaderSelectionTooltip', () => {

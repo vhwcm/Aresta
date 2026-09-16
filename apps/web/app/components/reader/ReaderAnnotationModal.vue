@@ -274,6 +274,8 @@ const props = defineProps<{
   chapterTitle?: string
   cfi?: string
   noteId?: string | null
+  initialWantNote?: boolean
+  initialWantFlashcard?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -314,9 +316,9 @@ watch(
     if (open) {
       selectedText.value = props.initialText || ''
       selectedColor.value = '#E57B55'
-      wantNote.value = false
+      wantNote.value = props.initialWantNote ?? false
       note.value = ''
-      wantFlashcard.value = false
+      wantFlashcard.value = props.initialWantFlashcard ?? false
       selectedThemeIds.value = []
       showThemesSection.value = false
       showNewThemeInput.value = false
@@ -346,7 +348,6 @@ const handleCreateQuickTheme = async () => {
   try {
     const node = await createNode({
       label: name,
-      type: 'theme',
       color: '#E57B55',
     })
     if (node && node.id) {
