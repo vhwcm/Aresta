@@ -5,20 +5,7 @@ import { useGoogleDriveSync } from '~/composables/useGoogleDriveSync'
 import { bookRepo } from '~/adapters/database/repositories/BookRepository'
 import { annotationRepo } from '~/adapters/database/repositories/AnnotationRepository'
 import { flashcardRepo } from '~/adapters/database/repositories/FlashcardRepository'
-
-const getApiBase = () => {
-  if (typeof useRuntimeConfig === 'function') {
-    try {
-      const config = useRuntimeConfig()
-      if (config?.public?.apiUrl) {
-        return `${config.public.apiUrl}/api`
-      }
-    } catch {
-      // fallback gracioso se runtime config não estiver disponível
-    }
-  }
-  return 'http://localhost:3001/api'
-}
+import { getApiBase } from '~/utils/apiBase'
 
 const mapLocalToUserBookItem = (b: any): UserBookItem => ({
   userBookId: b.id,
@@ -39,6 +26,13 @@ const sharedUserBooks = ref<UserBookItem[]>([])
 const sharedLoading = ref(false)
 const sharedError = ref<string | null>(null)
 let isInitialized = false
+
+export const resetUserBooksMemory = () => {
+  sharedUserBooks.value = []
+  sharedLoading.value = false
+  sharedError.value = null
+  isInitialized = false
+}
 
 const initFromLocalRepo = async () => {
   if (isInitialized && sharedUserBooks.value.length > 0) return
@@ -118,88 +112,99 @@ export const useUserBooks = () => {
         themes: item.themes || []
       }))
 
-      // Mescla livros remotos com possíveis livros exclusivos salvos localmente offline nesta sessão
-      try {
-        const localBooks = await bookRepo.getAll()
-        const localOnly: any[] = []
+      if (remoteItems.length === 0) {
+        userBooks.value = []
+        try {
+          await bookRepo.clear()
+        } catch {}
+      } else {
+        // Mescla livros remotos com possíveis livros exclusivos salvos localmente offline nesta sessão
+        try {
+          const localBooks = await bookRepo.getAll()
+          const localOnly: any[] = []
 
-        for (const lb of localBooks) {
-          const matchingRemote = remoteItems.find((r: any) => {
-            const idMatches = r.bookId === (lb.bookId || lb.id) || r.userBookId === lb.id
-            const titleMatches = Boolean(r.title && lb.title && r.title.trim().toLowerCase() === lb.title.trim().toLowerCase())
-            const fileMatches = Boolean(r.filePath && lb.filePath && r.filePath === lb.filePath)
-            return idMatches || titleMatches || fileMatches
+          for (const lb of localBooks) {
+            const matchingRemote = remoteItems.find((r: any) => {
+              const idMatches = r.bookId === (lb.bookId || lb.id) || r.userBookId === lb.id
+              const titleMatches = Boolean(r.title && lb.title && r.title.trim().toLowerCase() === lb.title.trim().toLowerCase())
+              const fileMatches = Boolean(r.filePath && lb.filePath && r.filePath === lb.filePath)
+              return idMatches || titleMatches || fileMatches
+            })
+
+            if (matchingRemote) {
+              // Se o timestamp de acesso local for mais recente que o remoto, atualiza
+              if (lb.lastAccessedAt) {
+                const localTime = new Date(lb.lastAccessedAt).getTime()
+                const remoteTime = matchingRemote.lastAccessedAt ? new Date(matchingRemote.lastAccessedAt).getTime() : 0
+                if (localTime > remoteTime) {
+                  matchingRemote.lastAccessedAt = lb.lastAccessedAt
+                }
+              }
+              if (typeof lb.currentPage === 'number' && lb.currentPage > (matchingRemote.currentPage || 0)) {
+                matchingRemote.currentPage = lb.currentPage
+              }
+
+              // Se o ID local for diferente dos IDs oficiais remotos (ex: ID temporário Date.now()),
+              // limpa o registro antigo para evitar acúmulo de duplicatas no armazenamento local
+              if (lb.id !== matchingRemote.userBookId && lb.id !== matchingRemote.bookId) {
+                try {
+                  await bookRepo.delete(lb.id)
+                } catch (delErr) {
+                  console.warn('[useUserBooks] Erro ao limpar livro duplicado do banco local:', delErr)
+                }
+              }
+            } else {
+              localOnly.push(lb)
+            }
+          }
+
+          const candidateBooks = [...remoteItems, ...localOnly.map(mapLocalToUserBookItem)]
+          
+          // Garante unicidade estrita por bookId, userBookId e título normalizado
+          const seenIds = new Set<number>()
+          const seenTitles = new Set<string>()
+          const uniqueBooks: UserBookItem[] = []
+
+          for (const book of candidateBooks) {
+            const normTitle = book.title ? book.title.trim().toLowerCase() : ''
+            if (seenIds.has(book.bookId) || seenIds.has(book.userBookId) || (normTitle && seenTitles.has(normTitle))) {
+              continue
+            }
+            seenIds.add(book.bookId)
+            seenIds.add(book.userBookId)
+            if (normTitle) seenTitles.add(normTitle)
+            uniqueBooks.push(book)
+          }
+
+          // Ordena estritamente pelo acesso mais recente
+          uniqueBooks.sort((a, b) => {
+            const timeA = a.lastAccessedAt ? new Date(a.lastAccessedAt).getTime() : 0
+            const timeB = b.lastAccessedAt ? new Date(b.lastAccessedAt).getTime() : 0
+            return timeB - timeA
           })
 
-          if (matchingRemote) {
-            // Se o timestamp de acesso local for mais recente que o remoto, atualiza
-            if (lb.lastAccessedAt) {
-              const localTime = new Date(lb.lastAccessedAt).getTime()
-              const remoteTime = matchingRemote.lastAccessedAt ? new Date(matchingRemote.lastAccessedAt).getTime() : 0
-              if (localTime > remoteTime) {
-                matchingRemote.lastAccessedAt = lb.lastAccessedAt
-              }
-            }
-            if (typeof lb.currentPage === 'number' && lb.currentPage > (matchingRemote.currentPage || 0)) {
-              matchingRemote.currentPage = lb.currentPage
-            }
+          userBooks.value = uniqueBooks
 
-            // Se o ID local for diferente dos IDs oficiais remotos (ex: ID temporário Date.now()),
-            // limpa o registro antigo para evitar acúmulo de duplicatas no armazenamento local
-            if (lb.id !== matchingRemote.userBookId && lb.id !== matchingRemote.bookId) {
-              try {
-                await bookRepo.delete(lb.id)
-              } catch (delErr) {
-                console.warn('[useUserBooks] Erro ao limpar livro duplicado do banco local:', delErr)
-              }
-            }
-          } else {
-            localOnly.push(lb)
+          // Atualiza o banco local com os dados remotos oficiais
+          for (const item of remoteItems) {
+            await bookRepo.save({
+              id: item.userBookId,
+              bookId: item.bookId,
+              title: item.title,
+              author: item.author,
+              coverPath: item.coverPath || undefined,
+              filePath: item.filePath,
+              status: item.status,
+              currentPage: item.currentPage,
+              lastAccessedAt: item.lastAccessedAt || undefined,
+              themes: item.themes
+            })
           }
+        } catch (localErr) {
+          console.warn('[useUserBooks] Erro ao sincronizar com banco local:', localErr)
+          userBooks.value = remoteItems
         }
-
-        const candidateBooks = [...remoteItems, ...localOnly.map(mapLocalToUserBookItem)]
-        
-        // Garante unicidade estrita por bookId, userBookId e título normalizado
-        const seenIds = new Set<number>()
-        const seenTitles = new Set<string>()
-        const uniqueBooks: UserBookItem[] = []
-
-        for (const book of candidateBooks) {
-          const normTitle = book.title ? book.title.trim().toLowerCase() : ''
-          if (seenIds.has(book.bookId) || seenIds.has(book.userBookId) || (normTitle && seenTitles.has(normTitle))) {
-            continue
-          }
-          seenIds.add(book.bookId)
-          seenIds.add(book.userBookId)
-          if (normTitle) seenTitles.add(normTitle)
-          uniqueBooks.push(book)
-        }
-
-        // Ordena estritamente pelo acesso mais recente
-        uniqueBooks.sort((a, b) => {
-          const timeA = a.lastAccessedAt ? new Date(a.lastAccessedAt).getTime() : 0
-          const timeB = b.lastAccessedAt ? new Date(b.lastAccessedAt).getTime() : 0
-          return timeB - timeA
-        })
-
-        userBooks.value = uniqueBooks
-
-        // Atualiza o banco local com os dados remotos oficiais
-        for (const item of remoteItems) {
-          await bookRepo.save({
-            id: item.userBookId,
-            bookId: item.bookId,
-            title: item.title,
-            author: item.author,
-            coverPath: item.coverPath || undefined,
-            filePath: item.filePath,
-            status: item.status,
-            currentPage: item.currentPage,
-            lastAccessedAt: item.lastAccessedAt || undefined,
-            themes: item.themes
-          })
-        }
+      }
 
         // 2. Se o Google Drive estiver conectado, mescla livros existentes na pasta Aresta do Drive
         try {
@@ -239,10 +244,6 @@ export const useUserBooks = () => {
         } catch (driveErr) {
           console.warn('[useUserBooks] Aviso ao sincronizar com Google Drive:', driveErr)
         }
-      } catch (err) {
-        console.warn('[useUserBooks] Falha ao sincronizar banco local com livros remotos:', err)
-        userBooks.value = remoteItems
-      }
     } catch (e: any) {
       // Se estiver offline ou backend temporariamente indisponível, carrega do banco local
       console.warn('[useUserBooks] Backend indisponível, tentando repositório local:', e)
@@ -549,6 +550,7 @@ export const useUserBooks = () => {
     deleteUserBook,
     deleteUserBookByBookId,
     isBookInShelf,
-    getUserBookByBookId
+    getUserBookByBookId,
+    resetUserBooks: resetUserBooksMemory
   }
 }

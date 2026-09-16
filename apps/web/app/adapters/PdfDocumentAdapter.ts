@@ -4,6 +4,7 @@ import { readerProfiler } from '~/utils/readerProfiler'
 export class PdfDocumentAdapter implements IBookDocument {
   readonly type = 'pdf' as const
   private _pdfDocument: unknown = null
+  private _defaultAspectRatio = 0.707
   private _metadata: BookMetadata = { title: '' }
   private _totalPages = 0
   private _isLoaded = false
@@ -18,6 +19,10 @@ export class PdfDocumentAdapter implements IBookDocument {
 
   get isLoaded(): boolean {
     return this._isLoaded
+  }
+
+  getAspectRatio(_pageNumber?: number): number {
+    return this._defaultAspectRatio || 0.707
   }
 
   setFontSize(_fontSize: number, currentPage = 1): number {
@@ -72,6 +77,16 @@ export class PdfDocumentAdapter implements IBookDocument {
       }
     }, 'parse', { pages: this._totalPages })
 
+    if (this._totalPages > 0) {
+      try {
+        const firstPage = await pdfDoc.getPage(1)
+        const vp = firstPage.getViewport({ scale: 1.0 })
+        this._defaultAspectRatio = vp.width / Math.max(1, vp.height)
+      } catch {
+        this._defaultAspectRatio = 0.707
+      }
+    }
+
     this._isLoaded = true
   }
 
@@ -90,11 +105,21 @@ export class PdfDocumentAdapter implements IBookDocument {
     // Isso elimina distorção de fase, serrilhamento e o efeito de letras alternando entre negrito e fino.
     const dpr = typeof window !== 'undefined' ? (window.devicePixelRatio || 1) : 1
     let scale: number
+    let offsetX = 0
+    let offsetY = 0
 
     if (targetWidth && targetWidth > 0 && targetHeight && targetHeight > 0) {
       const scaleX = (targetWidth * dpr) / baseWidth
       const scaleY = (targetHeight * dpr) / baseHeight
       scale = Math.min(scaleX, scaleY)
+      const renderedW = (baseWidth * scale) / dpr
+      const renderedH = (baseHeight * scale) / dpr
+      if (targetWidth > renderedW) {
+        offsetX = Math.round(((targetWidth - renderedW) / 2) * dpr)
+      }
+      if (targetHeight > renderedH) {
+        offsetY = Math.round(((targetHeight - renderedH) / 2) * dpr)
+      }
     } else if (targetWidth && targetWidth > 0) {
       scale = (targetWidth * dpr) / baseWidth
     } else if (targetHeight && targetHeight > 0) {
@@ -105,7 +130,7 @@ export class PdfDocumentAdapter implements IBookDocument {
 
     // Garante que a escala não fique abaixo da resolução física do display
     scale = Math.max(scale, dpr)
-    const viewport = pdfPage.getViewport({ scale })
+    const viewport = pdfPage.getViewport({ scale, offsetX, offsetY })
 
     const pageData: PageData = {
       width: viewport.width,
@@ -148,32 +173,68 @@ export class PdfDocumentAdapter implements IBookDocument {
     const pdfDoc = this._pdfDocument as import('pdfjs-dist').PDFDocumentProxy
     const pdfPage = await pdfDoc.getPage(pageNumber)
 
-    const baseViewport = pdfPage.getViewport({ scale: 1 })
-    const scale = targetWidth && targetWidth > 0
-      ? targetWidth / baseViewport.width
-      : (targetHeight && targetHeight > 0 ? targetHeight / baseViewport.height : 1.5)
-    const viewport = pdfPage.getViewport({ scale })
+    const baseViewport = pdfPage.getViewport({ scale: 1.0 })
+    const baseWidth = baseViewport.width
+    const baseHeight = baseViewport.height
+
+    let cssScale: number
+    let offsetX = 0
+    let offsetY = 0
+
+    if (targetWidth && targetWidth > 0 && targetHeight && targetHeight > 0) {
+      const scaleX = targetWidth / baseWidth
+      const scaleY = targetHeight / baseHeight
+      cssScale = Math.min(scaleX, scaleY)
+      const renderedW = baseWidth * cssScale
+      const renderedH = baseHeight * cssScale
+      if (targetWidth > renderedW) {
+        offsetX = Math.round((targetWidth - renderedW) / 2)
+      }
+      if (targetHeight > renderedH) {
+        offsetY = Math.round((targetHeight - renderedH) / 2)
+      }
+    } else if (targetWidth && targetWidth > 0) {
+      cssScale = targetWidth / baseWidth
+    } else if (targetHeight && targetHeight > 0) {
+      cssScale = targetHeight / baseHeight
+    } else {
+      cssScale = 1.0
+    }
+
+    const viewport = pdfPage.getViewport({ scale: cssScale })
 
     container.innerHTML = ''
-    container.classList.add('textLayer')
-    container.style.setProperty('--scale-factor', `${scale}`)
-    container.style.setProperty('--total-scale-factor', `${scale}`)
-    container.style.width = `${viewport.width}px`
-    container.style.height = `${viewport.height}px`
+
+    // Cria contêiner dedicado para a camada oficial .textLayer do PDF.js
+    const textLayerDiv = document.createElement('div')
+    textLayerDiv.className = 'textLayer'
+    textLayerDiv.style.width = `${Math.round(viewport.width)}px`
+    textLayerDiv.style.height = `${Math.round(viewport.height)}px`
+    textLayerDiv.style.setProperty('--scale-factor', `${cssScale}`)
+    textLayerDiv.style.setProperty('--total-scale-factor', `${cssScale}`)
+
+    if (offsetX > 0) {
+      textLayerDiv.style.left = `${offsetX}px`
+    }
+    if (offsetY > 0) {
+      textLayerDiv.style.top = `${offsetY}px`
+    }
+
+    container.appendChild(textLayerDiv)
 
     const textContent = await pdfPage.getTextContent()
 
     if (pdfjsLib.TextLayer) {
       const textLayer = new pdfjsLib.TextLayer({
         textContentSource: textContent,
-        container,
+        container: textLayerDiv,
         viewport,
       })
       await textLayer.render()
     } else if (typeof (pdfjsLib as any).renderTextLayer === 'function') {
       await (pdfjsLib as any).renderTextLayer({
         textContentSource: textContent,
-        container,
+        container: textLayerDiv,
         viewport,
       }).promise
     }

@@ -1626,62 +1626,7 @@ defineExpose({
   }
 }
 
-/* PDF.js Text Layer */
-.page-text-layer.textLayer,
-.page-text-layer :deep(.textLayer) {
-  position: absolute;
-  overflow: hidden;
-  line-height: 1;
-  text-size-adjust: none;
-  -webkit-text-size-adjust: none;
-  forced-color-adjust: none;
-  transform-origin: 0 0;
-  user-select: text;
-  -webkit-user-select: text;
-  cursor: text;
-  mix-blend-mode: multiply;
-  --min-font-size: 1;
-  --text-scale-factor: calc(var(--total-scale-factor, var(--scale-factor, 1)) * var(--min-font-size));
-  --min-font-size-inv: calc(1 / var(--min-font-size));
-}
-
-.theme-black .page-text-layer.textLayer,
-.theme-black .page-text-layer :deep(.textLayer) {
-  mix-blend-mode: screen;
-}
-
-.page-text-layer :deep(.textLayer span),
-.page-text-layer :deep(.textLayer span[role="presentation"]),
-.page-text-layer :deep(.textLayer br) {
-  color: transparent !important;
-  position: absolute;
-  white-space: pre;
-  cursor: text;
-  transform-origin: 0% 0%;
-}
-
-.page-text-layer :deep(.textLayer > :not(.markedContent)),
-.page-text-layer :deep(.textLayer .markedContent span:not(.markedContent)) {
-  --font-height: 0;
-  font-size: calc(var(--text-scale-factor) * var(--font-height));
-  --scale-x: 1;
-  --rotate: 0deg;
-  transform: rotate(var(--rotate)) scaleX(var(--scale-x)) scale(var(--min-font-size-inv));
-}
-
-.page-text-layer :deep(.textLayer .markedContent) {
-  display: contents;
-}
-
-/* Seleção de Texto nos Documentos */
-.page-text-layer.textLayer ::selection,
-.page-text-layer.textLayer *::selection,
-.page-text-layer :deep(.textLayer span::selection),
-.page-text-layer :deep(.textLayer ::selection),
-.page-text-layer :deep(.textLayer *::selection) {
-  background: rgba(229, 123, 85, 0.35) !important;
-  color: transparent !important;
-}
+/* PDF.js Text Layer gerenciado de forma desacoplada via pdfjs-textlayer.css */
 
 /* EPUB Native Typography Layer */
 .page-text-layer :deep(.epub-text-layer-content),

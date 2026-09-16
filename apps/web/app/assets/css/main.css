@@ -1,5 +1,6 @@
 @import './milkdown-aresta-theme.css';
 @import 'katex/dist/katex.min.css';
+@import './pdfjs-textlayer.css';
 
 @tailwind base;
 @tailwind components;

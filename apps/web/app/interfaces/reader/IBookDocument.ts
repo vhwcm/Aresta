@@ -29,6 +29,7 @@ export interface IBookDocument {
   readonly fontSize?: number
   readonly fontFamily?: string
 
+  getAspectRatio?(pageNumber?: number): number
   setFontSize?(fontSize: number, currentPage?: number): number
   setFontFamily?(fontFamily: string, currentPage?: number): number
   load(source: File | ArrayBuffer, fileName?: string, initialFontSize?: number, initialFontFamily?: string, coverUrl?: string): Promise<void>
