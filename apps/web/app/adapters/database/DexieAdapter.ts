@@ -76,6 +76,11 @@ export class DexieAdapter implements IDatabaseAdapter {
     return book && !book.deleted_at ? book : null;
   }
 
+  async getBookRawById(id: number): Promise<LocalBook | null> {
+    await this.init();
+    return (await this.db.books.get(id)) ?? null;
+  }
+
   async saveBook(book: LocalBook): Promise<void> {
     await this.init();
     if (!book || book.id === undefined || book.id === null || isNaN(Number(book.id))) {

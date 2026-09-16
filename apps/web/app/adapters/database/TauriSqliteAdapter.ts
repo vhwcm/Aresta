@@ -193,6 +193,28 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
     };
   }
 
+  async getBookRawById(id: number): Promise<LocalBook | null> {
+    await this.init();
+    const rows = await this.db!.select<any[]>('SELECT * FROM books WHERE id = ?', [id]);
+    if (rows.length === 0) return null;
+    const r = rows[0];
+    return {
+      id: r.id,
+      bookId: r.book_id,
+      title: r.title,
+      author: r.author,
+      coverPath: r.cover_path,
+      filePath: r.file_path,
+      status: r.status,
+      currentPage: r.current_page,
+      lastAccessedAt: r.last_accessed_at,
+      themes: r.themes_json ? JSON.parse(r.themes_json) : [],
+      updated_at: r.updated_at,
+      deleted_at: r.deleted_at,
+      sync_status: r.sync_status
+    };
+  }
+
   async saveBook(book: LocalBook): Promise<void> {
     await this.init();
     await this.db!.execute(

@@ -14,8 +14,25 @@ export class BookRepository {
     return this.db.getBookById(id);
   }
 
+  /**
+   * Retorna o livro pelo ID independentemente de `deleted_at`,
+   * necessário para checagens de estado antes de salvar.
+   */
+  private async getRawById(id: number): Promise<LocalBook | null> {
+    return this.db.getBookRawById ? this.db.getBookRawById(id) : this.db.getBookById(id);
+  }
+
   async save(book: Partial<LocalBook> & { id: number; bookId: number; title: string }): Promise<LocalBook> {
-    const existing = await this.db.getBookById(book.id);
+    // Busca o registro real (inclusive se estiver deletado)
+    const existing = await this.getRawById(book.id);
+
+    // Se o livro foi deletado e não estamos explicitamente restaurando-o,
+    // não ressuscitamos — o usuário já o excluiu intencionalmente.
+    if (existing?.deleted_at && !('deleted_at' in book)) {
+      // Retorna o estado atual sem sobrescrever nada
+      return existing;
+    }
+
     const now = new Date().toISOString();
     const entity: LocalBook = {
       ...existing,

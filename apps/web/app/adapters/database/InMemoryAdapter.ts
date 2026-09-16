@@ -34,6 +34,10 @@ export class InMemoryAdapter implements IDatabaseAdapter {
     return b && !b.deleted_at ? b : null;
   }
 
+  async getBookRawById(id: number): Promise<LocalBook | null> {
+    return this.books.get(id) ?? null;
+  }
+
   async saveBook(book: LocalBook): Promise<void> {
     this.books.set(book.id, { ...book });
   }
