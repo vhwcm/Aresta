@@ -2,6 +2,7 @@
 - [16/09/2026 11:00] [Fazendo] Implementar exemplos reais de leitura e grafo na home e bloquear acesso e criação anônima sem autenticação
 
 ## ✅ Concluído
+- [16/09/2026 12:00] [Concluído] Finalizar especificação técnica e ADR do Aresta Cloud Drive para dados pessoais local-first
 - [16/09/2026 11:44] [Concluído] Auditoria e correção de 12 vulnerabilidades de segurança: JWT hardcoded, OCR sem auth, bypass teste, IDOR livros, CORS aberto, rate limiting, Helmet, admin endpoint, healthcheck, cookie, nginx
 - [16/09/2026 11:00] [Concluído] Adicionar formas geométricas, textos, arestas e seleção por mouse no editor de notas de desenho
 - [16/09/2026 10:57] [Concluído] Implementar endpoint de métricas agregadas reais do usuário no backend e conectar cards de leitura e conhecimento em conta.vue
