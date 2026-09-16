@@ -3,6 +3,7 @@ import { mount } from '@vue/test-utils'
 import ContaPage from '~/pages/conta.vue'
 import { useSettings } from '~/composables/useSettings'
 import { useUserMetrics } from '~/composables/useUserMetrics'
+import { useOAuth } from '~/composables/useOAuth'
 
 describe('Conta Page (/conta)', () => {
   const defaultStubs = {
@@ -202,6 +203,9 @@ describe('Conta Page (/conta)', () => {
   })
 
   it('exibe seção de sincronização em nuvem com status do Google Drive e permite conectar/desconectar', async () => {
+    const { setGoogleDriveToken, isGoogleDriveConnected } = useOAuth()
+    setGoogleDriveToken(null)
+
     const wrapper = mount(ContaPage, {
       global: {
         stubs: defaultStubs,
@@ -217,8 +221,8 @@ describe('Conta Page (/conta)', () => {
     expect(connectBtn.exists()).toBe(true)
     expect(connectBtn.text()).toContain('Conectar Google Drive')
 
-    // Simula token conectado
-    localStorage.setItem('aresta_google_drive_token', 'mock_token_123')
+    // Simula token conectado em memória via useOAuth
+    setGoogleDriveToken('mock_token_123')
     const wrapperConnected = mount(ContaPage, {
       global: {
         stubs: defaultStubs,
@@ -231,7 +235,7 @@ describe('Conta Page (/conta)', () => {
     expect(disconnectBtn.text()).toContain('Desconectar')
 
     await disconnectBtn.trigger('click')
-    expect(localStorage.getItem('aresta_google_drive_token')).toBeNull()
+    expect(isGoogleDriveConnected.value).toBe(false)
   })
 })
 
