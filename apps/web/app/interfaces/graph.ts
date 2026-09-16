@@ -80,6 +80,7 @@ export interface GraphNode {
   // Campos de Notas & Quadros
   folder?: string | null
   tags?: string[]
+  isDrawing?: boolean
   createdAt?: string
   updatedAt?: string
   // D3 force fields

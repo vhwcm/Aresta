@@ -12,4 +12,5 @@ aiRouter.post('/translate', authenticate, (req, res) => aiController.translate(r
 aiRouter.post('/summarize', authenticate, (req, res) => aiController.summarize(req, res))
 aiRouter.post('/didactic', authenticate, (req, res) => aiController.didactic(req, res))
 aiRouter.post('/short-explanation', authenticate, (req, res) => aiController.shortExplanation(req, res))
+aiRouter.post('/ocr', authenticate, (req, res) => aiController.synthesize(req, res))
 

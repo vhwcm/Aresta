@@ -14,6 +14,7 @@
       v-if="node.type === 'text' || node.type === 'loose_text'"
       :node="node"
       :is-selected="isSelected"
+      :autofocus="autofocusNodeId === node.id"
       @update:text="$emit('update-text', node.id, $event)"
       @delete="$emit('delete', node.id)"
     />
@@ -174,6 +175,7 @@ const props = defineProps<{
   isSelected?: boolean;
   isMultiSelect?: boolean;
   zoom: number;
+  autofocusNodeId?: string | null;
 }>();
 
 const emit = defineEmits<{

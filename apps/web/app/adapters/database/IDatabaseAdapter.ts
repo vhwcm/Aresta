@@ -7,7 +7,8 @@ import type {
   LocalMutation,
   LocalNote,
   LocalDrawingNote,
-  LocalUserSettings
+  LocalUserSettings,
+  LocalDidacticBooklet
 } from './types';
 
 export interface IDatabaseAdapter {
@@ -65,6 +66,12 @@ export interface IDatabaseAdapter {
   enqueueMutation(mutation: LocalMutation): Promise<void>;
   markMutationsSynced(ids: string[]): Promise<void>;
   clearPendingMutations(): Promise<void>;
+
+  // Didactic Booklets (Local First)
+  getDidacticBooklets(filters?: { bookId?: number; themeId?: number }): Promise<LocalDidacticBooklet[]>;
+  getDidacticBookletById(id: string): Promise<LocalDidacticBooklet | null>;
+  saveDidacticBooklet(booklet: LocalDidacticBooklet): Promise<void>;
+  deleteDidacticBooklet(id: string): Promise<void>;
 
   // Session Purge
   clearAll?(): Promise<void>;

@@ -1,30 +1,31 @@
 <template>
   <!-- 1. NOTA / CARD (type === 'text') - Bloco retangular estilo card Markdown com Live Preview -->
-  <div
-    v-if="!isLooseText"
-    class="w-full h-full flex flex-col rounded-xl overflow-hidden bg-bgPanel/95 border backdrop-blur-md transition-all shadow-md cursor-move"
-    :class="[
-      isSelected ? 'border-primary shadow-primary/20 ring-2 ring-primary/40' : 'border-divider hover:border-dividerHover'
-    ]"
-    :style="{ borderColor: node.color ? node.color : undefined }"
-  >
-    <!-- Header/Color Bar -->
     <div
-      v-if="node.color"
-      class="h-1.5 w-full flex-shrink-0 cursor-move"
-      :style="{ backgroundColor: node.color }"
-    ></div>
+      v-if="!isLooseText"
+      class="w-full h-full flex flex-col rounded-xl overflow-hidden bg-bgPanel/95 border backdrop-blur-md transition-all shadow-md cursor-move"
+      :class="[
+        isSelected ? 'border-primary shadow-primary/20 ring-2 ring-primary/40' : 'border-divider hover:border-dividerHover'
+      ]"
+      :style="{ borderColor: node.color ? node.color : undefined }"
+    >
+      <!-- Header/Color Bar -->
+      <div
+        v-if="node.color"
+        class="h-1.5 w-full flex-shrink-0 cursor-move"
+        :style="{ backgroundColor: node.color }"
+      ></div>
 
-    <!-- Body com Milkdown Live Preview -->
-    <div class="flex-1 p-2 overflow-auto text-textPrimary text-sm custom-scrollbar cursor-text">
-      <MilkdownEditor
-        v-model="localText"
-        placeholder="Escreva em Markdown..."
-        @update:model-value="onTextChange"
-        @blur="onBlur"
-      />
+      <!-- Body com Milkdown Live Preview -->
+      <div class="flex-1 p-2 overflow-auto text-textPrimary text-sm custom-scrollbar cursor-text">
+        <MilkdownEditor
+          v-model="localText"
+          placeholder="Escreva em Markdown..."
+          :autofocus="autofocus"
+          @update:model-value="onTextChange"
+          @blur="onBlur"
+        />
+      </div>
     </div>
-  </div>
 
   <!-- 2. TEXTO LIVRE (type === 'loose_text') - Escrita livre sem quadrado, sem borda e sem fundo com Live Preview -->
   <div
@@ -41,6 +42,7 @@
       <MilkdownEditor
         v-model="localText"
         placeholder="Comece a escrever livremente..."
+        :autofocus="autofocus"
         @update:model-value="onTextChange"
         @blur="onBlur"
       />
@@ -56,6 +58,7 @@ import MilkdownEditor from '~/components/MilkdownEditor.vue';
 const props = defineProps<{
   node: CanvasNode;
   isSelected?: boolean;
+  autofocus?: boolean;
 }>();
 
 const emit = defineEmits<{

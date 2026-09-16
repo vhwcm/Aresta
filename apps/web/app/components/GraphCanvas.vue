@@ -1477,10 +1477,20 @@ const initGraph = (animateTransition = true) => {
     snapTargetNode = null
   }
 
+  // Helper para emitir selectNode a partir de um dado nó D3
+  const emitSelectForNode = (d: any) => {
+    if (d.isRoot) {
+      emit('selectNode', rootNode)
+    } else {
+      const originalNode = props.nodes.find((n) => String(n.id) === String(d.id))
+      emit('selectNode', originalNode ?? d)
+    }
+  }
+
   nodesSelection.on('pointerdown', (event, d) => {
     if (event.button !== 0) return
     event.stopPropagation()
-    event.preventDefault()
+    // NÃO chamar event.preventDefault() — em WebView2/Chromium (Tauri) isso suprime o 'click'
     dragSourceNode = d
     isDraggingWire = false
     snapTargetNode = null
@@ -1497,6 +1507,8 @@ const initGraph = (animateTransition = true) => {
 
   nodesSelection.on('click', (event, d) => {
     event.stopPropagation()
+    // Guarda no clique se houve drag recente — didJustDrag será resetado
+    // após 60ms pelo setTimeout em onWindowPointerUp quando isDraggingWire era true
     if (didJustDrag) return
     if (d.isRoot) {
       emit('selectNode', rootNode)

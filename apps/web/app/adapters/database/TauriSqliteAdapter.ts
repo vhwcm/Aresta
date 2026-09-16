@@ -9,7 +9,8 @@ import type {
   LocalMutation,
   LocalNote,
   LocalDrawingNote,
-  LocalUserSettings
+  LocalUserSettings,
+  LocalDidacticBooklet
 } from './types';
 
 export class TauriSqliteAdapter implements IDatabaseAdapter {
@@ -146,6 +147,24 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
         updated_at TEXT NOT NULL,
         deleted_at TEXT,
         PRIMARY KEY (entity_type, id)
+      );
+    `);
+
+    await this.db.execute(`
+      CREATE TABLE IF NOT EXISTS didactic_booklets (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        topic TEXT NOT NULL,
+        html TEXT NOT NULL,
+        markdown TEXT NOT NULL,
+        diagram_count INTEGER DEFAULT 0,
+        depth_level TEXT DEFAULT 'standard',
+        book_id INTEGER,
+        theme_id INTEGER,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        deleted_at TEXT,
+        sync_status TEXT DEFAULT 'pending'
       );
     `);
   }
@@ -690,5 +709,105 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
     await this.db!.execute('DELETE FROM canvases');
     await this.db!.execute('DELETE FROM streaks');
     await this.db!.execute('DELETE FROM mutation_queue');
+    await this.db!.execute('DELETE FROM didactic_booklets');
+  }
+
+  // Didactic Booklets
+  async getDidacticBooklets(filters?: { bookId?: number; themeId?: number }): Promise<LocalDidacticBooklet[]> {
+    await this.init();
+    let sql = 'SELECT * FROM didactic_booklets WHERE deleted_at IS NULL';
+    const params: any[] = [];
+    if (filters?.bookId !== undefined && filters.bookId !== null) {
+      sql += ' AND book_id = ?';
+      params.push(filters.bookId);
+    }
+    if (filters?.themeId !== undefined && filters.themeId !== null) {
+      sql += ' AND theme_id = ?';
+      params.push(filters.themeId);
+    }
+    sql += ' ORDER BY created_at DESC';
+    const rows = await this.db!.select<any[]>(sql, params);
+    return rows.map((r) => ({
+      id: r.id,
+      title: r.title,
+      topic: r.topic,
+      html: r.html,
+      markdown: r.markdown,
+      diagramCount: r.diagram_count,
+      depthLevel: r.depth_level as 'quick_summary' | 'standard' | 'deep_dive',
+      bookId: r.book_id,
+      themeId: r.theme_id,
+      createdAt: r.created_at,
+      updated_at: r.updated_at,
+      deleted_at: r.deleted_at,
+      sync_status: r.sync_status,
+    }));
+  }
+
+  async getDidacticBookletById(id: string): Promise<LocalDidacticBooklet | null> {
+    await this.init();
+    const rows = await this.db!.select<any[]>('SELECT * FROM didactic_booklets WHERE id = ? AND deleted_at IS NULL', [id]);
+    if (rows.length === 0) return null;
+    const r = rows[0];
+    return {
+      id: r.id,
+      title: r.title,
+      topic: r.topic,
+      html: r.html,
+      markdown: r.markdown,
+      diagramCount: r.diagram_count,
+      depthLevel: r.depth_level as 'quick_summary' | 'standard' | 'deep_dive',
+      bookId: r.book_id,
+      themeId: r.theme_id,
+      createdAt: r.created_at,
+      updated_at: r.updated_at,
+      deleted_at: r.deleted_at,
+      sync_status: r.sync_status,
+    };
+  }
+
+  async saveDidacticBooklet(booklet: LocalDidacticBooklet): Promise<void> {
+    await this.init();
+    await this.db!.execute(
+      `INSERT INTO didactic_booklets
+         (id, title, topic, html, markdown, diagram_count, depth_level, book_id, theme_id, created_at, updated_at, deleted_at, sync_status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(id) DO UPDATE SET
+         title = excluded.title,
+         topic = excluded.topic,
+         html = excluded.html,
+         markdown = excluded.markdown,
+         diagram_count = excluded.diagram_count,
+         depth_level = excluded.depth_level,
+         book_id = excluded.book_id,
+         theme_id = excluded.theme_id,
+         updated_at = excluded.updated_at,
+         deleted_at = excluded.deleted_at,
+         sync_status = excluded.sync_status`,
+      [
+        booklet.id,
+        booklet.title,
+        booklet.topic,
+        booklet.html,
+        booklet.markdown,
+        booklet.diagramCount,
+        booklet.depthLevel,
+        booklet.bookId ?? null,
+        booklet.themeId ?? null,
+        booklet.createdAt,
+        booklet.updated_at,
+        booklet.deleted_at ?? null,
+        booklet.sync_status,
+      ]
+    );
+  }
+
+  async deleteDidacticBooklet(id: string): Promise<void> {
+    await this.init();
+    const now = new Date().toISOString();
+    await this.db!.execute(
+      `UPDATE didactic_booklets SET deleted_at = ?, updated_at = ?, sync_status = 'pending' WHERE id = ?`,
+      [now, now, id]
+    );
   }
 }

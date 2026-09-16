@@ -50,6 +50,7 @@
         :is-selected="(selectedNodeIds || []).includes(node.id)"
         :is-multi-select="(selectedNodeIds || []).length > 1"
         :zoom="scale"
+        :autofocus-node-id="lastCreatedNodeId"
         @select="onSelectNode"
         @drag-start="onNodeDragStart"
         @resize-start="onNodeResizeStart"
@@ -162,6 +163,7 @@ const isDrawing = ref(false);
 const isErasing = ref(false);
 const activeStrokePoints = ref<DrawingPoint[]>([]);
 const currentActiveTool = ref<PenToolType>('pen');
+const lastCreatedNodeId = ref<string | null>(null);
 
 const backgroundColor = '#FFFFFF';
 
@@ -289,6 +291,7 @@ function handleContainerClick(e: MouseEvent) {
       text: '',
       color: props.color || '#E57B55',
     };
+    lastCreatedNodeId.value = newNode.id;
     emit('add-node', newNode);
     emit('update:tool', 'select');
     return;
@@ -306,6 +309,7 @@ function handleContainerClick(e: MouseEvent) {
       text: '',
       color: props.color || '#18181B',
     };
+    lastCreatedNodeId.value = newNode.id;
     emit('add-node', newNode);
     emit('update:tool', 'select');
     return;

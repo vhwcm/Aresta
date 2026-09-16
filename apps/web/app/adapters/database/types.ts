@@ -150,11 +150,24 @@ export interface LocalStreak extends BaseLocalEntity {
 
 export interface LocalMutation {
   id: string; // UUID v4
-  entity_type: 'book' | 'annotation' | 'flashcard' | 'canvas' | 'streak' | 'note' | 'drawing_note' | 'settings';
+  entity_type: 'book' | 'annotation' | 'flashcard' | 'canvas' | 'streak' | 'note' | 'drawing_note' | 'settings' | 'didactic_booklet';
   entity_id: string | number;
   action: 'INSERT' | 'UPDATE' | 'DELETE';
   payload: any;
   client_timestamp: string;
   sync_status: SyncStatus;
   retry_count: number;
+}
+
+export interface LocalDidacticBooklet extends BaseLocalEntity {
+  id: string;           // uuid gerado no cliente
+  title: string;
+  topic: string;
+  html: string;
+  markdown: string;
+  diagramCount: number;
+  depthLevel: 'quick_summary' | 'standard' | 'deep_dive';
+  bookId?: number | null;
+  themeId?: number | null;
+  createdAt: string;
 }

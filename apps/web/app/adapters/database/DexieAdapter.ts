@@ -9,7 +9,8 @@ import type {
   LocalMutation,
   LocalNote,
   LocalDrawingNote,
-  LocalUserSettings
+  LocalUserSettings,
+  LocalDidacticBooklet
 } from './types';
 
 class ArestaDexieDB extends Dexie {
@@ -22,6 +23,7 @@ class ArestaDexieDB extends Dexie {
   notes!: Table<LocalNote, string>;
   drawing_notes!: Table<LocalDrawingNote, string>;
   user_settings!: Table<LocalUserSettings, string>;
+  didactic_booklets!: Table<LocalDidacticBooklet, string>;
 
   constructor() {
     super('aresta_local_db');
@@ -43,6 +45,18 @@ class ArestaDexieDB extends Dexie {
       notes: 'id, updated_at, deleted_at, folder',
       drawing_notes: 'id, updated_at, deleted_at, folder',
       user_settings: 'id, updated_at'
+    });
+    this.version(3).stores({
+      books: 'id, bookId, status, updated_at, deleted_at',
+      annotations: 'id, bookId, cfi, createdAt, updated_at, deleted_at',
+      flashcards: 'id, bookId, annotationId, nextReviewAt, repetitionLevel, updated_at, deleted_at',
+      canvases: 'id, name, updated_at, deleted_at',
+      streaks: 'id, updated_at',
+      mutation_queue: 'id, entity_type, entity_id, action, client_timestamp, sync_status',
+      notes: 'id, updated_at, deleted_at, folder',
+      drawing_notes: 'id, updated_at, deleted_at, folder',
+      user_settings: 'id, updated_at',
+      didactic_booklets: 'id, bookId, themeId, createdAt, updated_at, deleted_at'
     });
   }
 }
@@ -281,8 +295,46 @@ export class DexieAdapter implements IDatabaseAdapter {
       this.db.flashcards.clear(),
       this.db.canvases.clear(),
       this.db.streaks.clear(),
-      this.db.mutation_queue.clear()
-      ,this.db.notes.clear(), this.db.drawing_notes.clear(), this.db.user_settings.clear()
+      this.db.mutation_queue.clear(),
+      this.db.notes.clear(),
+      this.db.drawing_notes.clear(),
+      this.db.user_settings.clear(),
+      this.db.didactic_booklets.clear()
     ]);
+  }
+
+  // Didactic Booklets
+  async getDidacticBooklets(filters?: { bookId?: number; themeId?: number }): Promise<LocalDidacticBooklet[]> {
+    await this.init();
+    let list = (await this.db.didactic_booklets.toArray()).filter((b) => !b.deleted_at);
+    if (filters?.bookId !== undefined && filters.bookId !== null) {
+      list = list.filter((b) => Number(b.bookId) === Number(filters.bookId));
+    }
+    if (filters?.themeId !== undefined && filters.themeId !== null) {
+      list = list.filter((b) => Number(b.themeId) === Number(filters.themeId));
+    }
+    return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  async getDidacticBookletById(id: string): Promise<LocalDidacticBooklet | null> {
+    await this.init();
+    const item = await this.db.didactic_booklets.get(id);
+    return item && !item.deleted_at ? item : null;
+  }
+
+  async saveDidacticBooklet(booklet: LocalDidacticBooklet): Promise<void> {
+    await this.init();
+    await this.db.didactic_booklets.put(booklet);
+  }
+
+  async deleteDidacticBooklet(id: string): Promise<void> {
+    await this.init();
+    const existing = await this.db.didactic_booklets.get(id);
+    if (existing) {
+      existing.deleted_at = new Date().toISOString();
+      existing.sync_status = 'pending';
+      existing.updated_at = new Date().toISOString();
+      await this.db.didactic_booklets.put(existing);
+    }
   }
 }

@@ -8,7 +8,8 @@ import type {
   LocalMutation,
   LocalNote,
   LocalDrawingNote,
-  LocalUserSettings
+  LocalUserSettings,
+  LocalDidacticBooklet
 } from './types';
 
 export class InMemoryAdapter implements IDatabaseAdapter {
@@ -21,6 +22,7 @@ export class InMemoryAdapter implements IDatabaseAdapter {
   private notes = new Map<string, LocalNote>();
   private drawingNotes = new Map<string, LocalDrawingNote>();
   private settings: LocalUserSettings | null = null;
+  private didacticBooklets = new Map<string, LocalDidacticBooklet>();
 
   async init(): Promise<void> {}
 
@@ -186,5 +188,42 @@ export class InMemoryAdapter implements IDatabaseAdapter {
     this.canvases.clear();
     this.streak = null;
     this.mutationQueue.clear();
+    this.notes.clear();
+    this.drawingNotes.clear();
+    this.settings = null;
+    this.didacticBooklets.clear();
+  }
+
+  // Didactic Booklets
+  async getDidacticBooklets(filters?: { bookId?: number; themeId?: number }): Promise<LocalDidacticBooklet[]> {
+    let list = Array.from(this.didacticBooklets.values()).filter((b) => !b.deleted_at);
+    if (filters?.bookId !== undefined && filters.bookId !== null) {
+      list = list.filter((b) => Number(b.bookId) === Number(filters.bookId));
+    }
+    if (filters?.themeId !== undefined && filters.themeId !== null) {
+      list = list.filter((b) => Number(b.themeId) === Number(filters.themeId));
+    }
+    return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  async getDidacticBookletById(id: string): Promise<LocalDidacticBooklet | null> {
+    const item = this.didacticBooklets.get(id);
+    return item && !item.deleted_at ? item : null;
+  }
+
+  async saveDidacticBooklet(booklet: LocalDidacticBooklet): Promise<void> {
+    this.didacticBooklets.set(booklet.id, { ...booklet });
+  }
+
+  async deleteDidacticBooklet(id: string): Promise<void> {
+    const item = this.didacticBooklets.get(id);
+    if (item) {
+      this.didacticBooklets.set(id, {
+        ...item,
+        deleted_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        sync_status: 'pending',
+      });
+    }
   }
 }

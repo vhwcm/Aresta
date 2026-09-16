@@ -197,6 +197,7 @@ export const buildLocalGraph = (input: BuildLocalGraphInput = {}): GraphData => 
       id: nodeId,
       rawId: drawing.id,
       type: 'note',
+      isDrawing: true,
       name: truncateTitle(drawing.title || 'Desenho'),
       title: drawing.title || 'Desenho',
       folder: drawing.folder || null,

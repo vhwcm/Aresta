@@ -95,6 +95,21 @@ export class AiController {
       res.status(500).json({ error: err.message || 'Falha na transcrição' })
     }
   }
+
+  async synthesize(req: Request, res: Response): Promise<void> {
+    try {
+      const { images, promptOverride } = req.body
+      if (!images || !Array.isArray(images) || images.length === 0) {
+        res.status(400).json({ error: 'images é obrigatório e deve ser um array não vazio.' })
+        return
+      }
+      const result = await aiService.synthesizeDrawingToHtml({ images, promptOverride })
+      res.json(result)
+    } catch (err: any) {
+      console.error('[AiController] Erro na síntese de desenho:', err)
+      res.status(500).json({ error: err.message || 'Falha ao sintetizar desenho.' })
+    }
+  }
 }
 
 export const aiController = new AiController()
