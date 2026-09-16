@@ -1,10 +1,11 @@
 ## 🔄 Em Andamento
-- [16/09/2026 15:30] [Fazendo] Fazer transição suave e lenta dos nós no Grafo ao ligar graficamente com um tema
 - [16/09/2026 15:30] [Fazendo] Adicionar benefícios da leitura profunda e integração entre IA, flashcards, leitura, anotações estruturadas e canvas na página de benefícios
 - [16/09/2026 12:10] [Fazendo] Implementar Aresta Cloud Drive local-first para todos os dados pessoais e descarte do backend legado
 - [16/09/2026 11:00] [Fazendo] Implementar exemplos reais de leitura e grafo na home e bloquear acesso e criação anônima sem autenticação
 
 ## ✅ Concluído
+- [16/09/2026 15:50] [Concluído] Implementar transição suave e lenta dos nós no Grafo ao ligar graficamente com um tema com interpolação easeInOutCubic (2400ms) e persistência de posições
+- [16/09/2026 15:47] [Concluído] Remover caracteres soltos e cabeçalho duplicado na seção de CTA da landing page (index.vue)
 - [16/09/2026 15:44] [Concluído] Permitir criação de anotação ou flashcard a partir de seleção de texto nas notas
 - [16/09/2026 15:27] [Concluído] Remover seção de experiência sensorial e virada de página 3D da página de benefícios
 - [16/09/2026 15:25] [Concluído] Remover card de identificação do usuário do modal de feedback (FeedbackCanvas)

@@ -435,4 +435,31 @@ describe('GraphCanvas Component', () => {
     const textEl = themeNode?.find('text')
     expect(textEl?.attributes('fill')).toBe(customColor)
   })
+
+  it('emits connectNodes and connect-nodes events with proper payload when connecting nodes', async () => {
+    const wrapper = mount(GraphCanvas, {
+      props: {
+        nodes: [
+          { id: 'theme-1', rawId: 1, type: 'theme', name: 'Tecnologia' },
+          { id: 'book-1', rawId: 10, type: 'book', name: 'Clean Code' },
+        ],
+        edges: [],
+      },
+    })
+
+    // Simula evento emitido quando o usuário conecta dois nós
+    wrapper.vm.$emit('connect-nodes', {
+      sourceId: 'book-1',
+      targetId: 'theme-1',
+      sourceRawId: 10,
+      targetRawId: 1,
+      sourceType: 'book',
+      targetType: 'theme',
+    })
+
+    expect(wrapper.emitted('connect-nodes')).toBeTruthy()
+    const emittedPayload = (wrapper.emitted('connect-nodes') as any)[0][0]
+    expect(emittedPayload.sourceType).toBe('book')
+    expect(emittedPayload.targetType).toBe('theme')
+  })
 })

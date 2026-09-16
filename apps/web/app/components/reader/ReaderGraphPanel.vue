@@ -76,6 +76,7 @@
           @select-node="handleSelectNode"
           @open-create-node="isCreateModalOpen = true"
           @open-connect-modal="isConnectModalOpen = true"
+          @connect-nodes="handleConnectNodesPayload"
         />
       </div>
     </div>
@@ -360,7 +361,7 @@ const themeBgColor = computed(() => {
   if (activeTheme.value === 'black') return '#121214'
   return '#f5eedc'
 })
-const { graphData, loading: graphLoading, fetchGraph, createNode, createConnection } = useGraph()
+const { graphData, loading: graphLoading, fetchGraph, createNode, createConnection, linkBookToNode } = useGraph()
 const { annotations: themeAnnotations, loading: annotationsLoading, fetchAnnotations, updateAnnotationNote } = useAnnotations()
 
 const selectedTheme = ref<GraphNode | null>(null)
@@ -418,6 +419,24 @@ const handleCreateNode = async (payload: { name: string; color: string; descript
 const handleConnectNodes = async (payload: { sourceId: number; targetId: number }) => {
   await createConnection(payload.sourceId, payload.targetId)
   isConnectModalOpen.value = false
+}
+
+const handleConnectNodesPayload = async (payload: any) => {
+  try {
+    if (payload.sourceType === 'book' && payload.targetType === 'theme') {
+      await linkBookToNode(Number(payload.targetRawId || payload.targetId), Number(payload.sourceRawId || payload.sourceId))
+    } else if (payload.sourceType === 'theme' && payload.targetType === 'book') {
+      await linkBookToNode(Number(payload.sourceRawId || payload.sourceId), Number(payload.targetRawId || payload.targetId))
+    } else {
+      const sId = Number(payload.sourceRawId ?? payload.sourceId)
+      const tId = Number(payload.targetRawId ?? payload.targetId)
+      if (!isNaN(sId) && !isNaN(tId) && sId > 0 && tId > 0) {
+        await createConnection(sId, tId)
+      }
+    }
+  } catch (err) {
+    console.warn('[ReaderGraphPanel] Falha ao persistir conexão no backend:', err)
+  }
 }
 
 const getPageFromCfi = (cfi?: string): number | null => {

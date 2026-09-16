@@ -17,6 +17,7 @@
         @select-node="handleSelectNode"
         @open-create-node="isCreateModalOpen = true"
         @open-connect-modal="isConnectModalOpen = true"
+        @connect-nodes="handleConnectNodesPayload"
       />
     </div>
 
@@ -174,7 +175,7 @@ import BookAnnotationsDrawer from '~/components/graph/BookAnnotationsDrawer.vue'
 import CreateNodeModal from '~/components/CreateNodeModal.vue'
 import ConnectNodesModal from '~/components/ConnectNodesModal.vue'
 
-const { graphData, loading, fetchGraph, createNode, createConnection } = useGraph()
+const { graphData, loading, fetchGraph, createNode, createConnection, linkBookToNode } = useGraph()
 const { userBooks, fetchUserBooks } = useUserBooks()
 
 const selectedNode = ref<GraphNode | null>(null)
@@ -264,6 +265,24 @@ const handleCreateNode = async (payload: { name: string, color: string, descript
 const handleConnectNodes = async (payload: { sourceId: number, targetId: number }) => {
   await createConnection(payload.sourceId, payload.targetId)
   isConnectModalOpen.value = false
+}
+
+const handleConnectNodesPayload = async (payload: any) => {
+  try {
+    if (payload.sourceType === 'book' && payload.targetType === 'theme') {
+      await linkBookToNode(Number(payload.targetRawId || payload.targetId), Number(payload.sourceRawId || payload.sourceId))
+    } else if (payload.sourceType === 'theme' && payload.targetType === 'book') {
+      await linkBookToNode(Number(payload.sourceRawId || payload.sourceId), Number(payload.targetRawId || payload.targetId))
+    } else {
+      const sId = Number(payload.sourceRawId ?? payload.sourceId)
+      const tId = Number(payload.targetRawId ?? payload.targetId)
+      if (!isNaN(sId) && !isNaN(tId) && sId > 0 && tId > 0) {
+        await createConnection(sId, tId)
+      }
+    }
+  } catch (err) {
+    console.warn('[SidebarGraph] Falha ao persistir conexão no backend:', err)
+  }
 }
 
 const getStatusLabel = (status: string) => {

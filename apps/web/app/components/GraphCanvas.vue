@@ -383,7 +383,7 @@ let currentSimulationNodes: any[] = []
 const persistentNodePositions = new Map<string, { x: number; y: number }>()
 let transitionStartTime = 0
 let isTransitioning = false
-const TRANSITION_DURATION = 1400 // 1.4s para deslizamento lento, suave e orgânico
+const TRANSITION_DURATION = 2400 // 2.4s para deslocamento lento, fluido e orgânico
 
 const fitToScreen = (animate = true, duration = 500) => {
   if (!svgRef.value || !containerRef.value || currentSimulationNodes.length === 0) return
@@ -396,7 +396,7 @@ const fitToScreen = (animate = true, duration = 500) => {
     const targetTransform = d3.zoomIdentity.translate(0, 0).scale(1.0)
     const svg = d3.select(svgRef.value)
     if (animate) {
-      svg.transition().duration(duration).ease(d3.easeCubicOut).call(zoomBehavior.transform as any, targetTransform)
+      svg.transition().duration(duration).ease(d3.easeCubicInOut).call(zoomBehavior.transform as any, targetTransform)
     } else {
       svg.call(zoomBehavior.transform as any, targetTransform)
     }
@@ -441,7 +441,7 @@ const fitToScreen = (animate = true, duration = 500) => {
   const svg = d3.select(svgRef.value)
 
   if (animate) {
-    svg.transition().duration(duration).ease(d3.easeCubicOut).call(zoomBehavior.transform as any, targetTransform)
+    svg.transition().duration(duration).ease(d3.easeCubicInOut).call(zoomBehavior.transform as any, targetTransform)
   } else {
     svg.call(zoomBehavior.transform as any, targetTransform)
   }
@@ -921,9 +921,8 @@ const initGraph = (animateTransition = true) => {
       d.baseY = d.targetY
       d.currentX = d.targetX
       d.currentY = d.targetY
+      persistentNodePositions.set(nKey, { x: d.startX, y: d.startY })
     }
-
-    persistentNodePositions.set(nKey, { x: d.targetX, y: d.targetY })
   }
 
   if (shouldAnimate) {
@@ -1352,8 +1351,8 @@ const initGraph = (animateTransition = true) => {
 
       for (const target of simulationNodes) {
         if (target.id === dragSourceNode.id || target.isRoot) continue
-        const tX = target.currentX ?? target.x
-        const tY = target.currentY ?? target.y
+        const tX = target.currentX ?? target.x ?? 0
+        const tY = target.currentY ?? target.y ?? 0
         const d = Math.hypot(svgX - tX, svgY - tY)
         const snapThreshold = Math.max(getNodeRadius(target) + 36, 65 / currentScale)
         if (d < snapThreshold && d < closestDist) {
@@ -1405,8 +1404,8 @@ const initGraph = (animateTransition = true) => {
 
         for (const target of simulationNodes) {
           if (target.id === dragSourceNode.id || target.isRoot) continue
-          const tX = target.currentX ?? target.x
-          const tY = target.currentY ?? target.y
+          const tX = target.currentX ?? target.x ?? 0
+          const tY = target.currentY ?? target.y ?? 0
           const d = Math.hypot(svgX - tX, svgY - tY)
           const threshold = Math.max(getNodeRadius(target) + 40, 75 / currentScale)
           if (d < threshold && d < closestDist) {
@@ -1441,13 +1440,14 @@ const initGraph = (animateTransition = true) => {
         })
 
         if (!alreadyExists) {
+          skipNextWatch = true
           localCustomEdges.value.push({
             id: optimisticEdgeId,
             source: dragSourceNode.id,
             target: finalTarget.id,
             type: edgeType,
           })
-          initGraph()
+          initGraph(true)
         }
 
         emit('connectNodes', {
@@ -1599,15 +1599,15 @@ const initGraph = (animateTransition = true) => {
         const now = typeof performance !== 'undefined' ? performance.now() : Date.now()
         const elapsed = now - transitionStartTime
         const progress = Math.min(1, Math.max(0, elapsed / TRANSITION_DURATION))
-        // easeOutCubic: movimento inicial rápido desacelerando suavemente até o repouso
-        ease = 1 - Math.pow(1 - progress, 3)
+        // easeInOutCubic: aceleração suave, deslocamento lento e desaceleração gradual e orgânica
+        ease = progress < 0.5 ? 4 * progress * progress * progress : 1 - Math.pow(-2 * progress + 2, 3) / 2
         if (progress >= 1) {
           isTransitioning = false
         }
       }
 
       for (const d of simulationNodes) {
-        if (isTransitioning && d.startX !== undefined && d.targetX !== undefined) {
+        if (isTransitioning && d.startX !== undefined && d.targetX !== undefined && d.startY !== undefined && d.targetY !== undefined) {
           d.baseX = d.startX + (d.targetX - d.startX) * ease
           d.baseY = d.startY + (d.targetY - d.startY) * ease
         } else if (d.targetX !== undefined) {
@@ -1627,8 +1627,8 @@ const initGraph = (animateTransition = true) => {
 
         if (d.id !== undefined && d.id !== null) {
           persistentNodePositions.set(String(d.id), {
-            x: d.baseX ?? d.x,
-            y: d.baseY ?? d.y,
+            x: d.baseX ?? d.x ?? 0,
+            y: d.baseY ?? d.y ?? 0,
           })
         }
       }
@@ -1649,10 +1649,15 @@ const initGraph = (animateTransition = true) => {
 }
 
 let resizeObserver: ResizeObserver | null = null
+let skipNextWatch = false
 
 watch(
   () => [props.nodes, allEdges.value, currentSearchQuery.value],
   () => {
+    if (skipNextWatch) {
+      skipNextWatch = false
+      return
+    }
     initGraph(true)
   },
   { deep: true }

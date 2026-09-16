@@ -272,6 +272,7 @@
           :show-controls="false"
           @select-node="handleSelectGraphNode"
           @open-create-node="newCanvasModalOpen = true"
+          @connect-nodes="handleConnectNodesPayload"
         />
       </div>
 
@@ -545,7 +546,7 @@
 
                 <div class="mt-4 pt-3 border-t border-divider/50 flex items-center justify-between text-[11px] text-textSecondary">
                   <span v-if="item.updatedAt">
-                    {{ formatRelativeTime(item.updatedAt) }}
+                    {{ formatDate(item.updatedAt) }}
                   </span>
                   <button
                     class="opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-red-500/10 text-textSecondary hover:text-red-500 transition-all cursor-pointer"
@@ -754,7 +755,25 @@ const {
   deleteDrawing,
 } = useDrawing()
 
-const { graphData, fetchGraph: fetchUnifiedGraph } = useGraph()
+const { graphData, fetchGraph: fetchUnifiedGraph, createConnection, linkBookToNode } = useGraph()
+
+const handleConnectNodesPayload = async (payload: any) => {
+  try {
+    if (payload.sourceType === 'book' && payload.targetType === 'theme') {
+      await linkBookToNode(Number(payload.targetRawId || payload.targetId), Number(payload.sourceRawId || payload.sourceId))
+    } else if (payload.sourceType === 'theme' && payload.targetType === 'book') {
+      await linkBookToNode(Number(payload.sourceRawId || payload.sourceId), Number(payload.targetRawId || payload.targetId))
+    } else {
+      const sId = Number(payload.sourceRawId ?? payload.sourceId)
+      const tId = Number(payload.targetRawId ?? payload.targetId)
+      if (!isNaN(sId) && !isNaN(tId) && sId > 0 && tId > 0) {
+        await createConnection(sId, tId)
+      }
+    }
+  } catch (err) {
+    console.warn('[canvas/index] Falha ao persistir conexão no backend:', err)
+  }
+}
 
 const handleSelectGraphNode = async (node: any) => {
   if (node.type === 'canvas') {
