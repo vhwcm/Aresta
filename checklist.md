@@ -1,4 +1,5 @@
 ## 🔄 Em Andamento
+- [16/09/2026 16:19] [Fazendo] Restaurar grafo de conhecimento local-first e corrigir altura zero na home
 - [16/09/2026 16:12] [Fazendo] Excluir livros e pasta Aresta no Google Drive ao deletar a conta do usuário
 - [16/09/2026 15:30] [Fazendo] Adicionar benefícios da leitura profunda e integração entre IA, flashcards, leitura, anotações estruturadas e canvas na página de benefícios
 - [16/09/2026 12:10] [Fazendo] Implementar Aresta Cloud Drive local-first para todos os dados pessoais e descarte do backend legado

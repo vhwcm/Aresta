@@ -66,7 +66,8 @@ model BookTheme {
 ---
 
 ## 4. Código Relacionado
-- **Backend**:
-  - `src/controllers/graph.controller.ts`, `src/services/graph.service.ts`, `src/schemas/graph.schema.ts`, `src/services/ai.client.ts`
+- **Agregação local-first**:
+  - `apps/web/app/utils/buildLocalGraph.ts` monta nós e arestas a partir dos repositórios Dexie/SQLite.
+  - `apps/web/app/composables/useGraph.ts` deixa de depender de `/api/graph` (recurso descontinuado no backend).
 - **Frontend**:
-  - `front/app/composables/useGraph.ts`, `front/app/components/GraphCanvas.vue`, `front/app/components/graph/ThemeCanvasOverlay.vue`, `front/app/components/graph/BookAnnotationsDrawer.vue`, `front/app/pages/grafo.vue`
+  - `apps/web/app/components/GraphCanvas.vue`, `apps/web/app/components/graph/ThemeCanvasOverlay.vue`, `apps/web/app/components/graph/BookAnnotationsDrawer.vue`

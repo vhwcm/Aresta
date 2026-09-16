@@ -62,10 +62,12 @@ export { resetUserBooksMemory, useUserBooks } from '../app/composables/useUserBo
 export { useUserMetrics, UserMetricsData } from '../app/composables/useUserMetrics';
 export { getResolvedApiBase, getApiBase, getApiRoot, getStorageBaseUrl } from '../app/utils/apiBase';
 export { getCachedBook, saveCachedBook, deleteCachedBook, CachedBookEntry } from '../app/utils/bookCache';
+export { buildLocalGraph, GraphThemeRecord, BuildLocalGraphInput } from '../app/utils/buildLocalGraph';
 export { getAnchorPoint, getVectorForSide, calculateBezierPath, calculateMidPoint, getClosestAnchorSide } from '../app/utils/canvasGeometry';
 export { getDiamondPoints, getTrianglePoints, getTrapezoidPoints, getParallelogramPoints, getHexagonPoints, getStarPoints, RectIcon, RoundedIcon, CircleIcon, DiamondIcon, TriangleIcon, CylinderIcon, TrapezoidIcon, ParallelogramIcon, HexagonIcon, StarIcon, CANVAS_SHAPES, getShapeIcon, ShapeDefinition } from '../app/utils/canvasShapes';
 export { generateDidacticCoverSvg, generateDidacticCoverDataUri, getCoverUrl, getBookFormat, resolveBookCover, DidacticCoverParams, BookFormat } from '../app/utils/cover';
 export { validateBookFile, detectFileTypeFromArrayBuffer, readFileHeader, matchesSignature, detectFileTypeFromBytes, MAX_FILE_SIZE_BYTES } from '../app/utils/fileValidator';
+export { GRAPH_META_STORAGE_KEY, loadGraphMeta, saveGraphMeta, resetGraphMeta, GraphMeta } from '../app/utils/graphMeta';
 export { isProductionMode, logError, logWarn, formatErrorMessage } from '../app/utils/logger';
 export { escapeHtml, renderInlineMarkdown, renderMarkdown, applyMarkdownFormat, MarkdownFormatResult } from '../app/utils/markdownFormat';
 export { computeCurlGeometry, renderPageCurl, interpolateCurlState, DEFAULT_CONFIG, easeInOutCubic, lerp, clamp, distance } from '../app/utils/pageCurlMath';

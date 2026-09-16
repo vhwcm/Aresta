@@ -32,7 +32,7 @@ O leitor de documentos utiliza o padrão Adapter para desacoplar bibliotecas de 
 
 ## 3. Visualização do Grafo de Conhecimento (D3.js)
 
-- O composable `useGraph.ts` consome `/api/graph` e inicializa uma simulação física baseada em forças (`d3.forceSimulation`).
+- O composable `useGraph.ts` monta o grafo local-first a partir de livros, anotações, notas, quadros e temas persistidos no dispositivo. O canvas D3 (`GraphCanvas.vue`) inicializa uma simulação física baseada em forças (`d3.forceSimulation`).
 - **Nós**:
   - **Obras (Livros)**: Representam nós de entrada de leitura.
   - **Temas**: Conceitos unificadores que conectam múltiplas obras.

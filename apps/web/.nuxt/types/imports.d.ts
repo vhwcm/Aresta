@@ -7,6 +7,7 @@ declare global {
   const CylinderIcon: typeof import('../../app/utils/canvasShapes').CylinderIcon
   const DEFAULT_CONFIG: typeof import('../../app/utils/pageCurlMath').DEFAULT_CONFIG
   const DiamondIcon: typeof import('../../app/utils/canvasShapes').DiamondIcon
+  const GRAPH_META_STORAGE_KEY: typeof import('../../app/utils/graphMeta').GRAPH_META_STORAGE_KEY
   const HexagonIcon: typeof import('../../app/utils/canvasShapes').HexagonIcon
   const MAX_COMPOSITE_DEPTH: typeof import('../../app/composables/useCycleDetector').MAX_COMPOSITE_DEPTH
   const MAX_FILE_SIZE_BYTES: typeof import('../../app/utils/fileValidator').MAX_FILE_SIZE_BYTES
@@ -25,6 +26,7 @@ declare global {
   const applyPageHighlights: typeof import('../../app/utils/readerHighlight').applyPageHighlights
   const applyTheme: typeof import('../../app/composables/useSettings').applyTheme
   const applyThemeToCanvas: typeof import('../../app/utils/pageRasterizer').applyThemeToCanvas
+  const buildLocalGraph: typeof import('../../app/utils/buildLocalGraph').buildLocalGraph
   const calculateBezierPath: typeof import('../../app/utils/canvasGeometry').calculateBezierPath
   const calculateMidPoint: typeof import('../../app/utils/canvasGeometry').calculateMidPoint
   const callOnce: typeof import('../../node_modules/nuxt/dist/app/composables/once').callOnce
@@ -107,6 +109,7 @@ declare global {
   const isVue2: typeof import('../../node_modules/nuxt/dist/app/compat/vue-demi').isVue2
   const isVue3: typeof import('../../node_modules/nuxt/dist/app/compat/vue-demi').isVue3
   const lerp: typeof import('../../app/utils/pageCurlMath').lerp
+  const loadGraphMeta: typeof import('../../app/utils/graphMeta').loadGraphMeta
   const loadPayload: typeof import('../../node_modules/nuxt/dist/app/composables/payload').loadPayload
   const logError: typeof import('../../app/utils/logger').logError
   const logWarn: typeof import('../../app/utils/logger').logWarn
@@ -157,12 +160,14 @@ declare global {
   const resetAnnotationsMemory: typeof import('../../app/composables/useAnnotations').resetAnnotationsMemory
   const resetFlashcardsMemory: typeof import('../../app/composables/useFlashcards').resetFlashcardsMemory
   const resetGraphMemory: typeof import('../../app/composables/useGraph').resetGraphMemory
+  const resetGraphMeta: typeof import('../../app/utils/graphMeta').resetGraphMeta
   const resetNotesMemory: typeof import('../../app/composables/useNotes').resetNotesMemory
   const resetSettingsForTesting: typeof import('../../app/composables/useSettings').resetSettingsForTesting
   const resetUserBooksMemory: typeof import('../../app/composables/useUserBooks').resetUserBooksMemory
   const resolveBookCover: typeof import('../../app/utils/cover').resolveBookCover
   const resolveComponent: typeof import('vue').resolveComponent
   const saveCachedBook: typeof import('../../app/utils/bookCache').saveCachedBook
+  const saveGraphMeta: typeof import('../../app/utils/graphMeta').saveGraphMeta
   const setInterval: typeof import('../../node_modules/nuxt/dist/app/compat/interval').setInterval
   const setPageLayout: typeof import('../../node_modules/nuxt/dist/app/composables/router').setPageLayout
   const setResponseStatus: typeof import('../../node_modules/nuxt/dist/app/composables/ssr').setResponseStatus
@@ -366,11 +371,17 @@ declare global {
   export type { CachedBookEntry } from '../../app/utils/bookCache'
   import('../../app/utils/bookCache')
   // @ts-ignore
+  export type { GraphThemeRecord, BuildLocalGraphInput } from '../../app/utils/buildLocalGraph'
+  import('../../app/utils/buildLocalGraph')
+  // @ts-ignore
   export type { ShapeDefinition } from '../../app/utils/canvasShapes'
   import('../../app/utils/canvasShapes')
   // @ts-ignore
   export type { DidacticCoverParams, BookFormat } from '../../app/utils/cover'
   import('../../app/utils/cover')
+  // @ts-ignore
+  export type { GraphMeta } from '../../app/utils/graphMeta'
+  import('../../app/utils/graphMeta')
   // @ts-ignore
   export type { MarkdownFormatResult } from '../../app/utils/markdownFormat'
   import('../../app/utils/markdownFormat')
@@ -397,6 +408,7 @@ declare module 'vue' {
     readonly CylinderIcon: UnwrapRef<typeof import('../../app/utils/canvasShapes')['CylinderIcon']>
     readonly DEFAULT_CONFIG: UnwrapRef<typeof import('../../app/utils/pageCurlMath')['DEFAULT_CONFIG']>
     readonly DiamondIcon: UnwrapRef<typeof import('../../app/utils/canvasShapes')['DiamondIcon']>
+    readonly GRAPH_META_STORAGE_KEY: UnwrapRef<typeof import('../../app/utils/graphMeta')['GRAPH_META_STORAGE_KEY']>
     readonly HexagonIcon: UnwrapRef<typeof import('../../app/utils/canvasShapes')['HexagonIcon']>
     readonly MAX_COMPOSITE_DEPTH: UnwrapRef<typeof import('../../app/composables/useCycleDetector')['MAX_COMPOSITE_DEPTH']>
     readonly MAX_FILE_SIZE_BYTES: UnwrapRef<typeof import('../../app/utils/fileValidator')['MAX_FILE_SIZE_BYTES']>
@@ -415,6 +427,7 @@ declare module 'vue' {
     readonly applyPageHighlights: UnwrapRef<typeof import('../../app/utils/readerHighlight')['applyPageHighlights']>
     readonly applyTheme: UnwrapRef<typeof import('../../app/composables/useSettings')['applyTheme']>
     readonly applyThemeToCanvas: UnwrapRef<typeof import('../../app/utils/pageRasterizer')['applyThemeToCanvas']>
+    readonly buildLocalGraph: UnwrapRef<typeof import('../../app/utils/buildLocalGraph')['buildLocalGraph']>
     readonly calculateBezierPath: UnwrapRef<typeof import('../../app/utils/canvasGeometry')['calculateBezierPath']>
     readonly calculateMidPoint: UnwrapRef<typeof import('../../app/utils/canvasGeometry')['calculateMidPoint']>
     readonly callOnce: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/once')['callOnce']>
@@ -497,6 +510,7 @@ declare module 'vue' {
     readonly isVue2: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/compat/vue-demi')['isVue2']>
     readonly isVue3: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/compat/vue-demi')['isVue3']>
     readonly lerp: UnwrapRef<typeof import('../../app/utils/pageCurlMath')['lerp']>
+    readonly loadGraphMeta: UnwrapRef<typeof import('../../app/utils/graphMeta')['loadGraphMeta']>
     readonly loadPayload: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/payload')['loadPayload']>
     readonly logError: UnwrapRef<typeof import('../../app/utils/logger')['logError']>
     readonly logWarn: UnwrapRef<typeof import('../../app/utils/logger')['logWarn']>
@@ -547,12 +561,14 @@ declare module 'vue' {
     readonly resetAnnotationsMemory: UnwrapRef<typeof import('../../app/composables/useAnnotations')['resetAnnotationsMemory']>
     readonly resetFlashcardsMemory: UnwrapRef<typeof import('../../app/composables/useFlashcards')['resetFlashcardsMemory']>
     readonly resetGraphMemory: UnwrapRef<typeof import('../../app/composables/useGraph')['resetGraphMemory']>
+    readonly resetGraphMeta: UnwrapRef<typeof import('../../app/utils/graphMeta')['resetGraphMeta']>
     readonly resetNotesMemory: UnwrapRef<typeof import('../../app/composables/useNotes')['resetNotesMemory']>
     readonly resetSettingsForTesting: UnwrapRef<typeof import('../../app/composables/useSettings')['resetSettingsForTesting']>
     readonly resetUserBooksMemory: UnwrapRef<typeof import('../../app/composables/useUserBooks')['resetUserBooksMemory']>
     readonly resolveBookCover: UnwrapRef<typeof import('../../app/utils/cover')['resolveBookCover']>
     readonly resolveComponent: UnwrapRef<typeof import('vue')['resolveComponent']>
     readonly saveCachedBook: UnwrapRef<typeof import('../../app/utils/bookCache')['saveCachedBook']>
+    readonly saveGraphMeta: UnwrapRef<typeof import('../../app/utils/graphMeta')['saveGraphMeta']>
     readonly setInterval: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/compat/interval')['setInterval']>
     readonly setPageLayout: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/router')['setPageLayout']>
     readonly setResponseStatus: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/ssr')['setResponseStatus']>

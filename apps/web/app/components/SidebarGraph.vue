@@ -274,10 +274,10 @@ const handleConnectNodesPayload = async (payload: any) => {
     } else if (payload.sourceType === 'theme' && payload.targetType === 'book') {
       await linkBookToNode(Number(payload.sourceRawId || payload.sourceId), Number(payload.targetRawId || payload.targetId))
     } else {
-      const sId = Number(payload.sourceRawId ?? payload.sourceId)
-      const tId = Number(payload.targetRawId ?? payload.targetId)
-      if (!isNaN(sId) && !isNaN(tId) && sId > 0 && tId > 0) {
-        await createConnection(sId, tId)
+      const sourceId = payload.sourceId ?? payload.sourceRawId
+      const targetId = payload.targetId ?? payload.targetRawId
+      if (sourceId !== undefined && targetId !== undefined) {
+        await createConnection(sourceId, targetId)
       }
     }
   } catch (err) {
