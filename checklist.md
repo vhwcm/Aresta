@@ -2,8 +2,8 @@
 
 ## 🔄 Em Andamento
 
-
 ## ✅ Concluído
+- [16/09/2026 10:04] [Concluído] Interromper traço de desenho ao soltar o mouse fora da página ou janela no editor de notas de desenho
 - [14/09/2026 10:34] [Concluído] Corrigir MIME type e carregamento do worker PDF.js na AWS e isolar estante, temas e grafo estritamente por usuário
 - [14/09/2026 10:08] [Concluído] Implementar cache híbrido em memória no Backend e estratégia SWR no Frontend para Grafo, Estante, Leitura, Notas e Flashcards
 

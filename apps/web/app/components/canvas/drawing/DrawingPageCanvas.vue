@@ -29,6 +29,8 @@
       @pointermove="handlePointerMove"
       @pointerup="handlePointerUp"
       @pointercancel="handlePointerUp"
+      @pointerenter="handlePointerEnter"
+      @lostpointercapture="handlePointerUp"
       @contextmenu.prevent
     />
 
@@ -43,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, nextTick } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { getStroke } from 'perfect-freehand';
 import type { DrawingPage, DrawingStroke, DrawingPoint, PenToolType } from '~/interfaces/drawing';
 
@@ -206,6 +208,15 @@ function getCanvasPoint(e: PointerEvent): DrawingPoint {
 }
 
 // Handlers de Pointer Events (Rejeição de Palma + Botão Stylus S-Pen)
+const activePointerId = ref<number | null>(null);
+
+function handlePointerEnter(e: PointerEvent) {
+  // Se o cursor entrar na página com o botão do mouse já solto fora, finaliza o traço imediatamente
+  if ((isDrawing.value || isErasing.value) && e.buttons === 0) {
+    handlePointerUp(e);
+  }
+}
+
 function handlePointerDown(e: PointerEvent) {
   emit('select-page');
 
@@ -218,6 +229,18 @@ function handlePointerDown(e: PointerEvent) {
         return;
       }
     }
+  }
+
+  // Com mouse, apenas o botão principal (esquerdo) inicia desenho
+  if (e.pointerType === 'mouse' && e.button !== 0) {
+    return;
+  }
+
+  activePointerId.value = e.pointerId;
+  try {
+    ((e.currentTarget as HTMLElement) || (e.target as HTMLElement))?.setPointerCapture?.(e.pointerId);
+  } catch {
+    // Ignora se o ambiente não suportar captura de ponteiro
   }
 
   // Detecção de Botão da caneta S-Pen / Stylus (botão lateral ou borracha):
@@ -241,6 +264,12 @@ function handlePointerDown(e: PointerEvent) {
 }
 
 function handlePointerMove(e: PointerEvent) {
+  // Se os botões foram soltos fora da página ou janela mas o estado permaneceu ativo, finaliza
+  if ((isDrawing.value || isErasing.value) && e.buttons === 0) {
+    handlePointerUp(e);
+    return;
+  }
+
   // Se estiver apagando com o botão da S-Pen ou ferramenta borracha
   const isStylusButtonPressed = (e.buttons & 2) !== 0 || (e.buttons & 32) !== 0;
 
@@ -258,7 +287,17 @@ function handlePointerMove(e: PointerEvent) {
   renderStrokes();
 }
 
-function handlePointerUp() {
+function handlePointerUp(e?: PointerEvent) {
+  const pointerId = e?.pointerId ?? activePointerId.value;
+  if (pointerId !== null && drawCanvasRef.value && drawCanvasRef.value.hasPointerCapture?.(pointerId)) {
+    try {
+      drawCanvasRef.value.releasePointerCapture(pointerId);
+    } catch {
+      // Ignora erro ao liberar captura
+    }
+  }
+  activePointerId.value = null;
+
   if (isErasing.value) {
     isErasing.value = false;
     return;
@@ -281,6 +320,18 @@ function handlePointerUp() {
 
   activeStrokePoints.value = [];
   renderStrokes();
+}
+
+function handleGlobalPointerUp(e: PointerEvent) {
+  if (isDrawing.value || isErasing.value) {
+    handlePointerUp(e);
+  }
+}
+
+function handleWindowBlur() {
+  if (isDrawing.value || isErasing.value) {
+    handlePointerUp();
+  }
 }
 
 // Exporta a página inteira combinando fundo e traços para PNG
@@ -336,5 +387,14 @@ watch(
 onMounted(() => {
   renderBackground();
   renderStrokes();
+  window.addEventListener('pointerup', handleGlobalPointerUp);
+  window.addEventListener('pointercancel', handleGlobalPointerUp);
+  window.addEventListener('blur', handleWindowBlur);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('pointerup', handleGlobalPointerUp);
+  window.removeEventListener('pointercancel', handleGlobalPointerUp);
+  window.removeEventListener('blur', handleWindowBlur);
 });
 </script>
