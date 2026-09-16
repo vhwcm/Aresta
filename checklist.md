@@ -1,8 +1,11 @@
 ## 🔄 Em Andamento
+- [16/09/2026 15:25] [Fazendo] Permitir criação de anotação ou flashcard a partir de seleção de texto nas notas
 - [16/09/2026 12:10] [Fazendo] Implementar Aresta Cloud Drive local-first para todos os dados pessoais e descarte do backend legado
 - [16/09/2026 11:00] [Fazendo] Implementar exemplos reais de leitura e grafo na home e bloquear acesso e criação anônima sem autenticação
 
 ## ✅ Concluído
+- [16/09/2026 15:25] [Concluído] Remover card de identificação do usuário do modal de feedback (FeedbackCanvas)
+- [16/09/2026 15:20] [Concluído] Limpeza de documentação legada, descontinuação de Mintlify (docs.json e mint.json), correção de ADRs e organização de specs
 - [16/09/2026 15:07] [Concluído] Simplificar interface de login para exibir exclusivamente autenticação com Google mantendo lógica subjacente intacta
 - [16/09/2026 12:05] [Concluído] Atualizar plano Cloud Drive para descarte autorizado dos dados pessoais legados
 - [16/09/2026 12:00] [Concluído] Finalizar especificação técnica e ADR do Aresta Cloud Drive para dados pessoais local-first

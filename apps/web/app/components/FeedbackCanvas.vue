@@ -57,23 +57,6 @@
             Sua percepção molda o futuro do Aresta. Compartilhe uma ideia de funcionalidade, uma sugestão de usabilidade ou nos conte o que achou da experiência.
           </p>
 
-          <!-- Banner do Usuário -->
-          <div
-            data-testid="feedback-user-banner"
-            class="p-3.5 rounded-xl border border-divider bg-white/[0.02] flex items-center justify-between text-xs"
-          >
-            <div class="flex items-center gap-2.5 truncate">
-              <div class="w-7 h-7 rounded-full bg-accent/20 text-accent font-technical font-semibold flex items-center justify-center shrink-0 text-[11px]">
-                {{ userInitials }}
-              </div>
-              <div class="flex flex-col truncate">
-                <span class="text-textPrimary font-medium truncate">{{ userName }}</span>
-                <span class="text-textSecondary text-[11px] truncate">{{ userEmail }}</span>
-              </div>
-            </div>
-
-          </div>
-
           <!-- Seleção de Categoria / Tipo -->
           <div class="flex flex-col gap-2">
             <label class="font-technical text-xs text-textSecondary uppercase tracking-wider">
@@ -245,24 +228,6 @@ const message = ref('')
 const isSubmitting = ref(false)
 const isSuccess = ref(false)
 const errorMessage = ref('')
-
-const userName = computed(() => {
-  return auth.user.value?.name || 'Leitor Aresta'
-})
-
-const userEmail = computed(() => {
-  return auth.user.value?.email || 'autenticado'
-})
-
-const userInitials = computed(() => {
-  const name = userName.value.trim()
-  if (!name) return 'A'
-  const parts = name.split(' ')
-  if (parts.length >= 2) {
-    return (parts[0][0] + parts[1][0]).toUpperCase()
-  }
-  return name.slice(0, 2).toUpperCase()
-})
 
 const canSubmit = computed(() => {
   return message.value.trim().length >= 3 && !isSubmitting.value

@@ -26,7 +26,7 @@ describe('FeedbackCanvas Component', () => {
     expect(wrapper.find('[data-testid="feedback-canvas-container"]').exists()).toBe(false)
   })
 
-  it('renderiza o cabeçalho, banner de usuário e categorias quando isOpen for true', () => {
+  it('renderiza o cabeçalho, opções de categoria e campo de mensagem quando isOpen for true', () => {
     const wrapper = mount(FeedbackCanvas, {
       props: { isOpen: true },
       global: {
@@ -38,8 +38,8 @@ describe('FeedbackCanvas Component', () => {
 
     expect(wrapper.find('[data-testid="feedback-canvas-container"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="feedback-canvas-title"]').text()).toContain('Feedback & Melhorias')
-    expect(wrapper.find('[data-testid="feedback-user-banner"]').text()).toContain('Viktor Vasconcelos')
-    expect(wrapper.find('[data-testid="feedback-user-banner"]').text()).toContain('viktor@aresta.org')
+    expect(wrapper.find('[data-testid="feedback-user-banner"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="feedback-message-textarea"]').exists()).toBe(true)
   })
 
   it('emite close e update:isOpen ao clicar no botão de fechar ou backdrop', async () => {
