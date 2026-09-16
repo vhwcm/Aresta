@@ -88,4 +88,34 @@ describe('CanvasToolbar component', () => {
     await exportBtn.trigger('click');
     expect(wrapper.emitted('export')).toBeTruthy();
   });
+
+  it('abre popover de formas geométricas e emite update:selectedShapeType ao selecionar', async () => {
+    const wrapper = mount(CanvasToolbar, {
+      props: defaultProps,
+      global: {
+        stubs: {
+          ArestaLogoGraph: { template: '<div class="aresta-logo-mock" />' },
+        },
+      },
+    });
+
+    const shapesBtn = wrapper.find('button[title="Formas Geométricas (S)"]');
+    expect(shapesBtn.exists()).toBe(true);
+
+    // Abre popover de formas
+    await shapesBtn.trigger('click');
+    expect(wrapper.emitted('update:activeTool')?.[0]).toEqual(['shape']);
+
+    // Verifica se os botões de formas estão visíveis
+    const circleBtn = wrapper.find('button[title="Círculo / Elipse"]');
+    const diamondBtn = wrapper.find('button[title="Losango"]');
+    const starBtn = wrapper.find('button[title="Estrela"]');
+    expect(circleBtn.exists()).toBe(true);
+    expect(diamondBtn.exists()).toBe(true);
+    expect(starBtn.exists()).toBe(true);
+
+    // Seleciona estrela
+    await starBtn.trigger('click');
+    expect(wrapper.emitted('update:selectedShapeType')?.[0]).toEqual(['star']);
+  });
 });

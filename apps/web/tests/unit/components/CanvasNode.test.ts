@@ -231,4 +231,46 @@ describe('CanvasNode Component', () => {
     const createNoteButton = wrapper.findAll('button').find((b) => b.attributes('title')?.includes('Salvar como Nota'));
     expect(createNoteButton).toBeUndefined();
   });
+
+  it('exibe seletor de formas na mini toolbar quando nó de forma está selecionado e emite update-shape', async () => {
+    const node: ICanvasNode = {
+      id: 'node-shape-1',
+      type: 'shape',
+      shape: 'rectangle',
+      x: 100,
+      y: 100,
+      width: 180,
+      height: 120,
+      text: 'Conceito',
+    };
+
+    const wrapper = mount(CanvasNode, {
+      props: {
+        node,
+        isSelected: true,
+        zoom: 1,
+      },
+      global: {
+        stubs: {
+          CanvasNodeText: true,
+          CanvasNodeShape: true,
+          CanvasNodeBook: true,
+          CanvasNodeNote: true,
+        },
+      },
+    });
+
+    const shapeSwitcherBtn = wrapper.find('button[title="Mudar forma geométrica"]');
+    expect(shapeSwitcherBtn.exists()).toBe(true);
+
+    await shapeSwitcherBtn.trigger('click');
+
+    const diamondBtn = wrapper.find('button[title="Losango"]');
+    expect(diamondBtn.exists()).toBe(true);
+
+    await diamondBtn.trigger('click');
+
+    expect(wrapper.emitted('update-shape')).toBeTruthy();
+    expect(wrapper.emitted('update-shape')?.[0]).toEqual(['node-shape-1', 'diamond']);
+  });
 });

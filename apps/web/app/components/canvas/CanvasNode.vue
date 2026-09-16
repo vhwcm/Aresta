@@ -96,7 +96,41 @@
           @click.stop="$emit('update-color', node.id, c)"
         ></button>
 
-        <div class="w-px h-3.5 bg-divider mx-0.5"></div>
+        <!-- Shape Selector Dropdown for Shape Nodes -->
+        <template v-if="node.type === 'shape'">
+          <div class="w-px h-3.5 bg-divider mx-0.5"></div>
+          <div class="relative" ref="nodeShapeMenuRef">
+            <button
+              class="p-1 rounded hover:bg-bgElevated text-textSecondary hover:text-textPrimary transition-colors text-xs flex items-center gap-1 cursor-pointer"
+              title="Mudar forma geométrica"
+              @click.stop="showNodeShapeMenu = !showNodeShapeMenu"
+            >
+              <component :is="getShapeIcon(node.shape)" class="w-3.5 h-3.5 text-primary" />
+              <svg class="w-2.5 h-2.5 opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </button>
+
+            <!-- Popover de seleção de forma no próprio nó -->
+            <div
+              v-if="showNodeShapeMenu"
+              class="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-1 p-1 sm:p-1.5 rounded-xl bg-bgPanel/95 border border-divider shadow-2xl backdrop-blur-xl z-50 animate-in fade-in zoom-in-95 duration-100"
+            >
+              <button
+                v-for="s in shapesList"
+                :key="s.type"
+                class="p-1.5 rounded-lg hover:bg-bgElevated text-textSecondary hover:text-textPrimary transition-colors cursor-pointer"
+                :class="{ 'bg-primary/20 text-primary': (node.shape || 'rectangle') === s.type }"
+                :title="s.label"
+                @click.stop="changeNodeShape(s.type)"
+              >
+                <component :is="s.icon" class="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        </template>
+
+        <div v-if="node.type === 'text' || node.type === 'loose_text'" class="w-px h-3.5 bg-divider mx-0.5"></div>
 
         <!-- Convert / Save as Note button -->
         <button
@@ -109,7 +143,7 @@
           <span class="text-[10px] hidden sm:inline">Criar Nota</span>
         </button>
 
-        <div v-if="node.type === 'text' || node.type === 'loose_text'" class="w-px h-3.5 bg-divider mx-0.5"></div>
+        <div class="w-px h-3.5 bg-divider mx-0.5"></div>
 
         <!-- Delete Button -->
         <button
@@ -127,8 +161,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import type { CanvasNode, CanvasSide } from '~/interfaces/canvas';
+import { ref, onMounted, onUnmounted } from 'vue';
+import type { CanvasNode, CanvasSide, CanvasShapeType } from '~/interfaces/canvas';
+import { CANVAS_SHAPES, getShapeIcon } from '~/utils/canvasShapes';
 import CanvasNodeText from './CanvasNodeText.vue';
 import CanvasNodeShape from './CanvasNodeShape.vue';
 import CanvasNodeBook from './CanvasNodeBook.vue';
@@ -148,11 +183,39 @@ const emit = defineEmits<{
   (_e: 'start-connect', _nodeId: string, _side: CanvasSide, _event: PointerEvent): void;
   (_e: 'update-text', _id: string, _text: string): void;
   (_e: 'update-color', _id: string, _color: string): void;
+  (_e: 'update-shape', _id: string, _shape: CanvasShapeType): void;
   (_e: 'convert-to-note', _id: string): void;
   (_e: 'delete', _id: string): void;
 }>();
 
 const isHovered = ref(false);
+const showNodeShapeMenu = ref(false);
+const nodeShapeMenuRef = ref<HTMLElement | null>(null);
+const shapesList = CANVAS_SHAPES;
+
+const changeNodeShape = (shape: CanvasShapeType) => {
+  emit('update-shape', props.node.id, shape);
+  showNodeShapeMenu.value = false;
+};
+
+const handleDocumentClick = (e: MouseEvent) => {
+  if (nodeShapeMenuRef.value && !nodeShapeMenuRef.value.contains(e.target as Node)) {
+    showNodeShapeMenu.value = false;
+  }
+};
+
+onMounted(() => {
+  if (typeof window !== 'undefined') {
+    window.addEventListener('click', handleDocumentClick);
+  }
+});
+
+onUnmounted(() => {
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('click', handleDocumentClick);
+  }
+});
+
 const anchorSides: CanvasSide[] = ['top', 'right', 'bottom', 'left'];
 
 const colorOptions = [

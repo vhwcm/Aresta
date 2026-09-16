@@ -49,7 +49,7 @@
       <!-- Diamond / Losango -->
       <polygon
         v-else-if="shapeType === 'diamond'"
-        :points="`${node.width / 2},3 ${node.width - 3},${node.height / 2} ${node.width / 2},${node.height - 3} 3,${node.height / 2}`"
+        :points="getDiamondPoints(node.width, node.height)"
         :fill="fillColor"
         :stroke="strokeColor"
         stroke-width="2"
@@ -58,7 +58,7 @@
       <!-- Triangle -->
       <polygon
         v-else-if="shapeType === 'triangle'"
-        :points="`${node.width / 2},4 ${node.width - 4},${node.height - 4} 4,${node.height - 4}`"
+        :points="getTrianglePoints(node.width, node.height)"
         :fill="fillColor"
         :stroke="strokeColor"
         stroke-width="2"
@@ -98,7 +98,7 @@
         />
         <!-- Cover body sides to hide stroke overlap -->
         <rect
-          :x="3"
+          x="3"
           :y="node.height * 0.15"
           :width="node.width - 6"
           :height="node.height * 0.7"
@@ -110,7 +110,34 @@
       <!-- Trapezoid -->
       <polygon
         v-else-if="shapeType === 'trapezoid'"
-        :points="`${node.width * 0.2},4 ${node.width * 0.8},4 ${node.width - 4},${node.height - 4} 4,${node.height - 4}`"
+        :points="getTrapezoidPoints(node.width, node.height)"
+        :fill="fillColor"
+        :stroke="strokeColor"
+        stroke-width="2"
+      />
+
+      <!-- Parallelogram -->
+      <polygon
+        v-else-if="shapeType === 'parallelogram'"
+        :points="getParallelogramPoints(node.width, node.height)"
+        :fill="fillColor"
+        :stroke="strokeColor"
+        stroke-width="2"
+      />
+
+      <!-- Hexagon -->
+      <polygon
+        v-else-if="shapeType === 'hexagon'"
+        :points="getHexagonPoints(node.width, node.height)"
+        :fill="fillColor"
+        :stroke="strokeColor"
+        stroke-width="2"
+      />
+
+      <!-- Star -->
+      <polygon
+        v-else-if="shapeType === 'star'"
+        :points="getStarPoints(node.width, node.height)"
         :fill="fillColor"
         :stroke="strokeColor"
         stroke-width="2"
@@ -120,7 +147,10 @@
     <!-- Shape Content / Text Center -->
     <div
       class="relative z-10 p-4 w-full h-full flex items-center justify-center text-center overflow-hidden"
-      :class="{ 'pt-8': shapeType === 'triangle' }"
+      :class="{
+        'pt-8': shapeType === 'triangle',
+        'px-6': shapeType === 'diamond' || shapeType === 'hexagon' || shapeType === 'star'
+      }"
     >
       <div v-if="isEditing" class="w-full max-h-full flex flex-col items-center">
         <textarea
@@ -149,6 +179,14 @@
 import { ref, computed, nextTick } from 'vue';
 import type { CanvasNode, CanvasShapeType } from '~/interfaces/canvas';
 import { useSettings } from '~/composables/useSettings';
+import {
+  getDiamondPoints,
+  getTrianglePoints,
+  getTrapezoidPoints,
+  getParallelogramPoints,
+  getHexagonPoints,
+  getStarPoints,
+} from '~/utils/canvasShapes';
 
 const props = defineProps<{
   node: CanvasNode;

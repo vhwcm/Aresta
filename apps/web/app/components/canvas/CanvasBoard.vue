@@ -52,6 +52,7 @@
         @start-connect="onStartConnect"
         @update-text="onUpdateNodeText"
         @update-color="onUpdateNodeColor"
+        @update-shape="onUpdateNodeShape"
         @convert-to-note="handleConvertToNote"
         @delete="removeNode"
       />
@@ -157,6 +158,7 @@ import type {
   CanvasNode,
   CanvasEdge,
   CanvasSide,
+  CanvasShapeType,
 } from '~/interfaces/canvas';
 import { useCanvas } from '~/composables/useCanvas';
 import { useNotes } from '~/composables/useNotes';
@@ -722,6 +724,10 @@ const onUpdateNodeText = (id: string, text: string) => {
 
 const onUpdateNodeColor = (id: string, color: string) => {
   updateNode(id, { color }, true);
+};
+
+const onUpdateNodeShape = (id: string, shape: CanvasShapeType) => {
+  updateNode(id, { shape }, true);
 };
 
 // Inking OCR Result Handler

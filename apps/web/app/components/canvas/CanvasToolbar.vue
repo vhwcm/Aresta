@@ -1,7 +1,7 @@
 <template>
   <div class="canvas-toolbar-container fixed bottom-3 sm:bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 z-40 select-none max-w-[calc(100vw-1rem)]" @pointerdown.stop>
     <!-- Main Floating Tool Group -->
-    <div class="flex items-center gap-0.5 sm:gap-1 p-1 sm:p-1.5 rounded-2xl bg-bgPanel/95 border border-divider shadow-2xl backdrop-blur-xl max-w-full overflow-x-auto no-scrollbar">
+    <div class="flex items-center gap-0.5 sm:gap-1 p-1 sm:p-1.5 rounded-2xl bg-bgPanel/95 border border-divider shadow-2xl backdrop-blur-xl">
       <!-- 1. Select / Move Pointer -->
       <button
         class="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-xl transition-all cursor-pointer flex-shrink-0"
@@ -36,34 +36,13 @@
           @click="toggleShapesMenu"
         >
           <!-- Current Shape Icon -->
-          <svg v-if="selectedShapeType === 'rectangle'" class="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect width="18" height="18" x="3" y="3" rx="2" />
-          </svg>
-          <svg v-else-if="selectedShapeType === 'ellipse'" class="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="9" />
-          </svg>
-          <svg v-else-if="selectedShapeType === 'diamond'" class="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 2 22 12 12 22 2 12z" />
-          </svg>
-          <svg v-else-if="selectedShapeType === 'triangle'" class="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 3 2 21h20z" />
-          </svg>
-          <svg v-else-if="selectedShapeType === 'cylinder'" class="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M5 6.5C5 4.567 8.134 3 12 3s7 1.567 7 3.5V17.5c0 1.933-3.134 3.5-7 3.5s-7-1.567-7-3.5z" />
-            <ellipse cx="12" cy="6.5" rx="7" ry="3.5" />
-          </svg>
-          <svg v-else-if="selectedShapeType === 'trapezoid'" class="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M7 4h10l4 16H3z" />
-          </svg>
-          <svg v-else class="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect width="18" height="18" x="3" y="3" rx="6" />
-          </svg>
+          <component :is="getShapeIcon(selectedShapeType)" class="w-3.5 h-3.5 sm:w-4 sm:h-4" />
         </button>
 
         <!-- Shapes Selection Popover -->
         <div
           v-if="showShapesMenu"
-          class="absolute bottom-11 sm:bottom-12 left-1/2 -translate-x-1/2 flex items-center gap-1 p-1 sm:p-1.5 rounded-xl bg-bgPanel border border-divider shadow-xl backdrop-blur-md z-50 animate-in fade-in zoom-in-95 duration-100"
+          class="absolute bottom-11 sm:bottom-12 left-1/2 -translate-x-1/2 flex items-center gap-1 p-1 sm:p-1.5 rounded-xl bg-bgPanel/95 border border-divider shadow-2xl backdrop-blur-xl z-50 animate-in fade-in zoom-in-95 duration-100"
         >
           <button
             v-for="s in shapesList"
@@ -235,11 +214,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, h, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { MoreHorizontalIcon } from 'lucide-vue-next';
 import ArestaLogoGraph from '~/components/ArestaLogoGraph.vue';
 import { useBottomNavbar } from '~/composables/useBottomNavbar';
 import type { CanvasShapeType } from '~/interfaces/canvas';
+import { CANVAS_SHAPES, getShapeIcon } from '~/utils/canvasShapes';
 
 const props = defineProps<{
   activeTool: string;
@@ -311,37 +291,5 @@ onUnmounted(() => {
   }
 });
 
-// Shape icon components
-const RectIcon = () => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: '2' }, [
-  h('rect', { width: '18', height: '18', x: '3', y: '3', rx: '2' })
-]);
-const RoundedIcon = () => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: '2' }, [
-  h('rect', { width: '18', height: '18', x: '3', y: '3', rx: '6' })
-]);
-const CircleIcon = () => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: '2' }, [
-  h('circle', { cx: '12', cy: '12', r: '9' })
-]);
-const DiamondIcon = () => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: '2' }, [
-  h('path', { d: 'M12 2 22 12 12 22 2 12z' })
-]);
-const TriangleIcon = () => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: '2' }, [
-  h('path', { d: 'M12 3 2 21h20z' })
-]);
-const CylinderIcon = () => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: '2' }, [
-  h('path', { d: 'M5 6.5C5 4.567 8.134 3 12 3s7 1.567 7 3.5V17.5c0 1.933-3.134 3.5-7 3.5s-7-1.567-7-3.5z' }),
-  h('ellipse', { cx: '12', cy: '6.5', rx: '7', ry: '3.5' })
-]);
-const TrapezoidIcon = () => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: '2' }, [
-  h('path', { d: 'M7 4h10l4 16H3z' })
-]);
-
-const shapesList: Array<{ type: CanvasShapeType; label: string; icon: any }> = [
-  { type: 'rectangle', label: 'Retângulo', icon: RectIcon },
-  { type: 'rounded', label: 'Arredondado', icon: RoundedIcon },
-  { type: 'ellipse', label: 'Círculo / Elipse', icon: CircleIcon },
-  { type: 'diamond', label: 'Losango', icon: DiamondIcon },
-  { type: 'triangle', label: 'Triângulo', icon: TriangleIcon },
-  { type: 'cylinder', label: 'Cilindro', icon: CylinderIcon },
-  { type: 'trapezoid', label: 'Trapézio', icon: TrapezoidIcon },
-];
+const shapesList = CANVAS_SHAPES;
 </script>

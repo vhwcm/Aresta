@@ -3,6 +3,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [16/09/2026 10:52] [Concluído] Corrigir clipping de overflow no menu de formas geométricas do canvas e adicionar seletor dinâmico de 10 formas poligonais
 - [16/09/2026 10:42] [Concluído] Adicionar atributos de autocomplete nos formulários de autenticação e atualizar callback OAuth no guia de deploy AWS
 - [16/09/2026 10:29] [Concluído] Resolver problema de cross origin entre servicos na AWS com Same-Origin via Caddy e unificacao de API
 - [16/09/2026 10:27] [Concluído] Isolar estritamente livros e temas por usuário com remoção de bypass no auth middleware, migração de user_id em temas e purga de cache no frontend
