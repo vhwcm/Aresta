@@ -215,4 +215,26 @@ export class OneDriveStorageProvider implements IDataSyncProvider {
   }
   async deleteDataFile(fileName: string): Promise<void> { return this.deleteJson(await this.getDataFolderId(), fileName) }
   async deleteSubFolderDataFile(subFolder: DataSubFolder, fileName: string): Promise<void> { return this.deleteJson(await this.getSubFolderId(subFolder), fileName) }
+
+  /**
+   * Exclui permanentemente a pasta Aresta no OneDrive.
+   */
+  async deleteAllArestaData(): Promise<void> {
+    try {
+      const root = await this.findFolder('Aresta')
+      if (root) {
+        const res = await fetch(`https://graph.microsoft.com/v1.0/me/drive/items/${root.id}`, {
+          method: 'DELETE',
+          headers: this.getAuthHeader(),
+        })
+        if (!res.ok && res.status !== 404) {
+          console.warn(`[OneDriveStorageProvider] Falha ao deletar pasta Aresta: ${res.status}`)
+        }
+      }
+      this.dataFolderId = null
+      this.subFolderIds = {}
+    } catch (err) {
+      console.warn('[OneDriveStorageProvider] Erro ao excluir dados no OneDrive:', err)
+    }
+  }
 }

@@ -73,13 +73,13 @@
       </div>
     </header>
 
-    <!-- Main Viewport: Horizontal Pages (Colado no topo e centralizado horizontalmente) -->
+    <!-- Main Viewport: Horizontal Pages (Centralizado vertical e horizontalmente) -->
     <main
       ref="viewportRef"
-      class="flex-1 relative w-full h-full overflow-x-auto overflow-y-auto pt-0 pb-4 bg-bgRoot/60"
+      class="flex-1 relative w-full h-full overflow-auto bg-bgRoot/60 flex"
     >
       <!-- Loading State -->
-      <div v-if="isLoading" class="h-full flex flex-col items-center justify-center text-textSecondary gap-3">
+      <div v-if="isLoading" class="m-auto flex flex-col items-center justify-center text-textSecondary gap-3">
         <div class="w-8 h-8 border-2 border-primary/20 border-t-primary rounded-full animate-spin"></div>
         <p class="text-xs">Carregando páginas de desenho...</p>
       </div>
@@ -87,7 +87,7 @@
       <!-- Centering Track -->
       <div
         v-else-if="currentDrawing"
-        class="min-w-full w-max mx-auto px-6 md:pl-24 md:pr-16 flex flex-row items-start justify-center gap-8"
+        class="min-w-full min-h-full w-max m-auto px-6 md:pl-28 md:pr-16 py-8 flex flex-row items-center justify-center gap-8"
       >
         <!-- Pages Container (Horizontal lado a lado) -->
         <div
@@ -159,8 +159,8 @@
     <!-- Floating Docked Toolbar: Top on mobile, Left on desktop -->
     <div
       class="fixed z-30 pointer-events-none transition-all duration-200
-             top-14 inset-x-0 flex justify-center px-2 py-1.5
-             md:top-1/2 md:-translate-y-1/2 md:left-4 md:right-auto md:bottom-auto md:inset-x-auto md:p-0 md:flex md:flex-col"
+             top-16 inset-x-0 flex justify-center px-2 py-1.5
+             md:top-1/2 md:-translate-y-1/2 md:left-6 md:right-auto md:bottom-auto md:inset-x-auto md:p-0 md:flex md:flex-col"
     >
       <div class="pointer-events-auto max-w-[96vw] overflow-x-auto md:overflow-visible">
         <DrawingToolbar
@@ -168,14 +168,6 @@
           v-model:selected-shape-type="selectedShapeType"
           v-model:color="strokeColor"
           v-model:size="strokeSize"
-          :zoom="pageScale"
-          :can-undo="canUndo"
-          :can-redo="canRedo"
-          @zoom-in="handleZoomIn"
-          @zoom-out="handleZoomOut"
-          @zoom-fit="handleZoomFit"
-          @undo="undo"
-          @redo="redo"
         />
       </div>
     </div>
@@ -293,10 +285,10 @@ const pageScale = ref(0.7);
 function calculateFitScale(): number {
   if (typeof window === 'undefined') return 1;
   const isDesktop = window.innerWidth >= 768;
-  // No desktop desconta barra lateral esquerda (~80px) + botão de adicionar página à direita (~120px)
-  const availableWidth = isDesktop ? window.innerWidth - 200 : window.innerWidth - 32;
-  // Colado no topo: altura total menos o header (56px) e respiro inferior suave (24px)
-  const availableHeight = isDesktop ? window.innerHeight - 80 : window.innerHeight - 150;
+  // No desktop desconta barra lateral esquerda (~100px) + botão de adicionar página à direita (~140px)
+  const availableWidth = isDesktop ? window.innerWidth - 240 : window.innerWidth - 48;
+  // Desconta header (56px) + respiro vertical superior e inferior (80px)
+  const availableHeight = isDesktop ? window.innerHeight - 136 : window.innerHeight - 140;
   const scaleW = availableWidth / 794;
   const scaleH = availableHeight / 1123;
   const fit = Math.min(scaleW, scaleH);
@@ -449,11 +441,49 @@ function handleKeyDown(e: KeyboardEvent) {
     return;
   }
 
+  const isCtrlOrCmd = e.ctrlKey || e.metaKey;
   const key = e.key.toLowerCase();
+
+  // Desfazer / Refazer via teclado (Ctrl+Z, Ctrl+Shift+Z, Ctrl+Y)
+  if (isCtrlOrCmd && key === 'z') {
+    e.preventDefault();
+    if (e.shiftKey) {
+      if (canRedo.value) redo();
+    } else {
+      if (canUndo.value) undo();
+    }
+    return;
+  }
+  if (isCtrlOrCmd && key === 'y') {
+    e.preventDefault();
+    if (canRedo.value) redo();
+    return;
+  }
+
+  // Zoom via teclado (+/-, 0 ou Ctrl + +/-, 0)
+  if (e.key === '+' || e.key === '=' || (isCtrlOrCmd && (e.key === '+' || e.key === '='))) {
+    e.preventDefault();
+    handleZoomIn();
+    return;
+  }
+  if (e.key === '-' || e.key === '_' || (isCtrlOrCmd && (e.key === '-' || e.key === '_'))) {
+    e.preventDefault();
+    handleZoomOut();
+    return;
+  }
+  if (e.key === '0' || (isCtrlOrCmd && e.key === '0')) {
+    e.preventDefault();
+    handleZoomFit();
+    return;
+  }
+
+  // Seleção de ferramentas
   if (key === 'v') {
     activeTool.value = 'select';
   } else if (key === 'p') {
     activeTool.value = 'pen';
+  } else if (key === 'h') {
+    activeTool.value = 'highlighter';
   } else if (key === 'e') {
     activeTool.value = 'eraser';
   } else if (key === 's') {

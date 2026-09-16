@@ -10,7 +10,7 @@ datasource db {
 }
 
 // ==========================================
-// 1. AUTH & USER MANAGEMENT
+// 1. AUTH & USER MANAGEMENT (Identity & Accounts)
 // ==========================================
 
 model User {
@@ -22,24 +22,8 @@ model User {
   is_active           Boolean           @default(true)
   created_at          DateTime          @default(now())
   updated_at          DateTime?         @updatedAt
-  current_streak      Int               @default(0)
-  longest_streak      Int               @default(0)
-  streak_freeze_count Int               @default(0)
-  target_streak_days  Int               @default(7)
-  last_active_date    String?
-  userSettings        UserSettings?
-  dailyActivities     DailyActivity[]
-  userBooks           UserBook[]
-  canvases            Canvas[]
-  notes               Note[]
-  drawingNotes        DrawingNote[]
-  annotations         Annotation[]
-  flashcards          Flashcard[]
-  dailyDeckCards      DailyDeckCard[]
-  didacticBooklets    DidacticBooklet[]
   accounts            Account[]
   feedbacks           Feedback[]
-  themes              Theme[]
 
   @@map("users")
 }
@@ -63,24 +47,6 @@ model Account {
   @@map("accounts")
 }
 
-model UserSettings {
-  user_id                     Int      @id
-  page_animation_enabled      Boolean  @default(true)
-  page_crease_enabled         Boolean  @default(true)
-  language                    String   @default("pt-BR")
-  native_language             String   @default("pt-BR")
-  target_translation_language String   @default("en")
-  epub_font_size              Int      @default(18)
-  epub_font_family            String   @default("newsreader")
-  theme_mode                  String   @default("dark")
-  desktop_home_graph_open     Boolean  @default(true)
-  desktop_reader_graph_open   Boolean  @default(false)
-  updated_at                  DateTime @default(now()) @updatedAt
-  user                        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
-  @@map("user_settings")
-}
-
 model AppConfig {
   key   String  @id
   value String?
@@ -88,24 +54,8 @@ model AppConfig {
   @@map("app_config")
 }
 
-model DailyActivity {
-  id                  Int      @id @default(autoincrement())
-  user_id             Int
-  date                String
-  reading_seconds     Int      @default(0)
-  flashcards_reviewed Int      @default(0)
-  is_completed        Boolean  @default(false)
-  is_frozen           Boolean  @default(false)
-  created_at          DateTime @default(now())
-  updated_at          DateTime @default(now()) @updatedAt
-  user                User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
-  @@unique([user_id, date])
-  @@map("daily_activities")
-}
-
 // ==========================================
-// 2. READER & LIBRARY MANAGEMENT
+// 2. PUBLIC CATALOG (Shared Books & Metadata)
 // ==========================================
 
 model Book {
@@ -116,11 +66,6 @@ model Book {
   file_type        String            @default("epub")
   created_at       DateTime          @default(now())
   publicInfo       BookPublicInfo?
-  userBooks        UserBook[]
-  bookThemes       BookTheme[]
-  annotations      Annotation[]
-  flashcards       Flashcard[]
-  didacticBooklets DidacticBooklet[]
 
   @@map("books")
 }
@@ -137,261 +82,8 @@ model BookPublicInfo {
   @@map("book_public_infos")
 }
 
-model UserBook {
-  id               Int       @id @default(autoincrement())
-  user_id          Int
-  book_id          Int
-  status           String    @default("QUERO_LER")
-  current_page     Int       @default(0)
-  last_accessed_at DateTime?
-  created_at       DateTime  @default(now())
-  updated_at       DateTime  @default(now()) @updatedAt
-  user             User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  book             Book      @relation(fields: [book_id], references: [id], onDelete: Cascade)
-
-  @@unique([user_id, book_id])
-  @@map("user_books")
-}
-
 // ==========================================
-// 3. THEMES & TAXONOMY (Unified Reader + Memory)
-// ==========================================
-
-model Theme {
-  id                Int               @id @default(autoincrement())
-  user_id           Int?
-  name              String
-  color             String?           @default("#E57B55")
-  description       String?
-  embedding         String?
-  created_at        DateTime          @default(now())
-  user              User?             @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  parentHierarchies ThemeHierarchy[]  @relation("ParentTheme")
-  childHierarchies  ThemeHierarchy[]  @relation("ChildTheme")
-  bookThemes        BookTheme[]
-  annotationThemes  AnnotationTheme[]
-  didacticBooklets  DidacticBooklet[]
-
-  @@unique([user_id, name])
-  @@index([user_id])
-  @@map("themes")
-}
-
-model ThemeHierarchy {
-  id              Int      @id @default(autoincrement())
-  parent_theme_id Int
-  child_theme_id  Int
-  created_at      DateTime @default(now())
-  parentTheme     Theme    @relation("ParentTheme", fields: [parent_theme_id], references: [id], onDelete: Cascade)
-  childTheme      Theme    @relation("ChildTheme", fields: [child_theme_id], references: [id], onDelete: Cascade)
-
-  @@unique([parent_theme_id, child_theme_id])
-  @@map("theme_hierarchies")
-}
-
-model BookTheme {
-  id         Int      @id @default(autoincrement())
-  book_id    Int
-  theme_id   Int
-  created_at DateTime @default(now())
-  book       Book     @relation(fields: [book_id], references: [id], onDelete: Cascade)
-  theme      Theme    @relation(fields: [theme_id], references: [id], onDelete: Cascade)
-
-  @@unique([book_id, theme_id])
-  @@map("book_themes")
-}
-
-// ==========================================
-// 4. MEMORY, ANNOTATIONS & SPACED REPETITION (SM-2)
-// ==========================================
-
-model Annotation {
-  id               Int                      @id @default(autoincrement())
-  user_id          Int
-  book_id          Int
-  cfi              String?
-  selected_text    String?
-  note             String?
-  chapter_title    String?
-  progress         Float?                   @default(0.0)
-  embedding        Unsupported("vector(1536)")?
-  created_at       DateTime                 @default(now())
-  updated_at       DateTime                 @default(now()) @updatedAt
-  user             User                     @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  book             Book                     @relation(fields: [book_id], references: [id], onDelete: Cascade)
-  annotationThemes AnnotationTheme[]
-  flashcard        Flashcard?
-  didacticChapters DidacticBookletChapter[]
-
-  @@index([user_id, book_id])
-  @@map("annotations")
-}
-
-model AnnotationTheme {
-  id            Int        @id @default(autoincrement())
-  annotation_id Int
-  theme_id      Int
-  created_at    DateTime   @default(now())
-  annotation    Annotation @relation(fields: [annotation_id], references: [id], onDelete: Cascade)
-  theme         Theme      @relation(fields: [theme_id], references: [id], onDelete: Cascade)
-
-  @@unique([annotation_id, theme_id])
-  @@map("annotation_themes")
-}
-
-model Flashcard {
-  id               Int                      @id @default(autoincrement())
-  user_id          Int
-  annotation_id    Int                      @unique
-  book_id          Int
-  card_type        String                   @default("CONCEPT_RECALL")
-  question         String
-  answer           String
-  context_summary  String?
-  repetition_level Int                      @default(1)
-  next_review_at   DateTime                 @default(now())
-  last_reviewed_at DateTime?
-  review_count     Int                      @default(0)
-  difficulty       Float                    @default(2.5)
-  created_at       DateTime                 @default(now())
-  updated_at       DateTime                 @default(now()) @updatedAt
-  user             User                     @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  annotation       Annotation               @relation(fields: [annotation_id], references: [id], onDelete: Cascade)
-  book             Book                     @relation(fields: [book_id], references: [id], onDelete: Cascade)
-  dailyDeckCards   DailyDeckCard[]
-  didacticChapters DidacticBookletChapter[]
-
-  @@index([user_id, next_review_at])
-  @@map("flashcards")
-}
-
-model DailyDeckCard {
-  id           Int       @id @default(autoincrement())
-  user_id      Int
-  deck_date    String
-  flashcard_id Int
-  position     Int
-  is_reviewed  Boolean   @default(false)
-  rating       String?
-  reviewed_at  DateTime?
-  created_at   DateTime  @default(now())
-  updated_at   DateTime  @default(now()) @updatedAt
-  user         User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  flashcard    Flashcard @relation(fields: [flashcard_id], references: [id], onDelete: Cascade)
-
-  @@unique([user_id, deck_date, flashcard_id])
-  @@index([user_id, deck_date, position])
-  @@map("daily_deck_cards")
-}
-
-model DidacticBooklet {
-  id              Int                      @id @default(autoincrement())
-  user_id         Int
-  book_id         Int
-  theme_id        Int?
-  title           String
-  description     String?
-  target_audience String                   @default("student")
-  created_at      DateTime                 @default(now())
-  updated_at      DateTime                 @default(now()) @updatedAt
-  user            User                     @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  book            Book                     @relation(fields: [book_id], references: [id], onDelete: Cascade)
-  theme           Theme?                   @relation(fields: [theme_id], references: [id], onDelete: SetNull)
-  chapters        DidacticBookletChapter[]
-
-  @@index([user_id])
-  @@map("didactic_booklets")
-}
-
-model DidacticBookletChapter {
-  id             Int             @id @default(autoincrement())
-  booklet_id     Int
-  order_index    Int
-  title          String
-  topic          String
-  flashcard_id   Int?
-  annotation_id  Int?
-  raw_markdown   String          @db.Text
-  diagram_count  Int             @default(0)
-  depth_level    String          @default("standard")
-  created_at     DateTime        @default(now())
-  booklet        DidacticBooklet @relation(fields: [booklet_id], references: [id], onDelete: Cascade)
-  flashcard      Flashcard?      @relation(fields: [flashcard_id], references: [id], onDelete: SetNull)
-  annotation     Annotation?     @relation(fields: [annotation_id], references: [id], onDelete: SetNull)
-
-  @@unique([booklet_id, order_index])
-  @@index([booklet_id])
-  @@map("didactic_booklet_chapters")
-}
-
-// ==========================================
-// 5. CANVAS & VISUAL NOTES (Migrated to PostgreSQL)
-// ==========================================
-
-model Canvas {
-  id          String   @id @default(uuid())
-  user_id     Int
-  title       String   @default("Quadro sem título")
-  description String?
-  folder      String?
-  tags        String   @default("[]")
-  data        String   @db.Text
-  created_at  DateTime @default(now())
-  updated_at  DateTime @default(now()) @updatedAt
-  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
-  @@index([user_id, updated_at])
-  @@index([user_id, folder])
-  @@map("canvases")
-}
-
-model Note {
-  id          String     @id @default(uuid())
-  user_id     Int
-  title       String     @default("Nota sem título")
-  content     String     @default("") @db.Text
-  folder      String?
-  tags        String     @default("[]")
-  created_at  DateTime   @default(now())
-  updated_at  DateTime   @default(now()) @updatedAt
-  user        User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  noteLinks   NoteLink[] @relation("SourceNote")
-
-  @@index([user_id, updated_at])
-  @@map("notes")
-}
-
-model NoteLink {
-  id             Int      @id @default(autoincrement())
-  source_note_id String
-  target_type    String   // 'NOTE' | 'CANVAS' | 'BOOK'
-  target_id      String   // UUID ou Book ID
-  created_at     DateTime @default(now())
-  sourceNote     Note     @relation("SourceNote", fields: [source_note_id], references: [id], onDelete: Cascade)
-
-  @@index([source_note_id, target_type, target_id])
-  @@map("note_links")
-}
-
-model DrawingNote {
-  id          String   @id @default(uuid())
-  user_id     Int
-  title       String   @default("Desenho sem título")
-  folder      String?
-  tags        String   @default("[]")
-  pages_data  String   @db.Text
-  preview_url String?  @db.Text
-  created_at  DateTime @default(now())
-  updated_at  DateTime @default(now()) @updatedAt
-  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
-  @@index([user_id, updated_at])
-  @@index([user_id, folder])
-  @@map("drawing_notes")
-}
-
-// ==========================================
-// 8. USER FEEDBACK & APP IMPROVEMENTS
+// 3. USER FEEDBACK & APP IMPROVEMENTS
 // ==========================================
 
 model Feedback {
@@ -405,4 +97,3 @@ model Feedback {
   @@index([user_id])
   @@map("feedbacks")
 }
-

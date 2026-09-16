@@ -75,6 +75,7 @@ interface _GlobalComponents {
   ReaderViewer: typeof import("../../app/components/reader/Viewer.vue")['default']
   ReaderEnginePageCurlCanvas: typeof import("../../app/components/reader/engine/PageCurlCanvas.vue")['default']
   ReaderUploadDropZone: typeof import("../../app/components/reader/upload/DropZone.vue")['default']
+  SettingsDriveSettingsPanel: typeof import("../../app/components/settings/DriveSettingsPanel.vue")['default']
   NuxtWelcome: typeof import("../../node_modules/nuxt/dist/app/components/welcome.vue")['default']
   NuxtLayout: typeof import("../../node_modules/nuxt/dist/app/components/nuxt-layout")['default']
   NuxtErrorBoundary: typeof import("../../node_modules/nuxt/dist/app/components/nuxt-error-boundary.vue")['default']
@@ -160,6 +161,7 @@ interface _GlobalComponents {
   LazyReaderViewer: LazyComponent<typeof import("../../app/components/reader/Viewer.vue")['default']>
   LazyReaderEnginePageCurlCanvas: LazyComponent<typeof import("../../app/components/reader/engine/PageCurlCanvas.vue")['default']>
   LazyReaderUploadDropZone: LazyComponent<typeof import("../../app/components/reader/upload/DropZone.vue")['default']>
+  LazySettingsDriveSettingsPanel: LazyComponent<typeof import("../../app/components/settings/DriveSettingsPanel.vue")['default']>
   LazyNuxtWelcome: LazyComponent<typeof import("../../node_modules/nuxt/dist/app/components/welcome.vue")['default']>
   LazyNuxtLayout: LazyComponent<typeof import("../../node_modules/nuxt/dist/app/components/nuxt-layout")['default']>
   LazyNuxtErrorBoundary: LazyComponent<typeof import("../../node_modules/nuxt/dist/app/components/nuxt-error-boundary.vue")['default']>

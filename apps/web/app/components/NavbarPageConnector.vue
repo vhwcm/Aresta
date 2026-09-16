@@ -140,7 +140,7 @@ const activeIndex = computed(() => {
 const targetY = computed<number | null>(() => {
   const idx = activeIndex.value
   if (idx < 0 || idx >= ITEM_OFFSETS.length) return null
-  return (viewportHeight.value / 2) + ITEM_OFFSETS[idx]
+  return (viewportHeight.value / 2) + (ITEM_OFFSETS[idx] ?? 0)
 })
 
 // Posição animada fluida a 120 FPS via requestAnimationFrame lerp

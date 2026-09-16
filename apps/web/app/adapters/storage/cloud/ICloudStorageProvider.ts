@@ -39,4 +39,5 @@ export interface ICloudStorageProvider {
   getFile(fileId: string): Promise<Blob>
   listFolder(folderId: string): Promise<Array<{ id: string; name: string; mimeType: string }>>
   uploadBookPackage(options: UploadBookPackageOptions): Promise<UploadBookPackageResult>
+  deleteAllArestaData?(): Promise<void>
 }

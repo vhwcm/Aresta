@@ -283,8 +283,11 @@ export const useGraph = () => {
         headers: getHeaders(),
         body: { name, color, description },
       })
-      await fetchGraph()
-      return newNode
+      if (newNode && newNode.id !== undefined && newNode.id !== null) {
+        await fetchGraph()
+        return newNode
+      }
+      throw new Error('Resposta inválida da API ao criar nó')
     } catch (e: any) {
       console.warn('Erro ao criar nó na API, aplicando fallback local:', e)
       const fallbackNode: GraphNode = {

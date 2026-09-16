@@ -130,64 +130,6 @@
         title="Espessura do traço"
       />
     </div>
-
-    <!-- Divisor -->
-    <div class="h-5 w-px md:w-6 md:h-px bg-divider/60"></div>
-
-    <!-- Controles de Zoom -->
-    <div class="flex flex-row md:flex-col items-center gap-0.5 bg-bgElevated/80 border border-divider/60 rounded-xl p-1 text-xs">
-      <button
-        @click="$emit('zoom-in')"
-        class="p-1 rounded-lg hover:bg-bgSurface text-textSecondary hover:text-textPrimary transition-all cursor-pointer"
-        title="Aumentar Zoom"
-      >
-        <ZoomInIcon class="w-3.5 h-3.5" />
-      </button>
-      <button
-        @click="$emit('zoom-fit')"
-        class="px-1 py-0.5 text-[10px] font-mono font-semibold text-textSecondary hover:text-primary transition-colors cursor-pointer"
-        title="Ajustar à tela do notebook"
-      >
-        {{ Math.round(zoom * 100) }}%
-      </button>
-      <button
-        @click="$emit('zoom-out')"
-        class="p-1 rounded-lg hover:bg-bgSurface text-textSecondary hover:text-textPrimary transition-all cursor-pointer"
-        title="Diminuir Zoom"
-      >
-        <ZoomOutIcon class="w-3.5 h-3.5" />
-      </button>
-      <button
-        @click="$emit('zoom-fit')"
-        class="p-1 rounded-lg hover:bg-bgSurface text-textSecondary hover:text-textPrimary transition-all cursor-pointer hidden md:flex items-center justify-center"
-        title="Ajustar página inteira na tela"
-      >
-        <Maximize2Icon class="w-3.5 h-3.5" />
-      </button>
-    </div>
-
-    <!-- Divisor -->
-    <div class="h-5 w-px md:w-6 md:h-px bg-divider/60"></div>
-
-    <!-- Ações: Desfazer / Refazer -->
-    <div class="flex flex-row md:flex-col items-center gap-1">
-      <button
-        :disabled="!canUndo"
-        @click="$emit('undo')"
-        class="p-1.5 md:p-2 rounded-xl bg-bgElevated text-textSecondary hover:text-textPrimary border border-divider transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
-        title="Desfazer (Ctrl+Z)"
-      >
-        <UndoIcon class="w-3.5 h-3.5 md:w-4 md:h-4" />
-      </button>
-      <button
-        :disabled="!canRedo"
-        @click="$emit('redo')"
-        class="p-1.5 md:p-2 rounded-xl bg-bgElevated text-textSecondary hover:text-textPrimary border border-divider transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
-        title="Refazer (Ctrl+Y)"
-      >
-        <RedoIcon class="w-3.5 h-3.5 md:w-4 md:h-4" />
-      </button>
-    </div>
   </div>
 </template>
 
@@ -198,11 +140,6 @@ import {
   PenTool as PenToolIcon,
   Highlighter as HighlighterIcon,
   Eraser as EraserIcon,
-  ZoomIn as ZoomInIcon,
-  ZoomOut as ZoomOutIcon,
-  Maximize2 as Maximize2Icon,
-  Undo2 as UndoIcon,
-  Redo2 as RedoIcon,
 } from 'lucide-vue-next';
 import type { PenToolType } from '~/interfaces/drawing';
 import type { CanvasShapeType } from '~/interfaces/canvas';
@@ -214,13 +151,9 @@ const props = withDefaults(
     selectedShapeType?: CanvasShapeType;
     color: string;
     size: number;
-    canUndo: boolean;
-    canRedo: boolean;
-    zoom?: number;
   }>(),
   {
     selectedShapeType: 'rectangle',
-    zoom: 1,
   }
 );
 
@@ -229,11 +162,6 @@ const emit = defineEmits<{
   (e: 'update:selectedShapeType', shape: CanvasShapeType): void;
   (e: 'update:color', color: string): void;
   (e: 'update:size', size: number): void;
-  (e: 'zoom-in'): void;
-  (e: 'zoom-out'): void;
-  (e: 'zoom-fit'): void;
-  (e: 'undo'): void;
-  (e: 'redo'): void;
 }>();
 
 const showShapesMenu = ref(false);

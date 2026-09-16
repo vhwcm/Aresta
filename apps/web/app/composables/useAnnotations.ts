@@ -3,7 +3,6 @@ import { useAuth } from '~/composables/useAuth'
 import { annotationRepo } from '~/adapters/database/repositories/AnnotationRepository'
 import { flashcardRepo } from '~/adapters/database/repositories/FlashcardRepository'
 import { useFlashcards } from '~/composables/useFlashcards'
-import { getApiBase } from '~/utils/apiBase'
 
 export interface AnnotationTheme {
   id: number
@@ -47,7 +46,6 @@ export interface CreateAnnotationPayload {
   noteId?: string | null
 }
 
-
 // Estado reativo compartilhado a nível de módulo
 const sharedAnnotations = ref<AnnotationItem[]>([])
 const sharedLoading = ref(false)
@@ -64,26 +62,6 @@ export const useAnnotations = () => {
   const loading = sharedLoading
   const error = sharedError
   const auth = useAuth()
-
-  const getHeaders = (includeContentType = true): Record<string, string> => {
-    let token: string | null = auth.token.value ?? null
-    if (!token && typeof useCookie === 'function') {
-      try {
-        const cookieVal = useCookie<string | null | undefined>('aresta_token').value
-        token = cookieVal ?? null
-      } catch {
-        token = null
-      }
-    }
-    const headers: Record<string, string> = {}
-    if (includeContentType) {
-      headers['Content-Type'] = 'application/json'
-    }
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`
-    }
-    return headers
-  }
 
   const normalizeItem = (a: any): AnnotationItem => {
     if (!a) return a
@@ -103,7 +81,7 @@ export const useAnnotations = () => {
       sourceType: isNote ? 'canvas_note' : 'book',
       noteId
     }
-    // Recupera a cor diretamente ou a partir do sufixo #color= salvo no cfi
+
     let resolvedColor: string | null = a.color || null
     if (!resolvedColor && a.cfi && a.cfi.includes('#color=')) {
       const colorMatch = a.cfi.match(/#color=([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})/)
@@ -151,73 +129,12 @@ export const useAnnotations = () => {
     }
     error.value = null
 
-    // 1. Carrega imediatamente do IndexedDB local (Local-First instantâneo)
     try {
       const localNotes = await annotationRepo.getAll(filters)
-      if (localNotes && localNotes.length > 0) {
-        annotations.value = localNotes.map(normalizeItem)
-      }
+      annotations.value = localNotes.map(normalizeItem)
     } catch (e) {
       console.warn('[useAnnotations] Falha ao carregar anotações locais:', e)
-    }
-
-    // 2. Tenta sincronizar com a API remota se houver conexão
-    try {
-      const params: Record<string, string> = {}
-      if (filters?.bookId !== undefined && filters?.bookId !== null) params.bookId = String(filters.bookId)
-      if (filters?.themeId !== undefined && filters?.themeId !== null) params.themeId = String(filters.themeId)
-
-      const query = new URLSearchParams(params).toString()
-      const url = `${getApiBase()}/annotations${query ? `?${query}` : ''}`
-
-      const data = await $fetch<any>(url, {
-        headers: getHeaders()
-      })
-      const list = Array.isArray(data) ? data : (Array.isArray(data?.annotations) ? data.annotations : null)
-      if (list !== null) {
-        const currentLocal = await annotationRepo.getAll(filters).catch(() => [])
-        const localMap = new Map((currentLocal || []).map((l: any) => [Number(l.id), l]))
-
-        const mapped: AnnotationItem[] = list.map((rawItem: any) => {
-          const item = normalizeItem(rawItem)
-          if (!item.color && localMap.has(item.id)) {
-            const local = localMap.get(item.id)
-            if (local?.color) {
-              item.color = local.color
-            }
-          }
-          return item
-        })
-
-        for (const item of mapped) {
-          await annotationRepo.save({
-            id: item.id,
-            userId: item.userId,
-            bookId: item.bookId,
-            bookTitle: item.bookTitle,
-            bookCover: item.bookCover,
-            cfi: item.cfi,
-            selectedText: item.selectedText,
-            note: item.note,
-            color: item.color,
-            chapterTitle: item.chapterTitle,
-            progress: item.progress,
-            themes: item.themes,
-            createdAt: item.createdAt
-          })
-        }
-        try {
-          const updatedLocal = await annotationRepo.getAll(filters)
-          const pending = updatedLocal.filter((l: any) => !mapped.some((m: AnnotationItem) => m.id === l.id))
-          annotations.value = [...pending.map(normalizeItem), ...mapped]
-        } catch {
-          annotations.value = mapped
-        }
-      }
-    } catch (err: any) {
-      if (annotations.value.length === 0) {
-        console.warn('Backend indisponível ou offline:', err)
-      }
+      error.value = 'Falha ao carregar anotações locais.'
     } finally {
       loading.value = false
     }
@@ -257,7 +174,6 @@ export const useAnnotations = () => {
       createdAt: now
     }
 
-    // 1. Grava no banco local primeiro (Local-First instantâneo)
     await annotationRepo.save({
       id: localId,
       bookId: payload.bookId,
@@ -272,80 +188,25 @@ export const useAnnotations = () => {
       createdAt: now
     })
     annotations.value = [localItem, ...annotations.value]
+    loading.value = false
 
-    // 2. Dispara requisição HTTP em background se online
-    let finalItem = localItem
-    try {
-      const response = await $fetch<any>(`${getApiBase()}/annotations`, {
-        method: 'POST',
-        headers: getHeaders(),
-        body: {
-          ...payload,
-          cfi: finalCfi,
-          color: effectiveColor,
-        }
-      })
-      const createdRaw = response?.annotation || response
-      if (createdRaw) {
-        const created = normalizeItem(createdRaw)
-        if (!created.color && payload.color) {
-          created.color = payload.color
-        }
-        if (!created.bookTitle && payload.bookTitle) {
-          created.bookTitle = payload.bookTitle
-        }
-        if (!created.bookCover && payload.bookCover) {
-          created.bookCover = payload.bookCover
-        }
-        const idx = annotations.value.findIndex((a) => a.id === localId)
-        if (idx !== -1) {
-          annotations.value[idx] = created
-        } else {
-          annotations.value = [created, ...annotations.value.filter((a) => a.id !== localId)]
-        }
-        await annotationRepo.delete(localId)
-        await annotationRepo.save({
-          id: created.id,
-          userId: created.userId,
-          bookId: created.bookId,
-          bookTitle: created.bookTitle,
-          bookCover: created.bookCover,
-          cfi: created.cfi,
-          selectedText: created.selectedText,
-          note: created.note,
-          ...(created.color || payload.color ? { color: created.color || payload.color } : {}),
-          chapterTitle: created.chapterTitle,
-          progress: created.progress,
-          themes: created.themes,
-          createdAt: created.createdAt
-        })
-        finalItem = created
-      }
-    } catch (err: any) {
-      console.warn('Anotação persistida localmente (offline mode):', err)
-    } finally {
-      loading.value = false
-    }
-
-    // 3. Se solicitado, gera flashcard em background com IA
     if (payload.generateFlashcard) {
       const flashcards = useFlashcards()
-      flashcards.generateAiFlashcardForAnnotation(finalItem).then((card) => {
-        finalItem.hasFlashcard = true
-        finalItem.flashcardId = card.id
+      flashcards.generateAiFlashcardForAnnotation(localItem).then((card) => {
+        localItem.hasFlashcard = true
+        localItem.flashcardId = card.id
       }).catch((err) => {
         console.warn('Erro ao gerar flashcard com IA em background:', err)
       })
     }
 
-    return finalItem
+    return localItem
   }
 
   const updateAnnotationNote = async (id: number, note: string): Promise<AnnotationItem> => {
     loading.value = true
     error.value = null
 
-    // Atualiza localmente
     const existing = annotations.value.find((a) => a.id === id)
     if (existing) {
       existing.note = note
@@ -356,26 +217,8 @@ export const useAnnotations = () => {
         note
       })
     }
-
-    try {
-      const response = await $fetch<any>(`${getApiBase()}/annotations/${id}`, {
-        method: 'PUT',
-        headers: getHeaders(),
-        body: { note }
-      })
-      const updatedRaw = response?.annotation || response
-      const updated = normalizeItem(updatedRaw)
-      const idx = annotations.value.findIndex((a) => a.id === id)
-      if (idx !== -1) {
-        annotations.value[idx] = updated
-      }
-      return updated
-    } catch (err: any) {
-      console.warn('Nota atualizada localmente:', err)
-      return existing as AnnotationItem
-    } finally {
-      loading.value = false
-    }
+    loading.value = false
+    return existing as AnnotationItem
   }
 
   const deleteAnnotation = async (id: number): Promise<boolean> => {
@@ -385,19 +228,8 @@ export const useAnnotations = () => {
     await annotationRepo.delete(id)
     await flashcardRepo.deleteByAnnotationId(id)
     annotations.value = annotations.value.filter((a) => a.id !== id)
-
-    try {
-      await $fetch(`${getApiBase()}/annotations/${id}`, {
-        method: 'DELETE',
-        headers: getHeaders()
-      })
-      return true
-    } catch (err: any) {
-      console.warn('Exclusão agendada localmente:', err)
-      return true
-    } finally {
-      loading.value = false
-    }
+    loading.value = false
+    return true
   }
 
   const toggleAnnotationFlashcard = async (annotationId: number) => {

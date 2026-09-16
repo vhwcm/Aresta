@@ -94,6 +94,10 @@ export interface GraphNode {
   baseY?: number
   currentX?: number
   currentY?: number
+  startX?: number
+  startY?: number
+  targetX?: number
+  targetY?: number
   phaseX?: number
   phaseY?: number
   targetAngle?: number

@@ -19,6 +19,7 @@ export interface UploadLocalBookOptions {
   customTitle?: string
   initialFontSize?: number
   initialFontFamily?: string
+  themes?: Array<{ id: number | string; name: string; color?: string | null }>
 }
 
 export interface UploadLocalBookResult {
@@ -99,6 +100,13 @@ export const useLocalBookUpload = () => {
       }
 
       // 6. Salva no banco de dados local (Tauri SQLite / Dexie / InMemory)
+      const rawThemes = options.themes || []
+      const normalizedThemes = rawThemes.map((t) => ({
+        id: Number(t.id),
+        name: t.name,
+        color: t.color || null,
+      }))
+
       let localBook = await bookRepo.save({
         id: bookId,
         bookId,
@@ -108,6 +116,7 @@ export const useLocalBookUpload = () => {
         filePath: savedPath || `${bookId}.${type}`,
         status: 'LENDO',
         currentPage: 1,
+        themes: normalizedThemes,
       })
 
       let finalBookId = bookId
@@ -157,6 +166,7 @@ export const useLocalBookUpload = () => {
               filePath: savedPath || `${realBookId}.${type}`,
               status: 'LENDO',
               currentPage: 1,
+              themes: normalizedThemes,
             })
 
             // Espelha o binário sob a chave do realBookId no storage/cache
@@ -165,6 +175,21 @@ export const useLocalBookUpload = () => {
               await saveCachedBook(String(realBookId), arrayBuffer, title, type)
             } catch (mirrorErr) {
               console.warn('[useLocalBookUpload] Aviso ao espelhar cache binário:', mirrorErr)
+            }
+          }
+
+          // Se houver temas selecionados, vincula-os no grafo do backend
+          if (normalizedThemes.length > 0) {
+            for (const theme of normalizedThemes) {
+              if (!isNaN(theme.id)) {
+                try {
+                  await $fetch(`${apiBase}/graph/nodes/${theme.id}/books`, {
+                    method: 'POST',
+                    headers: auth.token.value ? { Authorization: `Bearer ${auth.token.value}` } : {},
+                    body: { bookId: finalBookId },
+                  })
+                } catch {}
+              }
             }
           }
         } catch (apiErr) {

@@ -1,252 +1,45 @@
-import { prisma } from '../config/database'
-
-export interface DailyActivityDTO {
-  date: string
-  readingSeconds: number
-  readingMinutes: number
-  requiredReadingSeconds: number
-  flashcardsReviewed: number
-  requiredFlashcards: number
-  isReadingCompleted: boolean
-  isFlashcardsCompleted: boolean
-  isCompleted: boolean
-  isFrozen: boolean
-}
-
-export interface StreakStatusDTO {
-  currentStreak: number
-  longestStreak: number
-  streakFreezeCount: number
-  targetStreakDays: number
-  isGoalReachedToday: boolean
-  today: DailyActivityDTO
-  weeklyActivity: Array<{
-    date: string
-    dayLabel: string
-    readingSeconds: number
-    readingMinutes: number
-    flashcardsReviewed: number
-    completed: boolean
-    frozen: boolean
-  }>
-}
-
 export class StreakService {
-  public static readonly REQUIRED_READING_SECONDS = 600 // 10 minutos
-  public static readonly REQUIRED_FLASHCARDS = 5
-
-  public getUtcDateString(d = new Date()): string {
-    const year = d.getUTCFullYear()
-    const month = String(d.getUTCMonth() + 1).padStart(2, '0')
-    const day = String(d.getUTCDate()).padStart(2, '0')
-    return `${year}-${month}-${day}`
-  }
-
-  public getDayLabel(dateStr: string): string {
-    const [y, m, d] = dateStr.split('-').map(Number)
-    const date = new Date(Date.UTC(y, m - 1, d))
-    const days = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']
-    return days[date.getUTCDay()]
-  }
-
-  public getDiffInDays(dateStrA: string, dateStrB: string): number {
-    const [y1, m1, d1] = dateStrA.split('-').map(Number)
-    const [y2, m2, d2] = dateStrB.split('-').map(Number)
-    const dateA = Date.UTC(y1, m1 - 1, d1)
-    const dateB = Date.UTC(y2, m2 - 1, d2)
-    return Math.floor((dateB - dateA) / (1000 * 60 * 60 * 24))
-  }
-
-  public addDaysToUtcDateString(dateStr: string, daysToAdd: number): string {
-    const [y, m, d] = dateStr.split('-').map(Number)
-    const date = new Date(Date.UTC(y, m - 1, d + daysToAdd))
-    return this.getUtcDateString(date)
-  }
-
-  public async getStreakStatus(userId: number): Promise<StreakStatusDTO> {
-    const todayStr = this.getUtcDateString()
-    let user = await prisma.user.findUnique({ where: { id: userId } })
-    if (!user) throw new Error('Usuário não encontrado')
-
-    let { current_streak: currentStreak, longest_streak: longestStreak, streak_freeze_count: streakFreezeCount } = user
-    const targetStreakDays = user.target_streak_days || 7
-    let lastActiveDate = user.last_active_date
-
-    if (lastActiveDate && lastActiveDate !== todayStr) {
-      const daysDiff = this.getDiffInDays(lastActiveDate, todayStr)
-      if (daysDiff > 1) {
-        const missedDays = daysDiff - 1
-        if (missedDays <= streakFreezeCount) {
-          for (let i = 1; i <= missedDays; i++) {
-            const missedDateStr = this.addDaysToUtcDateString(lastActiveDate, i)
-            await prisma.dailyActivity.upsert({
-              where: { user_id_date: { user_id: userId, date: missedDateStr } },
-              create: { user_id: userId, date: missedDateStr, is_frozen: true, is_completed: false },
-              update: { is_frozen: true },
-            })
-          }
-          streakFreezeCount -= missedDays
-          lastActiveDate = this.addDaysToUtcDateString(lastActiveDate, missedDays)
-          user = await prisma.user.update({
-            where: { id: userId },
-            data: { streak_freeze_count: streakFreezeCount, last_active_date: lastActiveDate },
-          })
-        } else {
-          currentStreak = 0
-          user = await prisma.user.update({ where: { id: userId }, data: { current_streak: 0, last_active_date: lastActiveDate } })
-        }
-      }
-    }
-
-    const todayActivity = await prisma.dailyActivity.upsert({
-      where: { user_id_date: { user_id: userId, date: todayStr } },
-      create: { user_id: userId, date: todayStr, reading_seconds: 0, flashcards_reviewed: 0, is_completed: false, is_frozen: false },
-      update: {},
-    })
-
-    if (todayActivity.flashcards_reviewed === 0) {
-      try {
-        const todayStart = new Date(`${todayStr}T00:00:00.000Z`)
-        const reviewedCardsCount = await prisma.flashcard.count({
-          where: {
-            user_id: userId,
-            last_reviewed_at: { gte: todayStart }
-          }
-        })
-        if (reviewedCardsCount > 0) {
-          todayActivity.flashcards_reviewed = reviewedCardsCount
-          await prisma.dailyActivity.update({
-            where: { user_id_date: { user_id: userId, date: todayStr } },
-            data: { flashcards_reviewed: reviewedCardsCount }
-          })
-        }
-      } catch {
-        // Fallback silencioso
-      }
-    }
-
-    const last7DaysList: string[] = []
-    for (let i = 6; i >= 0; i--) last7DaysList.push(this.addDaysToUtcDateString(todayStr, -i))
-
-    const pastActivities = await prisma.dailyActivity.findMany({ where: { user_id: userId, date: { in: last7DaysList } } })
-    const activityMap = new Map(pastActivities.map((a) => [a.date, a]))
-
-    const weeklyActivity = last7DaysList.map((dateStr) => {
-      const act = activityMap.get(dateStr)
-      return {
-        date: dateStr,
-        dayLabel: this.getDayLabel(dateStr),
-        readingSeconds: act?.reading_seconds || 0,
-        readingMinutes: Math.floor((act?.reading_seconds || 0) / 60),
-        flashcardsReviewed: act?.flashcards_reviewed || 0,
-        completed: act?.is_completed || false,
-        frozen: act?.is_frozen || false,
-      }
-    })
-
-    const isReadingCompleted = todayActivity.reading_seconds >= StreakService.REQUIRED_READING_SECONDS
-    const isFlashcardsCompleted = todayActivity.flashcards_reviewed >= StreakService.REQUIRED_FLASHCARDS
-    const isGoalReached = isReadingCompleted || isFlashcardsCompleted
-
-    if (!todayActivity.is_completed && isGoalReached) {
-      await this.completeTodayStreak(userId, todayStr)
-      todayActivity.is_completed = true
-      user = await prisma.user.findUnique({ where: { id: userId } })
-      if (user) {
-        currentStreak = user.current_streak
-        longestStreak = user.longest_streak
-        streakFreezeCount = user.streak_freeze_count
-      }
-    }
-
+  async getStreakStatus(_userId: number) {
     return {
-      currentStreak,
-      longestStreak,
-      streakFreezeCount,
-      targetStreakDays,
-      isGoalReachedToday: todayActivity.is_completed,
+      currentStreak: 0,
+      longestStreak: 0,
+      streakFreezeCount: 0,
+      targetStreakDays: 7,
+      isGoalReachedToday: false,
       today: {
-        date: todayActivity.date,
-        readingSeconds: todayActivity.reading_seconds,
-        readingMinutes: Math.floor(todayActivity.reading_seconds / 60),
-        requiredReadingSeconds: StreakService.REQUIRED_READING_SECONDS,
-        flashcardsReviewed: todayActivity.flashcards_reviewed,
-        requiredFlashcards: StreakService.REQUIRED_FLASHCARDS,
-        isReadingCompleted,
-        isFlashcardsCompleted,
-        isCompleted: todayActivity.is_completed,
-        isFrozen: todayActivity.is_frozen,
+        date: new Date().toISOString().split('T')[0]!,
+        readingSeconds: 0,
+        readingMinutes: 0,
+        requiredReadingSeconds: 600,
+        flashcardsReviewed: 0,
+        requiredFlashcards: 5,
+        isReadingCompleted: false,
+        isFlashcardsCompleted: false,
+        isCompleted: false,
+        isFrozen: false,
       },
-      weeklyActivity,
+      weeklyActivity: [],
     }
   }
 
-  private async completeTodayStreak(userId: number, todayStr: string): Promise<void> {
-    await prisma.dailyActivity.update({
-      where: { user_id_date: { user_id: userId, date: todayStr } },
-      data: { is_completed: true },
-    })
-
-    const user = await prisma.user.findUnique({ where: { id: userId } })
-    const newStreak = (user?.current_streak || 0) + 1
-    const newLongest = Math.max(user?.longest_streak || 0, newStreak)
-    let freezeCount = user?.streak_freeze_count || 0
-    if (newStreak % 7 === 0 && freezeCount < 2) freezeCount = Math.min(2, freezeCount + 1)
-    await prisma.user.update({
-      where: { id: userId },
-      data: { current_streak: newStreak, longest_streak: newLongest, streak_freeze_count: freezeCount, last_active_date: todayStr },
-    })
+  async getStreak(_userId: number) {
+    return this.getStreakStatus(_userId)
   }
 
-  public async recordReadingTime(userId: number, seconds: number): Promise<{ status: StreakStatusDTO; justCompleted: boolean }> {
-    await this.getStreakStatus(userId)
-    const todayStr = this.getUtcDateString()
-    const current = await prisma.dailyActivity.findUnique({ where: { user_id_date: { user_id: userId, date: todayStr } } })
-    const newReadingSeconds = (current?.reading_seconds || 0) + seconds
-    const flashcardsCount = current?.flashcards_reviewed || 0
-    const wasCompleted = current?.is_completed || false
-    const isNowCompleted = newReadingSeconds >= StreakService.REQUIRED_READING_SECONDS || flashcardsCount >= StreakService.REQUIRED_FLASHCARDS
-    const justCompleted = !wasCompleted && isNowCompleted
-
-    await prisma.dailyActivity.update({
-      where: { user_id_date: { user_id: userId, date: todayStr } },
-      data: { reading_seconds: newReadingSeconds, is_completed: wasCompleted || isNowCompleted },
-    })
-
-    if (justCompleted) {
-      await this.completeTodayStreak(userId, todayStr)
-    }
-
-    const updatedStatus = await this.getStreakStatus(userId)
-    return { status: updatedStatus, justCompleted }
+  async recordReadingTime(_userId: number, _seconds: number) {
+    return { status: await this.getStreakStatus(_userId), justCompleted: false }
   }
 
-  public async recordFlashcardReview(userId: number, count = 1): Promise<{ status: StreakStatusDTO; justCompleted: boolean }> {
-    await this.getStreakStatus(userId)
-    const todayStr = this.getUtcDateString()
-    const current = await prisma.dailyActivity.findUnique({ where: { user_id_date: { user_id: userId, date: todayStr } } })
-    const readingSecs = current?.reading_seconds || 0
-    const newFlashcardsCount = (current?.flashcards_reviewed || 0) + count
-    const wasCompleted = current?.is_completed || false
-    const isNowCompleted = readingSecs >= StreakService.REQUIRED_READING_SECONDS || newFlashcardsCount >= StreakService.REQUIRED_FLASHCARDS
-    const justCompleted = !wasCompleted && isNowCompleted
-
-    await prisma.dailyActivity.update({
-      where: { user_id_date: { user_id: userId, date: todayStr } },
-      data: { flashcards_reviewed: newFlashcardsCount, is_completed: wasCompleted || isNowCompleted },
-    })
-
-    if (justCompleted) {
-      await this.completeTodayStreak(userId, todayStr)
-    }
-
-    const updatedStatus = await this.getStreakStatus(userId)
-    return { status: updatedStatus, justCompleted }
+  async recordFlashcardReview(_userId: number, _count: number) {
+    return { status: await this.getStreakStatus(_userId), justCompleted: false }
   }
 
-  public async updateStreakTarget(userId: number, targetDays: number): Promise<{ targetStreakDays: number }> {
-    const updated = await prisma.user.update({ where: { id: userId }, data: { target_streak_days: targetDays } })
-    return { targetStreakDays: updated.target_streak_days }
+  async updateStreakTarget(_userId: number, targetDays: number) {
+    return { targetStreakDays: targetDays }
+  }
+
+  async updateTargetStreakDays(_userId: number, targetDays: number) {
+    return this.updateStreakTarget(_userId, targetDays)
   }
 }
 

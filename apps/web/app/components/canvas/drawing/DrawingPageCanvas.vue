@@ -278,7 +278,7 @@ function handleContainerClick(e: MouseEvent) {
 
   if (props.tool === 'shape') {
     const pt = getCanvasPoint(e);
-    const newNode: CanvasNode = {
+    const newNode: ICanvasNode = {
       id: `node-${Date.now()}`,
       type: 'shape',
       shape: props.selectedShapeType || 'rectangle',
@@ -296,7 +296,7 @@ function handleContainerClick(e: MouseEvent) {
 
   if (props.tool === 'text') {
     const pt = getCanvasPoint(e);
-    const newNode: CanvasNode = {
+    const newNode: ICanvasNode = {
       id: `node-${Date.now()}`,
       type: 'loose_text',
       x: Math.max(10, Math.min(width - 210, Math.round(pt.x - 10))),
@@ -445,13 +445,22 @@ function renderStrokes() {
 function getSvgPathFromStroke(strokePoints: number[][]): string {
   if (!strokePoints.length) return '';
 
-  const d = strokePoints.reduce(
-    (acc, [x0, y0], i, arr) => {
-      const [x1, y1] = arr[(i + 1) % arr.length];
+  const firstPt = strokePoints[0] || [0, 0];
+  const firstX = firstPt[0] ?? 0;
+  const firstY = firstPt[1] ?? 0;
+  const initialAcc: (string | number)[] = ['M', firstX, firstY, 'Q'];
+
+  const d = strokePoints.reduce<(string | number)[]>(
+    (acc, pt, i, arr) => {
+      const x0 = pt[0] ?? 0;
+      const y0 = pt[1] ?? 0;
+      const next = arr[(i + 1) % arr.length] || [x0, y0];
+      const x1 = next[0] ?? 0;
+      const y1 = next[1] ?? 0;
       acc.push(x0, y0, (x0 + x1) / 2, (y0 + y1) / 2);
       return acc;
     },
-    ['M', ...strokePoints[0], 'Q']
+    initialAcc
   );
 
   d.push('Z');

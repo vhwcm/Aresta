@@ -1,6 +1,6 @@
 import { reactive, computed, readonly } from 'vue'
-import { useAuth } from '~/composables/useAuth'
 import { useReaderStore, type ReaderColorTheme, type ReaderWidthMode } from '~/stores/readerStore'
+import { settingsRepo } from '~/adapters/database/repositories/SettingsRepository'
 
 function trySyncReaderStore() {
   if (typeof window === 'undefined') return
@@ -33,7 +33,7 @@ export interface SettingsState {
 }
 
 export interface UserSettingsResponse {
-  userId: number
+  userId?: number
   pageAnimationEnabled: boolean
   pageCreaseEnabled?: boolean
   language: string
@@ -62,11 +62,6 @@ export function readerThemeToThemeMode(theme: ReaderColorTheme): ThemeMode {
   return 'light'
 }
 
-import { getApiRoot } from '~/utils/apiBase'
-
-const getAuthApiUrl = () => {
-  return getApiRoot()
-}
 const STORAGE_KEY = 'aresta_settings'
 
 const settings = reactive<SettingsState>({
@@ -132,27 +127,13 @@ function initSettings() {
     const saved = localStorage.getItem(STORAGE_KEY)
     if (saved) {
       const parsed = JSON.parse(saved)
-      if (typeof parsed.pageAnimationEnabled === 'boolean') {
-        settings.pageAnimationEnabled = parsed.pageAnimationEnabled
-      }
-      if (typeof parsed.pageCreaseEnabled === 'boolean') {
-        settings.pageCreaseEnabled = parsed.pageCreaseEnabled
-      }
-      if (!settings.pageAnimationEnabled) {
-        settings.pageCreaseEnabled = false
-      }
-      if (typeof parsed.language === 'string') {
-        settings.language = parsed.language
-      }
-      if (typeof parsed.nativeLanguage === 'string') {
-        settings.nativeLanguage = parsed.nativeLanguage
-      }
-      if (typeof parsed.targetTranslationLanguage === 'string') {
-        settings.targetTranslationLanguage = parsed.targetTranslationLanguage
-      }
-      if (typeof parsed.epubFontSize === 'number') {
-        settings.epubFontSize = Math.max(12, Math.min(36, Math.round(parsed.epubFontSize)))
-      }
+      if (typeof parsed.pageAnimationEnabled === 'boolean') settings.pageAnimationEnabled = parsed.pageAnimationEnabled
+      if (typeof parsed.pageCreaseEnabled === 'boolean') settings.pageCreaseEnabled = parsed.pageCreaseEnabled
+      if (!settings.pageAnimationEnabled) settings.pageCreaseEnabled = false
+      if (typeof parsed.language === 'string') settings.language = parsed.language
+      if (typeof parsed.nativeLanguage === 'string') settings.nativeLanguage = parsed.nativeLanguage
+      if (typeof parsed.targetTranslationLanguage === 'string') settings.targetTranslationLanguage = parsed.targetTranslationLanguage
+      if (typeof parsed.epubFontSize === 'number') settings.epubFontSize = Math.max(12, Math.min(36, Math.round(parsed.epubFontSize)))
       if (typeof parsed.epubFontFamily === 'string' && ['newsreader', 'literata', 'lora', 'merriweather', 'inter'].includes(parsed.epubFontFamily)) {
         settings.epubFontFamily = parsed.epubFontFamily
       }
@@ -162,51 +143,32 @@ function initSettings() {
       if (parsed.readerTheme === 'white' || parsed.readerTheme === 'sepia' || parsed.readerTheme === 'black') {
         settings.readerTheme = parsed.readerTheme
       }
-      if (typeof parsed.desktopHomeGraphOpen === 'boolean') {
-        settings.desktopHomeGraphOpen = parsed.desktopHomeGraphOpen
-      }
-      if (typeof parsed.desktopReaderGraphOpen === 'boolean') {
-        settings.desktopReaderGraphOpen = parsed.desktopReaderGraphOpen
-      }
-      if (typeof parsed.readerTwoPageMode === 'boolean') {
-        settings.readerTwoPageMode = parsed.readerTwoPageMode
-      }
-      if (parsed.readerWidthMode === 'centered' || parsed.readerWidthMode === 'wide') {
-        settings.readerWidthMode = parsed.readerWidthMode
-      }
+      if (typeof parsed.desktopHomeGraphOpen === 'boolean') settings.desktopHomeGraphOpen = parsed.desktopHomeGraphOpen
+      if (typeof parsed.desktopReaderGraphOpen === 'boolean') settings.desktopReaderGraphOpen = parsed.desktopReaderGraphOpen
+      if (typeof parsed.readerTwoPageMode === 'boolean') settings.readerTwoPageMode = parsed.readerTwoPageMode
+      if (parsed.readerWidthMode === 'centered' || parsed.readerWidthMode === 'wide') settings.readerWidthMode = parsed.readerWidthMode
     }
 
-    const legacyReaderTheme = localStorage.getItem('aresta_reader_theme')
-    if (legacyReaderTheme === 'white' || legacyReaderTheme === 'sepia' || legacyReaderTheme === 'black') {
-      if (!saved) {
-        settings.readerTheme = legacyReaderTheme as ReaderColorTheme
-        settings.themeMode = readerThemeToThemeMode(legacyReaderTheme as ReaderColorTheme)
+    // Carrega em paralelo do banco local
+    settingsRepo.get().then((dbSettings) => {
+      if (dbSettings) {
+        if (typeof dbSettings.pageAnimationEnabled === 'boolean') settings.pageAnimationEnabled = dbSettings.pageAnimationEnabled
+        if (typeof dbSettings.pageCreaseEnabled === 'boolean') settings.pageCreaseEnabled = dbSettings.pageCreaseEnabled
+        if (typeof dbSettings.language === 'string') settings.language = dbSettings.language
+        if (typeof dbSettings.nativeLanguage === 'string') settings.nativeLanguage = dbSettings.nativeLanguage
+        if (typeof dbSettings.targetTranslationLanguage === 'string') settings.targetTranslationLanguage = dbSettings.targetTranslationLanguage
+        if (typeof dbSettings.epubFontSize === 'number') settings.epubFontSize = dbSettings.epubFontSize
+        if (dbSettings.epubFontFamily) settings.epubFontFamily = dbSettings.epubFontFamily as EpubFontFamilyId
+        if (dbSettings.themeMode) settings.themeMode = dbSettings.themeMode as ThemeMode
+        if (dbSettings.readerTheme) settings.readerTheme = dbSettings.readerTheme as ReaderColorTheme
+        if (typeof dbSettings.desktopHomeGraphOpen === 'boolean') settings.desktopHomeGraphOpen = dbSettings.desktopHomeGraphOpen
+        if (typeof dbSettings.desktopReaderGraphOpen === 'boolean') settings.desktopReaderGraphOpen = dbSettings.desktopReaderGraphOpen
+        if (typeof dbSettings.readerTwoPageMode === 'boolean') settings.readerTwoPageMode = dbSettings.readerTwoPageMode
+        if (dbSettings.readerWidthMode) settings.readerWidthMode = dbSettings.readerWidthMode as ReaderWidthMode
+        applyTheme(settings.themeMode)
+        trySyncReaderStore()
       }
-    }
-
-    const legacyTwoPage = localStorage.getItem('aresta_reader_two_page')
-    if (legacyTwoPage !== null) {
-      settings.readerTwoPageMode = legacyTwoPage === 'true'
-    }
-
-    const legacyWidthMode = localStorage.getItem('aresta_reader_width_mode')
-    if (legacyWidthMode === 'centered' || legacyWidthMode === 'wide') {
-      settings.readerWidthMode = legacyWidthMode
-    }
-
-    // Compatibilidade retroativa com chave antiga do grafo home
-    const legacyGraphCollapsed = localStorage.getItem('aresta_home_graph_collapsed')
-    if (legacyGraphCollapsed !== null && saved && JSON.parse(saved).desktopHomeGraphOpen === undefined) {
-      settings.desktopHomeGraphOpen = legacyGraphCollapsed !== 'true'
-    }
-
-    // Compatibilidade retroativa com chave antiga de fonte do reader
-    const legacyFont = localStorage.getItem('aresta_reader_font')
-    if (legacyFont && saved && JSON.parse(saved).epubFontFamily === undefined) {
-      if (['newsreader', 'literata', 'lora', 'merriweather', 'inter'].includes(legacyFont)) {
-        settings.epubFontFamily = legacyFont as EpubFontFamilyId
-      }
-    }
+    }).catch(() => {})
   } catch {
     // ignorar falha de parse
   }
@@ -215,64 +177,13 @@ function initSettings() {
   applyTheme(settings.themeMode)
 }
 
-function applyServerSettings(data: UserSettingsResponse) {
-  if (typeof data.pageAnimationEnabled === 'boolean') {
-    settings.pageAnimationEnabled = data.pageAnimationEnabled
-  }
-  if (typeof data.pageCreaseEnabled === 'boolean') {
-    settings.pageCreaseEnabled = data.pageCreaseEnabled
-  }
-  if (!settings.pageAnimationEnabled) {
-    settings.pageCreaseEnabled = false
-  }
-  if (typeof data.language === 'string') {
-    settings.language = data.language
-  }
-  if (typeof data.nativeLanguage === 'string') {
-    settings.nativeLanguage = data.nativeLanguage
-  }
-  if (typeof data.targetTranslationLanguage === 'string') {
-    settings.targetTranslationLanguage = data.targetTranslationLanguage
-  }
-  if (typeof data.epubFontSize === 'number') {
-    settings.epubFontSize = Math.max(12, Math.min(36, Math.round(data.epubFontSize)))
-  }
-  if (data.epubFontFamily && ['newsreader', 'literata', 'lora', 'merriweather', 'inter'].includes(data.epubFontFamily)) {
-    settings.epubFontFamily = data.epubFontFamily
-  }
-  if (data.themeMode === 'dark' || data.themeMode === 'light' || data.themeMode === 'sepia') {
-    settings.themeMode = data.themeMode
-  }
-  if (data.readerTheme === 'white' || data.readerTheme === 'sepia' || data.readerTheme === 'black') {
-    settings.readerTheme = data.readerTheme
-  }
-  if (typeof data.desktopHomeGraphOpen === 'boolean') {
-    settings.desktopHomeGraphOpen = data.desktopHomeGraphOpen
-  }
-  if (typeof data.desktopReaderGraphOpen === 'boolean') {
-    settings.desktopReaderGraphOpen = data.desktopReaderGraphOpen
-  }
-  if (typeof data.readerTwoPageMode === 'boolean') {
-    settings.readerTwoPageMode = data.readerTwoPageMode
-  }
-  if (data.readerWidthMode === 'centered' || data.readerWidthMode === 'wide') {
-    settings.readerWidthMode = data.readerWidthMode
-  }
-
-  applyTheme(settings.themeMode)
-  trySyncReaderStore()
-}
-
 export function useSettings() {
   initSettings()
-
-  const auth = useAuth()
 
   const saveLocally = () => {
     if (typeof window === 'undefined') return
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
-      // Sincronizar chave legada para compatibilidade de leitor
       localStorage.setItem('aresta_reader_font', settings.epubFontFamily)
       localStorage.setItem('aresta_reader_page_crease', String(settings.pageCreaseEnabled))
       localStorage.setItem('aresta_home_graph_collapsed', String(!settings.desktopHomeGraphOpen))
@@ -282,45 +193,51 @@ export function useSettings() {
     }
   }
 
-  const persistToServer = async () => {
-    if (!auth.token?.value) return
+  const persistToLocalDb = async () => {
     try {
-      const authUrl = getAuthApiUrl()
-      await $fetch(`${authUrl}/api/user-settings`, {
-        method: 'PUT',
-        headers: { Authorization: `Bearer ${auth.token.value}` },
-        body: {
-          pageAnimationEnabled: settings.pageAnimationEnabled,
-          pageCreaseEnabled: settings.pageCreaseEnabled,
-          language: settings.language,
-          nativeLanguage: settings.nativeLanguage,
-          targetTranslationLanguage: settings.targetTranslationLanguage,
-          epubFontSize: settings.epubFontSize,
-          epubFontFamily: settings.epubFontFamily,
-          themeMode: settings.themeMode,
-          readerTheme: settings.readerTheme,
-          desktopHomeGraphOpen: settings.desktopHomeGraphOpen,
-          desktopReaderGraphOpen: settings.desktopReaderGraphOpen,
-        },
+      await settingsRepo.save({
+        pageAnimationEnabled: settings.pageAnimationEnabled,
+        pageCreaseEnabled: settings.pageCreaseEnabled,
+        language: settings.language,
+        nativeLanguage: settings.nativeLanguage,
+        targetTranslationLanguage: settings.targetTranslationLanguage,
+        epubFontSize: settings.epubFontSize,
+        epubFontFamily: settings.epubFontFamily,
+        themeMode: settings.themeMode,
+        readerTheme: settings.readerTheme,
+        desktopHomeGraphOpen: settings.desktopHomeGraphOpen,
+        desktopReaderGraphOpen: settings.desktopReaderGraphOpen,
+        readerTwoPageMode: settings.readerTwoPageMode,
+        readerWidthMode: settings.readerWidthMode,
       })
-    } catch {
-      // silencioso se a requisição falhar
+    } catch (e) {
+      console.warn('[useSettings] Falha ao salvar configurações no banco local:', e)
     }
   }
 
   const loadFromServer = async () => {
-    if (!auth.token?.value) return
     try {
-      const authUrl = getAuthApiUrl()
-      const data = await $fetch<UserSettingsResponse>(`${authUrl}/api/user-settings`, {
-        headers: { Authorization: `Bearer ${auth.token.value}` },
-      })
-      if (data) {
-        applyServerSettings(data)
+      const dbSettings = await settingsRepo.get()
+      if (dbSettings) {
+        if (typeof dbSettings.pageAnimationEnabled === 'boolean') settings.pageAnimationEnabled = dbSettings.pageAnimationEnabled
+        if (typeof dbSettings.pageCreaseEnabled === 'boolean') settings.pageCreaseEnabled = dbSettings.pageCreaseEnabled
+        if (typeof dbSettings.language === 'string') settings.language = dbSettings.language
+        if (typeof dbSettings.nativeLanguage === 'string') settings.nativeLanguage = dbSettings.nativeLanguage
+        if (typeof dbSettings.targetTranslationLanguage === 'string') settings.targetTranslationLanguage = dbSettings.targetTranslationLanguage
+        if (typeof dbSettings.epubFontSize === 'number') settings.epubFontSize = dbSettings.epubFontSize
+        if (dbSettings.epubFontFamily) settings.epubFontFamily = dbSettings.epubFontFamily as EpubFontFamilyId
+        if (dbSettings.themeMode) settings.themeMode = dbSettings.themeMode as ThemeMode
+        if (dbSettings.readerTheme) settings.readerTheme = dbSettings.readerTheme as ReaderColorTheme
+        if (typeof dbSettings.desktopHomeGraphOpen === 'boolean') settings.desktopHomeGraphOpen = dbSettings.desktopHomeGraphOpen
+        if (typeof dbSettings.desktopReaderGraphOpen === 'boolean') settings.desktopReaderGraphOpen = dbSettings.desktopReaderGraphOpen
+        if (typeof dbSettings.readerTwoPageMode === 'boolean') settings.readerTwoPageMode = dbSettings.readerTwoPageMode
+        if (dbSettings.readerWidthMode) settings.readerWidthMode = dbSettings.readerWidthMode as ReaderWidthMode
         saveLocally()
+        applyTheme(settings.themeMode)
+        trySyncReaderStore()
       }
     } catch {
-      // silencioso se a requisição falhar
+      // fallback
     }
   }
 
@@ -328,44 +245,44 @@ export function useSettings() {
     settings.pageAnimationEnabled = enabled
     settings.pageCreaseEnabled = enabled
     saveLocally()
-    void persistToServer()
+    void persistToLocalDb()
   }
 
   const setPageCreaseEnabled = (enabled: boolean) => {
     settings.pageCreaseEnabled = enabled
     settings.pageAnimationEnabled = enabled
     saveLocally()
-    void persistToServer()
+    void persistToLocalDb()
   }
 
   const setLanguage = (lang: string) => {
     settings.language = lang
     saveLocally()
-    void persistToServer()
+    void persistToLocalDb()
   }
 
   const setNativeLanguage = (lang: DictionaryLanguage | string) => {
     settings.nativeLanguage = lang
     saveLocally()
-    void persistToServer()
+    void persistToLocalDb()
   }
 
   const setTargetTranslationLanguage = (lang: DictionaryLanguage | string) => {
     settings.targetTranslationLanguage = lang
     saveLocally()
-    void persistToServer()
+    void persistToLocalDb()
   }
 
   const setEpubFontSize = (size: number) => {
     settings.epubFontSize = Math.max(12, Math.min(36, Math.round(size)))
     saveLocally()
-    void persistToServer()
+    void persistToLocalDb()
   }
 
   const setEpubFontFamily = (family: EpubFontFamilyId) => {
     settings.epubFontFamily = family
     saveLocally()
-    void persistToServer()
+    void persistToLocalDb()
   }
 
   const setThemeMode = (mode: ThemeMode) => {
@@ -376,18 +293,16 @@ export function useSettings() {
     if (typeof window !== 'undefined') {
       try {
         localStorage.setItem('aresta_reader_theme', rTheme)
-      } catch {
-        // ignorar erro
-      }
+      } catch {}
     }
     saveLocally()
-    void persistToServer()
+    void persistToLocalDb()
   }
 
   const setDesktopHomeGraphOpen = (open: boolean) => {
     settings.desktopHomeGraphOpen = open
     saveLocally()
-    void persistToServer()
+    void persistToLocalDb()
   }
 
   const setReaderTheme = (theme: ReaderColorTheme) => {
@@ -399,12 +314,10 @@ export function useSettings() {
       if (typeof window !== 'undefined') {
         try {
           localStorage.setItem('aresta_reader_theme', theme)
-        } catch {
-          // ignorar erro
-        }
+        } catch {}
       }
       saveLocally()
-      void persistToServer()
+      void persistToLocalDb()
     }
   }
 

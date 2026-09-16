@@ -12,6 +12,8 @@ authRouter.delete('/me', authenticate, (req, res) => authController.deleteMe(req
 
 authRouter.get('/oauth/:provider/url', (req, res) => oauthController.getUrl(req, res))
 authRouter.post('/oauth/:provider/callback', (req, res) => oauthController.callback(req, res))
+authRouter.post('/oauth/:provider/link-drive', authenticate, (req, res) => oauthController.linkDrive(req, res))
+authRouter.delete('/oauth/:provider/unlink-drive', authenticate, (req, res) => oauthController.unlinkDrive(req, res))
 authRouter.post('/oauth/:provider/refresh', authenticate, (req, res) => oauthController.refresh(req, res))
 authRouter.post('/cloud/:provider/access-token', authenticate, (req, res) => oauthController.getAccessToken(req, res))
 authRouter.get('/oauth/:provider/status', authenticate, (req, res) => oauthController.getStatus(req, res))

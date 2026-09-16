@@ -52,10 +52,10 @@
       <div class="p-6 md:p-8 rounded-3xl bg-white/[0.02] border border-divider flex flex-col gap-4 backdrop-blur-xl relative overflow-hidden group">
         <div class="absolute inset-0 bg-gradient-to-r from-accent/10 via-transparent to-transparent opacity-40 group-hover:opacity-80 transition-opacity"></div>
         <p class="font-interface text-lg sm:text-xl text-textPrimary leading-relaxed relative z-10 font-light">
-          A maioria das plataformas trata livros como texto estático e notas como arquivos isolados. O <strong class="font-semibold text-accent">Aresta</strong> foi concebido como um segundo cérebro sensorial: uma união harmoniosa entre neurociência da leitura, espacialização visual e algoritmos de retenção de longo prazo.
+          A maioria das ferramentas trata livros como texto estático, notas como arquivos soltos e flashcards como tarefas isoladas. O <strong class="font-semibold text-accent">Aresta</strong> unifica <span class="text-textPrimary font-medium">leitura ativa, anotações estruturadas, flashcards inteligentes, canvas espacial infinito e inteligência artificial</span> em uma única engrenagem cognitiva contínua.
         </p>
         <p class="font-interface text-sm sm:text-base text-textSecondary leading-relaxed relative z-10">
-          Descubra cada pilar arquitetado para resgatar sua atenção, aprofundar seu raciocínio crítico e garantir que o conhecimento absorvido permaneça com você para sempre.
+          Descubra como o resgate da leitura profunda e a integração sem fricção entre ferramentas multiplicam seu foco, pensamento crítico e retenção a longo prazo.
         </p>
       </div>
     </header>
@@ -65,7 +65,7 @@
     <!-- Grade de Pilares e Benefícios -->
     <main class="flex flex-col gap-16">
 
-      <!-- Pilar 1: Leitura Sensorial & 3D Realista -->
+      <!-- Pilar 1: O Poder Cognitivo da Leitura Profunda -->
       <section class="flex flex-col gap-6 group">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 rounded-2xl bg-accent/15 border border-accent/30 text-accent flex items-center justify-center font-technical font-bold text-sm">
@@ -73,56 +73,157 @@
           </div>
           <div>
             <div class="font-technical text-[10px] uppercase tracking-widest text-accent font-semibold">
-              Experiência Sensorial
+              Neurociência & Foco
             </div>
             <h2 class="font-editorial text-2xl sm:text-3xl font-light text-textPrimary group-hover:text-accent transition-colors">
-              Leitura Imersiva & Virada de Página Tridimensional
+              O Poder Transformador da Leitura Profunda
             </h2>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <!-- Card 1: Foco e Atenção Sustentada -->
+          <div class="p-6 rounded-2xl bg-white/[0.02] border border-divider flex flex-col justify-between gap-4">
+            <div class="flex flex-col gap-2.5">
+              <div class="w-8 h-8 rounded-xl bg-accent/10 text-accent flex items-center justify-center">
+                <TargetIcon class="w-4 h-4" />
+              </div>
+              <h3 class="font-editorial text-xl font-light text-textPrimary">
+                Resgate da Atenção Sustentada
+              </h3>
+              <p class="font-interface text-xs sm:text-sm text-textSecondary leading-relaxed">
+                Em um ambiente saturado de estímulos rápidos e dopamina barata, a leitura focada atua como um treino neuroplástico que reconstrói sua capacidade de manter concentração prolongada.
+              </p>
+            </div>
+            <div class="text-[11px] font-technical text-textSecondary/80 border-t border-divider/60 pt-3">
+              ✦ Blindagem contra a fragmentação da atenção
+            </div>
+          </div>
+
+          <!-- Card 2: Pensamento Crítico e Modelos Mentais -->
+          <div class="p-6 rounded-2xl bg-white/[0.02] border border-divider flex flex-col justify-between gap-4">
+            <div class="flex flex-col gap-2.5">
+              <div class="w-8 h-8 rounded-xl bg-accent/10 text-accent flex items-center justify-center">
+                <LightbulbIcon class="w-4 h-4" />
+              </div>
+              <h3 class="font-editorial text-xl font-light text-textPrimary">
+                Pensamento Crítico & Modelos Mentais
+              </h3>
+              <p class="font-interface text-xs sm:text-sm text-textSecondary leading-relaxed">
+                Acompanhar argumentos longos e encadeados de autores clássicos e técnicos exercita o raciocínio dedutivo, permitindo avaliar premissas e criar repertório denso para tomada de decisão.
+              </p>
+            </div>
+            <div class="text-[11px] font-technical text-textSecondary/80 border-t border-divider/60 pt-3">
+              ✦ Construção de discernimento e raciocínio analítico
+            </div>
+          </div>
+
+          <!-- Card 3: Expansão de Vocabulário & Clareza -->
           <div class="p-6 rounded-2xl bg-white/[0.02] border border-divider flex flex-col justify-between gap-4">
             <div class="flex flex-col gap-2.5">
               <div class="w-8 h-8 rounded-xl bg-accent/10 text-accent flex items-center justify-center">
                 <BookOpenIcon class="w-4 h-4" />
               </div>
               <h3 class="font-editorial text-xl font-light text-textPrimary">
-                Física Realista de Folheamento (Three.js)
+                Riqueza Semântica & Clareza de Expressão
               </h3>
               <p class="font-interface text-xs sm:text-sm text-textSecondary leading-relaxed">
-                Ao invés de rolagens infinitas que cansam a visão e fragmentam a memória espacial, o leitor do Aresta simula a curvatura e a inércia de páginas reais de papel com aceleração por hardware.
+                A imersão em vocabulário refinado e estruturas gramaticais diversas amplia o repertório expressivo, tornando a comunicação oral e escrita mais precisa, persuasiva e elegante.
               </p>
             </div>
             <div class="text-[11px] font-technical text-textSecondary/80 border-t border-divider/60 pt-3">
-              ✦ Ancoragem topográfica da memória por quadrante da folha
-            </div>
-          </div>
-
-          <div class="p-6 rounded-2xl bg-white/[0.02] border border-divider flex flex-col justify-between gap-4">
-            <div class="flex flex-col gap-2.5">
-              <div class="w-8 h-8 rounded-xl bg-accent/10 text-accent flex items-center justify-center">
-                <SunIcon class="w-4 h-4" />
-              </div>
-              <h3 class="font-editorial text-xl font-light text-textPrimary">
-                Tipografia Editorial & Iluminação Calibrada
-              </h3>
-              <p class="font-interface text-xs sm:text-sm text-textSecondary leading-relaxed">
-                Projetado com a fonte clássica <span class="font-editorial text-accent font-medium">Newsreader</span> e paletas dedicadas: modo Escuro profundo, Sépia amarelado de livro impresso e Claro suave, minimizando o cansaço ocular em sessões prolongadas.
-              </p>
-            </div>
-            <div class="text-[11px] font-technical text-textSecondary/80 border-t border-divider/60 pt-3">
-              ✦ Contraste harmônico para preservar o ciclo circadiano
+              ✦ Clareza de pensamento proporcional à clareza linguística
             </div>
           </div>
         </div>
       </section>
 
-      <!-- Pilar 2: Retenção Ativa & Curva de Ebbinghaus -->
+      <!-- Pilar 2: Integração Total do Ecossistema Aresta -->
       <section class="flex flex-col gap-6 group">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 rounded-2xl bg-accent/15 border border-accent/30 text-accent flex items-center justify-center font-technical font-bold text-sm">
             02
+          </div>
+          <div>
+            <div class="font-technical text-[10px] uppercase tracking-widest text-accent font-semibold">
+              Simbiose Cognitiva
+            </div>
+            <h2 class="font-editorial text-2xl sm:text-3xl font-light text-textPrimary group-hover:text-accent transition-colors">
+              Integração Fluida: Leitura, Anotações, Flashcards, Canvas & IA
+            </h2>
+          </div>
+        </div>
+
+        <!-- Banner de Fluxo Unificado -->
+        <div class="p-6 md:p-8 rounded-3xl bg-white/[0.02] border border-accent/20 flex flex-col gap-6 backdrop-blur-xl relative overflow-hidden">
+          <div class="flex flex-col gap-2">
+            <span class="font-technical text-[11px] uppercase tracking-widest text-accent font-semibold flex items-center gap-2">
+              <WorkflowIcon class="w-4 h-4" />
+              Ciclo Contínuo de Aprendizado de Alto Rendimento
+            </span>
+            <p class="font-interface text-sm text-textSecondary leading-relaxed">
+              No Aresta, cada etapa do estudo alimenta naturalmente a próxima sem necessidade de trocar de aplicativo ou copiar e colar manualmente.
+            </p>
+          </div>
+
+          <!-- Grade dos 4 Passos do Fluxo Integrado -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Passo 1 -->
+            <div class="p-4 rounded-2xl bg-black/20 dark:bg-white/[0.03] border border-divider flex flex-col gap-2.5">
+              <div class="flex items-center justify-between">
+                <span class="w-6 h-6 rounded-full bg-accent/15 text-accent text-xs font-technical font-bold flex items-center justify-center">1</span>
+                <BookOpenIcon class="w-4 h-4 text-accent" />
+              </div>
+              <h4 class="font-editorial text-base text-textPrimary font-medium">Leitura Ativa & Citação</h4>
+              <p class="text-xs text-textSecondary leading-relaxed">
+                Destaque passagens essenciais durante a leitura; o texto é preservado com referência direta à página original.
+              </p>
+            </div>
+
+            <!-- Passo 2 -->
+            <div class="p-4 rounded-2xl bg-black/20 dark:bg-white/[0.03] border border-divider flex flex-col gap-2.5">
+              <div class="flex items-center justify-between">
+                <span class="w-6 h-6 rounded-full bg-accent/15 text-accent text-xs font-technical font-bold flex items-center justify-center">2</span>
+                <FileTextIcon class="w-4 h-4 text-accent" />
+              </div>
+              <h4 class="font-editorial text-base text-textPrimary font-medium">Anotações Estruturadas</h4>
+              <p class="text-xs text-textSecondary leading-relaxed">
+                Elabore reflexões em Markdown bidirecional, conectando insights do livro a temas e anotações prévias.
+              </p>
+            </div>
+
+            <!-- Passo 3 -->
+            <div class="p-4 rounded-2xl bg-black/20 dark:bg-white/[0.03] border border-divider flex flex-col gap-2.5">
+              <div class="flex items-center justify-between">
+                <span class="w-6 h-6 rounded-full bg-accent/15 text-accent text-xs font-technical font-bold flex items-center justify-center">3</span>
+                <LayersIcon class="w-4 h-4 text-accent" />
+              </div>
+              <h4 class="font-editorial text-base text-textPrimary font-medium">Flashcards com FSRS</h4>
+              <p class="text-xs text-textSecondary leading-relaxed">
+                Gere cartões de memorização com 1 clique ou via IA, mantendo o link de volta ao contexto do livro.
+              </p>
+            </div>
+
+            <!-- Passo 4 -->
+            <div class="p-4 rounded-2xl bg-black/20 dark:bg-white/[0.03] border border-divider flex flex-col gap-2.5">
+              <div class="flex items-center justify-between">
+                <span class="w-6 h-6 rounded-full bg-accent/15 text-accent text-xs font-technical font-bold flex items-center justify-center">4</span>
+                <CompassIcon class="w-4 h-4 text-accent" />
+              </div>
+              <h4 class="font-editorial text-base text-textPrimary font-medium">Canvas & IA Didática</h4>
+              <p class="text-xs text-textSecondary leading-relaxed">
+                Espalhe notas e livros no canvas infinito e deixe a IA sintetizar livretos explicativos e conexões interdisciplinares.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Pilar 3: Retenção Ativa & Curva de Ebbinghaus -->
+      <section class="flex flex-col gap-6 group">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-accent/15 border border-accent/30 text-accent flex items-center justify-center font-technical font-bold text-sm">
+            03
           </div>
           <div>
             <div class="font-technical text-[10px] uppercase tracking-widest text-accent font-semibold">
@@ -171,11 +272,11 @@
         </div>
       </section>
 
-      <!-- Pilar 3: Grafo de Conhecimento Espacial & Zettelkasten -->
+      <!-- Pilar 4: Grafo de Conhecimento Espacial & Zettelkasten -->
       <section class="flex flex-col gap-6 group">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 rounded-2xl bg-accent/15 border border-accent/30 text-accent flex items-center justify-center font-technical font-bold text-sm">
-            03
+            04
           </div>
           <div>
             <div class="font-technical text-[10px] uppercase tracking-widest text-accent font-semibold">
@@ -224,11 +325,11 @@
         </div>
       </section>
 
-      <!-- Pilar 4: Canvas Espacial Infinito & IA Didática -->
+      <!-- Pilar 5: Canvas Espacial Infinito & IA Didática -->
       <section class="flex flex-col gap-6 group">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 rounded-2xl bg-accent/15 border border-accent/30 text-accent flex items-center justify-center font-technical font-bold text-sm">
-            04
+            05
           </div>
           <div>
             <div class="font-technical text-[10px] uppercase tracking-widest text-accent font-semibold">
@@ -294,14 +395,14 @@
             </thead>
             <tbody class="divide-y divide-divider/40 text-textSecondary">
               <tr>
+                <td class="py-3.5 px-4 font-medium text-textPrimary">Integração do Conhecimento</td>
+                <td class="py-3.5 px-4">Ferramentas fragmentadas (app de PDF + bloco de notas + anki avulso)</td>
+                <td class="py-3.5 px-4 text-accent font-medium">Fluxo Unificado (Leitura ➔ Notas ➔ Flashcards ➔ Canvas ➔ IA)</td>
+              </tr>
+              <tr>
                 <td class="py-3.5 px-4 font-medium text-textPrimary">Fixação do Conteúdo</td>
                 <td class="py-3.5 px-4">Passiva (esquecimento de 80% em 7 dias)</td>
                 <td class="py-3.5 px-4 text-accent font-medium">Repetição Espaçada FSRS & Recall Ativo</td>
-              </tr>
-              <tr>
-                <td class="py-3.5 px-4 font-medium text-textPrimary">Sensação de Leitura</td>
-                <td class="py-3.5 px-4">Scroll contínuo mecânico</td>
-                <td class="py-3.5 px-4 text-accent font-medium">Virada de página 3D física e sensorial</td>
               </tr>
               <tr>
                 <td class="py-3.5 px-4 font-medium text-textPrimary">Organização de Notas</td>
@@ -311,7 +412,7 @@
               <tr>
                 <td class="py-3.5 px-4 font-medium text-textPrimary">Assistência Cognitiva</td>
                 <td class="py-3.5 px-4">Nenhuma ou resumos genéricos</td>
-                <td class="py-3.5 px-4 text-accent font-medium">Livretos didáticos com rigor pedagógico</td>
+                <td class="py-3.5 px-4 text-accent font-medium">Livretos didáticos com rigor pedagógico e IA socrática</td>
               </tr>
               <tr>
                 <td class="py-3.5 px-4 font-medium text-textPrimary">Hábito e Disciplina</td>
@@ -339,8 +440,10 @@ import {
   MessageSquareIcon,
   SparklesIcon,
   BrainIcon,
+  TargetIcon,
+  LightbulbIcon,
   BookOpenIcon,
-  SunIcon,
+  WorkflowIcon,
   FlameIcon,
   LayersIcon,
   NetworkIcon,
@@ -357,11 +460,11 @@ if (typeof useHead === 'function') {
     meta: [
       {
         name: 'description',
-        content: 'Conheça todos os benefícios do Aresta: leitura imersiva 3D, retenção ativa com FSRS, Grafo de Conhecimento, Canvas Espacial e síntese didática por IA.'
+        content: 'Conheça todos os benefícios do Aresta: leitura profunda, fluxo unificado de IA, anotações, flashcards com FSRS, Grafo de Conhecimento e Canvas Espacial.'
       },
       {
         name: 'keywords',
-        content: 'benefícios aresta, leitura ativa, retenção de conhecimento, spaced repetition, grafo de conhecimento, canvas espacial, fsrs'
+        content: 'benefícios aresta, leitura profunda, leitura ativa, retenção de conhecimento, spaced repetition, grafo de conhecimento, canvas espacial, fsrs, inteligência artificial'
       }
     ]
   })

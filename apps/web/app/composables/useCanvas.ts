@@ -12,11 +12,6 @@ import type {
 } from '~/interfaces/canvas';
 import { useAuth } from '~/composables/useAuth';
 import { canvasRepo } from '~/adapters/database/repositories/CanvasRepository';
-import { getApiBase } from '~/utils/apiBase';
-
-const getCanvasApiUrl = () => {
-  return getApiBase();
-};
 
 // Shared module-level reactive state across components for current active canvas session
 const canvasesList = ref<CanvasSummary[]>([]);
@@ -51,17 +46,7 @@ const maxHistory = 40;
 let autosaveTimeout: any = null;
 
 export function useCanvas() {
-  const { token } = useAuth();
-
-  const getHeaders = () => {
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    if (token?.value) {
-      headers.Authorization = `Bearer ${token.value}`;
-    }
-    return headers;
-  };
+  const { token, user } = useAuth();
 
   const pushHistory = () => {
     redoStack.value = [];
@@ -154,7 +139,6 @@ export function useCanvas() {
 
   // Operações de Arestas (Conexões)
   const addEdge = (edge: CanvasEdge) => {
-    // Evitar conexões duplicadas exatas
     const exists = edges.value.some(
       (e) =>
         e.fromNode === edge.fromNode &&
@@ -282,7 +266,6 @@ export function useCanvas() {
         parsedDoc = { nodes: nodes.value, edges: edges.value, viewport: viewport.value };
       }
 
-      // 1. Salva localmente primeiro (Local-First)
       await canvasRepo.save({
         id: currentCanvas.value.id,
         name: currentCanvas.value.title,
@@ -290,23 +273,11 @@ export function useCanvas() {
         document: parsedDoc,
       });
 
-      // 2. Se online, envia para a API
-      await $fetch(`${getCanvasApiUrl()}/canvases/${currentCanvas.value.id}`, {
-        method: 'PUT',
-        headers: getHeaders(),
-        body: {
-          title: currentCanvas.value.title,
-          description: currentCanvas.value.description,
-          folder: currentCanvas.value.folder,
-          tags: currentCanvas.value.tags || [],
-          data: payloadData,
-        },
-      });
       if (currentCanvas.value) {
         currentCanvas.value.data = payloadData;
       }
     } catch (err: any) {
-      console.warn('Canvas salvo localmente (offline mode):', err);
+      console.warn('Erro ao salvar canvas localmente:', err);
     } finally {
       isSaving.value = false;
     }
@@ -315,55 +286,46 @@ export function useCanvas() {
   const fetchCanvases = async (params: { folder?: string; tag?: string; search?: string } = {}) => {
     isLoading.value = true;
     error.value = null;
-    if (!token?.value) {
+
+    if (!token?.value && !user?.value) {
       canvasesList.value = [];
       isLoading.value = false;
       return [];
     }
 
-    // 1. Carrega primeiro do banco local
     try {
       const localCanvases = await canvasRepo.getAll();
-      if (localCanvases && localCanvases.length > 0) {
-        canvasesList.value = localCanvases.map((c: any) => ({
-          id: c.id,
-          title: c.name,
-          description: c.description || null,
-          folder: c.folder || null,
-          tags: c.tags || [],
-          nodeCount: c.nodeCount || 0,
-          edgeCount: c.edgeCount || 0,
-          noteIds: Array.isArray(c.document?.nodes)
-            ? c.document.nodes
-                .filter((n: any) => n && n.type === 'note_embed' && n.noteId)
-                .map((n: any) => n.noteId)
-            : [],
-          updatedAt: c.updated_at,
-        }));
+      let list = localCanvases || [];
+      if (params.folder !== undefined && params.folder !== '') {
+        list = list.filter((c: any) => c.folder === params.folder);
       }
-    } catch (e) {
-      console.warn('[useCanvas] Falha ao ler banco local:', e);
-    }
-
-    // 2. Sincroniza se online
-    try {
-      const queryParams = new URLSearchParams();
-      if (params.folder !== undefined && params.folder !== '') queryParams.append('folder', params.folder);
-      if (params.tag) queryParams.append('tag', params.tag);
-      if (params.search) queryParams.append('search', params.search);
-
-      const qs = queryParams.toString() ? `?${queryParams.toString()}` : '';
-      const list = await $fetch<CanvasSummary[]>(`${getCanvasApiUrl()}/canvases${qs}`, {
-        headers: getHeaders(),
-      });
-      if (Array.isArray(list)) {
-        canvasesList.value = list;
+      if (params.tag) {
+        list = list.filter((c: any) => c.tags?.includes(params.tag));
       }
+      if (params.search) {
+        const q = params.search.toLowerCase();
+        list = list.filter((c: any) => c.name?.toLowerCase().includes(q) || c.description?.toLowerCase().includes(q));
+      }
+
+      canvasesList.value = list.map((c: any) => ({
+        id: c.id,
+        title: c.name,
+        description: c.description || null,
+        folder: c.folder || null,
+        tags: c.tags || [],
+        nodeCount: c.nodeCount || c.document?.nodes?.length || 0,
+        edgeCount: c.edgeCount || c.document?.edges?.length || 0,
+        noteIds: Array.isArray(c.document?.nodes)
+          ? c.document.nodes
+              .filter((n: any) => n && n.type === 'note_embed' && n.noteId)
+              .map((n: any) => n.noteId)
+          : [],
+        updatedAt: c.updated_at,
+      }));
+
       return canvasesList.value;
     } catch (err: any) {
-      if (canvasesList.value.length === 0) {
-        error.value = 'Falha ao carregar lista de quadros.';
-      }
+      console.warn('[useCanvas] Erro ao carregar quadros locais:', err);
       return canvasesList.value;
     } finally {
       isLoading.value = false;
@@ -371,28 +333,23 @@ export function useCanvas() {
   };
 
   const fetchCanvasFolders = async (): Promise<string[]> => {
-    if (!token?.value) return [];
     try {
-      const list = await $fetch<string[]>(`${getCanvasApiUrl()}/canvases/folders`, {
-        headers: getHeaders(),
+      const all = await canvasRepo.getAll();
+      const set = new Set<string>();
+      all.forEach((c: any) => {
+        if (c.folder) set.add(c.folder);
       });
-      if (Array.isArray(list)) {
-        canvasFolders.value = list;
-        return list;
-      }
-      return [];
+      canvasFolders.value = Array.from(set);
+      return canvasFolders.value;
     } catch (e) {
-      console.warn('[useCanvas] Falha ao buscar pastas:', e);
       return [];
     }
   };
 
   const loadCanvas = async (id: string) => {
-    if (!token?.value) return null;
     isLoading.value = true;
     error.value = null;
 
-    // 1. Carrega primeiro do banco local
     try {
       const local = await canvasRepo.getById(id);
       if (local) {
@@ -408,38 +365,13 @@ export function useCanvas() {
         };
         currentCanvas.value = item;
         deserializeDocument(item.data);
+        return item;
       }
-    } catch (e) {
-      console.warn('[useCanvas] Falha ao carregar canvas local:', e);
-    }
-
-    // 2. Busca da API se online
-    try {
-      const item = await $fetch<CanvasItem>(`${getCanvasApiUrl()}/canvases/${id}`, {
-        headers: getHeaders(),
-      });
-      currentCanvas.value = item;
-      deserializeDocument(item.data);
-
-      let parsedDoc: any = {};
-      try {
-        parsedDoc = JSON.parse(item.data);
-      } catch (e) {
-        parsedDoc = { nodes: [], edges: [], viewport: { x: 0, y: 0, zoom: 1 } };
-      }
-      await canvasRepo.save({
-        id: item.id,
-        name: item.title,
-        description: item.description,
-        document: parsedDoc,
-      });
-
-      return item;
+      error.value = 'Quadro não encontrado.';
+      return null;
     } catch (err: any) {
-      if (!currentCanvas.value) {
-        error.value = 'Quadro não encontrado.';
-      }
-      return currentCanvas.value;
+      error.value = 'Quadro não encontrado.';
+      return null;
     } finally {
       isLoading.value = false;
     }
@@ -449,13 +381,13 @@ export function useCanvas() {
     optionsOrTitle: { title?: string; description?: string | null; folder?: string | null; tags?: string[]; initialData?: string } | string = 'Quadro sem título',
     initialData?: string
   ) => {
-    if (!token?.value) {
+    if (!token?.value && !user?.value) {
       error.value = 'É necessário estar autenticado para criar um quadro.';
       throw new Error('É necessário estar autenticado para criar um quadro.');
     }
 
     isLoading.value = true;
-    const localId = `canvas_${Date.now()}`;
+    const localId = `canvas_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
     const title = typeof optionsOrTitle === 'string' ? optionsOrTitle : (optionsOrTitle.title || 'Quadro sem título');
     const description = typeof optionsOrTitle === 'string' ? null : (optionsOrTitle.description || null);
     const folder = typeof optionsOrTitle === 'string' ? null : (optionsOrTitle.folder || null);
@@ -471,7 +403,6 @@ export function useCanvas() {
       parsedDoc = { nodes: [], edges: [], viewport: { x: 0, y: 0, zoom: 1 } };
     }
 
-    // Salva localmente primeiro
     await canvasRepo.save({
       id: localId,
       name: title,
@@ -501,74 +432,44 @@ export function useCanvas() {
       updatedAt: localItem.updatedAt,
     });
     currentCanvas.value = localItem;
-
-    try {
-      const created = await $fetch<CanvasItem>(`${getCanvasApiUrl()}/canvases`, {
-        method: 'POST',
-        headers: getHeaders(),
-        body: {
-          title,
-          description,
-          folder,
-          tags,
-          data: defaultData,
-        },
-      });
-      if (created) {
-        await canvasRepo.delete(localId);
-        await canvasRepo.save({
-          id: created.id,
-          name: created.title,
-          description: created.description,
-          document: parsedDoc,
-        });
-        canvasesList.value = canvasesList.value.map((c) => (c.id === localId ? { ...c, id: created.id } : c));
-        currentCanvas.value = created;
-        return created;
-      }
-      return localItem;
-    } catch (err: any) {
-      console.warn('Quadro criado localmente (offline mode):', err);
-      return localItem;
-    } finally {
-      isLoading.value = false;
-    }
+    deserializeDocument(defaultData);
+    isLoading.value = false;
+    return localItem;
   };
 
   const updateCanvasMetadata = async (
     id: string,
     metadata: { title?: string; description?: string | null; folder?: string | null; tags?: string[] }
   ) => {
-    try {
-      const updated = await $fetch<CanvasItem>(`${getCanvasApiUrl()}/canvases/${id}`, {
-        method: 'PUT',
-        headers: getHeaders(),
-        body: metadata,
+    const existing = await canvasRepo.getById(id);
+    if (existing) {
+      await canvasRepo.save({
+        id,
+        name: metadata.title !== undefined ? metadata.title : existing.name,
+        description: metadata.description !== undefined ? metadata.description : existing.description,
+        document: existing.document,
       });
-
-      if (currentCanvas.value?.id === id) {
-        if (metadata.title !== undefined) currentCanvas.value.title = metadata.title;
-        if (metadata.description !== undefined) currentCanvas.value.description = metadata.description;
-        if (metadata.folder !== undefined) currentCanvas.value.folder = metadata.folder;
-        if (metadata.tags !== undefined) currentCanvas.value.tags = metadata.tags;
-      }
-
-      canvasesList.value = canvasesList.value.map((c) =>
-        c.id === id
-          ? {
-              ...c,
-              ...(metadata.title !== undefined ? { title: metadata.title } : {}),
-              ...(metadata.description !== undefined ? { description: metadata.description } : {}),
-              ...(metadata.folder !== undefined ? { folder: metadata.folder } : {}),
-              ...(metadata.tags !== undefined ? { tags: metadata.tags } : {}),
-            }
-          : c
-      );
-      return updated;
-    } catch (err: any) {
-      console.error('Erro ao atualizar metadados do quadro:', err);
-      throw err;
     }
+
+    if (currentCanvas.value?.id === id) {
+      if (metadata.title !== undefined) currentCanvas.value.title = metadata.title;
+      if (metadata.description !== undefined) currentCanvas.value.description = metadata.description;
+      if (metadata.folder !== undefined) currentCanvas.value.folder = metadata.folder;
+      if (metadata.tags !== undefined) currentCanvas.value.tags = metadata.tags;
+    }
+
+    canvasesList.value = canvasesList.value.map((c) =>
+      c.id === id
+        ? {
+            ...c,
+            ...(metadata.title !== undefined ? { title: metadata.title } : {}),
+            ...(metadata.description !== undefined ? { description: metadata.description } : {}),
+            ...(metadata.folder !== undefined ? { folder: metadata.folder } : {}),
+            ...(metadata.tags !== undefined ? { tags: metadata.tags } : {}),
+          }
+        : c
+    );
+    return currentCanvas.value;
   };
 
   const deleteCanvas = async (id: string) => {
@@ -579,29 +480,17 @@ export function useCanvas() {
       nodes.value = [];
       edges.value = [];
     }
-
-    try {
-      await $fetch(`${getCanvasApiUrl()}/canvases/${id}`, {
-        method: 'DELETE',
-        headers: getHeaders(),
-      });
-    } catch (err: any) {
-      console.warn('Exclusão persistida localmente para sincronização:', err);
-    }
   };
 
   const duplicateCanvas = async (id: string) => {
-    try {
-      const dup = await $fetch<CanvasItem>(`${getCanvasApiUrl()}/canvases/${id}/duplicate`, {
-        method: 'POST',
-        headers: getHeaders(),
-      });
-      await fetchCanvases();
-      return dup;
-    } catch (err: any) {
-      console.error('Erro ao duplicar quadro:', err);
-      throw err;
-    }
+    const orig = await canvasRepo.getById(id);
+    if (!orig) throw new Error('Quadro original não encontrado.');
+    const newDoc = JSON.stringify(orig.document || {});
+    return createCanvas({
+      title: `${orig.name} (Cópia)`,
+      description: orig.description,
+      initialData: newDoc,
+    });
   };
 
   const exportAsJsonCanvas = () => {

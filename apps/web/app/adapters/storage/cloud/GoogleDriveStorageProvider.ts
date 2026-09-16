@@ -210,6 +210,41 @@ export class GoogleDriveStorageProvider implements IDataSyncProvider {
     }
   }
 
+  /**
+   * Exclui permanentemente todas as pastas e arquivos do Aresta no Google Drive (incluindo livros e dados).
+   */
+  async deleteAllArestaData(): Promise<void> {
+    try {
+      const headers = this.getAuthHeader()
+      const query = `name = 'Aresta' and mimeType = 'application/vnd.google-apps.folder' and trashed = false`
+      const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(
+        query
+      )}&fields=files(id,name)`
+
+      const res = await fetch(url, { headers })
+      if (!res.ok) return
+
+      const data = (await res.json()) as { files?: Array<{ id: string; name: string }> }
+      if (data.files && data.files.length > 0) {
+        for (const folder of data.files) {
+          try {
+            await fetch(`https://www.googleapis.com/drive/v3/files/${folder.id}`, {
+              method: 'DELETE',
+              headers,
+            })
+          } catch (delErr) {
+            console.warn(`[GoogleDriveStorageProvider] Falha ao deletar pasta ${folder.id}:`, delErr)
+          }
+        }
+      }
+      this._folderIdCache.clear()
+      this._dataFolderId = null
+      this._subFolderIds = {}
+    } catch (err) {
+      console.warn('[GoogleDriveStorageProvider] Erro ao excluir dados no Google Drive:', err)
+    }
+  }
+
   // =========================================================================
   // IDataSyncProvider — Operações de dados estruturados (JSON)
   // =========================================================================

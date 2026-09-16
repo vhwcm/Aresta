@@ -226,9 +226,10 @@ const loadThemeData = async () => {
   loadingAnnotations.value = true
 
   try {
+    const themeId = Number(props.theme.rawId)
     const [fetchedBooks, fetchedAnnotations] = await Promise.all([
-      fetchThemeBooks(props.theme.rawId),
-      fetchThemeAnnotations(props.theme.rawId),
+      fetchThemeBooks(themeId),
+      fetchThemeAnnotations(themeId),
     ])
     books.value = fetchedBooks
     annotations.value = fetchedAnnotations

@@ -1,4 +1,4 @@
-# ADR-003: Arquitetura Local-First e Distribuição Desktop Multiplataforma com Tauri v2
+# ADR-017: Arquitetura Local-First e Distribuição Desktop Multiplataforma com Tauri v2
 
 ## Status
 **Aceito e Implementado** (2026-08-29)

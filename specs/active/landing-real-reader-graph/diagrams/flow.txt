@@ -1,0 +1,47 @@
+================================================================================
+ARQUITETURA DE DEMONSTRAÇÃO REAL NA LANDING PAGE (VISITANTE vs AUTENTICADO)
+================================================================================
+
++------------------------------------------------------------------------------+
+|                         REQUISIÇÃO: apps/web (/)                              |
++------------------------------------------------------------------------------+
+                                       |
+                                       v
+                    +-------------------------------------+
+                    |   Checagem: auth.isLoggedIn.value   |
+                    +-------------------------------------+
+                               /               \
+                 [SIM: Autenticado]          [NÃO: Visitante]
+                             /                   \
+                            v                     v
+            +-----------------------+     +-------------------------------+
+            |  Home do Usuário      |     |  Landing Page Metodológica    |
+            |  - Último Livro Lido  |     |  - Hero & Filosofia Aresta    |
+            |  - Feed de Leitura    |     |  - Seção Científica Leitura   |
+            |  - Grafo Pessoal      |     |  - Demonstrações Reais:       |
+            +-----------------------+     +-------------------------------+
+                       |                                  |
+                       |                                  +-------------------------------------+
+                       |                                  |                                     |
+                       v                                  v                                     v
+            +----------------------+           +----------------------+              +----------------------+
+            |  Dados Pessoais      |           |  Motor Leitor Real   |              |  GraphCanvas.vue     |
+            |  - IndexedDB Local   |           |  - Layout Editorial  |              |  - Engine D3 Real    |
+            |  - Google Drive Sync |           |  - Temas & Tipografia|              |  - Dataset Curado    |
+            +----------------------+           |  - Simulação local   |              |  - Física & Magnético|
+                                               +----------------------+              +----------------------+
+                                                          |                                     |
+                                                          +------------------+------------------+
+                                                                             |
+                                                                             v
+                                                              +-------------------------------+
+                                                              |  Ação Interativa de Escrita   |
+                                                              |  (Criar Tema / Salvar Nota)   |
+                                                              +-------------------------------+
+                                                                             |
+                                                                             v
+                                                              +-------------------------------+
+                                                              |  Gate de Login Google 1-Click |
+                                                              |  ("Faça login para salvar")   |
+                                                              +-------------------------------+
+================================================================================

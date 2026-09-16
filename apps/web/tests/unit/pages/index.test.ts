@@ -139,9 +139,9 @@ describe('Index Page (Landing Page & Home)', () => {
 
     expect(wrapper.find('[data-testid="guest-landing"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="auth-home"]').exists()).toBe(false)
-    expect(wrapper.find('[data-testid="home-book-reader-demo"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="home-book-reader-demo"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="home-canvas-notes-demo"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="home-knowledge-graph-demo"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="home-knowledge-graph-demo"]').exists()).toBe(true)
     expect(wrapper.text()).toContain('Transforme cada livro e anotação em retenção duradoura de conhecimento')
     expect(wrapper.text()).toContain('Experimentar o Aresta Gratuitamente')
     expect(wrapper.text()).toContain('Por que usar o Aresta?')

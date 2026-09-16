@@ -20,8 +20,11 @@ export function useDriveSync() {
   const isConnected = computed(() => !!driveProvider.value)
 
   const resolveProvider = async (): Promise<IDataSyncProvider | null> => {
-    if (!driveProvider.value || !auth.token.value) return null
-    if (driveProvider.value === 'icloud-folder') return null
+    if (!driveProvider.value) return null
+    if (driveProvider.value === 'icloud-folder') {
+      return CloudStorageProviderFactory.getProvider('icloud-folder', '') as IDataSyncProvider
+    }
+    if (!auth.token.value) return null
     const token = await oauth.refreshCloudToken(driveProvider.value)
     if (!token) return null
     return CloudStorageProviderFactory.getProvider(driveProvider.value, token) as IDataSyncProvider
@@ -31,7 +34,8 @@ export function useDriveSync() {
     if (isSyncing.value || (typeof navigator !== 'undefined' && !navigator.onLine)) return
     const provider = await resolveProvider()
     if (!provider) return
-    isSyncing.value = true; syncError.value = null
+    isSyncing.value = true
+    syncError.value = null
     try {
       const summary = await new DriveSyncService(provider).fullSync()
       lastSyncAt.value = summary.syncedAt
@@ -39,21 +43,30 @@ export function useDriveSync() {
       if (typeof localStorage !== 'undefined') localStorage.setItem('aresta_drive_last_sync', summary.syncedAt)
     } catch (error: any) {
       syncError.value = error?.message || 'Não foi possível sincronizar com o Drive.'
-    } finally { isSyncing.value = false }
+    } finally {
+      isSyncing.value = false
+    }
   }
 
-  const connect = async (provider: Exclude<SupportedCloudStorage, 'icloud-folder'>) => {
-    // O fluxo atual de OAuth também cria sessão. A rota de conexão autenticada
-    // deverá substituir esta chamada quando o popup de vínculo dedicado existir.
-    const result = await oauth.loginWithOAuth(provider === 'onedrive' ? 'microsoft' : 'google')
+  const connect = async (provider: SupportedCloudStorage) => {
+    if (provider === 'icloud-folder') {
+      driveProvider.value = provider
+      if (typeof localStorage !== 'undefined') localStorage.setItem(PROVIDER_KEY, provider)
+      await sync()
+      return
+    }
+
+    const result = await oauth.connectDriveOnly(provider === 'onedrive' ? 'microsoft' : 'google')
     if (!result.success) throw new Error(result.error || 'Falha ao conectar o Drive.')
     driveProvider.value = provider
     if (typeof localStorage !== 'undefined') localStorage.setItem(PROVIDER_KEY, provider)
     await sync()
   }
-  const disconnect = () => {
-    if (driveProvider.value === 'google') oauth.setGoogleDriveToken(null)
-    if (driveProvider.value === 'onedrive') oauth.setOneDriveToken(null)
+
+  const disconnect = async () => {
+    if (driveProvider.value === 'google' || driveProvider.value === 'onedrive') {
+      await oauth.disconnectDriveOnly(driveProvider.value === 'onedrive' ? 'microsoft' : 'google')
+    }
     driveProvider.value = null
     if (typeof localStorage !== 'undefined') localStorage.removeItem(PROVIDER_KEY)
   }
@@ -65,6 +78,7 @@ export function useDriveSync() {
     window.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') void sync() })
     interval = setInterval(() => void sync(), 5 * 60 * 1000)
   }
+
   const dispose = () => {
     if (typeof window === 'undefined' || !listenersAttached) return
     listenersAttached = false
@@ -72,7 +86,20 @@ export function useDriveSync() {
     if (interval) clearInterval(interval)
     interval = null
   }
-  onMounted(initListeners); onUnmounted(dispose)
 
-  return { isSyncing, lastSyncAt, pendingCount, driveProvider, syncError, isConnected, sync, connect, disconnect, initListeners }
+  onMounted(initListeners)
+  onUnmounted(dispose)
+
+  return {
+    isSyncing,
+    lastSyncAt,
+    pendingCount,
+    driveProvider,
+    syncError,
+    isConnected,
+    sync,
+    connect,
+    disconnect,
+    initListeners
+  }
 }

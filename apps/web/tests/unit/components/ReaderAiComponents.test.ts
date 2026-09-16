@@ -32,9 +32,9 @@ describe('Reader AI Components (ReaderSelectionTooltip & ReaderAiOverlayCard)', 
     expect(items.length).toBe(2)
 
     // Clica em Explicação Rápida
-    await items[0].trigger('click')
+    await items[0]!.trigger('click')
     expect(wrapper.emitted('request-short-explanation')).toBeTruthy()
-    expect(wrapper.emitted('request-short-explanation')![0][0]).toMatchObject({
+    expect(wrapper.emitted('request-short-explanation')![0]![0]).toMatchObject({
       text: 'Arquitetura Hexagonal',
       pageNumber: 2,
     })
@@ -42,9 +42,9 @@ describe('Reader AI Components (ReaderSelectionTooltip & ReaderAiOverlayCard)', 
     // Reabre menu e clica em Livreto Estruturado
     await aiBtn.trigger('click')
     const refreshedItems = wrapper.findAll('.reader-selection-tooltip__ai-item')
-    await refreshedItems[1].trigger('click')
+    await refreshedItems[1]!.trigger('click')
     expect(wrapper.emitted('request-booklet')).toBeTruthy()
-    expect(wrapper.emitted('request-booklet')![0][0]).toMatchObject({
+    expect(wrapper.emitted('request-booklet')![0]![0]).toMatchObject({
       text: 'Arquitetura Hexagonal',
       pageNumber: 2,
     })
@@ -70,19 +70,19 @@ describe('Reader AI Components (ReaderSelectionTooltip & ReaderAiOverlayCard)', 
     expect(wrapper.text()).not.toMatch(/[\u{1F300}-\u{1F9FF}]/u) // Valida ausência estrita de emojis
 
     // Testa ação de salvar anotação
-    const saveBtn = wrapper.findAll('footer button')[1]
+    const saveBtn = wrapper.findAll('footer button')[1]!
     await saveBtn.trigger('click')
     expect(wrapper.emitted('save-note')).toBeTruthy()
-    expect(wrapper.emitted('save-note')![0][0]).toMatchObject({
+    expect(wrapper.emitted('save-note')![0]![0]).toMatchObject({
       text: 'Injeção de Dependência',
       explanation: '<div class="aresta-short-explanation"><p>Conceito explicado.</p></div>',
     })
 
     // Testa ação de aprofundar em livreto
-    const bookletBtn = wrapper.findAll('footer button')[0]
+    const bookletBtn = wrapper.findAll('footer button')[0]!
     await bookletBtn.trigger('click')
     expect(wrapper.emitted('create-booklet')).toBeTruthy()
-    expect(wrapper.emitted('create-booklet')![0][0]).toBe('Injeção de Dependência')
+    expect(wrapper.emitted('create-booklet')![0]![0]).toBe('Injeção de Dependência')
   })
 
   it('3. ReaderCreateBookletModal renderiza caixa sobreposta com tópico preenchido e fecha ou cria livreto', async () => {

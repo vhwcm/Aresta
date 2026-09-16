@@ -616,7 +616,7 @@
             <strong>Atenção:</strong> Ao confirmar a exclusão, todos os seus dados serão apagados definitivamente do Aresta:
           </p>
           <ul class="list-disc list-inside space-y-1 text-rose-700 dark:text-rose-300/90 text-[11px] font-interface">
-            <li>Livros e documentos enviados</li>
+            <li>Livros e documentos enviados (inclusive na pasta Aresta do Google Drive)</li>
             <li>Progresso de leitura e histórico</li>
             <li>Anotações, citações e flashcards</li>
             <li>Nós e conexões do seu Grafo de Conhecimento</li>

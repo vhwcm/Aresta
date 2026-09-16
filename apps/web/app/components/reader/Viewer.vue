@@ -613,7 +613,7 @@ function handleHighlightSelected(annotationId: number) {
       if (parsed.type === 'ai_explanation' && parsed.html) {
         // Abre o card flutuante sobreposto com o conteúdo salvo da explicação
         aiOverlayHtml.value = parsed.html
-        aiOverlayText.value = ann.selected_text || ''
+        aiOverlayText.value = (ann as any).selectedText || (ann as any).selected_text || ''
         aiOverlayError.value = null
         isAiOverlayLoading.value = false
         aiOverlayX.value = typeof window !== 'undefined' ? window.innerWidth / 2 - 180 : 100

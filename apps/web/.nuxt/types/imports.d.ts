@@ -199,6 +199,7 @@ declare global {
   const useCycleDetector: typeof import('../../app/composables/useCycleDetector').useCycleDetector
   const useDidacticBooklet: typeof import('../../app/composables/useDidacticBooklet').useDidacticBooklet
   const useDrawing: typeof import('../../app/composables/useDrawing').useDrawing
+  const useDriveSync: typeof import('../../app/composables/useDriveSync').useDriveSync
   const useError: typeof import('../../node_modules/nuxt/dist/app/composables/error').useError
   const useFetch: typeof import('../../node_modules/nuxt/dist/app/composables/fetch').useFetch
   const useFlashcards: typeof import('../../app/composables/useFlashcards').useFlashcards
@@ -334,6 +335,9 @@ declare global {
   // @ts-ignore
   export type { DidacticChapterItem, DidacticBookletItem } from '../../app/composables/useDidacticBooklet'
   import('../../app/composables/useDidacticBooklet')
+  // @ts-ignore
+  export type { DrawingSummaryItem } from '../../app/composables/useDrawing'
+  import('../../app/composables/useDrawing')
   // @ts-ignore
   export type { FlashcardItem, DailyDeckResponse } from '../../app/composables/useFlashcards'
   import('../../app/composables/useFlashcards')
@@ -585,6 +589,7 @@ declare module 'vue' {
     readonly useCycleDetector: UnwrapRef<typeof import('../../app/composables/useCycleDetector')['useCycleDetector']>
     readonly useDidacticBooklet: UnwrapRef<typeof import('../../app/composables/useDidacticBooklet')['useDidacticBooklet']>
     readonly useDrawing: UnwrapRef<typeof import('../../app/composables/useDrawing')['useDrawing']>
+    readonly useDriveSync: UnwrapRef<typeof import('../../app/composables/useDriveSync')['useDriveSync']>
     readonly useError: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/error')['useError']>
     readonly useFetch: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/fetch')['useFetch']>
     readonly useFlashcards: UnwrapRef<typeof import('../../app/composables/useFlashcards')['useFlashcards']>

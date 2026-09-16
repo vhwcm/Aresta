@@ -6,28 +6,14 @@ import path from 'path'
 import { env } from './config/env'
 import { authenticate } from './middlewares/auth.middleware'
 import { requireAdmin } from './middlewares/admin.middleware'
+import { createGoneRouter } from './shared/gone.router'
 
 // Auth Module
 import { authRouter } from './modules/auth/routes/auth.routes'
 import { userRouter } from './modules/auth/routes/user.routes'
-import { streakRouter } from './modules/auth/routes/streak.routes'
-import { userSettingsController } from './modules/auth/controllers/userSettings.controller'
 
-// Reader Module
+// Reader Module (Public Books Catalog)
 import { bookRouter } from './modules/reader/routes/book.routes'
-import { userBookRouter } from './modules/reader/routes/userBook.routes'
-import { syncRouter } from './modules/reader/routes/sync.routes'
-
-// Canvas Module
-import { canvasRouter } from './modules/canvas/routes/canvas.routes'
-import { noteRouter } from './modules/canvas/routes/note.routes'
-import { drawingRouter } from './modules/canvas/routes/drawing.routes'
-
-// Memory Module
-import { annotationRouter } from './modules/memory/routes/annotation.routes'
-import { flashcardRouter } from './modules/memory/routes/flashcard.routes'
-import { graphRouter } from './modules/memory/routes/graph.routes'
-import { didacticRouter } from './modules/memory/routes/didactic.routes'
 
 // AI Module
 import { aiRouter } from './modules/ai/routes/ai.routes'
@@ -71,13 +57,12 @@ if (process.env.DOMAIN) {
 
 // ─── Global Middlewares ───────────────────────────────────────────────────────
 app.use(helmet({
-  crossOriginResourcePolicy: { policy: 'cross-origin' }, // permite servir arquivos estáticos cross-origin
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
 }))
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Permite requests sem origin (ex: Tauri, Postman em dev, mobile apps)
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true)
       } else {
@@ -93,9 +78,9 @@ app.options('*', cors())
 app.use(express.json({ limit: '20mb' }))
 app.use('/storage', express.static(path.resolve(env.STORAGE_PATH)))
 
-// ─── Healthcheck (sem dados internos expostos) ────────────────────────────────
+// ─── Healthcheck ─────────────────────────────────────────────────────────────
 app.get('/health', (_req, res) => {
-  res.json({ status: 'ok' })
+  res.json({ status: 'ok', localFirst: true })
 })
 
 // ─── Auth Routes (rate-limited) ───────────────────────────────────────────────
@@ -103,27 +88,26 @@ app.use('/api/auth/login', authLimiter)
 app.use('/api/auth/register', authLimiter)
 app.use('/api/auth', authRouter)
 app.use('/api/users', userRouter)
-app.use('/api/users/me', streakRouter)
-app.get('/api/user-settings', authenticate, (req, res) => userSettingsController.get(req, res))
-app.put('/api/user-settings', authenticate, (req, res) => userSettingsController.upsert(req, res))
 
-// ─── Reader Routes ────────────────────────────────────────────────────────────
+// ─── Reader Routes (Public Catalog) ──────────────────────────────────────────
 app.use('/api/books', bookRouter)
-app.use('/api/user-books', userBookRouter)
-app.use('/api/sync', syncRouter)
 
-// ─── Canvas Routes ────────────────────────────────────────────────────────────
-app.use('/api/canvas', canvasRouter)
-app.use('/api/canvases', canvasRouter)
-app.use('/api/notes', noteRouter)
-app.use('/api/drawings', drawingRouter)
-
-// ─── Memory Routes ────────────────────────────────────────────────────────────
-app.use('/api/annotations', annotationRouter)
-app.use('/api/flashcards', flashcardRouter)
-app.use('/api/v1/flashcards', flashcardRouter)
-app.use('/api/graph', graphRouter)
-app.use('/api/didactic', didacticRouter)
+// ─── Deprecated Personal Routes (410 Gone - Local First Architecture) ────────
+app.use('/api/user-settings', createGoneRouter('user-settings'))
+app.use('/api/user-books', createGoneRouter('user-books'))
+app.use('/api/sync', createGoneRouter('sync'))
+app.use('/api/canvas', createGoneRouter('canvas'))
+app.use('/api/canvases', createGoneRouter('canvases'))
+app.use('/api/notes', createGoneRouter('notes'))
+app.use('/api/drawings', createGoneRouter('drawings'))
+app.use('/api/annotations', createGoneRouter('annotations'))
+app.use('/api/flashcards', createGoneRouter('flashcards'))
+app.use('/api/v1/flashcards', createGoneRouter('flashcards'))
+app.use('/api/graph', createGoneRouter('graph'))
+app.use('/api/didactic', createGoneRouter('didactic'))
+app.use('/api/auth/streak', createGoneRouter('streak'))
+app.use('/api/auth/metrics', createGoneRouter('metrics'))
+app.use('/api/streak', createGoneRouter('streak'))
 
 // ─── AI & OCR Routes (rate-limited + autenticados) ───────────────────────────
 app.use('/api/ai', aiLimiter, aiRouter)

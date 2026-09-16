@@ -1,7 +1,3 @@
-import { Router } from 'express'
-import { syncController } from '../controllers/sync.controller'
-import { authenticate } from '../middlewares/jwt.middleware'
+import { createGoneRouter } from '../../../shared/gone.router'
 
-export const syncRouter = Router()
-
-syncRouter.post('/', authenticate, (req, res) => syncController.sync(req, res))
+export const syncRouter = createGoneRouter('sync')

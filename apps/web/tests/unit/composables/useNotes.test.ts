@@ -1,85 +1,60 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { useNotes } from '../../../app/composables/useNotes';
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { useNotes } from '../../../app/composables/useNotes'
+import { noteRepo } from '../../../app/adapters/database/repositories/NoteRepository'
 
-// Mock global $fetch
-const mockFetch = vi.fn();
-(global as any).$fetch = mockFetch;
+import { ref } from 'vue'
+import * as authComposable from '../../../app/composables/useAuth'
 
-vi.mock('../../../app/composables/useAuth', () => ({
-  useAuth: () => ({
-    token: { value: 'fake-token' },
-    user: { value: { id: 1, name: 'Test' } },
-  }),
-}));
+describe('useNotes composable (Local-First Architecture)', () => {
+  beforeEach(async () => {
+    vi.clearAllMocks()
+    vi.spyOn(authComposable, 'useAuth').mockReturnValue({
+      token: ref('fake-token'),
+      user: ref({ id: 1, name: 'Test' }),
+      isLoggedIn: ref(true),
+    } as any)
+    const { notesList } = useNotes()
+    notesList.value = []
+  })
 
-describe('useNotes composable in aresta-canvas', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
+  it('fetchNotes busca lista de notas do repositório local', async () => {
+    await noteRepo.save({
+      id: 'note-1',
+      title: 'Nota 1',
+      content: 'Conteúdo 1',
+      tags: ['tag1'],
+    })
 
-  it('fetchNotes busca lista de notas da API', async () => {
-    const mockResponse = {
-      notes: [
-        { id: 'note-1', title: 'Nota 1', content: 'Conteúdo 1', tags: ['tag1'], updatedAt: '2026-09-01' },
-      ],
-      total: 1,
-      page: 1,
-      limit: 50,
-      totalPages: 1,
-    };
-    mockFetch.mockResolvedValueOnce(mockResponse);
+    const { notesList, fetchNotes } = useNotes()
+    const result = await fetchNotes()
 
-    const { notesList, fetchNotes } = useNotes();
-    const result = await fetchNotes();
+    expect(result.notes.length).toBeGreaterThanOrEqual(1)
+    expect(notesList.value.some((n) => n.title === 'Nota 1')).toBe(true)
+  })
 
-    expect(mockFetch).toHaveBeenCalled();
-    expect(result.notes).toHaveLength(1);
-    expect(notesList.value[0]?.title).toBe('Nota 1');
-  });
+  it('createNote persiste localmente e adiciona nota ao topo da lista', async () => {
+    const { createNote, notesList, currentNote } = useNotes()
+    const created = await createNote({ title: 'Nota Criada', content: 'Markdown content' })
 
-  it('createNote envia payload e adiciona nota ao topo da lista', async () => {
-    const newNote = {
-      id: 'note-new',
-      userId: 1,
-      title: 'Nota Criada',
-      content: 'Markdown content',
-      tags: [],
-      updatedAt: '2026-09-02',
-    };
-    mockFetch.mockResolvedValueOnce(newNote);
+    expect(created.id).toBeDefined()
+    expect(created.title).toBe('Nota Criada')
+    expect(notesList.value[0]?.title).toBe('Nota Criada')
+    expect(currentNote.value?.title).toBe('Nota Criada')
 
-    const { createNote, notesList, currentNote } = useNotes();
-    const created = await createNote({ title: 'Nota Criada', content: 'Markdown content' });
+    // Confirma persistência no repositório
+    const saved = await noteRepo.getById(created.id)
+    expect(saved?.title).toBe('Nota Criada')
+  })
 
-    expect(created.id).toBe('note-new');
-    expect(notesList.value[0]?.id).toBe('note-new');
-    expect(currentNote.value?.title).toBe('Nota Criada');
-  });
+  it('deleteNote remove a nota do banco local e atualiza a lista reativa', async () => {
+    const { createNote, deleteNote, notesList } = useNotes()
+    const note = await createNote({ title: 'Nota Para Deletar', content: '...' })
+    expect(notesList.value.some((n) => n.id === note.id)).toBe(true)
 
-  it('createNote persiste localmente e retorna nota se a API falhar ou estiver offline', async () => {
-    mockFetch.mockRejectedValueOnce(new Error('Network error / offline'));
+    await deleteNote(note.id)
 
-    const { createNote, notesList, currentNote } = useNotes();
-    const created = await createNote({ title: 'Nota Offline', content: 'Gravada local' });
-
-    expect(created.title).toBe('Nota Offline');
-    expect(created.content).toBe('Gravada local');
-    expect(created.id).toContain('note-');
-    expect(notesList.value[0]?.title).toBe('Nota Offline');
-    expect(currentNote.value?.title).toBe('Nota Offline');
-  });
-
-  it('deleteNote remove a nota da lista', async () => {
-    const { deleteNote, notesList } = useNotes();
-    notesList.value = [
-      { id: 'note-1', userId: 1, title: 'Nota 1', content: '', tags: [], updatedAt: '' },
-      { id: 'note-2', userId: 1, title: 'Nota 2', content: '', tags: [], updatedAt: '' },
-    ];
-    mockFetch.mockResolvedValueOnce({ message: 'Nota excluída com sucesso' });
-
-    await deleteNote('note-1');
-
-    expect(notesList.value).toHaveLength(1);
-    expect(notesList.value[0]?.id).toBe('note-2');
-  });
-});
+    expect(notesList.value.some((n) => n.id === note.id)).toBe(false)
+    const deleted = await noteRepo.getById(note.id)
+    expect(deleted).toBeNull()
+  })
+})

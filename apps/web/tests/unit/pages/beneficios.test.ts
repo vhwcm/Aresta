@@ -20,7 +20,9 @@ describe('Beneficios Page', () => {
     })
 
     expect(wrapper.text()).toContain('Por que o Aresta transforma a forma como você')
-    expect(wrapper.text()).toContain('Leitura Imersiva & Virada de Página Tridimensional')
+    expect(wrapper.text()).not.toContain('Leitura Imersiva & Virada de Página Tridimensional')
+    expect(wrapper.text()).toContain('O Poder Transformador da Leitura Profunda')
+    expect(wrapper.text()).toContain('Integração Fluida: Leitura, Anotações, Flashcards, Canvas & IA')
     expect(wrapper.text()).toContain('Derrotando a Curva do Esquecimento com Spaced Repetition (FSRS)')
     expect(wrapper.text()).toContain('Grafo Interdisciplinar & Método Zettelkasten')
     expect(wrapper.text()).toContain('Canvas Infinito & Livretos Didáticos com Inteligência Artificial')

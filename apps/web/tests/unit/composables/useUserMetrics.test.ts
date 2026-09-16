@@ -1,9 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { useUserMetrics } from '../../../app/composables/useUserMetrics'
 import * as authComposable from '../../../app/composables/useAuth'
+import { bookRepo } from '../../../app/adapters/database/repositories/BookRepository'
+import { canvasRepo } from '../../../app/adapters/database/repositories/CanvasRepository'
+import { flashcardRepo } from '../../../app/adapters/database/repositories/FlashcardRepository'
+import { annotationRepo } from '../../../app/adapters/database/repositories/AnnotationRepository'
 import { ref, computed } from 'vue'
 
-describe('useUserMetrics composable', () => {
+describe('useUserMetrics composable (Local-First Architecture)', () => {
   beforeEach(() => {
     vi.restoreAllMocks()
     const { resetMetrics } = useUserMetrics()
@@ -27,7 +31,7 @@ describe('useUserMetrics composable', () => {
     expect(memberSinceFormatted.value).toBe('Membro do Aresta')
   })
 
-  it('busca e popula métricas reais a partir da API', async () => {
+  it('calcula métricas agregadas reais a partir dos repositórios locais', async () => {
     vi.spyOn(authComposable, 'useAuth').mockReturnValue({
       token: ref('mock_jwt_token'),
       user: computed(() => ({
@@ -41,53 +45,35 @@ describe('useUserMetrics composable', () => {
       isAdmin: computed(() => false),
     } as any)
 
-    const mockApiResponse = {
-      metrics: {
-        books: { total: 12, activeReading: 4 },
-        readingTime: { totalSeconds: 153000, totalHoursFormatted: '42.5', averageMinutesPerDay: 35 },
-        knowledge: { totalNodes: 64, canvasCount: 4 },
-        memory: { retentionRate: 91, totalFlashcards: 25, reviewedCount: 20 },
-        memberSince: '2026-08-10T12:00:00.000Z',
-      },
-    }
+    vi.spyOn(bookRepo, 'getAll').mockResolvedValue([
+      { id: 1, bookId: 1, title: 'B1', status: 'LENDO', currentPage: 10, updated_at: '', sync_status: 'synced' },
+      { id: 2, bookId: 2, title: 'B2', status: 'LIDO', currentPage: 100, updated_at: '', sync_status: 'synced' },
+    ])
 
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => mockApiResponse,
-    } as any)
+    vi.spyOn(canvasRepo, 'getAll').mockResolvedValue([
+      { id: 'c1', name: 'Canvas 1', nodeCount: 5, document: { nodes: [], edges: [], viewport: { x: 0, y: 0, zoom: 1 } }, updated_at: '', sync_status: 'synced' },
+    ])
+
+    vi.spyOn(flashcardRepo, 'getAll').mockResolvedValue([
+      { id: 1, question: 'Q1', answer: 'A1', repetitionLevel: 1, nextReviewAt: '', cardType: 'basic', isReviewed: true, updated_at: '', sync_status: 'synced' },
+      { id: 2, question: 'Q2', answer: 'A2', repetitionLevel: 1, nextReviewAt: '', cardType: 'basic', isReviewed: false, updated_at: '', sync_status: 'synced' },
+    ])
+
+    vi.spyOn(annotationRepo, 'getAll').mockResolvedValue([
+      { id: 1, bookId: 1, cfi: 'cfi1', createdAt: '', updated_at: '', sync_status: 'synced' },
+    ])
 
     const { metrics, fetchMetrics, hasFetched, memberSinceFormatted } = useUserMetrics()
 
     await fetchMetrics({ force: true })
 
     expect(hasFetched.value).toBe(true)
-    expect(metrics.value.books.total).toBe(12)
-    expect(metrics.value.books.activeReading).toBe(4)
-    expect(metrics.value.readingTime.totalHoursFormatted).toBe('42.5')
-    expect(metrics.value.readingTime.averageMinutesPerDay).toBe(35)
-    expect(metrics.value.knowledge.totalNodes).toBe(64)
-    expect(metrics.value.knowledge.canvasCount).toBe(4)
-    expect(metrics.value.memory.retentionRate).toBe(91)
+    expect(metrics.value.books.total).toBe(2)
+    expect(metrics.value.books.activeReading).toBe(2)
+    expect(metrics.value.knowledge.canvasCount).toBe(1)
+    expect(metrics.value.memory.totalFlashcards).toBe(2)
+    expect(metrics.value.memory.reviewedCount).toBe(1)
+    expect(metrics.value.memory.retentionRate).toBe(50)
     expect(memberSinceFormatted.value).toContain('Agosto de 2026')
   })
-
-  it('lida com falha de rede ou resposta HTTP não 200', async () => {
-    vi.spyOn(authComposable, 'useAuth').mockReturnValue({
-      token: ref('mock_jwt_token'),
-      user: computed(() => ({ id: 1 })) as any,
-      isLoggedIn: computed(() => true),
-      isAdmin: computed(() => false),
-    } as any)
-
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: false,
-      status: 500,
-    } as any)
-
-    const { fetchMetrics, error } = useUserMetrics()
-    await fetchMetrics({ force: true })
-
-    expect(error.value).toContain('HTTP 500')
-  })
 })
-

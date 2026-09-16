@@ -19,7 +19,7 @@ describe('Auth Middleware', () => {
   it('redirects to /login with redirect query when user is not authenticated', () => {
     const to = { fullPath: '/canvas?action=new' } as any
     authMiddleware(to, {} as any)
-    expect(globalThis.navigateTo).toHaveBeenCalledWith('/login?redirect=%2Fcanvas%3Faction%3Dnew')
+    expect((globalThis as any).navigateTo).toHaveBeenCalledWith('/login?redirect=%2Fcanvas%3Faction%3Dnew')
   })
 
   it('allows navigation when user is authenticated', () => {
@@ -27,6 +27,6 @@ describe('Auth Middleware', () => {
     const to = { fullPath: '/canvas' } as any
     const result = authMiddleware(to, {} as any)
     expect(result).toBeUndefined()
-    expect(globalThis.navigateTo).not.toHaveBeenCalled()
+    expect((globalThis as any).navigateTo).not.toHaveBeenCalled()
   })
 })

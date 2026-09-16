@@ -130,11 +130,28 @@ export const useAuth = () => {
   const deleteAccount = async () => {
     if (!tokenCookie.value) return { success: false, error: 'Usuário não autenticado.' }
     try {
+      // 1. Tenta limpar todos os arquivos da pasta Aresta no Google Drive do usuário
+      try {
+        const { GoogleDriveStorageProvider } = await import('~/adapters/storage/cloud/GoogleDriveStorageProvider')
+        const { useOAuth } = await import('~/composables/useOAuth')
+        const { ensureGoogleDriveToken } = useOAuth()
+        const token = await ensureGoogleDriveToken()
+        if (token) {
+          const provider = new GoogleDriveStorageProvider(() => token)
+          await provider.deleteAllArestaData()
+        }
+      } catch (driveErr) {
+        console.warn('[useAuth] Aviso ao limpar arquivos do Google Drive no cliente:', driveErr)
+      }
+
+      // 2. Chama o backend para exclusão no banco e redundância na nuvem
       const authUrl = getAuthApiUrl()
       await $fetch(`${authUrl}/api/auth/me`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${tokenCookie.value}` }
       })
+
+      // 3. Limpa credenciais, cookies e dados locais
       tokenCookie.value = null
       userCookie.value = null
       clearAllAuthCookies()

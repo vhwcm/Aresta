@@ -123,6 +123,29 @@ describe('useLocalBookUpload Composable', () => {
     expect(result.title.length).toBe(30)
   })
 
+  it('persiste os temas informados na entidade localBook ao salvar o livro', async () => {
+    const fileBytes = new Uint8Array([0x50, 0x4b, 0x03, 0x04])
+    const fakeFile = new File([fileBytes], 'estoicismo.epub', { type: 'application/epub+zip' })
+
+    const { uploadBookLocally } = useLocalBookUpload()
+    const result = await uploadBookLocally({
+      file: fakeFile,
+      type: 'epub',
+      themes: [
+        { id: 42, name: 'Estoicismo', color: '#E57B55' },
+        { id: 99, name: 'Filosofia Prática', color: '#3B82F6' },
+      ],
+    })
+
+    expect(result.localBook.themes).toHaveLength(2)
+    expect(result.localBook.themes?.[0]?.name).toBe('Estoicismo')
+    expect(result.localBook.themes?.[1]?.name).toBe('Filosofia Prática')
+
+    const stored = await bookRepo.getById(result.bookId)
+    expect(stored?.themes).toHaveLength(2)
+    expect(stored?.themes?.[0]?.id).toBe(42)
+  })
+
   it('registra erro e relança exceção caso ocorra falha no parsing', async () => {
     mockLoad.mockRejectedValueOnce(new Error('Corrompido'))
 
@@ -137,3 +160,4 @@ describe('useLocalBookUpload Composable', () => {
     expect(uploadError.value).toBe('Corrompido')
   })
 })
+

@@ -98,7 +98,7 @@ const [fetchedMeta, response] = await Promise.all([
 
 ## 6. Ferramenta de Profiling e Diagnóstico de Gargalos (`readerProfiler`)
 
-Para auditar o tempo gasto em cada etapa, o utilitário `readerProfiler` ([`front/app/utils/readerProfiler.ts`](file:///home/bcc/vhwcm24/Aresta/front/app/utils/readerProfiler.ts)) está ativo em ambiente de desenvolvimento.
+Para auditar o tempo gasto em cada etapa, o utilitário `readerProfiler` (`apps/web/app/utils/readerProfiler.ts`) está ativo em ambiente de desenvolvimento.
 
 ### 6.1. O que é medido automaticamente:
 1. **1. Buscar no Cache Local (IndexedDB)** (`io`): Tempo de busca do livro localmente.

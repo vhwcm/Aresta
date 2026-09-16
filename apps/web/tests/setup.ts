@@ -41,9 +41,9 @@ config.global.mocks = {
   renderMarkdown,
 }
 
-config.global.config = config.global.config || {}
-config.global.config.globalProperties = {
-  ...config.global.config.globalProperties,
+;(config.global as any).config = (config.global as any).config || {}
+;(config.global.config as any).globalProperties = {
+  ...(config.global.config as any).globalProperties,
   renderInlineMarkdown,
   renderMarkdown,
 }

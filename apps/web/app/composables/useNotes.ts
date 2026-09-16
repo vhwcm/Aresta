@@ -2,32 +2,24 @@ import { ref } from 'vue';
 import type { NoteItem, NoteListResponse } from '~/interfaces/note';
 import { useAuth } from '~/composables/useAuth';
 import { useFlashcards } from '~/composables/useFlashcards';
-import { getApiBase } from '~/utils/apiBase';
+import { noteRepo } from '~/adapters/database/repositories/NoteRepository';
+import type { LocalNote } from '~/adapters/database/types';
 
-const getNotesApiUrl = () => {
-  return getApiBase();
-};
-
-const LOCAL_STORAGE_KEY = 'aresta_local_notes';
-
-const loadLocalNotes = (): NoteItem[] => {
-  if (typeof window === 'undefined' || !window.localStorage) return [];
-  try {
-    const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-};
-
-const saveLocalNotes = (notes: NoteItem[]) => {
-  if (typeof window === 'undefined' || !window.localStorage) return;
-  try {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(notes));
-  } catch (e) {
-    console.warn('[useNotes] Erro ao salvar notas no localStorage:', e);
-  }
-};
+const mapLocalToNoteItem = (n: LocalNote): NoteItem => ({
+  id: n.id,
+  userId: 0,
+  title: n.title,
+  content: n.content || '',
+  folder: n.folder || null,
+  tags: n.tags || [],
+  links: (n.links || []).map((l: any, idx: number) => ({
+    id: idx + 1,
+    targetType: l.targetType || 'NOTE',
+    targetId: l.targetId || String(l.id || idx + 1)
+  })),
+  createdAt: n.created_at || new Date().toISOString(),
+  updatedAt: n.updated_at || new Date().toISOString(),
+});
 
 const notesList = ref<NoteItem[]>([]);
 const currentNote = ref<NoteItem | null>(null);
@@ -41,68 +33,29 @@ export const resetNotesMemory = () => {
   folders.value = [];
   isLoading.value = false;
   error.value = null;
-  if (typeof window !== 'undefined' && window.localStorage) {
-    try {
-      localStorage.removeItem(LOCAL_STORAGE_KEY);
-    } catch {}
-  }
 };
 
 export function useNotes() {
   const { token, user } = useAuth();
 
-  const getHeaders = () => {
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    if (token?.value) {
-      headers.Authorization = `Bearer ${token.value}`;
-    }
-    return headers;
-  };
-
   const fetchNotes = async (params: { folder?: string; tag?: string; search?: string; page?: number; limit?: number } = {}) => {
     isLoading.value = true;
     error.value = null;
 
-    if (!token?.value) {
+    if (!token?.value && !user?.value) {
       notesList.value = [];
       isLoading.value = false;
       return { notes: [], total: 0, page: 1, limit: 50, totalPages: 0 };
     }
 
-    if (notesList.value.length === 0) {
-      const cached = loadLocalNotes();
-      if (cached.length > 0) {
-        notesList.value = cached;
-      }
-    }
-
     try {
-      const queryParams = new URLSearchParams();
-      if (params.folder) queryParams.append('folder', params.folder);
-      if (params.tag) queryParams.append('tag', params.tag);
-      if (params.search) queryParams.append('search', params.search);
-      if (params.page) queryParams.append('page', String(params.page));
-      if (params.limit) queryParams.append('limit', String(params.limit));
-
-      const res = await $fetch<NoteListResponse>(`${getNotesApiUrl()}/notes?${queryParams.toString()}`, {
-        headers: getHeaders(),
-      });
-
-      if (res && Array.isArray(res.notes)) {
-        const remoteIds = new Set(res.notes.map((n) => n.id));
-        const localOnly = notesList.value.filter((n) => !remoteIds.has(n.id) && n.id.startsWith('note-'));
-        notesList.value = [...localOnly, ...res.notes];
-        saveLocalNotes(notesList.value);
-      }
-      return res;
+      const local = await noteRepo.getAll({ folder: params.folder, tag: params.tag, search: params.search });
+      const mapped = local.map(mapLocalToNoteItem);
+      notesList.value = mapped;
+      return { notes: mapped, total: mapped.length, page: params.page || 1, limit: params.limit || 50, totalPages: 1 };
     } catch (err: any) {
-      console.warn('[useNotes] fetchNotes offline ou sem resposta da API:', err);
-      const cached = loadLocalNotes();
-      if (cached.length > 0) {
-        notesList.value = cached;
-      }
+      console.warn('[useNotes] Erro ao carregar notas locais:', err);
+      error.value = 'Falha ao carregar anotações locais.';
       return { notes: notesList.value, total: notesList.value.length, page: 1, limit: 50, totalPages: 1 };
     } finally {
       isLoading.value = false;
@@ -110,23 +63,24 @@ export function useNotes() {
   };
 
   const loadNote = async (id: string) => {
-    if (!token?.value) return null;
     isLoading.value = true;
     error.value = null;
     try {
-      const note = await $fetch<NoteItem>(`${getNotesApiUrl()}/notes/${id}`, {
-        headers: getHeaders(),
-      });
-      currentNote.value = note;
-      return note;
-    } catch (err: any) {
-      const local = notesList.value.find((n) => n.id === id);
+      const local = await noteRepo.getById(id);
       if (local) {
-        currentNote.value = local;
-        return local;
+        const item = mapLocalToNoteItem(local);
+        currentNote.value = item;
+        return item;
+      }
+      const inMemory = notesList.value.find((n) => n.id === id);
+      if (inMemory) {
+        currentNote.value = inMemory;
+        return inMemory;
       }
       error.value = 'Nota não encontrada.';
-      console.warn('[useNotes] loadNote offline / local fallback:', err);
+      return null;
+    } catch (err: any) {
+      error.value = 'Nota não encontrada.';
       return null;
     } finally {
       isLoading.value = false;
@@ -141,7 +95,7 @@ export function useNotes() {
     canvasId?: string;
     links?: Array<{ targetType: 'CANVAS' | 'BOOK' | 'NOTE'; targetId: string }>;
   }) => {
-    if (!token?.value) {
+    if (!token?.value && !user?.value) {
       error.value = 'É necessário estar autenticado para criar uma anotação.';
       throw new Error('É necessário estar autenticado para criar uma anotação.');
     }
@@ -156,133 +110,79 @@ export function useNotes() {
       initialLinks.push({ id: initialLinks.length + 1, targetType: 'CANVAS', targetId: input.canvasId });
     }
 
-    const currentUserId = Number((user as any)?.value?.id) || 0;
-    const fallbackNote: NoteItem = {
+    const saved = await noteRepo.save({
       id: localId,
-      userId: currentUserId,
       title: input.title?.trim() || 'Nova Nota',
       content: input.content || '',
       folder: input.folder || null,
       tags: input.tags || [],
       links: initialLinks,
-      createdAt: now,
-      updatedAt: now,
-    };
+      created_at: now,
+      updated_at: now,
+    });
 
-    try {
-      const created = await $fetch<NoteItem>(`${getNotesApiUrl()}/notes`, {
-        method: 'POST',
-        headers: getHeaders(),
-        body: input,
-      });
-
-      const index = notesList.value.findIndex((n) => n.id === created.id);
-      if (index !== -1) {
-        notesList.value[index] = created;
-      } else {
-        notesList.value.unshift(created);
-      }
-      currentNote.value = created;
-      saveLocalNotes(notesList.value);
-      return created;
-    } catch (err: any) {
-      console.warn('[useNotes] createNote API falhou ou offline, persistindo localmente:', err);
-      notesList.value.unshift(fallbackNote);
-      currentNote.value = fallbackNote;
-      saveLocalNotes(notesList.value);
-      return fallbackNote;
-    } finally {
-      isLoading.value = false;
-    }
+    const item = mapLocalToNoteItem(saved);
+    notesList.value.unshift(item);
+    currentNote.value = item;
+    isLoading.value = false;
+    return item;
   };
 
   const updateNote = async (id: string, input: { title?: string; content?: string; folder?: string | null; tags?: string[] }) => {
     isLoading.value = true;
     error.value = null;
 
-    // Atualiza otimista localmente
-    const index = notesList.value.findIndex((n) => n.id === id);
-    if (index !== -1) {
-      const existing = notesList.value[index]!;
-      const updatedLocal: NoteItem = {
-        ...existing,
-        ...input,
-        folder: input.folder !== undefined ? input.folder : existing.folder,
-        tags: input.tags !== undefined ? input.tags : existing.tags,
-        updatedAt: new Date().toISOString(),
-      };
-      notesList.value[index] = updatedLocal;
-      if (currentNote.value?.id === id) {
-        currentNote.value = updatedLocal;
-      }
-      saveLocalNotes(notesList.value);
-    }
-
     try {
-      const updated = await $fetch<NoteItem>(`${getNotesApiUrl()}/notes/${id}`, {
-        method: 'PUT',
-        headers: getHeaders(),
-        body: input,
+      const existing = await noteRepo.getById(id);
+      const saved = await noteRepo.save({
+        id,
+        title: input.title !== undefined ? input.title : (existing?.title || 'Nota'),
+        content: input.content !== undefined ? input.content : (existing?.content || ''),
+        folder: input.folder !== undefined ? input.folder : (existing?.folder || null),
+        tags: input.tags !== undefined ? input.tags : (existing?.tags || []),
       });
 
+      const updated = mapLocalToNoteItem(saved);
+      const index = notesList.value.findIndex((n) => n.id === id);
       if (index !== -1) {
         notesList.value[index] = updated;
       }
       if (currentNote.value?.id === id) {
         currentNote.value = updated;
       }
-      saveLocalNotes(notesList.value);
       return updated;
     } catch (err: any) {
-      console.warn('[useNotes] updateNote API offline / local-only:', err);
-      return notesList.value[index] || null;
+      console.warn('[useNotes] Erro ao atualizar nota local:', err);
+      return null;
     } finally {
       isLoading.value = false;
     }
   };
 
   const deleteNote = async (id: string) => {
+    await noteRepo.delete(id);
     notesList.value = notesList.value.filter((n) => n.id !== id);
     if (currentNote.value?.id === id) {
       currentNote.value = null;
     }
-    saveLocalNotes(notesList.value);
 
     // Cascata: excluir flashcards locais vinculados a esta nota
     try {
-      const { deleteFlashcardByNoteId } = useFlashcards()
-      await deleteFlashcardByNoteId(id)
+      const { deleteFlashcardByNoteId } = useFlashcards();
+      await deleteFlashcardByNoteId(id);
     } catch (e) {
-      console.warn('[useNotes] Falha na cascata de exclusão de flashcards locais da nota:', e)
-    }
-
-    try {
-      await $fetch(`${getNotesApiUrl()}/notes/${id}`, {
-        method: 'DELETE',
-        headers: getHeaders(),
-      });
-    } catch (err: any) {
-      console.warn('[useNotes] deleteNote API offline / local-only:', err);
+      console.warn('[useNotes] Falha na cascata de exclusão de flashcards locais da nota:', e);
     }
   };
 
   const fetchFolders = async () => {
     try {
-      const list = await $fetch<string[]>(`${getNotesApiUrl()}/notes/folders`, {
-        headers: getHeaders(),
-      });
-      if (Array.isArray(list)) {
-        folders.value = list;
-      }
-      return folders.value;
+      const list = await noteRepo.getFolders();
+      folders.value = list;
+      return list;
     } catch (err: any) {
-      console.warn('[useNotes] fetchFolders offline / derivando das notas locais:', err);
-      const set = new Set<string>();
-      notesList.value.forEach((n) => {
-        if (n.folder) set.add(n.folder);
-      });
-      folders.value = Array.from(set);
-      return folders.value;
+      console.warn('[useNotes] Erro ao buscar pastas locais:', err);
+      return [];
     }
   };
 

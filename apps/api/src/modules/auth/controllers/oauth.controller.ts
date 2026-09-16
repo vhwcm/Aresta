@@ -32,6 +32,45 @@ export class OAuthController {
     }
   }
 
+  async linkDrive(req: Request, res: Response): Promise<void> {
+    try {
+      const provider = String(req.params.provider)
+      const userId = (req as any).user?.userId
+      const { code, redirectUri } = req.body
+
+      if (!userId) {
+        res.status(401).json({ error: 'Usuário não autenticado' })
+        return
+      }
+      if (!code) {
+        res.status(400).json({ error: 'Parâmetro "code" é obrigatório' })
+        return
+      }
+
+      const result = await oauthService.linkDriveAccount(userId, provider, code, redirectUri)
+      res.json(result)
+    } catch (err: any) {
+      res.status(400).json({ error: err.message })
+    }
+  }
+
+  async unlinkDrive(req: Request, res: Response): Promise<void> {
+    try {
+      const provider = String(req.params.provider)
+      const userId = (req as any).user?.userId
+
+      if (!userId) {
+        res.status(401).json({ error: 'Usuário não autenticado' })
+        return
+      }
+
+      const result = await oauthService.unlinkDriveAccount(userId, provider)
+      res.json(result)
+    } catch (err: any) {
+      res.status(400).json({ error: err.message })
+    }
+  }
+
   async refresh(req: Request, res: Response): Promise<void> {
     try {
       const provider = String(req.params.provider)
@@ -49,10 +88,6 @@ export class OAuthController {
     }
   }
 
-  /**
-   * Entrega um access token efêmero ao cliente autenticado. Refresh tokens
-   * permanecem exclusivamente no backend.
-   */
   async getAccessToken(req: Request, res: Response): Promise<void> {
     await this.refresh(req, res)
   }

@@ -1,9 +1,13 @@
 ## 🔄 Em Andamento
+- [16/09/2026 16:12] [Fazendo] Excluir livros e pasta Aresta no Google Drive ao deletar a conta do usuário
 - [16/09/2026 15:30] [Fazendo] Adicionar benefícios da leitura profunda e integração entre IA, flashcards, leitura, anotações estruturadas e canvas na página de benefícios
 - [16/09/2026 12:10] [Fazendo] Implementar Aresta Cloud Drive local-first para todos os dados pessoais e descarte do backend legado
 - [16/09/2026 11:00] [Fazendo] Implementar exemplos reais de leitura e grafo na home e bloquear acesso e criação anônima sem autenticação
 
 ## ✅ Concluído
+- [16/09/2026 16:07] [Concluído] Remover texto de ajuda sobre truncamento de título no formulário de upload de livros
+- [16/09/2026 16:05] [Concluído] Permitir selecionar e definir temas do livro diretamente na tela de upload de arquivos com criação inline e vínculo imediato na estante e grafo
+- [16/09/2026 16:02] [Concluído] Centralizar visualização das notas de desenho no deszoom e remover botões de undo/redo e zoom da barra de ferramentas mantendo atalhos de teclado
 - [16/09/2026 15:50] [Concluído] Implementar transição suave e lenta dos nós no Grafo ao ligar graficamente com um tema com interpolação easeInOutCubic (2400ms) e persistência de posições
 - [16/09/2026 15:47] [Concluído] Remover caracteres soltos e cabeçalho duplicado na seção de CTA da landing page (index.vue)
 - [16/09/2026 15:44] [Concluído] Permitir criação de anotação ou flashcard a partir de seleção de texto nas notas

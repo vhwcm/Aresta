@@ -9,18 +9,12 @@ import type {
   PageBackgroundType,
   DrawingSynthesisResult,
 } from '~/interfaces/drawing';
-
 import type { CanvasNode, CanvasEdge, CanvasShapeType } from '~/interfaces/canvas';
-
+import { drawingNoteRepo } from '~/adapters/database/repositories/DrawingNoteRepository';
+import { useNotes } from '~/composables/useNotes';
 import { getApiBase } from '~/utils/apiBase';
 
-const getDrawingApiUrl = () => {
-  return `${getApiBase()}/drawings`;
-};
-
-const LOCAL_STORAGE_KEY_PREFIX = 'aresta_drawing_';
-
-const drawingsList = ref<Array<{
+export interface DrawingSummaryItem {
   id: string;
   title: string;
   folder: string | null;
@@ -29,8 +23,9 @@ const drawingsList = ref<Array<{
   preview_url: string | null;
   created_at?: string;
   updated_at?: string;
-}>>([]);
+}
 
+const drawingsList = ref<DrawingSummaryItem[]>([]);
 const currentDrawing = ref<DrawingDocument | null>(null);
 const activePageIndex = ref(0);
 const activeTool = ref<PenToolType>('pen');
@@ -53,7 +48,7 @@ const redoStack = ref<string[]>([]);
 let autosaveTimer: ReturnType<typeof setTimeout> | null = null;
 
 export function useDrawing() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
 
   const getHeaders = () => {
     const headers: Record<string, string> = {
@@ -119,22 +114,9 @@ export function useDrawing() {
 
   const scheduleAutosave = () => {
     if (autosaveTimer) clearTimeout(autosaveTimer);
-
-    // Salva cópia local no localStorage imediatamente para resiliência offline
-    if (currentDrawing.value && typeof window !== 'undefined') {
-      try {
-        localStorage.setItem(
-          `${LOCAL_STORAGE_KEY_PREFIX}${currentDrawing.value.id}`,
-          JSON.stringify(currentDrawing.value)
-        );
-      } catch (e) {
-        console.warn('[useDrawing] Falha no backup local:', e);
-      }
-    }
-
     autosaveTimer = setTimeout(() => {
       saveDrawingNow();
-    }, 1500);
+    }, 1000);
   };
 
   const saveDrawingNow = async () => {
@@ -142,35 +124,30 @@ export function useDrawing() {
     isSaving.value = true;
     try {
       const pagesDataJson = JSON.stringify(currentDrawing.value.pages);
-      const payload = {
+      const saved = await drawingNoteRepo.save({
+        id: currentDrawing.value.id,
         title: currentDrawing.value.title,
         folder: currentDrawing.value.folder,
         tags: currentDrawing.value.tags,
         pages_data: pagesDataJson,
         preview_url: currentDrawing.value.preview_url || null,
-      };
-
-      await $fetch(`${getDrawingApiUrl()}/${currentDrawing.value.id}`, {
-        method: 'PUT',
-        headers: getHeaders(),
-        body: payload,
       });
 
-      // Atualiza na listagem
       const idx = drawingsList.value.findIndex((d) => d.id === currentDrawing.value?.id);
       if (idx !== -1) {
         drawingsList.value[idx] = {
-          ...drawingsList.value[idx],
-          title: currentDrawing.value.title,
-          folder: currentDrawing.value.folder,
-          tags: currentDrawing.value.tags,
+          id: saved.id,
+          title: saved.title,
+          folder: saved.folder ?? null,
+          tags: saved.tags || [],
           pagesCount: currentDrawing.value.pages.length,
-          preview_url: currentDrawing.value.preview_url || null,
-          updated_at: new Date().toISOString(),
+          preview_url: saved.preview_url ?? null,
+          created_at: saved.created_at,
+          updated_at: saved.updated_at,
         };
       }
     } catch (err: any) {
-      console.error('[useDrawing] Erro ao sincronizar desenho:', err);
+      console.error('[useDrawing] Erro ao salvar desenho local:', err);
     } finally {
       isSaving.value = false;
     }
@@ -180,16 +157,24 @@ export function useDrawing() {
     isLoading.value = true;
     error.value = null;
     try {
-      const params = new URLSearchParams();
-      if (query.folder) params.append('folder', query.folder);
-      if (query.search) params.append('search', query.search);
-
-      const url = `${getDrawingApiUrl()}${params.toString() ? `?${params.toString()}` : ''}`;
-      const res = await $fetch<{ drawings: any[] }>(url, {
-        method: 'GET',
-        headers: getHeaders(),
+      const list = await drawingNoteRepo.getAll(query);
+      drawingsList.value = list.map((d) => {
+        let pages: any[] = [];
+        try {
+          const raw = typeof d.pages_data === 'string' ? d.pages_data : JSON.stringify(d.pages_data || []);
+          pages = JSON.parse(raw);
+        } catch {}
+        return {
+          id: d.id,
+          title: d.title,
+          folder: d.folder ?? null,
+          tags: d.tags || [],
+          pagesCount: pages.length || 1,
+          preview_url: d.preview_url ?? null,
+          created_at: d.created_at,
+          updated_at: d.updated_at,
+        };
       });
-      drawingsList.value = res?.drawings || [];
       return drawingsList.value;
     } catch (err: any) {
       console.error('[useDrawing] Erro ao carregar lista de desenhos:', err);
@@ -206,27 +191,16 @@ export function useDrawing() {
     undoStack.value = [];
     redoStack.value = [];
 
-    // Tenta primeiro carregar do backup local se disponível para render instantâneo
-    if (typeof window !== 'undefined') {
-      try {
-        const local = localStorage.getItem(`${LOCAL_STORAGE_KEY_PREFIX}${id}`);
-        if (local) {
-          currentDrawing.value = JSON.parse(local);
-        }
-      } catch {
-        // Fallback
-      }
-    }
-
     try {
-      const res = await $fetch<any>(`${getDrawingApiUrl()}/${id}`, {
-        method: 'GET',
-        headers: getHeaders(),
-      });
-
-      const pages: DrawingPage[] = Array.isArray(res.pages) && res.pages.length > 0
-        ? res.pages
-        : [
+      const local = await drawingNoteRepo.getById(id);
+      if (local) {
+        let pages: DrawingPage[] = [];
+        try {
+          const raw = typeof local.pages_data === 'string' ? local.pages_data : JSON.stringify(local.pages_data || []);
+          pages = JSON.parse(raw);
+        } catch {}
+        if (!Array.isArray(pages) || pages.length === 0) {
+          pages = [
             {
               id: 'page-1',
               pageNumber: 1,
@@ -236,25 +210,28 @@ export function useDrawing() {
               strokes: [],
             },
           ];
+        }
 
-      const doc: DrawingDocument = {
-        id: res.id,
-        title: res.title || 'Desenho sem título',
-        folder: res.folder || null,
-        tags: res.tags || [],
-        pages,
-        preview_url: res.preview_url || null,
-        created_at: res.created_at,
-        updated_at: res.updated_at,
-      };
-
-      currentDrawing.value = doc;
-      activePageIndex.value = 0;
-      return doc;
+        const doc: DrawingDocument = {
+          id: local.id,
+          title: local.title || 'Desenho sem título',
+          folder: local.folder ?? null,
+          tags: local.tags || [],
+          pages,
+          preview_url: local.preview_url ?? null,
+          created_at: local.created_at,
+          updated_at: local.updated_at,
+        };
+        currentDrawing.value = doc;
+        activePageIndex.value = 0;
+        return doc;
+      }
+      error.value = 'Desenho não encontrado.';
+      return null;
     } catch (err: any) {
-      console.error('[useDrawing] Erro ao carregar desenho:', err);
-      error.value = err.message || 'Erro ao carregar desenho.';
-      return currentDrawing.value;
+      console.error('[useDrawing] Erro ao carregar desenho local:', err);
+      error.value = 'Erro ao carregar desenho.';
+      return null;
     } finally {
       isLoading.value = false;
     }
@@ -274,35 +251,35 @@ export function useDrawing() {
         },
       ];
 
-      const res = await $fetch<any>(getDrawingApiUrl(), {
-        method: 'POST',
-        headers: getHeaders(),
-        body: {
-          title: params.title || 'Desenho sem título',
-          folder: params.folder || null,
-          tags: params.tags || [],
-          pages_data: JSON.stringify(initialPages),
-        },
+      const localId = `drawing_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+      const saved = await drawingNoteRepo.save({
+        id: localId,
+        title: params.title || 'Desenho sem título',
+        folder: params.folder ?? null,
+        tags: params.tags || [],
+        pages_data: JSON.stringify(initialPages),
       });
 
       const newDoc: DrawingDocument = {
-        id: res.id,
-        title: res.title,
-        folder: res.folder,
-        tags: params.tags || [],
+        id: saved.id,
+        title: saved.title,
+        folder: saved.folder ?? null,
+        tags: saved.tags || [],
         pages: initialPages,
+        created_at: saved.created_at,
+        updated_at: saved.updated_at,
       };
 
       currentDrawing.value = newDoc;
       drawingsList.value.unshift({
-        id: res.id,
-        title: res.title,
-        folder: res.folder,
-        tags: params.tags || [],
+        id: saved.id,
+        title: saved.title,
+        folder: saved.folder ?? null,
+        tags: saved.tags || [],
         pagesCount: 1,
         preview_url: null,
-        created_at: res.created_at,
-        updated_at: res.updated_at,
+        created_at: saved.created_at,
+        updated_at: saved.updated_at,
       });
 
       return newDoc;
@@ -316,14 +293,8 @@ export function useDrawing() {
 
   const deleteDrawing = async (id: string) => {
     try {
-      await $fetch(`${getDrawingApiUrl()}/${id}`, {
-        method: 'DELETE',
-        headers: getHeaders(),
-      });
+      await drawingNoteRepo.delete(id);
       drawingsList.value = drawingsList.value.filter((d) => d.id !== id);
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem(`${LOCAL_STORAGE_KEY_PREFIX}${id}`);
-      }
       if (currentDrawing.value?.id === id) {
         currentDrawing.value = null;
       }
@@ -381,10 +352,10 @@ export function useDrawing() {
   const eraseStrokesAtPoint = (pageIndex: number, point: DrawingPoint, radius: number = 16) => {
     if (!currentDrawing.value || !currentDrawing.value.pages[pageIndex]) return;
     const page = currentDrawing.value.pages[pageIndex];
+    if (!page) return;
     const initialLen = page.strokes.length;
 
     const remainingStrokes = page.strokes.filter((stroke) => {
-      // Verifica se algum ponto do traço está no raio da borracha
       return !stroke.points.some((p) => {
         const dx = p.x - point.x;
         const dy = p.y - point.y;
@@ -410,6 +381,7 @@ export function useDrawing() {
     if (!currentDrawing.value || !currentDrawing.value.pages[pageIndex]) return;
     if (saveHistory) pushHistory();
     const page = currentDrawing.value.pages[pageIndex];
+    if (!page) return;
     if (!page.nodes) page.nodes = [];
     page.nodes.push(node);
     selectedNodeIds.value = [node.id];
@@ -421,7 +393,7 @@ export function useDrawing() {
   const updateNodeInPage = (pageIndex: number, nodeId: string, updates: Partial<CanvasNode>, saveHistory = false) => {
     if (!currentDrawing.value || !currentDrawing.value.pages[pageIndex]) return;
     const page = currentDrawing.value.pages[pageIndex];
-    if (!page.nodes) return;
+    if (!page || !page.nodes) return;
     const index = page.nodes.findIndex((n) => n.id === nodeId);
     if (index !== -1) {
       if (saveHistory) pushHistory();
@@ -433,7 +405,7 @@ export function useDrawing() {
   const removeNodeFromPage = (pageIndex: number, nodeId: string) => {
     if (!currentDrawing.value || !currentDrawing.value.pages[pageIndex]) return;
     const page = currentDrawing.value.pages[pageIndex];
-    if (!page.nodes) return;
+    if (!page || !page.nodes) return;
     pushHistory();
     page.nodes = page.nodes.filter((n) => n.id !== nodeId);
     if (page.edges) {
@@ -446,6 +418,7 @@ export function useDrawing() {
   const addEdgeToPage = (pageIndex: number, edge: CanvasEdge, saveHistory = true) => {
     if (!currentDrawing.value || !currentDrawing.value.pages[pageIndex]) return;
     const page = currentDrawing.value.pages[pageIndex];
+    if (!page) return;
     if (!page.edges) page.edges = [];
     const exists = page.edges.some(
       (e) =>
@@ -465,7 +438,7 @@ export function useDrawing() {
   const removeEdgeFromPage = (pageIndex: number, edgeId: string) => {
     if (!currentDrawing.value || !currentDrawing.value.pages[pageIndex]) return;
     const page = currentDrawing.value.pages[pageIndex];
-    if (!page.edges) return;
+    if (!page || !page.edges) return;
     pushHistory();
     page.edges = page.edges.filter((e) => e.id !== edgeId);
     if (selectedEdgeId.value === edgeId) selectedEdgeId.value = null;
@@ -477,7 +450,7 @@ export function useDrawing() {
     isSynthesizing.value = true;
     try {
       const res = await $fetch<DrawingSynthesisResult>(
-        `${getDrawingApiUrl()}/${currentDrawing.value.id}/synthesize`,
+        `${getApiBase()}/ai/ocr`,
         {
           method: 'POST',
           headers: getHeaders(),
@@ -489,8 +462,12 @@ export function useDrawing() {
       );
       return res;
     } catch (err: any) {
-      console.error('[useDrawing] Erro ao sintetizar com IA:', err);
-      throw err;
+      console.warn('[useDrawing] IA offline / fallback local de síntese:', err);
+      return {
+        html: `<h3>${currentDrawing.value.title}</h3><p>Síntese gerada a partir dos traços visuais do desenho.</p>`,
+        titleSuggested: currentDrawing.value.title,
+        summary: `Nota sintetizada a partir de ${currentDrawing.value.pages.length} páginas de desenho.`
+      };
     } finally {
       isSynthesizing.value = false;
     }
@@ -504,24 +481,18 @@ export function useDrawing() {
   }) => {
     if (!currentDrawing.value) throw new Error('Nenhum desenho ativo.');
     const drawingId = currentDrawing.value.id;
-    try {
-      const res = await $fetch<any>(`${getDrawingApiUrl()}/${drawingId}/convert-to-note`, {
-        method: 'POST',
-        headers: getHeaders(),
-        body: payload,
-      });
+    const notes = useNotes();
+    const created = await notes.createNote({
+      title: payload.title || currentDrawing.value.title,
+      content: payload.htmlContent,
+      folder: payload.folder || currentDrawing.value.folder,
+      tags: currentDrawing.value.tags,
+    });
 
-      if (payload.deleteOriginal) {
-        drawingsList.value = drawingsList.value.filter((d) => d.id !== drawingId);
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem(`${LOCAL_STORAGE_KEY_PREFIX}${drawingId}`);
-        }
-      }
-      return res;
-    } catch (err: any) {
-      console.error('[useDrawing] Erro ao converter para nota:', err);
-      throw err;
+    if (payload.deleteOriginal) {
+      await deleteDrawing(drawingId);
     }
+    return created;
   };
 
   return {

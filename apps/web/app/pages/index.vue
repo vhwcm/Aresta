@@ -642,10 +642,10 @@
         </div>
       </header>
 
-      <!-- 2. DEMONSTRAÇÕES INTERATIVAS AO VIVO: LEITOR IMERSIVO, NOTAS & CANVAS -->
+      <!-- 2. DEMONSTRAÇÕES INTERATIVAS AO VIVO: GRAFO DE CONHECIMENTO & CANVAS -->
       <section class="flex flex-col gap-12 sm:gap-16">
-        <!-- 1. Demonstração Interativa do Leitor de Livro -->
-        <HomeBookReaderDemo />
+        <!-- 1. Demonstração Interativa do Grafo de Conhecimento com D3 Real -->
+        <HomeKnowledgeGraphDemo />
 
         <!-- 2. Demonstração Interativa de Notas Ativas & Canvas Espacial para Retenção -->
         <HomeCanvasNotesDemo />
@@ -1144,9 +1144,6 @@
       <!-- 8. SEÇÃO DE CONVERSÃO / EXPERIMENTE O ARESTA (CHAMADA PARA AÇÃO COM LINKS DEDICADOS) -->
       <section id="comece-agora" class="flex flex-col lg:flex-row items-center justify-between gap-8 p-8 sm:p-12 rounded-3xl bg-bgPanel border border-divider shadow-2xl">
         <div class="flex flex-col gap-4 text-left max-w-2xl">
-          <h2 class="font-editorial text-3xl sm:text-4xl md:text-5xl font-light text-textPrimary leading-tight">
-            Pronto para transformar sua leitura em <span class="text-accent italic">sabedoria duradoura</span>?
-          </h2>x-w-2xl">
           <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-accent/15 border border-accent/30 text-accent font-technical text-[10px] uppercase tracking-widest font-semibold w-fit">
             Acesso Imediato
           </div>
@@ -1250,7 +1247,7 @@ import ReadingStreak from '~/components/ReadingStreak.vue'
 import EbbinghausChart from '~/components/EbbinghausChart.vue'
 import SidebarGraph from '~/components/SidebarGraph.vue'
 import ArestaLogoGraph from '~/components/ArestaLogoGraph.vue'
-import HomeBookReaderDemo from '~/components/HomeBookReaderDemo.vue'
+import HomeKnowledgeGraphDemo from '~/components/HomeKnowledgeGraphDemo.vue'
 import HomeCanvasNotesDemo from '~/components/HomeCanvasNotesDemo.vue'
 import { useAuth } from '~/composables/useAuth'
 import { useSettings } from '~/composables/useSettings'

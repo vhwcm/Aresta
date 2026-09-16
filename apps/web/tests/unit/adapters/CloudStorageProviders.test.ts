@@ -117,4 +117,59 @@ describe('CloudStorageProviders & Factory (SOLID)', () => {
     expect(books).toHaveLength(1)
     expect(books[0]?.title).toBe('Memórias Póstumas')
   })
+
+  it('GoogleDriveStorageProvider deve deletar todas as pastas Aresta ao invocar deleteAllArestaData', async () => {
+    const deletedIds: string[] = []
+    global.fetch = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
+      const urlStr = url.toString()
+      if (init?.method === 'DELETE') {
+        const id = urlStr.split('/').pop() || ''
+        deletedIds.push(id)
+        return new Response(null, { status: 204 })
+      }
+      if (urlStr.includes('name') && urlStr.includes('Aresta')) {
+        return new Response(
+          JSON.stringify({
+            files: [
+              { id: 'folder_aresta_1', name: 'Aresta' },
+              { id: 'folder_aresta_2', name: 'Aresta' },
+            ],
+          }),
+          { status: 200 }
+        )
+      }
+      return new Response(JSON.stringify({ files: [] }), { status: 200 })
+    }) as any
+
+    const provider = new GoogleDriveStorageProvider('test-token')
+    await provider.deleteAllArestaData()
+
+    expect(deletedIds).toContain('folder_aresta_1')
+    expect(deletedIds).toContain('folder_aresta_2')
+  })
+
+  it('OneDriveStorageProvider deve deletar a pasta Aresta ao invocar deleteAllArestaData', async () => {
+    let deletedRoot = false
+    global.fetch = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
+      const urlStr = url.toString()
+      if (init?.method === 'DELETE' && urlStr.includes('root_onedrive_aresta')) {
+        deletedRoot = true
+        return new Response(null, { status: 204 })
+      }
+      if (urlStr.includes('drive/root/children')) {
+        return new Response(
+          JSON.stringify({
+            value: [{ id: 'root_onedrive_aresta', name: 'Aresta', folder: {} }],
+          }),
+          { status: 200 }
+        )
+      }
+      return new Response(JSON.stringify({ value: [] }), { status: 200 })
+    }) as any
+
+    const provider = new OneDriveStorageProvider('test-token')
+    await provider.deleteAllArestaData()
+
+    expect(deletedRoot).toBe(true)
+  })
 })

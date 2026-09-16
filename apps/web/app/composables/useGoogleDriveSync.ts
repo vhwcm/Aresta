@@ -113,11 +113,25 @@ export const useGoogleDriveSync = () => {
     }
   }
 
+  const deleteAllDriveData = async (): Promise<boolean> => {
+    let token = await ensureGoogleDriveToken()
+    if (!token) return false
+    try {
+      const provider = new GoogleDriveStorageProvider(() => token)
+      await provider.deleteAllArestaData()
+      return true
+    } catch (err) {
+      console.warn('[GoogleDriveSync] Falha ao excluir todos os dados do Drive:', err)
+      return false
+    }
+  }
+
   return {
     isSyncing,
     syncError,
     isGoogleDriveConnected,
     syncBookToDrive,
     listDriveBooks,
+    deleteAllDriveData,
   }
 }

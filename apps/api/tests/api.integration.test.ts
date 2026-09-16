@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../src/server'
 import axios from 'axios'
 import http from 'http'
@@ -45,18 +45,21 @@ describe('Unified Monolith API Integration', () => {
     expect(res.data.user.email).toBe('admin@aresta.app')
   })
 
-  it('GET /api/canvases lista quadros com token JWT', async () => {
+  it('GET /api/canvases retorna 410 Gone (migrado para Local-First)', async () => {
     const loginRes = await axios.post(`${baseUrl}/api/auth/login`, {
       email: 'admin@aresta.app',
       password: 'admin123',
     })
     const token = loginRes.data.token
 
-    const res = await axios.get(`${baseUrl}/api/canvases`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    expect(res.status).toBe(200)
-    expect(Array.isArray(res.data.canvases || res.data)).toBe(true)
+    try {
+      await axios.get(`${baseUrl}/api/canvases`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      expect.unreachable('Deveria retornar 410')
+    } catch (err: any) {
+      expect(err.response?.status).toBe(410)
+    }
   })
 
   it('GET /api/books lista livros com token JWT', async () => {

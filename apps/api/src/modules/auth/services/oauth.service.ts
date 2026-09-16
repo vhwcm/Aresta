@@ -28,12 +28,11 @@ export class OAuthService {
 
     if (!user) {
       isNewUser = true
-      // 2. Se não existir, cria o novo usuário com userSettings padrão
+      // 2. Se não existir, cria o novo usuário
       user = await prisma.user.create({
         data: {
           name: userProfile.name || cleanEmail.split('@')[0],
           email: cleanEmail,
-          userSettings: { create: {} },
         },
         include: { accounts: true },
       })
@@ -96,8 +95,60 @@ export class OAuthService {
     }
   }
 
+  async linkDriveAccount(userId: number, provider: string, code: string, redirectUri?: string) {
+    const cleanProvider = provider.toLowerCase() === 'onedrive' ? 'microsoft' : provider.toLowerCase()
+    const authProvider = AuthProviderFactory.getProvider(cleanProvider)
+    const { tokens, userProfile } = await authProvider.handleCallback(code, redirectUri)
+    const expiresAt = tokens.expiresIn ? Math.floor(Date.now() / 1000) + tokens.expiresIn : undefined
+
+    const existingAccount = await prisma.account.findFirst({
+      where: { user_id: userId, provider: cleanProvider }
+    })
+
+    if (existingAccount) {
+      await prisma.account.update({
+        where: { id: existingAccount.id },
+        data: {
+          provider_account_id: userProfile.providerAccountId,
+          access_token: tokens.accessToken,
+          ...(tokens.refreshToken ? { refresh_token: tokens.refreshToken } : {}),
+          expires_at: expiresAt,
+          scope: tokens.scope,
+          token_type: tokens.tokenType,
+        }
+      })
+    } else {
+      await prisma.account.create({
+        data: {
+          user_id: userId,
+          provider: cleanProvider,
+          provider_account_id: userProfile.providerAccountId,
+          access_token: tokens.accessToken,
+          refresh_token: tokens.refreshToken,
+          expires_at: expiresAt,
+          scope: tokens.scope,
+          token_type: tokens.tokenType,
+        }
+      })
+    }
+
+    return {
+      success: true,
+      provider: cleanProvider,
+      accessToken: tokens.accessToken,
+      expiresIn: tokens.expiresIn
+    }
+  }
+
+  async unlinkDriveAccount(userId: number, provider: string) {
+    const cleanProvider = provider.toLowerCase() === 'onedrive' ? 'microsoft' : provider.toLowerCase()
+    await prisma.account.deleteMany({
+      where: { user_id: userId, provider: cleanProvider }
+    })
+    return { success: true }
+  }
+
   async refreshToken(userId: number, provider: SupportedAuthProvider | string) {
-    // "onedrive" é o nome do storage provider; a identidade OAuth é Microsoft.
     const cleanProvider = provider.toLowerCase() === 'onedrive' ? 'microsoft' : provider.toLowerCase()
     const account = await prisma.account.findFirst({
       where: { user_id: userId, provider: cleanProvider },
@@ -132,8 +183,9 @@ export class OAuthService {
   }
 
   async getAccount(userId: number, provider: string) {
+    const cleanProvider = provider.toLowerCase() === 'onedrive' ? 'microsoft' : provider.toLowerCase()
     return prisma.account.findFirst({
-      where: { user_id: userId, provider: provider.toLowerCase() },
+      where: { user_id: userId, provider: cleanProvider },
       select: {
         id: true,
         provider: true,

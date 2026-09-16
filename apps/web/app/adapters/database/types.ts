@@ -11,12 +11,12 @@ export interface LocalBook extends BaseLocalEntity {
   id: number;
   bookId: number;
   title: string;
-  author?: string;
-  coverPath?: string;
-  filePath?: string;
+  author?: string | null;
+  coverPath?: string | null;
+  filePath?: string | null;
   status: string;
   currentPage: number;
-  lastAccessedAt?: string;
+  lastAccessedAt?: string | null;
   themes?: Array<{ id: number; name: string; color?: string | null }>;
 }
 
@@ -83,7 +83,8 @@ export interface LocalNote extends BaseLocalEntity {
   folder?: string | null;
   tags?: string[];
   links?: Array<{ targetType: 'CANVAS' | 'BOOK' | 'NOTE'; targetId: string }>;
-  createdAt: string;
+  createdAt?: string;
+  created_at?: string;
 }
 
 export interface LocalDrawingNote extends BaseLocalEntity {
@@ -91,14 +92,30 @@ export interface LocalDrawingNote extends BaseLocalEntity {
   title: string;
   folder?: string | null;
   tags?: string[];
-  pagesData: unknown;
+  pagesData?: unknown;
+  pages_data?: unknown;
   previewUrl?: string | null;
-  createdAt: string;
+  preview_url?: string | null;
+  createdAt?: string;
+  created_at?: string;
 }
 
 export interface LocalUserSettings extends BaseLocalEntity {
   id: 'user_settings';
-  values: Record<string, unknown>;
+  pageAnimationEnabled?: boolean;
+  pageCreaseEnabled?: boolean;
+  language?: string;
+  nativeLanguage?: string;
+  targetTranslationLanguage?: string;
+  epubFontSize?: number;
+  epubFontFamily?: string;
+  themeMode?: string;
+  readerTheme?: string;
+  desktopHomeGraphOpen?: boolean;
+  desktopReaderGraphOpen?: boolean;
+  readerTwoPageMode?: boolean;
+  readerWidthMode?: string;
+  values?: Record<string, unknown>;
 }
 
 export interface LocalStreak extends BaseLocalEntity {

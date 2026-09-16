@@ -39,7 +39,6 @@ export interface DailyDeckResponse {
   cards: FlashcardItem[]
 }
 
-
 // Shared module-level reactive state
 const dailyDeck = ref<FlashcardItem[]>([])
 const firstCard = ref<FlashcardItem | null>(null)
@@ -109,113 +108,54 @@ export const useFlashcards = () => {
     }
   }
 
-  /**
-   * Busca o deck de flashcards do dia para o usuário com Local-First
-   */
   const fetchDailyDeck = async (dateStr?: string): Promise<DailyDeckResponse | null> => {
     if (dailyDeck.value.length === 0) {
       isLoading.value = true
     }
     error.value = null
 
-    // 1. Carrega primeiro do banco local
     try {
       const localCards = await flashcardRepo.getAll({ dateStr, onlyDue: false })
-      if (localCards && localCards.length > 0) {
-        dailyDeck.value = localCards.map(mapLocalToFlashcardItem)
-        totalCards.value = dailyDeck.value.length
-        reviewedCount.value = dailyDeck.value.filter((c) => c.isReviewed).length
-        if (dailyDeck.value.length > 0) {
-          firstCard.value = dailyDeck.value[0] || null
-        }
-      }
-    } catch (e) {
-      console.warn('[useFlashcards] Falha ao carregar flashcards locais:', e)
-    }
-
-    // 2. Se online, sincroniza com o backend
-    try {
-      const url = dateStr
-        ? `${getApiBase()}/v1/flashcards/daily?date=${encodeURIComponent(dateStr)}`
-        : `${getApiBase()}/v1/flashcards/daily`
-
-      const res = await $fetch<DailyDeckResponse>(url, {
-        method: 'GET',
-        headers: getHeaders()
-      })
-
-      if (res && res.cards) {
-        dailyDeck.value = res.cards
-        deckDate.value = res.date
-        totalCards.value = res.totalCards
-        reviewedCount.value = res.reviewedCount
-
-        if (dailyDeck.value.length > 0) {
-          firstCard.value = dailyDeck.value[0] || null
-        }
-
-        // Salva cópia local
-        for (const card of res.cards) {
-          await flashcardRepo.save({
-            id: card.id,
-            userId: card.userId,
-            annotationId: card.annotationId,
-            bookId: card.bookId,
-            bookTitle: card.bookTitle,
-            bookCover: card.bookCover,
-            chapterTitle: card.chapterTitle,
-            selectedText: card.selectedText,
-            note: card.note,
-            cardType: card.cardType,
-            question: card.question,
-            answer: card.answer,
-            contextSummary: card.contextSummary,
-            repetitionLevel: card.repetitionLevel,
-            nextReviewAt: card.nextReviewAt,
-            lastReviewedAt: card.lastReviewedAt,
-            reviewCount: card.reviewCount,
-            difficulty: card.difficulty,
-            isReviewed: card.isReviewed,
-            rating: card.rating
-          })
-        }
-      }
-
-      return res
-    } catch (err: any) {
-      if (dailyDeck.value.length === 0) {
-        error.value = err?.message || 'Falha ao carregar deck diário de flashcards'
+      const mapped = localCards.map(mapLocalToFlashcardItem)
+      dailyDeck.value = mapped
+      deckDate.value = dateStr || new Date().toISOString().split('T')[0]!
+      totalCards.value = mapped.length
+      reviewedCount.value = mapped.filter((c) => c.isReviewed).length
+      if (mapped.length > 0) {
+        firstCard.value = mapped[0] || null
       }
       return {
-        date: dateStr || (new Date().toISOString().split('T')[0] ?? ''),
+        date: deckDate.value,
         totalCards: totalCards.value,
         reviewedCount: reviewedCount.value,
-        cards: dailyDeck.value
+        cards: mapped
+      }
+    } catch (e: any) {
+      console.warn('[useFlashcards] Falha ao carregar flashcards locais:', e)
+      error.value = 'Falha ao carregar deck diário de flashcards'
+      return {
+        date: dateStr || new Date().toISOString().split('T')[0]!,
+        totalCards: 0,
+        reviewedCount: 0,
+        cards: []
       }
     } finally {
       isLoading.value = false
     }
   }
 
-  /**
-   * Busca o primeiro flashcard do dia para exibir no feed da Home
-   */
   const fetchFirstDailyCard = async (dateStr?: string): Promise<FlashcardItem | null> => {
     if (firstCard.value) return firstCard.value
     await fetchDailyDeck(dateStr)
     return firstCard.value
   }
 
-  /**
-   * Registra a autoavaliação (hard, good, easy), atualiza agendamento e incrementa streak
-   */
   const reviewFlashcard = async (
     flashcardId: number,
     rating: 'hard' | 'good' | 'easy'
   ) => {
     isSubmitting.value = true
 
-    // Atualiza localmente
     const idx = dailyDeck.value.findIndex((c) => c.id === flashcardId)
     if (idx !== -1) {
       const card = dailyDeck.value[idx]!
@@ -234,73 +174,20 @@ export const useFlashcards = () => {
     }
     reviewedCount.value = dailyDeck.value.filter((c) => c.isReviewed).length
 
-    try {
-      const res = await $fetch<{
-        flashcard: FlashcardItem
-        streak: any
-        justCompletedStreakGoal: boolean
-      }>(`${getApiBase()}/v1/flashcards/${flashcardId}/review`, {
-        method: 'POST',
-        headers: getHeaders(),
-        body: { rating }
-      })
+    await streak.recordFlashcardReview(1)
+    isSubmitting.value = false
+    return { flashcard: dailyDeck.value[idx] || null, streak: null, justCompletedStreakGoal: false }
+  }
 
-      if (res && res.flashcard && idx !== -1) {
-        dailyDeck.value[idx] = {
-          ...dailyDeck.value[idx],
-          ...res.flashcard,
-          isReviewed: true,
-          rating
-        }
-      }
-
-      if (res?.streak) {
-        streak.applyStreakPayload(res.streak)
-      } else {
-        await streak.fetchStreak()
-      }
-      return res
-    } catch (err: any) {
-      console.warn('Avaliação gravada localmente (offline):', err)
-      await streak.recordFlashcardReview(1)
-      return { flashcard: dailyDeck.value[idx]!, streak: null, justCompletedStreakGoal: false }
-    } finally {
-      isSubmitting.value = false
+  const generateBatch = async (_limit = 50) => {
+    await fetchDailyDeck()
+    return {
+      totalPendingFound: 0,
+      totalGenerated: 0,
+      flashcards: dailyDeck.value
     }
   }
 
-  /**
-   * Dispara geração de flashcards para anotações pendentes via IA
-   */
-  const generateBatch = async (limit = 50) => {
-    isLoading.value = true
-    try {
-      const res = await $fetch<{
-        totalPendingFound: number
-        totalGenerated: number
-        flashcards: FlashcardItem[]
-      }>(`${getApiBase()}/v1/flashcards/generate-batch`, {
-        method: 'POST',
-        headers: getHeaders(),
-        body: { limit }
-      })
-
-      if (res.totalGenerated > 0) {
-        await fetchDailyDeck()
-      }
-
-      return res
-    } catch (err: any) {
-      console.error('[useFlashcards] Erro na geração em lote:', err)
-      throw err
-    } finally {
-      isLoading.value = false
-    }
-  }
-
-  /**
-   * Gera flashcard via IA (ou fallback socrático local) para uma anotação (livro ou nota)
-   */
   const generateAiFlashcardForAnnotation = async (annotation: any) => {
     isLoading.value = true
     let question = ''
@@ -314,7 +201,6 @@ export const useFlashcards = () => {
     const noteContent = annotation.note || ''
 
     try {
-      // 1. Tenta gerar via IA
       const res = await $fetch<{ question: string; answer: string; contextSummary: string }>(
         `${getApiBase()}/ai/flashcard`,
         {
@@ -334,11 +220,10 @@ export const useFlashcards = () => {
         answer = res.answer
         contextSummary = res.contextSummary || null
       }
-    } catch (err) {
-      console.warn('[useFlashcards] Geração via IA offline ou sem chave. Usando fallback inteligente:', err)
+    } catch {
+      // Fallback socrático inteligente se IA indisponível
     }
 
-    // 2. Fallback heurístico inteligente se IA falhar ou estiver offline
     if (!question || !answer) {
       if (noteContent && selectedText) {
         question = `O que significa a reflexão "${noteContent}" em relação ao trecho grifado?`
@@ -354,7 +239,6 @@ export const useFlashcards = () => {
       contextSummary = noteContent || selectedText.slice(0, 100)
     }
 
-    // 3. Salva no banco local com rastreamento da fonte
     const saved = await flashcardRepo.createFromAnnotation(
       {
         id: annotation.id,
@@ -382,32 +266,11 @@ export const useFlashcards = () => {
       }
     )
 
-    // 4. Sincroniza com backend se online
-    try {
-      await $fetch(`${getApiBase()}/flashcards`, {
-        method: 'POST',
-        headers: getHeaders(),
-        body: {
-          annotationId: annotation.id,
-          bookId: annotation.bookId || 1,
-          question,
-          answer,
-          contextSummary,
-          cardType: 'CONCEPT_RECALL'
-        }
-      })
-    } catch {
-      // offline
-    }
-
     await fetchDailyDeck()
     isLoading.value = false
     return saved
   }
 
-  /**
-   * Exclui flashcard associado a uma anotação (local e remoto)
-   */
   const deleteFlashcardByAnnotationId = async (annotationId: number) => {
     await flashcardRepo.deleteByAnnotationId(annotationId)
     dailyDeck.value = dailyDeck.value.filter((c) => c.annotationId !== annotationId)
@@ -415,20 +278,8 @@ export const useFlashcards = () => {
     if (firstCard.value?.annotationId === annotationId) {
       firstCard.value = dailyDeck.value[0] || null
     }
-
-    try {
-      await $fetch(`${getApiBase()}/flashcards/by-annotation/${annotationId}`, {
-        method: 'DELETE',
-        headers: getHeaders()
-      })
-    } catch (e) {
-      console.warn('Exclusão remota agendada localmente:', e)
-    }
   }
 
-  /**
-   * Exclui flashcards associados a uma nota do canvas (local e remoto)
-   */
   const deleteFlashcardByNoteId = async (noteId: string) => {
     await flashcardRepo.deleteByNoteId(noteId)
     dailyDeck.value = dailyDeck.value.filter((c) => c.noteId !== noteId && !c.sourceUrl?.includes(noteId))
@@ -438,9 +289,6 @@ export const useFlashcards = () => {
     }
   }
 
-  /**
-   * Exclui flashcards associados a um livro (localmente e no estado em memória)
-   */
   const deleteFlashcardsByBookId = async (bookId: number) => {
     try {
       await flashcardRepo.deleteByBookId(bookId)
