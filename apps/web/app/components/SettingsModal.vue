@@ -154,6 +154,8 @@
               </div>
             </div>
 
+            <DriveSettingsPanel v-if="auth.isLoggedIn.value" />
+
             <!-- Grupo: Preferências do Leitor e Interface -->
             <div class="flex flex-col gap-3">
               <span class="font-technical text-[10px] uppercase font-semibold tracking-widest text-textSecondary opacity-60">
@@ -312,6 +314,7 @@ import { useSettingsModal } from '~/composables/useSettingsModal'
 import { useSettings } from '~/composables/useSettings'
 import { useAuth } from '~/composables/useAuth'
 import ConfirmModal from '~/components/ConfirmModal.vue'
+import DriveSettingsPanel from '~/components/settings/DriveSettingsPanel.vue'
 
 const modal = useSettingsModal()
 const {

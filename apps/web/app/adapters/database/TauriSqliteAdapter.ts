@@ -6,7 +6,10 @@ import type {
   LocalFlashcard,
   LocalCanvasItem,
   LocalStreak,
-  LocalMutation
+  LocalMutation,
+  LocalNote,
+  LocalDrawingNote,
+  LocalUserSettings
 } from './types';
 
 export class TauriSqliteAdapter implements IDatabaseAdapter {
@@ -132,6 +135,17 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
         client_timestamp TEXT NOT NULL,
         sync_status TEXT DEFAULT 'pending',
         retry_count INTEGER DEFAULT 0
+      );
+    `);
+
+    await this.db.execute(`
+      CREATE TABLE IF NOT EXISTS personal_records (
+        entity_type TEXT NOT NULL,
+        id TEXT NOT NULL,
+        payload_json TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        deleted_at TEXT,
+        PRIMARY KEY (entity_type, id)
       );
     `);
   }
@@ -532,6 +546,43 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
     await this.db!.execute('UPDATE canvases SET deleted_at = ?, sync_status = "pending", updated_at = ? WHERE id = ?', [now, now, id]);
   }
 
+  private async getPersonalRecord<T extends { id: string; deleted_at?: string | null }>(entityType: string, id: string): Promise<T | null> {
+    await this.init();
+    const rows = await this.db!.select<any[]>('SELECT payload_json FROM personal_records WHERE entity_type = ? AND id = ? AND deleted_at IS NULL', [entityType, id]);
+    return rows[0] ? JSON.parse(rows[0].payload_json) as T : null;
+  }
+
+  private async getPersonalRecords<T extends { deleted_at?: string | null }>(entityType: string): Promise<T[]> {
+    await this.init();
+    const rows = await this.db!.select<any[]>('SELECT payload_json FROM personal_records WHERE entity_type = ? AND deleted_at IS NULL ORDER BY updated_at DESC', [entityType]);
+    return rows.map((row) => JSON.parse(row.payload_json) as T).filter((item) => !item.deleted_at);
+  }
+
+  private async savePersonalRecord<T extends { id: string; updated_at: string; deleted_at?: string | null }>(entityType: string, item: T): Promise<void> {
+    await this.init();
+    await this.db!.execute(
+      `INSERT INTO personal_records (entity_type, id, payload_json, updated_at, deleted_at) VALUES (?, ?, ?, ?, ?)
+       ON CONFLICT(entity_type, id) DO UPDATE SET payload_json = excluded.payload_json, updated_at = excluded.updated_at, deleted_at = excluded.deleted_at`,
+      [entityType, item.id, JSON.stringify(item), item.updated_at, item.deleted_at || null]
+    );
+  }
+
+  private async deletePersonalRecord<T extends { id: string; updated_at: string; deleted_at?: string | null; sync_status: any }>(entityType: string, id: string): Promise<void> {
+    const item = await this.getPersonalRecord<T>(entityType, id);
+    if (item) await this.savePersonalRecord(entityType, { ...item, updated_at: new Date().toISOString(), deleted_at: new Date().toISOString(), sync_status: 'pending' });
+  }
+
+  async getNotes(): Promise<LocalNote[]> { return this.getPersonalRecords<LocalNote>('note'); }
+  async getNoteById(id: string): Promise<LocalNote | null> { return this.getPersonalRecord<LocalNote>('note', id); }
+  async saveNote(note: LocalNote): Promise<void> { return this.savePersonalRecord('note', note); }
+  async deleteNote(id: string): Promise<void> { return this.deletePersonalRecord<LocalNote>('note', id); }
+  async getDrawingNotes(): Promise<LocalDrawingNote[]> { return this.getPersonalRecords<LocalDrawingNote>('drawing_note'); }
+  async getDrawingNoteById(id: string): Promise<LocalDrawingNote | null> { return this.getPersonalRecord<LocalDrawingNote>('drawing_note', id); }
+  async saveDrawingNote(note: LocalDrawingNote): Promise<void> { return this.savePersonalRecord('drawing_note', note); }
+  async deleteDrawingNote(id: string): Promise<void> { return this.deletePersonalRecord<LocalDrawingNote>('drawing_note', id); }
+  async getSettings(): Promise<LocalUserSettings | null> { return this.getPersonalRecord<LocalUserSettings>('settings', 'user_settings'); }
+  async saveSettings(settings: LocalUserSettings): Promise<void> { return this.savePersonalRecord('settings', { ...settings, id: 'user_settings' }); }
+
   // Streak
   async getStreak(): Promise<LocalStreak | null> {
     await this.init();
@@ -606,6 +657,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
   async clearPendingMutations(): Promise<void> {
     await this.init();
     await this.db!.execute('DELETE FROM mutation_queue');
+    await this.db!.execute('DELETE FROM personal_records');
   }
 
   async clearAll(): Promise<void> {

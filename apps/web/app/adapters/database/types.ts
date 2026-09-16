@@ -76,6 +76,31 @@ export interface LocalCanvasItem extends BaseLocalEntity {
   edgeCount?: number;
 }
 
+export interface LocalNote extends BaseLocalEntity {
+  id: string;
+  title: string;
+  content: string;
+  folder?: string | null;
+  tags?: string[];
+  links?: Array<{ targetType: 'CANVAS' | 'BOOK' | 'NOTE'; targetId: string }>;
+  createdAt: string;
+}
+
+export interface LocalDrawingNote extends BaseLocalEntity {
+  id: string;
+  title: string;
+  folder?: string | null;
+  tags?: string[];
+  pagesData: unknown;
+  previewUrl?: string | null;
+  createdAt: string;
+}
+
+export interface LocalUserSettings extends BaseLocalEntity {
+  id: 'user_settings';
+  values: Record<string, unknown>;
+}
+
 export interface LocalStreak extends BaseLocalEntity {
   id: string; // ex: 'user_streak'
   currentStreak: number;
@@ -108,7 +133,7 @@ export interface LocalStreak extends BaseLocalEntity {
 
 export interface LocalMutation {
   id: string; // UUID v4
-  entity_type: 'book' | 'annotation' | 'flashcard' | 'canvas' | 'streak';
+  entity_type: 'book' | 'annotation' | 'flashcard' | 'canvas' | 'streak' | 'note' | 'drawing_note' | 'settings';
   entity_id: string | number;
   action: 'INSERT' | 'UPDATE' | 'DELETE';
   payload: any;

@@ -4,7 +4,10 @@ import type {
   LocalFlashcard,
   LocalCanvasItem,
   LocalStreak,
-  LocalMutation
+  LocalMutation,
+  LocalNote,
+  LocalDrawingNote,
+  LocalUserSettings
 } from './types';
 
 export interface IDatabaseAdapter {
@@ -34,6 +37,22 @@ export interface IDatabaseAdapter {
   getCanvasById(id: string): Promise<LocalCanvasItem | null>;
   saveCanvas(canvas: LocalCanvasItem): Promise<void>;
   deleteCanvas(id: string): Promise<void>;
+
+  // Notes
+  getNotes(): Promise<LocalNote[]>;
+  getNoteById(id: string): Promise<LocalNote | null>;
+  saveNote(note: LocalNote): Promise<void>;
+  deleteNote(id: string): Promise<void>;
+
+  // Drawing notes
+  getDrawingNotes(): Promise<LocalDrawingNote[]>;
+  getDrawingNoteById(id: string): Promise<LocalDrawingNote | null>;
+  saveDrawingNote(note: LocalDrawingNote): Promise<void>;
+  deleteDrawingNote(id: string): Promise<void>;
+
+  // Settings
+  getSettings(): Promise<LocalUserSettings | null>;
+  saveSettings(settings: LocalUserSettings): Promise<void>;
 
   // Reading Streak
   getStreak(): Promise<LocalStreak | null>;

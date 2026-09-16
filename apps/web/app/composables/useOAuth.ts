@@ -16,91 +16,62 @@ const getAuthApiUrl = () => {
   return getApiRoot()
 }
 
-const GOOGLE_TOKEN_KEY = 'aresta_google_drive_token'
-const ONEDRIVE_TOKEN_KEY = 'aresta_onedrive_token'
-
-// Estado compartilhado singleton entre todos os composables e componentes
-const sharedGoogleDriveToken = ref<string | null>(
-  typeof window !== 'undefined' ? localStorage.getItem(GOOGLE_TOKEN_KEY) : null
-)
+// Access tokens são efêmeros e ficam somente em memória. Refresh tokens nunca
+// são enviados pelo backend ao browser.
+const cloudTokens = new Map<'google' | 'onedrive', string>()
+const sharedGoogleDriveToken = ref<string | null>(null)
 
 export const useOAuth = () => {
   const auth = useAuth()
   const isLoggingIn = ref(false)
   const oauthError = ref<string | null>(null)
 
-  if (typeof window !== 'undefined') {
-    const currentStored = localStorage.getItem(GOOGLE_TOKEN_KEY)
-    if (currentStored !== sharedGoogleDriveToken.value) {
-      sharedGoogleDriveToken.value = currentStored
-    }
-  }
-
   const googleDriveToken = sharedGoogleDriveToken
   const isGoogleDriveConnected = computed(() => !!googleDriveToken.value)
 
   const setGoogleDriveToken = (token: string | null) => {
     sharedGoogleDriveToken.value = token
-    if (typeof window !== 'undefined') {
-      if (token) {
-        localStorage.setItem(GOOGLE_TOKEN_KEY, token)
-      } else {
-        localStorage.removeItem(GOOGLE_TOKEN_KEY)
-      }
-    }
+    if (token) cloudTokens.set('google', token)
+    else cloudTokens.delete('google')
   }
 
   const setOneDriveToken = (token: string | null) => {
-    if (typeof window !== 'undefined') {
-      if (token) {
-        localStorage.setItem(ONEDRIVE_TOKEN_KEY, token)
-      } else {
-        localStorage.removeItem(ONEDRIVE_TOKEN_KEY)
-      }
+    if (token) cloudTokens.set('onedrive', token)
+    else cloudTokens.delete('onedrive')
+  }
+
+  const refreshCloudToken = async (provider: 'google' | 'onedrive'): Promise<string | null> => {
+    if (!auth.token.value) return null
+    try {
+      const data = await $fetch<{ accessToken: string }>(
+        `${getAuthApiUrl()}/api/auth/cloud/${provider}/access-token`,
+        { method: 'POST', headers: { Authorization: `Bearer ${auth.token.value}` } }
+      )
+      if (!data?.accessToken) return null
+      if (provider === 'google') setGoogleDriveToken(data.accessToken)
+      else setOneDriveToken(data.accessToken)
+      return data.accessToken
+    } catch (err) {
+      console.warn(`[useOAuth] Não foi possível obter token do ${provider}:`, err)
+      return null
     }
   }
 
   const refreshGoogleToken = async (): Promise<string | null> => {
     if (!auth.token.value) return null
-    try {
-      const authUrl = getAuthApiUrl()
-      const data = await $fetch<{ accessToken: string }>(
-        `${authUrl}/api/auth/oauth/google/refresh`,
-        {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${auth.token.value}` },
-        }
-      )
-      if (data?.accessToken) {
-        setGoogleDriveToken(data.accessToken)
-        return data.accessToken
-      }
-      return null
-    } catch (err) {
-      console.warn('[useOAuth] Não foi possível renovar o token do Google Drive:', err)
-      return null
-    }
+    return refreshCloudToken('google')
   }
 
   const ensureGoogleDriveToken = async (): Promise<string | null> => {
     if (sharedGoogleDriveToken.value) {
       return sharedGoogleDriveToken.value
     }
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem(GOOGLE_TOKEN_KEY)
-      if (stored) {
-        sharedGoogleDriveToken.value = stored
-        return stored
-      }
-    }
-    // Tenta renovar via backend se usuário autenticado
     return await refreshGoogleToken()
   }
 
   const getCloudToken = (provider: 'google' | 'onedrive' | 'apple'): string | null => {
-    if (typeof window === 'undefined') return null
-    if (provider === 'google') return localStorage.getItem(GOOGLE_TOKEN_KEY)
-    if (provider === 'onedrive') return localStorage.getItem(ONEDRIVE_TOKEN_KEY)
+    if (provider === 'google') return cloudTokens.get('google') || null
+    if (provider === 'onedrive') return cloudTokens.get('onedrive') || null
     return null
   }
 
@@ -202,13 +173,13 @@ export const useOAuth = () => {
         token: string
         user: AuthUser
         isNewUser?: boolean
-        oauth: { provider: string; accessToken: string; refreshToken?: string }
+        oauth: { provider: string; scope?: string }
       }>(`${authUrl}/api/auth/oauth/${provider}/callback`, {
         method: 'POST',
         body: { code, redirectUri },
       })
 
-      // 5. Atualiza sessão do Aresta e armazena token em nuvem
+      // 5. Atualiza sessão do Aresta e solicita token efêmero somente em memória
       const tokenCookie = useCookie<string | null>('aresta_token', { path: '/', maxAge: 60 * 60 * 24 * 7, sameSite: 'lax' })
       const userCookie = useCookie<AuthUser | null>('aresta_user', { path: '/', maxAge: 60 * 60 * 24 * 7, sameSite: 'lax' })
 
@@ -217,20 +188,15 @@ export const useOAuth = () => {
       tokenCookie.value = response.token
       userCookie.value = response.user
 
-      if (response.oauth?.accessToken) {
-        if (provider === 'google') {
-          setGoogleDriveToken(response.oauth.accessToken)
-        } else if (provider === 'microsoft') {
-          setOneDriveToken(response.oauth.accessToken)
-        }
-      }
+      if (provider === 'google') await refreshCloudToken('google')
+      if (provider === 'microsoft') await refreshCloudToken('onedrive')
 
       return {
         success: true,
         provider,
         user: response.user,
         isNewUser: response.isNewUser ?? false,
-        accessToken: response.oauth?.accessToken,
+        accessToken: (provider === 'google' ? getCloudToken('google') : getCloudToken('onedrive')) || undefined,
       }
     } catch (err: any) {
       const msg = err?.message || 'Erro ao autenticar com o provedor.'
@@ -250,6 +216,7 @@ export const useOAuth = () => {
     setGoogleDriveToken,
     setOneDriveToken,
     getCloudToken,
+    refreshCloudToken,
     refreshGoogleToken,
     ensureGoogleDriveToken,
   }

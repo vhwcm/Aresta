@@ -49,6 +49,14 @@ export class OAuthController {
     }
   }
 
+  /**
+   * Entrega um access token efêmero ao cliente autenticado. Refresh tokens
+   * permanecem exclusivamente no backend.
+   */
+  async getAccessToken(req: Request, res: Response): Promise<void> {
+    await this.refresh(req, res)
+  }
+
   async getStatus(req: Request, res: Response): Promise<void> {
     try {
       const provider = String(req.params.provider)

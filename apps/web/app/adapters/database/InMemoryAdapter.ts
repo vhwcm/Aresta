@@ -5,7 +5,10 @@ import type {
   LocalFlashcard,
   LocalCanvasItem,
   LocalStreak,
-  LocalMutation
+  LocalMutation,
+  LocalNote,
+  LocalDrawingNote,
+  LocalUserSettings
 } from './types';
 
 export class InMemoryAdapter implements IDatabaseAdapter {
@@ -15,6 +18,9 @@ export class InMemoryAdapter implements IDatabaseAdapter {
   private canvases = new Map<string, LocalCanvasItem>();
   private streak: LocalStreak | null = null;
   private mutationQueue = new Map<string, LocalMutation>();
+  private notes = new Map<string, LocalNote>();
+  private drawingNotes = new Map<string, LocalDrawingNote>();
+  private settings: LocalUserSettings | null = null;
 
   async init(): Promise<void> {}
 
@@ -126,6 +132,17 @@ export class InMemoryAdapter implements IDatabaseAdapter {
     }
   }
 
+  async getNotes(): Promise<LocalNote[]> { return Array.from(this.notes.values()).filter((item) => !item.deleted_at); }
+  async getNoteById(id: string): Promise<LocalNote | null> { const item = this.notes.get(id); return item && !item.deleted_at ? item : null; }
+  async saveNote(note: LocalNote): Promise<void> { this.notes.set(note.id, { ...note }); }
+  async deleteNote(id: string): Promise<void> { const item = this.notes.get(id); if (item) this.notes.set(id, { ...item, deleted_at: new Date().toISOString(), updated_at: new Date().toISOString(), sync_status: 'pending' }); }
+  async getDrawingNotes(): Promise<LocalDrawingNote[]> { return Array.from(this.drawingNotes.values()).filter((item) => !item.deleted_at); }
+  async getDrawingNoteById(id: string): Promise<LocalDrawingNote | null> { const item = this.drawingNotes.get(id); return item && !item.deleted_at ? item : null; }
+  async saveDrawingNote(note: LocalDrawingNote): Promise<void> { this.drawingNotes.set(note.id, { ...note }); }
+  async deleteDrawingNote(id: string): Promise<void> { const item = this.drawingNotes.get(id); if (item) this.drawingNotes.set(id, { ...item, deleted_at: new Date().toISOString(), updated_at: new Date().toISOString(), sync_status: 'pending' }); }
+  async getSettings(): Promise<LocalUserSettings | null> { return this.settings ? { ...this.settings } : null; }
+  async saveSettings(settings: LocalUserSettings): Promise<void> { this.settings = { ...settings, id: 'user_settings' }; }
+
   // Reading Streak
   async getStreak(): Promise<LocalStreak | null> {
     return this.streak;
@@ -155,6 +172,7 @@ export class InMemoryAdapter implements IDatabaseAdapter {
 
   async clearPendingMutations(): Promise<void> {
     this.mutationQueue.clear();
+    this.notes.clear(); this.drawingNotes.clear(); this.settings = null;
   }
 
   async clearAll(): Promise<void> {

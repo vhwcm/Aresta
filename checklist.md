@@ -1,4 +1,5 @@
 ## 🔄 Em Andamento
+- [16/09/2026 12:10] [Fazendo] Implementar Aresta Cloud Drive local-first para todos os dados pessoais e descarte do backend legado
 - [16/09/2026 11:00] [Fazendo] Implementar exemplos reais de leitura e grafo na home e bloquear acesso e criação anônima sem autenticação
 
 ## ✅ Concluído

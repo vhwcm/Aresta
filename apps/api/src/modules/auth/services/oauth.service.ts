@@ -91,16 +91,14 @@ export class OAuthService {
       },
       oauth: {
         provider: userProfile.provider,
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken,
-        expiresIn: tokens.expiresIn,
         scope: tokens.scope,
       },
     }
   }
 
   async refreshToken(userId: number, provider: SupportedAuthProvider | string) {
-    const cleanProvider = provider.toLowerCase()
+    // "onedrive" é o nome do storage provider; a identidade OAuth é Microsoft.
+    const cleanProvider = provider.toLowerCase() === 'onedrive' ? 'microsoft' : provider.toLowerCase()
     const account = await prisma.account.findFirst({
       where: { user_id: userId, provider: cleanProvider },
     })
@@ -140,7 +138,6 @@ export class OAuthService {
         id: true,
         provider: true,
         provider_account_id: true,
-        access_token: true,
         expires_at: true,
         scope: true,
         created_at: true,

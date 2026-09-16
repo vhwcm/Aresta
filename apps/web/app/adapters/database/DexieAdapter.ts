@@ -6,7 +6,10 @@ import type {
   LocalFlashcard,
   LocalCanvasItem,
   LocalStreak,
-  LocalMutation
+  LocalMutation,
+  LocalNote,
+  LocalDrawingNote,
+  LocalUserSettings
 } from './types';
 
 class ArestaDexieDB extends Dexie {
@@ -16,6 +19,9 @@ class ArestaDexieDB extends Dexie {
   canvases!: Table<LocalCanvasItem, string>;
   streaks!: Table<LocalStreak, string>;
   mutation_queue!: Table<LocalMutation, string>;
+  notes!: Table<LocalNote, string>;
+  drawing_notes!: Table<LocalDrawingNote, string>;
+  user_settings!: Table<LocalUserSettings, string>;
 
   constructor() {
     super('aresta_local_db');
@@ -26,6 +32,17 @@ class ArestaDexieDB extends Dexie {
       canvases: 'id, name, updated_at, deleted_at',
       streaks: 'id, updated_at',
       mutation_queue: 'id, entity_type, entity_id, action, client_timestamp, sync_status'
+    });
+    this.version(2).stores({
+      books: 'id, bookId, status, updated_at, deleted_at',
+      annotations: 'id, bookId, cfi, createdAt, updated_at, deleted_at',
+      flashcards: 'id, bookId, annotationId, nextReviewAt, repetitionLevel, updated_at, deleted_at',
+      canvases: 'id, name, updated_at, deleted_at',
+      streaks: 'id, updated_at',
+      mutation_queue: 'id, entity_type, entity_id, action, client_timestamp, sync_status',
+      notes: 'id, updated_at, deleted_at, folder',
+      drawing_notes: 'id, updated_at, deleted_at, folder',
+      user_settings: 'id, updated_at'
     });
   }
 }
@@ -191,6 +208,31 @@ export class DexieAdapter implements IDatabaseAdapter {
     }
   }
 
+  async getNotes(): Promise<LocalNote[]> {
+    await this.init();
+    return (await this.db.notes.toArray()).filter((item) => !item.deleted_at).sort((a, b) => b.updated_at.localeCompare(a.updated_at));
+  }
+  async getNoteById(id: string): Promise<LocalNote | null> {
+    await this.init(); const item = await this.db.notes.get(id); return item && !item.deleted_at ? item : null;
+  }
+  async saveNote(note: LocalNote): Promise<void> { await this.init(); await this.db.notes.put(note); }
+  async deleteNote(id: string): Promise<void> {
+    await this.init(); const item = await this.db.notes.get(id); if (item) await this.db.notes.put({ ...item, deleted_at: new Date().toISOString(), updated_at: new Date().toISOString(), sync_status: 'pending' });
+  }
+
+  async getDrawingNotes(): Promise<LocalDrawingNote[]> {
+    await this.init(); return (await this.db.drawing_notes.toArray()).filter((item) => !item.deleted_at).sort((a, b) => b.updated_at.localeCompare(a.updated_at));
+  }
+  async getDrawingNoteById(id: string): Promise<LocalDrawingNote | null> {
+    await this.init(); const item = await this.db.drawing_notes.get(id); return item && !item.deleted_at ? item : null;
+  }
+  async saveDrawingNote(note: LocalDrawingNote): Promise<void> { await this.init(); await this.db.drawing_notes.put(note); }
+  async deleteDrawingNote(id: string): Promise<void> {
+    await this.init(); const item = await this.db.drawing_notes.get(id); if (item) await this.db.drawing_notes.put({ ...item, deleted_at: new Date().toISOString(), updated_at: new Date().toISOString(), sync_status: 'pending' });
+  }
+  async getSettings(): Promise<LocalUserSettings | null> { await this.init(); return (await this.db.user_settings.get('user_settings')) || null; }
+  async saveSettings(settings: LocalUserSettings): Promise<void> { await this.init(); await this.db.user_settings.put({ ...settings, id: 'user_settings' }); }
+
   // Reading Streak
   async getStreak(): Promise<LocalStreak | null> {
     await this.init();
@@ -235,6 +277,7 @@ export class DexieAdapter implements IDatabaseAdapter {
       this.db.canvases.clear(),
       this.db.streaks.clear(),
       this.db.mutation_queue.clear()
+      ,this.db.notes.clear(), this.db.drawing_notes.clear(), this.db.user_settings.clear()
     ]);
   }
 }

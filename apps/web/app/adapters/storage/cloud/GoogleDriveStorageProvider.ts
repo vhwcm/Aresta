@@ -217,7 +217,8 @@ export class GoogleDriveStorageProvider implements IDataSyncProvider {
   /** Garante pastas Aresta/data/ e todas as subpastas necessárias */
   async ensureDataFolders(): Promise<void> {
     const rootFolder = await this.ensureFolder('Aresta')
-    const dataFolder = await this.ensureFolder('data', rootFolder.id)
+    const versionFolder = await this.ensureFolder('v1', rootFolder.id)
+    const dataFolder = await this.ensureFolder('data', versionFolder.id)
     this._dataFolderId = dataFolder.id
 
     const subFolders: DataSubFolder[] = ['canvas', 'notes', 'drawing_notes']

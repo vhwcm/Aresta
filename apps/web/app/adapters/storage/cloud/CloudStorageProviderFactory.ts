@@ -1,8 +1,9 @@
 import type { ICloudStorageProvider } from './ICloudStorageProvider'
 import { GoogleDriveStorageProvider } from './GoogleDriveStorageProvider'
 import { OneDriveStorageProvider } from './OneDriveStorageProvider'
+import { ICloudFolderAdapter } from './ICloudFolderAdapter'
 
-export type SupportedCloudStorage = 'google' | 'onedrive'
+export type SupportedCloudStorage = 'google' | 'onedrive' | 'icloud-folder'
 
 export class CloudStorageProviderFactory {
   private static providers: Map<string, ICloudStorageProvider> = new Map()
@@ -21,6 +22,9 @@ export class CloudStorageProviderFactory {
           break
         case 'onedrive':
           instance = new OneDriveStorageProvider(tokenOrGetter)
+          break
+        case 'icloud-folder':
+          instance = new ICloudFolderAdapter()
           break
         default:
           throw new Error(`Provedor de nuvem não suportado: ${providerName}`)
