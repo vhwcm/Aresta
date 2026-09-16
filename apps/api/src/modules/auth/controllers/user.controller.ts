@@ -41,6 +41,15 @@ export class UserController {
       res.status(500).json({ error: err.message })
     }
   }
+
+  async metrics(req: Request, res: Response): Promise<void> {
+    try {
+      const metrics = await userService.getMetrics(req.user!.userId)
+      res.json({ metrics })
+    } catch (err: any) {
+      res.status(500).json({ error: err.message })
+    }
+  }
 }
 
 export const userController = new UserController()

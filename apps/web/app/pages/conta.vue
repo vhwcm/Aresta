@@ -41,7 +41,7 @@
         <div class="flex flex-col gap-1">
           <h2 class="font-editorial text-2xl font-light text-textPrimary">{{ userName }}</h2>
           <span class="font-interface text-xs text-textSecondary">{{ userEmail }}</span>
-          <span class="font-technical text-[10px] text-accent uppercase tracking-wider mt-1">Membro desde Agosto de 2026</span>
+          <span class="font-technical text-[10px] text-accent uppercase tracking-wider mt-1">{{ memberSinceFormatted }}</span>
         </div>
       </div>
 
@@ -75,47 +75,58 @@
     </section>
 
     <!-- Métricas Intelectuais e Estatísticas -->
-    <section class="flex flex-col gap-6">
+    <section class="flex flex-col gap-6" data-testid="reading-metrics-section">
       <h3 class="font-editorial text-2xl font-light text-textPrimary">Métricas de Leitura & Conhecimento</h3>
 
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <!-- Métrica 1: Livros -->
-        <div class="p-6 rounded-2xl bg-bgPanel border border-divider shadow-sm flex flex-col gap-2">
+        <div class="p-6 rounded-2xl bg-bgPanel border border-divider shadow-sm flex flex-col gap-2" data-testid="metric-books">
           <div class="flex items-center justify-between text-textSecondary">
             <span class="font-technical text-[10px] uppercase tracking-wider">Livros no Acervo</span>
             <BookOpenIcon class="w-4 h-4 text-accent" />
           </div>
-          <span class="font-editorial text-4xl font-light text-textPrimary">8</span>
-          <span class="font-interface text-[11px] text-textSecondary">3 em leitura ativa</span>
+          <span class="font-editorial text-4xl font-light text-textPrimary">{{ metrics.books.total }}</span>
+          <span class="font-interface text-[11px] text-textSecondary">
+            {{ metrics.books.activeReading }} em leitura ativa
+          </span>
         </div>
 
         <!-- Métrica 2: Horas de Leitura -->
-        <div class="p-6 rounded-2xl bg-bgPanel border border-divider shadow-sm flex flex-col gap-2">
+        <div class="p-6 rounded-2xl bg-bgPanel border border-divider shadow-sm flex flex-col gap-2" data-testid="metric-reading-time">
           <div class="flex items-center justify-between text-textSecondary">
             <span class="font-technical text-[10px] uppercase tracking-wider">Tempo Total</span>
             <ClockIcon class="w-4 h-4 text-accent" />
           </div>
-          <span class="font-editorial text-4xl font-light text-textPrimary">42.5<span class="text-lg font-interface">h</span></span>
-          <span class="font-interface text-[11px] text-textSecondary">Média 35 min/dia</span>
+          <span class="font-editorial text-4xl font-light text-textPrimary">
+            {{ metrics.readingTime.totalHoursFormatted }}<span class="text-lg font-interface">h</span>
+          </span>
+          <span class="font-interface text-[11px] text-textSecondary">
+            Média {{ metrics.readingTime.averageMinutesPerDay }} min/dia
+          </span>
         </div>
 
         <!-- Métrica 3: Nós do Grafo -->
-        <div class="p-6 rounded-2xl bg-bgPanel border border-divider shadow-sm flex flex-col gap-2">
+        <div class="p-6 rounded-2xl bg-bgPanel border border-divider shadow-sm flex flex-col gap-2" data-testid="metric-knowledge-nodes">
           <div class="flex items-center justify-between text-textSecondary">
             <span class="font-technical text-[10px] uppercase tracking-wider">Nós Conectados</span>
             <NetworkIcon class="w-4 h-4 text-accent" />
           </div>
-          <span class="font-editorial text-4xl font-light text-textPrimary">64</span>
-          <span class="font-interface text-[11px] text-textSecondary">Em 4 mapas conceituais</span>
+          <span class="font-editorial text-4xl font-light text-textPrimary">{{ metrics.knowledge.totalNodes }}</span>
+          <span class="font-interface text-[11px] text-textSecondary">
+            Em {{ metrics.knowledge.canvasCount }} {{ metrics.knowledge.canvasCount === 1 ? 'mapa conceitual' : 'mapas conceituais' }}
+          </span>
         </div>
 
         <!-- Métrica 4: Retenção -->
-        <div class="p-6 rounded-2xl bg-bgPanel border border-divider shadow-sm flex flex-col gap-2">
+        <div class="p-6 rounded-2xl bg-bgPanel border border-divider shadow-sm flex flex-col gap-2" data-testid="metric-retention-rate">
           <div class="flex items-center justify-between text-textSecondary">
             <span class="font-technical text-[10px] uppercase tracking-wider">Taxa de Retenção</span>
             <CheckCircle2Icon class="w-4 h-4 text-emerald-500" />
           </div>
-          <span class="font-editorial text-4xl font-light text-emerald-500">91%</span>
+          <span class="font-editorial text-4xl font-light text-emerald-500">{{ metrics.memory.retentionRate }}%</span>
+          <span class="font-interface text-[11px] text-textSecondary">
+            {{ metrics.memory.totalFlashcards > 0 ? `${metrics.memory.totalFlashcards} cards no acervo` : 'SM-2 Repetição Espaçada' }}
+          </span>
         </div>
       </div>
     </section>
@@ -675,7 +686,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import {
   UserIcon,
   CrownIcon,
@@ -702,10 +713,22 @@ import {
 import { useAuth } from '~/composables/useAuth'
 import { useSettings } from '~/composables/useSettings'
 import { useOAuth } from '~/composables/useOAuth'
+import { useUserMetrics } from '~/composables/useUserMetrics'
 import ConfirmModal from '~/components/ConfirmModal.vue'
 
 const auth = useAuth()
 const settings = useSettings()
+const {
+  metrics,
+  memberSinceFormatted,
+  fetchMetrics,
+  isLoading: isLoadingMetrics,
+} = useUserMetrics()
+
+onMounted(() => {
+  fetchMetrics()
+})
+
 const {
   isGoogleDriveConnected,
   loginWithOAuth,

@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import ContaPage from '~/pages/conta.vue'
 import { useSettings } from '~/composables/useSettings'
+import { useUserMetrics } from '~/composables/useUserMetrics'
 
 describe('Conta Page (/conta)', () => {
   const defaultStubs = {
@@ -27,6 +28,7 @@ describe('Conta Page (/conta)', () => {
     CheckIcon: true,
     PaletteIcon: true,
     CloudIcon: true,
+    SparklesIcon: true,
   }
 
   beforeEach(() => {
@@ -40,6 +42,15 @@ describe('Conta Page (/conta)', () => {
   })
 
   it('renders user profile, reading metrics, preferences section, and danger zone', () => {
+    const { metrics } = useUserMetrics()
+    metrics.value = {
+      books: { total: 8, activeReading: 3 },
+      readingTime: { totalSeconds: 153000, totalHoursFormatted: '42.5', averageMinutesPerDay: 35 },
+      knowledge: { totalNodes: 64, canvasCount: 4 },
+      memory: { retentionRate: 91, totalFlashcards: 10, reviewedCount: 8 },
+      memberSince: '2026-08-01T00:00:00.000Z',
+    }
+
     const wrapper = mount(ContaPage, {
       global: {
         stubs: defaultStubs,
@@ -48,6 +59,14 @@ describe('Conta Page (/conta)', () => {
 
     expect(wrapper.text()).toContain('Sua Conta')
     expect(wrapper.text()).toContain('Métricas de Leitura & Conhecimento')
+    expect(wrapper.find('[data-testid="reading-metrics-section"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="metric-books"]').text()).toContain('8')
+    expect(wrapper.find('[data-testid="metric-books"]').text()).toContain('3 em leitura ativa')
+    expect(wrapper.find('[data-testid="metric-reading-time"]').text()).toContain('42.5')
+    expect(wrapper.find('[data-testid="metric-reading-time"]').text()).toContain('Média 35 min/dia')
+    expect(wrapper.find('[data-testid="metric-knowledge-nodes"]').text()).toContain('64')
+    expect(wrapper.find('[data-testid="metric-knowledge-nodes"]').text()).toContain('Em 4 mapas conceituais')
+    expect(wrapper.find('[data-testid="metric-retention-rate"]').text()).toContain('91%')
     expect(wrapper.find('[data-testid="account-preferences-section"]').exists()).toBe(true)
     expect(wrapper.text()).toContain('Configurações da Aplicação')
     expect(wrapper.text()).toContain('Aresta Pro')
@@ -57,6 +76,7 @@ describe('Conta Page (/conta)', () => {
   })
 
   it('permite alternar o tema unificado do app e de leitura (claro, escuro, livro)', async () => {
+
     const wrapper = mount(ContaPage, {
       global: {
         stubs: defaultStubs,

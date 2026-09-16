@@ -48,7 +48,7 @@ Este documento serve como inventário técnico das funcionalidades que atualment
     - *Payload*: `{ planId: 'pro_annual' | 'pro_monthly', successUrl: string, cancelUrl: string }`
     - *Retorno*: `{ checkoutUrl: string, sessionId: string }`
   - `POST /api/subscriptions/webhook`: Endpoint de webhook para processar eventos de pagamento e ativação/cancelamento do plano.
-  - `GET /api/users/me/metrics`: Estatísticas agregadas (horas totais lidas, quantidade de livros na estante, nós conectados no grafo e taxa de retenção).
+  - `GET /api/users/me/metrics` *(Implementado)*: Estatísticas agregadas (horas totais lidas, quantidade de livros na estante, nós conectados no grafo e taxa de retenção).
 
 ---
 
