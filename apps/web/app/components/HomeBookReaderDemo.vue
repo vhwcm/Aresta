@@ -115,10 +115,11 @@
 
           <!-- CTA Direto -->
           <NuxtLink
-            to="/reader"
+            :to="auth.isLoggedIn.value ? '/library' : '/login?redirect=%2Flibrary'"
+            data-testid="reader-demo-cta"
             class="px-5 py-2.5 rounded-full bg-accent hover:bg-accent/90 text-white font-interface text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 shadow-lg shadow-accent/20 cursor-pointer shrink-0"
           >
-            <span>Abrir no Leitor</span>
+            <span>{{ auth.isLoggedIn.value ? 'Minha Estante' : 'Ler no Aresta (Criar Conta)' }}</span>
             <ArrowRightIcon class="w-4 h-4" />
           </NuxtLink>
         </div>
@@ -395,6 +396,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import { useAuth } from '~/composables/useAuth'
 import {
   BookOpenIcon,
   SparklesIcon,
@@ -404,6 +406,9 @@ import {
   ArrowRightIcon
 } from 'lucide-vue-next'
 import { useSettings } from '~/composables/useSettings'
+import { renderInlineMarkdown } from '~/utils/markdownFormat'
+
+const auth = useAuth()
 
 const { themeMode } = useSettings()
 

@@ -132,6 +132,10 @@
 </template>
 
 <script setup lang="ts">
+definePageMeta({
+  middleware: ['auth'],
+})
+
 import { ref } from 'vue'
 import { ArrowLeftIcon, AlertTriangleIcon, CheckCircle2Icon, BookmarkIcon } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'

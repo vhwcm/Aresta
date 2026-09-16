@@ -65,6 +65,12 @@ export function useNotes() {
     isLoading.value = true;
     error.value = null;
 
+    if (!token?.value) {
+      notesList.value = [];
+      isLoading.value = false;
+      return { notes: [], total: 0, page: 1, limit: 50, totalPages: 0 };
+    }
+
     if (notesList.value.length === 0) {
       const cached = loadLocalNotes();
       if (cached.length > 0) {
@@ -104,6 +110,7 @@ export function useNotes() {
   };
 
   const loadNote = async (id: string) => {
+    if (!token?.value) return null;
     isLoading.value = true;
     error.value = null;
     try {
@@ -134,6 +141,11 @@ export function useNotes() {
     canvasId?: string;
     links?: Array<{ targetType: 'CANVAS' | 'BOOK' | 'NOTE'; targetId: string }>;
   }) => {
+    if (!token?.value) {
+      error.value = 'É necessário estar autenticado para criar uma anotação.';
+      throw new Error('É necessário estar autenticado para criar uma anotação.');
+    }
+
     isLoading.value = true;
     error.value = null;
 
@@ -144,9 +156,10 @@ export function useNotes() {
       initialLinks.push({ id: initialLinks.length + 1, targetType: 'CANVAS', targetId: input.canvasId });
     }
 
+    const currentUserId = Number((user as any)?.value?.id) || 0;
     const fallbackNote: NoteItem = {
       id: localId,
-      userId: (user as any)?.value?.id || 1,
+      userId: currentUserId,
       title: input.title?.trim() || 'Nova Nota',
       content: input.content || '',
       folder: input.folder || null,

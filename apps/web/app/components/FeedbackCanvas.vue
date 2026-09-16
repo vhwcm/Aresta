@@ -71,9 +71,7 @@
                 <span class="text-textSecondary text-[11px] truncate">{{ userEmail }}</span>
               </div>
             </div>
-            <span class="font-technical text-[10px] uppercase px-2 py-0.5 rounded bg-accent/10 text-accent border border-accent/20 shrink-0">
-              Autor
-            </span>
+
           </div>
 
           <!-- Seleção de Categoria / Tipo -->

@@ -643,8 +643,13 @@
 </template>
 
 <script setup lang="ts">
+definePageMeta({
+  middleware: ['auth'],
+})
+
 import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useAuth } from '~/composables/useAuth'
 import {
   SearchIcon,
   PlusIcon,
@@ -672,6 +677,7 @@ import { useGraph } from '~/composables/useGraph'
 import type { CanvasSummary } from '~/interfaces/canvas'
 import type { NoteItem } from '~/interfaces/note'
 
+const auth = useAuth()
 const route = useRoute()
 const router = useRouter()
 
@@ -809,6 +815,8 @@ onMounted(async () => {
   }
 
   syncFromRoute()
+
+  if (!auth.isLoggedIn.value) return
 
   try {
     await Promise.all([

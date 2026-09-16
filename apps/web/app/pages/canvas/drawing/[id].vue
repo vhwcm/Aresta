@@ -212,6 +212,7 @@ import DrawingAiSynthesisModal from '~/components/canvas/drawing/DrawingAiSynthe
 
 definePageMeta({
   layout: false,
+  middleware: ['auth'],
 });
 
 const route = useRoute();

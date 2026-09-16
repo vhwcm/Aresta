@@ -1,15 +1,20 @@
 import type {
-  ICloudStorageProvider,
   CloudFolderResult,
   CloudFileResult,
   UploadFileOptions,
   UploadBookPackageOptions,
   UploadBookPackageResult,
 } from './ICloudStorageProvider'
+import type { IDataSyncProvider, DataSubFolder, DataSyncResult } from './IDataSyncProvider'
 
-export class GoogleDriveStorageProvider implements ICloudStorageProvider {
+export class GoogleDriveStorageProvider implements IDataSyncProvider {
   readonly providerName = 'google' as const
   private getAccessToken: () => string | null
+
+  // Cache de IDs de pastas para evitar buscas repetidas na API
+  private _folderIdCache: Map<string, string> = new Map()
+  private _dataFolderId: string | null = null
+  private _subFolderIds: Partial<Record<DataSubFolder, string>> = {}
 
   constructor(accessTokenOrGetter: string | (() => string | null)) {
     if (typeof accessTokenOrGetter === 'function') {
@@ -202,6 +207,191 @@ export class GoogleDriveStorageProvider implements ICloudStorageProvider {
         .map((folder) => ({ title: folder.name, folderId: folder.id }))
     } catch {
       return []
+    }
+  }
+
+  // =========================================================================
+  // IDataSyncProvider — Operações de dados estruturados (JSON)
+  // =========================================================================
+
+  /** Garante pastas Aresta/data/ e todas as subpastas necessárias */
+  async ensureDataFolders(): Promise<void> {
+    const rootFolder = await this.ensureFolder('Aresta')
+    const dataFolder = await this.ensureFolder('data', rootFolder.id)
+    this._dataFolderId = dataFolder.id
+
+    const subFolders: DataSubFolder[] = ['canvas', 'notes', 'drawing_notes']
+    await Promise.all(
+      subFolders.map(async (name) => {
+        const sf = await this.ensureFolder(name, dataFolder.id)
+        this._subFolderIds[name] = sf.id
+      })
+    )
+  }
+
+  /** Garante que as pastas de dados existem e retorna o ID da pasta data/ */
+  private async getDataFolderId(): Promise<string> {
+    if (this._dataFolderId) return this._dataFolderId
+    await this.ensureDataFolders()
+    return this._dataFolderId!
+  }
+
+  /** Retorna o ID de uma subpasta, criando se necessário */
+  private async getSubFolderId(subFolder: DataSubFolder): Promise<string> {
+    if (this._subFolderIds[subFolder]) return this._subFolderIds[subFolder]!
+    await this.ensureDataFolders()
+    return this._subFolderIds[subFolder]!
+  }
+
+  /** Encontra o ID de um arquivo pelo nome dentro de uma pasta */
+  private async findFileId(name: string, parentId: string): Promise<string | null> {
+    const headers = this.getAuthHeader()
+    const safeName = name.replace(/'/g, "\\'").replace(/"/g, '\\"')
+    const query = `name = '${safeName}' and '${parentId}' in parents and trashed = false`
+    const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id)&orderBy=createdTime asc`
+    const res = await fetch(url, { headers })
+    if (!res.ok) return null
+    const data = (await res.json()) as { files?: Array<{ id: string }> }
+    return data.files?.[0]?.id ?? null
+  }
+
+  /** Deleta um arquivo pelo ID */
+  private async deleteFileById(fileId: string): Promise<void> {
+    const headers = this.getAuthHeader()
+    await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}`, {
+      method: 'DELETE',
+      headers,
+    })
+  }
+
+  async uploadDataFile(fileName: string, data: unknown): Promise<DataSyncResult> {
+    const parentId = await this.getDataFolderId()
+    const json = JSON.stringify(data)
+    const blob = new Blob([json], { type: 'application/json' })
+
+    // Verifica se o arquivo já existe para fazer update em vez de criar duplicata
+    const existingId = await this.findFileId(fileName, parentId)
+    if (existingId) {
+      const headers = this.getAuthHeader()
+      const res = await fetch(
+        `https://www.googleapis.com/upload/drive/v3/files/${existingId}?uploadType=media`,
+        {
+          method: 'PATCH',
+          headers: { ...headers, 'Content-Type': 'application/json' },
+          body: blob,
+        }
+      )
+      if (!res.ok) {
+        const errText = await res.text()
+        throw new Error(`Erro ao atualizar ${fileName} no Drive: ${errText}`)
+      }
+    } else {
+      await this.uploadFile({
+        name: fileName,
+        content: blob,
+        mimeType: 'application/json',
+        parentFolderId: parentId,
+      })
+    }
+
+    const payload = Array.isArray(data) ? data : [data]
+    return { fileName, itemCount: payload.length, syncedAt: new Date().toISOString() }
+  }
+
+  async uploadSubFolderDataFile(
+    subFolder: DataSubFolder,
+    fileName: string,
+    data: unknown
+  ): Promise<DataSyncResult> {
+    const parentId = await this.getSubFolderId(subFolder)
+    const json = JSON.stringify(data)
+    const blob = new Blob([json], { type: 'application/json' })
+
+    const existingId = await this.findFileId(fileName, parentId)
+    if (existingId) {
+      const headers = this.getAuthHeader()
+      const res = await fetch(
+        `https://www.googleapis.com/upload/drive/v3/files/${existingId}?uploadType=media`,
+        {
+          method: 'PATCH',
+          headers: { ...headers, 'Content-Type': 'application/json' },
+          body: blob,
+        }
+      )
+      if (!res.ok) {
+        const errText = await res.text()
+        throw new Error(`Erro ao atualizar ${subFolder}/${fileName} no Drive: ${errText}`)
+      }
+    } else {
+      await this.uploadFile({
+        name: fileName,
+        content: blob,
+        mimeType: 'application/json',
+        parentFolderId: parentId,
+      })
+    }
+
+    return { fileName, itemCount: 1, syncedAt: new Date().toISOString() }
+  }
+
+  async downloadDataFile<T>(fileName: string): Promise<T | null> {
+    try {
+      const parentId = await this.getDataFolderId()
+      const fileId = await this.findFileId(fileName, parentId)
+      if (!fileId) return null
+      const blob = await this.getFile(fileId)
+      const text = await blob.text()
+      return JSON.parse(text) as T
+    } catch {
+      return null
+    }
+  }
+
+  async downloadSubFolderDataFile<T>(
+    subFolder: DataSubFolder,
+    fileName: string
+  ): Promise<T | null> {
+    try {
+      const parentId = await this.getSubFolderId(subFolder)
+      const fileId = await this.findFileId(fileName, parentId)
+      if (!fileId) return null
+      const blob = await this.getFile(fileId)
+      const text = await blob.text()
+      return JSON.parse(text) as T
+    } catch {
+      return null
+    }
+  }
+
+  async listSubFolderFiles(subFolder: DataSubFolder): Promise<string[]> {
+    try {
+      const parentId = await this.getSubFolderId(subFolder)
+      const items = await this.listFolder(parentId)
+      return items
+        .filter((item) => item.mimeType === 'application/json')
+        .map((item) => item.name)
+    } catch {
+      return []
+    }
+  }
+
+  async deleteDataFile(fileName: string): Promise<void> {
+    try {
+      const parentId = await this.getDataFolderId()
+      const fileId = await this.findFileId(fileName, parentId)
+      if (fileId) await this.deleteFileById(fileId)
+    } catch {
+      // Falha silenciosa — arquivo pode já não existir
+    }
+  }
+
+  async deleteSubFolderDataFile(subFolder: DataSubFolder, fileName: string): Promise<void> {
+    try {
+      const parentId = await this.getSubFolderId(subFolder)
+      const fileId = await this.findFileId(fileName, parentId)
+      if (fileId) await this.deleteFileById(fileId)
+    } catch {
+      // Falha silenciosa
     }
   }
 }

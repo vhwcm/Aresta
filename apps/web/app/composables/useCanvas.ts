@@ -315,8 +315,13 @@ export function useCanvas() {
   const fetchCanvases = async (params: { folder?: string; tag?: string; search?: string } = {}) => {
     isLoading.value = true;
     error.value = null;
+    if (!token?.value) {
+      canvasesList.value = [];
+      isLoading.value = false;
+      return [];
+    }
 
-    // 1. Carrega do banco local
+    // 1. Carrega primeiro do banco local
     try {
       const localCanvases = await canvasRepo.getAll();
       if (localCanvases && localCanvases.length > 0) {
@@ -366,6 +371,7 @@ export function useCanvas() {
   };
 
   const fetchCanvasFolders = async (): Promise<string[]> => {
+    if (!token?.value) return [];
     try {
       const list = await $fetch<string[]>(`${getCanvasApiUrl()}/canvases/folders`, {
         headers: getHeaders(),
@@ -382,6 +388,7 @@ export function useCanvas() {
   };
 
   const loadCanvas = async (id: string) => {
+    if (!token?.value) return null;
     isLoading.value = true;
     error.value = null;
 
@@ -442,6 +449,11 @@ export function useCanvas() {
     optionsOrTitle: { title?: string; description?: string | null; folder?: string | null; tags?: string[]; initialData?: string } | string = 'Quadro sem título',
     initialData?: string
   ) => {
+    if (!token?.value) {
+      error.value = 'É necessário estar autenticado para criar um quadro.';
+      throw new Error('É necessário estar autenticado para criar um quadro.');
+    }
+
     isLoading.value = true;
     const localId = `canvas_${Date.now()}`;
     const title = typeof optionsOrTitle === 'string' ? optionsOrTitle : (optionsOrTitle.title || 'Quadro sem título');

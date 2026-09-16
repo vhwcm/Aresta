@@ -16,6 +16,7 @@ if (typeof document !== 'undefined') {
 
 if (g) {
   g.definePageMeta = vi.fn()
+  g.defineNuxtRouteMiddleware = (fn: any) => fn
   g.navigateTo = vi.fn().mockResolvedValue(undefined)
   g.useRoute = () => ({
     path: '/',

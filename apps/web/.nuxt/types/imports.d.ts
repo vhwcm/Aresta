@@ -2,10 +2,21 @@
 export {}
 declare global {
   const $fetch: typeof import('../fetch.mjs').$fetch
+  const CANVAS_SHAPES: typeof import('../../app/utils/canvasShapes').CANVAS_SHAPES
+  const CircleIcon: typeof import('../../app/utils/canvasShapes').CircleIcon
+  const CylinderIcon: typeof import('../../app/utils/canvasShapes').CylinderIcon
   const DEFAULT_CONFIG: typeof import('../../app/utils/pageCurlMath').DEFAULT_CONFIG
+  const DiamondIcon: typeof import('../../app/utils/canvasShapes').DiamondIcon
+  const HexagonIcon: typeof import('../../app/utils/canvasShapes').HexagonIcon
   const MAX_COMPOSITE_DEPTH: typeof import('../../app/composables/useCycleDetector').MAX_COMPOSITE_DEPTH
   const MAX_FILE_SIZE_BYTES: typeof import('../../app/utils/fileValidator').MAX_FILE_SIZE_BYTES
+  const ParallelogramIcon: typeof import('../../app/utils/canvasShapes').ParallelogramIcon
   const READER_FONTS: typeof import('../../app/composables/useReaderTypography').READER_FONTS
+  const RectIcon: typeof import('../../app/utils/canvasShapes').RectIcon
+  const RoundedIcon: typeof import('../../app/utils/canvasShapes').RoundedIcon
+  const StarIcon: typeof import('../../app/utils/canvasShapes').StarIcon
+  const TrapezoidIcon: typeof import('../../app/utils/canvasShapes').TrapezoidIcon
+  const TriangleIcon: typeof import('../../app/utils/canvasShapes').TriangleIcon
   const abortNavigation: typeof import('../../node_modules/nuxt/dist/app/composables/router').abortNavigation
   const acceptHMRUpdate: typeof import('../../node_modules/@pinia/nuxt/dist/runtime/composables').acceptHMRUpdate
   const addRouteMiddleware: typeof import('../../node_modules/nuxt/dist/app/composables/router').addRouteMiddleware
@@ -65,11 +76,18 @@ declare global {
   const getCoverUrl: typeof import('../../app/utils/cover').getCoverUrl
   const getCurrentInstance: typeof import('vue').getCurrentInstance
   const getCurrentScope: typeof import('vue').getCurrentScope
+  const getDiamondPoints: typeof import('../../app/utils/canvasShapes').getDiamondPoints
   const getEffectiveNavIndex: typeof import('../../app/composables/useBottomNavbar').getEffectiveNavIndex
+  const getHexagonPoints: typeof import('../../app/utils/canvasShapes').getHexagonPoints
   const getNavIndexFromPath: typeof import('../../app/composables/useBottomNavbar').getNavIndexFromPath
+  const getParallelogramPoints: typeof import('../../app/utils/canvasShapes').getParallelogramPoints
   const getResolvedApiBase: typeof import('../../app/utils/apiBase').getResolvedApiBase
   const getRouteRules: typeof import('../../node_modules/nuxt/dist/app/composables/manifest').getRouteRules
+  const getShapeIcon: typeof import('../../app/utils/canvasShapes').getShapeIcon
+  const getStarPoints: typeof import('../../app/utils/canvasShapes').getStarPoints
   const getStorageBaseUrl: typeof import('../../app/utils/apiBase').getStorageBaseUrl
+  const getTrapezoidPoints: typeof import('../../app/utils/canvasShapes').getTrapezoidPoints
+  const getTrianglePoints: typeof import('../../app/utils/canvasShapes').getTrianglePoints
   const getVectorForSide: typeof import('../../app/utils/canvasGeometry').getVectorForSide
   const getVisibleTextChunks: typeof import('../../app/utils/readerHighlight').getVisibleTextChunks
   const h: typeof import('vue').h
@@ -274,6 +292,7 @@ declare global {
   const useTemplateRef: typeof import('vue').useTemplateRef
   const useTransitionState: typeof import('vue').useTransitionState
   const useUserBooks: typeof import('../../app/composables/useUserBooks').useUserBooks
+  const useUserMetrics: typeof import('../../app/composables/useUserMetrics').useUserMetrics
   const validateBookFile: typeof import('../../app/utils/fileValidator').validateBookFile
   const watch: typeof import('vue').watch
   const watchEffect: typeof import('vue').watchEffect
@@ -337,8 +356,14 @@ declare global {
   export type { ThemeMode, EpubFontFamilyId, DictionaryLanguage, SettingsState, UserSettingsResponse } from '../../app/composables/useSettings'
   import('../../app/composables/useSettings')
   // @ts-ignore
+  export type { UserMetricsData } from '../../app/composables/useUserMetrics'
+  import('../../app/composables/useUserMetrics')
+  // @ts-ignore
   export type { CachedBookEntry } from '../../app/utils/bookCache'
   import('../../app/utils/bookCache')
+  // @ts-ignore
+  export type { ShapeDefinition } from '../../app/utils/canvasShapes'
+  import('../../app/utils/canvasShapes')
   // @ts-ignore
   export type { DidacticCoverParams, BookFormat } from '../../app/utils/cover'
   import('../../app/utils/cover')
@@ -363,10 +388,21 @@ import { UnwrapRef } from 'vue'
 declare module 'vue' {
   interface ComponentCustomProperties {
     readonly $fetch: UnwrapRef<typeof import('../fetch.mjs')['$fetch']>
+    readonly CANVAS_SHAPES: UnwrapRef<typeof import('../../app/utils/canvasShapes')['CANVAS_SHAPES']>
+    readonly CircleIcon: UnwrapRef<typeof import('../../app/utils/canvasShapes')['CircleIcon']>
+    readonly CylinderIcon: UnwrapRef<typeof import('../../app/utils/canvasShapes')['CylinderIcon']>
     readonly DEFAULT_CONFIG: UnwrapRef<typeof import('../../app/utils/pageCurlMath')['DEFAULT_CONFIG']>
+    readonly DiamondIcon: UnwrapRef<typeof import('../../app/utils/canvasShapes')['DiamondIcon']>
+    readonly HexagonIcon: UnwrapRef<typeof import('../../app/utils/canvasShapes')['HexagonIcon']>
     readonly MAX_COMPOSITE_DEPTH: UnwrapRef<typeof import('../../app/composables/useCycleDetector')['MAX_COMPOSITE_DEPTH']>
     readonly MAX_FILE_SIZE_BYTES: UnwrapRef<typeof import('../../app/utils/fileValidator')['MAX_FILE_SIZE_BYTES']>
+    readonly ParallelogramIcon: UnwrapRef<typeof import('../../app/utils/canvasShapes')['ParallelogramIcon']>
     readonly READER_FONTS: UnwrapRef<typeof import('../../app/composables/useReaderTypography')['READER_FONTS']>
+    readonly RectIcon: UnwrapRef<typeof import('../../app/utils/canvasShapes')['RectIcon']>
+    readonly RoundedIcon: UnwrapRef<typeof import('../../app/utils/canvasShapes')['RoundedIcon']>
+    readonly StarIcon: UnwrapRef<typeof import('../../app/utils/canvasShapes')['StarIcon']>
+    readonly TrapezoidIcon: UnwrapRef<typeof import('../../app/utils/canvasShapes')['TrapezoidIcon']>
+    readonly TriangleIcon: UnwrapRef<typeof import('../../app/utils/canvasShapes')['TriangleIcon']>
     readonly abortNavigation: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/router')['abortNavigation']>
     readonly acceptHMRUpdate: UnwrapRef<typeof import('../../node_modules/@pinia/nuxt/dist/runtime/composables')['acceptHMRUpdate']>
     readonly addRouteMiddleware: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/router')['addRouteMiddleware']>
@@ -426,11 +462,18 @@ declare module 'vue' {
     readonly getCoverUrl: UnwrapRef<typeof import('../../app/utils/cover')['getCoverUrl']>
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
     readonly getCurrentScope: UnwrapRef<typeof import('vue')['getCurrentScope']>
+    readonly getDiamondPoints: UnwrapRef<typeof import('../../app/utils/canvasShapes')['getDiamondPoints']>
     readonly getEffectiveNavIndex: UnwrapRef<typeof import('../../app/composables/useBottomNavbar')['getEffectiveNavIndex']>
+    readonly getHexagonPoints: UnwrapRef<typeof import('../../app/utils/canvasShapes')['getHexagonPoints']>
     readonly getNavIndexFromPath: UnwrapRef<typeof import('../../app/composables/useBottomNavbar')['getNavIndexFromPath']>
+    readonly getParallelogramPoints: UnwrapRef<typeof import('../../app/utils/canvasShapes')['getParallelogramPoints']>
     readonly getResolvedApiBase: UnwrapRef<typeof import('../../app/utils/apiBase')['getResolvedApiBase']>
     readonly getRouteRules: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/manifest')['getRouteRules']>
+    readonly getShapeIcon: UnwrapRef<typeof import('../../app/utils/canvasShapes')['getShapeIcon']>
+    readonly getStarPoints: UnwrapRef<typeof import('../../app/utils/canvasShapes')['getStarPoints']>
     readonly getStorageBaseUrl: UnwrapRef<typeof import('../../app/utils/apiBase')['getStorageBaseUrl']>
+    readonly getTrapezoidPoints: UnwrapRef<typeof import('../../app/utils/canvasShapes')['getTrapezoidPoints']>
+    readonly getTrianglePoints: UnwrapRef<typeof import('../../app/utils/canvasShapes')['getTrianglePoints']>
     readonly getVectorForSide: UnwrapRef<typeof import('../../app/utils/canvasGeometry')['getVectorForSide']>
     readonly getVisibleTextChunks: UnwrapRef<typeof import('../../app/utils/readerHighlight')['getVisibleTextChunks']>
     readonly h: UnwrapRef<typeof import('vue')['h']>
@@ -635,6 +678,7 @@ declare module 'vue' {
     readonly useTemplateRef: UnwrapRef<typeof import('vue')['useTemplateRef']>
     readonly useTransitionState: UnwrapRef<typeof import('vue')['useTransitionState']>
     readonly useUserBooks: UnwrapRef<typeof import('../../app/composables/useUserBooks')['useUserBooks']>
+    readonly useUserMetrics: UnwrapRef<typeof import('../../app/composables/useUserMetrics')['useUserMetrics']>
     readonly validateBookFile: UnwrapRef<typeof import('../../app/utils/fileValidator')['validateBookFile']>
     readonly watch: UnwrapRef<typeof import('vue')['watch']>
     readonly watchEffect: UnwrapRef<typeof import('vue')['watchEffect']>

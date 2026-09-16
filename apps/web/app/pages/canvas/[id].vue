@@ -109,6 +109,7 @@ import FolderTagSidebar from '~/components/FolderTagSidebar.vue';
 
 definePageMeta({
   layout: false,
+  middleware: ['auth'],
 });
 
 const route = useRoute();
