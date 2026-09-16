@@ -21,8 +21,8 @@ O objetivo é que o dispositivo seja a fonte de leitura e escrita imediata e que
 3. A sincronização usará tombstones, `updated_at` UTC, um `device_id` persistente como desempate determinístico e ETags/revisions do provider para detectar escrita concorrente. O merge é por entidade, nunca "campo a campo" genérico.
 4. Refresh tokens nunca chegam ao browser. O backend guarda tokens cifrados e expõe somente access tokens de curta duração por endpoint autenticado. A vinculação de uma nuvem é um fluxo OAuth autenticado, separado do login.
 5. Google Drive será suportado com `drive.file`; OneDrive requer `Files.ReadWrite` delegado, substituindo `Files.ReadWrite.AppFolder`. iCloud não é um provider web: será um adapter nativo de pasta selecionada pelo usuário (`icloud-folder`), disponível somente onde a pasta estiver acessível pelo Tauri.
-6. Dados pessoais e embeddings derivados deles não permanecerão na AWS após a migração. Busca semântica será gerada sob demanda, com conteúdo e embedding descartados ao fim da requisição, até existir uma decisão explícita de retenção.
-7. Rotas e tabelas legadas permanecem em modo de compatibilidade até o rollout cumprir os critérios de saída. Nenhuma tabela é removida na primeira entrega.
+6. Dados pessoais e embeddings derivados deles não permanecerão na AWS após o cutover. Busca semântica será gerada sob demanda, com conteúdo e embedding descartados ao fim da requisição, até existir uma decisão explícita de retenção.
+7. Não haverá exportação nem importação da base atual: os dados pessoais legados estão explicitamente autorizados para descarte. Rotas e tabelas legadas permanecem apenas até o cliente local-first estar validado; então serão removidas em uma migration Prisma versionada. Identidade, contas OAuth, configuração do sistema, catálogo público e feedback não entram no descarte.
 
 ## Consequências
 
@@ -48,7 +48,6 @@ O objetivo é que o dispositivo seja a fonte de leitura e escrita imediata e que
 
 ## Condições para aceitar
 
-- Aprovar migração one-shot para a base existente.
 - Aprovar `Files.ReadWrite` delegado e a nova tela de consentimento Microsoft.
 - Confirmar que iCloud será tratado como pasta local nativa, não como integração CloudKit.
 - Aprovar que dados pessoais não terão embeddings persistentes na AWS.

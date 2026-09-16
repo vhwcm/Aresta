@@ -2,7 +2,7 @@
 
 ## 1. Resultado e limites
 
-Entregar sincronização local-first de todos os dados pessoais entre o banco local do dispositivo e **um** Drive conectado. O backend deixa de ser fonte de verdade de dados pessoais somente depois de uma migração observada e reversível.
+Entregar sincronização local-first de todos os dados pessoais entre o banco local do dispositivo e **um** Drive conectado. A base atual de dados pessoais pode ser descartada; não haverá exportação ou importação de usuários existentes.
 
 Esta entrega não autoriza apagar tabelas nem desativar rotas em produção. Esses passos têm gates próprios descritos na seção 9.
 
@@ -78,9 +78,9 @@ Entidades sincronizáveis têm ID estável UUID ou ID migrado, `created_at`, `up
 ## 5. Fase B — Banco local e escrita local-first
 
 1. Estender `types.ts` e `IDatabaseAdapter` com `LocalNote`, `LocalDrawingNote`, `LocalUserSettings`, `LocalTheme`, `LocalUserBook`, `LocalDailyDeckCard`, `LocalDidacticBooklet` e `SyncMetadata`.
-2. Implementar as entidades e migrations locais em Dexie, SQLite Tauri e InMemoryAdapter. Versionar Dexie e executar migration SQLite transacional; preservar dados já presentes em localStorage durante uma migração única para as novas tabelas.
+2. Implementar as entidades e migrations locais em Dexie, SQLite Tauri e InMemoryAdapter. Versionar Dexie e executar migration SQLite transacional. Dados pessoais locais legados podem ser limpos no primeiro boot da versão local-first.
 3. Expandir `LocalMutation.entity_type` para todos os tipos e garantir que cada `save*`/`delete*` atualize a entidade e enfileire a mutação na mesma transação.
-4. Refatorar composables/stores atuais — começando por `useNotes`, que hoje grava localStorage e chama a API — para depender exclusivamente do `IDatabaseAdapter`. A API legada só pode servir ao importador one-shot, não ao fluxo normal.
+4. Refatorar composables/stores atuais — começando por `useNotes`, que hoje grava localStorage e chama a API — para depender exclusivamente do `IDatabaseAdapter`. A API legada não participa do fluxo normal.
 5. Todo delete cria tombstone local. A UI filtra tombstones; o sync os replica antes de remover binários associados.
 
 ## 6. Fase C — DriveSyncService
@@ -92,13 +92,12 @@ Entidades sincronizáveis têm ID estável UUID ou ID migrado, `created_at`, `up
 5. Retry em erro transitório: 3 tentativas com jitter exponencial; erros 401 acionam um refresh único; erros 403/consentimento e JSON inválido são bloqueantes e visíveis.
 6. `useDriveSync` registra listeners apenas uma vez no cliente, limpa intervalo/listeners no unmount e aplica debounce a eventos. Gatilhos: boot autenticado, online, retorno de visibilidade, escrita enfileirada e intervalo de cinco minutos.
 
-## 7. Fase D — UX, observabilidade e migração
+## 7. Fase D — UX, observabilidade e cutover
 
 1. Criar `DriveSettingsPanel.vue` na área já existente em `SettingsModal.vue`: conectar/trocar, sincronizar agora, desconectar, status, último sucesso, pendências e erro recuperável. Desconectar remove somente token/capability local, nunca apaga dados do Drive.
 2. Exibir um primeiro sync com progresso por coleção e uma mensagem clara de que o Drive passa a guardar os dados pessoais.
-3. Criar `GET /api/export/my-data` autenticado e rate-limited. Gerar stream ZIP, com schema versionado, somente entidades do usuário autenticado, sem `Account`, hashes, tokens ou outros usuários. A exportação é auditada e expira em três meses após a migração.
-4. Criar fluxo de importação no cliente: export → validar ZIP/schema/owner → gravar transacionalmente no local → full sync para Drive → marcar `migration_completed_at` somente no banco local. Deve ser idempotente e oferecer download do relatório de falhas.
-5. Medir somente telemetria operacional sem conteúdo: duração, provider, códigos de erro, quantidade de arquivos e resultado. Nunca enviar payloads ou títulos de notas à AWS.
+3. No cutover, limpar os dados pessoais legados e remover os endpoints que os manipulam. A rotina deve ter allowlist explícita: `User`, `Account`, `AppConfig`, catálogo público e `Feedback` são preservados.
+4. Medir somente telemetria operacional sem conteúdo: duração, provider, códigos de erro, quantidade de arquivos e resultado. Nunca enviar payloads ou títulos de notas à AWS.
 
 ## 8. TDD e critérios de aceite
 
@@ -108,7 +107,7 @@ Antes de cada implementação, criar testes unitários correspondentes.
 - Engine: pull vazio, merge local/remoto, empate por device, tombstone, retry, token expirado e exclusão concorrente.
 - Adapters: migrations Dexie/SQLite, transação save+mutation e persistência de todos os novos tipos.
 - Composables/UI: único registro de listeners, cleanup, estados offline/degraded/synced e ações do painel.
-- API: exportação isolada por usuário, sem token, e OAuth connect sem vazamento de token.
+- API: conexão OAuth sem vazamento de token, endpoint de access token curto, e respostas `410 Gone` das rotas pessoais desativadas.
 
 Quality gates por fase:
 
@@ -124,15 +123,13 @@ Validação manual obrigatória: Google, OneDrive, novo dispositivo, edição of
 
 ## 9. Rollout e remoção segura do backend
 
-1. Liberar Fases A–D atrás de feature flag para usuários internos. Não remover nenhuma rota ou tabela.
-2. Após 14 dias estáveis e taxa de sucesso definida, habilitar migração voluntária para usuários existentes; manter leitura da API como fallback temporário somente no importador.
-3. Após 30 dias de migração e backup PostgreSQL testado, retornar `410 Gone` nas rotas pessoais com código de migração e orientação ao cliente. Manter exportação por três meses.
-4. Após mais 90 dias sem rollback, gerar migration Prisma exclusiva para remover relações e tabelas pessoais. Atualizar primeiro todos os serviços/queries, depois `schema.prisma`, gerar e versionar SQL, aplicar em staging e restaurar backup para teste. Nunca executar `DROP TABLE` na mesma release que muda o cliente.
-5. `User`, `Account`, `AppConfig`, catálogo público e `Feedback` permanecem. `Book`/`UserBook` só permanecem se forem de fato catálogo público; qualquer referência a binário, progresso ou associação pessoal deve estar no Drive/local.
+1. Liberar Fases A–C para usuários internos e validar sync contra Drives de teste. Nenhuma limpeza ocorre nessa etapa.
+2. Quando os quality gates e validação manual estiverem verdes, publicar a versão local-first e, no primeiro boot, iniciar com banco pessoal local vazio. Não há importação da API.
+3. Na release seguinte, retornar `410 Gone` nas rotas pessoais e executar migration Prisma exclusiva para apagar relações e tabelas pessoais legadas. Atualizar primeiro todos os serviços/queries, depois `schema.prisma`, gerar e versionar SQL e aplicar em staging antes de produção. Nunca executar `DROP TABLE` na mesma release que muda o cliente.
+4. A migration de descarte deve ter allowlist e preservar `User`, `Account`, `AppConfig`, catálogo público e `Feedback`. `Book`/`UserBook` só permanecem se forem de fato catálogo público; qualquer referência a binário, progresso ou associação pessoal deve estar no Drive/local.
 
 ## 10. Questões que exigem aprovação
 
-1. Confirmar se há usuários com dados no PostgreSQL; se sim, habilitar exportação e importação one-shot.
-2. Confirmar o consentimento Microsoft `Files.ReadWrite` e a reautorização dos usuários existentes.
-3. Confirmar iCloud como pasta local Tauri, não CloudKit, e que a interface web exibirá indisponível.
-4. Confirmar a política de não retenção de embeddings pessoais na AWS. Caso a resposta seja não, é necessária uma ADR de privacidade separada antes do desenvolvimento.
+1. Confirmar o consentimento Microsoft `Files.ReadWrite` e a reautorização dos usuários existentes.
+2. Confirmar iCloud como pasta local Tauri, não CloudKit, e que a interface web exibirá indisponível.
+3. Confirmar a política de não retenção de embeddings pessoais na AWS. Caso a resposta seja não, é necessária uma ADR de privacidade separada antes do desenvolvimento.
