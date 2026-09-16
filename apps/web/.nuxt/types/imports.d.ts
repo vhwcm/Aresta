@@ -56,6 +56,8 @@ declare global {
   const generateDidacticCoverSvg: typeof import('../../app/utils/cover').generateDidacticCoverSvg
   const getAnchorPoint: typeof import('../../app/utils/canvasGeometry').getAnchorPoint
   const getAnnotationPageNumber: typeof import('../../app/utils/readerHighlight').getAnnotationPageNumber
+  const getApiBase: typeof import('../../app/utils/apiBase').getApiBase
+  const getApiRoot: typeof import('../../app/utils/apiBase').getApiRoot
   const getAppManifest: typeof import('../../node_modules/nuxt/dist/app/composables/manifest').getAppManifest
   const getBookFormat: typeof import('../../app/utils/cover').getBookFormat
   const getCachedBook: typeof import('../../app/utils/bookCache').getCachedBook
@@ -65,7 +67,9 @@ declare global {
   const getCurrentScope: typeof import('vue').getCurrentScope
   const getEffectiveNavIndex: typeof import('../../app/composables/useBottomNavbar').getEffectiveNavIndex
   const getNavIndexFromPath: typeof import('../../app/composables/useBottomNavbar').getNavIndexFromPath
+  const getResolvedApiBase: typeof import('../../app/utils/apiBase').getResolvedApiBase
   const getRouteRules: typeof import('../../node_modules/nuxt/dist/app/composables/manifest').getRouteRules
+  const getStorageBaseUrl: typeof import('../../app/utils/apiBase').getStorageBaseUrl
   const getVectorForSide: typeof import('../../app/utils/canvasGeometry').getVectorForSide
   const getVisibleTextChunks: typeof import('../../app/utils/readerHighlight').getVisibleTextChunks
   const h: typeof import('vue').h
@@ -117,6 +121,7 @@ declare global {
   const prerenderRoutes: typeof import('../../node_modules/nuxt/dist/app/composables/ssr').prerenderRoutes
   const provide: typeof import('vue').provide
   const proxyRefs: typeof import('vue').proxyRefs
+  const purgeClientSession: typeof import('../../app/composables/useAuth').purgeClientSession
   const rasterizeElementToCanvas: typeof import('../../app/utils/pageRasterizer').rasterizeElementToCanvas
   const reactive: typeof import('vue').reactive
   const readFileHeader: typeof import('../../app/utils/fileValidator').readFileHeader
@@ -131,7 +136,12 @@ declare global {
   const renderMarkdown: typeof import('../../app/utils/markdownFormat').renderMarkdown
   const renderPageCurl: typeof import('../../app/utils/pageCurlMath').renderPageCurl
   const requestIdleCallback: typeof import('../../node_modules/nuxt/dist/app/compat/idle-callback').requestIdleCallback
+  const resetAnnotationsMemory: typeof import('../../app/composables/useAnnotations').resetAnnotationsMemory
+  const resetFlashcardsMemory: typeof import('../../app/composables/useFlashcards').resetFlashcardsMemory
+  const resetGraphMemory: typeof import('../../app/composables/useGraph').resetGraphMemory
+  const resetNotesMemory: typeof import('../../app/composables/useNotes').resetNotesMemory
   const resetSettingsForTesting: typeof import('../../app/composables/useSettings').resetSettingsForTesting
+  const resetUserBooksMemory: typeof import('../../app/composables/useUserBooks').resetUserBooksMemory
   const resolveBookCover: typeof import('../../app/utils/cover').resolveBookCover
   const resolveComponent: typeof import('vue').resolveComponent
   const saveCachedBook: typeof import('../../app/utils/bookCache').saveCachedBook
@@ -407,6 +417,8 @@ declare module 'vue' {
     readonly generateDidacticCoverSvg: UnwrapRef<typeof import('../../app/utils/cover')['generateDidacticCoverSvg']>
     readonly getAnchorPoint: UnwrapRef<typeof import('../../app/utils/canvasGeometry')['getAnchorPoint']>
     readonly getAnnotationPageNumber: UnwrapRef<typeof import('../../app/utils/readerHighlight')['getAnnotationPageNumber']>
+    readonly getApiBase: UnwrapRef<typeof import('../../app/utils/apiBase')['getApiBase']>
+    readonly getApiRoot: UnwrapRef<typeof import('../../app/utils/apiBase')['getApiRoot']>
     readonly getAppManifest: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/manifest')['getAppManifest']>
     readonly getBookFormat: UnwrapRef<typeof import('../../app/utils/cover')['getBookFormat']>
     readonly getCachedBook: UnwrapRef<typeof import('../../app/utils/bookCache')['getCachedBook']>
@@ -416,7 +428,9 @@ declare module 'vue' {
     readonly getCurrentScope: UnwrapRef<typeof import('vue')['getCurrentScope']>
     readonly getEffectiveNavIndex: UnwrapRef<typeof import('../../app/composables/useBottomNavbar')['getEffectiveNavIndex']>
     readonly getNavIndexFromPath: UnwrapRef<typeof import('../../app/composables/useBottomNavbar')['getNavIndexFromPath']>
+    readonly getResolvedApiBase: UnwrapRef<typeof import('../../app/utils/apiBase')['getResolvedApiBase']>
     readonly getRouteRules: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/manifest')['getRouteRules']>
+    readonly getStorageBaseUrl: UnwrapRef<typeof import('../../app/utils/apiBase')['getStorageBaseUrl']>
     readonly getVectorForSide: UnwrapRef<typeof import('../../app/utils/canvasGeometry')['getVectorForSide']>
     readonly getVisibleTextChunks: UnwrapRef<typeof import('../../app/utils/readerHighlight')['getVisibleTextChunks']>
     readonly h: UnwrapRef<typeof import('vue')['h']>
@@ -468,6 +482,7 @@ declare module 'vue' {
     readonly prerenderRoutes: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/ssr')['prerenderRoutes']>
     readonly provide: UnwrapRef<typeof import('vue')['provide']>
     readonly proxyRefs: UnwrapRef<typeof import('vue')['proxyRefs']>
+    readonly purgeClientSession: UnwrapRef<typeof import('../../app/composables/useAuth')['purgeClientSession']>
     readonly rasterizeElementToCanvas: UnwrapRef<typeof import('../../app/utils/pageRasterizer')['rasterizeElementToCanvas']>
     readonly reactive: UnwrapRef<typeof import('vue')['reactive']>
     readonly readFileHeader: UnwrapRef<typeof import('../../app/utils/fileValidator')['readFileHeader']>
@@ -482,7 +497,12 @@ declare module 'vue' {
     readonly renderMarkdown: UnwrapRef<typeof import('../../app/utils/markdownFormat')['renderMarkdown']>
     readonly renderPageCurl: UnwrapRef<typeof import('../../app/utils/pageCurlMath')['renderPageCurl']>
     readonly requestIdleCallback: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/compat/idle-callback')['requestIdleCallback']>
+    readonly resetAnnotationsMemory: UnwrapRef<typeof import('../../app/composables/useAnnotations')['resetAnnotationsMemory']>
+    readonly resetFlashcardsMemory: UnwrapRef<typeof import('../../app/composables/useFlashcards')['resetFlashcardsMemory']>
+    readonly resetGraphMemory: UnwrapRef<typeof import('../../app/composables/useGraph')['resetGraphMemory']>
+    readonly resetNotesMemory: UnwrapRef<typeof import('../../app/composables/useNotes')['resetNotesMemory']>
     readonly resetSettingsForTesting: UnwrapRef<typeof import('../../app/composables/useSettings')['resetSettingsForTesting']>
+    readonly resetUserBooksMemory: UnwrapRef<typeof import('../../app/composables/useUserBooks')['resetUserBooksMemory']>
     readonly resolveBookCover: UnwrapRef<typeof import('../../app/utils/cover')['resolveBookCover']>
     readonly resolveComponent: UnwrapRef<typeof import('vue')['resolveComponent']>
     readonly saveCachedBook: UnwrapRef<typeof import('../../app/utils/bookCache')['saveCachedBook']>

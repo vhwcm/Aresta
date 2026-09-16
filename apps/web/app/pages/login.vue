@@ -99,6 +99,7 @@
                 v-model="loginId"
                 type="text"
                 required
+                autocomplete="username"
                 data-testid="login-input"
                 placeholder="seu.usuario ou e-mail"
                 class="w-full bg-black/[0.03] dark:bg-black/40 border border-divider rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-textPrimary placeholder:text-textSecondary/40 focus:outline-none focus:border-accent transition-colors"
@@ -116,6 +117,7 @@
                 v-model="password"
                 type="password"
                 required
+                autocomplete="current-password"
                 data-testid="password-input"
                 placeholder="••••••••••••"
                 class="w-full bg-black/[0.03] dark:bg-black/40 border border-divider rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-textPrimary placeholder:text-textSecondary/40 focus:outline-none focus:border-accent transition-colors"
@@ -150,6 +152,7 @@
                 v-model="registerName"
                 type="text"
                 required
+                autocomplete="name"
                 data-testid="register-name-input"
                 placeholder="Seu Nome"
                 class="w-full bg-black/[0.03] dark:bg-black/40 border border-divider rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-textPrimary placeholder:text-textSecondary/40 focus:outline-none focus:border-accent transition-colors"
@@ -167,6 +170,7 @@
                 v-model="registerEmail"
                 type="email"
                 required
+                autocomplete="username"
                 data-testid="register-email-input"
                 placeholder="seu.email@exemplo.com"
                 class="w-full bg-black/[0.03] dark:bg-black/40 border border-divider rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-textPrimary placeholder:text-textSecondary/40 focus:outline-none focus:border-accent transition-colors"
@@ -185,6 +189,7 @@
                 type="password"
                 required
                 minlength="6"
+                autocomplete="new-password"
                 data-testid="register-password-input"
                 placeholder="••••••••••••"
                 class="w-full bg-black/[0.03] dark:bg-black/40 border border-divider rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-textPrimary placeholder:text-textSecondary/40 focus:outline-none focus:border-accent transition-colors"
