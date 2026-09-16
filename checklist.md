@@ -1,9 +1,8 @@
-# Checklist
-
 ## 🔄 Em Andamento
-- [16/09/2026 10:55] [Fazendo] Adicionar formas geométricas, textos, arestas e seleção por mouse no editor de notas de desenho
+- [16/09/2026 11:00] [Fazendo] Implementar exemplos reais de leitura e grafo na home e bloquear acesso e criação anônima sem autenticação
 
 ## ✅ Concluído
+- [16/09/2026 11:00] [Concluído] Adicionar formas geométricas, textos, arestas e seleção por mouse no editor de notas de desenho
 - [16/09/2026 10:57] [Concluído] Implementar endpoint de métricas agregadas reais do usuário no backend e conectar cards de leitura e conhecimento em conta.vue
 - [16/09/2026 10:52] [Concluído] Corrigir clipping de overflow no menu de formas geométricas do canvas e adicionar seletor dinâmico de 10 formas poligonais
 - [16/09/2026 10:42] [Concluído] Adicionar atributos de autocomplete nos formulários de autenticação e atualizar callback OAuth no guia de deploy AWS

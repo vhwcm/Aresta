@@ -10,6 +10,8 @@ import type {
   DrawingSynthesisResult,
 } from '~/interfaces/drawing';
 
+import type { CanvasNode, CanvasEdge, CanvasShapeType } from '~/interfaces/canvas';
+
 import { getApiBase } from '~/utils/apiBase';
 
 const getDrawingApiUrl = () => {
@@ -32,6 +34,9 @@ const drawingsList = ref<Array<{
 const currentDrawing = ref<DrawingDocument | null>(null);
 const activePageIndex = ref(0);
 const activeTool = ref<PenToolType>('pen');
+const selectedShapeType = ref<CanvasShapeType>('rectangle');
+const selectedNodeIds = ref<string[]>([]);
+const selectedEdgeId = ref<string | null>(null);
 const strokeColor = ref('#E57B55');
 const strokeSize = ref(3);
 const palmRejectionEnabled = ref(true);
@@ -401,6 +406,72 @@ export function useDrawing() {
     scheduleAutosave();
   };
 
+  const addNodeToPage = (pageIndex: number, node: CanvasNode, saveHistory = true) => {
+    if (!currentDrawing.value || !currentDrawing.value.pages[pageIndex]) return;
+    if (saveHistory) pushHistory();
+    const page = currentDrawing.value.pages[pageIndex];
+    if (!page.nodes) page.nodes = [];
+    page.nodes.push(node);
+    selectedNodeIds.value = [node.id];
+    selectedEdgeId.value = null;
+    scheduleAutosave();
+    return node;
+  };
+
+  const updateNodeInPage = (pageIndex: number, nodeId: string, updates: Partial<CanvasNode>, saveHistory = false) => {
+    if (!currentDrawing.value || !currentDrawing.value.pages[pageIndex]) return;
+    const page = currentDrawing.value.pages[pageIndex];
+    if (!page.nodes) return;
+    const index = page.nodes.findIndex((n) => n.id === nodeId);
+    if (index !== -1) {
+      if (saveHistory) pushHistory();
+      page.nodes[index] = { ...page.nodes[index], ...updates } as CanvasNode;
+      scheduleAutosave();
+    }
+  };
+
+  const removeNodeFromPage = (pageIndex: number, nodeId: string) => {
+    if (!currentDrawing.value || !currentDrawing.value.pages[pageIndex]) return;
+    const page = currentDrawing.value.pages[pageIndex];
+    if (!page.nodes) return;
+    pushHistory();
+    page.nodes = page.nodes.filter((n) => n.id !== nodeId);
+    if (page.edges) {
+      page.edges = page.edges.filter((e) => e.fromNode !== nodeId && e.toNode !== nodeId);
+    }
+    selectedNodeIds.value = selectedNodeIds.value.filter((id) => id !== nodeId);
+    scheduleAutosave();
+  };
+
+  const addEdgeToPage = (pageIndex: number, edge: CanvasEdge, saveHistory = true) => {
+    if (!currentDrawing.value || !currentDrawing.value.pages[pageIndex]) return;
+    const page = currentDrawing.value.pages[pageIndex];
+    if (!page.edges) page.edges = [];
+    const exists = page.edges.some(
+      (e) =>
+        e.fromNode === edge.fromNode &&
+        e.fromSide === edge.fromSide &&
+        e.toNode === edge.toNode &&
+        e.toSide === edge.toSide
+    );
+    if (exists) return null;
+    if (saveHistory) pushHistory();
+    page.edges.push(edge);
+    selectedEdgeId.value = edge.id;
+    scheduleAutosave();
+    return edge;
+  };
+
+  const removeEdgeFromPage = (pageIndex: number, edgeId: string) => {
+    if (!currentDrawing.value || !currentDrawing.value.pages[pageIndex]) return;
+    const page = currentDrawing.value.pages[pageIndex];
+    if (!page.edges) return;
+    pushHistory();
+    page.edges = page.edges.filter((e) => e.id !== edgeId);
+    if (selectedEdgeId.value === edgeId) selectedEdgeId.value = null;
+    scheduleAutosave();
+  };
+
   const synthesizeDrawing = async (images: string[], promptOverride?: string): Promise<DrawingSynthesisResult> => {
     if (!currentDrawing.value) throw new Error('Nenhum desenho ativo.');
     isSynthesizing.value = true;
@@ -459,6 +530,9 @@ export function useDrawing() {
     activePageIndex,
     activePage,
     activeTool,
+    selectedShapeType,
+    selectedNodeIds,
+    selectedEdgeId,
     strokeColor,
     strokeSize,
     palmRejectionEnabled,
@@ -478,6 +552,11 @@ export function useDrawing() {
     addStrokeToActivePage,
     eraseStrokesAtPoint,
     clearActivePageStrokes,
+    addNodeToPage,
+    updateNodeInPage,
+    removeNodeFromPage,
+    addEdgeToPage,
+    removeEdgeFromPage,
     undo,
     redo,
     saveDrawingNow,

@@ -1,4 +1,6 @@
-export type PenToolType = 'pen' | 'fountain' | 'pencil' | 'highlighter' | 'eraser';
+import type { CanvasNode, CanvasEdge, CanvasShapeType } from '~/interfaces/canvas';
+
+export type PenToolType = 'select' | 'pen' | 'fountain' | 'pencil' | 'highlighter' | 'eraser' | 'shape' | 'text';
 
 export type PageBackgroundType = 'blank' | 'ruled' | 'grid' | 'dots';
 
@@ -23,6 +25,8 @@ export interface DrawingPage {
   height: number;
   backgroundType: PageBackgroundType;
   strokes: DrawingStroke[];
+  nodes?: CanvasNode[];
+  edges?: CanvasEdge[];
 }
 
 export interface DrawingDocument {

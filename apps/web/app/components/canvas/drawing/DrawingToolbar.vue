@@ -2,19 +2,29 @@
   <div
     class="flex flex-row md:flex-col items-center gap-1.5 md:gap-2 px-2.5 py-1.5 md:px-2 md:py-3 rounded-2xl bg-bgPanel/95 backdrop-blur-md border border-divider shadow-xl text-textPrimary select-none z-30 shrink-0"
   >
-    <!-- Grupo de Ferramentas de Escrita: Caneta, Marcador, Borracha -->
+    <!-- Grupo 1: Seleção e Desenho Livre -->
     <div class="flex flex-row md:flex-col items-center gap-1 p-1 bg-bgElevated/80 rounded-xl border border-divider/40">
-      <!-- Caneta -->
+      <!-- 1. Selecionar / Mover (Mouse) -->
+      <button
+        @click="$emit('update:tool', 'select')"
+        class="p-1.5 md:p-2 rounded-lg transition-all flex items-center justify-center cursor-pointer"
+        :class="tool === 'select' ? 'bg-primary text-white shadow-sm' : 'text-textSecondary hover:text-textPrimary hover:bg-bgSurface'"
+        title="Selecionar / Mover (V)"
+      >
+        <MousePointerIcon class="w-4 h-4" />
+      </button>
+
+      <!-- 2. Caneta -->
       <button
         @click="$emit('update:tool', 'pen')"
         class="p-1.5 md:p-2 rounded-lg transition-all flex items-center justify-center cursor-pointer"
         :class="tool === 'pen' ? 'bg-primary text-white shadow-sm' : 'text-textSecondary hover:text-textPrimary hover:bg-bgSurface'"
-        title="Caneta"
+        title="Caneta (P)"
       >
         <PenToolIcon class="w-4 h-4" />
       </button>
 
-      <!-- Marcador -->
+      <!-- 3. Marcador -->
       <button
         @click="$emit('update:tool', 'highlighter')"
         class="p-1.5 md:p-2 rounded-lg transition-all flex items-center justify-center cursor-pointer"
@@ -24,14 +34,59 @@
         <HighlighterIcon class="w-4 h-4" />
       </button>
 
-      <!-- Borracha -->
+      <!-- 4. Borracha -->
       <button
         @click="$emit('update:tool', 'eraser')"
         class="p-1.5 md:p-2 rounded-lg transition-all flex items-center justify-center cursor-pointer"
         :class="tool === 'eraser' ? 'bg-primary text-white shadow-sm' : 'text-textSecondary hover:text-textPrimary hover:bg-bgSurface'"
-        title="Borracha (ou segure o botão da caneta Stylus/S-Pen)"
+        title="Borracha (E)"
       >
         <EraserIcon class="w-4 h-4" />
+      </button>
+    </div>
+
+    <!-- Divisor -->
+    <div class="h-5 w-px md:w-6 md:h-px bg-divider/60"></div>
+
+    <!-- Grupo 2: Formas Geométricas & Texto -->
+    <div class="flex flex-row md:flex-col items-center gap-1 p-1 bg-bgElevated/80 rounded-xl border border-divider/40">
+      <!-- 5. Formas Geométricas Dropdown -->
+      <div class="relative" ref="shapesMenuRef">
+        <button
+          @click="toggleShapesMenu"
+          class="p-1.5 md:p-2 rounded-lg transition-all flex items-center justify-center cursor-pointer"
+          :class="tool === 'shape' ? 'bg-primary text-white shadow-sm' : 'text-textSecondary hover:text-textPrimary hover:bg-bgSurface'"
+          title="Formas Geométricas (S)"
+        >
+          <component :is="getShapeIcon(selectedShapeType)" class="w-4 h-4" />
+        </button>
+
+        <!-- Popover de Formas Geométricas -->
+        <div
+          v-if="showShapesMenu"
+          class="absolute bottom-12 md:bottom-auto md:left-14 md:top-0 flex flex-row md:grid md:grid-cols-2 gap-1 p-1.5 rounded-xl bg-bgPanel/95 border border-divider shadow-2xl backdrop-blur-xl z-50 animate-in fade-in zoom-in-95 duration-100 min-w-max"
+        >
+          <button
+            v-for="s in shapesList"
+            :key="s.type"
+            class="p-1.5 rounded-lg hover:bg-bgElevated text-textSecondary hover:text-textPrimary transition-colors cursor-pointer"
+            :class="{ 'bg-primary/20 text-primary': selectedShapeType === s.type }"
+            :title="s.label"
+            @click="selectShape(s.type)"
+          >
+            <component :is="s.icon" class="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      <!-- 6. Texto Livre -->
+      <button
+        @click="$emit('update:tool', 'text')"
+        class="p-1.5 md:p-2 rounded-lg transition-all flex items-center justify-center cursor-pointer"
+        :class="tool === 'text' ? 'bg-primary text-white shadow-sm' : 'text-textSecondary hover:text-textPrimary hover:bg-bgSurface'"
+        title="Inserir Texto (T)"
+      >
+        <span class="font-serif font-bold text-sm leading-none">T</span>
       </button>
     </div>
 
@@ -137,7 +192,9 @@
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted, onUnmounted } from 'vue';
 import {
+  MousePointer as MousePointerIcon,
   PenTool as PenToolIcon,
   Highlighter as HighlighterIcon,
   Eraser as EraserIcon,
@@ -148,10 +205,13 @@ import {
   Redo2 as RedoIcon,
 } from 'lucide-vue-next';
 import type { PenToolType } from '~/interfaces/drawing';
+import type { CanvasShapeType } from '~/interfaces/canvas';
+import { CANVAS_SHAPES, getShapeIcon } from '~/utils/canvasShapes';
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     tool: PenToolType;
+    selectedShapeType?: CanvasShapeType;
     color: string;
     size: number;
     canUndo: boolean;
@@ -159,12 +219,14 @@ withDefaults(
     zoom?: number;
   }>(),
   {
+    selectedShapeType: 'rectangle',
     zoom: 1,
   }
 );
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'update:tool', tool: PenToolType): void;
+  (e: 'update:selectedShapeType', shape: CanvasShapeType): void;
   (e: 'update:color', color: string): void;
   (e: 'update:size', size: number): void;
   (e: 'zoom-in'): void;
@@ -173,6 +235,39 @@ defineEmits<{
   (e: 'undo'): void;
   (e: 'redo'): void;
 }>();
+
+const showShapesMenu = ref(false);
+const shapesMenuRef = ref<HTMLElement | null>(null);
+const shapesList = CANVAS_SHAPES;
+
+const toggleShapesMenu = () => {
+  showShapesMenu.value = !showShapesMenu.value;
+  emit('update:tool', 'shape');
+};
+
+const selectShape = (shape: CanvasShapeType) => {
+  emit('update:selectedShapeType', shape);
+  emit('update:tool', 'shape');
+  showShapesMenu.value = false;
+};
+
+const handleClickOutside = (e: MouseEvent) => {
+  if (shapesMenuRef.value && !shapesMenuRef.value.contains(e.target as Node)) {
+    showShapesMenu.value = false;
+  }
+};
+
+onMounted(() => {
+  if (typeof window !== 'undefined') {
+    window.addEventListener('click', handleClickOutside);
+  }
+});
+
+onUnmounted(() => {
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('click', handleClickOutside);
+  }
+});
 
 const paletteColors = [
   '#18181B', // Preto / Grafite

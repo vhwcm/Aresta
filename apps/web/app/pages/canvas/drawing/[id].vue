@@ -116,14 +116,24 @@
             :page="page"
             :scale="pageScale"
             :tool="activeTool"
+            :selected-shape-type="selectedShapeType"
             :color="strokeColor"
             :size="strokeSize"
+            :selected-node-ids="selectedNodeIds"
+            :selected-edge-id="selectedEdgeId"
             :palm-rejection="true"
             :is-active="activePageIndex === idx"
             :is-dark-mode="themeMode === 'dark'"
             @select-page="activePageIndex = idx"
             @stroke-added="(stroke) => handleStrokeAdded(idx, stroke)"
             @erase="(pt, radius) => handleErase(idx, pt, radius)"
+            @add-node="(node) => addNodeToPage(idx, node)"
+            @update-node="(nodeId, updates, saveHistory) => updateNodeInPage(idx, nodeId, updates, saveHistory)"
+            @delete-node="(nodeId) => removeNodeFromPage(idx, nodeId)"
+            @add-edge="(edge) => addEdgeToPage(idx, edge)"
+            @select-node="(nodeId, isShift) => handleSelectNode(nodeId, isShift)"
+            @select-edge="(edgeId) => selectedEdgeId = edgeId"
+            @update:tool="(t) => activeTool = t"
           />
         </div>
 
@@ -155,6 +165,7 @@
       <div class="pointer-events-auto max-w-[96vw] overflow-x-auto md:overflow-visible">
         <DrawingToolbar
           v-model:tool="activeTool"
+          v-model:selected-shape-type="selectedShapeType"
           v-model:color="strokeColor"
           v-model:size="strokeSize"
           :zoom="pageScale"
@@ -213,6 +224,9 @@ const {
   currentDrawing,
   activePageIndex,
   activeTool,
+  selectedShapeType,
+  selectedNodeIds,
+  selectedEdgeId,
   strokeColor,
   strokeSize,
   isSaving,
@@ -225,12 +239,34 @@ const {
   removePage,
   addStrokeToActivePage,
   eraseStrokesAtPoint,
+  addNodeToPage,
+  updateNodeInPage,
+  removeNodeFromPage,
+  addEdgeToPage,
+  removeEdgeFromPage,
   undo,
   redo,
   saveDrawingNow,
   synthesizeDrawing,
   convertToNote,
 } = useDrawing();
+
+function handleSelectNode(nodeId: string, isShift: boolean) {
+  if (!nodeId) {
+    selectedNodeIds.value = [];
+    return;
+  }
+  if (isShift) {
+    if (selectedNodeIds.value.includes(nodeId)) {
+      selectedNodeIds.value = selectedNodeIds.value.filter((id) => id !== nodeId);
+    } else {
+      selectedNodeIds.value.push(nodeId);
+    }
+  } else {
+    selectedNodeIds.value = [nodeId];
+  }
+  selectedEdgeId.value = null;
+}
 
 const isEditingTitle = ref(false);
 const editedTitle = ref('');
@@ -400,9 +436,48 @@ async function handleSaveAsNote(payload: { title: string; html: string; deleteOr
   }
 }
 
+function handleKeyDown(e: KeyboardEvent) {
+  const target = e.target as HTMLElement | null;
+  if (
+    target &&
+    (target.tagName === 'INPUT' ||
+      target.tagName === 'TEXTAREA' ||
+      target.isContentEditable ||
+      target.closest('.ProseMirror'))
+  ) {
+    return;
+  }
+
+  const key = e.key.toLowerCase();
+  if (key === 'v') {
+    activeTool.value = 'select';
+  } else if (key === 'p') {
+    activeTool.value = 'pen';
+  } else if (key === 'e') {
+    activeTool.value = 'eraser';
+  } else if (key === 's') {
+    activeTool.value = 'shape';
+  } else if (key === 't') {
+    activeTool.value = 'text';
+  } else if (key === 'delete' || key === 'backspace') {
+    if (selectedNodeIds.value.length > 0) {
+      e.preventDefault();
+      for (const id of [...selectedNodeIds.value]) {
+        removeNodeFromPage(activePageIndex.value, id);
+      }
+      selectedNodeIds.value = [];
+    } else if (selectedEdgeId.value) {
+      e.preventDefault();
+      removeEdgeFromPage(activePageIndex.value, selectedEdgeId.value);
+      selectedEdgeId.value = null;
+    }
+  }
+}
+
 onMounted(async () => {
   handleZoomFit();
   window.addEventListener('resize', handleZoomFit);
+  window.addEventListener('keydown', handleKeyDown);
   if (viewportRef.value) {
     viewportRef.value.addEventListener('wheel', handleWheel, { passive: false });
   }
@@ -413,6 +488,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', handleZoomFit);
+  window.removeEventListener('keydown', handleKeyDown);
   if (viewportRef.value) {
     viewportRef.value.removeEventListener('wheel', handleWheel);
   }

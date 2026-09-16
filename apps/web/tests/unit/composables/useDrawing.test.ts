@@ -127,4 +127,62 @@ describe('useDrawing composable (Samsung Notes Style Paged Drawing)', () => {
     drawing.palmRejectionEnabled.value = false;
     expect(drawing.palmRejectionEnabled.value).toBe(false);
   });
+
+  it('adiciona, atualiza e remove nós (formas e textos) e arestas na página de desenho', () => {
+    const drawing = useDrawing();
+
+    // 1. Adicionar forma geométrica
+    const node = drawing.addNodeToPage(0, {
+      id: 'node-shape-1',
+      type: 'shape',
+      shape: 'diamond',
+      x: 100,
+      y: 100,
+      width: 180,
+      height: 120,
+      color: '#E57B55',
+    });
+
+    expect(node).toBeDefined();
+    expect(drawing.currentDrawing.value?.pages[0]?.nodes).toHaveLength(1);
+    expect(drawing.selectedNodeIds.value).toEqual(['node-shape-1']);
+
+    // 2. Atualizar nó
+    drawing.updateNodeInPage(0, 'node-shape-1', { text: 'Conceito Central', shape: 'star' });
+    expect(drawing.currentDrawing.value?.pages[0]?.nodes?.[0]?.text).toBe('Conceito Central');
+    expect(drawing.currentDrawing.value?.pages[0]?.nodes?.[0]?.shape).toBe('star');
+
+    // 3. Adicionar segundo nó para conexão
+    drawing.addNodeToPage(0, {
+      id: 'node-shape-2',
+      type: 'shape',
+      shape: 'rectangle',
+      x: 350,
+      y: 100,
+      width: 180,
+      height: 120,
+    });
+    expect(drawing.currentDrawing.value?.pages[0]?.nodes).toHaveLength(2);
+
+    // 4. Adicionar aresta conectando os nós
+    const edge = drawing.addEdgeToPage(0, {
+      id: 'edge-1',
+      fromNode: 'node-shape-1',
+      fromSide: 'right',
+      toNode: 'node-shape-2',
+      toSide: 'left',
+    });
+    expect(edge).toBeDefined();
+    expect(drawing.currentDrawing.value?.pages[0]?.edges).toHaveLength(1);
+    expect(drawing.selectedEdgeId.value).toBe('edge-1');
+
+    // 5. Remover aresta
+    drawing.removeEdgeFromPage(0, 'edge-1');
+    expect(drawing.currentDrawing.value?.pages[0]?.edges).toHaveLength(0);
+
+    // 6. Remover nó
+    drawing.removeNodeFromPage(0, 'node-shape-1');
+    expect(drawing.currentDrawing.value?.pages[0]?.nodes).toHaveLength(1);
+    expect(drawing.currentDrawing.value?.pages[0]?.nodes?.[0]?.id).toBe('node-shape-2');
+  });
 });

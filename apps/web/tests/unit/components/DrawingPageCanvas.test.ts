@@ -191,4 +191,61 @@ describe('DrawingPageCanvas', () => {
     expect(wrapper.emitted('stroke-added')).toBeTruthy();
     expect(wrapper.emitted('stroke-added')?.length).toBe(1);
   });
+
+  it('cria nó de forma geométrica ao clicar na página com ferramenta shape', async () => {
+    const wrapper = mount(DrawingPageCanvas, {
+      props: {
+        page: defaultPage,
+        tool: 'shape',
+        selectedShapeType: 'diamond',
+        color: '#E57B55',
+        size: 3,
+      },
+      global: {
+        stubs: {
+          CanvasNode: true,
+          CanvasEdgeLayer: true,
+        },
+      },
+    });
+
+    await wrapper.trigger('click', {
+      clientX: 200,
+      clientY: 300,
+    });
+
+    expect(wrapper.emitted('add-node')).toBeTruthy();
+    const createdNode = wrapper.emitted('add-node')?.[0]?.[0] as any;
+    expect(createdNode.type).toBe('shape');
+    expect(createdNode.shape).toBe('diamond');
+    expect(createdNode.color).toBe('#E57B55');
+    expect(wrapper.emitted('update:tool')?.[0]).toEqual(['select']);
+  });
+
+  it('cria nó de texto ao clicar na página com ferramenta text', async () => {
+    const wrapper = mount(DrawingPageCanvas, {
+      props: {
+        page: defaultPage,
+        tool: 'text',
+        color: '#18181B',
+        size: 3,
+      },
+      global: {
+        stubs: {
+          CanvasNode: true,
+          CanvasEdgeLayer: true,
+        },
+      },
+    });
+
+    await wrapper.trigger('click', {
+      clientX: 150,
+      clientY: 250,
+    });
+
+    expect(wrapper.emitted('add-node')).toBeTruthy();
+    const createdNode = wrapper.emitted('add-node')?.[0]?.[0] as any;
+    expect(createdNode.type).toBe('loose_text');
+    expect(wrapper.emitted('update:tool')?.[0]).toEqual(['select']);
+  });
 });
