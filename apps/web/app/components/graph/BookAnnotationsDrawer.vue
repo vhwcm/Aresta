@@ -226,24 +226,6 @@ import type { GraphNode, AnnotationThemeItem, BookThemeItem } from '~/interfaces
 import { useGraph } from '~/composables/useGraph'
 import { annotationRepo } from '~/adapters/database/repositories/AnnotationRepository'
 import { getCoverUrl as resolveCoverUrl } from '~/utils/cover'
-
-const getApiBase = () => {
-  if (typeof useRuntimeConfig === 'function') {
-    try {
-      const config = useRuntimeConfig()
-      if (config?.public?.readerApiUrl) {
-        return config.public.readerApiUrl
-      }
-      if (config?.public?.apiUrl) {
-        return config.public.apiUrl
-      }
-    } catch {
-      // fallback
-    }
-  }
-  return 'http://localhost:3001'
-}
-
 import { useAuth } from '~/composables/useAuth'
 
 const props = defineProps<{

@@ -1,4 +1,5 @@
 import { ref } from 'vue'
+import { getApiBase } from '~/utils/apiBase'
 
 export interface CatalogBook {
   id: number
@@ -6,23 +7,6 @@ export interface CatalogBook {
   filePath: string
   coverPath?: string
   createdAt?: string
-}
-
-const getApiBase = () => {
-  if (typeof useRuntimeConfig === 'function') {
-    try {
-      const config = useRuntimeConfig()
-      if (config?.public?.readerApiUrl) {
-        return `${config.public.readerApiUrl}/api`
-      }
-      if (config?.public?.apiUrl) {
-        return `${config.public.apiUrl}/api`
-      }
-    } catch {
-      // fallback
-    }
-  }
-  return 'http://localhost:3001/api'
 }
 
 export const useCatalog = () => {

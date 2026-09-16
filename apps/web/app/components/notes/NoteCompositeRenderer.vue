@@ -31,7 +31,7 @@
         </div>
 
         <a
-          :href="`http://localhost:3010/reader?bookId=${chunk.id}`"
+          :href="`/reader?bookId=${chunk.id}`"
           target="_blank"
           rel="noopener noreferrer"
           class="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary hover:bg-primaryHover text-white text-xs font-medium transition-colors flex-shrink-0"

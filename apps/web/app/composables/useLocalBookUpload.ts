@@ -6,6 +6,7 @@ import { bookRepo } from '~/adapters/database/repositories/BookRepository'
 import { CoverExtractorFactory } from '~/adapters/cover/CoverExtractorFactory'
 import { useGoogleDriveSync, type GoogleDriveSyncResult } from './useGoogleDriveSync'
 import { useAuth } from './useAuth'
+import { getApiBase } from '~/utils/apiBase'
 import type { IBookDocument } from '~/interfaces/reader/IBookDocument'
 import type { SupportedFileType } from '~/interfaces/reader/IValidationResult'
 import type { LocalBook } from '~/adapters/database/types'
@@ -114,15 +115,7 @@ export const useLocalBookUpload = () => {
       // 6.1 Se o usuário estiver autenticado, persiste o livro na conta do usuário no backend
       if (auth.isLoggedIn.value) {
         try {
-          let apiBase = 'http://localhost:3001/api'
-          if (typeof useRuntimeConfig === 'function') {
-            try {
-              const cfg = useRuntimeConfig()
-              if (cfg?.public?.apiUrl) {
-                apiBase = `${cfg.public.apiUrl}/api`
-              }
-            } catch {}
-          }
+          const apiBase = getApiBase()
 
           const res = await $fetch<any>(`${apiBase}/user-books`, {
             method: 'POST',

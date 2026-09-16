@@ -2,6 +2,7 @@ import { ref, computed } from 'vue'
 import { useAuth } from '~/composables/useAuth'
 import { useStreakCelebration } from '~/composables/useStreakCelebration'
 import { streakRepo } from '~/adapters/database/repositories/StreakRepository'
+import { getApiBase } from '~/utils/apiBase'
 
 export interface StreakDay {
   date: string
@@ -26,22 +27,6 @@ export interface TodayActivity {
   isFrozen: boolean
 }
 
-const getApiBase = () => {
-  if (typeof useRuntimeConfig === 'function') {
-    try {
-      const config = useRuntimeConfig()
-      if (config?.public?.authApiUrl) {
-        return `${config.public.authApiUrl}/api`
-      }
-      if (config?.public?.apiUrl) {
-        return `${config.public.apiUrl}/api`
-      }
-    } catch {
-      // fallback
-    }
-  }
-  return 'http://localhost:3001/api'
-}
 
 // Shared module-level reactive state
 const currentStreak = ref(0)

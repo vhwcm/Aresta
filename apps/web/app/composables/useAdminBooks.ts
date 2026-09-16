@@ -1,23 +1,7 @@
 import { ref } from 'vue'
 import { useAuth } from '~/composables/useAuth'
 import type { BookItem } from '~/interfaces/graph'
-
-const getApiBase = () => {
-  if (typeof useRuntimeConfig === 'function') {
-    try {
-      const config = useRuntimeConfig()
-      if (config?.public?.readerApiUrl) {
-        return `${config.public.readerApiUrl}/api`
-      }
-      if (config?.public?.apiUrl) {
-        return `${config.public.apiUrl}/api`
-      }
-    } catch {
-      // fallback
-    }
-  }
-  return 'http://localhost:3001/api'
-}
+import { getApiBase } from '~/utils/apiBase'
 
 export const useAdminBooks = () => {
   const loading = ref(false)

@@ -61,6 +61,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { CanvasNode } from '~/interfaces/canvas';
+import { getCoverUrl } from '~/utils/cover';
 
 const props = defineProps<{
   node: CanvasNode;
@@ -69,14 +70,11 @@ const props = defineProps<{
 
 const readerUrl = computed(() => {
   if (!props.node.bookId) return '#';
-  return `http://localhost:3010/reader?bookId=${props.node.bookId}`;
+  return `/reader?bookId=${props.node.bookId}`;
 });
 
 const coverUrl = computed(() => {
   if (!props.node.bookCover) return '';
-  if (props.node.bookCover.startsWith('http') || props.node.bookCover.startsWith('/')) {
-    return props.node.bookCover;
-  }
-  return `http://localhost:3003/${props.node.bookCover}`;
+  return getCoverUrl(props.node.bookCover, props.node.bookId ? Number(props.node.bookId) : undefined);
 });
 </script>

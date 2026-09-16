@@ -153,19 +153,13 @@ export function generateDidacticCoverDataUri(params: DidacticCoverParams): strin
   return `data:image/svg+xml;base64,${base64}`
 }
 
+import { getResolvedApiBase } from './apiBase'
+
 export const getCoverUrl = (coverPath?: string, bookId?: number) => {
   if (coverPath && (coverPath.startsWith('data:') || coverPath.startsWith('blob:') || coverPath.startsWith('http://') || coverPath.startsWith('https://'))) {
     return coverPath
   }
-  let baseUrl = 'http://localhost:3001'
-  if (typeof useRuntimeConfig === 'function') {
-    try {
-      const config = useRuntimeConfig()
-      if (config?.public?.apiUrl) {
-        baseUrl = config.public.apiUrl
-      }
-    } catch {}
-  }
+  const baseUrl = getResolvedApiBase()
   if (bookId) {
     return `${baseUrl}/api/books/${bookId}/cover`
   }

@@ -151,16 +151,10 @@ const isPanning = ref(false);
 const startPanX = ref(0);
 const startPanY = ref(0);
 
+import { getApiRoot } from '~/utils/apiBase';
+
 const getApiBaseUrl = () => {
-  if (typeof useRuntimeConfig === 'function') {
-    try {
-      const config = useRuntimeConfig();
-      if (config?.public?.canvasApiUrl) return config.public.canvasApiUrl;
-    } catch {
-      // Ignora erro fora de contexto Nuxt
-    }
-  }
-  return 'http://localhost:3004';
+  return getApiRoot();
 };
 
 const loadCanvasData = async () => {

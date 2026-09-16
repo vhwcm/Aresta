@@ -241,6 +241,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useAnnotations } from '~/composables/useAnnotations';
 import { useNotes } from '~/composables/useNotes';
+import { getCoverUrl as resolveCoverUrl } from '~/utils/cover';
 
 const props = withDefaults(
   defineProps<{
@@ -319,9 +320,7 @@ const handleCreateAndInsertNote = async () => {
 };
 
 const getCoverUrl = (path: string) => {
-  if (!path) return '';
-  if (path.startsWith('http') || path.startsWith('/')) return path;
-  return `http://localhost:3003/${path}`;
+  return resolveCoverUrl(path);
 };
 
 const filteredBooks = computed(() => {

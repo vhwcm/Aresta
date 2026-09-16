@@ -2,6 +2,7 @@ import { ref, computed } from 'vue';
 import { useAuth } from '~/composables/useAuth';
 import { useCanvas } from '~/composables/useCanvas';
 import type { StrokePoint, InkingStroke } from '~/interfaces/canvas';
+import { getApiBase } from '~/utils/apiBase';
 
 export type { StrokePoint, InkingStroke };
 
@@ -13,23 +14,6 @@ export interface BoundingBox {
   width: number;
   height: number;
 }
-
-const getApiBase = () => {
-  if (typeof useRuntimeConfig === 'function') {
-    try {
-      const config = useRuntimeConfig();
-      if (config?.public?.canvasApiUrl) {
-        return `${config.public.canvasApiUrl}/api`;
-      }
-      if (config?.public?.apiUrl) {
-        return `${config.public.apiUrl}/api`;
-      }
-    } catch {
-      // fallback
-    }
-  }
-  return 'http://localhost:3001/api';
-};
 
 export function useCanvasInking() {
   const { token } = useAuth();

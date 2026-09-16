@@ -60,6 +60,8 @@ import { getCachedBook, saveCachedBook } from '~/utils/bookCache'
 import { getBinaryStorage } from '~/adapters/storage/StorageManager'
 import { bookRepo } from '~/adapters/database/repositories/BookRepository'
 import { detectFileTypeFromArrayBuffer } from '~/utils/fileValidator'
+import { getApiRoot } from '~/utils/apiBase'
+import { getCoverUrl } from '~/utils/cover'
 import type { SupportedFileType } from '~/interfaces/reader/IValidationResult'
 
 const store = useReaderStore()
@@ -88,8 +90,7 @@ function getAuthHeaders(): Record<string, string> {
 }
 
 function resolveBookFileUrl(bookId?: string, bookPath?: string): string {
-  const config = useRuntimeConfig()
-  const readerApi = config.public.readerApiUrl || config.public.apiUrl || 'http://localhost:3001'
+  const readerApi = getApiRoot()
   if (bookId) return `${readerApi}/api/books/${bookId}/file`
   if (!bookPath) return ''
   if (bookPath.startsWith('http://') || bookPath.startsWith('https://')) return bookPath
@@ -106,8 +107,7 @@ function resolveBookFileUrl(bookId?: string, bookPath?: string): string {
 
 async function fetchBookMetadata(bookId: string) {
   try {
-    const config = useRuntimeConfig()
-    const readerApi = config.public.readerApiUrl || config.public.apiUrl || 'http://localhost:3001'
+    const readerApi = getApiRoot()
     const headers = getAuthHeaders()
     const metaRes = await fetch(`${readerApi}/api/books/${bookId}`, { headers })
     return metaRes.ok ? await metaRes.json() : null
@@ -257,9 +257,7 @@ const loadBookFromQuery = async () => {
 
     store.syncSettings()
     const doc = createBookDocument(type)
-    const config = typeof useRuntimeConfig === 'function' ? useRuntimeConfig() : null
-    const readerApi = config?.public?.readerApiUrl || config?.public?.apiUrl || 'http://localhost:3001'
-    const coverUrl = localBookMeta?.coverPath || (validBookId ? `${readerApi}/api/books/${validBookId}/cover` : undefined)
+    const coverUrl = localBookMeta?.coverPath || (validBookId ? getCoverUrl(undefined, Number(validBookId)) : undefined)
 
     await readerProfiler.measureAsync('4. Parsing e Inicialização do Documento', async () => {
       await doc.load(arrayBuffer!, title, store.fontSize, store.fontFamily, coverUrl)

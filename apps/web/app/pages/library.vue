@@ -633,6 +633,7 @@ import { useFlashcards } from '~/composables/useFlashcards'
 import { annotationRepo } from '~/adapters/database/repositories/AnnotationRepository'
 import { flashcardRepo } from '~/adapters/database/repositories/FlashcardRepository'
 import { getCoverUrl, getBookFormat, resolveBookCover } from '~/utils/cover'
+import { getApiBase } from '~/utils/apiBase'
 
 import ConfirmModal from '~/components/ConfirmModal.vue'
 import ManageThemesModal from '~/components/ManageThemesModal.vue'
@@ -705,17 +706,6 @@ const bookNotesCount = ref(0)
 const bookFlashcardsCount = ref(0)
 const isCheckingBookContents = ref(false)
 
-const getApiBase = () => {
-  if (typeof useRuntimeConfig === 'function') {
-    try {
-      const config = useRuntimeConfig()
-      if (config?.public?.apiUrl) {
-        return `${config.public.apiUrl}/api`
-      }
-    } catch {}
-  }
-  return 'http://localhost:3001/api'
-}
 
 const deleteBookModalDescription = computed(() => {
   const title = bookToDelete.value?.title || 'este livro'

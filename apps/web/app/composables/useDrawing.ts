@@ -10,17 +10,10 @@ import type {
   DrawingSynthesisResult,
 } from '~/interfaces/drawing';
 
+import { getApiBase } from '~/utils/apiBase';
+
 const getDrawingApiUrl = () => {
-  if (typeof useRuntimeConfig === 'function') {
-    try {
-      const config = useRuntimeConfig();
-      if (config?.public?.canvasApiUrl) return `${config.public.canvasApiUrl}/api/drawings`;
-      if (config?.public?.apiUrl) return `${config.public.apiUrl}/api/drawings`;
-    } catch {
-      // Ignora erro fora de contexto
-    }
-  }
-  return 'http://localhost:3001/api/drawings';
+  return `${getApiBase()}/drawings`;
 };
 
 const LOCAL_STORAGE_KEY_PREFIX = 'aresta_drawing_';

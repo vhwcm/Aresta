@@ -1,14 +1,14 @@
 {$DOMAIN:aresta.duckdns.org} {
     # Roteia chamadas de API, uploads e healthcheck para o container Express (aresta-api)
-    handle /api/* {
+    handle /api* {
         reverse_proxy aresta-api:3001
     }
 
-    handle /storage/* {
+    handle /storage* {
         reverse_proxy aresta-api:3001
     }
 
-    handle /health {
+    handle /health* {
         reverse_proxy aresta-api:3001
     }
 

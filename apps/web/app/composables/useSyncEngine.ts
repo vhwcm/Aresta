@@ -5,19 +5,7 @@ import { bookRepo } from '~/adapters/database/repositories/BookRepository';
 import { annotationRepo } from '~/adapters/database/repositories/AnnotationRepository';
 import { flashcardRepo } from '~/adapters/database/repositories/FlashcardRepository';
 import { canvasRepo } from '~/adapters/database/repositories/CanvasRepository';
-const getApiBase = () => {
-  if (typeof useRuntimeConfig === 'function') {
-    try {
-      const config = useRuntimeConfig();
-      if (config?.public?.apiUrl) {
-        return `${config.public.apiUrl}/api`;
-      }
-    } catch {
-      // fallback
-    }
-  }
-  return 'http://localhost:3001/api';
-};
+import { getApiBase } from '~/utils/apiBase';
 // Shared state across the application
 const isOnline = ref(typeof navigator !== 'undefined' ? navigator.onLine : true);
 const isSyncing = ref(false);

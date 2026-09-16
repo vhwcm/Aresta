@@ -525,6 +525,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { getApiRoot } from '~/utils/apiBase'
 import {
   UserIcon,
   ShieldCheckIcon,
@@ -646,9 +647,7 @@ const finishOnboarding = async () => {
     }
 
     // 2. Atualiza meta de streak no backend
-    const authUrl = typeof useRuntimeConfig === 'function' && useRuntimeConfig()?.public?.authApiUrl
-      ? useRuntimeConfig().public.authApiUrl
-      : 'http://localhost:3001'
+    const authUrl = getApiRoot()
 
     if (auth.token.value) {
       try {

@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { markRaw } from 'vue'
 import type { IBookDocument } from '~/interfaces/reader/IBookDocument'
 import { bookRepo } from '~/adapters/database/repositories/BookRepository'
+import { getApiRoot } from '~/utils/apiBase'
 
 export type ReaderColorTheme = 'sepia' | 'white' | 'black'
 export type ReaderWidthMode = 'centered' | 'wide'
@@ -513,8 +514,7 @@ export const useReaderStore = defineStore('reader', {
 
       // Sincroniza em background com o backend se autenticado
       try {
-        const config = typeof useRuntimeConfig === 'function' ? useRuntimeConfig() : null
-        const apiUrl = config?.public?.apiUrl || 'http://localhost:3001'
+        const apiUrl = getApiRoot()
         const cookieToken = typeof useCookie === 'function' ? useCookie<string | null>('aresta_token').value : null
         const authData = typeof window !== 'undefined' ? (localStorage.getItem('aresta_token') || localStorage.getItem('auth_token')) : null
         const token = cookieToken || (authData ? (authData.startsWith('"') ? JSON.parse(authData) : authData) : null)

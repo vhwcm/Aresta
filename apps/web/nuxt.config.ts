@@ -26,12 +26,12 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      apiUrl: process.env.NUXT_PUBLIC_API_URL ?? 'http://localhost:3001',
-      readerApiUrl: process.env.NUXT_PUBLIC_READER_API_URL ?? 'http://localhost:3001',
-      memoryApiUrl: process.env.NUXT_PUBLIC_MEMORY_API_URL ?? 'http://localhost:3001',
-      aiApiUrl: process.env.NUXT_PUBLIC_AI_API_URL ?? 'http://localhost:3001',
-      authApiUrl: process.env.NUXT_PUBLIC_AUTH_API_URL ?? 'http://localhost:3001',
-      canvasApiUrl: process.env.NUXT_PUBLIC_CANVAS_API_URL ?? 'http://localhost:3001',
+      apiUrl: process.env.NUXT_PUBLIC_API_URL ?? '',
+      readerApiUrl: process.env.NUXT_PUBLIC_READER_API_URL ?? '',
+      memoryApiUrl: process.env.NUXT_PUBLIC_MEMORY_API_URL ?? '',
+      aiApiUrl: process.env.NUXT_PUBLIC_AI_API_URL ?? '',
+      authApiUrl: process.env.NUXT_PUBLIC_AUTH_API_URL ?? '',
+      canvasApiUrl: process.env.NUXT_PUBLIC_CANVAS_API_URL ?? '',
     },
   },
 

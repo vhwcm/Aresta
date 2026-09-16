@@ -12,17 +12,10 @@ import type {
 } from '~/interfaces/canvas';
 import { useAuth } from '~/composables/useAuth';
 import { canvasRepo } from '~/adapters/database/repositories/CanvasRepository';
+import { getApiBase } from '~/utils/apiBase';
 
 const getCanvasApiUrl = () => {
-  if (typeof useRuntimeConfig === 'function') {
-    try {
-      const config = useRuntimeConfig();
-      if (config?.public?.canvasApiUrl) return `${config.public.canvasApiUrl}/api`;
-    } catch {
-      // Ignora erro ao obter runtimeConfig fora do contexto Nuxt
-    }
-  }
-  return 'http://localhost:3004/api';
+  return getApiBase();
 };
 
 // Shared module-level reactive state across components for current active canvas session

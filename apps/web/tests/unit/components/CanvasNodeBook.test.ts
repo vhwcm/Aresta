@@ -35,12 +35,12 @@ describe('CanvasNodeBook Component', () => {
     // Capa do livro
     const img = wrapper.find('img');
     expect(img.exists()).toBe(true);
-    expect(img.attributes('src')).toBe('http://localhost:3003/covers/pragmatic.jpg');
+    expect(img.attributes('src')).toBe('http://localhost:3001/api/books/42/cover');
 
     // Link de redirecionamento para o leitor
     const link = wrapper.find('a');
     expect(link.exists()).toBe(true);
-    expect(link.attributes('href')).toBe('http://localhost:3010/reader?bookId=42');
+    expect(link.attributes('href')).toBe('/reader?bookId=42');
     expect(link.attributes('target')).toBe('_blank');
   });
 
@@ -64,6 +64,6 @@ describe('CanvasNodeBook Component', () => {
 
     expect(wrapper.find('img').exists()).toBe(false);
     expect(wrapper.text()).toContain('Sem capa');
-    expect(wrapper.find('a').attributes('href')).toBe('http://localhost:3010/reader?bookId=99');
+    expect(wrapper.find('a').attributes('href')).toBe('/reader?bookId=99');
   });
 });

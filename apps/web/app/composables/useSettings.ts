@@ -62,16 +62,10 @@ export function readerThemeToThemeMode(theme: ReaderColorTheme): ThemeMode {
   return 'light'
 }
 
+import { getApiRoot } from '~/utils/apiBase'
+
 const getAuthApiUrl = () => {
-  if (typeof useRuntimeConfig === 'function') {
-    try {
-      const config = useRuntimeConfig()
-      if (config?.public?.authApiUrl) return config.public.authApiUrl
-    } catch {
-      // fallback gracioso se runtime config não estiver disponível
-    }
-  }
-  return 'http://localhost:3001'
+  return getApiRoot()
 }
 const STORAGE_KEY = 'aresta_settings'
 

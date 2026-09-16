@@ -255,6 +255,7 @@ import ReaderSelectionTooltip from '~/components/reader/ReaderSelectionTooltip.v
 import ReaderDictionaryCard from '~/components/reader/ReaderDictionaryCard.vue'
 import ReaderAiOverlayCard from '~/components/reader/ReaderAiOverlayCard.vue'
 import ReaderCreateBookletModal from '~/components/reader/ReaderCreateBookletModal.vue'
+import { getApiBase } from '~/utils/apiBase'
 
 const store = useReaderStore()
 const router = useRouter()
@@ -507,8 +508,7 @@ async function handleRequestShortExplanationFromTooltip(payload: { text: string;
   isAiOverlayVisible.value = true
 
   try {
-    const config = useRuntimeConfig()
-    const base = config?.public?.apiUrl || 'http://localhost:3001/api'
+    const base = getApiBase()
     const token = typeof useCookie === 'function' ? useCookie('aresta_token').value : null
 
     const res: any = await $fetch(`${base}/ai/short-explanation`, {
@@ -819,8 +819,7 @@ onMounted(() => {
     const detail = (e as CustomEvent).detail
     if (!detail) return
     try {
-      const config = useRuntimeConfig()
-      const base = config?.public?.apiUrl || 'http://localhost:3001/api'
+      const base = getApiBase()
       const token = typeof useCookie === 'function' ? useCookie('aresta_token').value : null
       await $fetch(`${base}/flashcards`, {
         method: 'POST',

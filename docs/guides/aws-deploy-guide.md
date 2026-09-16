@@ -87,18 +87,19 @@ cd Aresta
 
 # 2. Configurar variáveis de ambiente
 cp .env.example .env
-# Edite .env e informe o IP/DNS público da EC2:
-# NUXT_PUBLIC_API_URL=http://SEU_IP_PUBLICO:3001
-# GEMINI_API_KEY=sua-chave
+# Edite .env e preencha as chaves necessárias (ex: GEMINI_API_KEY).
+# NOTA: NUXT_PUBLIC_API_URL pode ser deixado em branco na AWS!
+# O Caddy atua como Reverse Proxy unificado (Same-Origin), servindo o frontend
+# na raiz (/) e a API em (/api), eliminando qualquer problema de Cross-Origin (CORS).
 
 # 3. Subir todos os serviços com Docker Compose
 docker compose up -d --build
 ```
 
-O frontend é uma aplicação estática e recebe a URL da API durante o build.
-Por isso, `NUXT_PUBLIC_API_URL` deve apontar para o endereço que o navegador do
-usuário consegue acessar, e não para `http://aresta-api:3001` (esse nome só
-existe na rede interna do Docker).
+O frontend roda com arquitetura **Same-Origin** através do Caddy Reverse Proxy.
+Todas as requisições do navegador para a API são automaticamente relativas (`/api/...`),
+garantindo segurança HTTPS, sem necessidade de expor a porta 3001 nem reconfigurar
+URLs caso o IP público ou domínio da EC2 mudem.
 
 ---
 

@@ -239,6 +239,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { UsersIcon, UserPlusIcon, SearchIcon, Edit3Icon, Trash2Icon, UserXIcon, XIcon } from 'lucide-vue-next'
 import { useAuth } from '~/composables/useAuth'
+import { getApiBase } from '~/utils/apiBase'
 
 definePageMeta({
   middleware: 'admin'
@@ -251,20 +252,6 @@ interface UserItem {
   role: string
   isActive: boolean
   createdAt?: string
-}
-
-const getApiBase = () => {
-  if (typeof useRuntimeConfig === 'function') {
-    try {
-      const config = useRuntimeConfig()
-      if (config?.public?.apiUrl) {
-        return `${config.public.apiUrl}/api`
-      }
-    } catch {
-      // fallback
-    }
-  }
-  return 'http://localhost:3001/api'
 }
 
 const auth = useAuth()

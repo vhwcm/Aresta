@@ -228,6 +228,7 @@ import {
   AlertCircleIcon
 } from 'lucide-vue-next'
 import { useAuth } from '~/composables/useAuth'
+import { getApiRoot } from '~/utils/apiBase'
 
 const props = defineProps<{
   isOpen: boolean
@@ -282,17 +283,7 @@ const resetForm = () => {
 }
 
 const getApiBase = () => {
-  if (typeof useRuntimeConfig === 'function') {
-    try {
-      const config = useRuntimeConfig()
-      if (config?.public?.apiUrl) {
-        return config.public.apiUrl
-      }
-    } catch {
-      // Fallback gracioso
-    }
-  }
-  return 'http://localhost:3001'
+  return getApiRoot()
 }
 
 const handleSubmit = async () => {

@@ -1,4 +1,5 @@
 import { ref } from 'vue'
+import { getApiBase } from '~/utils/apiBase'
 
 export interface DidacticChapterItem {
   id: string | number
@@ -34,22 +35,7 @@ const isGenerating = ref(false)
 const error = ref<string | null>(null)
 
 export const useDidacticBooklet = () => {
-  const getApiBase = () => {
-    if (typeof useRuntimeConfig === 'function') {
-      try {
-        const config = useRuntimeConfig()
-        if (config?.public?.memoryApiUrl) {
-          return `${config.public.memoryApiUrl}/api`
-        }
-        if (config?.public?.apiUrl) {
-          return `${config.public.apiUrl}/api`
-        }
-      } catch {
-        // fallback gracioso
-      }
-    }
-    return 'http://localhost:3001/api'
-  }
+
 
   const getHeaders = () => {
     const token = typeof useCookie === 'function' ? useCookie('aresta_token').value : null

@@ -57,12 +57,12 @@ services:
       context: ./apps/web
       dockerfile: Dockerfile
       args:
-        NUXT_PUBLIC_API_URL: ${NUXT_PUBLIC_API_URL:-https://aresta.duckdns.org}
-        NUXT_PUBLIC_READER_API_URL: ${NUXT_PUBLIC_READER_API_URL:-https://aresta.duckdns.org}
-        NUXT_PUBLIC_MEMORY_API_URL: ${NUXT_PUBLIC_MEMORY_API_URL:-https://aresta.duckdns.org}
-        NUXT_PUBLIC_AI_API_URL: ${NUXT_PUBLIC_AI_API_URL:-https://aresta.duckdns.org}
-        NUXT_PUBLIC_AUTH_API_URL: ${NUXT_PUBLIC_AUTH_API_URL:-https://aresta.duckdns.org}
-        NUXT_PUBLIC_CANVAS_API_URL: ${NUXT_PUBLIC_CANVAS_API_URL:-https://aresta.duckdns.org}
+        NUXT_PUBLIC_API_URL: ${NUXT_PUBLIC_API_URL:-}
+        NUXT_PUBLIC_READER_API_URL: ${NUXT_PUBLIC_READER_API_URL:-}
+        NUXT_PUBLIC_MEMORY_API_URL: ${NUXT_PUBLIC_MEMORY_API_URL:-}
+        NUXT_PUBLIC_AI_API_URL: ${NUXT_PUBLIC_AI_API_URL:-}
+        NUXT_PUBLIC_AUTH_API_URL: ${NUXT_PUBLIC_AUTH_API_URL:-}
+        NUXT_PUBLIC_CANVAS_API_URL: ${NUXT_PUBLIC_CANVAS_API_URL:-}
     container_name: aresta-web
     expose:
       - "80"
