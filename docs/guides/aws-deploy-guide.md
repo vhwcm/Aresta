@@ -113,8 +113,8 @@ Após subir os containers com o Caddy, a aplicação estará disponível de form
   `https://aresta.duckdns.org/api`
 * **Healthcheck da API**:
   `https://aresta.duckdns.org/health`
-* **OAuth Callback (Google)**:
-  `https://aresta.duckdns.org/api/auth/google/callback`
+* **OAuth Callback (Google/Microsoft/Apple)**:
+  `https://aresta.duckdns.org/auth/callback` (ou `http://SEU_IP/auth/callback` se sem domínio)
 
 ---
 
