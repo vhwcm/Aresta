@@ -39,6 +39,7 @@ model User {
   didacticBooklets    DidacticBooklet[]
   accounts            Account[]
   feedbacks           Feedback[]
+  themes              Theme[]
 
   @@map("users")
 }
@@ -158,17 +159,21 @@ model UserBook {
 
 model Theme {
   id                Int               @id @default(autoincrement())
-  name              String            @unique
+  user_id           Int?
+  name              String
   color             String?           @default("#E57B55")
   description       String?
   embedding         String?
   created_at        DateTime          @default(now())
+  user              User?             @relation(fields: [user_id], references: [id], onDelete: Cascade)
   parentHierarchies ThemeHierarchy[]  @relation("ParentTheme")
   childHierarchies  ThemeHierarchy[]  @relation("ChildTheme")
   bookThemes        BookTheme[]
   annotationThemes  AnnotationTheme[]
   didacticBooklets  DidacticBooklet[]
 
+  @@unique([user_id, name])
+  @@index([user_id])
   @@map("themes")
 }
 

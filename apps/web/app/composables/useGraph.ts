@@ -2,28 +2,18 @@ import { ref } from 'vue'
 import type { GraphData, GraphNode, GraphEdge, BookItem, AnnotationThemeItem } from '~/interfaces/graph'
 import { useAuth } from '~/composables/useAuth'
 import { bookRepo } from '~/adapters/database/repositories/BookRepository'
-
-const getApiBase = () => {
-  if (typeof useRuntimeConfig === 'function') {
-    try {
-      const config = useRuntimeConfig()
-      if (config?.public?.memoryApiUrl) {
-        return `${config.public.memoryApiUrl}/api`
-      }
-      if (config?.public?.apiUrl) {
-        return `${config.public.apiUrl}/api`
-      }
-    } catch {
-      // fallback gracioso
-    }
-  }
-  return 'http://localhost:3001/api'
-}
+import { getApiBase } from '~/utils/apiBase'
 
 // Estado Compartilhado Singleton para o Grafo (SWR - 0ms de latência)
 const sharedGraphData = ref<GraphData>({ nodes: [], edges: [] })
 const sharedLoading = ref(false)
 const sharedError = ref<string | null>(null)
+
+export const resetGraphMemory = () => {
+  sharedGraphData.value = { nodes: [], edges: [] }
+  sharedLoading.value = false
+  sharedError.value = null
+}
 
 export const useGraph = () => {
   const graphData = sharedGraphData
@@ -447,5 +437,6 @@ export const useGraph = () => {
     deleteConnection,
     linkBookToNode,
     unlinkBookFromNode,
+    resetGraph: resetGraphMemory,
   }
 }

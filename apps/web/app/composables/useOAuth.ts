@@ -1,6 +1,5 @@
 import { ref, computed } from 'vue'
-import { useAuth, type AuthUser } from './useAuth'
-import { bookRepo } from '~/adapters/database/repositories/BookRepository'
+import { useAuth, type AuthUser, purgeClientSession } from './useAuth'
 
 export interface OAuthResult {
   success: boolean
@@ -11,18 +10,10 @@ export interface OAuthResult {
   error?: string
 }
 
+import { getApiRoot } from '~/utils/apiBase'
+
 const getAuthApiUrl = () => {
-  if (typeof useRuntimeConfig === 'function') {
-    try {
-      const config = useRuntimeConfig()
-      if (config?.public?.authApiUrl) {
-        return config.public.authApiUrl
-      }
-    } catch {
-      // fallback gracioso
-    }
-  }
-  return 'http://localhost:3001'
+  return getApiRoot()
 }
 
 const GOOGLE_TOKEN_KEY = 'aresta_google_drive_token'
@@ -221,9 +212,7 @@ export const useOAuth = () => {
       const tokenCookie = useCookie<string | null>('aresta_token', { path: '/', maxAge: 60 * 60 * 24 * 7, sameSite: 'lax' })
       const userCookie = useCookie<AuthUser | null>('aresta_user', { path: '/', maxAge: 60 * 60 * 24 * 7, sameSite: 'lax' })
 
-      try {
-        await bookRepo.clear()
-      } catch {}
+      await purgeClientSession()
 
       tokenCookie.value = response.token
       userCookie.value = response.user

@@ -156,4 +156,13 @@ export class InMemoryAdapter implements IDatabaseAdapter {
   async clearPendingMutations(): Promise<void> {
     this.mutationQueue.clear();
   }
+
+  async clearAll(): Promise<void> {
+    this.books.clear();
+    this.annotations.clear();
+    this.flashcards.clear();
+    this.canvases.clear();
+    this.streak = null;
+    this.mutationQueue.clear();
+  }
 }

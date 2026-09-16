@@ -44,4 +44,7 @@ export interface IDatabaseAdapter {
   enqueueMutation(mutation: LocalMutation): Promise<void>;
   markMutationsSynced(ids: string[]): Promise<void>;
   clearPendingMutations(): Promise<void>;
+
+  // Session Purge
+  clearAll?(): Promise<void>;
 }

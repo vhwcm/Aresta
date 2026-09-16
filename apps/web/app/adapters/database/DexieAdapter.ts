@@ -225,4 +225,16 @@ export class DexieAdapter implements IDatabaseAdapter {
     await this.init();
     await this.db.mutation_queue.clear();
   }
+
+  async clearAll(): Promise<void> {
+    await this.init();
+    await Promise.allSettled([
+      this.db.books.clear(),
+      this.db.annotations.clear(),
+      this.db.flashcards.clear(),
+      this.db.canvases.clear(),
+      this.db.streaks.clear(),
+      this.db.mutation_queue.clear()
+    ]);
+  }
 }

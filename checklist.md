@@ -1,10 +1,10 @@
 # Checklist
 
 ## 🔄 Em Andamento
-- [16/09/2026 10:12] [Fazendo] Isolar estritamente livros e temas por usuário com remoção de bypass no auth middleware, migração de user_id em temas e purga de cache no frontend
 - [16/09/2026 10:09] [Fazendo] Resolver problema de cross origin entre servicos na AWS com Same-Origin via Caddy e unificacao de API
 
 ## ✅ Concluído
+- [16/09/2026 10:27] [Concluído] Isolar estritamente livros e temas por usuário com remoção de bypass no auth middleware, migração de user_id em temas e purga de cache no frontend
 - [16/09/2026 10:25] [Concluído] Corrigir renderização de texto e escala do PDF no leitor e desacoplar estilos e motor de EPUB e PDF
 - [16/09/2026 10:04] [Concluído] Interromper traço de desenho ao soltar o mouse fora da página ou janela no editor de notas de desenho
 - [14/09/2026 10:34] [Concluído] Corrigir MIME type e carregamento do worker PDF.js na AWS e isolar estante, temas e grafo estritamente por usuário

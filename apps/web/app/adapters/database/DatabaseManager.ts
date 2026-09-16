@@ -60,3 +60,16 @@ class DatabaseManager {
 
 export const dbManager = DatabaseManager.getInstance();
 export const getDatabase = () => dbManager.getAdapter();
+
+export const clearAllLocalData = async () => {
+  try {
+    const adapter = getDatabase() as any;
+    if (typeof adapter?.clearAll === 'function') {
+      await adapter.clearAll();
+    } else if (typeof adapter?.clearBooks === 'function') {
+      await adapter.clearBooks();
+    }
+  } catch (e) {
+    console.warn('[DatabaseManager] Falha ao limpar dados locais:', e);
+  }
+};

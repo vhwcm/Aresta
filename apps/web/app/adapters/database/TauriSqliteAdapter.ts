@@ -607,4 +607,14 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
     await this.init();
     await this.db!.execute('DELETE FROM mutation_queue');
   }
+
+  async clearAll(): Promise<void> {
+    await this.init();
+    await this.db!.execute('DELETE FROM books');
+    await this.db!.execute('DELETE FROM annotations');
+    await this.db!.execute('DELETE FROM flashcards');
+    await this.db!.execute('DELETE FROM canvases');
+    await this.db!.execute('DELETE FROM streaks');
+    await this.db!.execute('DELETE FROM mutation_queue');
+  }
 }

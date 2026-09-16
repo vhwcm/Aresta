@@ -2,17 +2,10 @@ import { ref } from 'vue';
 import type { NoteItem, NoteListResponse } from '~/interfaces/note';
 import { useAuth } from '~/composables/useAuth';
 import { useFlashcards } from '~/composables/useFlashcards';
+import { getApiBase } from '~/utils/apiBase';
 
 const getNotesApiUrl = () => {
-  if (typeof useRuntimeConfig === 'function') {
-    try {
-      const config = useRuntimeConfig();
-      if (config?.public?.canvasApiUrl) return `${config.public.canvasApiUrl}/api`;
-    } catch {
-      // Ignora erro ao obter runtimeConfig fora do contexto Nuxt
-    }
-  }
-  return 'http://localhost:3004/api';
+  return getApiBase();
 };
 
 const LOCAL_STORAGE_KEY = 'aresta_local_notes';
@@ -41,6 +34,19 @@ const currentNote = ref<NoteItem | null>(null);
 const folders = ref<string[]>([]);
 const isLoading = ref(false);
 const error = ref<string | null>(null);
+
+export const resetNotesMemory = () => {
+  notesList.value = [];
+  currentNote.value = null;
+  folders.value = [];
+  isLoading.value = false;
+  error.value = null;
+  if (typeof window !== 'undefined' && window.localStorage) {
+    try {
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
+    } catch {}
+  }
+};
 
 export function useNotes() {
   const { token, user } = useAuth();

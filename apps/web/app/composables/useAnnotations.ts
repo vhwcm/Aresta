@@ -3,6 +3,7 @@ import { useAuth } from '~/composables/useAuth'
 import { annotationRepo } from '~/adapters/database/repositories/AnnotationRepository'
 import { flashcardRepo } from '~/adapters/database/repositories/FlashcardRepository'
 import { useFlashcards } from '~/composables/useFlashcards'
+import { getApiBase } from '~/utils/apiBase'
 
 export interface AnnotationTheme {
   id: number
@@ -46,27 +47,17 @@ export interface CreateAnnotationPayload {
   noteId?: string | null
 }
 
-const getApiBase = () => {
-  if (typeof useRuntimeConfig === 'function') {
-    try {
-      const config = useRuntimeConfig()
-      if (config?.public?.memoryApiUrl) {
-        return `${config.public.memoryApiUrl}/api`
-      }
-      if (config?.public?.apiUrl) {
-        return `${config.public.apiUrl}/api`
-      }
-    } catch {
-      // fallback gracioso
-    }
-  }
-  return 'http://localhost:3001/api'
-}
 
 // Estado reativo compartilhado a nível de módulo
 const sharedAnnotations = ref<AnnotationItem[]>([])
 const sharedLoading = ref(false)
 const sharedError = ref<string | null>(null)
+
+export const resetAnnotationsMemory = () => {
+  sharedAnnotations.value = []
+  sharedLoading.value = false
+  sharedError.value = null
+}
 
 export const useAnnotations = () => {
   const annotations = sharedAnnotations

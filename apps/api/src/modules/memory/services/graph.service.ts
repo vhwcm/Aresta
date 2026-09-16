@@ -19,6 +19,7 @@ export class GraphService {
     })
 
     const themes = await prisma.theme.findMany({
+      where: { user_id: userId },
       include: {
         parentHierarchies: true,
         childHierarchies: true,
@@ -35,7 +36,11 @@ export class GraphService {
       },
     })
 
-    const themeHierarchies = await prisma.themeHierarchy.findMany()
+    const themeHierarchies = await prisma.themeHierarchy.findMany({
+      where: {
+        parentTheme: { user_id: userId },
+      },
+    })
 
     const userBooks = await prisma.userBook.findMany({
       where: { user_id: userId },
@@ -383,11 +388,36 @@ export class GraphService {
     return result
   }
 
-  async getThemes() {
-    return prisma.theme.findMany({ orderBy: { name: 'asc' } })
+  async getThemes(userId?: number) {
+    return prisma.theme.findMany({
+      where: userId ? { user_id: userId } : undefined,
+      orderBy: { name: 'asc' },
+    })
   }
 
-  async createNode(name: string, color = '#E57B55', description = '') {
+  async createNode(
+    userIdOrName: number | string,
+    nameOrColor?: string,
+    colorOrDescription?: string,
+    descriptionParam?: string
+  ) {
+    let userId: number
+    let name: string
+    let color: string
+    let description: string
+
+    if (typeof userIdOrName === 'number') {
+      userId = userIdOrName
+      name = nameOrColor || ''
+      color = colorOrDescription || '#E57B55'
+      description = descriptionParam || ''
+    } else {
+      userId = 1
+      name = userIdOrName || ''
+      color = nameOrColor || '#E57B55'
+      description = colorOrDescription || ''
+    }
+
     const trimmed = (name || '').trim()
     if (!trimmed) {
       throw new Error('Nome do nó/tema é obrigatório')
@@ -397,8 +427,14 @@ export class GraphService {
     }
 
     const theme = await prisma.theme.upsert({
-      where: { name: trimmed },
+      where: {
+        user_id_name: {
+          user_id: userId,
+          name: trimmed,
+        },
+      },
       create: {
+        user_id: userId,
         name: trimmed,
         color: color || '#E57B55',
         description: description || '',
@@ -409,7 +445,7 @@ export class GraphService {
       },
     })
 
-    cacheManager.invalidateTag('graph')
+    cacheManager.invalidateTags([`user:${userId}:graph`, 'graph'])
 
     return {
       id: theme.id,
@@ -421,7 +457,32 @@ export class GraphService {
     }
   }
 
-  async updateNode(id: number, name?: string, color?: string, description?: string) {
+  async updateNode(
+    userIdOrId: number,
+    idOrName?: number | string,
+    nameOrColor?: string,
+    colorOrDesc?: string,
+    descriptionParam?: string
+  ) {
+    let userId: number | undefined
+    let id: number
+    let name: string | undefined
+    let color: string | undefined
+    let description: string | undefined
+
+    if (typeof idOrName === 'number') {
+      userId = userIdOrId
+      id = idOrName
+      name = nameOrColor
+      color = colorOrDesc
+      description = descriptionParam
+    } else {
+      id = userIdOrId
+      name = typeof idOrName === 'string' ? idOrName : undefined
+      color = nameOrColor
+      description = colorOrDesc
+    }
+
     if (name !== undefined) {
       const trimmed = name.trim()
       if (!trimmed) {
@@ -432,16 +493,29 @@ export class GraphService {
       }
     }
 
+    if (userId !== undefined) {
+      const existing = await prisma.theme.findFirst({
+        where: { id, user_id: userId },
+      })
+      if (!existing) {
+        throw new Error(`Tema não encontrado ou não pertence a este usuário: ${id}`)
+      }
+    }
+
     const theme = await prisma.theme.update({
       where: { id },
       data: {
-        ...(name ? { name: name.trim() } : {}),
-        ...(color ? { color } : {}),
+        ...(name !== undefined ? { name: name.trim() } : {}),
+        ...(color !== undefined ? { color } : {}),
         ...(description !== undefined ? { description } : {}),
       },
     })
 
-    cacheManager.invalidateTag('graph')
+    if (userId !== undefined) {
+      cacheManager.invalidateTags([`user:${userId}:graph`, 'graph'])
+    } else {
+      cacheManager.invalidateTag('graph')
+    }
 
     return {
       id: theme.id,
@@ -453,11 +527,39 @@ export class GraphService {
     }
   }
 
-  async deleteNode(id: number) {
+  async deleteNode(userIdOrId: number, maybeId?: number) {
+    let userId: number | undefined
+    let id: number
+
+    if (typeof maybeId === 'number') {
+      userId = userIdOrId
+      id = maybeId
+    } else {
+      id = userIdOrId
+    }
+
+    if (userId !== undefined) {
+      const existing = await prisma.theme.findFirst({
+        where: { id, user_id: userId },
+      })
+      if (!existing) {
+        throw new Error(`Tema não encontrado ou não pertence a este usuário: ${id}`)
+      }
+    }
+
+    await prisma.bookTheme.deleteMany({ where: { theme_id: id } })
+    await prisma.annotationTheme.deleteMany({ where: { theme_id: id } })
+    await prisma.themeHierarchy.deleteMany({
+      where: { OR: [{ parent_theme_id: id }, { child_theme_id: id }] },
+    })
     const result = await prisma.theme.delete({
       where: { id },
     })
-    cacheManager.invalidateTag('graph')
+    if (userId !== undefined) {
+      cacheManager.invalidateTags([`user:${userId}:graph`, 'graph'])
+    } else {
+      cacheManager.invalidateTag('graph')
+    }
     return result
   }
 

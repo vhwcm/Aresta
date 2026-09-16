@@ -2,6 +2,7 @@ import { ref, computed } from 'vue'
 import { useAuth } from '~/composables/useAuth'
 import { useReadingStreak } from '~/composables/useReadingStreak'
 import { flashcardRepo } from '~/adapters/database/repositories/FlashcardRepository'
+import { getApiBase } from '~/utils/apiBase'
 
 export interface FlashcardItem {
   id: number
@@ -38,22 +39,6 @@ export interface DailyDeckResponse {
   cards: FlashcardItem[]
 }
 
-const getApiBase = () => {
-  if (typeof useRuntimeConfig === 'function') {
-    try {
-      const config = useRuntimeConfig()
-      if (config?.public?.memoryApiUrl) {
-        return `${config.public.memoryApiUrl}/api`
-      }
-      if (config?.public?.apiUrl) {
-        return `${config.public.apiUrl}/api`
-      }
-    } catch {
-      // fallback
-    }
-  }
-  return 'http://localhost:3001/api'
-}
 
 // Shared module-level reactive state
 const dailyDeck = ref<FlashcardItem[]>([])
@@ -64,6 +49,17 @@ const error = ref<string | null>(null)
 const deckDate = ref('')
 const totalCards = ref(0)
 const reviewedCount = ref(0)
+
+export const resetFlashcardsMemory = () => {
+  dailyDeck.value = []
+  firstCard.value = null
+  isLoading.value = false
+  isSubmitting.value = false
+  error.value = null
+  deckDate.value = ''
+  totalCards.value = 0
+  reviewedCount.value = 0
+}
 
 export const useFlashcards = () => {
   const auth = useAuth()

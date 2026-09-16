@@ -1,5 +1,20 @@
 import { ref, computed } from 'vue'
 import { bookRepo } from '~/adapters/database/repositories/BookRepository'
+import { resetUserBooksMemory } from '~/composables/useUserBooks'
+import { resetGraphMemory } from '~/composables/useGraph'
+import { resetAnnotationsMemory } from '~/composables/useAnnotations'
+import { resetFlashcardsMemory } from '~/composables/useFlashcards'
+import { resetNotesMemory } from '~/composables/useNotes'
+import { clearAllLocalData } from '~/adapters/database/DatabaseManager'
+
+export const purgeClientSession = async () => {
+  resetUserBooksMemory()
+  resetGraphMemory()
+  resetAnnotationsMemory()
+  resetFlashcardsMemory()
+  resetNotesMemory()
+  await clearAllLocalData()
+}
 
 export interface AuthUser {
   id: number
@@ -15,18 +30,10 @@ export interface LoginResponse {
   user: AuthUser
 }
 
+import { getApiRoot } from '~/utils/apiBase'
+
 const getAuthApiUrl = () => {
-  if (typeof useRuntimeConfig === 'function') {
-    try {
-      const config = useRuntimeConfig()
-      if (config?.public?.authApiUrl) {
-        return config.public.authApiUrl
-      }
-    } catch {
-      // fallback gracioso se runtime config não estiver disponível
-    }
-  }
-  return 'http://localhost:3001'
+  return getApiRoot()
 }
 
 const COOKIE_OPTS = {
@@ -75,9 +82,7 @@ export const useAuth = () => {
         }
       })
 
-      try {
-        await bookRepo.clear()
-      } catch {}
+      await purgeClientSession()
       tokenCookie.value = response.token
       userCookie.value = response.user
       return { success: true, user: response.user, isNewUser: response.isNewUser ?? false }
@@ -90,6 +95,7 @@ export const useAuth = () => {
 
   const register = async (name: string, email: string, passwordStr: string) => {
     try {
+      await purgeClientSession()
       const authUrl = getAuthApiUrl()
       const response = await $fetch<LoginResponse>(`${authUrl}/api/auth/register`, {
         method: 'POST',
@@ -100,9 +106,6 @@ export const useAuth = () => {
         }
       })
 
-      try {
-        await bookRepo.clear()
-      } catch {}
       tokenCookie.value = response.token
       userCookie.value = response.user
       return { success: true, user: response.user, isNewUser: response.isNewUser ?? true }
@@ -117,9 +120,7 @@ export const useAuth = () => {
     tokenCookie.value = null
     userCookie.value = null
     clearAllAuthCookies()
-    try {
-      await bookRepo.clear()
-    } catch {}
+    await purgeClientSession()
     if (typeof navigateTo === 'function') {
       await navigateTo('/', { replace: true })
     }
@@ -136,9 +137,7 @@ export const useAuth = () => {
       tokenCookie.value = null
       userCookie.value = null
       clearAllAuthCookies()
-      try {
-        await bookRepo.clear()
-      } catch {}
+      await purgeClientSession()
       if (typeof navigateTo === 'function') {
         await navigateTo('/', { replace: true })
       }
@@ -215,6 +214,7 @@ export const useAuth = () => {
     updateProfile,
     isOnboardingCompleted,
     completeOnboarding,
-    fetchCurrentUser
+    fetchCurrentUser,
+    purgeClientSession
   }
 }

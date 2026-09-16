@@ -7,7 +7,7 @@ async function main() {
   await prisma.$executeRaw`CREATE EXTENSION IF NOT EXISTS vector`
 
   const passwordHash = await bcrypt.hash('admin123', 10)
-  await prisma.user.upsert({
+  const adminUser = await prisma.user.upsert({
     where: { email: 'admin@aresta.app' },
     update: {},
     create: {
@@ -35,9 +35,17 @@ async function main() {
   const defaultThemes = ['Philosophy', 'Science', 'Technology', 'Literature', 'History']
   for (const name of defaultThemes) {
     await prisma.theme.upsert({
-      where: { name },
+      where: {
+        user_id_name: {
+          user_id: adminUser.id,
+          name,
+        },
+      },
       update: {},
-      create: { name },
+      create: {
+        user_id: adminUser.id,
+        name,
+      },
     })
   }
 

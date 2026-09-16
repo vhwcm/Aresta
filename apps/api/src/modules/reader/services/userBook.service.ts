@@ -191,7 +191,7 @@ export class UserBookService {
 
     if (themeIds && themeIds.length > 0) {
       const validThemes = await prisma.theme.findMany({
-        where: { id: { in: themeIds.map(Number) } },
+        where: { id: { in: themeIds.map(Number) }, user_id: userId },
         select: { id: true },
       })
 
@@ -231,6 +231,13 @@ export class UserBookService {
 
     if (!userBook) {
       throw new Error('Livro não encontrado para o usuário')
+    }
+
+    const theme = await prisma.theme.findFirst({
+      where: { id: Number(themeId), user_id: userId },
+    })
+    if (!theme) {
+      throw new Error('Tema não encontrado ou não pertence a este usuário')
     }
 
     await prisma.bookTheme.upsert({
