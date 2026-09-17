@@ -56,28 +56,64 @@
     </div>
 
     <!-- Barra de Tags da Nota Ativa -->
-    <div class="px-6 py-2 border-b border-divider bg-bgSurface/40 flex items-center gap-2 flex-wrap text-xs">
-      <TagIcon class="w-3.5 h-3.5 text-accent" />
-      <span class="text-textSecondary text-[11px] font-medium">Tags:</span>
+    <div class="px-6 py-2 border-b border-divider bg-bgSurface/40 flex items-center justify-between gap-2 flex-wrap text-xs">
+      <div class="flex items-center gap-2 flex-wrap">
+        <TagIcon class="w-3.5 h-3.5 text-accent" />
+        <span class="text-textSecondary text-[11px] font-medium">Tags:</span>
 
-      <span
-        v-for="(tag, idx) in localNote.tags"
-        :key="tag"
-        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-accent/15 text-accent text-xs font-medium"
-      >
-        #{{ tag }}
-        <button @click="removeTag(idx)" class="hover:text-white cursor-pointer ml-0.5">✕</button>
-      </span>
+        <span
+          v-for="(tag, idx) in localNote.tags"
+          :key="tag"
+          class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-accent/15 text-accent text-xs font-medium"
+        >
+          #{{ tag }}
+          <button @click="removeTag(idx)" class="hover:text-white cursor-pointer ml-0.5">✕</button>
+        </span>
 
-      <div class="flex items-center gap-1">
-        <input
-          v-model="newTagInput"
-          type="text"
-          placeholder="+ Adicionar tag (Enter)"
-          class="bg-transparent border-none text-xs text-textPrimary placeholder:text-textSecondary/50 focus:outline-none min-w-[120px]"
-          @keydown.enter.prevent="addTag"
-          @keydown="handleTagKeyDown"
-        />
+        <div class="flex items-center gap-1">
+          <input
+            v-model="newTagInput"
+            type="text"
+            placeholder="+ Adicionar tag (Enter)"
+            class="bg-transparent border-none text-xs text-textPrimary placeholder:text-textSecondary/50 focus:outline-none min-w-[120px]"
+            @keydown.enter.prevent="addTag"
+            @keydown="handleTagKeyDown"
+          />
+        </div>
+      </div>
+
+      <!-- Indicador e Alternador para Notas HTML / Síntese IA -->
+      <div v-if="isHtmlNote" class="flex items-center gap-2">
+        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-400 font-semibold text-[11px] border border-amber-500/30">
+          <SparklesIcon class="w-3 h-3" />
+          Síntese de Desenho (HTML)
+        </span>
+
+        <div class="flex items-center gap-1 bg-bgElevated p-0.5 rounded-lg text-[11px] border border-divider">
+          <button
+            @click="htmlViewMode = 'preview'"
+            class="px-2 py-0.5 rounded transition-all cursor-pointer"
+            :class="htmlViewMode === 'preview' ? 'bg-primary text-white font-medium shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
+          >
+            Preview Vivo
+          </button>
+          <button
+            @click="htmlViewMode = 'code'"
+            class="px-2 py-0.5 rounded transition-all cursor-pointer"
+            :class="htmlViewMode === 'code' ? 'bg-primary text-white font-medium shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
+          >
+            Código HTML
+          </button>
+        </div>
+
+        <button
+          @click="copyHtmlContent"
+          class="text-[11px] px-2 py-1 rounded bg-bgElevated hover:bg-bgSurface text-textSecondary hover:text-textPrimary border border-divider transition-all flex items-center gap-1 cursor-pointer"
+          title="Copiar HTML"
+        >
+          <CopyIcon class="w-3 h-3" />
+          <span>{{ copiedHtml ? 'Copiado!' : 'Copiar' }}</span>
+        </button>
       </div>
     </div>
 
@@ -99,7 +135,26 @@
       </Transition>
 
       <div class="flex-1 bg-bgPanel/60 rounded-2xl border border-divider/60 shadow-inner overflow-hidden flex flex-col relative">
+        <!-- Visualização HTML quando o conteúdo for HTML / Síntese de Desenho -->
+        <template v-if="isHtmlNote">
+          <div
+            v-if="htmlViewMode === 'preview'"
+            class="flex-1 overflow-y-auto p-6 select-text custom-scrollbar prose dark:prose-invert max-w-none text-textPrimary leading-relaxed"
+          >
+            <div class="synthesized-html-container" v-html="localNote.content"></div>
+          </div>
+          <textarea
+            v-else
+            v-model="localNote.content"
+            class="w-full h-full p-4 font-mono text-xs bg-transparent text-textPrimary focus:outline-none resize-none select-text custom-scrollbar"
+            placeholder="Código HTML da anotação..."
+            @input="onInput"
+          ></textarea>
+        </template>
+
+        <!-- Editor Markdown Padrão -->
         <MilkdownEditor
+          v-else
           v-model="localNote.content"
           placeholder="Comece a escrever sua nota... Live Preview renderiza automaticamente."
           @update:model-value="onInput"
@@ -173,7 +228,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import {
   FolderIcon,
   TagIcon,
@@ -183,6 +238,7 @@ import {
   SparklesIcon,
   XIcon,
   CheckCircle2Icon,
+  Copy as CopyIcon,
 } from 'lucide-vue-next'
 import MilkdownEditor from '~/components/MilkdownEditor.vue'
 import ReaderAnnotationModal from '~/components/reader/ReaderAnnotationModal.vue'
@@ -315,6 +371,23 @@ const openCanvasPicker = () => {
     onInput()
   }
 }
+
+const isHtmlNote = computed(() => {
+  const c = localNote.value?.content || ''
+  return /<([a-z]+)[^>]*>[\s\S]*?<\/\1>/i.test(c) || c.includes('synthesized-html-container') || c.includes('aresta-drawing-synthesis')
+})
+
+const htmlViewMode = ref<'preview' | 'code'>('preview')
+const copiedHtml = ref(false)
+
+function copyHtmlContent() {
+  if (!localNote.value?.content) return
+  navigator.clipboard.writeText(localNote.value.content)
+  copiedHtml.value = true
+  setTimeout(() => {
+    copiedHtml.value = false
+  }, 2000)
+}
 </script>
 
 <style scoped>
@@ -324,5 +397,43 @@ const openCanvasPicker = () => {
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background-color: var(--divider, rgba(255, 255, 255, 0.1));
   border-radius: 4px;
+}
+
+:deep(.aresta-drawing-synthesis) {
+  font-family: inherit;
+}
+:deep(.aresta-drawing-synthesis h1) {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  color: var(--color-textPrimary, inherit);
+}
+:deep(.aresta-drawing-synthesis h2) {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  color: var(--color-textPrimary, inherit);
+}
+:deep(.aresta-drawing-synthesis table) {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  font-size: 0.875rem;
+}
+:deep(.aresta-drawing-synthesis th),
+:deep(.aresta-drawing-synthesis td) {
+  border: 1px solid rgba(125, 125, 125, 0.2);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+:deep(.aresta-drawing-synthesis th) {
+  background-color: rgba(125, 125, 125, 0.08);
+  font-weight: 600;
+}
+:deep(.aresta-drawing-synthesis ul),
+:deep(.aresta-drawing-synthesis ol) {
+  padding-left: 1.25rem;
+  margin: 0.75rem 0;
 }
 </style>

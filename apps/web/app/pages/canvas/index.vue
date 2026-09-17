@@ -433,6 +433,14 @@
                       </span>
 
                       <span
+                        v-if="isHtmlNote(item.content)"
+                        class="inline-flex items-center gap-1 text-[10px] font-semibold tracking-wide uppercase px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-400 border border-amber-500/25"
+                      >
+                        <SparklesIcon class="w-3 h-3 text-amber-400" />
+                        Síntese IA
+                      </span>
+
+                      <span
                         v-if="item.folder"
                         class="inline-flex items-center gap-1 text-[11px] font-medium text-textSecondary bg-bgSurface px-2 py-0.5 rounded-md border border-divider truncate max-w-[110px]"
                       >
@@ -667,7 +675,8 @@ import {
   FileTextIcon,
   Edit3Icon,
   NetworkIcon,
-  PenTool as PenToolIcon
+  PenTool as PenToolIcon,
+  Sparkles as SparklesIcon
 } from 'lucide-vue-next'
 import FolderTagSidebar, { type SidebarTreeItem } from '~/components/FolderTagSidebar.vue'
 import ArestaLogoGraph from '~/components/ArestaLogoGraph.vue'
@@ -816,7 +825,9 @@ const handleSelectGraphNode = async (node: any) => {
 
 // Sincroniza query params da rota
 const syncFromRoute = async () => {
+  let hasExplicitTab = false
   if (route?.query?.tab) {
+    hasExplicitTab = true
     const tabStr = String(route.query.tab).toLowerCase()
     if (tabStr === 'notes' || tabStr === 'note') activeTab.value = 'notes'
     else if (tabStr === 'canvases' || tabStr === 'canvas') activeTab.value = 'canvases'
@@ -837,7 +848,7 @@ const syncFromRoute = async () => {
       activeNote.value = note
       viewLayout.value = 'note-editor'
     } else {
-      if (route?.query?.view === 'grid') {
+      if (route?.query?.view === 'grid' || (!route?.query?.view && hasExplicitTab)) {
         viewLayout.value = 'grid'
       } else if (route?.query?.view === 'split' || route?.query?.view === 'note-editor') {
         viewLayout.value = 'note-editor'
@@ -846,7 +857,7 @@ const syncFromRoute = async () => {
       }
     }
   } else {
-    if (route?.query?.view === 'grid') {
+    if (route?.query?.view === 'grid' || (!route?.query?.view && hasExplicitTab)) {
       viewLayout.value = 'grid'
     } else if (route?.query?.view === 'split' || route?.query?.view === 'note-editor') {
       viewLayout.value = 'note-editor'
@@ -1366,12 +1377,21 @@ const handleDeleteNote = async (id: string) => {
   }
 }
 
+const isHtmlNote = (content?: string) => {
+  if (!content) return false
+  return /<([a-z]+)[^>]*>[\s\S]*?<\/\1>/i.test(content) || content.includes('synthesized-html-container') || content.includes('aresta-drawing-synthesis')
+}
+
 const cleanMarkdownPreview = (text?: string) => {
   if (!text) return ''
   return text
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+    .replace(/<[^>]+>/g, ' ')
     .replace(/^#+\s+/gm, '')
     .replace(/!\[\[.*?\]\]/g, '')
     .replace(/\[\[.*?\]\]/g, '')
+    .replace(/\s+/g, ' ')
     .trim()
 }
 

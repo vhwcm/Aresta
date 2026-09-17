@@ -6,6 +6,7 @@
 - [16/09/2026 11:00] [Fazendo] Implementar exemplos reais de leitura e grafo na home e bloquear acesso e criação anônima sem autenticação
 
 ## ✅ Concluído
+- [16/09/2026 23:25] [Concluído] Exibir notas geradas a partir de desenhos visualmente e conectá-las no grafo de conhecimento
 - [16/09/2026 23:01] [Concluído] Corrigir filtragem e contagem de temas na estante compatibilizando prefixos theme-, IDs numéricos e nomes de temas
 - [16/09/2026 22:49] [Concluído] Eliminar aviso NUXT_E4007 com NuxtLayout e blindar transform SVG do grafo contra coordenadas NaN
 - [16/09/2026 22:40] [Concluído] Remover chamada legada ao endpoint descontinuado /api/user-books (410 Gone) no upload de livros local-first

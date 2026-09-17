@@ -61,4 +61,38 @@ describe('buildLocalGraph', () => {
     expect(graph.nodes.map((node) => node.name)).toContain('Tema Disponível Para Conexão')
     expect(graph.nodes.map((node) => node.name)).toContain('Livro Teste')
   })
+
+  it('identifica notas HTML e conecta com o desenho de origem via aresta note-note', () => {
+    const graph = buildLocalGraph({
+      drawingNotes: [{
+        id: 'drawing-123',
+        title: 'Meu Desenho',
+        updated_at: '',
+        sync_status: 'synced',
+      }],
+      notes: [{
+        id: 'note-456',
+        title: 'Rascunho Inicial: Teste',
+        content: '<div class="synthesized-html-container"><h1>Teste</h1></div>',
+        links: [{ targetType: 'NOTE', targetId: 'drawing-123' }],
+        updated_at: '',
+        sync_status: 'synced',
+      }],
+    })
+
+    const htmlNode = graph.nodes.find((n) => n.id === 'note-note-456')
+    expect(htmlNode).toBeDefined()
+    expect(htmlNode?.isHtml).toBe(true)
+    expect(htmlNode?.color).toBe('#F59E0B')
+
+    const drawingNode = graph.nodes.find((n) => n.id === 'note-drawing-123')
+    expect(drawingNode).toBeDefined()
+    expect(drawingNode?.isDrawing).toBe(true)
+
+    const connection = graph.edges.find((e) => e.type === 'note-note' && (
+      (e.source === 'note-note-456' && e.target === 'note-drawing-123') ||
+      (e.source === 'note-drawing-123' && e.target === 'note-note-456')
+    ))
+    expect(connection).toBeDefined()
+  })
 })

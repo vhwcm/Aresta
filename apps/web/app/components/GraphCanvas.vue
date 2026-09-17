@@ -525,9 +525,18 @@ const getNodeRadius = (node: GraphNode) => {
   return Math.min(22 + count * 2, 38)
 }
 
-const getTruncatedTitle = (title?: string, max = 12) => {
+const getTruncatedTitle = (title?: string, max = 14) => {
   if (!title) return ''
-  return title.length > max ? `${title.slice(0, max - 2)}...` : title
+  const trimmed = title.trim()
+  if (trimmed.length <= max) return trimmed
+  if (trimmed.includes(': ')) {
+    const parts = trimmed.split(': ')
+    const subtitle = parts.slice(1).join(': ').trim()
+    if (subtitle.length > 0 && subtitle.length <= max) {
+      return subtitle
+    }
+  }
+  return `${trimmed.slice(0, max - 2)}...`
 }
 
 const initGraph = (animateTransition = true) => {
@@ -996,6 +1005,7 @@ const initGraph = (animateTransition = true) => {
 
   bookNodesSelection.each(function (d: any) {
     const nodeEl = d3.select(this)
+    nodeEl.append('title').text(d.fullTitle || d.title || d.name || '')
     const rawBookId = d.rawId || (typeof d.id === 'number' ? d.id : parseInt(String(d.id).replace('book-', ''), 10))
     const coverUrl = getCoverUrl(d.coverPath, rawBookId)
 
@@ -1066,8 +1076,9 @@ const initGraph = (animateTransition = true) => {
     .attr('stroke-width', 1.5)
     .attr('class', 'transition-all duration-300 shadow-md')
 
-  annotationNodesSelection.each(function () {
+  annotationNodesSelection.each(function (d: any) {
     const nodeEl = d3.select(this)
+    nodeEl.append('title').text(d.fullTitle || d.title || d.name || '')
     const iconG = nodeEl
       .append('g')
       .attr('class', 'annotation-icon')
@@ -1101,37 +1112,56 @@ const initGraph = (animateTransition = true) => {
   noteNodesSelection
     .append('circle')
     .attr('r', 16)
-    .attr('fill', isSepiaMode.value ? '#EEF2FF' : (isLightMode.value ? '#F5F3FF' : '#1E1E38'))
-    .attr('stroke', '#6366F1')
+    .attr('fill', (d: any) => {
+      if (d.isDrawing) return isSepiaMode.value ? '#F3E8FF' : (isLightMode.value ? '#FAF5FF' : '#2A1B3D')
+      if (d.isHtml) return isSepiaMode.value ? '#FEF3C7' : (isLightMode.value ? '#FFFBEB' : '#2D2312')
+      return isSepiaMode.value ? '#EEF2FF' : (isLightMode.value ? '#F5F3FF' : '#1E1E38')
+    })
+    .attr('stroke', (d: any) => {
+      if (d.isDrawing) return '#8B5CF6'
+      if (d.isHtml) return '#F59E0B'
+      return '#6366F1'
+    })
     .attr('stroke-width', 1.5)
     .attr('class', 'transition-all duration-300 shadow-md')
 
-  noteNodesSelection.each(function () {
+  noteNodesSelection.each(function (d: any) {
     const nodeEl = d3.select(this)
+    nodeEl.append('title').text(d.fullTitle || d.title || d.name || '')
     const iconG = nodeEl
       .append('g')
       .attr('class', 'note-icon')
       .attr('pointer-events', 'none')
       .attr('transform', 'translate(-6, -6) scale(0.5)')
       .attr('fill', 'none')
-      .attr('stroke', '#6366F1')
+      .attr('stroke', d.isDrawing ? '#8B5CF6' : (d.isHtml ? '#F59E0B' : '#6366F1'))
       .attr('stroke-width', '2')
       .attr('stroke-linecap', 'round')
       .attr('stroke-linejoin', 'round')
 
-    iconG.html(`<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>`)
+    if (d.isDrawing) {
+      iconG.html(`<path d="m18 2 4 4-12 12H6v-4L18 2Z"/><path d="m14 6 4 4"/>`)
+    } else if (d.isHtml) {
+      iconG.html(`<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>`)
+    } else {
+      iconG.html(`<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>`)
+    }
   })
 
   noteNodesSelection
     .append('text')
     .attr('text-anchor', 'middle')
     .attr('dy', 28)
-    .attr('fill', isSepiaMode.value ? '#3730A3' : (isLightMode.value ? '#4F46E5' : '#818CF8'))
+    .attr('fill', (d: any) => {
+      if (d.isDrawing) return isSepiaMode.value ? '#6B21A8' : (isLightMode.value ? '#7E22CE' : '#C084FC')
+      if (d.isHtml) return isSepiaMode.value ? '#854D0E' : (isLightMode.value ? '#B45309' : '#FBBF24')
+      return isSepiaMode.value ? '#3730A3' : (isLightMode.value ? '#4F46E5' : '#818CF8')
+    })
     .attr('font-size', '10px')
     .attr('font-weight', '500')
     .attr('font-family', 'system-ui, -apple-system, sans-serif')
     .attr('pointer-events', 'none')
-    .text((d: any) => getTruncatedTitle(d.title || d.name, 12))
+    .text((d: any) => getTruncatedTitle(d.title || d.name, 14))
 
   // ----------------------------------------------------
   // D. NÓS DE QUADROS (TIPO 'canvas')
@@ -1151,8 +1181,9 @@ const initGraph = (animateTransition = true) => {
     .attr('stroke-width', 1.5)
     .attr('class', 'transition-all duration-300 shadow-md')
 
-  canvasNodesSelection.each(function () {
+  canvasNodesSelection.each(function (d: any) {
     const nodeEl = d3.select(this)
+    nodeEl.append('title').text(d.fullTitle || d.title || d.name || '')
     const iconG = nodeEl
       .append('g')
       .attr('class', 'canvas-icon')
@@ -1196,8 +1227,9 @@ const initGraph = (animateTransition = true) => {
     .attr('stroke-width', 1.8)
     .attr('class', 'transition-all duration-300 shadow-md')
 
-  folderNodesSelection.each(function () {
+  folderNodesSelection.each(function (d: any) {
     const nodeEl = d3.select(this)
+    nodeEl.append('title').text(d.fullTitle || d.title || d.name || '')
     const iconG = nodeEl
       .append('g')
       .attr('class', 'folder-icon')
@@ -1257,6 +1289,9 @@ const initGraph = (animateTransition = true) => {
 
   themeAndRootNodesSelection.each(function (d: any) {
     const nodeEl = d3.select(this)
+    if (!d.isRoot) {
+      nodeEl.append('title').text(d.fullTitle || d.title || d.name || '')
+    }
     const iconMarkup = getThemeIconSvg(d.name, (d as any).category, d.isRoot)
     const iconColor = getThemeNodeIconColor(d.color, d.isRoot)
     const scale = d.isRoot ? 0.85 : 0.66

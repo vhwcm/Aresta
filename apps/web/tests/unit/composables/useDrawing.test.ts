@@ -185,4 +185,20 @@ describe('useDrawing composable (Samsung Notes Style Paged Drawing)', () => {
     expect(drawing.currentDrawing.value?.pages[0]?.nodes).toHaveLength(1);
     expect(drawing.currentDrawing.value?.pages[0]?.nodes?.[0]?.id).toBe('node-shape-2');
   });
+
+  it('convertToNote vincula a nota ao desenho de origem no grafo quando não excluído', async () => {
+    const drawing = useDrawing();
+    const createdNote = await drawing.convertToNote({
+      htmlContent: '<div class="aresta-drawing-synthesis"><h1>Título</h1></div>',
+      title: 'Nota Sintetizada',
+      deleteOriginal: false,
+    });
+
+    expect(createdNote).toBeDefined();
+    expect(createdNote.links).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ targetType: 'NOTE', targetId: 'doc-test-1' })
+      ])
+    );
+  });
 });

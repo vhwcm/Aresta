@@ -221,4 +221,33 @@ describe('NoteEditorPane Component', () => {
 
     window.getSelection = originalGetSelection;
   });
+
+  it('renderiza preview vivo de HTML sintetizado quando a nota contém HTML', () => {
+    const htmlNote: NoteItem = {
+      id: 'note-html-1',
+      userId: 1,
+      title: 'Nota Sintetizada',
+      content: '<div class="synthesized-html-container"><h1>Título Gerado</h1><p>Conteúdo Semântico</p></div>',
+      folder: 'Geral',
+      tags: ['sintese'],
+      updatedAt: '2026-09-04T10:00:00Z',
+    };
+
+    const wrapper = mount(NoteEditorPane, {
+      props: {
+        note: htmlNote,
+        folders: ['Geral'],
+        canvases: [],
+      },
+      global: {
+        stubs: {
+          MilkdownEditor: true,
+        },
+      },
+    });
+
+    expect(wrapper.text()).toContain('Síntese de Desenho (HTML)');
+    expect(wrapper.find('.synthesized-html-container').exists()).toBe(true);
+    expect(wrapper.html()).toContain('Título Gerado');
+  });
 });

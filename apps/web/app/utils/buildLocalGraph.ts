@@ -166,16 +166,18 @@ export const buildLocalGraph = (input: BuildLocalGraphInput = {}): GraphData => 
 
   for (const note of notes) {
     const nodeId = `note-${note.id}`
+    const isHtml = /<([a-z]+)[^>]*>[\s\S]*?<\/\1>/i.test(note.content || '') || (note.content || '').includes('synthesized-html-container') || (note.content || '').includes('aresta-drawing-synthesis')
     nodes.push({
       id: nodeId,
       rawId: note.id,
       type: 'note',
+      isHtml,
       name: truncateTitle(note.title || 'Nota sem título'),
       title: note.title || 'Nota sem título',
       description: note.content ? note.content.slice(0, 140) : undefined,
       folder: note.folder || null,
       tags: note.tags || [],
-      color: '#6366F1',
+      color: isHtml ? '#F59E0B' : '#6366F1',
       createdAt: note.createdAt || note.created_at,
       updatedAt: note.updated_at,
     })

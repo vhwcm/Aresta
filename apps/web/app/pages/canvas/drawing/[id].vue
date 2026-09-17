@@ -414,7 +414,7 @@ async function handleTriggerAiSynthesis() {
 // Salva o HTML gerado como Nota tradicional e opcionalmente exclui o desenho
 async function handleSaveAsNote(payload: { title: string; html: string; deleteOriginal: boolean }) {
   try {
-    await convertToNote({
+    const created = await convertToNote({
       htmlContent: payload.html,
       title: payload.title,
       deleteOriginal: payload.deleteOriginal,
@@ -422,8 +422,11 @@ async function handleSaveAsNote(payload: { title: string; html: string; deleteOr
     });
 
     showSynthesisModal.value = false;
-    alert('Nota criada com sucesso a partir do desenho!');
-    router.push('/canvas?tab=notes');
+    if (created?.id) {
+      await router.push(`/canvas?id=${encodeURIComponent(created.id)}&view=note-editor`);
+    } else {
+      await router.push('/canvas?tab=notes&view=grid');
+    }
   } catch (err: any) {
     alert(err.message || 'Erro ao salvar como nota.');
   }

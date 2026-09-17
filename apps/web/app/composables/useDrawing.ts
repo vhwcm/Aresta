@@ -495,6 +495,7 @@ export function useDrawing() {
       content: payload.htmlContent,
       folder: payload.folder || currentDrawing.value.folder,
       tags: currentDrawing.value.tags,
+      links: payload.deleteOriginal ? [] : [{ targetType: 'NOTE', targetId: drawingId }],
     });
 
     if (payload.deleteOriginal) {
