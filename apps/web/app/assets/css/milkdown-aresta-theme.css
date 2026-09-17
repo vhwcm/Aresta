@@ -29,6 +29,11 @@
   line-height: 1.7;
   color: var(--text-primary, #f2f2f2);
   cursor: text;
+  white-space: pre-wrap;
+}
+
+.ProseMirror {
+  white-space: pre-wrap;
 }
 
 /* Headings */

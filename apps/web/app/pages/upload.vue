@@ -124,10 +124,10 @@
               v-for="theme in availableThemes"
               :key="theme.id"
               type="button"
-              @click="toggleTheme(theme.id)"
-              :data-testid="`theme-chip-${theme.id}`"
-              class="px-2.5 py-1 rounded-xl text-xs font-technical transition-all flex items-center gap-1.5 border shrink-0"
-              :style="selectedThemeIds.includes(Number(theme.id)) ? {
+              @click="toggleTheme(theme)"
+              :data-testid="`theme-chip-${theme.rawId || theme.id}`"
+              class="px-2.5 py-1 rounded-xl text-xs font-technical transition-all flex items-center gap-1.5 border shrink-0 cursor-pointer"
+              :style="isThemeSelected(theme) ? {
                 backgroundColor: (theme.color || '#E57B55'),
                 borderColor: (theme.color || '#E57B55'),
                 color: '#FFFFFF',
@@ -141,7 +141,7 @@
               <span class="w-2 h-2 rounded-full shrink-0" :style="{ backgroundColor: theme.color || '#E57B55' }"></span>
               <span class="font-medium">{{ theme.name }}</span>
               <CheckIcon
-                v-if="selectedThemeIds.includes(Number(theme.id))"
+                v-if="isThemeSelected(theme)"
                 class="w-3 h-3 text-white shrink-0 ml-0.5"
               />
             </button>
@@ -286,6 +286,24 @@ const newThemeColor = ref('#E57B55')
 const isCreatingTheme = ref(false)
 const createThemeError = ref<string | null>(null)
 
+function getThemeNumericId(themeOrId: any): number {
+  if (typeof themeOrId === 'object' && themeOrId !== null) {
+    if (themeOrId.rawId !== undefined && !isNaN(Number(themeOrId.rawId))) {
+      return Number(themeOrId.rawId)
+    }
+    return getThemeNumericId(themeOrId.id)
+  }
+  if (typeof themeOrId === 'number' && !isNaN(themeOrId)) return themeOrId
+  const raw = String(themeOrId || '').replace(/^theme-/, '')
+  const parsed = Number(raw)
+  return isNaN(parsed) ? 0 : parsed
+}
+
+function isThemeSelected(themeOrId: any): boolean {
+  const id = getThemeNumericId(themeOrId)
+  return id > 0 && selectedThemeIds.value.includes(id)
+}
+
 const availableThemes = computed(() => {
   const nodes = (graphData.value.nodes || []).filter((node: any) => {
     if (node.type && node.type !== 'theme') return false
@@ -303,21 +321,27 @@ const availableThemes = computed(() => {
   })
   const list: any[] = [...nodes]
   for (const ct of createdThemes.value) {
-    if (!list.some((n: any) => String(n.id) === String(ct.id))) {
+    if (!list.some((n: any) => getThemeNumericId(n) === getThemeNumericId(ct))) {
       list.push(ct)
     }
   }
   return list
 })
 
-function toggleTheme(id: number | string) {
-  const numId = Number(id)
-  if (isNaN(numId)) return
+const selectedThemesMap = ref<Map<number, { id: number; name: string; color?: string | null }>>(new Map())
+
+function toggleTheme(themeOrId: any) {
+  const numId = getThemeNumericId(themeOrId)
+  if (!numId) return
   const idx = selectedThemeIds.value.indexOf(numId)
   if (idx > -1) {
     selectedThemeIds.value.splice(idx, 1)
+    selectedThemesMap.value.delete(numId)
   } else {
     selectedThemeIds.value.push(numId)
+    const name = (typeof themeOrId === 'object' && themeOrId?.name) ? themeOrId.name : `Tema ${numId}`
+    const color = (typeof themeOrId === 'object' && themeOrId?.color) ? themeOrId.color : null
+    selectedThemesMap.value.set(numId, { id: numId, name, color })
   }
 }
 
@@ -333,24 +357,26 @@ async function handleCreateThemeInline() {
   try {
     const created = await createNode(name, newThemeColor.value)
     if (created && (created.rawId || created.id)) {
-      const rawThemeId = created.rawId ?? (typeof created.id === 'string' ? Number(created.id.replace(/^theme-/, '')) : Number(created.id))
-      const numId = isNaN(rawThemeId) ? Date.now() : rawThemeId
+      const numId = getThemeNumericId(created)
+      const validId = numId || Date.now()
       const themeObj = {
-        id: numId,
+        id: validId,
+        rawId: validId,
         name: created.name || name,
         color: created.color || newThemeColor.value,
       }
       createdThemes.value.push(themeObj)
-      if (!isNaN(numId) && !selectedThemeIds.value.includes(numId)) {
-        selectedThemeIds.value.push(numId)
+      if (validId && !selectedThemeIds.value.includes(validId)) {
+        selectedThemeIds.value.push(validId)
+        selectedThemesMap.value.set(validId, { id: validId, name: themeObj.name, color: themeObj.color })
       }
-      if (!graphData.value.nodes.some((n: any) => Number(n.id) === numId)) {
+      if (!graphData.value.nodes.some((n: any) => getThemeNumericId(n) === validId)) {
         graphData.value = {
           nodes: [
             ...(graphData.value.nodes || []),
             {
-              id: numId,
-              rawId: numId,
+              id: `theme-${validId}`,
+              rawId: validId,
               name: created.name || name,
               color: created.color || newThemeColor.value,
               type: 'theme',
@@ -388,14 +414,16 @@ async function onFileValidated({ file, type }: { file: File; type: SupportedFile
     const allKnownThemes = [...availableThemes.value, ...createdThemes.value]
     for (const id of selectedThemeIds.value) {
       const found = allKnownThemes.find(
-        (t: any) => Number(t.id) === Number(id) || String(t.id) === String(id)
+        (t: any) => getThemeNumericId(t) === id
       )
       if (found) {
         selectedThemes.push({
-          id: Number(found.id),
+          id,
           name: found.name,
           color: found.color || null,
         })
+      } else if (selectedThemesMap.value.has(id)) {
+        selectedThemes.push(selectedThemesMap.value.get(id)!)
       }
     }
 

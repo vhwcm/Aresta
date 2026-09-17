@@ -636,7 +636,8 @@ import {
   CheckIcon,
   XIcon,
   TagIcon,
-  FlameIcon
+  FlameIcon,
+  AlertCircleIcon
 } from 'lucide-vue-next'
 import { useReadingStreak } from '~/composables/useReadingStreak'
 import { useFlashcards, type FlashcardItem } from '~/composables/useFlashcards'

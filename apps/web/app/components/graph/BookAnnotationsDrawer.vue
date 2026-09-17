@@ -225,6 +225,7 @@ import {
 import type { GraphNode, AnnotationThemeItem, BookThemeItem } from '~/interfaces/graph'
 import { useGraph } from '~/composables/useGraph'
 import { annotationRepo } from '~/adapters/database/repositories/AnnotationRepository'
+import { bookRepo } from '~/adapters/database/repositories/BookRepository'
 import { getCoverUrl as resolveCoverUrl } from '~/utils/cover'
 import { useAuth } from '~/composables/useAuth'
 
@@ -359,14 +360,20 @@ const loadBookData = async () => {
 
     // 3. Buscar os temas que pertencem a este livro
     try {
-      const headers: Record<string, string> = {}
-      const token = auth.token.value || (typeof useCookie === 'function' ? useCookie<string | null>('aresta_token').value : null)
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`
+      const localBook = await bookRepo.getById(bookId)
+      if (localBook && localBook.themes && localBook.themes.length > 0) {
+        availableThemes.value = localBook.themes
+        selectedThemeIds.value = availableThemes.value.map((t: any) => Number(t.id))
+      } else {
+        const headers: Record<string, string> = {}
+        const token = auth.token.value || (typeof useCookie === 'function' ? useCookie<string | null>('aresta_token').value : null)
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`
+        }
+        const res = await $fetch<any>(`${getApiBase()}/books/${bookId}`, { headers })
+        availableThemes.value = res.themes || []
+        selectedThemeIds.value = availableThemes.value.map((t: any) => Number(t.id))
       }
-      const res = await $fetch<any>(`${getApiBase()}/api/books/${bookId}`, { headers })
-      availableThemes.value = res.themes || []
-      selectedThemeIds.value = availableThemes.value.map((t: any) => t.id)
     } catch {
       availableThemes.value = []
     }

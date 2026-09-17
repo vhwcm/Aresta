@@ -177,6 +177,60 @@ describe('Upload Page', () => {
     )
   })
 
+  it('permite selecionar tema existente com id formatado pelo grafo (ex: theme-1789607975103)', async () => {
+    const { useGraph } = await import('../../../app/composables/useGraph')
+    const { graphData } = useGraph()
+    graphData.value = {
+      nodes: [
+        { id: 'theme-1789607975103', rawId: 1789607975103, name: 'Programação', color: '#E57B55', type: 'theme' },
+      ],
+      edges: [],
+    }
+
+    const fakeFile = new File([new Uint8Array([1, 2, 3])], 'clean-code.epub', { type: 'application/epub+zip' })
+
+    const wrapper = mount(UploadPage, {
+      global: {
+        stubs: {
+          NuxtLink: true,
+          ReaderUploadDropZone: {
+            name: 'ReaderUploadDropZone',
+            template: '<div id="drop-zone-area"></div>'
+          }
+        }
+      }
+    })
+
+    const themeChip = wrapper.find('[data-testid="theme-chip-1789607975103"]')
+    expect(themeChip.exists()).toBe(true)
+    expect(themeChip.text()).toContain('Programação')
+
+    // Clica para selecionar
+    await themeChip.trigger('click')
+    await flushPromises()
+
+    // O chip deve ter estado visual selecionado
+    expect(themeChip.attributes('style')).toContain('#FFFFFF')
+
+    // Dispara validação do arquivo
+    const dropzone = wrapper.findComponent('#drop-zone-area')
+    ;(dropzone as any).vm.$emit('file-validated', { file: fakeFile, type: 'epub' })
+
+    await new Promise((r) => setTimeout(r, 100))
+
+    const store = useReaderStore()
+    expect(store.hasDocument).toBe(true)
+
+    const { bookRepo } = await import('../../../app/adapters/database/repositories/BookRepository')
+    const savedBook = await bookRepo.getById(store.bookId!)
+    expect(savedBook).toBeDefined()
+    expect(savedBook?.themes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 1789607975103, name: 'Programação' })
+      ])
+    )
+  })
+
   it('permite criar novo tema inline e vinculá-lo ao livro no upload', async () => {
     const fakeFile = new File([new Uint8Array([1, 2, 3])], 'novo-assunto.epub', { type: 'application/epub+zip' })
 
