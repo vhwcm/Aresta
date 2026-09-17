@@ -57,6 +57,7 @@ describe('Canvas Index Page Header (Mobile single line & expandable search)', ()
     CanvasActionModals: true,
     NoteEditorPane: true,
     GraphCanvas: true,
+    AppKnowledgeGraph: true,
     SearchIcon: true,
     PlusIcon: true,
     UploadCloudIcon: true,

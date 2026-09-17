@@ -1,9 +1,9 @@
 export interface BookThemeItem {
   id: number
   name: string
-  color?: string
-  description?: string
-  emoji?: string
+  color?: string | null
+  description?: string | null
+  emoji?: string | null
 }
 
 export interface BookItem {
@@ -39,6 +39,7 @@ export interface AnnotationThemeItem {
   cfi?: string | null
   selectedText?: string | null
   note?: string | null
+  color?: string | null
   chapterTitle?: string | null
   progress?: number | null
   themes?: BookThemeItem[]

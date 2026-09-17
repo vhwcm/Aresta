@@ -98,7 +98,7 @@
               </div>
             </div>
 
-            <!-- Botão de Leitura / Ação: abre gaveta de anotações do livro com opção de leitura -->
+            <!-- Botão de Leitura / Ação -->
             <button
               @click.stop="handleSelectBook(book)"
               class="p-2.5 rounded-xl bg-accent/10 border border-accent/30 text-accent hover:bg-accent hover:text-white transition-all shrink-0 ml-2 cursor-pointer"
@@ -118,13 +118,6 @@
             <p class="text-sm font-semibold text-textPrimary">Nenhum livro neste tema</p>
             <p class="text-xs text-textSecondary mt-1">Este mapa mental ainda não possui livros vinculados.</p>
           </div>
-          <NuxtLink
-            to="/canvas?tab=notes"
-            class="text-xs sm:text-sm text-accent font-semibold hover:underline inline-flex items-center gap-1"
-          >
-            <span>Gerenciar Conexões em Mapa Mental</span>
-            <ExternalLinkIcon class="w-3.5 h-3.5" />
-          </NuxtLink>
         </div>
       </div>
 
@@ -156,7 +149,7 @@
       @saved="handleNoteSaved"
     />
 
-    <!-- Modais para Criação e Conexão de Nós diretamente no sidebar -->
+    <!-- Modais para Criação e Conexão de Nós -->
     <CreateNodeModal
       :is-open="isCreateModalOpen"
       @close="isCreateModalOpen = false"
@@ -174,7 +167,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { ArrowLeftIcon, BookIcon, BookOpenIcon, ExternalLinkIcon } from 'lucide-vue-next'
+import { ArrowLeftIcon, BookIcon, BookOpenIcon } from 'lucide-vue-next'
 import type { GraphNode, UserBookItem } from '~/interfaces/graph'
 import { useGraph } from '~/composables/useGraph'
 import { useUserBooks } from '~/composables/useUserBooks'
@@ -339,7 +332,7 @@ const handleConnectNodesPayload = async (payload: any) => {
       }
     }
   } catch (err) {
-    console.warn('[SidebarGraph] Falha ao persistir conexão no backend:', err)
+    console.warn('[AppKnowledgeGraph] Falha ao persistir conexão no backend:', err)
   }
 }
 

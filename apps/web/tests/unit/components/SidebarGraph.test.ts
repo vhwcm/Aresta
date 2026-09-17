@@ -178,4 +178,45 @@ describe('SidebarGraph Component', () => {
     // Abre a gaveta de anotações do livro
     expect(wrapper.find('[data-testid="book-drawer"]').exists()).toBe(true)
   })
+
+  it('ao clicar em um nó do tipo nota no grafo, abre a gaveta NoteDetailDrawer no local ao invés de redirecionar para /canvas', async () => {
+    const wrapper = mount(SidebarGraph, {
+      global: {
+        stubs: {
+          GraphCanvas: {
+            template: '<div data-testid="graph-canvas"><button data-testid="click-note" @click="$emit(\'selectNode\', noteNode)">Nota</button></div>',
+            data() {
+              return {
+                noteNode: {
+                  id: 'note-42',
+                  rawId: '42',
+                  type: 'note',
+                  name: 'Minhas Anotações de Platão',
+                  title: 'Minhas Anotações de Platão',
+                },
+              }
+            },
+          },
+          BookAnnotationsDrawer: true,
+          NoteDetailDrawer: {
+            props: ['isOpen', 'node'],
+            template: '<div v-if="isOpen" data-testid="note-drawer"><h2>{{ node?.title || node?.name }}</h2></div>',
+          },
+          CreateNodeModal: true,
+          ConnectNodesModal: true,
+          NuxtLink: true,
+        },
+      },
+    })
+
+    expect(wrapper.find('[data-testid="note-drawer"]').exists()).toBe(false)
+
+    // Clica no nó de nota
+    await wrapper.find('[data-testid="click-note"]').trigger('click')
+
+    // Deve abrir a gaveta de nota
+    const noteDrawer = wrapper.find('[data-testid="note-drawer"]')
+    expect(noteDrawer.exists()).toBe(true)
+    expect(noteDrawer.text()).toContain('Minhas Anotações de Platão')
+  })
 })

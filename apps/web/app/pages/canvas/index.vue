@@ -263,16 +263,12 @@
         </button>
       </div>
 
-      <!-- CORPO PRINCIPAL: MODO 1 - GRAFO DE CONHECIMENTO NO CENTRO -->
+      <!-- CORPO PRINCIPAL: MODO 1 - GRAFO DE CONHECIMENTO NO CENTRO (UNIFICADO) -->
       <div v-if="viewLayout === 'graph'" class="flex-1 relative overflow-hidden">
-        <GraphCanvas
-          :nodes="graphData.nodes || []"
-          :edges="graphData.edges || []"
+        <AppKnowledgeGraph
+          :is-compact="false"
           :search-query="searchQuery"
           :show-controls="false"
-          @select-node="handleSelectGraphNode"
-          @open-create-node="newCanvasModalOpen = true"
-          @connect-nodes="handleConnectNodesPayload"
         />
       </div>
 
@@ -670,7 +666,7 @@ import FolderTagSidebar, { type SidebarTreeItem } from '~/components/FolderTagSi
 import ArestaLogoGraph from '~/components/ArestaLogoGraph.vue'
 import CanvasActionModals from '~/components/canvas/CanvasActionModals.vue'
 import NoteEditorPane from '~/components/notes/NoteEditorPane.vue'
-import GraphCanvas from '~/components/GraphCanvas.vue'
+import AppKnowledgeGraph from '~/components/graph/AppKnowledgeGraph.vue'
 import { useCanvas } from '~/composables/useCanvas'
 import { useNotes } from '~/composables/useNotes'
 import { useDrawing } from '~/composables/useDrawing'
@@ -828,6 +824,16 @@ const syncFromRoute = () => {
   } else if (route?.query?.view === 'split' || route?.query?.view === 'note-editor') {
     viewLayout.value = 'note-editor'
   }
+
+  const noteParam = (route?.query?.note || route?.query?.id) as string | undefined
+  if (noteParam) {
+    loadNote(noteParam).then((note) => {
+      if (note) {
+        activeNote.value = note
+        viewLayout.value = 'note-editor'
+      }
+    })
+  }
 }
 
 watch(() => route.query, syncFromRoute, { deep: true })
@@ -852,8 +858,9 @@ onMounted(async () => {
     ])
 
     // Se houver id de nota na rota, abre direto no editor
-    if (route.query.id && typeof route.query.id === 'string') {
-      const note = await loadNote(route.query.id)
+    const targetNoteId = (route.query.id || route.query.note) as string | undefined
+    if (targetNoteId && typeof targetNoteId === 'string') {
+      const note = await loadNote(targetNoteId)
       if (note) {
         activeNote.value = note
         viewLayout.value = 'note-editor'
