@@ -29,9 +29,9 @@
             <button
               v-for="theme in availableThemes"
               :key="theme.id"
-              @click="selectedThemeId = selectedThemeId === theme.id ? null : theme.id"
+              @click="toggleThemeFilter(theme)"
               class="px-2.5 py-1 rounded-xl text-xs font-technical transition-all flex items-center gap-1.5 border shrink-0"
-              :style="selectedThemeId === theme.id ? {
+              :style="isThemeSelected(theme) ? {
                 backgroundColor: (theme.color || '#E57B55'),
                 borderColor: (theme.color || '#E57B55'),
                 color: '#FFFFFF',
@@ -44,7 +44,7 @@
             >
               <span class="w-2 h-2 rounded-full shrink-0" :style="{ backgroundColor: theme.color || '#E57B55' }"></span>
               <span class="font-medium">{{ theme.name }}</span>
-              <span class="text-[10px] opacity-70">({{ countByTheme(theme.id) }})</span>
+              <span class="text-[10px] opacity-70">({{ countByTheme(theme) }})</span>
             </button>
           </div>
 
@@ -64,9 +64,9 @@
               <button
                 v-for="theme in availableThemes"
                 :key="theme.id"
-                @click="selectedThemeId = selectedThemeId === theme.id ? null : theme.id"
+                @click="toggleThemeFilter(theme)"
                 class="px-2.5 py-1 rounded-xl text-xs font-technical transition-all flex items-center gap-1.5 border shrink-0"
-                :style="selectedThemeId === theme.id ? {
+                :style="isThemeSelected(theme) ? {
                   backgroundColor: (theme.color || '#E57B55'),
                   borderColor: (theme.color || '#E57B55'),
                   color: '#FFFFFF',
@@ -79,7 +79,7 @@
               >
                 <span class="w-2 h-2 rounded-full shrink-0" :style="{ backgroundColor: theme.color || '#E57B55' }"></span>
                 <span class="font-medium">{{ theme.name }}</span>
-                <span class="text-[10px] opacity-70">({{ countByTheme(theme.id) }})</span>
+                <span class="text-[10px] opacity-70">({{ countByTheme(theme) }})</span>
               </button>
             </template>
 
@@ -189,9 +189,9 @@
           <button
             v-for="theme in availableThemes"
             :key="theme.id"
-            @click="selectedThemeId = selectedThemeId === theme.id ? null : theme.id; isMobileThemeListOpen = false"
+            @click="toggleThemeFilter(theme); isMobileThemeListOpen = false"
             class="px-2.5 py-1 rounded-xl text-xs font-technical transition-all flex items-center gap-1.5 border shrink-0"
-            :style="selectedThemeId === theme.id ? {
+            :style="isThemeSelected(theme) ? {
               backgroundColor: (theme.color || '#E57B55'),
               borderColor: (theme.color || '#E57B55'),
               color: '#FFFFFF',
@@ -204,7 +204,7 @@
           >
             <span class="w-2 h-2 rounded-full shrink-0" :style="{ backgroundColor: theme.color || '#E57B55' }"></span>
             <span class="font-medium">{{ theme.name }}</span>
-            <span class="text-[10px] opacity-70">({{ countByTheme(theme.id) }})</span>
+            <span class="text-[10px] opacity-70">({{ countByTheme(theme) }})</span>
           </button>
         </div>
       </div>
@@ -262,12 +262,13 @@
                 <span
                   v-for="theme in (item.themes || [])"
                   :key="theme.id"
-                  @click.stop="selectedThemeId = selectedThemeId === theme.id ? null : theme.id"
+                  @click.stop="toggleThemeFilter(theme)"
                   class="cursor-pointer text-[10px] font-technical uppercase font-bold px-2 py-0.5 rounded-md flex items-center gap-1.5 border transition-all hover:scale-105 shrink-0"
                   :style="{
-                    borderColor: (theme.color || '#E57B55') + '60',
-                    backgroundColor: (theme.color || '#E57B55') + '18',
-                    color: theme.color || '#E57B55'
+                    borderColor: (theme.color || '#E57B55') + (isThemeSelected(theme) ? 'CC' : '60'),
+                    backgroundColor: (theme.color || '#E57B55') + (isThemeSelected(theme) ? '35' : '18'),
+                    color: theme.color || '#E57B55',
+                    boxShadow: isThemeSelected(theme) ? '0 0 8px ' + (theme.color || '#E57B55') + '40' : 'none'
                   }"
                   :title="`Filtrar estante por '${theme.name}'`"
                 >
@@ -377,9 +378,9 @@
             <div
               v-for="theme in availableThemes"
               :key="theme.id"
-              @click="toggleModalTheme(theme.id)"
+              @click="toggleModalTheme(theme)"
               class="flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all duration-200"
-              :class="selectedThemeIdsForModal.includes(Number(theme.id))
+              :class="isModalThemeSelected(theme)
                 ? 'border-accent bg-accent/15 shadow-sm'
                 : 'border-divider bg-white/5 hover:border-divider/80 hover:bg-white/10'"
             >
@@ -389,7 +390,7 @@
               </div>
               <CheckIcon
                 class="w-4 h-4 shrink-0 transition-opacity"
-                :class="selectedThemeIdsForModal.includes(Number(theme.id)) ? 'text-accent opacity-100' : 'opacity-0'"
+                :class="isModalThemeSelected(theme) ? 'text-accent opacity-100' : 'opacity-0'"
               />
             </div>
           </div>
@@ -518,7 +519,7 @@
               class="bg-bgApp border border-divider rounded-xl p-2.5 text-xs text-textPrimary focus:outline-none focus:border-accent"
             >
               <option :value="null">Sem Tema Específico</option>
-              <option v-for="node in availableThemes" :key="node.id" :value="Number(node.id)">
+              <option v-for="node in availableThemes" :key="node.id" :value="getNumericThemeId(node)">
                 {{ node.name }}
               </option>
             </select>
@@ -732,19 +733,101 @@ const {
 } = useUserBooks()
 const { graphData, fetchGraph, createNode } = useGraph()
 
+const getNumericThemeId = (themeOrId: any): number => {
+  if (themeOrId === null || themeOrId === undefined) return 0
+  if (typeof themeOrId === 'object') {
+    if (themeOrId.rawId !== undefined && !isNaN(Number(themeOrId.rawId))) {
+      return Number(themeOrId.rawId)
+    }
+    return getNumericThemeId(themeOrId.id)
+  }
+  if (typeof themeOrId === 'number' && !isNaN(themeOrId)) return themeOrId
+  const raw = String(themeOrId).replace(/^theme-/, '')
+  const parsed = Number(raw)
+  return isNaN(parsed) ? 0 : parsed
+}
+
+const getThemeName = (themeOrId: any): string => {
+  if (!themeOrId) return ''
+  if (typeof themeOrId === 'object' && themeOrId.name) return String(themeOrId.name).trim()
+  if (typeof themeOrId === 'string' && isNaN(Number(themeOrId.replace(/^theme-/, '')))) return themeOrId.trim()
+  return ''
+}
+
+const themeMatches = (themeA: any, themeB: any): boolean => {
+  if (!themeA || !themeB) return false
+
+  // 1. Comparação por ID numérico / normalizado
+  const numA = getNumericThemeId(themeA)
+  const numB = getNumericThemeId(themeB)
+  if (numA > 0 && numB > 0 && numA === numB) {
+    return true
+  }
+
+  // 2. Comparação por string de ID (caso seja string sem ser numérico)
+  const rawIdA = typeof themeA === 'object' ? String(themeA.id || themeA.rawId || '') : String(themeA)
+  const rawIdB = typeof themeB === 'object' ? String(themeB.id || themeB.rawId || '') : String(themeB)
+  const cleanIdA = rawIdA.replace(/^theme-/, '')
+  const cleanIdB = rawIdB.replace(/^theme-/, '')
+  if (cleanIdA && cleanIdB && cleanIdA.toLowerCase() === cleanIdB.toLowerCase()) {
+    return true
+  }
+
+  // 3. Comparação por Nome do tema (case-insensitive)
+  const nameA = getThemeName(themeA).toLowerCase()
+  const nameB = getThemeName(themeB).toLowerCase()
+  if (nameA && nameB && nameA === nameB) {
+    return true
+  }
+
+  return false
+}
+
+const isThemeSelected = (theme: any): boolean => {
+  if (selectedThemeId.value === null || selectedThemeId.value === undefined) return false
+  return themeMatches(theme, selectedThemeId.value)
+}
+
+const toggleThemeFilter = (theme: any) => {
+  if (isThemeSelected(theme)) {
+    selectedThemeId.value = null
+  } else {
+    selectedThemeId.value = theme.rawId || theme.id
+  }
+}
+
 const availableThemes = computed(() => {
-  return (graphData.value.nodes || []).filter((node: any) => {
+  const nodes = (graphData.value.nodes || []).filter((node: any) => {
     if (node.type && node.type !== 'theme') return false
     if (typeof node.id === 'string' && (node.id.startsWith('book-') || node.id.startsWith('note-') || node.id.startsWith('canvas-'))) {
       return false
     }
     return true
   })
+
+  const list: any[] = [...nodes]
+  for (const book of userBooks.value) {
+    for (const bt of book.themes || []) {
+      const exists = list.some((item) => themeMatches(item, bt))
+      if (!exists) {
+        const numId = getNumericThemeId(bt) || Date.now()
+        list.push({
+          id: `theme-${numId}`,
+          rawId: numId,
+          name: bt.name,
+          color: bt.color || '#E57B55',
+          type: 'theme',
+        })
+      }
+    }
+  }
+
+  return list
 })
 
 const selectedTheme = computed(() => {
-  if (selectedThemeId.value === null) return null
-  return availableThemes.value.find((t: any) => String(t.id) === String(selectedThemeId.value)) || null
+  if (selectedThemeId.value === null || selectedThemeId.value === undefined) return null
+  return availableThemes.value.find((t: any) => isThemeSelected(t)) || null
 })
 
 const promptDeleteBook = async (book: UserBookItem) => {
@@ -864,8 +947,10 @@ const countByStatus = (status: string) => {
   return userBooks.value.filter((b: UserBookItem) => b.status === status).length
 }
 
-const countByTheme = (themeId: number | string) => {
-  return userBooks.value.filter((b: UserBookItem) => b.themes?.some((t: any) => String(t.id) === String(themeId))).length
+const countByTheme = (themeOrId: any) => {
+  return userBooks.value.filter((b: UserBookItem) => {
+    return (b.themes || []).some((t: any) => themeMatches(t, themeOrId))
+  }).length
 }
 
 const openReader = (item: UserBookItem) => {
@@ -877,8 +962,8 @@ const openReader = (item: UserBookItem) => {
 const filteredUserBooks = computed(() => {
   return userBooks.value
     .filter((b: UserBookItem) => {
-      const matchesTheme = selectedThemeId.value === null || (b.themes && b.themes.some((t: any) => String(t.id) === String(selectedThemeId.value)))
-      return matchesTheme
+      if (selectedThemeId.value === null || selectedThemeId.value === undefined) return true
+      return (b.themes || []).some((t: any) => themeMatches(t, selectedThemeId.value))
     })
     .slice()
     .sort((a: UserBookItem, b: UserBookItem) => {
@@ -905,16 +990,22 @@ const getFilterLabel = (filter: string) => {
 const openTagModal = (book: UserBookItem) => {
   tagModalBook.value = book
   selectedThemeIdsForModal.value = (book.themes || [])
-    .map((t: any) => Number(t.id))
-    .filter((id) => !isNaN(id))
+    .map((t: any) => getNumericThemeId(t))
+    .filter((id) => id > 0)
   showCreateThemeInline.value = false
   newThemeName.value = ''
   fetchGraph()
 }
 
-const toggleModalTheme = (themeId: number | string) => {
-  const numId = Number(themeId)
-  if (isNaN(numId)) return
+const isModalThemeSelected = (themeOrId: any): boolean => {
+  const numId = getNumericThemeId(themeOrId)
+  if (!numId) return false
+  return selectedThemeIdsForModal.value.includes(numId)
+}
+
+const toggleModalTheme = (themeOrId: any) => {
+  const numId = getNumericThemeId(themeOrId)
+  if (!numId) return
   const idx = selectedThemeIdsForModal.value.indexOf(numId)
   if (idx > -1) {
     selectedThemeIdsForModal.value.splice(idx, 1)
@@ -929,9 +1020,9 @@ const handleCreateThemeInline = async () => {
   creatingTheme.value = true
   try {
     const created = await createNode(name, newThemeColor.value)
-    if (created && created.id) {
-      const numId = Number(created.id)
-      if (!isNaN(numId) && !selectedThemeIdsForModal.value.includes(numId)) {
+    if (created) {
+      const numId = getNumericThemeId(created)
+      if (numId && !selectedThemeIdsForModal.value.includes(numId)) {
         selectedThemeIdsForModal.value.push(numId)
       }
     }
@@ -977,7 +1068,7 @@ const handleThemeUpdated = async () => {
 }
 
 const handleThemeDeleted = async (deletedId: number | string) => {
-  if (String(selectedThemeId.value) === String(deletedId)) {
+  if (selectedThemeId.value !== null && themeMatches(deletedId, selectedThemeId.value)) {
     selectedThemeId.value = null
   }
   await fetchGraph()

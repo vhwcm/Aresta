@@ -317,9 +317,9 @@ const filteredThemes = computed(() => {
   return list.filter((t) => t.name && t.name.toLowerCase().includes(q))
 })
 
-const getThemeBooksCount = (id: number | string): number => {
+const getThemeBooksCount = (themeOrId: any): number => {
   if (props.booksCountByTheme) {
-    return props.booksCountByTheme(id)
+    return props.booksCountByTheme(themeOrId)
   }
   return 0
 }

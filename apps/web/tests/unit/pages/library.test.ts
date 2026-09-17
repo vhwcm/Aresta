@@ -422,4 +422,100 @@ describe('Library Page', () => {
     expect(themeButtonTexts.some((t) => t.includes('Clássicos'))).toBe(true)
     expect(themeButtonTexts.some((t) => t.includes('Dom Casmurro'))).toBe(false)
   })
+
+  it('conta e filtra corretamente livros quando os nós do grafo possuem prefixo theme- e os livros possuem IDs numéricos ou nomes', async () => {
+    const { resetUserBooksMemory } = await import('../../../app/composables/useUserBooks')
+    const { resetGraphMemory } = await import('../../../app/composables/useGraph')
+    resetUserBooksMemory()
+    resetGraphMemory()
+    await bookRepo.clear()
+
+    await bookRepo.save({
+      id: 201,
+      bookId: 101,
+      title: 'O Programador Pragmático',
+      themes: [{ id: 42, name: 'Programação', color: '#E57B55' }],
+      status: 'LENDO',
+      currentPage: 30,
+      lastAccessedAt: '2026-09-10T10:00:00.000Z'
+    })
+    await bookRepo.save({
+      id: 202,
+      bookId: 102,
+      title: 'Código Limpo',
+      themes: [{ id: 42, name: 'Programação', color: '#E57B55' }],
+      status: 'LENDO',
+      currentPage: 15,
+      lastAccessedAt: '2026-09-09T10:00:00.000Z'
+    })
+    await bookRepo.save({
+      id: 203,
+      bookId: 103,
+      title: 'A Divina Comédia',
+      themes: [{ id: 99, name: 'Literatura', color: '#38BDF8' }],
+      status: 'LENDO',
+      currentPage: 5,
+      lastAccessedAt: '2026-09-08T10:00:00.000Z'
+    })
+
+    mockFetch.mockImplementation((url: string) => {
+      if (url.includes('/graph')) {
+        return Promise.resolve({
+          nodes: [
+            { id: 'theme-42', rawId: 42, type: 'theme', name: 'Programação', color: '#E57B55' },
+            { id: 'theme-99', rawId: 99, type: 'theme', name: 'Literatura', color: '#38BDF8' },
+            { id: 'book-101', rawId: 101, type: 'book', name: 'O Programador...' },
+            { id: 'book-102', rawId: 102, type: 'book', name: 'Código Limpo' },
+            { id: 'book-103', rawId: 103, type: 'book', name: 'A Divina Comédia' },
+          ],
+          edges: [
+            { id: 'e1', source: 'book-101', target: 'theme-42', type: 'book-theme' },
+            { id: 'e2', source: 'book-102', target: 'theme-42', type: 'book-theme' },
+            { id: 'e3', source: 'book-103', target: 'theme-99', type: 'book-theme' },
+          ]
+        })
+      }
+      return Promise.resolve([])
+    })
+
+    const wrapper = mount(LibraryPage, {
+      global: {
+        stubs: {
+          NuxtLink: { template: '<a><slot /></a>' },
+        },
+      },
+    })
+    await flushPromises()
+
+    // A contagem deve ser correta: 2 para Programação e 1 para Literatura (não 0)
+    expect(wrapper.text()).toContain('Programação')
+    expect(wrapper.text()).toContain('(2)')
+    expect(wrapper.text()).toContain('Literatura')
+    expect(wrapper.text()).toContain('(1)')
+
+    // Antes do filtro, todos os 3 livros são exibidos
+    let cards = wrapper.findAll('[data-testid="user-book-card"]')
+    expect(cards.length).toBe(3)
+
+    // Clica no botão de filtrar por Programação
+    const progBtn = wrapper.findAll('header button').find((b) => b.text().includes('Programação'))
+    expect(progBtn).toBeDefined()
+    await progBtn!.trigger('click')
+    await flushPromises()
+
+    // Deve exibir apenas os 2 livros de Programação
+    cards = wrapper.findAll('[data-testid="user-book-card"]')
+    expect(cards.length).toBe(2)
+    expect(wrapper.text()).toContain('O Programador Pragmático')
+    expect(wrapper.text()).toContain('Código Limpo')
+    expect(wrapper.text()).not.toContain('A Divina Comédia')
+
+    // Clica novamente para desmarcar o filtro
+    await progBtn!.trigger('click')
+    await flushPromises()
+
+    // Todos os 3 livros voltam a ser exibidos
+    cards = wrapper.findAll('[data-testid="user-book-card"]')
+    expect(cards.length).toBe(3)
+  })
 })

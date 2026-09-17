@@ -187,8 +187,18 @@ export const useUserBooks = () => {
       const book = userBooks.value[bookIndex]!
       const existingThemes = themesList || book.themes || []
       const updatedThemes = themeIds.map(tid => {
-        const found = existingThemes.find((t: any) => Number(t.id) === Number(tid))
-        return found || { id: Number(tid), name: `Tema ${tid}` }
+        const numTid = Number(String(tid).replace(/^theme-/, ''))
+        const found = existingThemes.find((t: any) => {
+          const tNum = Number(String(t.rawId ?? t.id).replace(/^theme-/, ''))
+          return !isNaN(tNum) && tNum === numTid
+        })
+        return found
+          ? {
+              id: numTid,
+              name: found.name || `Tema ${numTid}`,
+              color: found.color || null,
+            }
+          : { id: numTid, name: `Tema ${numTid}`, color: null }
       })
       userBooks.value[bookIndex] = {
         ...book,
