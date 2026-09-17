@@ -1,5 +1,4 @@
 ## 🔄 Em Andamento
-- [16/09/2026 22:39] [Fazendo] Remover chamada legada ao endpoint descontinuado /api/user-books (410 Gone) no upload de livros local-first
 - [16/09/2026 16:19] [Fazendo] Restaurar grafo de conhecimento local-first e corrigir altura zero na home
 - [16/09/2026 16:12] [Fazendo] Excluir livros e pasta Aresta no Google Drive ao deletar a conta do usuário
 - [16/09/2026 15:30] [Fazendo] Adicionar benefícios da leitura profunda e integração entre IA, flashcards, leitura, anotações estruturadas e canvas na página de benefícios
@@ -7,6 +6,7 @@
 - [16/09/2026 11:00] [Fazendo] Implementar exemplos reais de leitura e grafo na home e bloquear acesso e criação anônima sem autenticação
 
 ## ✅ Concluído
+- [16/09/2026 22:40] [Concluído] Remover chamada legada ao endpoint descontinuado /api/user-books (410 Gone) no upload de livros local-first
 - [16/09/2026 22:39] [Concluído] Alterar nome padrão de novos desenhos para "Desenho" e remover caixa de tooltip flutuante no hover dos nós do grafo
 - [16/09/2026 22:36] [Concluído] Corrigir abertura de notas a partir do nó do grafo no editor eliminando estado vazio de nota não selecionada
 - [16/09/2026 22:34] [Concluído] Corrigir seleção de temas de livros no upload (parsing de IDs com prefixo theme-), rota duplicada /api/api/books e imports de ícones
