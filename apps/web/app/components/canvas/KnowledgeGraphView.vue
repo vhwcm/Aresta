@@ -5,46 +5,7 @@
 
 
 
-    <!-- Tooltip Flutuante de Detalhes do Nó -->
-    <div
-      v-if="hoveredNode"
-      class="absolute z-20 pointer-events-none p-3 rounded-xl bg-bgPanel/95 backdrop-blur-md border border-divider shadow-2xl text-xs font-interface max-w-xs transition-opacity duration-150 animate-in fade-in"
-      :style="{ left: tooltipPos.x + 15 + 'px', top: tooltipPos.y + 15 + 'px' }"
-    >
-      <div class="flex items-center gap-1.5 mb-1">
-        <span
-          class="text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded tracking-wider"
-          :class="hoveredNode.kind === 'canvas' ? 'bg-accent/20 text-accent' : (hoveredNode.kind === 'folder' ? 'bg-amber-500/20 text-amber-400' : 'bg-indigo-500/20 text-indigo-400')"
-        >
-          {{ hoveredNode.kind === 'canvas' ? 'Quadro' : (hoveredNode.kind === 'folder' ? 'Pasta' : 'Nota') }}
-        </span>
-        <span v-if="hoveredNode.folder" class="text-[10px] text-textSecondary truncate">
-          📁 {{ hoveredNode.folder }}
-        </span>
-      </div>
 
-      <h4 class="font-semibold text-textPrimary text-sm line-clamp-1">
-        {{ hoveredNode.title }}
-      </h4>
-
-      <p v-if="hoveredNode.description" class="text-[11px] text-textSecondary mt-1 line-clamp-2">
-        {{ hoveredNode.description }}
-      </p>
-
-      <div v-if="hoveredNode.tags && hoveredNode.tags.length > 0" class="flex flex-wrap gap-1 mt-2">
-        <span
-          v-for="t in hoveredNode.tags"
-          :key="t"
-          class="text-[9px] px-1.5 py-0.2 rounded bg-bgRoot text-textSecondary border border-divider"
-        >
-          #{{ t }}
-        </span>
-      </div>
-
-      <p class="text-[9px] text-accent/80 mt-2 font-mono">
-        💡 Clique para abrir
-      </p>
-    </div>
 
     <!-- Estado Vazio se não houver nós -->
     <div

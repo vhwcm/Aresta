@@ -222,7 +222,7 @@ export function useDrawing() {
 
         const doc: DrawingDocument = {
           id: local.id,
-          title: local.title || 'Desenho sem título',
+          title: local.title || 'Desenho',
           folder: local.folder ?? null,
           tags: local.tags ? [...local.tags] : [],
           pages,
@@ -262,7 +262,7 @@ export function useDrawing() {
       const localId = `drawing_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
       const saved = await drawingNoteRepo.save({
         id: localId,
-        title: params.title || 'Desenho sem título',
+        title: params.title || 'Desenho',
         folder: params.folder ?? null,
         tags: params.tags || [],
         pages_data: JSON.stringify(initialPages),

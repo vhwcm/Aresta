@@ -1223,7 +1223,7 @@ const openDrawing = async (id: string) => {
 const handleCreateNewDrawing = async () => {
   try {
     const created = await createDrawing({
-      title: 'Caderno de Desenho',
+      title: 'Desenho',
       folder: activeFolder.value !== '__uncategorized__' ? activeFolder.value : null,
     })
     if (created?.id) {
