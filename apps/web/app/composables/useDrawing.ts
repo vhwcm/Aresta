@@ -128,7 +128,7 @@ export function useDrawing() {
         id: currentDrawing.value.id,
         title: currentDrawing.value.title,
         folder: currentDrawing.value.folder,
-        tags: currentDrawing.value.tags,
+        tags: currentDrawing.value.tags ? [...currentDrawing.value.tags] : [],
         pages_data: pagesDataJson,
         preview_url: currentDrawing.value.preview_url || null,
       });
@@ -139,7 +139,7 @@ export function useDrawing() {
           id: saved.id,
           title: saved.title,
           folder: saved.folder ?? null,
-          tags: saved.tags || [],
+          tags: saved.tags ? [...saved.tags] : [],
           pagesCount: currentDrawing.value.pages.length,
           preview_url: saved.preview_url ?? null,
           created_at: saved.created_at,
@@ -161,16 +161,20 @@ export function useDrawing() {
       drawingsList.value = list.map((d) => {
         let pages: any[] = [];
         try {
-          const raw = typeof d.pages_data === 'string' ? d.pages_data : JSON.stringify(d.pages_data || []);
+          const raw = typeof d.pages_data === 'string'
+            ? d.pages_data
+            : (typeof (d as any).pagesData === 'string'
+                ? (d as any).pagesData
+                : JSON.stringify(d.pages_data || (d as any).pagesData || []));
           pages = JSON.parse(raw);
         } catch {}
         return {
           id: d.id,
           title: d.title,
           folder: d.folder ?? null,
-          tags: d.tags || [],
+          tags: d.tags ? [...d.tags] : [],
           pagesCount: pages.length || 1,
-          preview_url: d.preview_url ?? null,
+          preview_url: d.preview_url ?? (d as any).previewUrl ?? null,
           created_at: d.created_at,
           updated_at: d.updated_at,
         };
@@ -196,7 +200,11 @@ export function useDrawing() {
       if (local) {
         let pages: DrawingPage[] = [];
         try {
-          const raw = typeof local.pages_data === 'string' ? local.pages_data : JSON.stringify(local.pages_data || []);
+          const raw = typeof local.pages_data === 'string'
+            ? local.pages_data
+            : (typeof (local as any).pagesData === 'string'
+                ? (local as any).pagesData
+                : JSON.stringify(local.pages_data || (local as any).pagesData || []));
           pages = JSON.parse(raw);
         } catch {}
         if (!Array.isArray(pages) || pages.length === 0) {
@@ -216,9 +224,9 @@ export function useDrawing() {
           id: local.id,
           title: local.title || 'Desenho sem título',
           folder: local.folder ?? null,
-          tags: local.tags || [],
+          tags: local.tags ? [...local.tags] : [],
           pages,
-          preview_url: local.preview_url ?? null,
+          preview_url: local.preview_url ?? (local as any).previewUrl ?? null,
           created_at: local.created_at,
           updated_at: local.updated_at,
         };

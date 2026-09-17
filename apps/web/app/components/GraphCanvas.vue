@@ -1316,6 +1316,7 @@ const initGraph = (animateTransition = true) => {
   let snapTargetNode: any = null
   let startClientPos = { x: 0, y: 0 }
   let didJustDrag = false
+  let didEmitOnPointerUp = false // flag para evitar dupla emissão (pointerup + click)
 
   const tempWire = g.select<SVGLineElement>('.drag-wire')
   const tempWireTip = g.select<SVGCircleElement>('.drag-wire-tip')
@@ -1470,6 +1471,15 @@ const initGraph = (animateTransition = true) => {
       setTimeout(() => {
         didJustDrag = false
       }, 60)
+    } else {
+      // Clique simples (sem drag de aresta): disparar selectNode diretamente no pointerup.
+      // Isso é mais confiável do que o evento 'click' do DOM, que pode ser suprimido
+      // em WebView2/Chromium quando outro handler chama stopPropagation ou preventDefault.
+      const clickedNode = dragSourceNode
+      if (clickedNode && !didJustDrag) {
+        didEmitOnPointerUp = true
+        emitSelectForNode(clickedNode)
+      }
     }
 
     dragSourceNode = null
@@ -1495,6 +1505,7 @@ const initGraph = (animateTransition = true) => {
     isDraggingWire = false
     snapTargetNode = null
     didJustDrag = false
+    didEmitOnPointerUp = false
     startClientPos = { x: event.clientX, y: event.clientY }
 
     window.addEventListener('pointermove', onWindowPointerMove, { passive: false })
@@ -1505,21 +1516,12 @@ const initGraph = (animateTransition = true) => {
     event.stopPropagation()
   })
 
+  // O evento 'click' serve como fallback secundário (ex: touch sem pointer events).
+  // Se o pointerup já emitiu (didEmitOnPointerUp), não emitir novamente.
   nodesSelection.on('click', (event, d) => {
     event.stopPropagation()
-    // Guarda no clique se houve drag recente — didJustDrag será resetado
-    // após 60ms pelo setTimeout em onWindowPointerUp quando isDraggingWire era true
-    if (didJustDrag) return
-    if (d.isRoot) {
-      emit('selectNode', rootNode)
-    } else {
-      const originalNode = props.nodes.find((n) => String(n.id) === String(d.id))
-      if (originalNode) {
-        emit('selectNode', originalNode)
-      } else {
-        emit('selectNode', d)
-      }
-    }
+    if (didJustDrag || didEmitOnPointerUp) return
+    emitSelectForNode(d)
   })
 
   // Destaque e Tooltip no Hover

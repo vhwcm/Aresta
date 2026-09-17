@@ -61,6 +61,16 @@ class ArestaDexieDB extends Dexie {
   }
 }
 
+function toCloneable<T>(obj: T): T {
+  if (obj === undefined || obj === null) return obj;
+  try {
+    return JSON.parse(JSON.stringify(obj));
+  } catch (err) {
+    console.warn('[DexieAdapter] Falha ao serializar para clone limpo:', err);
+    return obj;
+  }
+}
+
 export class DexieAdapter implements IDatabaseAdapter {
   private db: ArestaDexieDB;
   private isInitialized = false;
@@ -106,7 +116,7 @@ export class DexieAdapter implements IDatabaseAdapter {
       id: Number(book.id),
       bookId: Number(book.bookId || book.id),
     };
-    await this.db.books.put(cleanBook);
+    await this.db.books.put(toCloneable(cleanBook));
   }
 
   async deleteBook(id: number): Promise<void> {
@@ -116,7 +126,7 @@ export class DexieAdapter implements IDatabaseAdapter {
       existing.deleted_at = new Date().toISOString();
       existing.sync_status = 'pending';
       existing.updated_at = new Date().toISOString();
-      await this.db.books.put(existing);
+      await this.db.books.put(toCloneable(existing));
     }
   }
 
@@ -149,7 +159,7 @@ export class DexieAdapter implements IDatabaseAdapter {
 
   async saveAnnotation(annotation: LocalAnnotation): Promise<void> {
     await this.init();
-    await this.db.annotations.put(annotation);
+    await this.db.annotations.put(toCloneable(annotation));
   }
 
   async deleteAnnotation(id: number): Promise<void> {
@@ -159,7 +169,7 @@ export class DexieAdapter implements IDatabaseAdapter {
       existing.deleted_at = new Date().toISOString();
       existing.sync_status = 'pending';
       existing.updated_at = new Date().toISOString();
-      await this.db.annotations.put(existing);
+      await this.db.annotations.put(toCloneable(existing));
     }
   }
 
@@ -184,7 +194,7 @@ export class DexieAdapter implements IDatabaseAdapter {
 
   async saveFlashcard(flashcard: LocalFlashcard): Promise<void> {
     await this.init();
-    await this.db.flashcards.put(flashcard);
+    await this.db.flashcards.put(toCloneable(flashcard));
   }
 
   async deleteFlashcard(id: number): Promise<void> {
@@ -194,7 +204,7 @@ export class DexieAdapter implements IDatabaseAdapter {
       existing.deleted_at = new Date().toISOString();
       existing.sync_status = 'pending';
       existing.updated_at = new Date().toISOString();
-      await this.db.flashcards.put(existing);
+      await this.db.flashcards.put(toCloneable(existing));
     }
   }
 
@@ -213,7 +223,7 @@ export class DexieAdapter implements IDatabaseAdapter {
 
   async saveCanvas(canvas: LocalCanvasItem): Promise<void> {
     await this.init();
-    await this.db.canvases.put(canvas);
+    await this.db.canvases.put(toCloneable(canvas));
   }
 
   async deleteCanvas(id: string): Promise<void> {
@@ -223,7 +233,7 @@ export class DexieAdapter implements IDatabaseAdapter {
       existing.deleted_at = new Date().toISOString();
       existing.sync_status = 'pending';
       existing.updated_at = new Date().toISOString();
-      await this.db.canvases.put(existing);
+      await this.db.canvases.put(toCloneable(existing));
     }
   }
 
@@ -234,9 +244,9 @@ export class DexieAdapter implements IDatabaseAdapter {
   async getNoteById(id: string): Promise<LocalNote | null> {
     await this.init(); const item = await this.db.notes.get(id); return item && !item.deleted_at ? item : null;
   }
-  async saveNote(note: LocalNote): Promise<void> { await this.init(); await this.db.notes.put(note); }
+  async saveNote(note: LocalNote): Promise<void> { await this.init(); await this.db.notes.put(toCloneable(note)); }
   async deleteNote(id: string): Promise<void> {
-    await this.init(); const item = await this.db.notes.get(id); if (item) await this.db.notes.put({ ...item, deleted_at: new Date().toISOString(), updated_at: new Date().toISOString(), sync_status: 'pending' });
+    await this.init(); const item = await this.db.notes.get(id); if (item) await this.db.notes.put(toCloneable({ ...item, deleted_at: new Date().toISOString(), updated_at: new Date().toISOString(), sync_status: 'pending' }));
   }
 
   async getDrawingNotes(): Promise<LocalDrawingNote[]> {
@@ -245,12 +255,12 @@ export class DexieAdapter implements IDatabaseAdapter {
   async getDrawingNoteById(id: string): Promise<LocalDrawingNote | null> {
     await this.init(); const item = await this.db.drawing_notes.get(id); return item && !item.deleted_at ? item : null;
   }
-  async saveDrawingNote(note: LocalDrawingNote): Promise<void> { await this.init(); await this.db.drawing_notes.put(note); }
+  async saveDrawingNote(note: LocalDrawingNote): Promise<void> { await this.init(); await this.db.drawing_notes.put(toCloneable(note)); }
   async deleteDrawingNote(id: string): Promise<void> {
-    await this.init(); const item = await this.db.drawing_notes.get(id); if (item) await this.db.drawing_notes.put({ ...item, deleted_at: new Date().toISOString(), updated_at: new Date().toISOString(), sync_status: 'pending' });
+    await this.init(); const item = await this.db.drawing_notes.get(id); if (item) await this.db.drawing_notes.put(toCloneable({ ...item, deleted_at: new Date().toISOString(), updated_at: new Date().toISOString(), sync_status: 'pending' }));
   }
   async getSettings(): Promise<LocalUserSettings | null> { await this.init(); return (await this.db.user_settings.get('user_settings')) || null; }
-  async saveSettings(settings: LocalUserSettings): Promise<void> { await this.init(); await this.db.user_settings.put({ ...settings, id: 'user_settings' }); }
+  async saveSettings(settings: LocalUserSettings): Promise<void> { await this.init(); await this.db.user_settings.put(toCloneable({ ...settings, id: 'user_settings' })); }
 
   // Reading Streak
   async getStreak(): Promise<LocalStreak | null> {
@@ -262,7 +272,7 @@ export class DexieAdapter implements IDatabaseAdapter {
   async saveStreak(streak: LocalStreak): Promise<void> {
     await this.init();
     streak.id = 'user_streak';
-    await this.db.streaks.put(streak);
+    await this.db.streaks.put(toCloneable(streak));
   }
 
   // Mutation Queue
@@ -274,11 +284,12 @@ export class DexieAdapter implements IDatabaseAdapter {
 
   async enqueueMutation(mutation: LocalMutation): Promise<void> {
     await this.init();
-    await this.db.mutation_queue.put(mutation);
+    await this.db.mutation_queue.put(toCloneable(mutation));
   }
 
   async markMutationsSynced(ids: string[]): Promise<void> {
     await this.init();
+    if (ids.length === 0) return;
     await this.db.mutation_queue.where('id').anyOf(ids).modify({ sync_status: 'synced' });
   }
 
@@ -310,7 +321,7 @@ export class DexieAdapter implements IDatabaseAdapter {
     if (filters?.bookId !== undefined && filters.bookId !== null) {
       list = list.filter((b) => Number(b.bookId) === Number(filters.bookId));
     }
-    if (filters?.themeId !== undefined && filters.themeId !== null) {
+    if (filters?.themeId !== undefined && filters?.themeId !== null) {
       list = list.filter((b) => Number(b.themeId) === Number(filters.themeId));
     }
     return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -324,7 +335,7 @@ export class DexieAdapter implements IDatabaseAdapter {
 
   async saveDidacticBooklet(booklet: LocalDidacticBooklet): Promise<void> {
     await this.init();
-    await this.db.didactic_booklets.put(booklet);
+    await this.db.didactic_booklets.put(toCloneable(booklet));
   }
 
   async deleteDidacticBooklet(id: string): Promise<void> {
@@ -334,7 +345,7 @@ export class DexieAdapter implements IDatabaseAdapter {
       existing.deleted_at = new Date().toISOString();
       existing.sync_status = 'pending';
       existing.updated_at = new Date().toISOString();
-      await this.db.didactic_booklets.put(existing);
+      await this.db.didactic_booklets.put(toCloneable(existing));
     }
   }
 }

@@ -26,11 +26,11 @@ export class DrawingNoteRepository {
   async save(note: Partial<LocalDrawingNote> & { id: string; title: string }): Promise<LocalDrawingNote> {
     const existing = await this.getDb().getDrawingNoteById(note.id);
     const now = new Date().toISOString();
-    const entity: LocalDrawingNote = {
+    const rawEntity: LocalDrawingNote = {
       ...existing,
       ...note,
       folder: note.folder !== undefined ? note.folder : (existing?.folder || null),
-      tags: note.tags || existing?.tags || [],
+      tags: note.tags ? [...note.tags] : (existing?.tags || []),
       pages_data: note.pages_data !== undefined ? note.pages_data : (existing?.pages_data || '[]'),
       preview_url: note.preview_url !== undefined ? note.preview_url : (existing?.preview_url || null),
       created_at: existing?.created_at || note.created_at || now,
@@ -38,6 +38,7 @@ export class DrawingNoteRepository {
       deleted_at: null,
       sync_status: 'pending'
     };
+    const entity: LocalDrawingNote = JSON.parse(JSON.stringify(rawEntity));
     await this.getDb().saveDrawingNote(entity);
     await dbManager.recordMutation('drawing_note', entity.id, existing ? 'UPDATE' : 'INSERT', entity);
     return entity;

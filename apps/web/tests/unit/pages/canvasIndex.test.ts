@@ -9,7 +9,8 @@ vi.mock('vue-router', () => ({
   }),
   useRouter: () => ({
     push: vi.fn()
-  })
+  }),
+  onBeforeRouteLeave: vi.fn()
 }))
 
 vi.mock('../../../app/composables/useCanvas', () => ({

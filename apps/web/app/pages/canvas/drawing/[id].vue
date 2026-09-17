@@ -186,7 +186,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router';
 import {
   Sparkles as SparklesIcon,
   Sun as SunIcon,
@@ -505,10 +505,15 @@ function handleKeyDown(e: KeyboardEvent) {
   }
 }
 
+function handleBeforeUnload() {
+  saveDrawingNow();
+}
+
 onMounted(async () => {
   handleZoomFit();
   window.addEventListener('resize', handleZoomFit);
   window.addEventListener('keydown', handleKeyDown);
+  window.addEventListener('beforeunload', handleBeforeUnload);
   if (viewportRef.value) {
     viewportRef.value.addEventListener('wheel', handleWheel, { passive: false });
   }
@@ -517,9 +522,26 @@ onMounted(async () => {
   }
 });
 
-onBeforeUnmount(() => {
+onBeforeRouteLeave(async () => {
+  try {
+    const firstCanvas = pageCanvasRefs.value[0];
+    if (firstCanvas?.exportToDataUrl && currentDrawing.value) {
+      const thumb = firstCanvas.exportToDataUrl();
+      if (thumb) {
+        currentDrawing.value.preview_url = thumb;
+      }
+    }
+  } catch {}
+  await saveDrawingNow();
+});
+
+onBeforeUnmount(async () => {
+  // Força salvamento imediato antes de desmontar — o autosave tem debounce de 1s
+  // e pode não ter disparado ainda se o usuário sair logo após o último traço.
+  await saveDrawingNow();
   window.removeEventListener('resize', handleZoomFit);
   window.removeEventListener('keydown', handleKeyDown);
+  window.removeEventListener('beforeunload', handleBeforeUnload);
   if (viewportRef.value) {
     viewportRef.value.removeEventListener('wheel', handleWheel);
   }

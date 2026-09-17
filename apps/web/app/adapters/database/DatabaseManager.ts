@@ -41,12 +41,20 @@ class DatabaseManager {
     payload: any
   ): Promise<void> {
     try {
+      let cleanPayload = payload;
+      if (payload !== undefined && payload !== null) {
+        try {
+          cleanPayload = JSON.parse(JSON.stringify(payload));
+        } catch {
+          cleanPayload = payload;
+        }
+      }
       const mutation: LocalMutation = {
         id: uuidv4(),
         entity_type,
         entity_id,
         action,
-        payload,
+        payload: cleanPayload,
         client_timestamp: new Date().toISOString(),
         sync_status: 'pending',
         retry_count: 0

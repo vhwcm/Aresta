@@ -648,8 +648,8 @@ definePageMeta({
   middleware: ['auth'],
 })
 
-import { ref, computed, watch, onMounted, nextTick } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
 import { useAuth } from '~/composables/useAuth'
 import {
   SearchIcon,
@@ -779,6 +779,10 @@ const handleSelectGraphNode = async (node: any) => {
   if (node.type === 'canvas') {
     const rawId = String(node.rawId || node.id).replace('canvas-', '')
     openCanvas(rawId)
+  } else if (node.type === 'note' && node.isDrawing) {
+    // Desenhos têm type='note' no grafo mas isDrawing=true — navegam para a página de desenho
+    const rawId = String(node.rawId || node.id).replace('note-', '')
+    openDrawing(rawId)
   } else if (node.type === 'note') {
     const rawId = String(node.rawId || node.id).replace('note-', '')
     const target = notesList.value.find((n) => n.id === rawId)
@@ -1368,6 +1372,40 @@ const formatDate = (dateStr?: string) => {
     return ''
   }
 }
+
+if (typeof onBeforeRouteLeave === 'function') {
+  onBeforeRouteLeave(async () => {
+    if (noteSaveTimeout) {
+      clearTimeout(noteSaveTimeout)
+      noteSaveTimeout = null
+      if (activeNote.value) {
+        await updateNote(activeNote.value.id, {
+          title: activeNote.value.title,
+          content: activeNote.value.content,
+          folder: activeNote.value.folder,
+          tags: activeNote.value.tags ? [...activeNote.value.tags] : []
+        })
+      }
+    }
+  })
+}
+
+onBeforeUnmount(async () => {
+  // Cancela o timer pendente e salva imediatamente para evitar perda
+  // quando o usuário sai antes do debounce de 600ms disparar.
+  if (noteSaveTimeout) {
+    clearTimeout(noteSaveTimeout)
+    noteSaveTimeout = null
+    if (activeNote.value) {
+      await updateNote(activeNote.value.id, {
+        title: activeNote.value.title,
+        content: activeNote.value.content,
+        folder: activeNote.value.folder,
+        tags: activeNote.value.tags ? [...activeNote.value.tags] : []
+      })
+    }
+  }
+})
 </script>
 
 <style scoped>

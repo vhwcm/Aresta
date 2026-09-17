@@ -29,18 +29,19 @@ export class NoteRepository {
   async save(note: Partial<LocalNote> & { id: string; title: string }): Promise<LocalNote> {
     const existing = await this.getDb().getNoteById(note.id);
     const now = new Date().toISOString();
-    const entity: LocalNote = {
+    const rawEntity: LocalNote = {
       ...existing,
       ...note,
       content: note.content !== undefined ? note.content : (existing?.content || ''),
       folder: note.folder !== undefined ? note.folder : (existing?.folder || null),
-      tags: note.tags || existing?.tags || [],
-      links: note.links || existing?.links || [],
+      tags: note.tags ? [...note.tags] : (existing?.tags || []),
+      links: note.links ? [...note.links] : (existing?.links || []),
       created_at: existing?.created_at || note.created_at || now,
       updated_at: now,
       deleted_at: null,
       sync_status: 'pending'
     };
+    const entity: LocalNote = JSON.parse(JSON.stringify(rawEntity));
     await this.getDb().saveNote(entity);
     await dbManager.recordMutation('note', entity.id, existing ? 'UPDATE' : 'INSERT', entity);
     return entity;
