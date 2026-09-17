@@ -332,8 +332,9 @@ async function handleCreateThemeInline() {
   createThemeError.value = null
   try {
     const created = await createNode(name, newThemeColor.value)
-    if (created && created.id) {
-      const numId = Number(created.id)
+    if (created && (created.rawId || created.id)) {
+      const rawThemeId = created.rawId ?? (typeof created.id === 'string' ? Number(created.id.replace(/^theme-/, '')) : Number(created.id))
+      const numId = isNaN(rawThemeId) ? Date.now() : rawThemeId
       const themeObj = {
         id: numId,
         name: created.name || name,

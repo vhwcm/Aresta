@@ -6,6 +6,7 @@
 - [16/09/2026 11:00] [Fazendo] Implementar exemplos reais de leitura e grafo na home e bloquear acesso e criação anônima sem autenticação
 
 ## ✅ Concluído
+- [16/09/2026 21:41] [Concluído] Corrigir erro 410 (Gone) ao criar livreto didático integrando com IA (/api/ai/didactic) e persistência local-first via Dexie/SQLite e BookRepository
 - [16/09/2026 16:44] [Concluído] Corrigir clique em notas/quadros no grafo de conhecimento não abrindo (event.preventDefault() no pointerdown suprimia o evento click no WebView2/Tauri)
 - [16/09/2026 16:42] [Concluído] Corrigir ferramenta de texto no desenho: nó loose_text criado sem autofocus no MilkdownEditor (prop autofocus não propagada em CanvasNode/CanvasNodeText)
 - [16/09/2026 16:40] [Concluído] Corrigir bug de síntese de desenho com IA exibindo texto genérico (rota POST /ai/ocr ausente no backend)
