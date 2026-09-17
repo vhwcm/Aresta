@@ -7,6 +7,7 @@ describe('App Root (app.vue)', () => {
     const wrapper = mount(App, {
       global: {
         stubs: {
+          NuxtLayout: { template: '<div><slot /></div>' },
           NuxtPage: { template: '<div data-testid="nuxt-page-stub">Page Content</div>' },
           BottomNavbar: { template: '<div data-testid="bottom-navbar-stub">Navbar</div>' },
           NavbarPageConnector: { template: '<div data-testid="navbar-page-connector-stub" />' },

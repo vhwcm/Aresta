@@ -6,6 +6,7 @@
 - [16/09/2026 11:00] [Fazendo] Implementar exemplos reais de leitura e grafo na home e bloquear acesso e criação anônima sem autenticação
 
 ## ✅ Concluído
+- [16/09/2026 22:49] [Concluído] Eliminar aviso NUXT_E4007 com NuxtLayout e blindar transform SVG do grafo contra coordenadas NaN
 - [16/09/2026 22:40] [Concluído] Remover chamada legada ao endpoint descontinuado /api/user-books (410 Gone) no upload de livros local-first
 - [16/09/2026 22:39] [Concluído] Alterar nome padrão de novos desenhos para "Desenho" e remover caixa de tooltip flutuante no hover dos nós do grafo
 - [16/09/2026 22:36] [Concluído] Corrigir abertura de notas a partir do nó do grafo no editor eliminando estado vazio de nota não selecionada

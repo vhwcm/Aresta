@@ -341,7 +341,7 @@ const fitToScreen = (animate = true, duration = 500) => {
 
   const containerWidth = containerRef.value.clientWidth || (typeof window !== 'undefined' ? window.innerWidth : 1200)
   const containerHeight = containerRef.value.clientHeight || (typeof window !== 'undefined' ? window.innerHeight : 800)
-  if (containerWidth === 0 || containerHeight === 0) return
+  if (!containerWidth || !containerHeight || !Number.isFinite(containerWidth) || !Number.isFinite(containerHeight) || containerWidth <= 0 || containerHeight <= 0) return
 
   if (currentSimulationNodes.length <= 1) {
     const targetTransform = d3.zoomIdentity.translate(0, 0).scale(1.0)
@@ -361,8 +361,10 @@ const fitToScreen = (animate = true, duration = 500) => {
 
   for (const d of currentSimulationNodes) {
     // Utiliza a posição de destino final prevista para que o enquadramento acompanhe o destino
-    const x = d.targetX ?? d.baseX ?? d.x ?? containerWidth / 2
-    const y = d.targetY ?? d.baseY ?? d.y ?? containerHeight / 2
+    const x = d.targetX ?? d.baseX ?? d.x ?? (containerWidth / 2)
+    const y = d.targetY ?? d.baseY ?? d.y ?? (containerHeight / 2)
+    if (!Number.isFinite(x) || !Number.isFinite(y)) continue
+
     const r = getNodeRadius(d) + 36
     if (x - r < minX) minX = x - r
     if (x + r > maxX) maxX = x + r
@@ -370,15 +372,31 @@ const fitToScreen = (animate = true, duration = 500) => {
     if (y + r + 24 > maxY) maxY = y + r + 24
   }
 
-  if (minX === Infinity || maxX === -Infinity || minX >= maxX || minY >= maxY) return
+  if (
+    !Number.isFinite(minX) ||
+    !Number.isFinite(maxX) ||
+    !Number.isFinite(minY) ||
+    !Number.isFinite(maxY) ||
+    minX >= maxX ||
+    minY >= maxY
+  ) {
+    return
+  }
 
   const graphW = maxX - minX
   const graphH = maxY - minY
   const padding = 75
 
+  if (!Number.isFinite(graphW) || !Number.isFinite(graphH) || graphW <= 0 || graphH <= 0) {
+    return
+  }
+
   const scaleX = containerWidth / (graphW + padding * 2)
   const scaleY = containerHeight / (graphH + padding * 2)
-  const scale = Math.max(0.15, Math.min(Math.min(scaleX, scaleY), 1.0))
+  const rawScale = Math.min(scaleX, scaleY)
+  if (!Number.isFinite(rawScale) || rawScale <= 0) return
+
+  const scale = Math.max(0.15, Math.min(rawScale, 1.0))
 
   const midX = (minX + maxX) / 2
   const midY = (minY + maxY) / 2
@@ -386,7 +404,15 @@ const fitToScreen = (animate = true, duration = 500) => {
   const tx = containerWidth / 2 - midX * scale
   const ty = containerHeight / 2 - midY * scale
 
-  if (!zoomBehavior) return
+  if (
+    !zoomBehavior ||
+    !Number.isFinite(tx) ||
+    !Number.isFinite(ty) ||
+    !Number.isFinite(scale) ||
+    scale <= 0
+  ) {
+    return
+  }
 
   const targetTransform = d3.zoomIdentity.translate(tx, ty).scale(scale)
   const svg = d3.select(svgRef.value)
@@ -544,7 +570,10 @@ const initGraph = (animateTransition = true) => {
       return !event.button
     })
     .on('zoom', (event) => {
-      g.attr('transform', event.transform)
+      const t = event.transform
+      if (t && Number.isFinite(t.x) && Number.isFinite(t.y) && Number.isFinite(t.k) && t.k > 0) {
+        g.attr('transform', t)
+      }
     })
 
   svg.call(zoomBehavior as any).on('dblclick.zoom', null)
@@ -1539,14 +1568,26 @@ const initGraph = (animateTransition = true) => {
   // Atualização de posições de nós e arestas sincronizadas
   const updatePositions = () => {
     links
-      .attr('x1', (d: any) => d.source.currentX ?? d.source.baseX ?? d.source.x)
-      .attr('y1', (d: any) => d.source.currentY ?? d.source.baseY ?? d.source.y)
-      .attr('x2', (d: any) => d.target.currentX ?? d.target.baseX ?? d.target.x)
-      .attr('y2', (d: any) => d.target.currentY ?? d.target.baseY ?? d.target.y)
+      .attr('x1', (d: any) => {
+        const val = d.source.currentX ?? d.source.baseX ?? d.source.x
+        return Number.isFinite(val) ? val : 0
+      })
+      .attr('y1', (d: any) => {
+        const val = d.source.currentY ?? d.source.baseY ?? d.source.y
+        return Number.isFinite(val) ? val : 0
+      })
+      .attr('x2', (d: any) => {
+        const val = d.target.currentX ?? d.target.baseX ?? d.target.x
+        return Number.isFinite(val) ? val : 0
+      })
+      .attr('y2', (d: any) => {
+        const val = d.target.currentY ?? d.target.baseY ?? d.target.y
+        return Number.isFinite(val) ? val : 0
+      })
 
     nodesSelection.attr('transform', (d: any) => {
-      const cx = d.currentX ?? d.baseX ?? d.x
-      const cy = d.currentY ?? d.baseY ?? d.y
+      const cx = Number.isFinite(d.currentX) ? d.currentX : (Number.isFinite(d.baseX) ? d.baseX : (Number.isFinite(d.x) ? d.x : (width / 2)))
+      const cy = Number.isFinite(d.currentY) ? d.currentY : (Number.isFinite(d.baseY) ? d.baseY : (Number.isFinite(d.y) ? d.y : (height / 2)))
       return `translate(${cx},${cy})`
     })
   }
