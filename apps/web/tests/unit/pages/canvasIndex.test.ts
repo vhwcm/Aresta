@@ -28,15 +28,20 @@ vi.mock('../../../app/composables/useCanvas', () => ({
   })
 }))
 
+const mockNotesList = ref<any[]>([])
+const mockLoadNote = vi.fn().mockImplementation((id: string) => {
+  return Promise.resolve(mockNotesList.value.find((n) => String(n.id) === String(id) || String(n.id).replace(/^note-/, '') === String(id).replace(/^note-/, '')) || null)
+})
+
 vi.mock('../../../app/composables/useNotes', () => ({
   useNotes: () => ({
-    notesList: ref([]),
+    notesList: mockNotesList,
     folders: ref([]),
     isLoading: ref(false),
     createNote: vi.fn(),
     deleteNote: vi.fn(),
     updateNote: vi.fn(),
-    loadNote: vi.fn(),
+    loadNote: mockLoadNote,
     fetchNotes: vi.fn().mockResolvedValue([]),
     fetchFolders: vi.fn().mockResolvedValue([])
   })
@@ -131,5 +136,52 @@ describe('Canvas Index Page Header (Mobile single line & expandable search)', ()
     // Volta para o estado inicial fechado
     expect(wrapper.find('input[placeholder="Buscar livros, notas, quadros..."]').exists()).toBe(false)
     expect(wrapper.find('button[title="Buscar"]').exists()).toBe(true)
+  })
+
+  it('abre o NoteEditorPane ao selecionar um nó de nota emitido pelo AppKnowledgeGraph', async () => {
+    const mockNote = {
+      id: 'note-12345',
+      title: 'Nota Arquitetural',
+      content: '# Conteúdo da Nota',
+      tags: ['estudo'],
+      folder: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }
+
+    mockNotesList.value = [mockNote]
+
+    const wrapper = mount(CanvasIndexPage, {
+      global: {
+        stubs: {
+          ...defaultStubs,
+          AppKnowledgeGraph: {
+            template: '<div data-testid="app-knowledge-graph"><button data-testid="select-graph-note" @click="$emit(\'selectNode\', noteNode)">Abrir Nota</button></div>',
+            data() {
+              return {
+                noteNode: {
+                  id: 'note-note-12345',
+                  rawId: 'note-12345',
+                  type: 'note',
+                  name: 'Nota Arquitetural'
+                }
+              }
+            }
+          },
+          NoteEditorPane: {
+            props: ['note'],
+            template: '<div data-testid="note-editor-pane">Editor: {{ note?.title }}</div>'
+          }
+        }
+      }
+    })
+
+    // Clica no botão do stub do AppKnowledgeGraph simulando o clique no nó do grafo
+    await wrapper.find('[data-testid="select-graph-note"]').trigger('click')
+
+    // Deve abrir o NoteEditorPane e não exibir o estado vazio "Nenhuma nota selecionada"
+    expect(wrapper.find('[data-testid="note-editor-pane"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="note-editor-pane"]').text()).toContain('Nota Arquitetural')
+    expect(wrapper.text()).not.toContain('Nenhuma nota selecionada')
   })
 })

@@ -66,17 +66,46 @@ export function useNotes() {
     isLoading.value = true;
     error.value = null;
     try {
-      const local = await noteRepo.getById(id);
+      const cleanId = String(id).trim();
+      const prefixedId = cleanId.startsWith('note-') ? cleanId : `note-${cleanId}`;
+      const strippedId = cleanId.replace(/^note-/, '');
+
+      // 1. Tenta buscar no banco de dados local (Dexie/SQLite)
+      let local = await noteRepo.getById(cleanId);
+      if (!local && cleanId !== prefixedId) {
+        local = await noteRepo.getById(prefixedId);
+      }
+      if (!local && cleanId !== strippedId) {
+        local = await noteRepo.getById(strippedId);
+      }
       if (local) {
         const item = mapLocalToNoteItem(local);
         currentNote.value = item;
         return item;
       }
-      const inMemory = notesList.value.find((n) => n.id === id);
+
+      // 2. Tenta buscar na lista em memória atual
+      const matchNote = (n: NoteItem) => {
+        const nId = String(n.id);
+        return nId === cleanId || nId === prefixedId || nId === strippedId || nId.replace(/^note-/, '') === strippedId;
+      };
+
+      let inMemory = notesList.value.find(matchNote);
       if (inMemory) {
         currentNote.value = inMemory;
         return inMemory;
       }
+
+      // 3. Se não encontrou e a lista em memória estiver vazia, tenta recarregar notas
+      if (notesList.value.length === 0) {
+        await fetchNotes();
+        inMemory = notesList.value.find(matchNote);
+        if (inMemory) {
+          currentNote.value = inMemory;
+          return inMemory;
+        }
+      }
+
       error.value = 'Nota não encontrada.';
       return null;
     } catch (err: any) {

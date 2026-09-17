@@ -269,6 +269,7 @@
           :is-compact="false"
           :search-query="searchQuery"
           :show-controls="false"
+          @select-node="handleSelectGraphNode"
         />
       </div>
 
@@ -602,6 +603,12 @@
           @close="viewLayout = 'graph'"
         />
 
+        <!-- Estado de Carregamento da Nota -->
+        <div v-else-if="isNotesLoading" class="flex-1 flex flex-col items-center justify-center p-8 text-center bg-bgDarker select-none">
+          <div class="w-10 h-10 rounded-full border-2 border-accent border-t-transparent animate-spin mb-3"></div>
+          <p class="text-xs font-technical text-textSecondary uppercase tracking-widest">Carregando anotação...</p>
+        </div>
+
         <!-- Estado Vazio no Modo Split quando nenhuma nota estiver selecionada -->
         <div v-else class="flex-1 flex flex-col items-center justify-center p-8 text-center bg-bgDarker select-none">
           <div class="w-16 h-16 rounded-2xl bg-accent/10 text-accent flex items-center justify-center text-3xl mb-4">
@@ -772,16 +779,20 @@ const handleConnectNodesPayload = async (payload: any) => {
 }
 
 const handleSelectGraphNode = async (node: any) => {
-  if (node.type === 'canvas') {
-    const rawId = String(node.rawId || node.id).replace('canvas-', '')
+  if (node.type === 'canvas' || String(node.id).startsWith('canvas-')) {
+    const rawId = node.rawId != null ? String(node.rawId) : String(node.id).replace(/^canvas-/, '')
     openCanvas(rawId)
-  } else if (node.type === 'note' && node.isDrawing) {
+  } else if ((node.type === 'note' && (node.isDrawing || (node as any).is_drawing)) || String(node.id).includes('drawing')) {
     // Desenhos têm type='note' no grafo mas isDrawing=true — navegam para a página de desenho
-    const rawId = String(node.rawId || node.id).replace('note-', '')
+    const rawId = node.rawId != null ? String(node.rawId) : String(node.id).replace(/^note-/, '')
     openDrawing(rawId)
-  } else if (node.type === 'note') {
-    const rawId = String(node.rawId || node.id).replace('note-', '')
-    const target = notesList.value.find((n) => n.id === rawId)
+  } else if (node.type === 'note' || String(node.id).startsWith('note-')) {
+    const rawId = node.rawId != null ? String(node.rawId) : String(node.id).replace(/^note-/, '')
+    const strippedId = rawId.replace(/^note-/, '')
+    const target = notesList.value.find((n) => {
+      const nId = String(n.id)
+      return nId === rawId || nId.replace(/^note-/, '') === strippedId || nId === `note-${strippedId}`
+    })
     if (target) {
       openNoteEditor(target)
     } else {
@@ -789,8 +800,7 @@ const handleSelectGraphNode = async (node: any) => {
       if (loaded) openNoteEditor(loaded)
     }
   } else if (node.type === 'book') {
-    const bookId = node.rawId || String(node.id).replace('book-', '')
-    navigateTo(`/reader?bookId=${bookId}`)
+    // Gaveta de anotações do livro é tratada dentro do próprio AppKnowledgeGraph
   } else if (node.type === 'annotation') {
     if (node.bookId) {
       navigateTo(`/reader?bookId=${node.bookId}${node.cfi ? '&cfi=' + encodeURIComponent(node.cfi) : ''}`)
@@ -805,7 +815,7 @@ const handleSelectGraphNode = async (node: any) => {
 }
 
 // Sincroniza query params da rota
-const syncFromRoute = () => {
+const syncFromRoute = async () => {
   if (route?.query?.tab) {
     const tabStr = String(route.query.tab).toLowerCase()
     if (tabStr === 'notes' || tabStr === 'note') activeTab.value = 'notes'
@@ -819,31 +829,39 @@ const syncFromRoute = () => {
   if (route?.query?.tag !== undefined) {
     activeTag.value = (route.query.tag as string) || null
   }
-  if (route?.query?.view === 'grid') {
-    viewLayout.value = 'grid'
-  } else if (route?.query?.view === 'split' || route?.query?.view === 'note-editor') {
-    viewLayout.value = 'note-editor'
-  }
 
   const noteParam = (route?.query?.note || route?.query?.id) as string | undefined
   if (noteParam) {
-    loadNote(noteParam).then((note) => {
-      if (note) {
-        activeNote.value = note
+    const note = await loadNote(noteParam)
+    if (note) {
+      activeNote.value = note
+      viewLayout.value = 'note-editor'
+    } else {
+      if (route?.query?.view === 'grid') {
+        viewLayout.value = 'grid'
+      } else if (route?.query?.view === 'split' || route?.query?.view === 'note-editor') {
         viewLayout.value = 'note-editor'
+      } else if (route?.query?.view === 'graph') {
+        viewLayout.value = 'graph'
       }
-    })
+    }
+  } else {
+    if (route?.query?.view === 'grid') {
+      viewLayout.value = 'grid'
+    } else if (route?.query?.view === 'split' || route?.query?.view === 'note-editor') {
+      viewLayout.value = 'note-editor'
+    } else if (route?.query?.view === 'graph') {
+      viewLayout.value = 'graph'
+    }
   }
 }
 
-watch(() => route.query, syncFromRoute, { deep: true })
+watch(() => route.query, () => { syncFromRoute() }, { deep: true })
 
 onMounted(async () => {
   if (typeof window !== 'undefined' && window.innerWidth < 768) {
     isSidebarCollapsed.value = true
   }
-
-  syncFromRoute()
 
   if (!auth.isLoggedIn.value) return
 
@@ -857,15 +875,7 @@ onMounted(async () => {
       fetchUnifiedGraph(),
     ])
 
-    // Se houver id de nota na rota, abre direto no editor
-    const targetNoteId = (route.query.id || route.query.note) as string | undefined
-    if (targetNoteId && typeof targetNoteId === 'string') {
-      const note = await loadNote(targetNoteId)
-      if (note) {
-        activeNote.value = note
-        viewLayout.value = 'note-editor'
-      }
-    }
+    await syncFromRoute()
   } catch (err: any) {
     console.error('Erro ao carregar dados do Hub:', err)
   }

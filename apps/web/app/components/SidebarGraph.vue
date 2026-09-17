@@ -240,16 +240,16 @@ const handleSelectNode = (node: GraphNode) => {
   }
 
   // 3. Notas de desenho: abrem direto na página de desenho
-  const isDrawing = Boolean(node.isDrawing || (node as any).is_drawing)
+  const isDrawing = Boolean(node.isDrawing || (node as any).is_drawing || String(node.id).includes('drawing'))
   if (isDrawing) {
-    const rawId = String(node.rawId || node.id).replace(/^note-/, '')
+    const rawId = node.rawId != null ? String(node.rawId) : String(node.id).replace(/^note-/, '')
     navigateTo(`/canvas/drawing/${rawId}`)
     return
   }
 
   // 4. Quadros: abrem direto no canvas
   if (node.type === 'canvas' || String(node.id).startsWith('canvas-')) {
-    const rawId = String(node.rawId || node.id).replace(/^canvas-/, '')
+    const rawId = node.rawId != null ? String(node.rawId) : String(node.id).replace(/^canvas-/, '')
     navigateTo(`/canvas/${rawId}`)
     return
   }
@@ -257,8 +257,8 @@ const handleSelectNode = (node: GraphNode) => {
   // 5. Notas: abrem direto no editor de notas
   const isNote = node.type === 'note' || String(node.id).startsWith('note-')
   if (isNote) {
-    const rawId = String(node.rawId || node.id).replace(/^note-/, '')
-    navigateTo(`/canvas?id=${rawId}&view=note-editor`)
+    const rawId = node.rawId != null ? String(node.rawId) : String(node.id).replace(/^note-/, '')
+    navigateTo(`/canvas?id=${encodeURIComponent(rawId)}&view=note-editor`)
     return
   }
 
