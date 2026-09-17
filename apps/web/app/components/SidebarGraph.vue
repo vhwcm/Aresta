@@ -214,22 +214,15 @@ const isConnectModalOpen = ref(false)
 const handleSelectNode = (node: GraphNode) => {
   emit('selectNode', node)
 
+  // 1. Livros: único que abre a gaveta de anotações antes
   const isBook = node.type === 'book' || String(node.id).startsWith('book-')
-
   if (isBook) {
     selectedBookNode.value = node
     isBookDrawerOpen.value = true
     return
   }
 
-  const isNote = node.type === 'note' || String(node.id).startsWith('note-')
-
-  if (isNote) {
-    selectedNoteNode.value = node
-    isNoteDrawerOpen.value = true
-    return
-  }
-
+  // 2. Anotação dentro de livro: abre a gaveta de anotações daquele livro
   if (node.type === 'annotation') {
     const bookId = Number((node as any).bookId)
     if (bookId) {
@@ -246,9 +239,26 @@ const handleSelectNode = (node: GraphNode) => {
     }
   }
 
-  if (node.type === 'canvas') {
-    const rawId = node.rawId || String(node.id).replace('canvas-', '')
+  // 3. Notas de desenho: abrem direto na página de desenho
+  const isDrawing = Boolean(node.isDrawing || (node as any).is_drawing)
+  if (isDrawing) {
+    const rawId = String(node.rawId || node.id).replace(/^note-/, '')
+    navigateTo(`/canvas/drawing/${rawId}`)
+    return
+  }
+
+  // 4. Quadros: abrem direto no canvas
+  if (node.type === 'canvas' || String(node.id).startsWith('canvas-')) {
+    const rawId = String(node.rawId || node.id).replace(/^canvas-/, '')
     navigateTo(`/canvas/${rawId}`)
+    return
+  }
+
+  // 5. Notas: abrem direto no editor de notas
+  const isNote = node.type === 'note' || String(node.id).startsWith('note-')
+  if (isNote) {
+    const rawId = String(node.rawId || node.id).replace(/^note-/, '')
+    navigateTo(`/canvas?id=${rawId}&view=note-editor`)
     return
   }
 

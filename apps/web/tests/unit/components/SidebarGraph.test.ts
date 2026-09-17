@@ -179,7 +179,10 @@ describe('SidebarGraph Component', () => {
     expect(wrapper.find('[data-testid="book-drawer"]').exists()).toBe(true)
   })
 
-  it('ao clicar em um nó do tipo nota no grafo, abre a gaveta NoteDetailDrawer no local ao invés de redirecionar para /canvas', async () => {
+  it('ao clicar em um nó de nota, abre direto no editor de notas (/canvas?id=:id&view=note-editor) sem intermediários', async () => {
+    const navigateToMock = (globalThis as any).navigateTo as any
+    navigateToMock.mockClear()
+
     const wrapper = mount(SidebarGraph, {
       global: {
         stubs: {
@@ -198,10 +201,6 @@ describe('SidebarGraph Component', () => {
             },
           },
           BookAnnotationsDrawer: true,
-          NoteDetailDrawer: {
-            props: ['isOpen', 'node'],
-            template: '<div v-if="isOpen" data-testid="note-drawer"><h2>{{ node?.title || node?.name }}</h2></div>',
-          },
           CreateNodeModal: true,
           ConnectNodesModal: true,
           NuxtLink: true,
@@ -209,14 +208,81 @@ describe('SidebarGraph Component', () => {
       },
     })
 
-    expect(wrapper.find('[data-testid="note-drawer"]').exists()).toBe(false)
-
     // Clica no nó de nota
     await wrapper.find('[data-testid="click-note"]').trigger('click')
 
-    // Deve abrir a gaveta de nota
-    const noteDrawer = wrapper.find('[data-testid="note-drawer"]')
-    expect(noteDrawer.exists()).toBe(true)
-    expect(noteDrawer.text()).toContain('Minhas Anotações de Platão')
+    // Deve abrir direto no editor de notas
+    expect(navigateToMock).toHaveBeenCalledWith('/canvas?id=42&view=note-editor')
+  })
+
+  it('ao clicar em um nó de desenho, abre direto na página de desenho (/canvas/drawing/:id)', async () => {
+    const navigateToMock = (globalThis as any).navigateTo as any
+    navigateToMock.mockClear()
+
+    const wrapper = mount(SidebarGraph, {
+      global: {
+        stubs: {
+          GraphCanvas: {
+            template: '<div data-testid="graph-canvas"><button data-testid="click-drawing" @click="$emit(\'selectNode\', drawNode)">Desenho</button></div>',
+            data() {
+              return {
+                drawNode: {
+                  id: 'note-draw-99',
+                  rawId: 'draw-99',
+                  type: 'note',
+                  isDrawing: true,
+                  name: 'Diagrama Mental',
+                },
+              }
+            },
+          },
+          BookAnnotationsDrawer: true,
+          CreateNodeModal: true,
+          ConnectNodesModal: true,
+          NuxtLink: true,
+        },
+      },
+    })
+
+    // Clica no nó de desenho
+    await wrapper.find('[data-testid="click-drawing"]').trigger('click')
+
+    // Deve abrir direto no editor de desenho
+    expect(navigateToMock).toHaveBeenCalledWith('/canvas/drawing/draw-99')
+  })
+
+  it('ao clicar em um nó de quadro (canvas), abre direto no quadro (/canvas/:id)', async () => {
+    const navigateToMock = (globalThis as any).navigateTo as any
+    navigateToMock.mockClear()
+
+    const wrapper = mount(SidebarGraph, {
+      global: {
+        stubs: {
+          GraphCanvas: {
+            template: '<div data-testid="graph-canvas"><button data-testid="click-canvas" @click="$emit(\'selectNode\', canvasNode)">Quadro</button></div>',
+            data() {
+              return {
+                canvasNode: {
+                  id: 'canvas-c123',
+                  rawId: 'c123',
+                  type: 'canvas',
+                  name: 'Quadro Geral',
+                },
+              }
+            },
+          },
+          BookAnnotationsDrawer: true,
+          CreateNodeModal: true,
+          ConnectNodesModal: true,
+          NuxtLink: true,
+        },
+      },
+    })
+
+    // Clica no nó de quadro
+    await wrapper.find('[data-testid="click-canvas"]').trigger('click')
+
+    // Deve abrir direto no quadro
+    expect(navigateToMock).toHaveBeenCalledWith('/canvas/c123')
   })
 })

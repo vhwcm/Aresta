@@ -6,6 +6,7 @@
 - [16/09/2026 11:00] [Fazendo] Implementar exemplos reais de leitura e grafo na home e bloquear acesso e criação anônima sem autenticação
 
 ## ✅ Concluído
+- [16/09/2026 22:24] [Concluído] Fazer notas, desenhos e quadros abrirem direto no editor/canvas a partir do grafo e manter gaveta de anotações apenas para livros
 - [16/09/2026 22:21] [Concluído] Unificar componente de Grafo de Conhecimento na Home e Espaço Criativo, abrir gaveta de notas no local e gaveta de anotações para livros
 - [16/09/2026 22:08] [Concluído] Corrigir persistência de notas e desenhos: eliminar DataCloneError do IndexedDB/Dexie com sanitização de Proxies reativos do Vue, garantir salvamento síncrono no onBeforeRouteLeave e suporte robusto a pages_data
 - [16/09/2026 21:44] [Concluído] Corrigir clique em notas e desenhos no grafo de conhecimento: mover emissão de selectNode para pointerup (sem depender do evento click), marcar desenhos com isDrawing=true no grafo, e rotear desenhos para /canvas/drawing/:id
