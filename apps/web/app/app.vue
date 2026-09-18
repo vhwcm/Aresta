@@ -18,15 +18,32 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, watch } from 'vue'
 import BottomNavbar from '~/components/BottomNavbar.vue'
 import NavbarPageConnector from '~/components/NavbarPageConnector.vue'
 import CommandPalette from '~/components/CommandPalette.vue'
 import SettingsModal from '~/components/SettingsModal.vue'
 import StreakCelebrationModal from '~/components/StreakCelebrationModal.vue'
 import StreakShareModal from '~/components/StreakShareModal.vue'
+import { useAuth } from '~/composables/useAuth'
+import { useDriveSync } from '~/composables/useDriveSync'
 
 const route = typeof useRoute === 'function' ? useRoute() : { path: '/' }
+const auth = useAuth()
+const { initListeners, sync } = useDriveSync()
+
+onMounted(() => {
+  initListeners()
+  if (auth.isLoggedIn.value) {
+    void sync()
+  }
+})
+
+watch(() => auth.isLoggedIn.value, (loggedIn) => {
+  if (loggedIn) {
+    void sync()
+  }
+})
 
 // O leitor imersivo e o canvas de edição ocupam a viewport total
 const isImmersivePage = computed(() => {

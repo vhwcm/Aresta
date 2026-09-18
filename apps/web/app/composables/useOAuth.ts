@@ -183,8 +183,14 @@ export const useOAuth = () => {
       tokenCookie.value = response.token
       userCookie.value = response.user
 
-      if (provider === 'google') await refreshCloudToken('google')
-      if (provider === 'microsoft') await refreshCloudToken('onedrive')
+      if (provider === 'google') {
+        await refreshCloudToken('google')
+        if (typeof localStorage !== 'undefined') localStorage.setItem('aresta_drive_provider', 'google')
+      }
+      if (provider === 'microsoft') {
+        await refreshCloudToken('onedrive')
+        if (typeof localStorage !== 'undefined') localStorage.setItem('aresta_drive_provider', 'onedrive')
+      }
 
       return {
         success: true,
@@ -238,8 +244,14 @@ export const useOAuth = () => {
         body: { code, redirectUri },
       })
 
-      if (provider === 'google') setGoogleDriveToken(response.accessToken)
-      if (provider === 'microsoft') setOneDriveToken(response.accessToken)
+      if (provider === 'google') {
+        setGoogleDriveToken(response.accessToken)
+        if (typeof localStorage !== 'undefined') localStorage.setItem('aresta_drive_provider', 'google')
+      }
+      if (provider === 'microsoft') {
+        setOneDriveToken(response.accessToken)
+        if (typeof localStorage !== 'undefined') localStorage.setItem('aresta_drive_provider', 'onedrive')
+      }
 
       return {
         success: true,
@@ -267,6 +279,7 @@ export const useOAuth = () => {
     } finally {
       if (provider === 'google') setGoogleDriveToken(null)
       if (provider === 'microsoft') setOneDriveToken(null)
+      if (typeof localStorage !== 'undefined') localStorage.removeItem('aresta_drive_provider')
     }
   }
 

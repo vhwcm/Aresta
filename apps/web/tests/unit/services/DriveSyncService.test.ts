@@ -219,7 +219,109 @@ describe('DriveSyncService (Local-First Sync Engine)', () => {
     const service = new DriveSyncService(provider)
     const result = await service.fullSync()
 
-    expect(result.results.length).toBe(6)
+    expect(result.results.length).toBe(8)
     expect(result.syncedAt).toBeDefined()
+  })
+
+  it('6. Sincroniza a biblioteca de livros (library.json) mesclando temas e livros remotos', async () => {
+    await db.saveBook({
+      id: 101,
+      bookId: 101,
+      title: 'Livro Local',
+      status: 'LENDO',
+      currentPage: 12,
+      updated_at: '2026-01-01T00:00:00.000Z',
+      sync_status: 'pending',
+      themes: [{ id: 1, name: 'Filosofia' }],
+    })
+
+    let uploadedPayload: any = null
+    const provider: IDataSyncProvider = {
+      providerName: 'google-drive',
+      ensureDataFolders: async () => {},
+      downloadDataFile: async () => ({
+        schema_version: 1,
+        entity_type: 'book',
+        updated_at: '2026-01-02T00:00:00.000Z',
+        updated_by: 'remote_device',
+        payload: [
+          {
+            id: 202,
+            bookId: 202,
+            title: 'Livro Remoto da Nuvem',
+            status: 'LENDO',
+            currentPage: 50,
+            updated_at: '2026-01-02T00:00:00.000Z',
+            sync_status: 'synced',
+            themes: [{ id: 2, name: 'Programação' }],
+          },
+        ],
+      }),
+      uploadDataFile: async (_name: string, data: unknown) => {
+        uploadedPayload = data
+        return { fileName: 'library.json', itemCount: 2, syncedAt: new Date().toISOString() }
+      },
+      uploadSubFolderDataFile: async () => ({ fileName: '', itemCount: 0, syncedAt: '' }),
+      downloadSubFolderDataFile: async () => null,
+      listSubFolderFiles: async () => [],
+      deleteDataFile: async () => {},
+      deleteSubFolderDataFile: async () => {},
+    }
+
+    const service = new DriveSyncService(provider)
+    await service.syncLibrary()
+
+    const allBooks = await db.getBooks()
+    expect(allBooks.length).toBe(2)
+    const remoteSaved = allBooks.find((b) => b.title === 'Livro Remoto da Nuvem')
+    expect(remoteSaved?.currentPage).toBe(50)
+    expect(remoteSaved?.themes?.[0]?.name).toBe('Programação')
+    expect(uploadedPayload?.payload?.length).toBe(2)
+  })
+
+  it('7. Sincroniza metadados do grafo (graph_meta.json) unificando temas e conexões', async () => {
+    localStorage.setItem(
+      'aresta_graph_meta',
+      JSON.stringify({
+        themes: [{ id: 1, name: 'Filosofia', color: '#6366F1' }],
+        edges: [{ id: 'edge-1', source: 'theme-1', target: 'book-1', type: 'theme-hierarchy' }],
+      })
+    )
+
+    let uploadedPayload: any = null
+    const provider: IDataSyncProvider = {
+      providerName: 'google-drive',
+      ensureDataFolders: async () => {},
+      downloadDataFile: async () => ({
+        schema_version: 1,
+        entity_type: 'graph_meta',
+        updated_at: '2026-01-02T00:00:00.000Z',
+        updated_by: 'remote_device',
+        payload: {
+          themes: [{ id: 2, name: 'Programação', color: '#10B981' }],
+          edges: [{ id: 'edge-2', source: 'theme-2', target: 'book-2', type: 'theme-hierarchy' }],
+        },
+      }),
+      uploadDataFile: async (_name: string, data: unknown) => {
+        uploadedPayload = data
+        return { fileName: 'graph_meta.json', itemCount: 2, syncedAt: new Date().toISOString() }
+      },
+      uploadSubFolderDataFile: async () => ({ fileName: '', itemCount: 0, syncedAt: '' }),
+      downloadSubFolderDataFile: async () => null,
+      listSubFolderFiles: async () => [],
+      deleteDataFile: async () => {},
+      deleteSubFolderDataFile: async () => {},
+    }
+
+    const service = new DriveSyncService(provider)
+    await service.syncGraphMeta()
+
+    const savedRaw = localStorage.getItem('aresta_graph_meta')
+    const parsed = JSON.parse(savedRaw || '{}')
+    expect(parsed.themes.length).toBe(2)
+    expect(parsed.themes.some((t: any) => t.name === 'Filosofia')).toBe(true)
+    expect(parsed.themes.some((t: any) => t.name === 'Programação')).toBe(true)
+    expect(parsed.edges.length).toBe(2)
+    expect(uploadedPayload?.payload?.themes?.length).toBe(2)
   })
 })

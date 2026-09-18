@@ -1,7 +1,10 @@
 import type { IDataSyncProvider, DataSubFolder } from '~/adapters/storage/cloud/IDataSyncProvider'
 import { getDatabase } from '~/adapters/database/DatabaseManager'
-import type { BaseLocalEntity, LocalAnnotation, LocalCanvasItem, LocalDrawingNote, LocalFlashcard, LocalNote, LocalStreak, LocalUserSettings } from '~/adapters/database/types'
+import type { BaseLocalEntity, LocalAnnotation, LocalBook, LocalCanvasItem, LocalDrawingNote, LocalFlashcard, LocalNote, LocalStreak, LocalUserSettings } from '~/adapters/database/types'
 import { mutationQueueService } from './MutationQueueService'
+import { loadGraphMeta, saveGraphMeta, type GraphMeta } from '~/utils/graphMeta'
+import type { GraphEdge } from '~/interfaces/graph'
+import type { GraphThemeRecord } from '~/utils/buildLocalGraph'
 
 export interface SyncResult {
   fileName: string
@@ -334,17 +337,173 @@ export class DriveSyncService {
     return { fileName: 'profile.json', uploaded: 1, downloaded, conflicts }
   }
 
+  async syncLibrary(): Promise<SyncResult> {
+    const db = getDatabase()
+    const local = await db.getBooks()
+    const fileName = 'library.json'
+    const remote = await withRetry(() => this.provider.downloadDataFile<SyncEnvelope<LocalBook[]>>(fileName))
+
+    const byId = new Map<string | number, LocalBook>()
+    const byTitle = new Map<string, LocalBook>()
+    local.forEach((item) => {
+      byId.set(item.id, item)
+      if (item.title) byTitle.set(item.title.trim().toLowerCase(), item)
+    })
+
+    let downloaded = 0
+    let conflicts = 0
+
+    if (remote?.payload && Array.isArray(remote.payload)) {
+      for (const remoteItem of remote.payload) {
+        const normTitle = (remoteItem.title || '').trim().toLowerCase()
+        const current = byId.get(remoteItem.id) || (normTitle ? byTitle.get(normTitle) : undefined)
+
+        if (!current) {
+          if (remoteItem.deleted_at) {
+            byId.set(remoteItem.id, remoteItem)
+            continue
+          }
+          byId.set(remoteItem.id, remoteItem)
+          if (normTitle) byTitle.set(normTitle, remoteItem)
+          await db.saveBook({ ...remoteItem, sync_status: 'synced' })
+          downloaded++
+          continue
+        }
+
+        const winner = this.newer(current, remoteItem)
+        const targetToSave: LocalBook = {
+          ...winner,
+          id: current.id,
+          bookId: current.bookId || current.id,
+          sync_status: 'synced',
+        }
+        byId.set(current.id, targetToSave)
+
+        if (winner.deleted_at) {
+          await db.deleteBook(current.id)
+        } else {
+          await db.saveBook(targetToSave)
+        }
+
+        if (winner !== current) {
+          downloaded++
+          conflicts++
+        } else if (winner !== remoteItem) {
+          conflicts++
+        }
+      }
+    } else {
+      for (const item of local) {
+        if (item.deleted_at) {
+          await db.deleteBook(item.id)
+        }
+      }
+    }
+
+    const merged = [...byId.values()]
+    const mergedHash = computeHash(merged)
+    const cachedHash = getETagCache()[fileName]
+
+    if (cachedHash === mergedHash && remote?.content_hash === mergedHash) {
+      return { fileName, uploaded: 0, downloaded, conflicts, skipped: true }
+    }
+
+    const env = this.envelope('book', merged)
+    await withRetry(() => this.provider.uploadDataFile(fileName, env))
+    setETagCache(fileName, mergedHash)
+
+    return { fileName, uploaded: merged.length, downloaded, conflicts }
+  }
+
+  async syncGraphMeta(): Promise<SyncResult> {
+    const fileName = 'graph_meta.json'
+    const local = loadGraphMeta()
+    const remote = await withRetry(() => this.provider.downloadDataFile<SyncEnvelope<GraphMeta>>(fileName))
+
+    let downloaded = 0
+    let conflicts = 0
+
+    const themesMap = new Map<string | number, GraphThemeRecord>()
+    const themesByName = new Map<string, GraphThemeRecord>()
+    local.themes.forEach((t) => {
+      themesMap.set(t.id, t)
+      const norm = (t.name || '').trim().toLowerCase()
+      if (norm) themesByName.set(norm, t)
+    })
+
+    if (remote?.payload?.themes && Array.isArray(remote.payload.themes)) {
+      for (const remoteTheme of remote.payload.themes) {
+        const norm = (remoteTheme.name || '').trim().toLowerCase()
+        const current = themesMap.get(remoteTheme.id) || (norm ? themesByName.get(norm) : undefined)
+        if (!current) {
+          themesMap.set(remoteTheme.id, remoteTheme)
+          if (norm) themesByName.set(norm, remoteTheme)
+          downloaded++
+        } else {
+          const mergedTheme: GraphThemeRecord = {
+            id: current.id,
+            name: current.name || remoteTheme.name,
+            color: current.color || remoteTheme.color || '#E57B55',
+            description: current.description || remoteTheme.description || '',
+          }
+          themesMap.set(current.id, mergedTheme)
+        }
+      }
+    }
+
+    const edgesMap = new Map<string, GraphEdge>()
+    const edgeKey = (e: GraphEdge) => `${String(e.source)}---${String(e.target)}`
+    const reverseKey = (e: GraphEdge) => `${String(e.target)}---${String(e.source)}`
+
+    local.edges.forEach((e) => {
+      edgesMap.set(edgeKey(e), e)
+    })
+
+    if (remote?.payload?.edges && Array.isArray(remote.payload.edges)) {
+      for (const remoteEdge of remote.payload.edges) {
+        const k = edgeKey(remoteEdge)
+        const rk = reverseKey(remoteEdge)
+        if (!edgesMap.has(k) && !edgesMap.has(rk)) {
+          edgesMap.set(k, remoteEdge)
+          downloaded++
+        }
+      }
+    }
+
+    const mergedMeta: GraphMeta = {
+      themes: Array.from(themesMap.values()),
+      edges: Array.from(edgesMap.values()),
+    }
+
+    saveGraphMeta(mergedMeta)
+
+    const metaHash = computeHash(mergedMeta)
+    const cachedHash = getETagCache()[fileName]
+
+    if (cachedHash === metaHash && remote?.content_hash === metaHash) {
+      return { fileName, uploaded: 0, downloaded, conflicts, skipped: true }
+    }
+
+    const env = this.envelope('graph_meta', mergedMeta)
+    await withRetry(() => this.provider.uploadDataFile(fileName, env))
+    setETagCache(fileName, metaHash)
+
+    return { fileName, uploaded: mergedMeta.themes.length, downloaded, conflicts }
+  }
+
   async fullSync(): Promise<SyncSummary> {
     if (this.inFlight) return this.inFlight
     this.inFlight = (async () => {
       await withRetry(() => this.provider.ensureDataFolders())
       const results = await Promise.all([
         this.syncProfile(),
+        this.syncLibrary(),
+        this.syncGraphMeta(),
         this.syncAnnotations(),
         this.syncFlashcards(),
         this.syncCanvas(),
         this.syncNotes(),
-        this.syncDrawingNotes()
+        this.syncDrawingNotes(),
       ])
       const pending = await mutationQueueService.getPending()
       if (pending.length) {
@@ -380,15 +539,16 @@ export class DriveSyncService {
       provider: this.provider.providerName,
       syncedAt: summary.syncedAt,
       stats: {
-        books: { uploaded: 0, downloaded: 0, conflicts: 0 },
+        books: getStat('library'),
+        themes: getStat('graph_meta'),
         canvases: getStat('canvas'),
         notes: getStat('note'),
         drawingNotes: getStat('drawing'),
         annotations: getStat('annotation'),
         flashcards: getStat('flashcard'),
         streak: getStat('profile'),
-        settings: getStat('profile')
-      }
+        settings: getStat('profile'),
+      },
     }
   }
 
