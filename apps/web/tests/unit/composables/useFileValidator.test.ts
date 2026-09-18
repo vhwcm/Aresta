@@ -68,6 +68,26 @@ describe('detectFileTypeFromBytes', () => {
   it('retorna null para header vazio', () => {
     expect(detectFileTypeFromBytes(new Uint8Array([]))).toBeNull()
   })
+
+  it('detecta PDF com BOM UTF-8 (EF BB BF) no início', () => {
+    const bomPdf = new Uint8Array([0xef, 0xbb, 0xbf, 0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x37])
+    expect(detectFileTypeFromBytes(bomPdf)).toBe('pdf')
+  })
+
+  it('detecta PDF com quebras de linha ou espaços antes de %PDF', () => {
+    const spacesPdf = new Uint8Array([0x0d, 0x0a, 0x20, 0x20, 0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x35])
+    expect(detectFileTypeFromBytes(spacesPdf)).toBe('pdf')
+  })
+
+  it('detecta PDF com comando de impressão @PJL antes do header', () => {
+    const pjlHeader = Array.from('@PJL ENTER LANGUAGE = PDF\r\n%PDF-1.4').map((c) => c.charCodeAt(0))
+    expect(detectFileTypeFromBytes(new Uint8Array(pjlHeader))).toBe('pdf')
+  })
+
+  it('detecta EPUB com offset inicial', () => {
+    const offsetEpub = new Uint8Array([0x00, 0x00, 0x50, 0x4b, 0x03, 0x04, 0x14, 0x00])
+    expect(detectFileTypeFromBytes(offsetEpub)).toBe('epub')
+  })
 })
 
 describe('validateBookFile', () => {
@@ -78,6 +98,34 @@ describe('validateBookFile', () => {
     if (result.valid) {
       expect(result.fileType).toBe('pdf')
       expect(result.mimeType).toBe('application/pdf')
+    }
+  })
+
+  it('valida PDF com BOM UTF-8', async () => {
+    const bomPdf = new Uint8Array([0xef, 0xbb, 0xbf, 0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x37])
+    const file = createFakeFile(bomPdf, 'livro-bom.pdf', 'application/pdf')
+    const result = await validateBookFile(file)
+    expect(result.valid).toBe(true)
+    if (result.valid) {
+      expect(result.fileType).toBe('pdf')
+    }
+  })
+
+  it('valida PDF com MIME application/x-pdf', async () => {
+    const file = createFakeFile(PDF_MAGIC, 'livro.pdf', 'application/x-pdf')
+    const result = await validateBookFile(file)
+    expect(result.valid).toBe(true)
+    if (result.valid) {
+      expect(result.fileType).toBe('pdf')
+    }
+  })
+
+  it('valida PDF com MIME application/octet-stream do navegador', async () => {
+    const file = createFakeFile(PDF_MAGIC, 'livro.pdf', 'application/octet-stream')
+    const result = await validateBookFile(file)
+    expect(result.valid).toBe(true)
+    if (result.valid) {
+      expect(result.fileType).toBe('pdf')
     }
   })
 

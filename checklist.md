@@ -2,6 +2,7 @@
 
 
 ## ✅ Concluído
+- [18/09/2026 10:28] [Concluído] Corrigir validação de assinatura de bytes de PDFs permitindo offset no cabeçalho (BOM, espaços e conformidade ISO 32000-1)
 - [16/09/2026 23:25] [Concluído] Exibir notas geradas a partir de desenhos visualmente e conectá-las no grafo de conhecimento
 - [16/09/2026 23:01] [Concluído] Corrigir filtragem e contagem de temas na estante compatibilizando prefixos theme-, IDs numéricos e nomes de temas
 - [16/09/2026 22:49] [Concluído] Eliminar aviso NUXT_E4007 com NuxtLayout e blindar transform SVG do grafo contra coordenadas NaN

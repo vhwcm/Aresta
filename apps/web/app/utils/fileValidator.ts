@@ -16,8 +16,13 @@ const BYTE_SIGNATURES: Record<SupportedFileType, Uint8Array[]> = {
 
 const MIME_TYPE_MAP: Record<string, SupportedFileType> = {
   'application/pdf': 'pdf',
+  'application/x-pdf': 'pdf',
+  'application/acrobat': 'pdf',
+  'applications/vnd.pdf': 'pdf',
+  'text/pdf': 'pdf',
   'application/epub+zip': 'epub',
   'application/zip': 'epub',
+  'application/x-zip-compressed': 'epub',
 }
 
 async function readFileHeader(file: File, bytes: number): Promise<Uint8Array> {
@@ -35,11 +40,46 @@ function matchesSignature(header: Uint8Array, signature: Uint8Array): boolean {
 }
 
 function detectFileTypeFromBytes(header: Uint8Array): SupportedFileType | null {
+  if (!header || header.length < 4) return null
+
+  // 1. Verificação rápida no offset 0 (caminho feliz direto)
   for (const [fileType, signatures] of Object.entries(BYTE_SIGNATURES) as [SupportedFileType, Uint8Array[]][]) {
     for (const sig of signatures) {
       if (matchesSignature(header, sig)) return fileType
     }
   }
+
+  // 2. Detecção de PDF conforme ISO 32000-1 (Section 7.5.2)
+  // A especificação PDF exige que leitores aceitem %PDF em qualquer ponto dos primeiros 1024 bytes
+  // Suporta BOM UTF-8 (EF BB BF), UTF-16, quebras de linha (\r\n), comandos PJL (@PJL) e wrappers
+  const pdfLimit = Math.min(header.length - 4, 1024)
+  for (let i = 0; i <= pdfLimit; i++) {
+    if (
+      header[i] === 0x25 && // %
+      header[i + 1] === 0x50 && // P
+      header[i + 2] === 0x44 && // D
+      header[i + 3] === 0x46 // F
+    ) {
+      return 'pdf'
+    }
+  }
+
+  // 3. Detecção de EPUB / ZIP com deslocamento ou BOM
+  const epubLimit = Math.min(header.length - 4, 1024)
+  for (let i = 0; i <= epubLimit; i++) {
+    if (
+      header[i] === 0x50 && // P
+      header[i + 1] === 0x4b && // K
+      (
+        (header[i + 2] === 0x03 && header[i + 3] === 0x04) ||
+        (header[i + 2] === 0x05 && header[i + 3] === 0x06) ||
+        (header[i + 2] === 0x07 && header[i + 3] === 0x08)
+      )
+    ) {
+      return 'epub'
+    }
+  }
+
   return null
 }
 
@@ -62,7 +102,7 @@ export async function validateBookFile(file: File): Promise<IValidationResult> {
     }
   }
 
-  const header = await readFileHeader(file, 8)
+  const header = await readFileHeader(file, 2048)
   const detectedType = detectFileTypeFromBytes(header)
 
   if (detectedType === null) {
@@ -77,7 +117,12 @@ export async function validateBookFile(file: File): Promise<IValidationResult> {
   const mimeFromBrowser = file.type
   const mimeType = detectedType === 'pdf' ? 'application/pdf' : 'application/epub+zip'
 
-  if (mimeFromBrowser && !Object.keys(MIME_TYPE_MAP).includes(mimeFromBrowser)) {
+  if (
+    mimeFromBrowser &&
+    mimeFromBrowser !== 'application/octet-stream' &&
+    mimeFromBrowser !== 'binary/octet-stream' &&
+    !Object.keys(MIME_TYPE_MAP).includes(mimeFromBrowser)
+  ) {
     return {
       valid: false,
       reason: 'unsupported_mime',
@@ -100,7 +145,7 @@ export function detectFileTypeFromArrayBuffer(
   fallback: SupportedFileType = 'epub',
 ): SupportedFileType {
   if (!buffer || buffer.byteLength < 4) return fallback
-  const header = new Uint8Array(buffer.slice(0, 8))
+  const header = new Uint8Array(buffer.slice(0, Math.min(buffer.byteLength, 2048)))
   const detected = detectFileTypeFromBytes(header)
   if (detected) return detected
 
