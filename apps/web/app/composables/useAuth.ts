@@ -5,6 +5,7 @@ import { resetGraphMemory } from '~/composables/useGraph'
 import { resetAnnotationsMemory } from '~/composables/useAnnotations'
 import { resetFlashcardsMemory } from '~/composables/useFlashcards'
 import { resetNotesMemory } from '~/composables/useNotes'
+import { resetGraphMeta } from '~/utils/graphMeta'
 import { clearAllLocalData } from '~/adapters/database/DatabaseManager'
 
 export const purgeClientSession = async () => {
@@ -13,6 +14,27 @@ export const purgeClientSession = async () => {
   resetAnnotationsMemory()
   resetFlashcardsMemory()
   resetNotesMemory()
+  resetGraphMeta()
+  if (typeof localStorage !== 'undefined') {
+    const keysToRemove: string[] = []
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i)
+      if (key && (key.startsWith('aresta_') || key.startsWith('aresta:'))) {
+        keysToRemove.push(key)
+      }
+    }
+    keysToRemove.forEach((k) => localStorage.removeItem(k))
+  }
+  if (typeof sessionStorage !== 'undefined') {
+    const sessionKeys: string[] = []
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const key = sessionStorage.key(i)
+      if (key && (key.startsWith('aresta_') || key.startsWith('aresta:'))) {
+        sessionKeys.push(key)
+      }
+    }
+    sessionKeys.forEach((k) => sessionStorage.removeItem(k))
+  }
   await clearAllLocalData()
 }
 

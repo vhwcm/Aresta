@@ -84,7 +84,13 @@ export const useUserBooks = () => {
         const seenIds = new Set<number>()
         const seenTitles = new Set<string>()
         const uniqueLocal: UserBookItem[] = []
+        const SYSTEM_FOLDERS = new Set(['data', 'v1', 'v2', 'v3', '.aresta', 'books'])
         for (const lb of localBooks) {
+          const normRawTitle = (lb.title || '').trim().toLowerCase()
+          if (SYSTEM_FOLDERS.has(normRawTitle) || /^v\d+$/i.test(normRawTitle)) {
+            bookRepo.deleteBook(lb.id).catch(() => {})
+            continue
+          }
           const item = mapLocalToUserBookItem(lb)
           const normTitle = item.title ? item.title.trim().toLowerCase() : ''
           if (seenIds.has(item.bookId) || (normTitle && seenTitles.has(normTitle))) {
@@ -106,11 +112,28 @@ export const useUserBooks = () => {
 
       // Sincroniza livros do Google Drive se conectado
       try {
-        const { isGoogleDriveConnected, listDriveBooks } = useGoogleDriveSync()
+        const { isGoogleDriveConnected, listDriveBooks, deleteBookFromDrive } = useGoogleDriveSync()
         if (isGoogleDriveConnected.value) {
           const driveBooks = await listDriveBooks()
+          const rawBooks = await bookRepo.getRawAll()
+          const deletedTitles = new Set(
+            rawBooks
+              .filter((b) => b.deleted_at && b.title)
+              .map((b) => b.title.trim().toLowerCase())
+          )
+          const SYSTEM_FOLDERS = new Set(['data', 'v1', 'v2', 'v3', '.aresta', 'books'])
+
           for (const dbBook of driveBooks) {
             const normDbTitle = dbBook.title.toLowerCase().trim()
+            if (SYSTEM_FOLDERS.has(normDbTitle) || /^v\d+$/i.test(normDbTitle) || normDbTitle.startsWith('.')) {
+              continue
+            }
+            if (deletedTitles.has(normDbTitle)) {
+              // Livro excluído localmente: limpa pasta órfã no Drive em background e não ressuscita
+              deleteBookFromDrive(dbBook.title, dbBook.folderId).catch(() => {})
+              continue
+            }
+
             const alreadyExists = userBooks.value.some(
               (b) => b.title.toLowerCase().trim() === normDbTitle
             )
@@ -235,25 +258,61 @@ export const useUserBooks = () => {
   }
 
   const deleteUserBook = async (userBookId: number) => {
-    const item = userBooks.value.find((b: UserBookItem) => b.userBookId === userBookId)
-    const targetBookId = item?.bookId || userBookId
+    const numUserBookId = Number(userBookId)
+    const item = userBooks.value.find((b: UserBookItem) => Number(b.userBookId) === numUserBookId || Number(b.bookId) === numUserBookId)
+    const targetBookId = item?.bookId ? Number(item.bookId) : numUserBookId
 
-    await bookRepo.delete(userBookId)
-    if (item && item.bookId !== userBookId) {
+    // Remoção otimista imediata da interface reativa
+    userBooks.value = userBooks.value.filter(
+      (b) =>
+        Number(b.userBookId) !== numUserBookId &&
+        Number(b.bookId) !== numUserBookId &&
+        Number(b.userBookId) !== targetBookId &&
+        Number(b.bookId) !== targetBookId &&
+        (!item?.title || b.title?.trim().toLowerCase() !== item.title.trim().toLowerCase())
+    )
+
+    await bookRepo.delete(numUserBookId)
+    if (targetBookId !== numUserBookId) {
       try {
-        await bookRepo.delete(item.bookId)
+        await bookRepo.delete(targetBookId)
       } catch {}
     }
+
     if (item?.title) {
       try {
-        const all = await bookRepo.getAll()
+        const allRaw = await bookRepo.getRawAll()
         const norm = item.title.trim().toLowerCase()
-        for (const b of all) {
-          if (b.title && b.title.trim().toLowerCase() === norm) {
+        for (const b of allRaw) {
+          if (b.title && b.title.trim().toLowerCase() === norm && !b.deleted_at) {
             await bookRepo.delete(b.id)
           }
         }
       } catch {}
+    }
+
+    // Exclui a pasta do livro no Google Drive se conectado
+    try {
+      const { isGoogleDriveConnected, deleteBookFromDrive } = useGoogleDriveSync()
+      if (isGoogleDriveConnected.value && item?.title) {
+        const folderId = item.filePath?.startsWith('drive:') ? item.filePath.replace('drive:', '') : undefined
+        await deleteBookFromDrive(item.title, folderId)
+      }
+    } catch (driveErr) {
+      console.warn('[useUserBooks] Aviso ao excluir livro no Drive:', driveErr)
+    }
+
+    // Limpa cache binário e armazenamento local de arquivos
+    try {
+      const { deleteCachedBook } = await import('~/utils/bookCache')
+      await deleteCachedBook(targetBookId)
+      await deleteCachedBook(numUserBookId)
+      const { getBinaryStorage } = await import('~/adapters/storage/StorageManager')
+      const storage = getBinaryStorage()
+      await storage.deleteFile(String(targetBookId)).catch(() => {})
+      await storage.deleteFile(String(numUserBookId)).catch(() => {})
+    } catch (cacheErr) {
+      console.warn('[useUserBooks] Falha ao limpar binário em cache:', cacheErr)
     }
 
     // Exclui anotações e flashcards locais vinculados a este livro
@@ -262,11 +321,11 @@ export const useUserBooks = () => {
       const noteIds = notes.map((n) => n.id)
       await annotationRepo.deleteByBookId(targetBookId)
       await flashcardRepo.deleteByBookId(targetBookId, noteIds)
-      if (item && item.userBookId !== targetBookId) {
-        const ubNotes = await annotationRepo.getAll({ bookId: item.userBookId })
+      if (numUserBookId !== targetBookId) {
+        const ubNotes = await annotationRepo.getAll({ bookId: numUserBookId })
         const ubNoteIds = ubNotes.map((n) => n.id)
-        await annotationRepo.deleteByBookId(item.userBookId)
-        await flashcardRepo.deleteByBookId(item.userBookId, ubNoteIds)
+        await annotationRepo.deleteByBookId(numUserBookId)
+        await flashcardRepo.deleteByBookId(numUserBookId, ubNoteIds)
       }
     } catch (cleanErr) {
       console.warn('[useUserBooks] Erro ao limpar notas e flashcards locais do livro:', cleanErr)
@@ -276,9 +335,12 @@ export const useUserBooks = () => {
   }
 
   const deleteUserBookByBookId = async (bookId: number) => {
-    const item = userBooks.value.find((b: UserBookItem) => b.bookId === bookId)
+    const numBookId = Number(bookId)
+    const item = userBooks.value.find((b: UserBookItem) => Number(b.bookId) === numBookId || Number(b.userBookId) === numBookId)
     if (item) {
       await deleteUserBook(item.userBookId)
+    } else {
+      await deleteUserBook(numBookId)
     }
   }
 

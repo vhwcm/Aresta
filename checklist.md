@@ -1,9 +1,9 @@
 ## 🔄 Em Andamento
-- [18/09/2026 17:55] [Fazendo] Eliminar nós fantasmas pós-exclusão de conta corrigindo expurgo de localStorage e ignorando pastas de sistema no Google Drive
 - [18/09/2026 17:41] [Fazendo] Corrigir exclusão de livros da estante garantindo remoção local, no Drive, no cache e prevenção de ressuscitação
 - [18/09/2026 17:34] [Fazendo] Projetar e implementar modo de leitura scroll contínuo vertical para PDF e EPUB
 
 ## ✅ Concluído
+- [18/09/2026 18:08] [Concluído] Eliminar nós fantasmas pós-exclusão de conta corrigindo expurgo de localStorage e ignorando pastas de sistema no Google Drive
 - [18/09/2026 17:58] [Concluído] Remover barra superior de cabeçalho da nota e mover botão de exclusão para a barra de ferramentas interna
 - [18/09/2026 17:39] [Concluído] Mover título da nota para dentro da página no estilo Obsidian com edição dinâmica inline
 - [18/09/2026 17:16] [Concluído] Integrar barra única responsiva no topo da anotação com formatação rica (negrito, itálico, headers), pasta, tags em popover e vínculos universais (canvas, nota, livro, livreto)

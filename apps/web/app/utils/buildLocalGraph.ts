@@ -1,5 +1,6 @@
 import type { LocalAnnotation, LocalBook, LocalCanvasItem, LocalDrawingNote, LocalNote } from '~/adapters/database/types'
 import type { GraphData, GraphEdge, GraphNode } from '~/interfaces/graph'
+import { resolveNoteTitle } from '~/utils/noteTitle'
 
 export interface GraphThemeRecord {
   id: number
@@ -95,7 +96,12 @@ export const buildLocalGraph = (input: BuildLocalGraphInput = {}): GraphData => 
     })
   }
 
+  const SYSTEM_FOLDERS = new Set(['data', 'v1', 'v2', 'v3', '.aresta', 'books'])
   for (const book of books) {
+    const normTitle = (book.title || '').trim().toLowerCase()
+    if (SYSTEM_FOLDERS.has(normTitle) || /^v\d+$/i.test(normTitle)) {
+      continue
+    }
     const bookId = Number(book.bookId || book.id)
     const nodeId = `book-${bookId}`
     const title = book.title || 'Livro sem título'
@@ -165,15 +171,17 @@ export const buildLocalGraph = (input: BuildLocalGraphInput = {}): GraphData => 
   }
 
   for (const note of notes) {
-    const nodeId = `note-${note.id}`
+    const rawNoteId = String(note.id)
+    const nodeId = rawNoteId.startsWith('note-') ? rawNoteId : `note-${rawNoteId}`
     const isHtml = /<([a-z]+)[^>]*>[\s\S]*?<\/\1>/i.test(note.content || '') || (note.content || '').includes('synthesized-html-container') || (note.content || '').includes('aresta-drawing-synthesis')
+    const finalTitle = resolveNoteTitle(note.title, note.content)
     nodes.push({
       id: nodeId,
       rawId: note.id,
       type: 'note',
       isHtml,
-      name: truncateTitle(note.title || 'Nota sem título'),
-      title: note.title || 'Nota sem título',
+      name: truncateTitle(finalTitle),
+      title: finalTitle,
       description: note.content ? note.content.slice(0, 140) : undefined,
       folder: note.folder || null,
       tags: note.tags || [],
@@ -189,7 +197,10 @@ export const buildLocalGraph = (input: BuildLocalGraphInput = {}): GraphData => 
     for (const link of note.links || []) {
       if (link.targetType === 'BOOK') addEdge(nodeId, `book-${link.targetId}`, 'note-book')
       if (link.targetType === 'CANVAS') addEdge(nodeId, `canvas-${link.targetId}`, 'note-canvas')
-      if (link.targetType === 'NOTE') addEdge(nodeId, `note-${link.targetId}`, 'note-note')
+      if (link.targetType === 'NOTE') {
+        const tId = String(link.targetId)
+        addEdge(nodeId, tId.startsWith('note-') ? tId : `note-${tId}`, 'note-note')
+      }
     }
     const noteContent = note.content || ''
     const canvasRefRegexes = [

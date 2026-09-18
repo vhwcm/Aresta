@@ -118,6 +118,35 @@ describe('CloudStorageProviders & Factory (SOLID)', () => {
     expect(books[0]?.title).toBe('Memórias Póstumas')
   })
 
+  it('GoogleDriveStorageProvider deve ignorar pastas de sistema como v1, data, v2 ao listar livros', async () => {
+    global.fetch = vi.fn(async (url: string | URL | Request) => {
+      const urlStr = url.toString()
+      if (urlStr.includes('name') && urlStr.includes('Aresta')) {
+        return new Response(JSON.stringify({ files: [{ id: 'aresta_root_1', name: 'Aresta' }] }), { status: 200 })
+      }
+      if (urlStr.includes('aresta_root_1')) {
+        return new Response(
+          JSON.stringify({
+            files: [
+              { id: 'v1_folder', name: 'v1', mimeType: 'application/vnd.google-apps.folder' },
+              { id: 'data_folder', name: 'data', mimeType: 'application/vnd.google-apps.folder' },
+              { id: 'v2_folder', name: 'v2', mimeType: 'application/vnd.google-apps.folder' },
+              { id: 'hidden_folder', name: '.aresta', mimeType: 'application/vnd.google-apps.folder' },
+              { id: 'b1', name: 'Dom Casmurro', mimeType: 'application/vnd.google-apps.folder' },
+            ],
+          }),
+          { status: 200 }
+        )
+      }
+      return new Response(JSON.stringify({ files: [] }), { status: 200 })
+    }) as any
+
+    const provider = new GoogleDriveStorageProvider('test-token')
+    const books = await provider.listBooks()
+    expect(books).toHaveLength(1)
+    expect(books[0]?.title).toBe('Dom Casmurro')
+  })
+
   it('GoogleDriveStorageProvider deve deletar todas as pastas Aresta ao invocar deleteAllArestaData', async () => {
     const deletedIds: string[] = []
     global.fetch = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {

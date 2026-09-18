@@ -202,11 +202,65 @@ export class GoogleDriveStorageProvider implements IDataSyncProvider {
     try {
       const rootFolder = await this.ensureFolder('Aresta')
       const items = await this.listFolder(rootFolder.id)
+      const SYSTEM_FOLDERS = new Set(['data', 'v1', 'v2', 'v3', '.aresta', 'books'])
       return items
-        .filter((item) => item.mimeType === 'application/vnd.google-apps.folder')
+        .filter((item) => {
+          if (item.mimeType !== 'application/vnd.google-apps.folder') return false
+          const name = (item.name || '').trim().toLowerCase()
+          if (SYSTEM_FOLDERS.has(name) || /^v\d+$/i.test(name) || name.startsWith('.')) {
+            return false
+          }
+          return true
+        })
         .map((folder) => ({ title: folder.name, folderId: folder.id }))
     } catch {
       return []
+    }
+  }
+
+  async deleteBookFolder(bookTitle: string, folderId?: string): Promise<void> {
+    const headers = this.getAuthHeader()
+    if (folderId) {
+      try {
+        const res = await fetch(`https://www.googleapis.com/drive/v3/files/${folderId}`, {
+          method: 'DELETE',
+          headers,
+        })
+        if (res.ok || res.status === 404) {
+          this._folderIdCache.clear()
+          return
+        }
+      } catch (err) {
+        console.warn(`[GoogleDriveStorageProvider] Falha ao excluir pasta por folderId (${folderId}):`, err)
+      }
+    }
+
+    if (!bookTitle) return
+
+    try {
+      const rootFolder = await this.ensureFolder('Aresta')
+      const safeTitle = bookTitle.trim().replace(/'/g, "\\'")
+      const query = `'${rootFolder.id}' in parents and name = '${safeTitle}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false`
+      const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name)`
+      const res = await fetch(url, { headers })
+      if (res.ok) {
+        const data = (await res.json()) as { files?: Array<{ id: string; name: string }> }
+        if (data.files && data.files.length > 0) {
+          for (const folder of data.files) {
+            try {
+              await fetch(`https://www.googleapis.com/drive/v3/files/${folder.id}`, {
+                method: 'DELETE',
+                headers,
+              })
+            } catch (delErr) {
+              console.warn(`[GoogleDriveStorageProvider] Falha ao excluir pasta do livro ${folder.id}:`, delErr)
+            }
+          }
+        }
+      }
+      this._folderIdCache.clear()
+    } catch (err) {
+      console.warn(`[GoogleDriveStorageProvider] Erro ao excluir pasta do livro "${bookTitle}":`, err)
     }
   }
 

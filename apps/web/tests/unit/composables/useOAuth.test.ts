@@ -35,4 +35,19 @@ describe('useOAuth Composable', () => {
     setOneDriveToken(null)
     expect(getCloudToken('onedrive')).toBeNull()
   })
+
+  it('purgeClientSession deve limpar aresta_graph_meta e chaves aresta_* do localStorage', async () => {
+    const { purgeClientSession } = await import('~/composables/useAuth')
+    localStorage.setItem('aresta_graph_meta', JSON.stringify({ themes: [{ name: 'Programação' }], edges: [] }))
+    localStorage.setItem('aresta_settings', JSON.stringify({ theme: 'dark' }))
+    localStorage.setItem('aresta_drive_sync_device_id', 'dev-123')
+    localStorage.setItem('unrelated_key', 'keep_me')
+
+    await purgeClientSession()
+
+    expect(localStorage.getItem('aresta_graph_meta')).toBeNull()
+    expect(localStorage.getItem('aresta_settings')).toBeNull()
+    expect(localStorage.getItem('aresta_drive_sync_device_id')).toBeNull()
+    expect(localStorage.getItem('unrelated_key')).toBe('keep_me')
+  })
 })
