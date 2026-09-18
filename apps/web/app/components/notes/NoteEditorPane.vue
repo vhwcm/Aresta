@@ -1,40 +1,5 @@
 <template>
   <main class="flex-1 flex flex-col bg-bgApp overflow-hidden">
-    <!-- Barra Superior da Janela da Nota (Breadcrumb Contextual e Ações Globais) -->
-    <div class="h-12 md:h-14 border-b border-divider bg-bgPanel flex items-center justify-between px-3 md:px-6 flex-shrink-0 gap-3">
-      <div class="flex items-center gap-2 text-xs text-textSecondary min-w-0 font-medium select-none">
-        <FileTextIcon class="w-4 h-4 text-accent shrink-0" />
-        <span class="truncate max-w-[200px] sm:max-w-xs md:max-w-md">
-          {{ localNote.folder ? `${localNote.folder} / ` : '' }}{{ localNote.title || 'Sem título' }}
-        </span>
-      </div>
-
-      <div class="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
-        <!-- Botão Excluir Nota -->
-        <button
-          type="button"
-          class="p-2 rounded-xl hover:bg-red-500/10 text-red-400 hover:text-red-300 transition-colors cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
-          title="Excluir Nota"
-          @click="$emit('delete', localNote.id)"
-          data-testid="btn-delete-note"
-        >
-          <Trash2Icon class="w-4 h-4" />
-        </button>
-
-        <!-- Botão Fechar e Voltar ao Hub -->
-        <button
-          type="button"
-          class="px-2.5 py-1.5 rounded-xl bg-bgSurface hover:bg-bgElevated text-xs text-textSecondary hover:text-textPrimary border border-divider transition-colors flex items-center gap-1.5 cursor-pointer min-h-[36px]"
-          title="Fechar e retornar"
-          @click="$emit('close')"
-          data-testid="btn-close-note"
-        >
-          <LayoutGridIcon class="w-3.5 h-3.5 text-accent" />
-          <span class="hidden sm:inline">Fechar</span>
-        </button>
-      </div>
-    </div>
-
     <!-- Corpo do Editor -->
     <div
       class="flex-1 p-2 sm:p-4 md:p-6 overflow-hidden bg-bgDarker flex flex-col relative"
@@ -220,40 +185,53 @@
             </button>
           </div>
 
-          <!-- Grupo da Direita: Indicador para Notas HTML Sintetizadas -->
-          <div v-if="isHtmlNote" class="flex items-center gap-1.5 shrink-0">
-            <span class="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-400 font-semibold text-[11px] border border-amber-500/30">
-              <SparklesIcon class="w-3 h-3" />
-              Síntese de Desenho (HTML)
-            </span>
+          <!-- Grupo da Direita: Indicador para Notas HTML Sintetizadas e Ações -->
+          <div class="flex items-center gap-1.5 sm:gap-2 shrink-0 ml-auto">
+            <div v-if="isHtmlNote" class="flex items-center gap-1.5 shrink-0">
+              <span class="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-400 font-semibold text-[11px] border border-amber-500/30">
+                <SparklesIcon class="w-3 h-3" />
+                Síntese de Desenho (HTML)
+              </span>
 
-            <div class="flex items-center gap-1 bg-bgElevated p-0.5 rounded-lg text-[11px] border border-divider">
+              <div class="flex items-center gap-1 bg-bgElevated p-0.5 rounded-lg text-[11px] border border-divider">
+                <button
+                  type="button"
+                  class="px-2 py-0.5 rounded transition-all cursor-pointer"
+                  :class="htmlViewMode === 'preview' ? 'bg-primary text-white font-medium shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
+                  @click="htmlViewMode === 'preview'"
+                >
+                  Preview
+                </button>
+                <button
+                  type="button"
+                  class="px-2 py-0.5 rounded transition-all cursor-pointer"
+                  :class="htmlViewMode === 'code' ? 'bg-primary text-white font-medium shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
+                  @click="htmlViewMode = 'code'"
+                >
+                  Código
+                </button>
+              </div>
+
               <button
                 type="button"
-                class="px-2 py-0.5 rounded transition-all cursor-pointer"
-                :class="htmlViewMode === 'preview' ? 'bg-primary text-white font-medium shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
-                @click="htmlViewMode = 'preview'"
+                class="text-[11px] px-2 py-1 rounded bg-bgElevated hover:bg-bgSurface text-textSecondary hover:text-textPrimary border border-divider transition-all flex items-center gap-1 cursor-pointer"
+                title="Copiar HTML"
+                @click="copyHtmlContent"
               >
-                Preview
-              </button>
-              <button
-                type="button"
-                class="px-2 py-0.5 rounded transition-all cursor-pointer"
-                :class="htmlViewMode === 'code' ? 'bg-primary text-white font-medium shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
-                @click="htmlViewMode = 'code'"
-              >
-                Código
+                <CopyIcon class="w-3 h-3" />
+                <span class="hidden sm:inline">{{ copiedHtml ? 'Copiado!' : 'Copiar' }}</span>
               </button>
             </div>
 
+            <!-- Botão Excluir Nota -->
             <button
               type="button"
-              class="text-[11px] px-2 py-1 rounded bg-bgElevated hover:bg-bgSurface text-textSecondary hover:text-textPrimary border border-divider transition-all flex items-center gap-1 cursor-pointer"
-              title="Copiar HTML"
-              @click="copyHtmlContent"
+              class="w-8 h-8 rounded-lg flex items-center justify-center text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-divider/80 hover:border-red-500/30 transition-colors cursor-pointer shrink-0"
+              title="Excluir Nota"
+              @click="$emit('delete', localNote.id)"
+              data-testid="btn-delete-note"
             >
-              <CopyIcon class="w-3 h-3" />
-              <span class="hidden sm:inline">{{ copiedHtml ? 'Copiado!' : 'Copiar' }}</span>
+              <Trash2Icon class="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -698,7 +676,6 @@ import {
   FolderIcon,
   TagIcon,
   Trash2Icon,
-  LayoutGridIcon,
   MessageSquareIcon,
   SparklesIcon,
   XIcon,

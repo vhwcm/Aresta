@@ -78,7 +78,7 @@ describe('NoteEditorPane Component', () => {
     expect(wrapper.emitted('save')).toBeTruthy();
   });
 
-  it('renders inline title inside document page (Obsidian style) and updates breadcrumb dynamically', async () => {
+  it('renders inline title inside document page (Obsidian style) and updates title dynamically', async () => {
     const wrapper = mount(NoteEditorPane, {
       props: {
         note: sampleNote,
@@ -99,16 +99,13 @@ describe('NoteEditorPane Component', () => {
     expect(inlineTitleInput.exists()).toBe(true);
     expect((inlineTitleInput.element as HTMLInputElement).value).toBe('Nota de Teste');
 
-    // Verifica que o breadcrumb no topo reflete a pasta e o título
-    expect(wrapper.text()).toContain('Geral / Nota de Teste');
-
     // Altera o título dinamicamente
     await inlineTitleInput.setValue('Meu Novo Título Obsidian');
-    expect(wrapper.text()).toContain('Geral / Meu Novo Título Obsidian');
+    expect((inlineTitleInput.element as HTMLInputElement).value).toBe('Meu Novo Título Obsidian');
     expect(wrapper.emitted('update:note')).toBeTruthy();
   });
 
-  it('emits delete when trash button is clicked', async () => {
+  it('emits delete when trash button is clicked in toolbar', async () => {
     const wrapper = mount(NoteEditorPane, {
       props: {
         note: sampleNote,
@@ -133,7 +130,7 @@ describe('NoteEditorPane Component', () => {
     expect(wrapper.emitted('delete')?.[0]).toEqual(['note-test-1']);
   });
 
-  it('emits close when close button is clicked', async () => {
+  it('does not render close button or top breadcrumb bar', async () => {
     const wrapper = mount(NoteEditorPane, {
       props: {
         note: sampleNote,
@@ -150,11 +147,8 @@ describe('NoteEditorPane Component', () => {
       },
     });
 
-    const closeBtn = wrapper.find('button[title="Fechar e retornar"]');
-    expect(closeBtn.exists()).toBe(true);
-    await closeBtn.trigger('click');
-
-    expect(wrapper.emitted('close')).toBeTruthy();
+    const closeBtn = wrapper.find('[data-testid="btn-close-note"]');
+    expect(closeBtn.exists()).toBe(false);
   });
 
   it('emits update:note and save when MilkdownEditor content changes', async () => {
