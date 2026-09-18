@@ -113,6 +113,19 @@ export const useGoogleDriveSync = () => {
     }
   }
 
+  const deleteBookFromDrive = async (title: string, folderId?: string): Promise<boolean> => {
+    let token = await ensureGoogleDriveToken()
+    if (!token) return false
+    try {
+      const provider = new GoogleDriveStorageProvider(() => token)
+      await provider.deleteBookFolder(title, folderId)
+      return true
+    } catch (err) {
+      console.warn(`[GoogleDriveSync] Falha ao excluir livro "${title}" do Drive:`, err)
+      return false
+    }
+  }
+
   const deleteAllDriveData = async (): Promise<boolean> => {
     let token = await ensureGoogleDriveToken()
     if (!token) return false
@@ -132,6 +145,7 @@ export const useGoogleDriveSync = () => {
     isGoogleDriveConnected,
     syncBookToDrive,
     listDriveBooks,
+    deleteBookFromDrive,
     deleteAllDriveData,
   }
 }

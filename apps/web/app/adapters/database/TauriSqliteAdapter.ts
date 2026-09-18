@@ -214,7 +214,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
 
   async getBookRawById(id: number): Promise<LocalBook | null> {
     await this.init();
-    const rows = await this.db!.select<any[]>('SELECT * FROM books WHERE id = ?', [id]);
+    const rows = await this.db!.select<any[]>('SELECT * FROM books WHERE id = ?', [Number(id)]);
     if (rows.length === 0) return null;
     const r = rows[0];
     return {
@@ -234,8 +234,33 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
     };
   }
 
+  async getBooksRaw(): Promise<LocalBook[]> {
+    await this.init();
+    const rows = await this.db!.select<any[]>('SELECT * FROM books');
+    return rows.map((r) => ({
+      id: r.id,
+      bookId: r.book_id,
+      title: r.title,
+      author: r.author,
+      coverPath: r.cover_path,
+      filePath: r.file_path,
+      status: r.status,
+      currentPage: r.current_page,
+      lastAccessedAt: r.last_accessed_at,
+      themes: r.themes_json ? JSON.parse(r.themes_json) : [],
+      updated_at: r.updated_at,
+      deleted_at: r.deleted_at,
+      sync_status: r.sync_status
+    }));
+  }
+
   async saveBook(book: LocalBook): Promise<void> {
     await this.init();
+    const cleanId = Number(book.id);
+    const existing = await this.getBookRawById(cleanId);
+    if (existing?.deleted_at && !book.deleted_at) {
+      return;
+    }
     await this.db!.execute(
       `INSERT INTO books (id, book_id, title, author, cover_path, file_path, status, current_page, last_accessed_at, themes_json, updated_at, deleted_at, sync_status)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -253,8 +278,8 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
          deleted_at = excluded.deleted_at,
          sync_status = excluded.sync_status`,
       [
-        book.id,
-        book.bookId,
+        cleanId,
+        Number(book.bookId || book.id),
         book.title,
         book.author || null,
         book.coverPath || null,
@@ -272,8 +297,10 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
 
   async deleteBook(id: number): Promise<void> {
     await this.init();
+    const numId = Number(id);
+    if (isNaN(numId)) return;
     const now = new Date().toISOString();
-    await this.db!.execute('UPDATE books SET deleted_at = ?, sync_status = "pending", updated_at = ? WHERE id = ?', [now, now, id]);
+    await this.db!.execute('UPDATE books SET deleted_at = ?, sync_status = "pending", updated_at = ? WHERE id = ? OR book_id = ?', [now, now, numId, numId]);
   }
 
   async clearBooks(): Promise<void> {

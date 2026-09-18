@@ -43,8 +43,12 @@ model Book {
 5. **Estratégia de Sincronização Híbrida (ADR-007)**:
    - Para usuários com múltiplos dispositivos, os metadados (posição, destaques, notas) são sincronizados via `/api/sync` com o PostgreSQL central.
    - Os arquivos binários (`.epub` e `.pdf`) são sincronizados diretamente com o Google Drive privado do usuário (`AppDataFolder`), com cache local em OPFS/FS. Ver `docs/decisions/ADR-007-hybrid-sync-storage.md`.
-6. **Exclusão em Cascata e Alerta Destrutivo de Notas e Flashcards**:
-   - Ao deletar um livro da estante (`UserBook` / `Book`), todas as anotações (`Annotation`) e flashcards (`Flashcard`) gerados a partir do livro são automaticamente excluídos em cascata no banco de dados (PostgreSQL) e no armazenamento local (IndexedDB/SQLite).
+6. **Exclusão em Cascata, Limpeza no Drive e Prevenção de Ressuscitação**:
+   - Ao deletar um livro da estante (`UserBookItem`), todas as anotações (`Annotation`) e flashcards (`Flashcard`) gerados a partir do livro são automaticamente excluídos em cascata no armazenamento local (IndexedDB/SQLite).
+   - **Remoção no Google Drive / Cloud Provider**: Se o usuário estiver autenticado ou com o Google Drive conectado, a pasta remota correspondente (`Aresta/[Título]/`) é excluída via API, e o arquivo binário local é purgado de `bookCache` e `getBinaryStorage()`.
+   - **Prevenção de Ressuscitação por Sync**:
+     - O método `fetchUserBooks()` consulta `bookRepo.getRawAll()` e rejeita a reimportação de qualquer pasta do Drive cujo título conste como excluído (`deleted_at`).
+     - O serviço `DriveSyncService` carrega livros via `db.getBooksRaw()` para preservar e propagar o tombstone `deleted_at` no arquivo `library.json`, impedindo que downloads de snapshots antigos da nuvem restaurem livros apagados.
    - Na interface (`/library`), ao solicitar a exclusão de uma obra que possui anotações ou flashcards vinculados, o modal de confirmação exibe um alerta proeminente (`book-notes-warning-box`) quantificando o número de anotações e flashcards que serão permanentemente apagados junto com o livro.
 
 ---

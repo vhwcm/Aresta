@@ -15,6 +15,13 @@ export class BookRepository {
   }
 
   /**
+   * Retorna todos os livros independentemente de `deleted_at`.
+   */
+  async getRawAll(): Promise<LocalBook[]> {
+    return this.db.getBooksRaw ? this.db.getBooksRaw() : this.db.getBooks();
+  }
+
+  /**
    * Retorna o livro pelo ID independentemente de `deleted_at`,
    * necessário para checagens de estado antes de salvar.
    */
@@ -24,7 +31,14 @@ export class BookRepository {
 
   async save(book: Partial<LocalBook> & { id: number; bookId: number; title: string }): Promise<LocalBook> {
     // Busca o registro real (inclusive se estiver deletado)
-    const existing = await this.getRawById(book.id);
+    let existing = await this.getRawById(book.id);
+
+    // Se não encontrou por ID, verifica se há registro deletado com mesmo título
+    if (!existing && book.title && !('deleted_at' in book)) {
+      const allRaw = await this.getRawAll();
+      const norm = book.title.trim().toLowerCase();
+      existing = allRaw.find((b) => b.title && b.title.trim().toLowerCase() === norm && b.deleted_at) || null;
+    }
 
     // Se o livro foi deletado e não estamos explicitamente restaurando-o,
     // não ressuscitamos — o usuário já o excluiu intencionalmente.

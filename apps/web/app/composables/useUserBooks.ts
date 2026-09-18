@@ -5,6 +5,8 @@ import { useGoogleDriveSync } from '~/composables/useGoogleDriveSync'
 import { bookRepo } from '~/adapters/database/repositories/BookRepository'
 import { annotationRepo } from '~/adapters/database/repositories/AnnotationRepository'
 import { flashcardRepo } from '~/adapters/database/repositories/FlashcardRepository'
+import { deleteCachedBook } from '~/utils/bookCache'
+import { getBinaryStorage } from '~/adapters/storage/StorageManager'
 
 const mapLocalToUserBookItem = (b: any): UserBookItem => ({
   userBookId: b.id,
@@ -304,13 +306,13 @@ export const useUserBooks = () => {
 
     // Limpa cache binário e armazenamento local de arquivos
     try {
-      const { deleteCachedBook } = await import('~/utils/bookCache')
-      await deleteCachedBook(targetBookId)
-      await deleteCachedBook(numUserBookId)
-      const { getBinaryStorage } = await import('~/adapters/storage/StorageManager')
+      await deleteCachedBook(targetBookId).catch(() => false)
+      await deleteCachedBook(numUserBookId).catch(() => false)
       const storage = getBinaryStorage()
-      await storage.deleteFile(String(targetBookId)).catch(() => {})
-      await storage.deleteFile(String(numUserBookId)).catch(() => {})
+      if (storage && typeof storage.deleteFile === 'function') {
+        await storage.deleteFile(String(targetBookId)).catch(() => false)
+        await storage.deleteFile(String(numUserBookId)).catch(() => false)
+      }
     } catch (cacheErr) {
       console.warn('[useUserBooks] Falha ao limpar binário em cache:', cacheErr)
     }

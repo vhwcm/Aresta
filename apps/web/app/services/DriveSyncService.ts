@@ -339,7 +339,7 @@ export class DriveSyncService {
 
   async syncLibrary(): Promise<SyncResult> {
     const db = getDatabase()
-    const local = await db.getBooks()
+    const local = db.getBooksRaw ? await db.getBooksRaw() : await db.getBooks()
     const fileName = 'library.json'
     const remote = await withRetry(() => this.provider.downloadDataFile<SyncEnvelope<LocalBook[]>>(fileName))
 

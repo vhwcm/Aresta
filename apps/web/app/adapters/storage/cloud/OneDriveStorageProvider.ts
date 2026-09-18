@@ -141,6 +141,20 @@ export class OneDriveStorageProvider implements IDataSyncProvider {
     }
   }
 
+  async deleteBookFolder(bookTitle: string, folderId?: string): Promise<void> {
+    try {
+      const headers = this.getAuthHeader()
+      if (folderId) {
+        await fetch(`https://graph.microsoft.com/v1.0/me/drive/items/${folderId}`, {
+          method: 'DELETE',
+          headers,
+        })
+      }
+    } catch (err) {
+      console.warn('[OneDriveStorageProvider] Falha ao excluir pasta do livro:', err)
+    }
+  }
+
   private async findFolder(name: string, parentId?: string): Promise<CloudFolderResult | null> {
     const headers = this.getAuthHeader()
     const endpoint = parentId

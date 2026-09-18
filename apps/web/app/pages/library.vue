@@ -897,6 +897,9 @@ const confirmDeleteBook = async () => {
       await deleteAnnotationsByBookId(targetBook.userBookId)
       await deleteFlashcardsByBookId(targetBook.userBookId)
     }
+    try {
+      await fetchGraph()
+    } catch {}
     showDeleteBookModal.value = false
     bookToDelete.value = null
     bookNotesCount.value = 0

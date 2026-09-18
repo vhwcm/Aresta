@@ -19,6 +19,8 @@ export interface IDatabaseAdapter {
   getBookById(id: number): Promise<LocalBook | null>;
   /** Retorna o livro pelo ID sem filtrar por deleted_at (uso interno do BookRepository). */
   getBookRawById?(id: number): Promise<LocalBook | null>;
+  /** Retorna todos os livros sem filtrar por deleted_at (para sync e checagem de exclusão). */
+  getBooksRaw?(): Promise<LocalBook[]>;
   saveBook(book: LocalBook): Promise<void>;
   deleteBook(id: number): Promise<void>;
   clearBooks(): Promise<void>;

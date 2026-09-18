@@ -21,6 +21,7 @@ function openDB(): Promise<IDBDatabase | null> {
   }
 
   return new Promise((resolve) => {
+    const timer = setTimeout(() => resolve(null), 250)
     try {
       const request = window.indexedDB.open(DB_NAME, DB_VERSION)
 
@@ -32,14 +33,17 @@ function openDB(): Promise<IDBDatabase | null> {
       }
 
       request.onsuccess = () => {
+        clearTimeout(timer)
         resolve(request.result)
       }
 
       request.onerror = (err) => {
+        clearTimeout(timer)
         logWarn('[BookCache] Erro ao abrir IndexedDB:', err)
         resolve(null)
       }
     } catch (err) {
+      clearTimeout(timer)
       logWarn('[BookCache] Exceção ao abrir IndexedDB:', err)
       resolve(null)
     }
@@ -114,14 +118,22 @@ export async function deleteCachedBook(key: string | number): Promise<boolean> {
   if (!db) return false
 
   return new Promise((resolve) => {
+    const timer = setTimeout(() => resolve(false), 250)
     try {
       const tx = db.transaction(STORE_NAME, 'readwrite')
       const store = tx.objectStore(STORE_NAME)
       const request = store.delete(String(key))
 
-      request.onsuccess = () => resolve(true)
-      request.onerror = () => resolve(false)
+      request.onsuccess = () => {
+        clearTimeout(timer)
+        resolve(true)
+      }
+      request.onerror = () => {
+        clearTimeout(timer)
+        resolve(false)
+      }
     } catch {
+      clearTimeout(timer)
       resolve(false)
     }
   })

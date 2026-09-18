@@ -102,7 +102,12 @@ export class DexieAdapter implements IDatabaseAdapter {
 
   async getBookRawById(id: number): Promise<LocalBook | null> {
     await this.init();
-    return (await this.db.books.get(id)) ?? null;
+    return (await this.db.books.get(Number(id))) ?? null;
+  }
+
+  async getBooksRaw(): Promise<LocalBook[]> {
+    await this.init();
+    return await this.db.books.toArray();
   }
 
   async saveBook(book: LocalBook): Promise<void> {
@@ -111,9 +116,14 @@ export class DexieAdapter implements IDatabaseAdapter {
       console.warn('[DexieAdapter] Tentativa de salvar livro com ID inválido:', book);
       return;
     }
+    const cleanId = Number(book.id);
+    const existing = await this.db.books.get(cleanId);
+    if (existing?.deleted_at && !book.deleted_at) {
+      return;
+    }
     const cleanBook: LocalBook = {
       ...book,
-      id: Number(book.id),
+      id: cleanId,
       bookId: Number(book.bookId || book.id),
     };
     await this.db.books.put(toCloneable(cleanBook));
@@ -121,12 +131,24 @@ export class DexieAdapter implements IDatabaseAdapter {
 
   async deleteBook(id: number): Promise<void> {
     await this.init();
-    const existing = await this.db.books.get(id);
+    const numId = Number(id);
+    if (isNaN(numId)) return;
+    const now = new Date().toISOString();
+    const existing = await this.db.books.get(numId);
     if (existing) {
-      existing.deleted_at = new Date().toISOString();
+      existing.deleted_at = now;
       existing.sync_status = 'pending';
-      existing.updated_at = new Date().toISOString();
+      existing.updated_at = now;
       await this.db.books.put(toCloneable(existing));
+    }
+    const matchingByBookId = await this.db.books.where('bookId').equals(numId).toArray();
+    for (const b of matchingByBookId) {
+      if (!b.deleted_at) {
+        b.deleted_at = now;
+        b.sync_status = 'pending';
+        b.updated_at = now;
+        await this.db.books.put(toCloneable(b));
+      }
     }
   }
 

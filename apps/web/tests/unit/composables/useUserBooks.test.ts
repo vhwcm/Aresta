@@ -103,4 +103,48 @@ describe('useUserBooks Composable (Local-First Architecture)', () => {
     const cardsAfter = await flashcardRepo.getAll()
     expect(cardsAfter.some((c) => c.bookId === 5)).toBe(false)
   })
+
+  it('deleteUserBook remove de forma otimista e chama deleteBookFromDrive quando Drive está conectado', async () => {
+    const driveSyncComposable = await import('~/composables/useGoogleDriveSync')
+    const mockDeleteFromDrive = vi.fn().mockResolvedValue(true)
+    const mockListDriveBooks = vi.fn().mockResolvedValue([
+      { title: 'Livro do Drive', folderId: 'folder-123' }
+    ])
+
+    vi.spyOn(driveSyncComposable, 'useGoogleDriveSync').mockReturnValue({
+      isGoogleDriveConnected: ref(true),
+      isSyncing: ref(false),
+      syncError: ref(null),
+      syncBookToDrive: vi.fn(),
+      listDriveBooks: mockListDriveBooks,
+      deleteBookFromDrive: mockDeleteFromDrive,
+      deleteAllDriveData: vi.fn(),
+    } as any)
+
+    await bookRepo.save({
+      id: 30,
+      bookId: 30,
+      title: 'Livro do Drive',
+      filePath: 'drive:folder-123',
+      status: 'QUERO_LER',
+      currentPage: 0,
+    })
+
+    const { userBooks, fetchUserBooks, deleteUserBook } = useUserBooks()
+    await fetchUserBooks()
+    expect(userBooks.value.some((b) => b.title === 'Livro do Drive')).toBe(true)
+
+    await deleteUserBook(30)
+
+    // Deve ter chamado deleteBookFromDrive
+    expect(mockDeleteFromDrive).toHaveBeenCalledWith('Livro do Drive', 'folder-123')
+
+    // Deve ter sido removido de userBooks
+    expect(userBooks.value.some((b) => b.title === 'Livro do Drive')).toBe(false)
+    expect(await bookRepo.getById(30)).toBeNull()
+
+    // Ao rodar fetchUserBooks novamente, não deve ressuscitar mesmo que listDriveBooks ainda liste a pasta
+    await fetchUserBooks()
+    expect(userBooks.value.some((b) => b.title === 'Livro do Drive')).toBe(false)
+  })
 })

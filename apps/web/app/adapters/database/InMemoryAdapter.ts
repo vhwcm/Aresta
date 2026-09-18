@@ -37,19 +37,44 @@ export class InMemoryAdapter implements IDatabaseAdapter {
   }
 
   async getBookRawById(id: number): Promise<LocalBook | null> {
-    return this.books.get(id) ?? null;
+    return this.books.get(Number(id)) ?? null;
+  }
+
+  async getBooksRaw(): Promise<LocalBook[]> {
+    return Array.from(this.books.values());
   }
 
   async saveBook(book: LocalBook): Promise<void> {
-    this.books.set(book.id, { ...book });
+    const cleanId = Number(book.id);
+    const existing = this.books.get(cleanId);
+    if (existing?.deleted_at && !book.deleted_at) {
+      return;
+    }
+    this.books.set(cleanId, {
+      ...book,
+      id: cleanId,
+      bookId: Number(book.bookId || book.id)
+    });
   }
 
   async deleteBook(id: number): Promise<void> {
-    const existing = this.books.get(id);
+    const numId = Number(id);
+    if (isNaN(numId)) return;
+    const now = new Date().toISOString();
+    const existing = this.books.get(numId);
     if (existing) {
-      existing.deleted_at = new Date().toISOString();
+      existing.deleted_at = now;
       existing.sync_status = 'pending';
-      this.books.set(id, existing);
+      this.books.set(numId, existing);
+    }
+    for (const [key, b] of this.books.entries()) {
+      if (Number(b.bookId) === numId || Number(b.id) === numId) {
+        if (!b.deleted_at) {
+          b.deleted_at = now;
+          b.sync_status = 'pending';
+          this.books.set(key, b);
+        }
+      }
     }
   }
 

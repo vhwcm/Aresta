@@ -99,6 +99,18 @@ export class ICloudFolderAdapter implements IDataSyncProvider {
     }
   }
 
+  async deleteBookFolder(bookTitle: string): Promise<void> {
+    if (!bookTitle) return
+    if (this.isTauriEnv()) {
+      try {
+        const bookFolder = `${this.rootDir}/books/${bookTitle.replace(/[^a-z0-9_ -]/gi, '_')}`
+        await remove(bookFolder, { baseDir: BaseDirectory.AppData, recursive: true }).catch(() => {})
+      } catch (err) {
+        console.warn('[ICloudFolderAdapter] Falha ao excluir pasta local do livro:', err)
+      }
+    }
+  }
+
   async ensureDataFolders(): Promise<void> {
     if (this.isInitialized) return
     if (this.isTauriEnv()) {
