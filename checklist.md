@@ -1,8 +1,10 @@
 ## 🔄 Em Andamento
-- [18/09/2026 17:27] [Fazendo] Sincronizar título de notas no Grafo de Conhecimento e padronizar fallback para "Nota"
-- [18/09/2026 17:16] [Fazendo] Integrar barra única no topo da anotação com formatação rica (negrito, itálico, headers), pasta, tags em popover e vínculos universais (canvas, nota, livro, livreto)
+- [18/09/2026 17:35] [Fazendo] Mover título da nota para dentro da página no estilo Obsidian com edição dinâmica inline
+- [18/09/2026 17:34] [Fazendo] Projetar e implementar modo de leitura scroll contínuo vertical para PDF e EPUB
 
 ## ✅ Concluído
+- [18/09/2026 17:16] [Concluído] Integrar barra única responsiva no topo da anotação com formatação rica (negrito, itálico, headers), pasta, tags em popover e vínculos universais (canvas, nota, livro, livreto)
+- [18/09/2026 17:35] [Concluído] Sincronizar título de notas no Grafo de Conhecimento e padronizar fallback para "Nota"
 - [18/09/2026 17:18] [Concluído] Aprimorar contraste e ergonomia do modo claro: tonalidades de fundo, bordas, textos secundários e badges
 - [18/09/2026 14:10] [Concluído] Unificar editor de notas em modo único live preview, substituir embed de canvas por links clicáveis e vincular no grafo de conhecimento
 - [18/09/2026 12:05] [Concluído] Corrigir incorporação de canvas em notas com seletor de quadro, visualização composta e renderização interativa

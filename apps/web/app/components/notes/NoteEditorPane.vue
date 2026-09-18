@@ -1,15 +1,13 @@
 <template>
   <main class="flex-1 flex flex-col bg-bgApp overflow-hidden">
-    <!-- Barra Superior da Janela da Nota (Apenas Título e Ações Globais) -->
+    <!-- Barra Superior da Janela da Nota (Breadcrumb Contextual e Ações Globais) -->
     <div class="h-12 md:h-14 border-b border-divider bg-bgPanel flex items-center justify-between px-3 md:px-6 flex-shrink-0 gap-3">
-      <input
-        v-model="localNote.title"
-        type="text"
-        placeholder="Nota"
-        class="bg-transparent border-none text-sm md:text-base font-semibold text-textPrimary focus:outline-none flex-1 min-w-0 font-serif truncate"
-        @input="onInput"
-        data-testid="input-note-title"
-      />
+      <div class="flex items-center gap-2 text-xs text-textSecondary min-w-0 font-medium select-none">
+        <FileTextIcon class="w-4 h-4 text-accent shrink-0" />
+        <span class="truncate max-w-[200px] sm:max-w-xs md:max-w-md">
+          {{ localNote.folder ? `${localNote.folder} / ` : '' }}{{ localNote.title || 'Sem título' }}
+        </span>
+      </div>
 
       <div class="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
         <!-- Botão Excluir Nota -->
@@ -264,25 +262,58 @@
         <template v-if="isHtmlNote">
           <div
             v-if="htmlViewMode === 'preview'"
-            class="flex-1 overflow-y-auto p-4 sm:p-6 select-text custom-scrollbar prose dark:prose-invert max-w-none text-textPrimary leading-relaxed"
+            class="flex-1 overflow-y-auto p-4 sm:p-6 select-text custom-scrollbar prose dark:prose-invert max-w-none text-textPrimary leading-relaxed flex flex-col"
           >
+            <!-- Título Inline estilo Obsidian dentro da página -->
+            <div class="mb-4 pb-2 border-b border-divider/40 not-prose shrink-0">
+              <input
+                v-model="localNote.title"
+                type="text"
+                placeholder="Sem título"
+                class="w-full bg-transparent border-none text-2xl sm:text-3xl font-bold font-serif text-textPrimary placeholder:text-textSecondary/40 focus:outline-none transition-colors leading-tight"
+                @input="onInput"
+              />
+            </div>
             <div class="synthesized-html-container" v-html="localNote.content"></div>
           </div>
-          <textarea
-            v-else
-            v-model="localNote.content"
-            class="w-full h-full p-4 font-mono text-xs bg-transparent text-textPrimary focus:outline-none resize-none select-text custom-scrollbar"
-            placeholder="Código HTML da anotação..."
-            @input="onInput"
-          ></textarea>
+          <div v-else class="flex-1 flex flex-col p-4 sm:p-6">
+            <div class="mb-4 pb-2 border-b border-divider/40 shrink-0">
+              <input
+                v-model="localNote.title"
+                type="text"
+                placeholder="Sem título"
+                class="w-full bg-transparent border-none text-2xl sm:text-3xl font-bold font-serif text-textPrimary placeholder:text-textSecondary/40 focus:outline-none transition-colors leading-tight"
+                @input="onInput"
+              />
+            </div>
+            <textarea
+              v-model="localNote.content"
+              class="w-full flex-1 font-mono text-xs bg-transparent text-textPrimary focus:outline-none resize-none select-text custom-scrollbar"
+              placeholder="Código HTML da anotação..."
+              @input="onInput"
+            ></textarea>
+          </div>
         </template>
 
         <!-- Editor Único Live Preview Milkdown -->
         <div
           v-else
           class="flex-1 overflow-y-auto p-3 sm:p-6 custom-scrollbar flex flex-col"
-          @click="handleEditorClick"
         >
+          <!-- Título Inline estilo Obsidian dentro da página -->
+          <div class="mb-4 pb-2 border-b border-divider/40 shrink-0">
+            <input
+              v-model="localNote.title"
+              type="text"
+              placeholder="Sem título"
+              class="w-full bg-transparent border-none text-2xl sm:text-3xl font-bold font-serif text-textPrimary placeholder:text-textSecondary/40 focus:outline-none transition-colors leading-tight"
+              @input="onInput"
+              @keydown.enter.prevent="focusEditor"
+              @keydown.down="focusEditor"
+              data-testid="input-note-title"
+            />
+          </div>
+
           <MilkdownEditor
             ref="milkdownRef"
             v-model="localNote.content"
@@ -829,6 +860,11 @@ const removeTag = (idx: number) => {
   if (!localNote.value.tags) return
   localNote.value.tags.splice(idx, 1)
   onInput()
+}
+
+// Transição suave do título para o editor (estilo Obsidian)
+const focusEditor = () => {
+  milkdownRef.value?.focus?.()
 }
 
 // Formatação rica delegada ao Milkdown via editorView

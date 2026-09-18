@@ -18,6 +18,7 @@ import {
 import { commonmark } from '@milkdown/kit/preset/commonmark'
 import { gfm } from '@milkdown/kit/preset/gfm'
 import { listener, listenerCtx } from '@milkdown/plugin-listener'
+import { toggleMark, setBlockType } from '@milkdown/prose/commands'
 
 const props = withDefaults(
   defineProps<{
@@ -133,6 +134,62 @@ const focus = () => {
   }
 }
 
+const toggleBold = () => {
+  if (milkdownEditor) {
+    milkdownEditor.action((ctx) => {
+      const view = ctx.get(editorViewCtx)
+      const markType = view.state.schema.marks.strong
+      if (markType) toggleMark(markType)(view.state, view.dispatch)
+      view.focus()
+    })
+  }
+}
+
+const toggleItalic = () => {
+  if (milkdownEditor) {
+    milkdownEditor.action((ctx) => {
+      const view = ctx.get(editorViewCtx)
+      const markType = view.state.schema.marks.em
+      if (markType) toggleMark(markType)(view.state, view.dispatch)
+      view.focus()
+    })
+  }
+}
+
+const setHeading = (level: 1 | 2 | 3) => {
+  if (milkdownEditor) {
+    milkdownEditor.action((ctx) => {
+      const view = ctx.get(editorViewCtx)
+      const nodeType = view.state.schema.nodes.heading
+      if (nodeType) setBlockType(nodeType, { level })(view.state, view.dispatch)
+      view.focus()
+    })
+  }
+}
+
+const setParagraph = () => {
+  if (milkdownEditor) {
+    milkdownEditor.action((ctx) => {
+      const view = ctx.get(editorViewCtx)
+      const nodeType = view.state.schema.nodes.paragraph
+      if (nodeType) setBlockType(nodeType)(view.state, view.dispatch)
+      view.focus()
+    })
+  }
+}
+
+const insertText = (text: string) => {
+  if (milkdownEditor) {
+    milkdownEditor.action((ctx) => {
+      const view = ctx.get(editorViewCtx)
+      const { state, dispatch } = view
+      const tr = state.tr.insertText(text)
+      dispatch(tr)
+      view.focus()
+    })
+  }
+}
+
 const getContent = (): string => {
   if (!milkdownEditor) return currentMarkdown
   let md = currentMarkdown
@@ -146,7 +203,12 @@ const getContent = (): string => {
 
 defineExpose({
   focus,
-  getContent
+  getContent,
+  toggleBold,
+  toggleItalic,
+  setHeading,
+  setParagraph,
+  insertText,
 })
 
 onMounted(() => {

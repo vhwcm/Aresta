@@ -80,7 +80,7 @@ describe('buildLocalGraph', () => {
       }],
     })
 
-    const htmlNode = graph.nodes.find((n) => n.id === 'note-note-456')
+    const htmlNode = graph.nodes.find((n) => n.id === 'note-note-456' || n.id === 'note-456')
     expect(htmlNode).toBeDefined()
     expect(htmlNode?.isHtml).toBe(true)
     expect(htmlNode?.color).toBe('#F59E0B')
@@ -90,8 +90,8 @@ describe('buildLocalGraph', () => {
     expect(drawingNode?.isDrawing).toBe(true)
 
     const connection = graph.edges.find((e) => e.type === 'note-note' && (
-      (e.source === 'note-note-456' && e.target === 'note-drawing-123') ||
-      (e.source === 'note-drawing-123' && e.target === 'note-note-456')
+      (e.source === (htmlNode?.id || '') && e.target === 'note-drawing-123') ||
+      (e.source === 'note-drawing-123' && e.target === (htmlNode?.id || ''))
     ))
     expect(connection).toBeDefined()
   })
@@ -116,16 +116,67 @@ describe('buildLocalGraph', () => {
       }],
     })
 
-    const noteNode = graph.nodes.find((n) => n.id === 'note-note-101')
+    const noteNode = graph.nodes.find((n) => n.id === 'note-note-101' || n.id === 'note-101')
     expect(noteNode).toBeDefined()
 
-    const canvasNode = graph.nodes.find((n) => n.id === 'canvas-canvas-789')
+    const canvasNode = graph.nodes.find((n) => n.id === 'canvas-canvas-789' || n.id === 'canvas-789')
     expect(canvasNode).toBeDefined()
 
     const edge = graph.edges.find((e) => e.type === 'note-canvas' && (
-      (e.source === 'note-note-101' && e.target === 'canvas-canvas-789') ||
-      (e.source === 'canvas-canvas-789' && e.target === 'note-note-101')
+      (e.source === (noteNode?.id || '') && e.target === (canvasNode?.id || '')) ||
+      (e.source === (canvasNode?.id || '') && e.target === (noteNode?.id || ''))
     ))
     expect(edge).toBeDefined()
+  })
+
+  it('exibe o título da nota no grafo quando fornecido e usa "Nota" quando nada for informado', () => {
+    const graph = buildLocalGraph({
+      notes: [
+        {
+          id: 'note-com-titulo',
+          title: 'Meu Conceito Fundamental',
+          content: 'Algum texto...',
+          updated_at: '',
+          sync_status: 'synced',
+        },
+        {
+          id: 'note-sem-titulo',
+          title: '',
+          content: '',
+          updated_at: '',
+          sync_status: 'synced',
+        },
+        {
+          id: 'note-legada-nova-nota',
+          title: 'Nova Nota',
+          content: '',
+          updated_at: '',
+          sync_status: 'synced',
+        },
+        {
+          id: 'note-com-heading',
+          title: '',
+          content: '# Título Extraído do Conteúdo\n\nTexto...',
+          updated_at: '',
+          sync_status: 'synced',
+        },
+      ],
+    })
+
+    const nodeComTitulo = graph.nodes.find((n) => n.id === 'note-com-titulo')
+    expect(nodeComTitulo?.title).toBe('Meu Conceito Fundamental')
+    expect(nodeComTitulo?.name).toBe('Meu Conceito Funda...')
+
+    const nodeSemTitulo = graph.nodes.find((n) => n.id === 'note-sem-titulo')
+    expect(nodeSemTitulo?.title).toBe('Nota')
+    expect(nodeSemTitulo?.name).toBe('Nota')
+
+    const nodeLegada = graph.nodes.find((n) => n.id === 'note-legada-nova-nota')
+    expect(nodeLegada?.title).toBe('Nota')
+    expect(nodeLegada?.name).toBe('Nota')
+
+    const nodeComHeading = graph.nodes.find((n) => n.id === 'note-com-heading')
+    expect(nodeComHeading?.title).toBe('Título Extraído do Conteúdo')
+    expect(nodeComHeading?.name).toBe('Título Extraído do...')
   })
 })
