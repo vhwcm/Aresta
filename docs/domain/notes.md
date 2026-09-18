@@ -31,6 +31,11 @@ O módulo de **Notas Compostas** do Aresta unifica a criação de documentos lin
 ### 2.1. Embed de Canvas em Notas
 - Uma nota pode incorporar um ou mais quadros infinitos utilizando a sintaxe `![[canvas:<uuid>]]`.
 - O renderizador (`NoteCompositeRenderer.vue`) monta uma visualização miniatura interativa (`CanvasEmbedPreview.vue`) com suporte a pan, zoom e abertura em tela cheia.
+- O editor de notas (`NoteEditorPane.vue`) oferece 3 modos de visualização:
+  - **Editor**: Modo focado em escrita com Live Preview Markdown via `MilkdownEditor`.
+  - **Dividido**: Exibição lado a lado (editor à esquerda e renderizador composto interativo à direita).
+  - **Preview**: Renderização compilada em largura total com canvas e livros interativos.
+- O botão **"Embutir Canvas"** abre um modal com busca de quadros do usuário e insere a referência com ativação automática do modo dividido.
 
 ### 2.2. Cards de Notas no Canvas
 - Nós do tipo `note_embed` no Canvas exibem o título e a pré-visualização formatada em Markdown da nota referenciada (`noteId`).

@@ -24,6 +24,40 @@
           </select>
         </div>
 
+        <!-- Alternador de Modos do Editor (Editor / Dividido / Preview) -->
+        <div v-if="!isHtmlNote" class="flex rounded-xl bg-bgElevated p-0.5 border border-divider text-xs">
+          <button
+            type="button"
+            class="px-2.5 py-1 rounded-lg transition-colors cursor-pointer flex items-center gap-1"
+            :class="noteViewMode === 'edit' ? 'bg-accent text-white font-medium shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
+            @click="noteViewMode = 'edit'"
+            title="Apenas editor de texto"
+          >
+            <Edit3Icon class="w-3.5 h-3.5" />
+            <span class="hidden lg:inline">Editor</span>
+          </button>
+          <button
+            type="button"
+            class="px-2.5 py-1 rounded-lg transition-colors cursor-pointer flex items-center gap-1"
+            :class="noteViewMode === 'split' ? 'bg-accent text-white font-medium shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
+            @click="noteViewMode = 'split'"
+            title="Editor e preview lado a lado"
+          >
+            <ColumnsIcon class="w-3.5 h-3.5" />
+            <span class="hidden lg:inline">Dividido</span>
+          </button>
+          <button
+            type="button"
+            class="px-2.5 py-1 rounded-lg transition-colors cursor-pointer flex items-center gap-1"
+            :class="noteViewMode === 'preview' ? 'bg-accent text-white font-medium shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
+            @click="noteViewMode = 'preview'"
+            title="Visualização com quadros e livros interativos"
+          >
+            <EyeIcon class="w-3.5 h-3.5" />
+            <span class="hidden lg:inline">Preview</span>
+          </button>
+        </div>
+
         <!-- Botão Inserir Canvas Embed -->
         <button
           class="px-2.5 py-1 rounded-xl bg-bgElevated hover:bg-bgSurface text-xs text-textSecondary hover:text-textPrimary border border-divider transition-colors flex items-center gap-1 cursor-pointer"
@@ -152,13 +186,71 @@
           ></textarea>
         </template>
 
-        <!-- Editor Markdown Padrão -->
-        <MilkdownEditor
+        <!-- Modo Preview Total (Composite Renderer com Canvas Interativo e Livros) -->
+        <div
+          v-else-if="noteViewMode === 'preview'"
+          class="flex-1 p-6 overflow-y-auto bg-bgDarker custom-scrollbar"
+        >
+          <NoteCompositeRenderer
+            :content="localNote.content || ''"
+            :note-id="localNote.id"
+            :note-title="localNote.title"
+          />
+        </div>
+
+        <!-- Modo Dividido (Split: Milkdown à esquerda, NoteCompositeRenderer à direita) -->
+        <div
+          v-else-if="noteViewMode === 'split'"
+          class="flex-1 flex flex-col md:flex-row overflow-hidden"
+        >
+          <div class="flex-1 border-b md:border-b-0 md:border-r border-divider/60 overflow-y-auto p-4 custom-scrollbar">
+            <MilkdownEditor
+              v-model="localNote.content"
+              placeholder="Comece a escrever sua nota... Use ![[canvas:id]] para embutir quadros."
+              @update:model-value="onInput"
+            />
+          </div>
+          <div class="flex-1 p-6 overflow-y-auto bg-bgDarker/70 custom-scrollbar border-t md:border-t-0">
+            <div class="text-[11px] uppercase tracking-wider text-textSecondary/60 font-semibold mb-3 flex items-center gap-1.5 select-none">
+              <EyeIcon class="w-3.5 h-3.5 text-accent" />
+              <span>Preview Vivo & Elementos Compostos</span>
+            </div>
+            <NoteCompositeRenderer
+              :content="localNote.content || ''"
+              :note-id="localNote.id"
+              :note-title="localNote.title"
+            />
+          </div>
+        </div>
+
+        <!-- Modo Editor Padrão (Full Milkdown) -->
+        <div
           v-else
-          v-model="localNote.content"
-          placeholder="Comece a escrever sua nota... Live Preview renderiza automaticamente."
-          @update:model-value="onInput"
-        />
+          class="flex-1 overflow-y-auto p-4 custom-scrollbar flex flex-col"
+        >
+          <!-- Dica sutil caso a nota contenha quadros embutidos no modo editor -->
+          <div
+            v-if="hasCompositeEmbeds"
+            class="mb-3 p-2.5 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-between text-xs text-textSecondary flex-shrink-0"
+          >
+            <span class="flex items-center gap-1.5 text-textPrimary font-medium">
+              <LayoutGridIcon class="w-3.5 h-3.5 text-accent" />
+              Esta nota contém quadro(s) embutido(s).
+            </span>
+            <button
+              type="button"
+              @click="noteViewMode = 'split'"
+              class="text-accent hover:underline font-semibold cursor-pointer"
+            >
+              Ver em modo Dividido →
+            </button>
+          </div>
+          <MilkdownEditor
+            v-model="localNote.content"
+            placeholder="Comece a escrever sua nota... Live Preview renderiza automaticamente."
+            @update:model-value="onInput"
+          />
+        </div>
 
         <!-- Barra flutuante de criação de anotação ou flashcard a partir do trecho selecionado -->
         <Transition name="fade">
@@ -224,6 +316,99 @@
       @close="isAnnotationModalOpen = false"
       @created="handleAnnotationCreated"
     />
+
+    <!-- Modal de Seleção de Canvas para Embutir -->
+    <Teleport to="body">
+      <Transition name="fade">
+        <div
+          v-if="isCanvasPickerOpen"
+          class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+          @click.self="isCanvasPickerOpen = false"
+        >
+          <div class="w-full max-w-md bg-bgPanel border border-divider rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95">
+            <!-- Modal Header -->
+            <div class="px-5 py-4 border-b border-divider flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-xl bg-accent/15 border border-accent/30 flex items-center justify-center text-accent">
+                  <LayoutGridIcon class="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 class="text-sm font-semibold text-textPrimary">Embutir Quadro no Texto</h3>
+                  <p class="text-[11px] text-textSecondary">Selecione o quadro para incorporar interativamente</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                @click="isCanvasPickerOpen = false"
+                class="p-1 rounded-lg text-textSecondary hover:text-textPrimary hover:bg-white/5 transition-colors cursor-pointer"
+              >
+                <XIcon class="w-4 h-4" />
+              </button>
+            </div>
+
+            <!-- Campo de Busca -->
+            <div class="p-3 border-b border-divider bg-bgSurface/30">
+              <div class="relative flex items-center">
+                <SearchIcon class="w-3.5 h-3.5 text-textSecondary absolute left-3" />
+                <input
+                  v-model="canvasSearchQuery"
+                  type="text"
+                  placeholder="Buscar quadro por título..."
+                  class="w-full pl-8 pr-3 py-1.5 text-xs bg-bgSurface border border-divider rounded-xl text-textPrimary placeholder:text-textSecondary/50 focus:outline-none focus:border-accent"
+                />
+              </div>
+            </div>
+
+            <!-- Lista de Quadros -->
+            <div class="flex-1 overflow-y-auto p-3 space-y-1.5 custom-scrollbar min-h-[160px] max-h-[360px]">
+              <div
+                v-for="c in filteredCanvases"
+                :key="c.id"
+                class="group p-3 rounded-xl border border-divider/60 hover:border-accent/40 bg-bgSurface/40 hover:bg-accent/5 transition-all cursor-pointer flex items-center justify-between gap-3"
+                @click="selectCanvasToEmbed(c)"
+              >
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-xs font-semibold text-textPrimary group-hover:text-accent transition-colors truncate">
+                      {{ c.title || 'Quadro Sem Título' }}
+                    </span>
+                    <span v-if="c.nodeCount" class="text-[10px] px-1.5 py-0.2 rounded bg-bgElevated text-textSecondary border border-divider/50">
+                      {{ c.nodeCount }} nós
+                    </span>
+                  </div>
+                  <div class="text-[11px] text-textSecondary/70 mt-0.5 truncate">
+                    ID: {{ c.id }}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  class="px-2.5 py-1 rounded-lg bg-accent/15 hover:bg-accent text-accent hover:text-white text-xs font-medium transition-colors flex items-center gap-1 flex-shrink-0"
+                >
+                  <span>Inserir</span>
+                  <span>+</span>
+                </button>
+              </div>
+
+              <div v-if="filteredCanvases.length === 0" class="p-8 text-center text-textSecondary text-xs">
+                Nenhum quadro encontrado correspondente à busca.
+              </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-5 py-3 border-t border-divider bg-bgSurface/20 flex items-center justify-end">
+              <button
+                type="button"
+                @click="isCanvasPickerOpen = false"
+                class="px-3 py-1.5 rounded-xl border border-divider text-xs text-textSecondary hover:text-textPrimary hover:bg-bgSurface transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </main>
 </template>
 
@@ -239,8 +424,13 @@ import {
   XIcon,
   CheckCircle2Icon,
   Copy as CopyIcon,
+  Edit3 as Edit3Icon,
+  Columns as ColumnsIcon,
+  Eye as EyeIcon,
+  Search as SearchIcon,
 } from 'lucide-vue-next'
 import MilkdownEditor from '~/components/MilkdownEditor.vue'
+import NoteCompositeRenderer from '~/components/notes/NoteCompositeRenderer.vue'
 import ReaderAnnotationModal from '~/components/reader/ReaderAnnotationModal.vue'
 import type { NoteItem } from '~/interfaces/note'
 import type { CanvasSummary } from '~/interfaces/canvas'
@@ -360,16 +550,45 @@ const removeTag = (idx: number) => {
   onInput()
 }
 
+const hasCompositeEmbeds = computed(() => {
+  const c = localNote.value?.content || ''
+  return /!\[\[(canvas|book):[a-zA-Z0-9_-]+\]\]/i.test(c)
+})
+
+const noteViewMode = ref<'edit' | 'split' | 'preview'>(
+  hasCompositeEmbeds.value ? 'split' : 'edit'
+)
+
+const isCanvasPickerOpen = ref(false)
+const canvasSearchQuery = ref('')
+
+const filteredCanvases = computed(() => {
+  const list = props.canvases || []
+  const q = canvasSearchQuery.value.trim().toLowerCase()
+  if (!q) return list
+  return list.filter(
+    (c) =>
+      (c.title && c.title.toLowerCase().includes(q)) ||
+      (c.id && c.id.toLowerCase().includes(q))
+  )
+})
+
 const openCanvasPicker = () => {
-  if (props.canvases.length === 0) {
-    alert('Nenhum canvas encontrado. Crie um quadro primeiro!')
+  if (!props.canvases || props.canvases.length === 0) {
+    showToast('Nenhum quadro encontrado. Crie um quadro primeiro!')
     return
   }
-  const canvas = props.canvases[0]
-  if (canvas) {
-    localNote.value.content = (localNote.value.content || '') + `\n\n![[canvas:${canvas.id}]]\n`
-    onInput()
-  }
+  canvasSearchQuery.value = ''
+  isCanvasPickerOpen.value = true
+}
+
+const selectCanvasToEmbed = (canvas: CanvasSummary) => {
+  isCanvasPickerOpen.value = false
+  const embedCode = `\n\n![[canvas:${canvas.id}]]\n`
+  localNote.value.content = (localNote.value.content || '') + embedCode
+  onInput()
+  noteViewMode.value = 'split'
+  showToast(`Quadro "${canvas.title || 'Sem título'}" embutido na nota!`)
 }
 
 const isHtmlNote = computed(() => {

@@ -250,4 +250,109 @@ describe('NoteEditorPane Component', () => {
     expect(wrapper.find('.synthesized-html-container').exists()).toBe(true);
     expect(wrapper.html()).toContain('Título Gerado');
   });
+
+  it('permite alternar entre os modos Editor, Dividido e Preview', async () => {
+    const wrapper = mount(NoteEditorPane, {
+      props: {
+        note: sampleNote,
+        folders: ['Geral'],
+        canvases: [],
+      },
+      global: {
+        stubs: {
+          MilkdownEditor: { template: '<div class="milkdown-stub" />' },
+          NoteCompositeRenderer: { template: '<div class="composite-stub" />' },
+        },
+      },
+    });
+
+    const splitBtn = wrapper.find('button[title="Editor e preview lado a lado"]');
+    const previewBtn = wrapper.find('button[title="Visualização com quadros e livros interativos"]');
+    const editBtn = wrapper.find('button[title="Apenas editor de texto"]');
+
+    expect(splitBtn.exists()).toBe(true);
+    expect(previewBtn.exists()).toBe(true);
+    expect(editBtn.exists()).toBe(true);
+
+    // Alterna para preview
+    await previewBtn.trigger('click');
+    expect(wrapper.find('.composite-stub').exists()).toBe(true);
+    expect(wrapper.find('.milkdown-stub').exists()).toBe(false);
+
+    // Alterna para dividido
+    await splitBtn.trigger('click');
+    expect(wrapper.find('.composite-stub').exists()).toBe(true);
+    expect(wrapper.find('.milkdown-stub').exists()).toBe(true);
+
+    // Alterna de volta para editor
+    await editBtn.trigger('click');
+    expect(wrapper.find('.composite-stub').exists()).toBe(false);
+    expect(wrapper.find('.milkdown-stub').exists()).toBe(true);
+  });
+
+  it('abre modal seletor ao clicar em Embutir Canvas e insere o embed no conteúdo', async () => {
+    const sampleCanvases = [
+      { id: 'canvas-1', title: 'Quadro Haskell', nodeCount: 5, edgeCount: 2, updatedAt: '2026-09-18' },
+      { id: 'canvas-2', title: 'Quadro Algoritmos', nodeCount: 12, edgeCount: 8, updatedAt: '2026-09-18' },
+    ];
+
+    const wrapper = mount(NoteEditorPane, {
+      props: {
+        note: sampleNote,
+        folders: ['Geral'],
+        canvases: sampleCanvases as any,
+      },
+      global: {
+        stubs: {
+          MilkdownEditor: true,
+          NoteCompositeRenderer: true,
+          teleport: true,
+        },
+      },
+    });
+
+    const embedBtn = wrapper.find('button[title="Inserir Embed de Canvas nesta nota"]');
+    await embedBtn.trigger('click');
+
+    // Modal deve estar aberto
+    expect(wrapper.text()).toContain('Embutir Quadro no Texto');
+    expect(wrapper.text()).toContain('Quadro Haskell');
+    expect(wrapper.text()).toContain('Quadro Algoritmos');
+
+    // Clica para inserir o Quadro Haskell
+    const insertButtons = wrapper.findAll('button').filter(b => b.text().includes('Inserir'));
+    expect(insertButtons.length).toBeGreaterThan(0);
+    await insertButtons[0].trigger('click');
+
+    // Deve emitir update:note com ![[canvas:canvas-1]]
+    const updateEvents = wrapper.emitted('update:note');
+    expect(updateEvents).toBeTruthy();
+    const lastUpdate = updateEvents![updateEvents!.length - 1][0] as NoteItem;
+    expect(lastUpdate.content).toContain('![[canvas:canvas-1]]');
+  });
+
+  it('inicializa automaticamente no modo dividido se a nota já contém ![[canvas:id]]', () => {
+    const noteWithCanvas: NoteItem = {
+      ...sampleNote,
+      content: '# Minha Nota\n\n![[canvas:canvas-haskell-1]]',
+    };
+
+    const wrapper = mount(NoteEditorPane, {
+      props: {
+        note: noteWithCanvas,
+        folders: ['Geral'],
+        canvases: [],
+      },
+      global: {
+        stubs: {
+          MilkdownEditor: { template: '<div class="milkdown-stub" />' },
+          NoteCompositeRenderer: { template: '<div class="composite-stub" />' },
+        },
+      },
+    });
+
+    // Deve renderizar tanto editor quanto preview imediatamente
+    expect(wrapper.find('.milkdown-stub').exists()).toBe(true);
+    expect(wrapper.find('.composite-stub').exists()).toBe(true);
+  });
 });

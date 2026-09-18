@@ -67,6 +67,13 @@
         />
       </div>
 
+      <!-- Fallback quando canvas não encontrado -->
+      <div v-else-if="notFound" class="absolute inset-0 flex flex-col items-center justify-center p-4 text-center text-textSecondary text-xs">
+        <span class="text-xl mb-1">🔍</span>
+        <span class="font-medium text-textPrimary">Quadro não encontrado</span>
+        <span class="text-[11px] text-textSecondary/70 mt-0.5">O canvas "{{ canvasId }}" não existe ou foi excluído.</span>
+      </div>
+
       <!-- Loading State -->
       <div v-else-if="isLoading" class="absolute inset-0 flex items-center justify-center text-textSecondary text-xs">
         Carregando quadro...
@@ -127,6 +134,7 @@ const props = defineProps<{
 
 const canvasTitle = ref('');
 const isLoading = ref(false);
+const notFound = ref(false);
 const containerRef = ref<HTMLElement | null>(null);
 const nodes = ref<CanvasNode[]>([]);
 const edges = ref<CanvasEdge[]>([]);
@@ -160,13 +168,23 @@ const getApiBaseUrl = () => {
 const loadCanvasData = async () => {
   if (!props.canvasId || cycleResult.value.hasCycle || cycleResult.value.maxDepthReached) return;
   isLoading.value = true;
+  notFound.value = false;
+
+  let loaded = false;
 
   // 1. Tentar carregar do banco local (offline-first)
   try {
     const local = await canvasRepo.getById(props.canvasId);
     if (local) {
       canvasTitle.value = local.name || 'Quadro Sem Título';
-      const doc = local.document || { nodes: [], edges: [], viewport: { x: 40, y: 40, zoom: 0.85 } };
+      let doc = local.document || { nodes: [], edges: [], viewport: { x: 40, y: 40, zoom: 0.85 } };
+      if (typeof doc === 'string') {
+        try {
+          doc = JSON.parse(doc);
+        } catch (_e) {
+          doc = { nodes: [], edges: [], viewport: { x: 40, y: 40, zoom: 0.85 } };
+        }
+      }
       nodes.value = doc.nodes || [];
       edges.value = doc.edges || [];
       if (doc.viewport) {
@@ -176,38 +194,45 @@ const loadCanvasData = async () => {
           zoom: Number(doc.viewport.zoom) || 0.85,
         };
       }
+      loaded = true;
     }
   } catch (e) {
-    // Silenciosamente ignora e tenta buscar via API
+    // Silenciosamente ignora e tenta fallback
   }
 
-  // 2. Buscar da API para dados atualizados
-  try {
-    const headers: Record<string, string> = {};
-    if (token?.value) headers.Authorization = `Bearer ${token.value}`;
+  // 2. Se não encontrado no local, tentar buscar da API (se houver conectividade)
+  if (!loaded) {
+    try {
+      const headers: Record<string, string> = {};
+      if (token?.value) headers.Authorization = `Bearer ${token.value}`;
 
-    const res = await $fetch<CanvasItem>(`${getApiBaseUrl()}/api/canvas/${props.canvasId}`, {
-      headers,
-    });
+      const res = await $fetch<CanvasItem>(`${getApiBaseUrl()}/api/canvas/${props.canvasId}`, {
+        headers,
+      });
 
-    if (res) {
-      canvasTitle.value = res.title || canvasTitle.value || 'Quadro Sem Título';
-      const parsed = typeof res.data === 'string' ? JSON.parse(res.data) : (res.data || {});
-      nodes.value = parsed.nodes || [];
-      edges.value = parsed.edges || [];
-      if (parsed.viewport) {
-        viewport.value = {
-          x: parsed.viewport.x ?? 40,
-          y: parsed.viewport.y ?? 40,
-          zoom: parsed.viewport.zoom ?? 0.85,
-        };
+      if (res) {
+        canvasTitle.value = res.title || canvasTitle.value || 'Quadro Sem Título';
+        const parsed = typeof res.data === 'string' ? JSON.parse(res.data) : (res.data || {});
+        nodes.value = parsed.nodes || [];
+        edges.value = parsed.edges || [];
+        if (parsed.viewport) {
+          viewport.value = {
+            x: parsed.viewport.x ?? 40,
+            y: parsed.viewport.y ?? 40,
+            zoom: parsed.viewport.zoom ?? 0.85,
+          };
+        }
+        loaded = true;
       }
+    } catch (_e) {
+      // Ignora erro 410 ou rede
     }
-  } catch (e) {
-    console.warn('[CanvasEmbedPreview] Falha ao carregar dados remotos do canvas:', e);
-  } finally {
-    isLoading.value = false;
   }
+
+  if (!loaded) {
+    notFound.value = true;
+  }
+  isLoading.value = false;
 };
 
 watch(
