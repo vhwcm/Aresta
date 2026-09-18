@@ -250,6 +250,7 @@ describe('Index Page (Landing Page & Home)', () => {
     expect(wrapper.text()).toContain('33%')
     expect(wrapper.find('[data-testid="home-new-canvas-btn"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="home-notes-btn"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="home-notes-btn"]').attributes('to')).toBe('/canvas')
 
     // Verifica que informa a falta de flashcards e de anotações
     expect(wrapper.text()).toContain('Nenhum flashcard disponível')

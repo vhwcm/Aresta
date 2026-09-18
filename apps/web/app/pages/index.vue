@@ -266,12 +266,12 @@
             </span>
           </NuxtLink>
 
-          <!-- Ação 2: Ir para as Notas -->
+          <!-- Ação 2: Ir para as Notas (Página inicial das anotações com Grafo) -->
           <NuxtLink
-            to="/canvas?tab=notes"
+            to="/canvas"
             data-testid="home-notes-btn"
             class="flex items-center gap-3 p-3 sm:p-3.5 rounded-xl border border-divider/80 hover:border-accent/60 bg-black/[0.02] dark:bg-white/[0.02] hover:bg-black/[0.04] dark:hover:bg-white/[0.04] group transition-all duration-200 cursor-pointer shadow-sm"
-            title="Ir para as Notas"
+            title="Ir para as Anotações"
           >
             <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-accent/15 text-accent flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
               <FileTextIcon class="w-4 h-4 sm:w-4.5 sm:h-4.5" />
