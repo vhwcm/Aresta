@@ -3,12 +3,13 @@ name: git-commit
 description: >-
   Instruções para versionamento automático e boas práticas de Git. Utilize esta skill
   sempre que concluir tarefas ou subtarefas para preparar arquivos (git add), realizar
-  commits com mensagens descritivas e dividir tarefas grandes em commits atômicos menores.
+  commits com mensagens descritivas, dividir tarefas grandes em commits atômicos menores
+  e realizar o push para o repositório remoto.
 ---
 
-# Git Commit Workflow
+# Git Commit & Push Workflow
 
-Instruções e diretrizes para versionamento e commits de alterações no repositório.
+Instruções e diretrizes para versionamento, commits e sincronização (push) de alterações no repositório.
 
 ## Diretrizes Principais
 
@@ -23,7 +24,7 @@ Instruções e diretrizes para versionamento e commits de alterações no reposi
    - Não acumule refatorações, novas features, correções e alterações de documentação em um único commit gigante.
    - Cada commit deve representar uma unidade coerente de trabalho (ex: `feat(api): ...`, `fix(ui): ...`, `refactor(db): ...`, `docs: ...`).
 
-3. **Mensagens Descritivas e Claras**:
+4. **Mensagens Descritivas e Claras**:
    - Utilize mensagens claras, objetivas e descritivas explicando o que foi feito e o contexto quando necessário.
    - Adote a convenção de Conventional Commits sempre que aplicável:
      - `feat:` Nova funcionalidade
@@ -33,6 +34,9 @@ Instruções e diretrizes para versionamento e commits de alterações no reposi
      - `docs:` Alterações na documentação
      - `test:` Criação ou ajuste de testes
      - `chore:` Tarefas de manutenção, dependências ou configurações de build
+
+5. **Envio para o Repositório Remoto (Git Push)**:
+   - Após finalizar os commits da tarefa/etapa, envie as alterações para o repositório remoto (`git push`) para manter a branch sincronizada e os commits salvos.
 
 ## Procedimento Passo a Passo
 
@@ -58,4 +62,10 @@ Instruções e diretrizes para versionamento e commits de alterações no reposi
 
 5. **Para tarefas grandes, repetir o processo para cada grupo de alterações**:
    - Isole os arquivos de cada parte da tarefa, faça `git add` seletivo e commite individualmente antes de prosseguir para a próxima parte.
+
+6. **Enviar os commits para o repositório remoto**:
+   ```bash
+   git push
+   ```
+   *(Caso seja o primeiro push de uma nova branch: `git push -u origin <nome-da-branch>`)*
 
