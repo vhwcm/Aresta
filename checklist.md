@@ -1,8 +1,8 @@
 ## 🔄 Em Andamento
-- [18/09/2026 17:35] [Fazendo] Mover título da nota para dentro da página no estilo Obsidian com edição dinâmica inline
 - [18/09/2026 17:34] [Fazendo] Projetar e implementar modo de leitura scroll contínuo vertical para PDF e EPUB
 
 ## ✅ Concluído
+- [18/09/2026 17:39] [Concluído] Mover título da nota para dentro da página no estilo Obsidian com edição dinâmica inline
 - [18/09/2026 17:16] [Concluído] Integrar barra única responsiva no topo da anotação com formatação rica (negrito, itálico, headers), pasta, tags em popover e vínculos universais (canvas, nota, livro, livreto)
 - [18/09/2026 17:35] [Concluído] Sincronizar título de notas no Grafo de Conhecimento e padronizar fallback para "Nota"
 - [18/09/2026 17:18] [Concluído] Aprimorar contraste e ergonomia do modo claro: tonalidades de fundo, bordas, textos secundários e badges

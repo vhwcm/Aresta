@@ -78,6 +78,36 @@ describe('NoteEditorPane Component', () => {
     expect(wrapper.emitted('save')).toBeTruthy();
   });
 
+  it('renders inline title inside document page (Obsidian style) and updates breadcrumb dynamically', async () => {
+    const wrapper = mount(NoteEditorPane, {
+      props: {
+        note: sampleNote,
+        folders: ['Geral', 'Projetos'],
+        canvases: [],
+      },
+      global: {
+        stubs: {
+          MilkdownEditor: {
+            props: ['modelValue'],
+            template: '<div class="milkdown-stub">{{ modelValue }}</div>'
+          },
+        },
+      },
+    });
+
+    const inlineTitleInput = wrapper.find('[data-testid="input-note-title"]');
+    expect(inlineTitleInput.exists()).toBe(true);
+    expect((inlineTitleInput.element as HTMLInputElement).value).toBe('Nota de Teste');
+
+    // Verifica que o breadcrumb no topo reflete a pasta e o título
+    expect(wrapper.text()).toContain('Geral / Nota de Teste');
+
+    // Altera o título dinamicamente
+    await inlineTitleInput.setValue('Meu Novo Título Obsidian');
+    expect(wrapper.text()).toContain('Geral / Meu Novo Título Obsidian');
+    expect(wrapper.emitted('update:note')).toBeTruthy();
+  });
+
   it('emits delete when trash button is clicked', async () => {
     const wrapper = mount(NoteEditorPane, {
       props: {
