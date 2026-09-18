@@ -57,4 +57,21 @@ describe('useNotes composable (Local-First Architecture)', () => {
     const deleted = await noteRepo.getById(note.id)
     expect(deleted).toBeNull()
   })
+
+  it('createNote e updateNote extraem referências de canvas do markdown e salvam em links', async () => {
+    const { createNote, updateNote } = useNotes()
+    const note = await createNote({
+      title: 'Nota com Canvas',
+      content: 'Veja este diagrama: [🎨 Fluxograma](canvas:canvas-999)',
+    })
+
+    expect(note.links?.some((l) => l.targetType === 'CANVAS' && l.targetId === 'canvas-999')).toBe(true)
+
+    const updated = await updateNote(note.id, {
+      content: 'Veja este diagrama: [🎨 Fluxograma](canvas:canvas-999) e outro [[canvas:canvas-888]]',
+    })
+
+    expect(updated?.links?.some((l) => l.targetType === 'CANVAS' && l.targetId === 'canvas-999')).toBe(true)
+    expect(updated?.links?.some((l) => l.targetType === 'CANVAS' && l.targetId === 'canvas-888')).toBe(true)
+  })
 })

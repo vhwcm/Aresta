@@ -191,6 +191,21 @@ export const buildLocalGraph = (input: BuildLocalGraphInput = {}): GraphData => 
       if (link.targetType === 'CANVAS') addEdge(nodeId, `canvas-${link.targetId}`, 'note-canvas')
       if (link.targetType === 'NOTE') addEdge(nodeId, `note-${link.targetId}`, 'note-note')
     }
+    const noteContent = note.content || ''
+    const canvasRefRegexes = [
+      /\[.*?\]\(canvas:([a-zA-Z0-9_-]+)\)/gi,
+      /\[\[canvas:([a-zA-Z0-9_-]+)(?:\|.*?)?\]\]/gi,
+      /!\[\[canvas:([a-zA-Z0-9_-]+)\]\]/gi,
+      /\[.*?\]\((?:https?:\/\/[^\/\s)]+)?\/canvas\/([a-zA-Z0-9_-]+)\)/gi,
+    ]
+    for (const reg of canvasRefRegexes) {
+      let m: RegExpExecArray | null
+      while ((m = reg.exec(noteContent)) !== null) {
+        if (m[1]) {
+          addEdge(nodeId, `canvas-${m[1]}`, 'note-canvas')
+        }
+      }
+    }
   }
 
   for (const drawing of drawingNotes) {

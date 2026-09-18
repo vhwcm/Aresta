@@ -232,6 +232,39 @@
   opacity: 0.8;
 }
 
+/* Links de Quadro (Canvas) em formato badge amigável */
+.milkdown-aresta-wrapper .milkdown .editor a[href^="canvas:"],
+.milkdown-aresta-wrapper .milkdown .editor a[href*="/canvas/"] {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0.55rem;
+  margin: 0 0.15rem;
+  border-radius: 0.5rem;
+  background: rgba(229, 123, 85, 0.12);
+  border: 1px solid rgba(229, 123, 85, 0.35);
+  color: var(--accent, #E57B55);
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  vertical-align: middle;
+}
+
+.milkdown-aresta-wrapper .milkdown .editor a[href^="canvas:"]:hover,
+.milkdown-aresta-wrapper .milkdown .editor a[href*="/canvas/"]:hover {
+  background: rgba(229, 123, 85, 0.25);
+  border-color: rgba(229, 123, 85, 0.6);
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(229, 123, 85, 0.25);
+}
+
+.milkdown-aresta-wrapper .milkdown .editor a[href^="canvas:"]:active,
+.milkdown-aresta-wrapper .milkdown .editor a[href*="/canvas/"]:active {
+  transform: translateY(0);
+}
+
 /* Custom Scrollbar */
 .milkdown-aresta-wrapper .milkdown::-webkit-scrollbar {
   width: 6px;

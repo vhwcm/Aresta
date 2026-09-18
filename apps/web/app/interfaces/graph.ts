@@ -69,6 +69,8 @@ export interface GraphNode {
   itemCount?: number
   books?: any[]
   isRoot?: boolean
+  isHtml?: boolean
+  isDrawing?: boolean
   // Campos de Anotações do Leitor
   bookId?: number
   bookTitle?: string

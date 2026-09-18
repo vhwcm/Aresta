@@ -28,14 +28,16 @@ O módulo de **Notas Compostas** do Aresta unifica a criação de documentos lin
 
 ## 2. Padrões de Composição
 
-### 2.1. Embed de Canvas em Notas
-- Uma nota pode incorporar um ou mais quadros infinitos utilizando a sintaxe `![[canvas:<uuid>]]`.
-- O renderizador (`NoteCompositeRenderer.vue`) monta uma visualização miniatura interativa (`CanvasEmbedPreview.vue`) com suporte a pan, zoom e abertura em tela cheia.
-- O editor de notas (`NoteEditorPane.vue`) oferece 3 modos de visualização:
-  - **Editor**: Modo focado em escrita com Live Preview Markdown via `MilkdownEditor`.
-  - **Dividido**: Exibição lado a lado (editor à esquerda e renderizador composto interativo à direita).
-  - **Preview**: Renderização compilada em largura total com canvas e livros interativos.
-- O botão **"Embutir Canvas"** abre um modal com busca de quadros do usuário e insere a referência com ativação automática do modo dividido.
+### 2.1. Vínculo e Links de Quadros (Canvas) em Notas
+- As notas operam em **Modo Único Live Preview** unificado (`MilkdownEditor`), eliminando abas e modos divididos para máxima imersão.
+- Em vez de widgets pesados de canvas incorporados no meio do texto, a nota utiliza links amigáveis clicáveis: `[🎨 Nome do Quadro](canvas:<uuid>)` ou `[[canvas:<uuid>]]`.
+- Links de quadros são renderizados como badges estilizados e interativos:
+  - **Clique direto**: Abre o quadro imediatamente na rota `/canvas/:id`.
+  - **Ctrl/Cmd + Clique**: Permite posicionar o cursor e editar o texto ou a URL do link.
+- O botão **"Vincular Quadro"** na barra superior abre um modal com duas abas:
+  1. **Quadro Existente**: Busca e seleção rápida entre quadros já cadastrados.
+  2. **Criar Novo Quadro**: Campo para nome do quadro, com criação instantânea no banco local e inserção automática do link na nota.
+- O Grafo de Conhecimento (`buildLocalGraph` e `useNotes`) detecta automaticamente as referências a quadros presentes no Markdown e cria a aresta `note-canvas` conectando o nó da nota ao nó do quadro.
 
 ### 2.2. Cards de Notas no Canvas
 - Nós do tipo `note_embed` no Canvas exibem o título e a pré-visualização formatada em Markdown da nota referenciada (`noteId`).

@@ -251,7 +251,7 @@ describe('NoteEditorPane Component', () => {
     expect(wrapper.html()).toContain('Título Gerado');
   });
 
-  it('permite alternar entre os modos Editor, Dividido e Preview', async () => {
+  it('renderiza em modo único live preview sem botões de alternância Editor/Dividido/Preview', () => {
     const wrapper = mount(NoteEditorPane, {
       props: {
         note: sampleNote,
@@ -261,7 +261,6 @@ describe('NoteEditorPane Component', () => {
       global: {
         stubs: {
           MilkdownEditor: { template: '<div class="milkdown-stub" />' },
-          NoteCompositeRenderer: { template: '<div class="composite-stub" />' },
         },
       },
     });
@@ -270,27 +269,13 @@ describe('NoteEditorPane Component', () => {
     const previewBtn = wrapper.find('button[title="Visualização com quadros e livros interativos"]');
     const editBtn = wrapper.find('button[title="Apenas editor de texto"]');
 
-    expect(splitBtn.exists()).toBe(true);
-    expect(previewBtn.exists()).toBe(true);
-    expect(editBtn.exists()).toBe(true);
-
-    // Alterna para preview
-    await previewBtn.trigger('click');
-    expect(wrapper.find('.composite-stub').exists()).toBe(true);
-    expect(wrapper.find('.milkdown-stub').exists()).toBe(false);
-
-    // Alterna para dividido
-    await splitBtn.trigger('click');
-    expect(wrapper.find('.composite-stub').exists()).toBe(true);
-    expect(wrapper.find('.milkdown-stub').exists()).toBe(true);
-
-    // Alterna de volta para editor
-    await editBtn.trigger('click');
-    expect(wrapper.find('.composite-stub').exists()).toBe(false);
+    expect(splitBtn.exists()).toBe(false);
+    expect(previewBtn.exists()).toBe(false);
+    expect(editBtn.exists()).toBe(false);
     expect(wrapper.find('.milkdown-stub').exists()).toBe(true);
   });
 
-  it('abre modal seletor ao clicar em Embutir Canvas e insere o embed no conteúdo', async () => {
+  it('abre modal ao clicar em Vincular Quadro e insere link markdown amigável ao selecionar quadro existente', async () => {
     const sampleCanvases = [
       { id: 'canvas-1', title: 'Quadro Haskell', nodeCount: 5, edgeCount: 2, updatedAt: '2026-09-18' },
       { id: 'canvas-2', title: 'Quadro Algoritmos', nodeCount: 12, edgeCount: 8, updatedAt: '2026-09-18' },
@@ -305,54 +290,69 @@ describe('NoteEditorPane Component', () => {
       global: {
         stubs: {
           MilkdownEditor: true,
-          NoteCompositeRenderer: true,
           teleport: true,
         },
       },
     });
 
-    const embedBtn = wrapper.find('button[title="Inserir Embed de Canvas nesta nota"]');
-    await embedBtn.trigger('click');
+    const linkBtn = wrapper.find('button[data-testid="btn-link-canvas"]');
+    expect(linkBtn.exists()).toBe(true);
+    await linkBtn.trigger('click');
 
     // Modal deve estar aberto
-    expect(wrapper.text()).toContain('Embutir Quadro no Texto');
+    expect(wrapper.text()).toContain('Vincular Quadro');
     expect(wrapper.text()).toContain('Quadro Haskell');
     expect(wrapper.text()).toContain('Quadro Algoritmos');
 
-    // Clica para inserir o Quadro Haskell
-    const insertButtons = wrapper.findAll('button').filter(b => b.text().includes('Inserir'));
-    expect(insertButtons.length).toBeGreaterThan(0);
-    await insertButtons[0].trigger('click');
+    // Clica para vincular o Quadro Haskell
+    const selectBtn = wrapper.find('button[data-testid="btn-select-canvas"]');
+    expect(selectBtn.exists()).toBe(true);
+    await selectBtn.trigger('click');
 
-    // Deve emitir update:note com ![[canvas:canvas-1]]
+    // Deve emitir update:note com link [🎨 Quadro Haskell](canvas:canvas-1)
     const updateEvents = wrapper.emitted('update:note');
     expect(updateEvents).toBeTruthy();
-    const lastUpdate = updateEvents![updateEvents!.length - 1][0] as NoteItem;
-    expect(lastUpdate.content).toContain('![[canvas:canvas-1]]');
+    const lastUpdate = (updateEvents as any)[(updateEvents as any).length - 1][0] as NoteItem;
+    expect(lastUpdate.content).toContain('[🎨 Quadro Haskell](canvas:canvas-1)');
   });
 
-  it('inicializa automaticamente no modo dividido se a nota já contém ![[canvas:id]]', () => {
-    const noteWithCanvas: NoteItem = {
-      ...sampleNote,
-      content: '# Minha Nota\n\n![[canvas:canvas-haskell-1]]',
-    };
-
+  it('permite alternar para aba Criar Novo Quadro, criar e vincular um novo quadro na nota', async () => {
     const wrapper = mount(NoteEditorPane, {
       props: {
-        note: noteWithCanvas,
+        note: sampleNote,
         folders: ['Geral'],
         canvases: [],
       },
       global: {
         stubs: {
-          MilkdownEditor: { template: '<div class="milkdown-stub" />' },
-          NoteCompositeRenderer: { template: '<div class="composite-stub" />' },
+          MilkdownEditor: true,
+          teleport: true,
         },
       },
     });
 
-    // Deve renderizar tanto editor quanto preview imediatamente
-    expect(wrapper.find('.milkdown-stub').exists()).toBe(true);
-    expect(wrapper.find('.composite-stub').exists()).toBe(true);
+    const linkBtn = wrapper.find('button[data-testid="btn-link-canvas"]');
+    await linkBtn.trigger('click');
+
+    // Clica na aba "+ Criar Novo Quadro"
+    const newTabBtn = wrapper.findAll('button').find(b => b.text().includes('Criar Novo Quadro'));
+    expect(newTabBtn).toBeDefined();
+    await newTabBtn!.trigger('click');
+
+    const inputTitle = wrapper.find('input[placeholder="Ex: Arquitetura do Sistema, Mapa Mental..."]');
+    expect(inputTitle.exists()).toBe(true);
+    await inputTitle.setValue('Quadro de Teste Automatizado');
+
+    const createBtn = wrapper.findAll('button').find(b => b.text().includes('Criar e Vincular'));
+    expect(createBtn).toBeDefined();
+    await createBtn!.trigger('click');
+
+    // Aguarda microtasks da promessa
+    await new Promise((r) => setTimeout(r, 50));
+
+    const updateEvents = wrapper.emitted('update:note');
+    expect(updateEvents).toBeTruthy();
+    const lastUpdate = (updateEvents as any)[(updateEvents as any).length - 1][0] as NoteItem;
+    expect(lastUpdate.content).toContain('[🎨 Quadro de Teste Automatizado](canvas:canvas_');
   });
 });

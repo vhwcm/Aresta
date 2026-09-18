@@ -2,6 +2,7 @@
 
 
 ## ✅ Concluído
+- [18/09/2026 14:10] [Concluído] Unificar editor de notas em modo único live preview, substituir embed de canvas por links clicáveis e vincular no grafo de conhecimento
 - [18/09/2026 12:05] [Concluído] Corrigir incorporação de canvas em notas com seletor de quadro, visualização composta e renderização interativa
 - [18/09/2026 11:05] [Concluído] Implementar sincronização de biblioteca de livros e metadados do grafo no DriveSyncService e inicialização global no app
 - [18/09/2026 10:28] [Concluído] Corrigir validação de assinatura de bytes de PDFs permitindo offset no cabeçalho (BOM, espaços e conformidade ISO 32000-1)

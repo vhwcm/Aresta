@@ -95,4 +95,37 @@ describe('buildLocalGraph', () => {
     ))
     expect(connection).toBeDefined()
   })
+
+  it('conecta nota ao quadro (canvas) via aresta note-canvas quando há link de canvas no conteúdo markdown', () => {
+    const graph = buildLocalGraph({
+      canvases: [{
+        id: 'canvas-789',
+        name: 'Quadro de Arquitetura',
+        document: { nodes: [], edges: [], viewport: { x: 0, y: 0, zoom: 1 } },
+        nodeCount: 3,
+        edgeCount: 2,
+        updated_at: '',
+        sync_status: 'synced',
+      }],
+      notes: [{
+        id: 'note-101',
+        title: 'Nota de Especificação',
+        content: 'Aqui está a especificação e o diagrama: [🎨 Quadro de Arquitetura](canvas:canvas-789)',
+        updated_at: '',
+        sync_status: 'synced',
+      }],
+    })
+
+    const noteNode = graph.nodes.find((n) => n.id === 'note-note-101')
+    expect(noteNode).toBeDefined()
+
+    const canvasNode = graph.nodes.find((n) => n.id === 'canvas-canvas-789')
+    expect(canvasNode).toBeDefined()
+
+    const edge = graph.edges.find((e) => e.type === 'note-canvas' && (
+      (e.source === 'note-note-101' && e.target === 'canvas-canvas-789') ||
+      (e.source === 'canvas-canvas-789' && e.target === 'note-note-101')
+    ))
+    expect(edge).toBeDefined()
+  })
 })

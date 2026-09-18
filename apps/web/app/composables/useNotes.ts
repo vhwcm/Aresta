@@ -35,6 +35,24 @@ export const resetNotesMemory = () => {
   error.value = null;
 };
 
+export function extractCanvasIdsFromMarkdown(content?: string): string[] {
+  if (!content) return [];
+  const regexes = [
+    /\[.*?\]\(canvas:([a-zA-Z0-9_-]+)\)/gi,
+    /\[\[canvas:([a-zA-Z0-9_-]+)(?:\|.*?)?\]\]/gi,
+    /!\[\[canvas:([a-zA-Z0-9_-]+)\]\]/gi,
+    /\[.*?\]\((?:https?:\/\/[^\/\s)]+)?\/canvas\/([a-zA-Z0-9_-]+)\)/gi,
+  ];
+  const ids = new Set<string>();
+  for (const reg of regexes) {
+    let m: RegExpExecArray | null;
+    while ((m = reg.exec(content)) !== null) {
+      if (m[1]) ids.add(m[1]);
+    }
+  }
+  return Array.from(ids);
+}
+
 export function useNotes() {
   const { token, user } = useAuth();
 
@@ -131,18 +149,24 @@ export function useNotes() {
 
     isLoading.value = true;
     error.value = null;
-
     const localId = `note-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
     const now = new Date().toISOString();
-    const initialLinks = (input.links || []).map((l, idx) => ({ id: idx + 1, targetType: l.targetType, targetId: l.targetId }));
+    const content = input.content || '';
+    const initialLinks: Array<{ targetType: 'CANVAS' | 'BOOK' | 'NOTE'; targetId: string }> = (input.links || []).map((l) => ({ targetType: l.targetType, targetId: l.targetId }));
     if (input.canvasId && !initialLinks.some((l) => l.targetType === 'CANVAS' && l.targetId === input.canvasId)) {
-      initialLinks.push({ id: initialLinks.length + 1, targetType: 'CANVAS', targetId: input.canvasId });
+      initialLinks.push({ targetType: 'CANVAS', targetId: input.canvasId });
+    }
+    const extractedFromContent = extractCanvasIdsFromMarkdown(content);
+    for (const cId of extractedFromContent) {
+      if (!initialLinks.some((l) => l.targetType === 'CANVAS' && l.targetId === cId)) {
+        initialLinks.push({ targetType: 'CANVAS', targetId: cId });
+      }
     }
 
     const saved = await noteRepo.save({
       id: localId,
       title: input.title?.trim() || 'Nova Nota',
-      content: input.content || '',
+      content,
       folder: input.folder || null,
       tags: input.tags || [],
       links: initialLinks,
@@ -163,12 +187,22 @@ export function useNotes() {
 
     try {
       const existing = await noteRepo.getById(id);
+      const content = input.content !== undefined ? input.content : (existing?.content || '');
+      const currentLinks: Array<{ targetType: 'CANVAS' | 'BOOK' | 'NOTE'; targetId: string }> = [...(existing?.links || [])];
+      const extractedFromContent = extractCanvasIdsFromMarkdown(content);
+      for (const cId of extractedFromContent) {
+        if (!currentLinks.some((l) => l.targetType === 'CANVAS' && l.targetId === cId)) {
+          currentLinks.push({ targetType: 'CANVAS', targetId: cId });
+        }
+      }
+
       const saved = await noteRepo.save({
         id,
         title: input.title !== undefined ? input.title : (existing?.title || 'Nota'),
-        content: input.content !== undefined ? input.content : (existing?.content || ''),
+        content,
         folder: input.folder !== undefined ? input.folder : (existing?.folder || null),
         tags: input.tags !== undefined ? input.tags : (existing?.tags || []),
+        links: currentLinks,
       });
 
       const updated = mapLocalToNoteItem(saved);
