@@ -1,9 +1,11 @@
 import { ref } from 'vue';
-import type { NoteItem, NoteListResponse } from '~/interfaces/note';
+import type { NoteItem } from '~/interfaces/note';
 import { useAuth } from '~/composables/useAuth';
 import { useFlashcards } from '~/composables/useFlashcards';
+import { useGraph } from '~/composables/useGraph';
 import { noteRepo } from '~/adapters/database/repositories/NoteRepository';
 import type { LocalNote } from '~/adapters/database/types';
+import { resolveNoteTitle } from '~/utils/noteTitle';
 
 const mapLocalToNoteItem = (n: LocalNote): NoteItem => ({
   id: n.id,
@@ -41,7 +43,7 @@ export function extractCanvasIdsFromMarkdown(content?: string): string[] {
     /\[.*?\]\(canvas:([a-zA-Z0-9_-]+)\)/gi,
     /\[\[canvas:([a-zA-Z0-9_-]+)(?:\|.*?)?\]\]/gi,
     /!\[\[canvas:([a-zA-Z0-9_-]+)\]\]/gi,
-    /\[.*?\]\((?:https?:\/\/[^\/\s)]+)?\/canvas\/([a-zA-Z0-9_-]+)\)/gi,
+    /\[.*?\]\((?:https?:\/\/[^/\s)]+)?\/canvas\/([a-zA-Z0-9_-]+)\)/gi,
   ];
   const ids = new Set<string>();
   for (const reg of regexes) {
@@ -163,9 +165,11 @@ export function useNotes() {
       }
     }
 
+    const resolvedTitle = resolveNoteTitle(input.title, content);
+
     const saved = await noteRepo.save({
       id: localId,
-      title: input.title?.trim() || 'Nova Nota',
+      title: resolvedTitle,
       content,
       folder: input.folder || null,
       tags: input.tags || [],
@@ -178,6 +182,14 @@ export function useNotes() {
     notesList.value.unshift(item);
     currentNote.value = item;
     isLoading.value = false;
+
+    try {
+      const { fetchGraph } = useGraph();
+      fetchGraph().catch(() => {});
+    } catch {
+      // Non-blocking
+    }
+
     return item;
   };
 
@@ -196,9 +208,12 @@ export function useNotes() {
         }
       }
 
+      const rawTitle = input.title !== undefined ? input.title : existing?.title;
+      const resolvedTitle = resolveNoteTitle(rawTitle, content);
+
       const saved = await noteRepo.save({
         id,
-        title: input.title !== undefined ? input.title : (existing?.title || 'Nota'),
+        title: resolvedTitle,
         content,
         folder: input.folder !== undefined ? input.folder : (existing?.folder || null),
         tags: input.tags !== undefined ? input.tags : (existing?.tags || []),
@@ -213,6 +228,14 @@ export function useNotes() {
       if (currentNote.value?.id === id) {
         currentNote.value = updated;
       }
+
+      try {
+        const { fetchGraph } = useGraph();
+        fetchGraph().catch(() => {});
+      } catch {
+        // Non-blocking
+      }
+
       return updated;
     } catch (err: any) {
       console.warn('[useNotes] Erro ao atualizar nota local:', err);
@@ -235,6 +258,13 @@ export function useNotes() {
       await deleteFlashcardByNoteId(id);
     } catch (e) {
       console.warn('[useNotes] Falha na cascata de exclusão de flashcards locais da nota:', e);
+    }
+
+    try {
+      const { fetchGraph } = useGraph();
+      fetchGraph().catch(() => {});
+    } catch {
+      // Non-blocking
     }
   };
 

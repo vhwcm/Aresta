@@ -160,6 +160,7 @@ import type { GraphNode, GraphEdge, GraphNodeType } from '~/interfaces/graph'
 import { PlusIcon, SearchIcon, LinkIcon, TagIcon, BookOpenIcon, FileTextIcon, LayoutGridIcon, FolderIcon } from 'lucide-vue-next'
 import { useSettings } from '~/composables/useSettings'
 import { getCoverUrl } from '~/utils/cover'
+import { resolveNoteTitle } from '~/utils/noteTitle'
 
 const props = withDefaults(
   defineProps<{
@@ -1127,7 +1128,7 @@ const initGraph = (animateTransition = true) => {
 
   noteNodesSelection.each(function (d: any) {
     const nodeEl = d3.select(this)
-    nodeEl.append('title').text(d.fullTitle || d.title || d.name || '')
+    nodeEl.append('title').text(resolveNoteTitle(d.fullTitle || d.title || d.name, d.description))
     const iconG = nodeEl
       .append('g')
       .attr('class', 'note-icon')
@@ -1161,7 +1162,7 @@ const initGraph = (animateTransition = true) => {
     .attr('font-weight', '500')
     .attr('font-family', 'system-ui, -apple-system, sans-serif')
     .attr('pointer-events', 'none')
-    .text((d: any) => getTruncatedTitle(d.title || d.name, 14))
+    .text((d: any) => getTruncatedTitle(resolveNoteTitle(d.title || d.name, d.description), 14))
 
   // ----------------------------------------------------
   // D. NÓS DE QUADROS (TIPO 'canvas')
