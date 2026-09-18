@@ -324,4 +324,172 @@ describe('DriveSyncService (Local-First Sync Engine)', () => {
     expect(parsed.edges.length).toBe(2)
     expect(uploadedPayload?.payload?.themes?.length).toBe(2)
   })
+
+  it('8. Não ressuscita nota deletada localmente e envia tombstone para o Google Drive', async () => {
+    // 1. Cria nota localmente
+    await db.saveNote({
+      id: 'note-tombstone-1',
+      title: 'Nota para Deletar',
+      content: 'Conteúdo',
+      updated_at: '2026-01-01T00:00:00.000Z',
+      sync_status: 'synced',
+    })
+
+    // 2. Deleta nota localmente (gerando deleted_at e updated_at mais recentes)
+    await db.deleteNote('note-tombstone-1')
+
+    const subFolderUploads: Array<{ subFolder: DataSubFolder; fileName: string; data: any }> = []
+    const provider: IDataSyncProvider = {
+      providerName: 'google-drive',
+      ensureDataFolders: async () => {},
+      downloadDataFile: async () => null,
+      uploadDataFile: async () => ({ fileName: '', itemCount: 0, syncedAt: '' }),
+      // O Drive ainda possui o arquivo antigo da nota (sem deleted_at)
+      listSubFolderFiles: async () => ['note-tombstone-1.json'],
+      downloadSubFolderDataFile: async () => ({
+        schema_version: 1,
+        entity_type: 'note',
+        updated_at: '2026-01-01T00:00:00.000Z',
+        updated_by: 'remote_device',
+        payload: {
+          id: 'note-tombstone-1',
+          title: 'Nota Antiga no Drive',
+          content: 'Conteúdo Antigo',
+          updated_at: '2026-01-01T00:00:00.000Z',
+          sync_status: 'synced',
+        },
+      }),
+      uploadSubFolderDataFile: async (subFolder, fileName, data) => {
+        subFolderUploads.push({ subFolder, fileName, data })
+        return { fileName, itemCount: 1, syncedAt: new Date().toISOString() }
+      },
+      deleteDataFile: async () => {},
+      deleteSubFolderDataFile: async () => {},
+    }
+
+    const service = new DriveSyncService(provider)
+    await service.syncNotes()
+
+    // Verifica que a nota NÃO ressuscitou no getNotes()
+    const activeNotes = await db.getNotes()
+    expect(activeNotes.find((n) => n.id === 'note-tombstone-1')).toBeUndefined()
+
+    // Verifica que o tombstone foi preservado no getNotesRaw()
+    const rawNotes = await db.getNotesRaw()
+    const tombstonedNote = rawNotes.find((n) => n.id === 'note-tombstone-1')
+    expect(tombstonedNote?.deleted_at).toBeDefined()
+
+    // Verifica que o tombstone foi enviado para o Google Drive
+    expect(subFolderUploads.length).toBe(1)
+    expect(subFolderUploads[0]?.data?.payload?.deleted_at).toBeDefined()
+  })
+
+  it('9. Não ressuscita anotação deletada localmente quando Google Drive tem versão anterior sem tombstone', async () => {
+    // 1. Salva anotação
+    await db.saveAnnotation({
+      id: 99,
+      bookId: 10,
+      cfi: 'epubcfi(/6/2)',
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updated_at: '2026-01-01T00:00:00.000Z',
+      sync_status: 'synced',
+      note: 'Anotação teste',
+    })
+
+    // 2. Deleta localmente
+    await db.deleteAnnotation(99)
+
+    let uploadedPayload: any = null
+    const provider: IDataSyncProvider = {
+      providerName: 'google-drive',
+      ensureDataFolders: async () => {},
+      // Drive tem arquivo anterior sem deleted_at
+      downloadDataFile: async () => ({
+        schema_version: 1,
+        entity_type: 'annotation',
+        updated_at: '2026-01-01T00:00:00.000Z',
+        updated_by: 'remote_device',
+        payload: [
+          {
+            id: 99,
+            bookId: 10,
+            cfi: 'epubcfi(/6/2)',
+            createdAt: '2026-01-01T00:00:00.000Z',
+            updated_at: '2026-01-01T00:00:00.000Z',
+            sync_status: 'synced',
+            note: 'Anotação antiga no Drive',
+          },
+        ],
+      }),
+      uploadDataFile: async (_name: string, data: unknown) => {
+        uploadedPayload = data
+        return { fileName: 'annotations.json', itemCount: 1, syncedAt: new Date().toISOString() }
+      },
+      uploadSubFolderDataFile: async () => ({ fileName: '', itemCount: 0, syncedAt: '' }),
+      downloadSubFolderDataFile: async () => null,
+      listSubFolderFiles: async () => [],
+      deleteDataFile: async () => {},
+      deleteSubFolderDataFile: async () => {},
+    }
+
+    const service = new DriveSyncService(provider)
+    await service.syncAnnotations()
+
+    // Não deve aparecer em getAnnotations()
+    const activeAnnotations = await db.getAnnotations()
+    expect(activeAnnotations.find((a) => a.id === 99)).toBeUndefined()
+
+    // Deve estar no payload uploaded como tombstone com deleted_at
+    const uploadedAnn = uploadedPayload?.payload?.find((a: any) => a.id === 99)
+    expect(uploadedAnn?.deleted_at).toBeDefined()
+  })
+
+  it('10. Aplica tombstone remoto mais recente em subpastas e apaga quadro localmente', async () => {
+    // 1. Quadro existe localmente com timestamp antigo
+    await db.saveCanvas({
+      id: 'canvas-del-1',
+      name: 'Quadro a Deletar',
+      document: { nodes: [], edges: [], viewport: { x: 0, y: 0, zoom: 1 } },
+      updated_at: '2026-01-01T00:00:00.000Z',
+      sync_status: 'synced',
+    })
+
+    const provider: IDataSyncProvider = {
+      providerName: 'google-drive',
+      ensureDataFolders: async () => {},
+      downloadDataFile: async () => null,
+      uploadDataFile: async () => ({ fileName: '', itemCount: 0, syncedAt: '' }),
+      listSubFolderFiles: async () => ['canvas-del-1.json'],
+      // O Drive envia um tombstone mais recente criado em outro dispositivo
+      downloadSubFolderDataFile: async () => ({
+        schema_version: 1,
+        entity_type: 'canvas',
+        updated_at: '2026-01-05T00:00:00.000Z',
+        updated_by: 'remote_device',
+        payload: {
+          id: 'canvas-del-1',
+          name: 'Quadro a Deletar',
+          document: { nodes: [], edges: [], viewport: { x: 0, y: 0, zoom: 1 } },
+          updated_at: '2026-01-05T00:00:00.000Z',
+          deleted_at: '2026-01-05T00:00:00.000Z',
+          sync_status: 'synced',
+        },
+      }),
+      uploadSubFolderDataFile: async () => ({ fileName: '', itemCount: 0, syncedAt: '' }),
+      deleteDataFile: async () => {},
+      deleteSubFolderDataFile: async () => {},
+    }
+
+    const service = new DriveSyncService(provider)
+    await service.syncCanvas()
+
+    // Quadro não pode mais aparecer na listagem ativa
+    const activeCanvases = await db.getCanvases()
+    expect(activeCanvases.find((c) => c.id === 'canvas-del-1')).toBeUndefined()
+
+    // Quadro deve ter deleted_at gravado no banco local
+    const rawCanvases = await db.getCanvasesRaw()
+    const rawItem = rawCanvases.find((c) => c.id === 'canvas-del-1')
+    expect(rawItem?.deleted_at).toBeDefined()
+  })
 })

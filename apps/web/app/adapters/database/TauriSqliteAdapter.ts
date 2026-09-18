@@ -343,6 +343,28 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
     return list;
   }
 
+  async getAnnotationsRaw(): Promise<LocalAnnotation[]> {
+    await this.init();
+    const rows = await this.db!.select<any[]>('SELECT * FROM annotations ORDER BY created_at DESC');
+    return rows.map((r) => ({
+      id: r.id,
+      userId: r.user_id,
+      bookId: r.book_id,
+      bookTitle: r.book_title,
+      bookCover: r.book_cover,
+      cfi: r.cfi,
+      selectedText: r.selected_text,
+      note: r.note,
+      chapterTitle: r.chapter_title,
+      progress: r.progress,
+      themes: r.themes_json ? JSON.parse(r.themes_json) : [],
+      createdAt: r.created_at,
+      updated_at: r.updated_at,
+      deleted_at: r.deleted_at,
+      sync_status: r.sync_status
+    }));
+  }
+
   async getAnnotationById(id: number): Promise<LocalAnnotation | null> {
     await this.init();
     const rows = await this.db!.select<any[]>('SELECT * FROM annotations WHERE id = ? AND deleted_at IS NULL', [id]);
@@ -424,6 +446,36 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
       params.push(now);
     }
     const rows = await this.db!.select<any[]>(query, params);
+    return rows.map((r) => ({
+      id: r.id,
+      userId: r.user_id,
+      annotationId: r.annotation_id,
+      bookId: r.book_id,
+      bookTitle: r.book_title,
+      bookCover: r.book_cover,
+      chapterTitle: r.chapter_title,
+      selectedText: r.selected_text,
+      note: r.note,
+      cardType: r.card_type,
+      question: r.question,
+      answer: r.answer,
+      contextSummary: r.context_summary,
+      repetitionLevel: r.repetition_level,
+      nextReviewAt: r.next_review_at,
+      lastReviewedAt: r.last_reviewed_at,
+      reviewCount: r.review_count,
+      difficulty: r.difficulty,
+      isReviewed: Boolean(r.is_reviewed),
+      rating: r.rating,
+      updated_at: r.updated_at,
+      deleted_at: r.deleted_at,
+      sync_status: r.sync_status
+    }));
+  }
+
+  async getFlashcardsRaw(): Promise<LocalFlashcard[]> {
+    await this.init();
+    const rows = await this.db!.select<any[]>('SELECT * FROM flashcards');
     return rows.map((r) => ({
       id: r.id,
       userId: r.user_id,
@@ -562,6 +614,22 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
     }));
   }
 
+  async getCanvasesRaw(): Promise<LocalCanvasItem[]> {
+    await this.init();
+    const rows = await this.db!.select<any[]>('SELECT * FROM canvases ORDER BY updated_at DESC');
+    return rows.map((r) => ({
+      id: r.id,
+      name: r.name,
+      description: r.description,
+      document: JSON.parse(r.document_json),
+      nodeCount: r.node_count,
+      edgeCount: r.edge_count,
+      updated_at: r.updated_at,
+      deleted_at: r.deleted_at,
+      sync_status: r.sync_status
+    }));
+  }
+
   async getCanvasById(id: string): Promise<LocalCanvasItem | null> {
     await this.init();
     const rows = await this.db!.select<any[]>('SELECT * FROM canvases WHERE id = ? AND deleted_at IS NULL', [id]);
@@ -626,6 +694,12 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
     return rows.map((row) => JSON.parse(row.payload_json) as T).filter((item) => !item.deleted_at);
   }
 
+  private async getPersonalRecordsRaw<T>(entityType: string): Promise<T[]> {
+    await this.init();
+    const rows = await this.db!.select<any[]>('SELECT payload_json FROM personal_records WHERE entity_type = ? ORDER BY updated_at DESC', [entityType]);
+    return rows.map((row) => JSON.parse(row.payload_json) as T);
+  }
+
   private async savePersonalRecord<T extends { id: string; updated_at: string; deleted_at?: string | null }>(entityType: string, item: T): Promise<void> {
     await this.init();
     await this.db!.execute(
@@ -641,10 +715,12 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
   }
 
   async getNotes(): Promise<LocalNote[]> { return this.getPersonalRecords<LocalNote>('note'); }
+  async getNotesRaw(): Promise<LocalNote[]> { return this.getPersonalRecordsRaw<LocalNote>('note'); }
   async getNoteById(id: string): Promise<LocalNote | null> { return this.getPersonalRecord<LocalNote>('note', id); }
   async saveNote(note: LocalNote): Promise<void> { return this.savePersonalRecord('note', note); }
   async deleteNote(id: string): Promise<void> { return this.deletePersonalRecord<LocalNote>('note', id); }
   async getDrawingNotes(): Promise<LocalDrawingNote[]> { return this.getPersonalRecords<LocalDrawingNote>('drawing_note'); }
+  async getDrawingNotesRaw(): Promise<LocalDrawingNote[]> { return this.getPersonalRecordsRaw<LocalDrawingNote>('drawing_note'); }
   async getDrawingNoteById(id: string): Promise<LocalDrawingNote | null> { return this.getPersonalRecord<LocalDrawingNote>('drawing_note', id); }
   async saveDrawingNote(note: LocalDrawingNote): Promise<void> { return this.savePersonalRecord('drawing_note', note); }
   async deleteDrawingNote(id: string): Promise<void> { return this.deletePersonalRecord<LocalDrawingNote>('drawing_note', id); }
@@ -754,6 +830,26 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
     }
     sql += ' ORDER BY created_at DESC';
     const rows = await this.db!.select<any[]>(sql, params);
+    return rows.map((r) => ({
+      id: r.id,
+      title: r.title,
+      topic: r.topic,
+      html: r.html,
+      markdown: r.markdown,
+      diagramCount: r.diagram_count,
+      depthLevel: r.depth_level as 'quick_summary' | 'standard' | 'deep_dive',
+      bookId: r.book_id,
+      themeId: r.theme_id,
+      createdAt: r.created_at,
+      updated_at: r.updated_at,
+      deleted_at: r.deleted_at,
+      sync_status: r.sync_status,
+    }));
+  }
+
+  async getDidacticBookletsRaw(): Promise<LocalDidacticBooklet[]> {
+    await this.init();
+    const rows = await this.db!.select<any[]>('SELECT * FROM didactic_booklets ORDER BY created_at DESC');
     return rows.map((r) => ({
       id: r.id,
       title: r.title,

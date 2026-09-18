@@ -1,6 +1,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [18/09/2026 19:33] [Concluído] Implementar arquitetura de tombstones e consultas raw para prevenir ressurreição de dados deletados na sincronização do Google Drive
 - [18/09/2026 18:34] [Concluído] Corrigir reatividade da visibilidade de seções e pré-renderização no motor de scroll contínuo do leitor
 
 - [18/09/2026 18:33] [Concluído] Atualizar skill git-commit para incluir instrução e etapa obrigatória de git push

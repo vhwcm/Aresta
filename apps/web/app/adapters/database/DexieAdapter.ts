@@ -173,6 +173,11 @@ export class DexieAdapter implements IDatabaseAdapter {
     return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
 
+  async getAnnotationsRaw(): Promise<LocalAnnotation[]> {
+    await this.init();
+    return await this.db.annotations.toArray();
+  }
+
   async getAnnotationById(id: number): Promise<LocalAnnotation | null> {
     await this.init();
     const note = await this.db.annotations.get(id);
@@ -208,6 +213,11 @@ export class DexieAdapter implements IDatabaseAdapter {
     return list;
   }
 
+  async getFlashcardsRaw(): Promise<LocalFlashcard[]> {
+    await this.init();
+    return await this.db.flashcards.toArray();
+  }
+
   async getFlashcardById(id: number): Promise<LocalFlashcard | null> {
     await this.init();
     const card = await this.db.flashcards.get(id);
@@ -237,6 +247,11 @@ export class DexieAdapter implements IDatabaseAdapter {
     return all.filter((c) => !c.deleted_at).sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
   }
 
+  async getCanvasesRaw(): Promise<LocalCanvasItem[]> {
+    await this.init();
+    return await this.db.canvases.toArray();
+  }
+
   async getCanvasById(id: string): Promise<LocalCanvasItem | null> {
     await this.init();
     const canvas = await this.db.canvases.get(id);
@@ -263,6 +278,10 @@ export class DexieAdapter implements IDatabaseAdapter {
     await this.init();
     return (await this.db.notes.toArray()).filter((item) => !item.deleted_at).sort((a, b) => b.updated_at.localeCompare(a.updated_at));
   }
+  async getNotesRaw(): Promise<LocalNote[]> {
+    await this.init();
+    return await this.db.notes.toArray();
+  }
   async getNoteById(id: string): Promise<LocalNote | null> {
     await this.init(); const item = await this.db.notes.get(id); return item && !item.deleted_at ? item : null;
   }
@@ -273,6 +292,10 @@ export class DexieAdapter implements IDatabaseAdapter {
 
   async getDrawingNotes(): Promise<LocalDrawingNote[]> {
     await this.init(); return (await this.db.drawing_notes.toArray()).filter((item) => !item.deleted_at).sort((a, b) => b.updated_at.localeCompare(a.updated_at));
+  }
+  async getDrawingNotesRaw(): Promise<LocalDrawingNote[]> {
+    await this.init();
+    return await this.db.drawing_notes.toArray();
   }
   async getDrawingNoteById(id: string): Promise<LocalDrawingNote | null> {
     await this.init(); const item = await this.db.drawing_notes.get(id); return item && !item.deleted_at ? item : null;
@@ -347,6 +370,11 @@ export class DexieAdapter implements IDatabaseAdapter {
       list = list.filter((b) => Number(b.themeId) === Number(filters.themeId));
     }
     return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  async getDidacticBookletsRaw(): Promise<LocalDidacticBooklet[]> {
+    await this.init();
+    return await this.db.didactic_booklets.toArray();
   }
 
   async getDidacticBookletById(id: string): Promise<LocalDidacticBooklet | null> {

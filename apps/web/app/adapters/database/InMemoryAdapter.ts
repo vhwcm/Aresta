@@ -94,6 +94,10 @@ export class InMemoryAdapter implements IDatabaseAdapter {
     return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
 
+  async getAnnotationsRaw(): Promise<LocalAnnotation[]> {
+    return Array.from(this.annotations.values());
+  }
+
   async getAnnotationById(id: number): Promise<LocalAnnotation | null> {
     const a = this.annotations.get(id);
     return a && !a.deleted_at ? a : null;
@@ -122,6 +126,10 @@ export class InMemoryAdapter implements IDatabaseAdapter {
     return list;
   }
 
+  async getFlashcardsRaw(): Promise<LocalFlashcard[]> {
+    return Array.from(this.flashcards.values());
+  }
+
   async getFlashcardById(id: number): Promise<LocalFlashcard | null> {
     const f = this.flashcards.get(id);
     return f && !f.deleted_at ? f : null;
@@ -145,6 +153,10 @@ export class InMemoryAdapter implements IDatabaseAdapter {
     return Array.from(this.canvases.values()).filter((c) => !c.deleted_at);
   }
 
+  async getCanvasesRaw(): Promise<LocalCanvasItem[]> {
+    return Array.from(this.canvases.values());
+  }
+
   async getCanvasById(id: string): Promise<LocalCanvasItem | null> {
     const c = this.canvases.get(id);
     return c && !c.deleted_at ? c : null;
@@ -164,10 +176,12 @@ export class InMemoryAdapter implements IDatabaseAdapter {
   }
 
   async getNotes(): Promise<LocalNote[]> { return Array.from(this.notes.values()).filter((item) => !item.deleted_at); }
+  async getNotesRaw(): Promise<LocalNote[]> { return Array.from(this.notes.values()); }
   async getNoteById(id: string): Promise<LocalNote | null> { const item = this.notes.get(id); return item && !item.deleted_at ? item : null; }
   async saveNote(note: LocalNote): Promise<void> { this.notes.set(note.id, { ...note }); }
   async deleteNote(id: string): Promise<void> { const item = this.notes.get(id); if (item) this.notes.set(id, { ...item, deleted_at: new Date().toISOString(), updated_at: new Date().toISOString(), sync_status: 'pending' }); }
   async getDrawingNotes(): Promise<LocalDrawingNote[]> { return Array.from(this.drawingNotes.values()).filter((item) => !item.deleted_at); }
+  async getDrawingNotesRaw(): Promise<LocalDrawingNote[]> { return Array.from(this.drawingNotes.values()); }
   async getDrawingNoteById(id: string): Promise<LocalDrawingNote | null> { const item = this.drawingNotes.get(id); return item && !item.deleted_at ? item : null; }
   async saveDrawingNote(note: LocalDrawingNote): Promise<void> { this.drawingNotes.set(note.id, { ...note }); }
   async deleteDrawingNote(id: string): Promise<void> { const item = this.drawingNotes.get(id); if (item) this.drawingNotes.set(id, { ...item, deleted_at: new Date().toISOString(), updated_at: new Date().toISOString(), sync_status: 'pending' }); }
@@ -229,6 +243,10 @@ export class InMemoryAdapter implements IDatabaseAdapter {
       list = list.filter((b) => Number(b.themeId) === Number(filters.themeId));
     }
     return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  async getDidacticBookletsRaw(): Promise<LocalDidacticBooklet[]> {
+    return Array.from(this.didacticBooklets.values());
   }
 
   async getDidacticBookletById(id: string): Promise<LocalDidacticBooklet | null> {

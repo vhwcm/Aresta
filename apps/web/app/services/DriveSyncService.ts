@@ -207,7 +207,10 @@ export class DriveSyncService {
 
       const current = byId.get(remote.payload.id)
       if (!current) {
-        if (remote.payload.deleted_at) continue
+        if (remote.payload.deleted_at) {
+          byId.set(remote.payload.id, remote.payload)
+          continue
+        }
         byId.set(remote.payload.id, remote.payload)
         await saveLocal({ ...remote.payload, sync_status: 'synced' })
         downloaded++
@@ -215,14 +218,16 @@ export class DriveSyncService {
       }
 
       const winner = this.newer(current, remote.payload)
+      byId.set(remote.payload.id, winner)
+      if (winner.deleted_at) {
+        await deleteLocal(winner.id)
+      } else {
+        await saveLocal({ ...winner, sync_status: 'synced' })
+      }
       if (winner !== current) {
-        byId.set(remote.payload.id, winner)
-        if (winner.deleted_at) {
-          await deleteLocal(winner.id)
-        } else {
-          await saveLocal({ ...winner, sync_status: 'synced' })
-        }
         downloaded++
+        conflicts++
+      } else if (winner !== remote.payload) {
         conflicts++
       }
     }
@@ -251,7 +256,7 @@ export class DriveSyncService {
     return this.syncCollection<LocalAnnotation>(
       'annotations.json',
       'annotation',
-      () => db.getAnnotations(),
+      () => (db.getAnnotationsRaw ? db.getAnnotationsRaw() : db.getAnnotations()),
       (item) => db.saveAnnotation(item),
       (id) => db.deleteAnnotation(id)
     )
@@ -262,7 +267,7 @@ export class DriveSyncService {
     return this.syncCollection<LocalFlashcard>(
       'flashcards.json',
       'flashcard',
-      () => db.getFlashcards(),
+      () => (db.getFlashcardsRaw ? db.getFlashcardsRaw() : db.getFlashcards()),
       (item) => db.saveFlashcard(item),
       (id) => db.deleteFlashcard(id)
     )
@@ -273,7 +278,7 @@ export class DriveSyncService {
     return this.syncItems<LocalCanvasItem>(
       'canvas',
       'canvas',
-      () => db.getCanvases(),
+      () => (db.getCanvasesRaw ? db.getCanvasesRaw() : db.getCanvases()),
       (item) => db.saveCanvas(item),
       (id) => db.deleteCanvas(id)
     )
@@ -284,7 +289,7 @@ export class DriveSyncService {
     return this.syncItems<LocalNote>(
       'notes',
       'note',
-      () => db.getNotes(),
+      () => (db.getNotesRaw ? db.getNotesRaw() : db.getNotes()),
       (item) => db.saveNote(item),
       (id) => db.deleteNote(id)
     )
@@ -295,7 +300,7 @@ export class DriveSyncService {
     return this.syncItems<LocalDrawingNote>(
       'drawing_notes',
       'drawing_note',
-      () => db.getDrawingNotes(),
+      () => (db.getDrawingNotesRaw ? db.getDrawingNotesRaw() : db.getDrawingNotes()),
       (item) => db.saveDrawingNote(item),
       (id) => db.deleteDrawingNote(id)
     )
