@@ -6,6 +6,7 @@ import { getApiRoot } from '~/utils/apiBase'
 
 export type ReaderColorTheme = 'sepia' | 'white' | 'black'
 export type ReaderWidthMode = 'centered' | 'wide'
+export type ReadingMode = 'paginated' | 'scroll'
 
 interface ReaderState {
   document: IBookDocument | null
@@ -25,7 +26,9 @@ interface ReaderState {
   fontSize: number
   fontFamily: string
   readerTheme: ReaderColorTheme
+  readingMode: ReadingMode
 }
+
 
 export const useReaderStore = defineStore('reader', {
   state: (): ReaderState => {
@@ -35,6 +38,7 @@ export const useReaderStore = defineStore('reader', {
     let defaultFontSize = 18
     let defaultFontFamily = "'Newsreader', Georgia, serif"
     let defaultReaderTheme: ReaderColorTheme = 'sepia'
+    let defaultReadingMode: ReadingMode = 'paginated'
 
     if (typeof window !== 'undefined') {
       try {
@@ -53,6 +57,11 @@ export const useReaderStore = defineStore('reader', {
           defaultTwoPageMode = savedTwoPage === 'true'
         }
 
+        const savedReadingMode = localStorage.getItem('aresta_reading_mode')
+        if (savedReadingMode === 'paginated' || savedReadingMode === 'scroll') {
+          defaultReadingMode = savedReadingMode
+        }
+
         const saved = localStorage.getItem('aresta_settings')
         if (saved) {
           const parsed = JSON.parse(saved)
@@ -61,6 +70,9 @@ export const useReaderStore = defineStore('reader', {
           }
           if (parsed.readerWidthMode === 'centered' || parsed.readerWidthMode === 'wide') {
             defaultWidthMode = parsed.readerWidthMode
+          }
+          if (parsed.readerReadingMode === 'paginated' || parsed.readerReadingMode === 'scroll') {
+            defaultReadingMode = parsed.readerReadingMode
           }
           if (typeof parsed.epubFontSize === 'number') {
             defaultFontSize = Math.max(12, Math.min(36, Math.round(parsed.epubFontSize)))
@@ -104,6 +116,7 @@ export const useReaderStore = defineStore('reader', {
       fontSize: defaultFontSize,
       fontFamily: defaultFontFamily,
       readerTheme: defaultReaderTheme,
+      readingMode: defaultReadingMode,
     }
   },
 
@@ -124,7 +137,9 @@ export const useReaderStore = defineStore('reader', {
       if (!state.document || state.document.totalPages <= 0) return 0
       return Math.round((state.currentPage / state.document.totalPages) * 100)
     },
+    isScrollMode: (state): boolean => state.readingMode === 'scroll',
   },
+
 
   actions: {
     syncSettings() {
@@ -139,9 +154,16 @@ export const useReaderStore = defineStore('reader', {
           if (parsed.readerWidthMode === 'centered' || parsed.readerWidthMode === 'wide') {
             this.readerWidthMode = parsed.readerWidthMode
           }
+          if (parsed.readerReadingMode === 'paginated' || parsed.readerReadingMode === 'scroll') {
+            this.readingMode = parsed.readerReadingMode
+          }
           if (parsed.readerTheme === 'white' || parsed.readerTheme === 'sepia' || parsed.readerTheme === 'black') {
             this.readerTheme = parsed.readerTheme
           }
+        }
+        const savedReadingMode = localStorage.getItem('aresta_reading_mode')
+        if (savedReadingMode === 'paginated' || savedReadingMode === 'scroll') {
+          this.readingMode = savedReadingMode
         }
         const savedTheme = localStorage.getItem('aresta_reader_theme')
         if (savedTheme === 'white' || savedTheme === 'sepia' || savedTheme === 'black') {
@@ -425,6 +447,26 @@ export const useReaderStore = defineStore('reader', {
       this.setReaderWidthMode(this.readerWidthMode === 'centered' ? 'wide' : 'centered')
     },
 
+    setReadingMode(mode: ReadingMode) {
+      if (mode !== 'paginated' && mode !== 'scroll') return
+      this.readingMode = mode
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('aresta_reading_mode', mode)
+          const saved = localStorage.getItem('aresta_settings')
+          const settings = saved ? JSON.parse(saved) : {}
+          settings.readerReadingMode = mode
+          localStorage.setItem('aresta_settings', JSON.stringify(settings))
+        } catch {
+          // ignorar erro
+        }
+      }
+    },
+
+    toggleReadingMode() {
+      this.setReadingMode(this.readingMode === 'paginated' ? 'scroll' : 'paginated')
+    },
+
     setReaderTheme(theme: ReaderColorTheme) {
       if (theme !== 'white' && theme !== 'sepia' && theme !== 'black') return
       this.readerTheme = theme
@@ -509,7 +551,9 @@ export const useReaderStore = defineStore('reader', {
         try {
           localStorage.setItem('aresta_last_accessed_book_id', String(this.bookId))
           localStorage.setItem('aresta_last_accessed_at', nowIso)
-        } catch {}
+        } catch {
+          /* ignorar */
+        }
       }
 
       // Sincroniza em background com o backend se autenticado
@@ -528,7 +572,9 @@ export const useReaderStore = defineStore('reader', {
             body: JSON.stringify({ currentPage: page })
           }).catch(() => {})
         }
-      } catch {}
+      } catch {
+        /* ignorar */
+      }
     },
 
     setCurrentPage(page: number) {

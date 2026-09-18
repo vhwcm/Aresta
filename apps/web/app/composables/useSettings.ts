@@ -1,5 +1,5 @@
 import { reactive, computed, readonly } from 'vue'
-import { useReaderStore, type ReaderColorTheme, type ReaderWidthMode } from '~/stores/readerStore'
+import { useReaderStore, type ReaderColorTheme, type ReaderWidthMode, type ReadingMode } from '~/stores/readerStore'
 import { settingsRepo } from '~/adapters/database/repositories/SettingsRepository'
 
 function trySyncReaderStore() {
@@ -30,6 +30,7 @@ export interface SettingsState {
   readerTwoPageMode: boolean
   readerWidthMode: ReaderWidthMode
   readerTheme: ReaderColorTheme
+  readerReadingMode: ReadingMode
 }
 
 export interface UserSettingsResponse {
@@ -47,6 +48,7 @@ export interface UserSettingsResponse {
   readerTwoPageMode?: boolean
   readerWidthMode?: ReaderWidthMode
   readerTheme?: ReaderColorTheme
+  readerReadingMode?: ReadingMode
   updatedAt?: string | null
 }
 
@@ -78,6 +80,7 @@ const settings = reactive<SettingsState>({
   readerTwoPageMode: true,
   readerWidthMode: 'centered',
   readerTheme: 'sepia',
+  readerReadingMode: 'paginated',
 })
 
 let isInitialized = false
@@ -96,6 +99,7 @@ export function resetSettingsForTesting() {
   settings.readerTwoPageMode = true
   settings.readerWidthMode = 'centered'
   settings.readerTheme = 'sepia'
+  settings.readerReadingMode = 'paginated'
   isInitialized = false
 }
 
@@ -147,6 +151,7 @@ function initSettings() {
       if (typeof parsed.desktopReaderGraphOpen === 'boolean') settings.desktopReaderGraphOpen = parsed.desktopReaderGraphOpen
       if (typeof parsed.readerTwoPageMode === 'boolean') settings.readerTwoPageMode = parsed.readerTwoPageMode
       if (parsed.readerWidthMode === 'centered' || parsed.readerWidthMode === 'wide') settings.readerWidthMode = parsed.readerWidthMode
+      if (parsed.readerReadingMode === 'paginated' || parsed.readerReadingMode === 'scroll') settings.readerReadingMode = parsed.readerReadingMode
     }
 
     // Carrega em paralelo do banco local
@@ -165,6 +170,7 @@ function initSettings() {
         if (typeof dbSettings.desktopReaderGraphOpen === 'boolean') settings.desktopReaderGraphOpen = dbSettings.desktopReaderGraphOpen
         if (typeof dbSettings.readerTwoPageMode === 'boolean') settings.readerTwoPageMode = dbSettings.readerTwoPageMode
         if (dbSettings.readerWidthMode) settings.readerWidthMode = dbSettings.readerWidthMode as ReaderWidthMode
+        if (dbSettings.readerReadingMode) settings.readerReadingMode = dbSettings.readerReadingMode as ReadingMode
         applyTheme(settings.themeMode)
         trySyncReaderStore()
       }
@@ -293,7 +299,9 @@ export function useSettings() {
     if (typeof window !== 'undefined') {
       try {
         localStorage.setItem('aresta_reader_theme', rTheme)
-      } catch {}
+      } catch {
+        /* ignorar */
+      }
     }
     saveLocally()
     void persistToLocalDb()
@@ -314,7 +322,24 @@ export function useSettings() {
       if (typeof window !== 'undefined') {
         try {
           localStorage.setItem('aresta_reader_theme', theme)
-        } catch {}
+        } catch {
+          /* ignorar */
+        }
+      }
+      saveLocally()
+      void persistToLocalDb()
+    }
+  }
+
+  const setReaderReadingMode = (mode: ReadingMode) => {
+    if (mode === 'paginated' || mode === 'scroll') {
+      settings.readerReadingMode = mode
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('aresta_reading_mode', mode)
+        } catch {
+          /* ignorar */
+        }
       }
       saveLocally()
       void persistToLocalDb()
@@ -378,6 +403,11 @@ export function useSettings() {
     set: (val: ReaderColorTheme) => setReaderTheme(val),
   })
 
+  const readerReadingMode = computed({
+    get: () => settings.readerReadingMode,
+    set: (val: ReadingMode) => setReaderReadingMode(val),
+  })
+
   const desktopHomeGraphOpen = computed({
     get: () => settings.desktopHomeGraphOpen,
     set: (val: boolean) => setDesktopHomeGraphOpen(val),
@@ -395,6 +425,7 @@ export function useSettings() {
     epubFontFamily,
     themeMode,
     readerTheme,
+    readerReadingMode,
     desktopHomeGraphOpen,
     setPageAnimationEnabled,
     setPageCreaseEnabled,
@@ -405,6 +436,7 @@ export function useSettings() {
     setEpubFontFamily,
     setThemeMode,
     setReaderTheme,
+    setReaderReadingMode,
     toggleThemeMode,
     setDesktopHomeGraphOpen,
     loadFromServer,

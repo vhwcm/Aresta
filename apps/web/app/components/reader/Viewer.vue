@@ -34,6 +34,7 @@
           >
             <div class="reader-viewer__stage-container" :style="{ backgroundColor: themeBgColor }">
               <button
+                v-if="store.readingMode !== 'scroll'"
                 class="reader-viewer__nav-btn reader-viewer__nav-btn--prev"
                 :disabled="store.isFirstPage || isTransitioning"
                 @click="pageRenderer?.previous()"
@@ -45,13 +46,21 @@
 
               <div class="reader-viewer__book-stage" id="book-stage" :style="{ backgroundColor: themeBgColor }">
                 <ReaderEnginePageCurlCanvas
+                  v-if="store.readingMode !== 'scroll'"
                   ref="pageRenderer"
                   @transition-state="isTransitioning = $event"
                   @select-annotation="handleHighlightSelected"
                 />
+                <ReaderEngineScrollEngine
+                  v-else
+                  ref="scrollRenderer"
+                  @select-annotation="handleHighlightSelected"
+                  @text-selected="handleTextSelectionCheck"
+                />
               </div>
 
               <button
+                v-if="store.readingMode !== 'scroll'"
                 class="reader-viewer__nav-btn reader-viewer__nav-btn--next"
                 :disabled="store.isLastPage || isTransitioning"
                 @click="pageRenderer?.next()"
@@ -247,6 +256,7 @@ import { useReaderTypography } from '~/composables/useReaderTypography'
 import { useAnnotations } from '~/composables/useAnnotations'
 
 import ReaderEnginePageCurlCanvas from '~/components/reader/engine/PageCurlCanvas.vue'
+import ReaderEngineScrollEngine from '~/components/reader/engine/ReaderScrollEngine.vue'
 import ReaderBottomBar from '~/components/reader/ReaderBottomBar.vue'
 import ReaderSavedPagesModal from '~/components/reader/ReaderSavedPagesModal.vue'
 import ReaderAnnotationModal from '~/components/reader/ReaderAnnotationModal.vue'
@@ -333,6 +343,7 @@ interface PageRenderer {
 }
 
 const pageRenderer = ref<PageRenderer | null>(null)
+const scrollRenderer = ref<{ scrollToPage: (_pageNumber: number, _behavior?: ScrollBehavior) => void } | null>(null)
 const isTransitioning = ref(false)
 
 function handleClose() {
@@ -370,6 +381,9 @@ function handleToggleNotes() {
 
 function handleSelectSavedPage(page: number) {
   store.goToPage(page)
+  if (store.readingMode === 'scroll') {
+    scrollRenderer.value?.scrollToPage(page)
+  }
 }
 
 function getTargetPageFromSelection(selection: Selection): number {
@@ -377,6 +391,16 @@ function getTargetPageFromSelection(selection: Selection): number {
   const element = selection.anchorNode instanceof HTMLElement
     ? selection.anchorNode
     : selection.anchorNode.parentElement
+
+  const scrollSlot = element?.closest('[data-page-number]') as HTMLElement | null
+  if (scrollSlot) {
+    const pageAttr = scrollSlot.getAttribute('data-page-number')
+    if (pageAttr) {
+      const parsed = Number(pageAttr)
+      if (!isNaN(parsed) && parsed > 0) return parsed
+    }
+  }
+
   const pageLayer = element?.closest('.page-text-layer')
   if (pageLayer && pageLayer.classList.contains('page-text-layer--right')) {
     const leftNum = store.currentPage % 2 !== 0 ? store.currentPage : Math.max(1, store.currentPage - 1)
@@ -789,13 +813,15 @@ function onKeyDown(event: KeyboardEvent) {
     }
   }
 
-  if (event.key === 'ArrowRight') {
-    event.preventDefault()
-    void pageRenderer.value?.next()
-  }
-  if (event.key === 'ArrowLeft') {
-    event.preventDefault()
-    void pageRenderer.value?.previous()
+  if (store.readingMode !== 'scroll') {
+    if (event.key === 'ArrowRight') {
+      event.preventDefault()
+      void pageRenderer.value?.next()
+    }
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault()
+      void pageRenderer.value?.previous()
+    }
   }
 }
 

@@ -179,6 +179,56 @@
             </div>
           </div>
 
+          <!-- Seção de Modo de Leitura (Páginas vs Scroll Contínuo) -->
+          <div
+            class="flex flex-col gap-2 pt-2 border-t"
+            :class="store.readerTheme === 'sepia' ? 'border-[#dfd5c0]' : (store.readerTheme === 'white' ? 'border-gray-200' : 'border-white/10')"
+          >
+            <span
+              class="text-[11px] font-technical uppercase tracking-wider font-semibold"
+              :class="store.readerTheme === 'sepia' ? 'text-[#786C5E]' : (store.readerTheme === 'white' ? 'text-gray-500' : 'text-textSecondary')"
+            >
+              Modo de Leitura
+            </span>
+            <div class="grid grid-cols-2 gap-1.5">
+              <!-- Virada de Páginas -->
+              <button
+                @click="store.setReadingMode('paginated')"
+                class="flex items-center justify-center gap-1.5 p-2 rounded-xl border text-xs font-semibold transition-all"
+                :class="store.readingMode !== 'scroll'
+                  ? 'bg-accent/20 border-accent text-accent font-bold shadow-sm'
+                  : (store.readerTheme === 'sepia'
+                    ? 'bg-[#f0e7d3] border-[#dfd5c0] text-[#5c4d3c] hover:bg-[#ebe0c8] hover:text-[#2a2521]'
+                    : (store.readerTheme === 'white'
+                      ? 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200 hover:text-gray-900'
+                      : 'bg-white/5 border-white/10 text-textSecondary hover:text-textPrimary hover:bg-white/10'))"
+                title="Modo clássico de virada de folhas"
+                id="btn-mode-paginated"
+              >
+                <BookOpenIcon class="w-3.5 h-3.5" />
+                <span>Páginas</span>
+              </button>
+
+              <!-- Scroll Contínuo -->
+              <button
+                @click="store.setReadingMode('scroll')"
+                class="flex items-center justify-center gap-1.5 p-2 rounded-xl border text-xs font-semibold transition-all"
+                :class="store.readingMode === 'scroll'
+                  ? 'bg-accent/20 border-accent text-accent font-bold shadow-sm'
+                  : (store.readerTheme === 'sepia'
+                    ? 'bg-[#f0e7d3] border-[#dfd5c0] text-[#5c4d3c] hover:bg-[#ebe0c8] hover:text-[#2a2521]'
+                    : (store.readerTheme === 'white'
+                      ? 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200 hover:text-gray-900'
+                      : 'bg-white/5 border-white/10 text-textSecondary hover:text-textPrimary hover:bg-white/10'))"
+                title="Modo contínuo com rolagem vertical"
+                id="btn-mode-scroll"
+              >
+                <ScrollTextIcon class="w-3.5 h-3.5" />
+                <span>Scroll</span>
+              </button>
+            </div>
+          </div>
+
           <!-- Seção de Diagramação e Largura de Leitura -->
           <div
             class="flex flex-col gap-2 pt-2 border-t"
@@ -190,7 +240,7 @@
             >
               Distribuição e Largura
             </span>
-            <div class="grid grid-cols-2 gap-1.5">
+            <div v-if="store.readingMode !== 'scroll'" class="grid grid-cols-2 gap-1.5">
               <!-- 1 Folha vs 2 Folhas -->
               <button
                 @click="store.setTwoPageMode(false)"
@@ -263,9 +313,31 @@
         </div>
       </div>
 
-      <!-- Botão Alternar 1 Folha / 2 Folhas (Desktop/Tablet) -->
+      <!-- Botão Alternar Modo de Leitura: Páginas vs Scroll Contínuo (Desktop/Tablet) -->
       <button
-        v-if="store.totalPages > 1"
+        @click="store.toggleReadingMode()"
+        class="hidden md:flex flex-col items-center justify-center md:w-11 md:h-11 rounded-xl border text-xs font-semibold transition-all active:scale-95 group"
+        :class="store.isScrollMode
+          ? 'bg-accent/15 border-accent text-accent shadow-sm'
+          : (store.readerTheme === 'sepia'
+            ? 'bg-[#f5eedc] border-[#dfd5c0] text-[#5c4d3c] hover:text-[#2a2521] hover:bg-[#EBE2CE]'
+            : (store.readerTheme === 'white'
+              ? 'bg-gray-100 border-gray-200 text-gray-700 hover:text-black hover:bg-gray-200'
+              : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary hover:bg-white/10'))"
+        :title="store.isScrollMode ? 'Modo Scroll ativo (Clique para modo Páginas)' : 'Modo Páginas ativo (Clique para modo Scroll)'"
+        aria-label="Alternar modo de leitura"
+        id="btn-toggle-reading-mode"
+      >
+        <ScrollTextIcon v-if="store.isScrollMode" class="w-4 h-4 text-accent" />
+        <BookOpenIcon v-else class="w-4 h-4 text-textSecondary group-hover:text-textPrimary" />
+        <span class="text-[8px] font-technical font-medium leading-none mt-0.5">
+          {{ store.isScrollMode ? 'Scroll' : 'Páginas' }}
+        </span>
+      </button>
+
+      <!-- Botão Alternar 1 Folha / 2 Folhas (Desktop/Tablet) - Apenas quando em modo Páginas -->
+      <button
+        v-if="store.readingMode !== 'scroll' && store.totalPages > 1"
         @click="store.toggleTwoPageMode()"
         class="hidden md:flex flex-col items-center justify-center md:w-11 md:h-11 rounded-xl border text-xs font-semibold transition-all active:scale-95 group"
         :class="store.isTwoPageMode
@@ -450,6 +522,7 @@ import {
   Maximize2Icon,
   Minimize2Icon,
   PaletteIcon,
+  ScrollTextIcon,
 } from 'lucide-vue-next'
 import { useReaderStore } from '~/stores/readerStore'
 

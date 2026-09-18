@@ -19,6 +19,9 @@ function createMockDocument(overrides: Partial<IBookDocument> = {}): IBookDocume
 describe('useReaderStore', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
+    if (typeof localStorage !== 'undefined') {
+      localStorage.clear()
+    }
   })
 
   it('estado inicial é vazio e sem documento', () => {
@@ -390,4 +393,33 @@ describe('useReaderStore', () => {
       expect(store.isZenMode).toBe(false)
     })
   })
+
+  describe('Modo de Leitura (readingMode: paginated | scroll)', () => {
+    it('inicia como "paginated" por padrão', () => {
+      const store = useReaderStore()
+      expect(store.readingMode).toBe('paginated')
+      expect(store.isScrollMode).toBe(false)
+    })
+
+    it('altera modo com setReadingMode("scroll")', () => {
+      const store = useReaderStore()
+      store.setReadingMode('scroll')
+      expect(store.readingMode).toBe('scroll')
+      expect(store.isScrollMode).toBe(true)
+    })
+
+    it('alterna entre modos com toggleReadingMode()', () => {
+      const store = useReaderStore()
+      expect(store.readingMode).toBe('paginated')
+
+      store.toggleReadingMode()
+      expect(store.readingMode).toBe('scroll')
+      expect(store.isScrollMode).toBe(true)
+
+      store.toggleReadingMode()
+      expect(store.readingMode).toBe('paginated')
+      expect(store.isScrollMode).toBe(false)
+    })
+  })
 })
+

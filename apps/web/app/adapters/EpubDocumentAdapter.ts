@@ -1079,6 +1079,71 @@ export class EpubDocumentAdapter implements IBookDocument {
     }
   }
 
+  getSectionCount(): number {
+    return this._sections.length
+  }
+
+  getPageForSection(sectionIndex: number): number {
+    const found = this._pageMap.find((m) => m.sectionIndex === sectionIndex)
+    return found ? found.globalPage : 1
+  }
+
+  getSectionForPage(pageNumber: number): number {
+    const mapping = this._pageMap[pageNumber - 1]
+    return mapping ? mapping.sectionIndex : 0
+  }
+
+  async renderSectionContinuous(sectionIndex: number, container: HTMLElement): Promise<void> {
+    if (!this._epub) throw new Error('EPUB não carregado')
+    const section = this._sections[sectionIndex]
+    if (!section) return
+
+    try {
+      let doc = this._sectionDocs.get(sectionIndex)
+      if (!doc) {
+        doc = await section.createDocument()
+        if (doc && this._unzipped) {
+          prepareSectionDocument(doc, section.id || '', this._unzipped)
+        }
+        this._sectionDocs.set(sectionIndex, doc)
+      }
+
+      const isCover = isCoverSection(section, doc)
+      const docStyles = doc && typeof doc.querySelectorAll === 'function'
+        ? Array.from(doc.querySelectorAll('style')).map((s) => s.innerHTML).join('\n')
+        : ''
+
+      const bodyEl = doc.body || (typeof doc.querySelector === 'function' ? doc.querySelector('body') : null) || (typeof doc.getElementsByTagName === 'function' ? doc.getElementsByTagName('body')[0] : null) || (doc as any)
+      const bodyContent = bodyEl ? (bodyEl.innerHTML || bodyEl.textContent || '') : (doc.documentElement ? doc.documentElement.innerHTML : '')
+      const bodyClasses = bodyEl && typeof bodyEl.getAttribute === 'function' ? (bodyEl.getAttribute('class') || '') : ''
+
+      container.innerHTML = ''
+      const sectionWrapper = document.createElement('div')
+      sectionWrapper.className = `epub-continuous-section ${isCover ? 'epub-cover-section' : ''} ${bodyClasses}`.trim()
+      sectionWrapper.style.fontFamily = this._fontFamily
+      sectionWrapper.style.fontSize = `${this._fontSize}px`
+      sectionWrapper.style.lineHeight = '1.75'
+      sectionWrapper.style.wordWrap = 'break-word'
+      sectionWrapper.style.userSelect = 'text'
+      sectionWrapper.style.webkitUserSelect = 'text'
+      sectionWrapper.style.boxSizing = 'border-box'
+      sectionWrapper.style.width = '100%'
+
+      const styleTag = document.createElement('style')
+      styleTag.innerHTML = `${EPUB_TYPOGRAPHY_STYLES}\n${docStyles}`
+      sectionWrapper.appendChild(styleTag)
+
+      const contentDiv = document.createElement('div')
+      contentDiv.className = 'epub-continuous-content'
+      contentDiv.innerHTML = bodyContent
+      sectionWrapper.appendChild(contentDiv)
+
+      container.appendChild(sectionWrapper)
+    } catch (err) {
+      logWarn('[EpubAdapter] renderSectionContinuous error:', err)
+    }
+  }
+
   private async _renderPageToCanvas(pageNumber: number, targetWidth?: number, targetHeight?: number): Promise<HTMLCanvasElement> {
     const width = targetWidth && targetWidth > 0 ? targetWidth : this._pageWidth
     const height = targetHeight && targetHeight > 0 ? targetHeight : this._pageHeight

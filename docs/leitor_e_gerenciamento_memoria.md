@@ -64,6 +64,13 @@ const [fetchedMeta, response] = await Promise.all([
 * **Saída Fluida no Mobile (`popstate`)**: Ao ativar o Modo Zen, o estado é registrado no histórico (`history.pushState`). O acionamento do **botão Voltar** (físico, barra de navegação virtual ou gesto lateral do Android/iOS) intercepta o evento `popstate` para sair do Modo Zen sem fechar a obra ou desviar da rota.
 * **Controles Suaves**: Inclui toast visual transitório (*fade-out* em 2.8s) e botão flutuante discreto com efeito *glassmorphism* no canto superior da tela.
 
+### 3.5. Modo de Leitura Scroll Contínuo Vertical (`ReaderScrollEngine.vue` e `useReaderScroll.ts`)
+* **Padrão Strategy**: Alternância desacoplada entre virada de folhas (`PageCurlCanvas.vue`) e rolagem vertical contínua (`ReaderScrollEngine.vue`), controlada por `store.readingMode`.
+* **Virtualização de PDFs com Dimensões Reais**: Slots proporcionais calculados previamente com base no aspect-ratio do PDF preservam a barra de rolagem precisa. Um `IntersectionObserver` carrega canvas e camada de texto apenas para páginas próximas à viewport (buffer de 600px) e descarta as demais da memória GPU/RAM.
+* **Fluxo Reflowable para EPUBs**: Renderização contínua de seções (`renderSectionContinuous`) com tipografia fluida, sem colunas artificiais nem cortes de parágrafos.
+* **Sincronização de Progresso Bidirecional**: Observador de baseline superior mantém `currentPage` e progresso percentual precisos durante o scroll livre e preserva a posição ao alternar modos.
+* **Paridade Total**: Suporte a temas de fundo (amarelado, branco, preto), larguras (centralizado e largo), seleção de texto, criação e exibição de anotações e destaques coloridos.
+
 ---
 
 ## 4. Detalhamento por Camada

@@ -1,7 +1,7 @@
 ## 🔄 Em Andamento
-- [18/09/2026 17:34] [Fazendo] Projetar e implementar modo de leitura scroll contínuo vertical para PDF e EPUB
 
 ## ✅ Concluído
+- [18/09/2026 18:18] [Concluído] Implementar modo de leitura scroll contínuo vertical para PDF e EPUB com padrão Strategy e virtualização
 - [18/09/2026 17:41] [Concluído] Corrigir exclusão de livros da estante garantindo remoção local, no Drive, no cache e prevenção de ressuscitação
 - [18/09/2026 18:12] [Concluído] Atualizar botão de notas da home para direcionar para a página inicial das anotações (/canvas) com o grafo de conhecimento
 - [18/09/2026 18:08] [Concluído] Eliminar nós fantasmas pós-exclusão de conta corrigindo expurgo de localStorage e ignorando pastas de sistema no Google Drive

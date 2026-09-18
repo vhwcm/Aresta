@@ -1,0 +1,608 @@
+<template>
+  <div
+    ref="containerRef"
+    class="reader-scroll-engine"
+    :class="[
+      'reader-scroll-engine--theme-' + activeTheme,
+      {
+        'reader-scroll-engine--zen': store.isZenMode,
+        'reader-scroll-engine--wide': store.readerWidthMode === 'wide',
+      },
+    ]"
+    :style="{ backgroundColor: themeBgColor, color: themeTextColor }"
+    role="region"
+    aria-label="Leitor em modo contínuo com rolagem vertical"
+    tabindex="0"
+    @keydown="onKeyDown"
+    @mouseup="handleMouseUp"
+  >
+    <!-- Contêiner Central de Leitura com Limite de Largura Ergonômica -->
+    <div
+      ref="contentAreaRef"
+      class="reader-scroll-engine__content"
+      :class="store.readerWidthMode === 'wide' ? 'reader-scroll-engine__content--wide' : 'reader-scroll-engine__content--centered'"
+    >
+      <!-- ================= FLUXO PDF (PÁGINAS VIRTUALIZADAS) ================= -->
+      <template v-if="isPdfDocument">
+        <div
+          v-for="pageNum in store.totalPages"
+          :key="'pdf-page-' + pageNum"
+          :ref="(el) => setSlotRef(el as HTMLElement, pageNum)"
+          class="scroll-page-slot shadow-md transition-shadow"
+          :data-page-number="pageNum"
+          :style="{
+            minHeight: `${getPageHeight(pageNum)}px`,
+            backgroundColor: pageSheetBgColor,
+          }"
+        >
+          <!-- Se a página estiver na janela de visualização -->
+          <template v-if="visiblePages.has(pageNum)">
+            <canvas
+              :ref="(el) => setCanvasRef(el as HTMLCanvasElement, pageNum)"
+              class="scroll-page-canvas"
+              aria-hidden="true"
+            />
+            <div
+              :ref="(el) => setTextLayerRef(el as HTMLElement, pageNum)"
+              class="scroll-page-text-layer"
+              @click="handleHighlightClick"
+            />
+          </template>
+
+          <!-- Placeholder suave enquanto não entra na viewport -->
+          <div
+            v-else
+            class="scroll-page-placeholder flex flex-col items-center justify-center select-none"
+            :style="{ height: `${getPageHeight(pageNum)}px` }"
+          >
+            <span class="text-xs font-technical opacity-40">
+              Página {{ pageNum }} de {{ store.totalPages }}
+            </span>
+          </div>
+
+          <!-- Indicador sutil de número da página no rodapé da folha -->
+          <div class="scroll-page-slot__badge" aria-hidden="true">
+            {{ pageNum }}
+          </div>
+        </div>
+      </template>
+
+      <!-- ================= FLUXO EPUB CONTÍNUO (REFLOW HTML) ================= -->
+      <template v-else-if="isEpubContinuous">
+        <div
+          v-for="sectionIdx in sectionCount"
+          :key="'epub-sec-' + sectionIdx"
+          :ref="(el) => setSectionSlotRef(el as HTMLElement, sectionIdx - 1)"
+          class="scroll-section-slot"
+          :data-section-index="sectionIdx - 1"
+          :data-page-number="getPageForSection(sectionIdx - 1)"
+          :style="{
+            fontFamily: store.fontFamily,
+            fontSize: `${store.fontSize}px`,
+          }"
+        >
+          <div
+            v-if="visibleSections.has(sectionIdx - 1)"
+            :ref="(el) => setSectionContentRef(el as HTMLElement, sectionIdx - 1)"
+            class="scroll-section-content"
+            @click="handleHighlightClick"
+          />
+          <div
+            v-else
+            class="scroll-section-placeholder min-h-[300px] flex items-center justify-center opacity-30 select-none text-xs font-technical"
+          >
+            Carregando seção {{ sectionIdx }}...
+          </div>
+        </div>
+      </template>
+
+      <!-- ================= FALLBACK GENÉRICO / DIDACTIC ================= -->
+      <template v-else>
+        <div
+          v-for="pageNum in store.totalPages"
+          :key="'fallback-page-' + pageNum"
+          :ref="(el) => setSlotRef(el as HTMLElement, pageNum)"
+          class="scroll-page-slot shadow-sm"
+          :data-page-number="pageNum"
+          :style="{
+            minHeight: `${getPageHeight(pageNum)}px`,
+            backgroundColor: pageSheetBgColor,
+          }"
+        >
+          <div
+            :ref="(el) => setTextLayerRef(el as HTMLElement, pageNum)"
+            class="scroll-page-text-layer"
+            @click="handleHighlightClick"
+          />
+        </div>
+      </template>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { useReaderStore } from '~/stores/readerStore'
+import { useReaderScroll } from '~/composables/reader/useReaderScroll'
+import { useAnnotations } from '~/composables/useAnnotations'
+import { applyPageHighlights } from '~/utils/readerHighlight'
+
+const emit = defineEmits<{
+  (_e: 'select-annotation', _annotationId: number): void
+  (_e: 'text-selected', _event: MouseEvent): void
+}>()
+
+const store = useReaderStore()
+const { annotations } = useAnnotations()
+
+const containerRef = ref<HTMLElement | null>(null)
+const contentAreaRef = ref<HTMLElement | null>(null)
+
+// Total de páginas para sincronização do scroll
+const totalPagesRef = computed(() => store.totalPages || 1)
+
+const {
+  onPageVisible,
+  scrollToPage,
+  handleKeyDown,
+} = useReaderScroll({
+  containerRef,
+  totalPages: totalPagesRef,
+})
+
+// Conjuntos de visibilidade para virtualização
+const visiblePages = ref<Set<number>>(new Set())
+const visibleSections = ref<Set<number>>(new Set())
+
+// Mapas de elementos
+const slotElements = new Map<number, HTMLElement>()
+const canvasElements = new Map<number, HTMLCanvasElement>()
+const textLayerElements = new Map<number, HTMLElement>()
+
+const sectionSlotElements = new Map<number, HTMLElement>()
+const sectionContentElements = new Map<number, HTMLElement>()
+
+// Observers
+let pageObserver: IntersectionObserver | null = null
+let sectionObserver: IntersectionObserver | null = null
+let baselineObserver: IntersectionObserver | null = null
+
+// Cores e Temas
+const activeTheme = computed(() => store.readerTheme || 'sepia')
+
+const themeBgColor = computed(() => {
+  if (store.readerTheme === 'sepia') return '#FAF5E8'
+  if (store.readerTheme === 'white') return '#F4F4F5'
+  return '#121214'
+})
+
+const pageSheetBgColor = computed(() => {
+  if (store.readerTheme === 'sepia') return '#fbf0d9'
+  if (store.readerTheme === 'white') return '#ffffff'
+  return '#18181b'
+})
+
+const themeTextColor = computed(() => {
+  if (store.readerTheme === 'sepia') return '#2a2521'
+  if (store.readerTheme === 'white') return '#18181b'
+  return '#e4e4e7'
+})
+
+// Tipos de Documento
+const isPdfDocument = computed(() => store.document?.type === 'pdf')
+const isEpubContinuous = computed(() => {
+  return (
+    store.document?.type === 'epub' &&
+    typeof (store.document as any).renderSectionContinuous === 'function'
+  )
+})
+
+const sectionCount = computed(() => {
+  if (isEpubContinuous.value && typeof (store.document as any).getSectionCount === 'function') {
+    return (store.document as any).getSectionCount() || 0
+  }
+  return 0
+})
+
+function getPageForSection(sectionIdx: number): number {
+  if (
+    store.document &&
+    typeof (store.document as any).getPageForSection === 'function'
+  ) {
+    return (store.document as any).getPageForSection(sectionIdx) || 1
+  }
+  return 1
+}
+
+function getPageHeight(pageNum: number): number {
+  const containerW = contentAreaRef.value?.clientWidth || 800
+  const aspect = store.document?.getAspectRatio?.(pageNum) || 0.707
+  return Math.round(containerW / Math.max(0.2, aspect))
+}
+
+// Registro de Refs
+function setSlotRef(el: HTMLElement | null, pageNum: number) {
+  if (el) {
+    slotElements.set(pageNum, el)
+    pageObserver?.observe(el)
+    baselineObserver?.observe(el)
+  } else {
+    const prev = slotElements.get(pageNum)
+    if (prev) {
+      pageObserver?.unobserve(prev)
+      baselineObserver?.unobserve(prev)
+    }
+    slotElements.delete(pageNum)
+  }
+}
+
+function setCanvasRef(el: HTMLCanvasElement | null, pageNum: number) {
+  if (el) {
+    canvasElements.set(pageNum, el)
+    renderPdfPage(pageNum, el)
+  } else {
+    canvasElements.delete(pageNum)
+  }
+}
+
+function setTextLayerRef(el: HTMLElement | null, pageNum: number) {
+  if (el) {
+    textLayerElements.set(pageNum, el)
+    renderTextLayer(pageNum, el)
+  } else {
+    textLayerElements.delete(pageNum)
+  }
+}
+
+function setSectionSlotRef(el: HTMLElement | null, sectionIdx: number) {
+  if (el) {
+    sectionSlotElements.set(sectionIdx, el)
+    sectionObserver?.observe(el)
+    baselineObserver?.observe(el)
+  } else {
+    const prev = sectionSlotElements.get(sectionIdx)
+    if (prev) {
+      sectionObserver?.unobserve(prev)
+      baselineObserver?.unobserve(prev)
+    }
+    sectionSlotElements.delete(sectionIdx)
+  }
+}
+
+function setSectionContentRef(el: HTMLElement | null, sectionIdx: number) {
+  if (el) {
+    sectionContentElements.set(sectionIdx, el)
+    renderEpubSection(sectionIdx, el)
+  } else {
+    sectionContentElements.delete(sectionIdx)
+  }
+}
+
+// Renderização de Página PDF
+async function renderPdfPage(pageNum: number, canvas: HTMLCanvasElement) {
+  if (!store.document) return
+  try {
+    const slot = slotElements.get(pageNum)
+    const renderWidth = slot?.clientWidth || 800
+    const pageData = await store.document.getPage(pageNum, renderWidth)
+
+    const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1
+    const width = Math.round(pageData.width || renderWidth)
+    const height = Math.round(pageData.height || getPageHeight(pageNum))
+
+    canvas.width = Math.round(width * dpr)
+    canvas.height = Math.round(height * dpr)
+    canvas.style.width = `${width}px`
+    canvas.style.height = `${height}px`
+
+    const ctx = canvas.getContext('2d')
+    if (ctx) {
+      ctx.save()
+      ctx.scale(dpr, dpr)
+      await pageData.render(ctx, {
+        width,
+        height,
+        scale: 1,
+        rotation: 0,
+      })
+      ctx.restore()
+    }
+  } catch {
+    // ignorar cancelamento de render
+  }
+}
+
+// Renderização de Text Layer (Seleção & Highlights)
+async function renderTextLayer(pageNum: number, textLayerEl: HTMLElement) {
+  if (!store.document) return
+  try {
+    const slot = slotElements.get(pageNum)
+    const width = slot?.clientWidth || 800
+    const height = getPageHeight(pageNum)
+
+    if (typeof store.document.renderTextLayer === 'function') {
+      await store.document.renderTextLayer(pageNum, textLayerEl, width, height)
+    }
+
+    // Aplica destaques existentes
+    if (annotations.value.length > 0) {
+      applyPageHighlights(pageNum, textLayerEl, annotations.value)
+    }
+  } catch {
+    // ignorar erro
+  }
+}
+
+// Renderização de Seção Contínua EPUB
+async function renderEpubSection(sectionIdx: number, container: HTMLElement) {
+  if (!store.document) return
+  try {
+    if (typeof (store.document as any).renderSectionContinuous === 'function') {
+      await (store.document as any).renderSectionContinuous(sectionIdx, container)
+    }
+
+    // Aplica destaques na seção
+    const pageNum = getPageForSection(sectionIdx)
+    if (annotations.value.length > 0) {
+      applyPageHighlights(pageNum, container, annotations.value)
+    }
+  } catch {
+    // ignorar erro
+  }
+}
+
+// Clique em Anotação
+function handleHighlightClick(e: MouseEvent) {
+  const target = (e.target as HTMLElement)?.closest('.reader-highlight') as HTMLElement | null
+  if (target) {
+    const annIdStr = target.getAttribute('data-annotation-id')
+    if (annIdStr) {
+      const annId = Number(annIdStr)
+      if (!isNaN(annId)) {
+        emit('select-annotation', annId)
+      }
+    }
+  }
+}
+
+// Disparo de Seleção de Texto para Tooltip
+function handleMouseUp(e: MouseEvent) {
+  emit('text-selected', e)
+}
+
+function onKeyDown(e: KeyboardEvent) {
+  handleKeyDown(e)
+}
+
+// Inicialização de IntersectionObservers
+function initObservers() {
+  if (typeof IntersectionObserver === 'undefined') {
+    // Fallback: marca tudo como visível se IntersectionObserver não existir no ambiente
+    if (isPdfDocument.value) {
+      for (let i = 1; i <= (store.totalPages || 0); i++) {
+        visiblePages.value.add(i)
+      }
+    } else if (isEpubContinuous.value) {
+      for (let i = 0; i < sectionCount.value; i++) {
+        visibleSections.value.add(i)
+      }
+    }
+    return
+  }
+
+  // Observer com margem de 600px para pré-carregar páginas
+  pageObserver = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        const pageNum = Number(entry.target.getAttribute('data-page-number'))
+        if (!isNaN(pageNum)) {
+          if (entry.isIntersecting) {
+            visiblePages.value.add(pageNum)
+          } else {
+            visiblePages.value.delete(pageNum)
+          }
+        }
+      }
+    },
+    {
+      root: containerRef.value,
+      rootMargin: '600px 0px 600px 0px',
+      threshold: 0.01,
+    },
+  )
+
+  // Observer para seções EPUB com margem
+  sectionObserver = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        const secIdx = Number(entry.target.getAttribute('data-section-index'))
+        if (!isNaN(secIdx)) {
+          if (entry.isIntersecting) {
+            visibleSections.value.add(secIdx)
+          } else {
+            visibleSections.value.delete(secIdx)
+          }
+        }
+      }
+    },
+    {
+      root: containerRef.value,
+      rootMargin: '800px 0px 800px 0px',
+      threshold: 0.01,
+    },
+  )
+
+  // Baseline Observer para calcular página ativa (cruza o terço superior)
+  baselineObserver = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
+          const pageNum = Number(entry.target.getAttribute('data-page-number'))
+          if (!isNaN(pageNum)) {
+            onPageVisible(pageNum)
+          }
+        }
+      }
+    },
+    {
+      root: containerRef.value,
+      rootMargin: '-15% 0px -70% 0px',
+      threshold: 0,
+    },
+  )
+}
+
+function cleanupObservers() {
+  pageObserver?.disconnect()
+  sectionObserver?.disconnect()
+  baselineObserver?.disconnect()
+  pageObserver = null
+  sectionObserver = null
+  baselineObserver = null
+}
+
+// Sincroniza anotações atualizadas com os textLayers visíveis
+watch(
+  () => annotations.value,
+  () => {
+    for (const [pageNum, el] of textLayerElements.entries()) {
+      applyPageHighlights(pageNum, el, annotations.value)
+    }
+    for (const [secIdx, el] of sectionContentElements.entries()) {
+      const pageNum = getPageForSection(secIdx)
+      applyPageHighlights(pageNum, el, annotations.value)
+    }
+  },
+  { deep: true },
+)
+
+// Ao montar ou mudar documento
+watch(
+  () => store.document,
+  async () => {
+    visiblePages.value.clear()
+    visibleSections.value.clear()
+    await nextTick()
+    if (store.currentPage && store.currentPage > 1) {
+      scrollToPage(store.currentPage, 'auto')
+    }
+  },
+)
+
+onMounted(async () => {
+  initObservers()
+  await nextTick()
+
+  // Se já houver página definida, rola até ela
+  if (store.currentPage && store.currentPage > 1) {
+    scrollToPage(store.currentPage, 'auto')
+  }
+})
+
+onUnmounted(() => {
+  cleanupObservers()
+  slotElements.clear()
+  canvasElements.clear()
+  textLayerElements.clear()
+  sectionSlotElements.clear()
+  sectionContentElements.clear()
+})
+
+defineExpose({
+  scrollToPage,
+})
+</script>
+
+<style scoped>
+.reader-scroll-engine {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  outline: none;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+.reader-scroll-engine__content {
+  margin: 0 auto;
+  padding: 24px 16px 80px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  transition: max-width 0.2s ease-in-out;
+}
+
+.reader-scroll-engine__content--centered {
+  max-width: 860px;
+}
+
+.reader-scroll-engine__content--wide {
+  max-width: 1180px;
+  width: 96%;
+}
+
+/* Slots de Página PDF */
+.scroll-page-slot {
+  position: relative;
+  width: 100%;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.scroll-page-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.scroll-page-text-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  user-select: text;
+  -webkit-user-select: text;
+  pointer-events: auto;
+}
+
+.scroll-page-placeholder {
+  width: 100%;
+}
+
+.scroll-page-slot__badge {
+  position: absolute;
+  bottom: 8px;
+  right: 12px;
+  font-family: var(--font-technical, monospace);
+  font-size: 10px;
+  opacity: 0.35;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Seções Contínuas EPUB */
+.scroll-section-slot {
+  position: relative;
+  width: 100%;
+  padding: 16px 24px;
+  border-radius: 8px;
+  box-sizing: border-box;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.scroll-section-content {
+  width: 100%;
+  line-height: 1.75;
+  word-wrap: break-word;
+}
+
+/* Modo Zen */
+.reader-scroll-engine--zen .reader-scroll-engine__content {
+  padding-top: 16px;
+  padding-bottom: 32px;
+}
+</style>

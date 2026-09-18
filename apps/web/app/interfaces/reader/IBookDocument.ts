@@ -36,5 +36,9 @@ export interface IBookDocument {
   getPage(pageNumber: number, targetWidth?: number, targetHeight?: number): Promise<PageData>
   getTextContent?(pageNumber: number): Promise<string>
   renderTextLayer?(pageNumber: number, container: HTMLElement, targetWidth?: number, targetHeight?: number): Promise<void>
+  getSectionCount?(): number
+  getPageForSection?(sectionIndex: number): number
+  getSectionForPage?(pageNumber: number): number
+  renderSectionContinuous?(sectionIndex: number, container: HTMLElement): Promise<void>
   destroy(): void
 }
