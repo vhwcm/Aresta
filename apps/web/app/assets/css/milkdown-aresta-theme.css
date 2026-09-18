@@ -265,6 +265,88 @@
   transform: translateY(0);
 }
 
+/* Links de Nota em formato badge amigável */
+.milkdown-aresta-wrapper .milkdown .editor a[href^="note:"],
+.milkdown-aresta-wrapper .milkdown .editor a[href*="/notes?id="] {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0.55rem;
+  margin: 0 0.15rem;
+  border-radius: 0.5rem;
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  color: #60a5fa;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  vertical-align: middle;
+}
+
+.milkdown-aresta-wrapper .milkdown .editor a[href^="note:"]:hover,
+.milkdown-aresta-wrapper .milkdown .editor a[href*="/notes?id="]:hover {
+  background: rgba(59, 130, 246, 0.25);
+  border-color: rgba(59, 130, 246, 0.6);
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+}
+
+/* Links de Livro em formato badge amigável */
+.milkdown-aresta-wrapper .milkdown .editor a[href^="book:"],
+.milkdown-aresta-wrapper .milkdown .editor a[href*="/reader?bookId="] {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0.55rem;
+  margin: 0 0.15rem;
+  border-radius: 0.5rem;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #34d399;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  vertical-align: middle;
+}
+
+.milkdown-aresta-wrapper .milkdown .editor a[href^="book:"]:hover,
+.milkdown-aresta-wrapper .milkdown .editor a[href*="/reader?bookId="]:hover {
+  background: rgba(16, 185, 129, 0.25);
+  border-color: rgba(16, 185, 129, 0.6);
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
+}
+
+/* Links de Livreto Didático em formato badge amigável */
+.milkdown-aresta-wrapper .milkdown .editor a[href^="booklet:"] {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0.55rem;
+  margin: 0 0.15rem;
+  border-radius: 0.5rem;
+  background: rgba(139, 92, 246, 0.12);
+  border: 1px solid rgba(139, 92, 246, 0.35);
+  color: #a78bfa;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  vertical-align: middle;
+}
+
+.milkdown-aresta-wrapper .milkdown .editor a[href^="booklet:"]:hover {
+  background: rgba(139, 92, 246, 0.25);
+  border-color: rgba(139, 92, 246, 0.6);
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.25);
+}
+
 /* Custom Scrollbar */
 .milkdown-aresta-wrapper .milkdown::-webkit-scrollbar {
   width: 6px;

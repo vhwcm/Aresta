@@ -13,16 +13,17 @@ module.exports = {
     extend: {
       colors: {
         bgApp: 'var(--bg-app, #121315)',
-        bgRoot: 'var(--bg-panel, #121315)',
+        bgRoot: 'var(--bg-root, var(--bg-panel, #121315))',
         bgPanel: 'var(--bg-panel, #121315)',
-        bgElevated: 'var(--bg-panel, #121315)',
-        bgSurface: 'var(--bg-panel, #121315)',
+        bgElevated: 'var(--bg-elevated, var(--bg-panel, #121315))',
+        bgSurface: 'var(--bg-surface, var(--bg-panel, #121315))',
+        bgDarker: 'var(--bg-app, #0f1012)',
         textPrimary: 'var(--text-primary, #F2F2F2)',
         textSecondary: 'var(--text-secondary, #7A7D84)',
         accent: 'var(--accent, #E57B55)',
         primary: 'var(--accent, #E57B55)',
         primaryHover: '#D46944',
-        divider: 'var(--divider, rgba(255, 255, 255, 0.06))',
+        divider: 'var(--divider, rgba(255, 255, 255, 0.08))',
       },
       fontFamily: {
         interface: ['Inter', 'sans-serif'],

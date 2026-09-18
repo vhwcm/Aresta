@@ -1,5 +1,5 @@
 <template>
-  <div class="h-screen w-full flex bg-bgPanel text-textPrimary overflow-hidden font-interface select-none">
+  <div class="h-screen w-full flex bg-bgApp text-textPrimary overflow-hidden font-interface select-none">
     <!-- Sidebar Unificada com Árvore de Pastas & Arquivos -->
     <FolderTagSidebar
       :items="unifiedSidebarItems"
@@ -22,7 +22,7 @@
     <!-- Área Central / Workspace Hub -->
     <div class="flex-1 flex flex-col h-full overflow-hidden">
       <!-- Top Header & Ações Globais -->
-      <header class="border-b border-divider bg-bgPanel/80 backdrop-blur-md px-2.5 sm:px-6 py-2 sm:py-3 flex-shrink-0 z-10">
+      <header class="border-b border-divider bg-bgPanel/95 backdrop-blur-md px-2.5 sm:px-6 py-2 sm:py-3 flex-shrink-0 z-10">
         <!-- DESKTOP / TABLET (>= md): Layout Espaçoso -->
         <div class="hidden md:flex items-center justify-between gap-3 max-w-7xl w-full mx-auto">
           <!-- Lado Esquerdo: Busca Unificada + Alternador Grafo/Grade -->
@@ -34,7 +34,7 @@
                 v-model="searchQuery"
                 type="text"
                 placeholder="Buscar livros, notas, temas, quadros e tags..."
-                class="w-full pl-8 sm:pl-9 pr-7 py-1.5 rounded-xl bg-bgRoot border border-divider text-xs text-textPrimary focus:outline-none focus:border-accent placeholder:text-textSecondary/50 font-interface shadow-inner"
+                class="w-full pl-8 sm:pl-9 pr-7 py-1.5 rounded-xl bg-bgRoot border border-divider text-xs text-textPrimary focus:outline-none focus:border-accent placeholder:text-textSecondary font-interface shadow-inner"
               />
               <button
                 v-if="searchQuery"
@@ -114,7 +114,7 @@
                 v-model="searchQuery"
                 type="text"
                 placeholder="Buscar livros, notas, quadros..."
-                class="w-full pl-9 pr-8 py-1.5 rounded-xl bg-bgRoot border border-accent/50 text-xs text-textPrimary focus:outline-none focus:border-accent placeholder:text-textSecondary/50 font-interface shadow-inner"
+                class="w-full pl-9 pr-8 py-1.5 rounded-xl bg-bgRoot border border-accent/50 text-xs text-textPrimary focus:outline-none focus:border-accent placeholder:text-textSecondary font-interface shadow-inner"
                 @keydown.esc="isMobileSearchOpen = false"
               />
               <button
@@ -163,7 +163,7 @@
                   class="p-1.5 rounded-lg transition-all flex items-center cursor-pointer"
                   :class="viewLayout === 'graph' ? 'bg-accent text-white font-semibold shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
                   title="Grafo"
-                  @click="viewLayout = 'graph'"
+                  @click="switchToGraphView"
                 >
                   <NetworkIcon class="w-3.5 h-3.5" />
                 </button>
@@ -427,14 +427,14 @@
                 <div>
                   <div class="flex items-center justify-between mb-2.5">
                     <div class="flex items-center gap-1.5">
-                      <span class="inline-flex items-center gap-1 text-[10px] font-semibold tracking-wide uppercase px-2 py-0.5 rounded-md bg-indigo-500/15 text-indigo-400 border border-indigo-500/25">
+                      <span class="inline-flex items-center gap-1 text-[10px] font-semibold tracking-wide uppercase px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/25">
                         <FileTextIcon class="w-3 h-3" />
                         Nota
                       </span>
 
                       <span
                         v-if="isHtmlNote(item.content)"
-                        class="inline-flex items-center gap-1 text-[10px] font-semibold tracking-wide uppercase px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-400 border border-amber-500/25"
+                        class="inline-flex items-center gap-1 text-[10px] font-semibold tracking-wide uppercase px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/25"
                       >
                         <SparklesIcon class="w-3 h-3 text-amber-400" />
                         Síntese IA
@@ -444,7 +444,7 @@
                         v-if="item.folder"
                         class="inline-flex items-center gap-1 text-[11px] font-medium text-textSecondary bg-bgSurface px-2 py-0.5 rounded-md border border-divider truncate max-w-[110px]"
                       >
-                        <FolderIcon class="w-2.5 h-2.5 text-indigo-400" />
+                        <FolderIcon class="w-2.5 h-2.5 text-indigo-600 dark:text-indigo-400" />
                         <span class="truncate">{{ item.folder }}</span>
                       </span>
                     </div>
@@ -483,7 +483,7 @@
                       :key="tag"
                       @click="activeTag = tag"
                       class="inline-flex items-center text-[10px] px-2 py-0.5 rounded-md font-medium transition-colors cursor-pointer"
-                      :class="activeTag === tag ? 'bg-indigo-600 text-white' : 'bg-bgSurface text-textSecondary hover:text-indigo-400 border border-divider'"
+                      :class="activeTag === tag ? 'bg-indigo-600 text-white' : 'bg-bgSurface text-textSecondary hover:text-indigo-600 dark:hover:text-indigo-400 border border-divider'"
                     >
                       #{{ tag }}
                     </button>
@@ -493,10 +493,10 @@
                 <!-- Rodapé do Card da Nota -->
                 <div class="flex items-center justify-between pt-3.5 mt-3.5 border-t border-divider/60 text-[11px] text-textSecondary">
                   <div class="flex items-center gap-2 font-mono">
-                    <span v-if="item.linksCount && item.linksCount > 0" class="inline-flex items-center gap-1 text-indigo-400 bg-indigo-500/10 px-1.5 py-0.2 rounded border border-indigo-500/20 text-[10px]">
+                    <span v-if="item.linksCount && item.linksCount > 0" class="inline-flex items-center gap-1 text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/10 px-1.5 py-0.2 rounded border border-indigo-200 dark:border-indigo-500/20 text-[10px]">
                       🔗 {{ item.linksCount }}
                     </span>
-                    <span v-else class="text-[10px] text-textSecondary/60 italic">
+                    <span v-else class="text-[10px] text-textSecondary italic">
                       Markdown livre
                     </span>
                   </div>
@@ -608,7 +608,7 @@
           @update:note="activeNote = $event"
           @save="scheduleSaveNote"
           @delete="handleDeleteNote"
-          @close="viewLayout = 'graph'"
+          @close="handleCloseNoteEditor"
         />
 
         <!-- Estado de Carregamento da Nota -->
@@ -1341,8 +1341,8 @@ const handleCreateNewNote = async (targetFolder?: string | Event) => {
   const tags = activeTag.value ? [activeTag.value] : []
 
   const created = await createNote({
-    title: 'Nova Nota',
-    content: '# Nova Anotação\n\nComece a digitar seu pensamento aqui...',
+    title: 'Nota',
+    content: '',
     folder,
     tags
   })
@@ -1351,6 +1351,35 @@ const handleCreateNewNote = async (targetFolder?: string | Event) => {
     activeNote.value = { ...created, tags: Array.isArray(created.tags) ? [...created.tags] : [] }
     viewLayout.value = 'note-editor'
   }
+}
+
+const flushSaveNote = async () => {
+  if (noteSaveTimeout) {
+    clearTimeout(noteSaveTimeout)
+    noteSaveTimeout = null
+  }
+  if (activeNote.value) {
+    await updateNote(activeNote.value.id, {
+      title: activeNote.value.title,
+      content: activeNote.value.content,
+      folder: activeNote.value.folder,
+      tags: activeNote.value.tags || []
+    })
+    await fetchUnifiedGraph()
+  }
+}
+
+const handleCloseNoteEditor = async () => {
+  await flushSaveNote()
+  viewLayout.value = 'graph'
+}
+
+const switchToGraphView = async () => {
+  if (viewLayout.value === 'note-editor' && activeNote.value) {
+    await flushSaveNote()
+  }
+  viewLayout.value = 'graph'
+  await fetchUnifiedGraph()
 }
 
 const scheduleSaveNote = () => {
@@ -1364,6 +1393,7 @@ const scheduleSaveNote = () => {
         folder: activeNote.value.folder,
         tags: activeNote.value.tags || []
       })
+      await fetchUnifiedGraph()
     }
   }, 600)
 }

@@ -72,3 +72,20 @@ Substitui o elemento nativo HTML `<select>` (que quebra a imersão com o popover
 *   **Menu Flutuante:** Fundo escuro fosco com desfoque `bg-bgPanel/95 backdrop-blur-xl`, sombra profunda (`shadow-2xl`), scroll customizado e animação suave de abertura.
 *   **Busca em Tempo Real:** Campo de busca integrado quando o seletor possui mais de 6 opções ou quando explicitamente ativado (`searchable`), permitindo filtrar rapidamente centenas de obras ou itens.
 *   **Acessibilidade & Atalhos:** Suporte a fechar com tecla `Escape`, navegação via setas do teclado (`ArrowDown`, `ArrowUp`, `Enter`) e detecção de clique externo para fechamento automático.
+
+## 6. Paleta de Cores "Light Mode" (Alto Contraste & Ergonomia)
+
+Para garantir máxima legibilidade em ambientes iluminados sem perder a sofisticação editorial, o modo claro estrutura-se em camadas tonais distintas em conformidade com WCAG AA:
+
+*   **Fundo Global (bgApp):** `#F8F9FA` (Cinza-gelo suave que elimina o ofuscamento do branco puro e cria base contrastante para os elementos).
+*   **Campos Rebaixados e Inputs (bgRoot):** `#F1F3F5` (Proporciona encaixe tátil para barras de busca e áreas rebaixadas).
+*   **Paineis, Folhas e Modais (bgPanel):** `#FFFFFF` (Branco puro para cartões de notas, documentos e folhas de leitura, destacando-se sobre o fundo).
+*   **Superfícies de Ação (bgSurface):** `#F8F9FA` (Botões secundários e barras de ferramentas com separação suave).
+*   **Texto Primário (textPrimary):** `#111827` (Slate-900 sólido, contraste ~15:1 contra o branco).
+*   **Texto Secundário (textSecondary):** `#4B5563` (Slate-600 sólido, legível sem esforço em legendas e metadados).
+*   **Divisores e Bordas (divider):** `#E2E8F0` (Delimitação limpa de 1px entre sidebar, cards e área de trabalho).
+*   **Badges Semânticas:**
+    *   **Quadro:** `bg-amber-50 dark:bg-accent/10 text-amber-700 dark:text-accent/90 border border-amber-200 dark:border-accent/20`
+    *   **Nota:** `bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400/90 border border-indigo-200 dark:border-indigo-500/20`
+    *   **Síntese IA:** `bg-amber-50 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/25`
+

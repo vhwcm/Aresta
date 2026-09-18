@@ -21,7 +21,7 @@
     >
       <div v-if="!isCollapsed" class="flex items-center gap-2 overflow-hidden">
         <span class="text-sm font-semibold tracking-tight text-textPrimary truncate font-interface">{{ title }}</span>
-        <span class="text-[11px] px-2 py-0.5 rounded-full bg-white/[0.06] text-textSecondary border border-white/[0.06] font-mono font-medium">
+        <span class="text-[11px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-textSecondary border border-slate-200 dark:border-white/[0.06] font-mono font-medium">
           {{ totalItemsCount }}
         </span>
       </div>
@@ -29,7 +29,7 @@
       <!-- Botão Minimizar/Expandir Sidebar -->
       <button
         @click="toggleCollapse"
-        class="p-1.5 rounded-lg text-textSecondary hover:text-textPrimary hover:bg-white/[0.08] transition-colors cursor-pointer"
+        class="p-1.5 rounded-lg text-textSecondary hover:text-textPrimary hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-colors cursor-pointer"
         :title="isCollapsed ? 'Expandir painel' : 'Recolher painel'"
       >
         <SidebarIcon class="w-4 h-4" />
@@ -43,7 +43,7 @@
         <button
           @click="$emit('select-folder', null); $emit('select-tag', null)"
           class="p-2.5 rounded-xl transition-all cursor-pointer border"
-          :class="selectedFolder === null && selectedTag === null ? 'bg-accent/15 text-accent border-accent/30 shadow-xs' : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-white/[0.05]'"
+          :class="selectedFolder === null && selectedTag === null ? 'bg-accent/15 text-accent border-accent/30 shadow-xs' : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.05] dark:hover:bg-white/[0.05]'"
           title="Todos os itens"
         >
           <LayersIcon class="w-4 h-4" />
@@ -52,7 +52,7 @@
         <button
           @click="$emit('select-folder', '__uncategorized__')"
           class="p-2.5 rounded-xl transition-all cursor-pointer border"
-          :class="selectedFolder === '__uncategorized__' ? 'bg-accent/15 text-accent border-accent/30 shadow-xs' : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-white/[0.05]'"
+          :class="selectedFolder === '__uncategorized__' ? 'bg-accent/15 text-accent border-accent/30 shadow-xs' : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.05] dark:hover:bg-white/[0.05]'"
           title="Sem pasta"
         >
           <InboxIcon class="w-4 h-4" />
@@ -65,10 +65,10 @@
           :key="folder"
           @click="$emit('select-folder', folder)"
           class="p-2.5 rounded-xl transition-all cursor-pointer relative group border"
-          :class="selectedFolder === folder ? 'bg-accent/15 text-accent border-accent/30 shadow-xs' : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-white/[0.05]'"
+          :class="selectedFolder === folder ? 'bg-accent/15 text-accent border-accent/30 shadow-xs' : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.05] dark:hover:bg-white/[0.05]'"
           :title="'Pasta: ' + folder"
         >
-          <FolderIcon class="w-4 h-4 text-amber-400/80 group-hover:text-amber-400" />
+          <FolderIcon class="w-4 h-4 text-amber-500 dark:text-amber-400/80 group-hover:text-amber-600 dark:group-hover:text-amber-400" />
         </div>
       </div>
 
@@ -81,7 +81,7 @@
             class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs md:text-sm font-medium transition-all cursor-pointer border group"
             :class="selectedFolder === null && selectedTag === null
               ? 'bg-accent/15 text-accent border-accent/30 shadow-xs font-semibold'
-              : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-white/[0.04]'"
+              : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'"
           >
             <div class="flex items-center gap-2.5 truncate">
               <LayersIcon class="w-4 h-4 flex-shrink-0 transition-colors" :class="selectedFolder === null && selectedTag === null ? 'text-accent' : 'text-textSecondary group-hover:text-textPrimary'" />
@@ -91,7 +91,7 @@
               class="text-xs px-2 py-0.5 rounded-full font-mono font-medium transition-colors"
               :class="selectedFolder === null && selectedTag === null
                 ? 'bg-accent/25 text-accent border border-accent/30'
-                : 'bg-white/[0.05] text-textSecondary/70 group-hover:text-textSecondary'"
+                : 'bg-slate-100 dark:bg-white/[0.05] text-slate-700 dark:text-textSecondary/70 group-hover:text-textPrimary'"
             >
               {{ totalItemsCount }}
             </span>
@@ -99,10 +99,10 @@
         </div>
 
         <!-- 2. Estrutura em Árvore (Pastas e Arquivos Aninhados) -->
-        <div class="pt-2 border-t border-divider/60">
+        <div class="pt-2 border-t border-divider">
           <div class="flex items-center justify-between px-2 mb-2">
             <div class="flex items-center gap-1.5 truncate">
-              <span class="text-[10px] font-bold tracking-wider uppercase text-textSecondary/60 font-interface truncate">
+              <span class="text-[10px] font-bold tracking-wider uppercase text-textSecondary font-interface truncate">
                 Árvore de Arquivos
               </span>
               <button
@@ -187,13 +187,13 @@
                 class="group relative flex items-center justify-between px-2 py-1.5 rounded-xl text-xs md:text-sm transition-all cursor-pointer border"
                 :class="selectedFolder === folder
                   ? 'bg-accent/15 text-accent border-accent/30 font-medium'
-                  : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-white/[0.04] font-medium'"
+                  : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04] font-medium'"
                 @click="selectFolder(folder)"
               >
                 <div class="flex items-center gap-1.5 truncate min-w-0 pr-2">
                   <!-- Botão de Expandir/Recolher Árvore -->
                   <button
-                    class="p-0.5 rounded hover:bg-white/[0.08] text-textSecondary hover:text-textPrimary cursor-pointer transition-transform"
+                    class="p-0.5 rounded hover:bg-black/[0.06] dark:hover:bg-white/[0.08] text-textSecondary hover:text-textPrimary cursor-pointer transition-transform"
                     @click.stop="toggleFolderExpand(folder)"
                     title="Expandir ou recolher pasta"
                   >
@@ -205,7 +205,7 @@
 
                   <FolderIcon
                     class="w-3.5 h-3.5 flex-shrink-0 transition-colors"
-                    :class="selectedFolder === folder ? 'text-accent' : 'text-amber-400/80 group-hover:text-amber-400'"
+                    :class="selectedFolder === folder ? 'text-accent' : 'text-amber-500 dark:text-amber-400 group-hover:text-amber-600 dark:group-hover:text-amber-300'"
                   />
                   <span class="truncate">{{ folder }}</span>
                 </div>
@@ -213,7 +213,7 @@
                 <div class="flex items-center gap-1">
                   <span
                     class="text-[11px] px-1.5 py-0.2 rounded-full font-mono transition-colors"
-                    :class="selectedFolder === folder ? 'bg-accent/20 text-accent' : 'text-textSecondary/60 bg-white/[0.04] group-hover:text-textSecondary'"
+                    :class="selectedFolder === folder ? 'bg-accent/20 text-accent' : 'text-slate-600 dark:text-textSecondary/60 bg-slate-100 dark:bg-white/[0.04] group-hover:text-textPrimary'"
                   >
                     {{ getFolderItems(folder).length }}
                   </span>
@@ -248,7 +248,7 @@
               <!-- Itens/Arquivos Aninhados dentro da Pasta (Tree Children) -->
               <div
                 v-if="expandedFolders.has(folder)"
-                class="pl-3.5 pr-1 py-1 space-y-1 border-l border-white/[0.08] ml-4 my-0.5"
+                class="pl-3.5 pr-1 py-1 space-y-1 border-l border-divider ml-4 my-0.5"
               >
                 <div
                   v-for="item in getFolderItems(folder)"
@@ -256,14 +256,14 @@
                   class="group/file relative flex items-center justify-between px-2 py-1.5 rounded-lg text-xs cursor-pointer transition-all border"
                   :class="selectedItemId === item.id
                     ? 'bg-accent/15 text-accent font-medium border-accent/30 shadow-xs'
-                    : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-white/[0.04]'"
+                    : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'"
                   @click="clickItem(item)"
                 >
                   <div class="flex items-center gap-2 truncate min-w-0 pr-2">
                     <!-- Ícone de Quadro ou Nota -->
                     <div
                       class="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 transition-colors"
-                      :class="item.kind === 'canvas' ? 'bg-accent/10 text-accent' : 'bg-indigo-500/10 text-indigo-400'"
+                      :class="item.kind === 'canvas' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' : 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'"
                     >
                       <LayoutGridIcon
                         v-if="item.kind === 'canvas'"
@@ -280,16 +280,16 @@
 
                   <!-- Micro Badge Elegante -->
                   <span
-                    class="text-[9px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded font-medium transition-all"
+                    class="text-[9px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded font-semibold transition-all"
                     :class="item.kind === 'canvas'
-                      ? 'bg-accent/10 text-accent/90 border border-accent/20'
-                      : 'bg-indigo-500/10 text-indigo-400/90 border border-indigo-500/20'"
+                      ? 'bg-amber-50 dark:bg-accent/10 text-amber-700 dark:text-accent/90 border border-amber-200 dark:border-accent/20'
+                      : 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400/90 border border-indigo-200 dark:border-indigo-500/20'"
                   >
                     {{ item.kind === 'canvas' ? 'quadro' : 'nota' }}
                   </span>
                 </div>
 
-                <div v-if="getFolderItems(folder).length === 0" class="px-2 py-1 text-[10px] text-textSecondary/50 italic">
+                <div v-if="getFolderItems(folder).length === 0" class="px-2 py-1 text-[10px] text-textSecondary italic">
                   {{ selectedTag ? 'Nenhum item com a tag nesta pasta' : 'Pasta vazia' }}
                 </div>
               </div>
@@ -301,11 +301,11 @@
                 class="group relative flex items-center justify-between px-2 py-1.5 rounded-xl text-xs md:text-sm transition-all cursor-pointer border"
                 :class="selectedFolder === '__uncategorized__'
                   ? 'bg-accent/15 text-accent border-accent/30 font-medium'
-                  : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-white/[0.04] font-medium'"
+                  : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04] font-medium'"
               >
                 <div class="flex items-center gap-1.5 truncate min-w-0 pr-2" @click="selectFolder('__uncategorized__')">
                   <button
-                    class="p-0.5 rounded hover:bg-white/[0.08] text-textSecondary hover:text-textPrimary cursor-pointer transition-transform"
+                    class="p-0.5 rounded hover:bg-black/[0.06] dark:hover:bg-white/[0.08] text-textSecondary hover:text-textPrimary cursor-pointer transition-transform"
                     @click.stop="toggleFolderExpand('__uncategorized__')"
                     title="Expandir ou recolher arquivos sem pasta"
                   >
@@ -317,14 +317,14 @@
 
                   <InboxIcon
                     class="w-3.5 h-3.5 flex-shrink-0 transition-colors"
-                    :class="selectedFolder === '__uncategorized__' ? 'text-accent' : 'text-blue-400/80 group-hover:text-blue-400'"
+                    :class="selectedFolder === '__uncategorized__' ? 'text-accent' : 'text-blue-500 dark:text-blue-400 group-hover:text-blue-600 dark:group-hover:text-blue-300'"
                   />
                   <span class="truncate">Sem pasta</span>
                 </div>
 
                 <span
                   class="text-[11px] px-1.5 py-0.2 rounded-full font-mono transition-colors"
-                  :class="selectedFolder === '__uncategorized__' ? 'bg-accent/20 text-accent' : 'text-textSecondary/60 bg-white/[0.04] group-hover:text-textSecondary'"
+                  :class="selectedFolder === '__uncategorized__' ? 'bg-accent/20 text-accent' : 'text-slate-600 dark:text-textSecondary/60 bg-slate-100 dark:bg-white/[0.04] group-hover:text-textPrimary'"
                 >
                   {{ uncategorizedItems.length }}
                 </span>
@@ -333,7 +333,7 @@
               <!-- Itens/Arquivos na Raiz (Sem Pasta) -->
               <div
                 v-if="expandedFolders.has('__uncategorized__')"
-                class="pl-3.5 pr-1 py-1 space-y-1 border-l border-white/[0.08] ml-4 my-0.5"
+                class="pl-3.5 pr-1 py-1 space-y-1 border-l border-divider ml-4 my-0.5"
               >
                 <div
                   v-for="item in uncategorizedItems"
@@ -341,13 +341,13 @@
                   class="group/file relative flex items-center justify-between px-2 py-1.5 rounded-lg text-xs cursor-pointer transition-all border"
                   :class="selectedItemId === item.id
                     ? 'bg-accent/15 text-accent font-medium border-accent/30 shadow-xs'
-                    : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-white/[0.04]'"
+                    : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'"
                   @click="clickItem(item)"
                 >
                   <div class="flex items-center gap-2 truncate min-w-0 pr-2">
                     <div
                       class="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 transition-colors"
-                      :class="item.kind === 'canvas' ? 'bg-accent/10 text-accent' : 'bg-indigo-500/10 text-indigo-400'"
+                      :class="item.kind === 'canvas' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' : 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'"
                     >
                       <LayoutGridIcon
                         v-if="item.kind === 'canvas'"
@@ -363,16 +363,16 @@
 
                   <!-- Micro Badge Elegante -->
                   <span
-                    class="text-[9px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded font-medium transition-all"
+                    class="text-[9px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded font-semibold transition-all"
                     :class="item.kind === 'canvas'
-                      ? 'bg-accent/10 text-accent/90 border border-accent/20'
-                      : 'bg-indigo-500/10 text-indigo-400/90 border border-indigo-500/20'"
+                      ? 'bg-amber-50 dark:bg-accent/10 text-amber-700 dark:text-accent/90 border border-amber-200 dark:border-accent/20'
+                      : 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400/90 border border-indigo-200 dark:border-indigo-500/20'"
                   >
                     {{ item.kind === 'canvas' ? 'quadro' : 'nota' }}
                   </span>
                 </div>
 
-                <div v-if="uncategorizedItems.length === 0" class="px-2 py-1 text-[10px] text-textSecondary/50 italic">
+                <div v-if="uncategorizedItems.length === 0" class="px-2 py-1 text-[10px] text-textSecondary italic">
                   Nenhum arquivo sem pasta
                 </div>
               </div>
@@ -381,9 +381,9 @@
         </div>
 
         <!-- 3. Seção de Tags -->
-        <div class="pt-3 border-t border-divider/60">
+        <div class="pt-3 border-t border-divider">
           <div class="flex items-center justify-between px-2 mb-2">
-            <span class="text-[10px] font-bold tracking-wider uppercase text-textSecondary/60 font-interface">
+            <span class="text-[10px] font-bold tracking-wider uppercase text-textSecondary font-interface">
               Tags
             </span>
             <button
@@ -405,19 +405,19 @@
               class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer border"
               :class="selectedTag === tagItem.name
                 ? 'bg-accent/15 text-accent border-accent/40 shadow-xs font-semibold'
-                : 'bg-bgSurface/60 border-divider/60 text-textSecondary hover:border-accent/30 hover:text-textPrimary hover:bg-white/[0.04]'"
+                : 'bg-bgSurface border-divider text-textSecondary hover:border-accent/30 hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'"
             >
               <span class="text-accent/70 font-mono text-[11px]">#</span>
               <span class="font-interface">{{ tagItem.name }}</span>
               <span
                 class="text-[10px] px-1.5 py-0.2 rounded-full font-mono transition-colors"
-                :class="selectedTag === tagItem.name ? 'bg-accent/25 text-accent' : 'bg-white/[0.06] text-textSecondary/60'"
+                :class="selectedTag === tagItem.name ? 'bg-accent/25 text-accent' : 'bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-textSecondary/60'"
               >
                 {{ tagItem.count }}
               </span>
             </button>
 
-            <div v-if="availableTags.length === 0" class="px-2 py-1 text-[11px] text-textSecondary/50 italic">
+            <div v-if="availableTags.length === 0" class="px-2 py-1 text-[11px] text-textSecondary italic">
               Nenhuma tag aplicada ainda.
             </div>
           </div>

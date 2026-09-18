@@ -1,126 +1,46 @@
 <template>
-  <main class="flex-1 flex flex-col bg-bgDarker overflow-hidden">
-    <!-- Barra de Ferramentas Superior da Nota -->
-    <div class="h-14 border-b border-divider bg-bgPanel flex items-center justify-between px-6 flex-shrink-0 gap-4">
+  <main class="flex-1 flex flex-col bg-bgApp overflow-hidden">
+    <!-- Barra Superior da Janela da Nota (Apenas Título e Ações Globais) -->
+    <div class="h-12 md:h-14 border-b border-divider bg-bgPanel flex items-center justify-between px-3 md:px-6 flex-shrink-0 gap-3">
       <input
         v-model="localNote.title"
         type="text"
-        placeholder="Título da nota..."
-        class="bg-transparent border-none text-base font-semibold text-textPrimary focus:outline-none flex-1 font-serif mr-4"
+        placeholder="Nota"
+        class="bg-transparent border-none text-sm md:text-base font-semibold text-textPrimary focus:outline-none flex-1 min-w-0 font-serif truncate"
         @input="onInput"
+        data-testid="input-note-title"
       />
 
-      <div class="flex items-center gap-2 flex-shrink-0">
-        <!-- Seletor de Pasta da Nota -->
-        <div class="flex items-center gap-1.5 text-xs text-textSecondary">
-          <FolderIcon class="w-3.5 h-3.5 text-accent" />
-          <select
-            v-model="localNote.folder"
-            class="bg-bgSurface border border-divider rounded-lg px-2 py-1 text-xs text-textPrimary focus:outline-none focus:border-accent cursor-pointer"
-            @change="onInput"
-          >
-            <option :value="null">Sem pasta</option>
-            <option v-for="f in folders" :key="f" :value="f">📁 {{ f }}</option>
-          </select>
-        </div>
-
-        <!-- Botão Vincular Quadro -->
-        <button
-          class="px-2.5 py-1 rounded-xl bg-bgElevated hover:bg-bgSurface text-xs text-textSecondary hover:text-textPrimary border border-divider transition-colors flex items-center gap-1.5 cursor-pointer"
-          title="Vincular ou criar um quadro nesta nota"
-          @click="openCanvasPicker"
-          data-testid="btn-link-canvas"
-        >
-          <LayoutGridIcon class="w-3.5 h-3.5 text-accent" />
-          <span class="hidden md:inline">Vincular Quadro</span>
-        </button>
-
+      <div class="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
         <!-- Botão Excluir Nota -->
         <button
-          class="p-1.5 rounded-xl hover:bg-red-500/10 text-red-400 hover:text-red-300 transition-colors cursor-pointer"
+          type="button"
+          class="p-2 rounded-xl hover:bg-red-500/10 text-red-400 hover:text-red-300 transition-colors cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
           title="Excluir Nota"
           @click="$emit('delete', localNote.id)"
+          data-testid="btn-delete-note"
         >
           <Trash2Icon class="w-4 h-4" />
         </button>
 
         <!-- Botão Fechar e Voltar ao Hub -->
         <button
-          class="px-2.5 py-1 rounded-xl bg-bgSurface hover:bg-bgElevated text-xs text-textSecondary hover:text-textPrimary border border-divider transition-colors flex items-center gap-1 cursor-pointer ml-1"
+          type="button"
+          class="px-2.5 py-1.5 rounded-xl bg-bgSurface hover:bg-bgElevated text-xs text-textSecondary hover:text-textPrimary border border-divider transition-colors flex items-center gap-1.5 cursor-pointer min-h-[36px]"
           title="Fechar e retornar"
           @click="$emit('close')"
+          data-testid="btn-close-note"
         >
           <LayoutGridIcon class="w-3.5 h-3.5 text-accent" />
-          <span>Fechar</span>
+          <span class="hidden sm:inline">Fechar</span>
         </button>
       </div>
     </div>
 
-    <!-- Barra de Tags da Nota Ativa -->
-    <div class="px-6 py-2 border-b border-divider bg-bgSurface/40 flex items-center justify-between gap-2 flex-wrap text-xs">
-      <div class="flex items-center gap-2 flex-wrap">
-        <TagIcon class="w-3.5 h-3.5 text-accent" />
-        <span class="text-textSecondary text-[11px] font-medium">Tags:</span>
-
-        <span
-          v-for="(tag, idx) in localNote.tags"
-          :key="tag"
-          class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-accent/15 text-accent text-xs font-medium"
-        >
-          #{{ tag }}
-          <button @click="removeTag(idx)" class="hover:text-white cursor-pointer ml-0.5">✕</button>
-        </span>
-
-        <div class="flex items-center gap-1">
-          <input
-            v-model="newTagInput"
-            type="text"
-            placeholder="+ Adicionar tag (Enter)"
-            class="bg-transparent border-none text-xs text-textPrimary placeholder:text-textSecondary/50 focus:outline-none min-w-[120px]"
-            @keydown.enter.prevent="addTag"
-            @keydown="handleTagKeyDown"
-          />
-        </div>
-      </div>
-
-      <!-- Indicador e Alternador para Notas HTML / Síntese IA -->
-      <div v-if="isHtmlNote" class="flex items-center gap-2">
-        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-400 font-semibold text-[11px] border border-amber-500/30">
-          <SparklesIcon class="w-3 h-3" />
-          Síntese de Desenho (HTML)
-        </span>
-
-        <div class="flex items-center gap-1 bg-bgElevated p-0.5 rounded-lg text-[11px] border border-divider">
-          <button
-            @click="htmlViewMode = 'preview'"
-            class="px-2 py-0.5 rounded transition-all cursor-pointer"
-            :class="htmlViewMode === 'preview' ? 'bg-primary text-white font-medium shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
-          >
-            Preview Vivo
-          </button>
-          <button
-            @click="htmlViewMode = 'code'"
-            class="px-2 py-0.5 rounded transition-all cursor-pointer"
-            :class="htmlViewMode === 'code' ? 'bg-primary text-white font-medium shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
-          >
-            Código HTML
-          </button>
-        </div>
-
-        <button
-          @click="copyHtmlContent"
-          class="text-[11px] px-2 py-1 rounded bg-bgElevated hover:bg-bgSurface text-textSecondary hover:text-textPrimary border border-divider transition-all flex items-center gap-1 cursor-pointer"
-          title="Copiar HTML"
-        >
-          <CopyIcon class="w-3 h-3" />
-          <span>{{ copiedHtml ? 'Copiado!' : 'Copiar' }}</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Corpo do Editor Live Preview Unificado -->
+    <!-- Corpo do Editor -->
     <div
-      class="flex-1 p-4 md:p-6 overflow-hidden bg-bgDarker flex flex-col relative"
+      class="flex-1 p-2 sm:p-4 md:p-6 overflow-hidden bg-bgDarker flex flex-col relative"
+      data-testid="editor-wrapper"
       @mouseup="handleTextSelection"
       @keyup="handleTextSelection"
     >
@@ -128,19 +48,223 @@
       <Transition name="fade">
         <div
           v-if="toastMessage"
-          class="absolute top-6 right-6 z-40 flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-medium shadow-lg backdrop-blur-md animate-in fade-in"
+          class="absolute top-4 right-4 sm:top-6 sm:right-6 z-50 flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-medium shadow-2xl backdrop-blur-md animate-in fade-in max-w-[calc(100vw-2rem)]"
         >
-          <CheckCircle2Icon class="w-4 h-4 text-emerald-400" />
-          <span>{{ toastMessage }}</span>
+          <CheckCircle2Icon class="w-4 h-4 text-emerald-400 shrink-0" />
+          <span class="truncate">{{ toastMessage }}</span>
         </div>
       </Transition>
 
-      <div class="flex-1 bg-bgPanel/60 rounded-2xl border border-divider/60 shadow-inner overflow-hidden flex flex-col relative">
-        <!-- Visualização HTML quando o conteúdo for HTML / Síntese de Desenho -->
+      <!-- Cartão Principal do Documento -->
+      <div class="flex-1 bg-bgPanel rounded-2xl border border-divider shadow-sm overflow-hidden flex flex-col relative">
+        <!-- BARRA ÚNICA NO TOPO DA ANOTAÇÃO (Responsiva no mobile) -->
+        <div class="w-full bg-bgSurface border-b border-divider px-2.5 sm:px-4 py-2 flex items-center justify-between gap-2 overflow-x-auto no-scrollbar scroll-smooth flex-nowrap shrink-0 backdrop-blur-sm touch-pan-x z-20">
+          <!-- Grupo da Esquerda: Formatação, Pasta, Tags e Vínculos -->
+          <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <!-- Formatação de Texto -->
+            <div class="flex items-center gap-1 shrink-0">
+              <!-- Seletor de Títulos / Cabeçalhos -->
+              <select
+                v-model="selectedHeading"
+                class="bg-bgElevated border border-divider/80 rounded-lg px-2 py-1 text-xs text-textPrimary focus:outline-none focus:border-accent cursor-pointer h-8 min-h-[32px] shrink-0 font-medium"
+                title="Estilo de texto ou cabeçalho"
+                @change="applyHeading"
+                data-testid="select-heading"
+              >
+                <option value="p">Normal (p)</option>
+                <option value="h1">Título 1 (H1)</option>
+                <option value="h2">Título 2 (H2)</option>
+                <option value="h3">Título 3 (H3)</option>
+              </select>
+
+              <!-- Botão Negrito -->
+              <button
+                type="button"
+                class="w-8 h-8 rounded-lg flex items-center justify-center text-textSecondary hover:text-textPrimary hover:bg-black/5 dark:hover:bg-white/5 border border-divider/80 font-bold text-xs shrink-0 cursor-pointer transition-colors"
+                title="Negrito (Ctrl+B)"
+                @click="applyBold"
+                data-testid="btn-format-bold"
+              >
+                B
+              </button>
+
+              <!-- Botão Itálico -->
+              <button
+                type="button"
+                class="w-8 h-8 rounded-lg flex items-center justify-center text-textSecondary hover:text-textPrimary hover:bg-black/5 dark:hover:bg-white/5 border border-divider/80 italic text-xs shrink-0 cursor-pointer transition-colors"
+                title="Itálico (Ctrl+I)"
+                @click="applyItalic"
+                data-testid="btn-format-italic"
+              >
+                I
+              </button>
+            </div>
+
+            <!-- Separador Vertical -->
+            <div class="h-4 w-px bg-divider/80 mx-0.5 shrink-0"></div>
+
+            <!-- Seletor de Pasta da Nota -->
+            <div class="flex items-center gap-1 shrink-0">
+              <FolderIcon class="w-3.5 h-3.5 text-accent shrink-0 hidden sm:inline" />
+              <select
+                v-model="localNote.folder"
+                class="bg-bgElevated border border-divider/80 rounded-lg px-2 py-1 text-xs text-textPrimary focus:outline-none focus:border-accent cursor-pointer h-8 min-h-[32px] max-w-[120px] sm:max-w-[160px] truncate"
+                title="Pasta da nota"
+                @change="onInput"
+                data-testid="select-folder"
+              >
+                <option :value="null">Sem pasta</option>
+                <option v-for="f in folders" :key="f" :value="f">📁 {{ f }}</option>
+              </select>
+            </div>
+
+            <!-- Separador Vertical -->
+            <div class="h-4 w-px bg-divider/80 mx-0.5 shrink-0"></div>
+
+            <!-- Botão e Popover de Tags -->
+            <div class="relative inline-block shrink-0">
+              <button
+                type="button"
+                class="px-2.5 h-8 rounded-lg bg-bgElevated hover:bg-bgSurface text-xs text-textSecondary hover:text-textPrimary border border-divider/80 flex items-center gap-1.5 cursor-pointer shrink-0 transition-colors"
+                :class="{ 'border-accent/60 text-accent font-semibold': isTagsPopoverOpen || (localNote.tags && localNote.tags.length > 0) }"
+                title="Gerenciar tags da nota"
+                @click="isTagsPopoverOpen = !isTagsPopoverOpen"
+                data-testid="btn-toggle-tags"
+              >
+                <TagIcon class="w-3.5 h-3.5 text-accent shrink-0" />
+                <span>Tags</span>
+                <span
+                  v-if="localNote.tags && localNote.tags.length > 0"
+                  class="px-1.5 py-0.2 rounded-full bg-accent/20 text-accent text-[10px] font-bold"
+                >
+                  {{ localNote.tags.length }}
+                </span>
+              </button>
+
+              <!-- Painel Popover Flutuante de Tags -->
+              <div
+                v-if="isTagsPopoverOpen"
+                class="absolute left-0 top-10 w-72 sm:w-80 bg-bgPanel border border-divider rounded-2xl shadow-2xl p-3 z-50 flex flex-col gap-2.5 animate-in fade-in zoom-in-95 max-w-[calc(100vw-2rem)]"
+                data-testid="tags-popover"
+              >
+                <div class="flex items-center justify-between border-b border-divider/60 pb-2">
+                  <span class="text-xs font-semibold text-textPrimary flex items-center gap-1.5">
+                    <TagIcon class="w-3.5 h-3.5 text-accent" />
+                    Tags da Nota
+                  </span>
+                  <button
+                    type="button"
+                    class="p-1 rounded-lg text-textSecondary hover:text-textPrimary hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
+                    @click="isTagsPopoverOpen = false"
+                  >
+                    <XIcon class="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                <!-- Lista de Tags Ativas -->
+                <div class="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto custom-scrollbar">
+                  <span
+                    v-for="(tag, idx) in localNote.tags"
+                    :key="tag"
+                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-accent/15 text-accent text-xs font-medium border border-accent/20"
+                  >
+                    #{{ tag }}
+                    <button
+                      type="button"
+                      class="hover:text-white cursor-pointer ml-0.5 text-accent/80"
+                      title="Remover tag"
+                      @click="removeTag(idx)"
+                    >
+                      ✕
+                    </button>
+                  </span>
+                  <span v-if="!localNote.tags || localNote.tags.length === 0" class="text-[11px] text-textSecondary italic">
+                    Nenhuma tag atribuída.
+                  </span>
+                </div>
+
+                <!-- Adicionar Nova Tag -->
+                <div class="flex items-center gap-1.5 pt-1 border-t border-divider/60">
+                  <input
+                    v-model="newTagInput"
+                    type="text"
+                    placeholder="Nova tag (Enter ou vírgula)..."
+                    class="flex-1 px-2.5 py-1 text-xs bg-bgSurface border border-divider rounded-lg text-textPrimary placeholder:text-textSecondary/50 focus:outline-none focus:border-accent"
+                    @keydown.enter.prevent="addTag"
+                    @keydown="handleTagKeyDown"
+                    data-testid="input-new-tag"
+                  />
+                  <button
+                    type="button"
+                    class="px-2.5 py-1 text-xs rounded-lg bg-accent/20 hover:bg-accent text-accent hover:text-white font-medium transition-colors cursor-pointer"
+                    @click="addTag"
+                  >
+                    + Add
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Separador Vertical -->
+            <div class="h-4 w-px bg-divider/80 mx-0.5 shrink-0"></div>
+
+            <!-- Botão Vincular Universal (Quadros, Notas, Livros, Livretos) -->
+            <button
+              type="button"
+              class="px-2.5 h-8 rounded-lg bg-accent/15 hover:bg-accent/25 text-accent hover:text-white border border-accent/30 flex items-center gap-1.5 text-xs font-medium cursor-pointer shrink-0 transition-colors shadow-xs"
+              title="Vincular Quadro, Nota, Livro ou Livreto"
+              @click="openUniversalLinkModal"
+              data-testid="btn-link-canvas"
+            >
+              <LinkIcon class="w-3.5 h-3.5" />
+              <span>Vincular</span>
+              <ChevronDownIcon class="w-3 h-3 opacity-70" />
+            </button>
+          </div>
+
+          <!-- Grupo da Direita: Indicador para Notas HTML Sintetizadas -->
+          <div v-if="isHtmlNote" class="flex items-center gap-1.5 shrink-0">
+            <span class="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-400 font-semibold text-[11px] border border-amber-500/30">
+              <SparklesIcon class="w-3 h-3" />
+              Síntese de Desenho (HTML)
+            </span>
+
+            <div class="flex items-center gap-1 bg-bgElevated p-0.5 rounded-lg text-[11px] border border-divider">
+              <button
+                type="button"
+                class="px-2 py-0.5 rounded transition-all cursor-pointer"
+                :class="htmlViewMode === 'preview' ? 'bg-primary text-white font-medium shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
+                @click="htmlViewMode = 'preview'"
+              >
+                Preview
+              </button>
+              <button
+                type="button"
+                class="px-2 py-0.5 rounded transition-all cursor-pointer"
+                :class="htmlViewMode === 'code' ? 'bg-primary text-white font-medium shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
+                @click="htmlViewMode = 'code'"
+              >
+                Código
+              </button>
+            </div>
+
+            <button
+              type="button"
+              class="text-[11px] px-2 py-1 rounded bg-bgElevated hover:bg-bgSurface text-textSecondary hover:text-textPrimary border border-divider transition-all flex items-center gap-1 cursor-pointer"
+              title="Copiar HTML"
+              @click="copyHtmlContent"
+            >
+              <CopyIcon class="w-3 h-3" />
+              <span class="hidden sm:inline">{{ copiedHtml ? 'Copiado!' : 'Copiar' }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Conteúdo do Editor -->
         <template v-if="isHtmlNote">
           <div
             v-if="htmlViewMode === 'preview'"
-            class="flex-1 overflow-y-auto p-6 select-text custom-scrollbar prose dark:prose-invert max-w-none text-textPrimary leading-relaxed"
+            class="flex-1 overflow-y-auto p-4 sm:p-6 select-text custom-scrollbar prose dark:prose-invert max-w-none text-textPrimary leading-relaxed"
           >
             <div class="synthesized-html-container" v-html="localNote.content"></div>
           </div>
@@ -153,15 +277,16 @@
           ></textarea>
         </template>
 
-        <!-- Modo Editor Único Live Preview -->
+        <!-- Editor Único Live Preview Milkdown -->
         <div
           v-else
-          class="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar flex flex-col"
+          class="flex-1 overflow-y-auto p-3 sm:p-6 custom-scrollbar flex flex-col"
           @click="handleEditorClick"
         >
           <MilkdownEditor
+            ref="milkdownRef"
             v-model="localNote.content"
-            placeholder="Comece a escrever sua nota... O Live Preview renderiza automaticamente. Use 'Vincular Quadro' para associar um quadro."
+            placeholder="Comece a escrever sua nota... O Live Preview renderiza automaticamente. Use 'Vincular' para associar quadros, notas, livros ou livretos."
             @update:model-value="onInput"
           />
         </div>
@@ -170,43 +295,40 @@
         <Transition name="fade">
           <div
             v-if="selectedSnippet"
-            class="absolute bottom-4 right-4 flex items-center gap-2 p-1.5 rounded-2xl bg-bgPanel/95 border border-divider shadow-2xl backdrop-blur-xl transition-all animate-in fade-in z-30 ring-1 ring-white/10"
+            class="absolute bottom-4 right-4 flex items-center gap-2 p-1.5 rounded-2xl bg-bgPanel/95 border border-divider shadow-2xl backdrop-blur-xl transition-all animate-in fade-in z-30 ring-1 ring-white/10 max-w-[calc(100vw-2rem)]"
             data-testid="note-selection-toolbar"
           >
             <div class="hidden sm:flex items-center gap-1 pl-1 pr-2 border-r border-divider/60 text-[11px] text-textSecondary font-technical">
               <span class="truncate max-w-[140px] italic">"{{ selectedSnippet }}"</span>
             </div>
 
-            <!-- Botão Criar Anotação -->
             <button
               type="button"
               class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-textPrimary font-technical text-xs font-semibold transition-all cursor-pointer hover:scale-102 active:scale-98"
-              @mousedown.prevent.stop="openModalForAnnotation"
               title="Criar anotação ou reflexão a partir do trecho selecionado"
+              @mousedown.prevent.stop="openModalForAnnotation"
               data-testid="btn-create-note-from-snippet"
             >
               <MessageSquareIcon class="w-3.5 h-3.5 text-accent" />
               <span>Anotar</span>
             </button>
 
-            <!-- Botão Criar Flashcard -->
             <button
               type="button"
               class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-accent text-white font-technical text-xs font-semibold hover:bg-accent/90 transition-all cursor-pointer shadow-md hover:scale-102 active:scale-98"
-              @mousedown.prevent.stop="openModalForFlashcard"
               title="Criar Flashcard a partir do trecho selecionado"
+              @mousedown.prevent.stop="openModalForFlashcard"
               data-testid="btn-create-flashcard-from-snippet"
             >
               <SparklesIcon class="w-3.5 h-3.5" />
               <span>Flashcard</span>
             </button>
 
-            <!-- Botão Cancelar Seleção -->
             <button
               type="button"
               class="p-1 rounded-lg text-textSecondary hover:text-textPrimary hover:bg-white/5 transition-colors cursor-pointer"
-              @mousedown.prevent.stop="selectedSnippet = ''"
               title="Fechar barra"
+              @mousedown.prevent.stop="selectedSnippet = ''"
             >
               <XIcon class="w-3.5 h-3.5" />
             </button>
@@ -231,76 +353,116 @@
       @created="handleAnnotationCreated"
     />
 
-    <!-- Modal de Seleção de Canvas para Embutir -->
+    <!-- MODAL UNIVERSAL DE VÍNCULOS (Quadros, Notas, Livros, Livretos) -->
     <Teleport to="body">
       <Transition name="fade">
         <div
-          v-if="isCanvasPickerOpen"
-          class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
-          @click.self="isCanvasPickerOpen = false"
+          v-if="isUniversalLinkModalOpen"
+          class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs"
+          @click.self="isUniversalLinkModalOpen = false"
         >
-          <div class="w-full max-w-md bg-bgPanel border border-divider rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95">
+          <div class="w-full max-w-lg bg-bgPanel border border-divider rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95">
             <!-- Modal Header -->
-            <div class="px-5 py-4 border-b border-divider flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <div class="w-8 h-8 rounded-xl bg-accent/15 border border-accent/30 flex items-center justify-center text-accent">
-                  <LayoutGridIcon class="w-4 h-4" />
+            <div class="px-4 sm:px-5 py-3.5 sm:py-4 border-b border-divider flex items-center justify-between">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-xl bg-accent/15 border border-accent/30 flex items-center justify-center text-accent shrink-0">
+                  <LinkIcon class="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 class="text-sm font-semibold text-textPrimary">Vincular Quadro</h3>
-                  <p class="text-[11px] text-textSecondary">Vincule um quadro existente ou crie um novo na hora</p>
+                  <h3 class="text-sm font-semibold text-textPrimary">Vincular Conteúdo</h3>
+                  <p class="text-[11px] text-textSecondary">Vincular Quadro, Nota, Livro ou Livreto Didático</p>
                 </div>
               </div>
               <button
                 type="button"
-                @click="isCanvasPickerOpen = false"
                 class="p-1 rounded-lg text-textSecondary hover:text-textPrimary hover:bg-white/5 transition-colors cursor-pointer"
+                @click="isUniversalLinkModalOpen = false"
               >
                 <XIcon class="w-4 h-4" />
               </button>
             </div>
 
-            <!-- Abas do Modal: Vincular Existente / Criar Novo -->
-            <div class="flex border-b border-divider bg-bgSurface/30 px-3 pt-2 gap-2 text-xs">
+            <!-- Abas do Modal (Scrollável no mobile) -->
+            <div class="flex border-b border-divider bg-bgSurface/30 px-3 pt-2 gap-1 overflow-x-auto no-scrollbar flex-nowrap text-xs">
               <button
                 type="button"
-                class="px-3 py-1.5 border-b-2 font-medium transition-colors cursor-pointer"
-                :class="activeCanvasTab === 'existing' ? 'border-accent text-accent font-semibold' : 'border-transparent text-textSecondary hover:text-textPrimary'"
-                @click="activeCanvasTab = 'existing'"
+                class="px-3 py-1.5 border-b-2 font-medium transition-colors cursor-pointer shrink-0 flex items-center gap-1.5"
+                :class="activeLinkTab === 'canvas' ? 'border-accent text-accent font-semibold' : 'border-transparent text-textSecondary hover:text-textPrimary'"
+                @click="activeLinkTab = 'canvas'"
+                data-testid="tab-link-canvas"
               >
-                Quadro Existente
+                <span>🎨 Quadro</span>
               </button>
               <button
                 type="button"
-                class="px-3 py-1.5 border-b-2 font-medium transition-colors cursor-pointer"
-                :class="activeCanvasTab === 'new' ? 'border-accent text-accent font-semibold' : 'border-transparent text-textSecondary hover:text-textPrimary'"
-                @click="activeCanvasTab = 'new'"
+                class="px-3 py-1.5 border-b-2 font-medium transition-colors cursor-pointer shrink-0 flex items-center gap-1.5"
+                :class="activeLinkTab === 'note' ? 'border-accent text-accent font-semibold' : 'border-transparent text-textSecondary hover:text-textPrimary'"
+                @click="activeLinkTab = 'note'"
+                data-testid="tab-link-note"
               >
-                + Criar Novo Quadro
+                <span>📝 Nota</span>
+              </button>
+              <button
+                type="button"
+                class="px-3 py-1.5 border-b-2 font-medium transition-colors cursor-pointer shrink-0 flex items-center gap-1.5"
+                :class="activeLinkTab === 'book' ? 'border-accent text-accent font-semibold' : 'border-transparent text-textSecondary hover:text-textPrimary'"
+                @click="activeLinkTab = 'book'"
+                data-testid="tab-link-book"
+              >
+                <span>📖 Livro</span>
+              </button>
+              <button
+                type="button"
+                class="px-3 py-1.5 border-b-2 font-medium transition-colors cursor-pointer shrink-0 flex items-center gap-1.5"
+                :class="activeLinkTab === 'booklet' ? 'border-accent text-accent font-semibold' : 'border-transparent text-textSecondary hover:text-textPrimary'"
+                @click="activeLinkTab = 'booklet'"
+                data-testid="tab-link-booklet"
+              >
+                <span>📚 Livreto</span>
               </button>
             </div>
 
-            <!-- Conteúdo Aba 1: Seleção de Existente -->
-            <div v-if="activeCanvasTab === 'existing'" class="flex flex-col flex-1 overflow-hidden">
-              <!-- Campo de Busca -->
-              <div class="p-3 border-b border-divider bg-bgSurface/20">
-                <div class="relative flex items-center">
-                  <SearchIcon class="w-3.5 h-3.5 text-textSecondary absolute left-3" />
-                  <input
-                    v-model="canvasSearchQuery"
-                    type="text"
-                    placeholder="Buscar quadro por título..."
-                    class="w-full pl-8 pr-3 py-1.5 text-xs bg-bgSurface border border-divider rounded-xl text-textPrimary placeholder:text-textSecondary/50 focus:outline-none focus:border-accent"
-                  />
-                </div>
+            <!-- Campo de Busca Universal -->
+            <div v-if="activeLinkTab !== 'canvas' || activeCanvasSubTab === 'existing'" class="p-3 border-b border-divider bg-bgSurface/20">
+              <div class="relative flex items-center">
+                <SearchIcon class="w-3.5 h-3.5 text-textSecondary absolute left-3" />
+                <input
+                  v-model="universalSearchQuery"
+                  type="text"
+                  :placeholder="searchPlaceholder"
+                  class="w-full pl-8 pr-3 py-1.5 text-xs bg-bgSurface border border-divider rounded-xl text-textPrimary placeholder:text-textSecondary/50 focus:outline-none focus:border-accent"
+                />
+              </div>
+            </div>
+
+            <!-- ABA 1: QUADRO (CANVAS) -->
+            <div v-if="activeLinkTab === 'canvas'" class="flex flex-col flex-1 overflow-hidden">
+              <!-- Sub-abas: Existente vs Novo -->
+              <div class="flex border-b border-divider/60 bg-bgSurface/20 px-3 py-1.5 gap-2 text-xs">
+                <button
+                  type="button"
+                  class="px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                  :class="activeCanvasSubTab === 'existing' ? 'bg-accent/20 text-accent font-medium' : 'text-textSecondary hover:text-textPrimary'"
+                  @click="activeCanvasSubTab = 'existing'"
+                >
+                  Quadro Existente
+                </button>
+                <button
+                  type="button"
+                  class="px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                  :class="activeCanvasSubTab === 'new' ? 'bg-accent/20 text-accent font-medium' : 'text-textSecondary hover:text-textPrimary'"
+                  @click="activeCanvasSubTab = 'new'"
+                >
+                  + Criar Novo Quadro
+                </button>
               </div>
 
-              <!-- Lista de Quadros -->
-              <div class="flex-1 overflow-y-auto p-3 space-y-1.5 custom-scrollbar min-h-[160px] max-h-[340px]">
+              <!-- Lista de Quadros Existentes -->
+              <div v-if="activeCanvasSubTab === 'existing'" class="flex-1 overflow-y-auto p-3 space-y-1.5 custom-scrollbar min-h-[160px] max-h-[320px]">
                 <div
                   v-for="c in filteredCanvases"
                   :key="c.id"
-                  class="group p-3 rounded-xl border border-divider/60 hover:border-accent/40 bg-bgSurface/40 hover:bg-accent/5 transition-all cursor-pointer flex items-center justify-between gap-3"
+                  class="group p-2.5 sm:p-3 rounded-xl border border-divider/60 hover:border-accent/40 bg-bgSurface/40 hover:bg-accent/5 transition-all cursor-pointer flex items-center justify-between gap-2.5"
                   @click="selectCanvasToLink(c)"
                 >
                   <div class="min-w-0 flex-1">
@@ -319,9 +481,9 @@
 
                   <button
                     type="button"
-                    data-testid="btn-select-canvas"
-                    class="px-2.5 py-1 rounded-lg bg-accent/15 hover:bg-accent text-accent hover:text-white text-xs font-medium transition-colors flex items-center gap-1 flex-shrink-0"
+                    class="px-2.5 py-1 rounded-lg bg-accent/15 hover:bg-accent text-accent hover:text-white text-xs font-medium transition-colors flex items-center gap-1 shrink-0 cursor-pointer min-h-[32px]"
                     @click.stop="selectCanvasToLink(c)"
+                    data-testid="btn-select-canvas"
                   >
                     <span>Vincular</span>
                     <span>🔗</span>
@@ -329,59 +491,167 @@
                 </div>
 
                 <div v-if="filteredCanvases.length === 0" class="p-8 text-center text-textSecondary text-xs">
-                  <p>Nenhum quadro existente encontrado.</p>
+                  <p>Nenhum quadro encontrado.</p>
                   <button
                     type="button"
                     class="mt-2 text-accent hover:underline font-semibold cursor-pointer inline-flex items-center gap-1"
-                    @click="activeCanvasTab = 'new'"
+                    @click="activeCanvasSubTab = 'new'"
                   >
-                    Clique aqui para criar um novo quadro →
+                    Criar um novo quadro agora →
+                  </button>
+                </div>
+              </div>
+
+              <!-- Criar Novo Quadro na Hora -->
+              <div v-else class="p-4 sm:p-5 space-y-4 flex-1 flex flex-col justify-center">
+                <div>
+                  <label class="block text-xs font-medium text-textSecondary mb-1.5">Título do Novo Quadro</label>
+                  <input
+                    v-model="newCanvasTitle"
+                    type="text"
+                    placeholder="Ex: Arquitetura do Sistema, Mapa Mental..."
+                    class="w-full px-3.5 py-2 text-xs bg-bgSurface border border-divider rounded-xl text-textPrimary placeholder:text-textSecondary/50 focus:outline-none focus:border-accent"
+                    @keydown.enter.prevent="createNewCanvasAndLink"
+                  />
+                </div>
+
+                <div class="flex items-center justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    class="px-3 py-1.5 rounded-xl border border-divider text-xs text-textSecondary hover:text-textPrimary hover:bg-bgSurface transition-colors cursor-pointer"
+                    @click="activeCanvasSubTab = 'existing'"
+                  >
+                    Voltar
+                  </button>
+                  <button
+                    type="button"
+                    class="px-4 py-1.5 rounded-xl bg-accent hover:bg-accent/90 text-white text-xs font-medium transition-colors cursor-pointer flex items-center gap-1.5 shadow-md disabled:opacity-50"
+                    :disabled="isCreatingCanvas"
+                    @click="createNewCanvasAndLink"
+                  >
+                    <PlusIcon class="w-3.5 h-3.5" />
+                    <span>{{ isCreatingCanvas ? 'Criando...' : 'Criar e Vincular' }}</span>
                   </button>
                 </div>
               </div>
             </div>
 
-            <!-- Conteúdo Aba 2: Criar Novo Quadro -->
-            <div v-else class="p-5 space-y-4 flex-1 flex flex-col justify-center">
-              <div>
-                <label class="block text-xs font-medium text-textSecondary mb-1.5">Título do Novo Quadro</label>
-                <input
-                  v-model="newCanvasTitle"
-                  type="text"
-                  placeholder="Ex: Arquitetura do Sistema, Mapa Mental..."
-                  class="w-full px-3.5 py-2 text-xs bg-bgSurface border border-divider rounded-xl text-textPrimary placeholder:text-textSecondary/50 focus:outline-none focus:border-accent"
-                  @keydown.enter.prevent="createNewCanvasAndLink"
-                />
+            <!-- ABA 2: NOTA -->
+            <div v-else-if="activeLinkTab === 'note'" class="flex-1 overflow-y-auto p-3 space-y-1.5 custom-scrollbar min-h-[160px] max-h-[320px]">
+              <div
+                v-for="n in filteredNotes"
+                :key="n.id"
+                class="group p-2.5 sm:p-3 rounded-xl border border-divider/60 hover:border-blue-400/40 bg-bgSurface/40 hover:bg-blue-500/5 transition-all cursor-pointer flex items-center justify-between gap-2.5"
+                @click="selectNoteToLink(n)"
+              >
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-center gap-1.5">
+                    <FileTextIcon class="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                    <span class="text-xs font-semibold text-textPrimary group-hover:text-blue-400 transition-colors truncate">
+                      {{ n.title || 'Nota Sem Título' }}
+                    </span>
+                  </div>
+                  <div class="text-[11px] text-textSecondary/70 mt-0.5 truncate">
+                    {{ n.folder ? `📁 ${n.folder}` : 'Sem pasta' }}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  class="px-2.5 py-1 rounded-lg bg-blue-500/15 hover:bg-blue-500 text-blue-400 hover:text-white text-xs font-medium transition-colors flex items-center gap-1 shrink-0 cursor-pointer min-h-[32px]"
+                  @click.stop="selectNoteToLink(n)"
+                  data-testid="btn-select-note"
+                >
+                  <span>Vincular</span>
+                  <span>🔗</span>
+                </button>
               </div>
 
-              <div class="flex items-center justify-end gap-2 pt-2">
+              <div v-if="filteredNotes.length === 0" class="p-8 text-center text-textSecondary text-xs">
+                <p>Nenhuma outra nota encontrada.</p>
+              </div>
+            </div>
+
+            <!-- ABA 3: LIVRO -->
+            <div v-else-if="activeLinkTab === 'book'" class="flex-1 overflow-y-auto p-3 space-y-1.5 custom-scrollbar min-h-[160px] max-h-[320px]">
+              <div
+                v-for="b in filteredBooks"
+                :key="b.id"
+                class="group p-2.5 sm:p-3 rounded-xl border border-divider/60 hover:border-emerald-400/40 bg-bgSurface/40 hover:bg-emerald-500/5 transition-all cursor-pointer flex items-center justify-between gap-2.5"
+                @click="selectBookToLink(b)"
+              >
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-center gap-1.5">
+                    <BookOpenIcon class="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span class="text-xs font-semibold text-textPrimary group-hover:text-emerald-400 transition-colors truncate">
+                      {{ b.title || 'Livro Sem Título' }}
+                    </span>
+                  </div>
+                  <div class="text-[11px] text-textSecondary/70 mt-0.5 truncate">
+                    {{ b.author || 'Autor Desconhecido' }}
+                  </div>
+                </div>
+
                 <button
                   type="button"
-                  @click="activeCanvasTab = 'existing'"
-                  class="px-3 py-1.5 rounded-xl border border-divider text-xs text-textSecondary hover:text-textPrimary hover:bg-bgSurface transition-colors cursor-pointer"
+                  class="px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500 text-emerald-400 hover:text-white text-xs font-medium transition-colors flex items-center gap-1 shrink-0 cursor-pointer min-h-[32px]"
+                  @click.stop="selectBookToLink(b)"
+                  data-testid="btn-select-book"
                 >
-                  Voltar
+                  <span>Vincular</span>
+                  <span>🔗</span>
                 </button>
+              </div>
+
+              <div v-if="filteredBooks.length === 0" class="p-8 text-center text-textSecondary text-xs">
+                <p>Nenhum livro encontrado na biblioteca.</p>
+              </div>
+            </div>
+
+            <!-- ABA 4: LIVRETO DIDÁTICO -->
+            <div v-else-if="activeLinkTab === 'booklet'" class="flex-1 overflow-y-auto p-3 space-y-1.5 custom-scrollbar min-h-[160px] max-h-[320px]">
+              <div
+                v-for="bk in filteredBooklets"
+                :key="bk.id"
+                class="group p-2.5 sm:p-3 rounded-xl border border-divider/60 hover:border-purple-400/40 bg-bgSurface/40 hover:bg-purple-500/5 transition-all cursor-pointer flex items-center justify-between gap-2.5"
+                @click="selectBookletToLink(bk)"
+              >
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-center gap-1.5">
+                    <BookMarkedIcon class="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                    <span class="text-xs font-semibold text-textPrimary group-hover:text-purple-400 transition-colors truncate">
+                      {{ bk.title || 'Livreto Didático' }}
+                    </span>
+                  </div>
+                  <div class="text-[11px] text-textSecondary/70 mt-0.5 truncate">
+                    {{ bk.topic ? `Tema: ${bk.topic}` : 'Livreto gerado por IA' }}
+                  </div>
+                </div>
+
                 <button
                   type="button"
-                  class="px-4 py-1.5 rounded-xl bg-accent hover:bg-accent/90 text-white text-xs font-medium transition-colors cursor-pointer flex items-center gap-1.5 shadow-md disabled:opacity-50"
-                  :disabled="isCreatingCanvas"
-                  @click="createNewCanvasAndLink"
+                  class="px-2.5 py-1 rounded-lg bg-purple-500/15 hover:bg-purple-500 text-purple-400 hover:text-white text-xs font-medium transition-colors flex items-center gap-1 shrink-0 cursor-pointer min-h-[32px]"
+                  @click.stop="selectBookletToLink(bk)"
+                  data-testid="btn-select-booklet"
                 >
-                  <PlusIcon class="w-3.5 h-3.5" />
-                  <span>{{ isCreatingCanvas ? 'Criando...' : 'Criar e Vincular' }}</span>
+                  <span>Vincular</span>
+                  <span>🔗</span>
                 </button>
+              </div>
+
+              <div v-if="filteredBooklets.length === 0" class="p-8 text-center text-textSecondary text-xs">
+                <p>Nenhum livreto didático encontrado.</p>
               </div>
             </div>
 
             <!-- Modal Footer -->
-            <div class="px-5 py-3 border-t border-divider bg-bgSurface/20 flex items-center justify-end">
+            <div class="px-4 sm:px-5 py-3 border-t border-divider bg-bgSurface/20 flex items-center justify-end">
               <button
                 type="button"
-                @click="isCanvasPickerOpen = false"
-                class="px-3 py-1.5 rounded-xl border border-divider text-xs text-textSecondary hover:text-textPrimary hover:bg-bgSurface transition-colors cursor-pointer"
+                class="px-3.5 py-1.5 rounded-xl border border-divider text-xs text-textSecondary hover:text-textPrimary hover:bg-bgSurface transition-colors cursor-pointer"
+                @click="isUniversalLinkModalOpen = false"
               >
-                Cancelar
+                Fechar
               </button>
             </div>
           </div>
@@ -392,7 +662,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import {
   FolderIcon,
   TagIcon,
@@ -405,13 +675,23 @@ import {
   Copy as CopyIcon,
   Search as SearchIcon,
   Plus as PlusIcon,
+  Link as LinkIcon,
+  ChevronDown as ChevronDownIcon,
+  BookOpen as BookOpenIcon,
+  FileText as FileTextIcon,
+  BookMarked as BookMarkedIcon,
 } from 'lucide-vue-next'
 import MilkdownEditor from '~/components/MilkdownEditor.vue'
 import ReaderAnnotationModal from '~/components/reader/ReaderAnnotationModal.vue'
 import { canvasRepo } from '~/adapters/database/repositories/CanvasRepository'
+import { noteRepo } from '~/adapters/database/repositories/NoteRepository'
+import { bookRepo } from '~/adapters/database/repositories/BookRepository'
+import { useDidacticBooklet } from '~/composables/useDidacticBooklet'
+import { extractTitleFromMarkdown } from '~/utils/noteTitle'
 import type { NoteItem } from '~/interfaces/note'
 import type { CanvasSummary } from '~/interfaces/canvas'
 import type { AnnotationItem } from '~/composables/useAnnotations'
+import type { LocalBook } from '~/adapters/database/types'
 
 const props = defineProps<{
   note: NoteItem
@@ -426,10 +706,22 @@ const emit = defineEmits<{
   (_e: 'close'): void
 }>()
 
+const normalizeInitialTitle = (t?: string) => {
+  const clean = (t || '').trim()
+  if (clean.toLowerCase() === 'nova nota' || clean.toLowerCase() === 'nota sem título') return ''
+  return clean
+}
+
 const localNote = ref<NoteItem>({
   ...props.note,
+  title: normalizeInitialTitle(props.note.title),
   tags: Array.isArray(props.note.tags) ? [...props.note.tags] : []
 })
+
+const milkdownRef = ref<any>(null)
+const selectedHeading = ref('p')
+const isTagsPopoverOpen = ref(false)
+const newTagInput = ref('')
 
 const selectedSnippet = ref('')
 const currentSelectedSnippet = ref('')
@@ -491,13 +783,25 @@ watch(
   (newVal) => {
     localNote.value = {
       ...newVal,
+      title: normalizeInitialTitle(newVal.title),
       tags: Array.isArray(newVal.tags) ? [...newVal.tags] : []
     }
   },
   { deep: true }
 )
 
-const newTagInput = ref('')
+watch(
+  () => localNote.value.content,
+  (newContent) => {
+    if (!localNote.value.title || localNote.value.title === 'Nota') {
+      const extracted = extractTitleFromMarkdown(newContent)
+      if (extracted) {
+        localNote.value.title = extracted
+        onInput()
+      }
+    }
+  }
+)
 
 const onInput = () => {
   emit('update:note', localNote.value)
@@ -527,15 +831,110 @@ const removeTag = (idx: number) => {
   onInput()
 }
 
-const isCanvasPickerOpen = ref(false)
-const activeCanvasTab = ref<'existing' | 'new'>('existing')
-const canvasSearchQuery = ref('')
+// Formatação rica delegada ao Milkdown via editorView
+const applyBold = () => {
+  milkdownRef.value?.toggleBold?.()
+}
+
+const applyItalic = () => {
+  milkdownRef.value?.toggleItalic?.()
+}
+
+const applyHeading = () => {
+  const val = selectedHeading.value
+  if (val === 'p') {
+    milkdownRef.value?.setParagraph?.()
+  } else if (val === 'h1') {
+    milkdownRef.value?.setHeading?.(1)
+  } else if (val === 'h2') {
+    milkdownRef.value?.setHeading?.(2)
+  } else if (val === 'h3') {
+    milkdownRef.value?.setHeading?.(3)
+  }
+}
+
+// Inserção de link e sincronização com a nota
+const insertMarkdownLink = (label: string, protocol: string, id: string | number) => {
+  const linkText = `[${label}](${protocol}:${id}) `
+  if (milkdownRef.value?.insertText) {
+    try {
+      milkdownRef.value.insertText(linkText)
+      setTimeout(() => {
+        if (milkdownRef.value?.getContent) {
+          localNote.value.content = milkdownRef.value.getContent()
+          onInput()
+        }
+      }, 30)
+      return
+    } catch {
+      // fallback
+    }
+  }
+
+  // Fallback se o ref ainda não estiver montado ou em modo texto direto
+  const current = localNote.value.content || ''
+  localNote.value.content = current + (current.endsWith('\n') || !current ? '' : '\n\n') + linkText
+  onInput()
+}
+
+// Estado do Modal Universal de Vínculos
+const isUniversalLinkModalOpen = ref(false)
+const activeLinkTab = ref<'canvas' | 'note' | 'book' | 'booklet'>('canvas')
+const activeCanvasSubTab = ref<'existing' | 'new'>('existing')
+const universalSearchQuery = ref('')
 const newCanvasTitle = ref('')
 const isCreatingCanvas = ref(false)
 
+const allNotes = ref<any[]>([])
+const allBooks = ref<LocalBook[]>([])
+const allBooklets = ref<any[]>([])
+
+const searchPlaceholder = computed(() => {
+  switch (activeLinkTab.value) {
+    case 'canvas': return 'Buscar quadro por título...'
+    case 'note': return 'Buscar nota por título ou conteúdo...'
+    case 'book': return 'Buscar livro por título ou autor...'
+    case 'booklet': return 'Buscar livreto didático por tema...'
+    default: return 'Buscar...'
+  }
+})
+
+const loadUniversalData = async () => {
+  try {
+    const [notes, books] = await Promise.all([
+      noteRepo.getAll().catch(() => []),
+      bookRepo.getAll().catch(() => []),
+    ])
+    allNotes.value = notes || []
+    allBooks.value = books || []
+  } catch (err) {
+    console.warn('[NoteEditorPane] Erro ao carregar notas e livros:', err)
+  }
+
+  try {
+    const didactic = useDidacticBooklet()
+    const booklets = await didactic.fetchBooklets().catch(() => [])
+    allBooklets.value = booklets || []
+  } catch (err) {
+    console.warn('[NoteEditorPane] Erro ao carregar livretos didáticos:', err)
+  }
+}
+
+onMounted(() => {
+  loadUniversalData()
+})
+
+const openUniversalLinkModal = () => {
+  universalSearchQuery.value = ''
+  newCanvasTitle.value = ''
+  activeCanvasSubTab.value = (props.canvases && props.canvases.length > 0) ? 'existing' : 'new'
+  isUniversalLinkModalOpen.value = true
+  loadUniversalData()
+}
+
 const filteredCanvases = computed(() => {
   const list = props.canvases || []
-  const q = canvasSearchQuery.value.trim().toLowerCase()
+  const q = universalSearchQuery.value.trim().toLowerCase()
   if (!q) return list
   return list.filter(
     (c) =>
@@ -544,20 +943,66 @@ const filteredCanvases = computed(() => {
   )
 })
 
-const openCanvasPicker = () => {
-  canvasSearchQuery.value = ''
-  newCanvasTitle.value = ''
-  activeCanvasTab.value = (props.canvases && props.canvases.length > 0) ? 'existing' : 'new'
-  isCanvasPickerOpen.value = true
-}
+const filteredNotes = computed(() => {
+  const list = allNotes.value.filter((n) => String(n.id) !== String(localNote.value.id))
+  const q = universalSearchQuery.value.trim().toLowerCase()
+  if (!q) return list
+  return list.filter(
+    (n) =>
+      (n.title && n.title.toLowerCase().includes(q)) ||
+      (n.content && n.content.toLowerCase().includes(q))
+  )
+})
+
+const filteredBooks = computed(() => {
+  const list = allBooks.value || []
+  const q = universalSearchQuery.value.trim().toLowerCase()
+  if (!q) return list
+  return list.filter(
+    (b) =>
+      (b.title && b.title.toLowerCase().includes(q)) ||
+      (b.author && b.author.toLowerCase().includes(q))
+  )
+})
+
+const filteredBooklets = computed(() => {
+  const list = allBooklets.value || []
+  const q = universalSearchQuery.value.trim().toLowerCase()
+  if (!q) return list
+  return list.filter(
+    (bk) =>
+      (bk.title && bk.title.toLowerCase().includes(q)) ||
+      (bk.topic && bk.topic.toLowerCase().includes(q))
+  )
+})
 
 const selectCanvasToLink = (canvas: CanvasSummary) => {
-  isCanvasPickerOpen.value = false
+  isUniversalLinkModalOpen.value = false
   const title = canvas.title || 'Quadro'
-  const linkText = `\n\n[🎨 ${title}](canvas:${canvas.id})\n`
-  localNote.value.content = (localNote.value.content || '') + linkText
-  onInput()
-  showToast(`Link para o quadro "${title}" adicionado à nota!`)
+  insertMarkdownLink(`🎨 ${title}`, 'canvas', canvas.id)
+  showToast(`Link para o quadro "${title}" vinculado!`)
+}
+
+const selectNoteToLink = (noteItem: any) => {
+  isUniversalLinkModalOpen.value = false
+  const title = noteItem.title || 'Nota'
+  insertMarkdownLink(`📝 ${title}`, 'note', noteItem.id)
+  showToast(`Link para a nota "${title}" vinculado!`)
+}
+
+const selectBookToLink = (bookItem: LocalBook) => {
+  isUniversalLinkModalOpen.value = false
+  const title = bookItem.title || 'Livro'
+  insertMarkdownLink(`📖 ${title}`, 'book', bookItem.id)
+  showToast(`Link para o livro "${title}" vinculado!`)
+}
+
+const selectBookletToLink = (bookletItem: any) => {
+  isUniversalLinkModalOpen.value = false
+  const title = bookletItem.title || 'Livreto'
+  const targetId = bookletItem.book?.id || bookletItem.id
+  insertMarkdownLink(`📚 ${title}`, 'booklet', targetId)
+  showToast(`Link para o livreto "${title}" vinculado!`)
 }
 
 const createNewCanvasAndLink = async () => {
@@ -571,10 +1016,8 @@ const createNewCanvasAndLink = async () => {
       document: { nodes: [], edges: [], viewport: { x: 0, y: 0, zoom: 1 } },
     })
 
-    isCanvasPickerOpen.value = false
-    const linkText = `\n\n[🎨 ${title}](canvas:${newId})\n`
-    localNote.value.content = (localNote.value.content || '') + linkText
-    onInput()
+    isUniversalLinkModalOpen.value = false
+    insertMarkdownLink(`🎨 ${title}`, 'canvas', newId)
     showToast(`Quadro "${title}" criado e vinculado com sucesso!`)
   } catch (err) {
     console.error('Erro ao criar novo quadro:', err)
@@ -584,6 +1027,7 @@ const createNewCanvasAndLink = async () => {
   }
 }
 
+// Navegação de cliques em links de quadros, notas, livros ou livretos
 const handleEditorClick = (event: MouseEvent) => {
   if (event.ctrlKey || event.metaKey) return
 
@@ -592,6 +1036,8 @@ const handleEditorClick = (event: MouseEvent) => {
   if (!anchor) return
 
   const href = anchor.getAttribute('href') || ''
+
+  // 1. Quadro (Canvas)
   let canvasId = ''
   if (href.startsWith('canvas:')) {
     canvasId = href.replace(/^canvas:/, '')
@@ -602,11 +1048,40 @@ const handleEditorClick = (event: MouseEvent) => {
 
   if (canvasId) {
     event.preventDefault()
-    if (typeof navigateTo === 'function') {
-      navigateTo(`/canvas/${canvasId}`)
-    } else if (typeof window !== 'undefined') {
-      window.location.href = `/canvas/${canvasId}`
-    }
+    navigateUrl(`/canvas/${canvasId}`)
+    return
+  }
+
+  // 2. Nota
+  if (href.startsWith('note:')) {
+    event.preventDefault()
+    const noteId = href.replace(/^note:/, '')
+    navigateUrl(`/notes?id=${noteId}`)
+    return
+  }
+
+  // 3. Livro
+  if (href.startsWith('book:')) {
+    event.preventDefault()
+    const bookId = href.replace(/^book:/, '')
+    navigateUrl(`/reader?bookId=${bookId}`)
+    return
+  }
+
+  // 4. Livreto Didático
+  if (href.startsWith('booklet:')) {
+    event.preventDefault()
+    const bookletId = href.replace(/^booklet:/, '')
+    navigateUrl(`/reader?bookId=${bookletId}`)
+    return
+  }
+}
+
+function navigateUrl(url: string) {
+  if (typeof navigateTo === 'function') {
+    navigateTo(url)
+  } else if (typeof window !== 'undefined') {
+    window.location.href = url
   }
 }
 

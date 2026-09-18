@@ -1,8 +1,18 @@
-import { describe, it, expect } from 'vitest';
-import { mount } from '@vue/test-utils';
+import { describe, it, expect, vi } from 'vitest';
+import { mount, flushPromises } from '@vue/test-utils';
 import NoteEditorPane from '~/components/notes/NoteEditorPane.vue';
 import MilkdownEditor from '~/components/MilkdownEditor.vue';
+import { noteRepo } from '~/adapters/database/repositories/NoteRepository';
+import { bookRepo } from '~/adapters/database/repositories/BookRepository';
 import type { NoteItem } from '~/interfaces/note';
+
+vi.mock('~/composables/useDidacticBooklet', () => ({
+  useDidacticBooklet: () => ({
+    fetchBooklets: vi.fn().mockResolvedValue([
+      { id: 'bk-1', title: 'Livreto de Algoritmos', topic: 'Grafos', book: { id: 99 } }
+    ])
+  })
+}));
 
 describe('NoteEditorPane Component', () => {
   const sampleNote: NoteItem = {
@@ -15,7 +25,7 @@ describe('NoteEditorPane Component', () => {
     updatedAt: '2026-09-04T10:00:00Z',
   };
 
-  it('renders note title, folder and tags correctly', () => {
+  it('renders note title, folder and tags correctly in unified toolbar', async () => {
     const wrapper = mount(NoteEditorPane, {
       props: {
         note: sampleNote,
@@ -34,6 +44,12 @@ describe('NoteEditorPane Component', () => {
 
     const titleInput = wrapper.find('input[type="text"]');
     expect((titleInput.element as HTMLInputElement).value).toBe('Nota de Teste');
+
+    // Abre popover de tags
+    const tagsBtn = wrapper.find('[data-testid="btn-toggle-tags"]');
+    expect(tagsBtn.exists()).toBe(true);
+    await tagsBtn.trigger('click');
+
     expect(wrapper.text()).toContain('#teste');
     expect(wrapper.text()).toContain('#dev');
   });
@@ -161,7 +177,7 @@ describe('NoteEditorPane Component', () => {
     });
 
     // Dispara seleção via mouseup na área do editor
-    await wrapper.find('.flex-1.p-4').trigger('mouseup');
+    await wrapper.find('[data-testid="editor-wrapper"]').trigger('mouseup');
 
     // Barra de ferramentas deve aparecer
     const toolbar = wrapper.find('[data-testid="note-selection-toolbar"]');
@@ -208,7 +224,7 @@ describe('NoteEditorPane Component', () => {
       },
     });
 
-    await wrapper.find('.flex-1.p-4').trigger('mouseup');
+    await wrapper.find('[data-testid="editor-wrapper"]').trigger('mouseup');
 
     const flashcardBtn = wrapper.find('[data-testid="btn-create-flashcard-from-snippet"]');
     await flashcardBtn.trigger('mousedown');
@@ -275,7 +291,7 @@ describe('NoteEditorPane Component', () => {
     expect(wrapper.find('.milkdown-stub').exists()).toBe(true);
   });
 
-  it('abre modal ao clicar em Vincular Quadro e insere link markdown amigável ao selecionar quadro existente', async () => {
+  it('abre modal universal ao clicar em Vincular e insere link markdown ao selecionar quadro existente', async () => {
     const sampleCanvases = [
       { id: 'canvas-1', title: 'Quadro Haskell', nodeCount: 5, edgeCount: 2, updatedAt: '2026-09-18' },
       { id: 'canvas-2', title: 'Quadro Algoritmos', nodeCount: 12, edgeCount: 8, updatedAt: '2026-09-18' },
@@ -299,8 +315,8 @@ describe('NoteEditorPane Component', () => {
     expect(linkBtn.exists()).toBe(true);
     await linkBtn.trigger('click');
 
-    // Modal deve estar aberto
-    expect(wrapper.text()).toContain('Vincular Quadro');
+    // Modal universal deve estar aberto
+    expect(wrapper.text()).toContain('Vincular Conteúdo');
     expect(wrapper.text()).toContain('Quadro Haskell');
     expect(wrapper.text()).toContain('Quadro Algoritmos');
 
@@ -354,5 +370,134 @@ describe('NoteEditorPane Component', () => {
     expect(updateEvents).toBeTruthy();
     const lastUpdate = (updateEvents as any)[(updateEvents as any).length - 1][0] as NoteItem;
     expect(lastUpdate.content).toContain('[🎨 Quadro de Teste Automatizado](canvas:canvas_');
+  });
+
+  it('suporta botões de formatação rica e controle de títulos na barra unificada', async () => {
+    const wrapper = mount(NoteEditorPane, {
+      props: {
+        note: sampleNote,
+        folders: ['Geral'],
+        canvases: [],
+      },
+      global: {
+        stubs: {
+          MilkdownEditor: {
+            template: '<div class="milkdown-stub" />',
+            methods: {
+              toggleBold: () => {},
+              toggleItalic: () => {},
+              setHeading: () => {},
+              setParagraph: () => {},
+            }
+          },
+          teleport: true,
+        },
+      },
+    });
+
+    const boldBtn = wrapper.find('[data-testid="btn-format-bold"]');
+    const italicBtn = wrapper.find('[data-testid="btn-format-italic"]');
+    const headingSelect = wrapper.find('[data-testid="select-heading"]');
+
+    expect(boldBtn.exists()).toBe(true);
+    expect(italicBtn.exists()).toBe(true);
+    expect(headingSelect.exists()).toBe(true);
+
+    await boldBtn.trigger('click');
+    await italicBtn.trigger('click');
+    await headingSelect.setValue('h2');
+    await headingSelect.trigger('change');
+  });
+
+  it('permite adicionar e remover tags através do popover de tags', async () => {
+    const wrapper = mount(NoteEditorPane, {
+      props: {
+        note: sampleNote,
+        folders: ['Geral'],
+        canvases: [],
+      },
+      global: {
+        stubs: {
+          MilkdownEditor: true,
+          teleport: true,
+        },
+      },
+    });
+
+    const tagsBtn = wrapper.find('[data-testid="btn-toggle-tags"]');
+    await tagsBtn.trigger('click');
+
+    const inputTag = wrapper.find('[data-testid="input-new-tag"]');
+    expect(inputTag.exists()).toBe(true);
+    await inputTag.setValue('arquitetura');
+    await inputTag.trigger('keydown.enter');
+
+    expect(wrapper.text()).toContain('#arquitetura');
+    expect(wrapper.emitted('update:note')).toBeTruthy();
+  });
+
+  it('permite alternar para abas de Nota, Livro e Livreto no modal universal e vincular', async () => {
+    vi.spyOn(noteRepo, 'getAll').mockResolvedValue([
+      { id: 'note-2', title: 'Segunda Nota', folder: 'Estudos' } as any
+    ]);
+    vi.spyOn(bookRepo, 'getAll').mockResolvedValue([
+      { id: 42, title: 'Clean Code', author: 'Robert C. Martin' } as any
+    ]);
+
+    const wrapper = mount(NoteEditorPane, {
+      props: {
+        note: sampleNote,
+        folders: ['Geral'],
+        canvases: [],
+      },
+      global: {
+        stubs: {
+          MilkdownEditor: true,
+          teleport: true,
+        },
+      },
+    });
+
+    // Abre modal
+    await wrapper.find('button[data-testid="btn-link-canvas"]').trigger('click');
+    await flushPromises();
+
+    // 1. Testa aba Nota
+    await wrapper.find('[data-testid="tab-link-note"]').trigger('click');
+    expect(wrapper.text()).toContain('Segunda Nota');
+    const noteSelectBtn = wrapper.find('[data-testid="btn-select-note"]');
+    expect(noteSelectBtn.exists()).toBe(true);
+    await noteSelectBtn.trigger('click');
+
+    let updateEvents = wrapper.emitted('update:note');
+    expect(updateEvents).toBeTruthy();
+    let lastUpdate = (updateEvents as any)[(updateEvents as any).length - 1][0] as NoteItem;
+    expect(lastUpdate.content).toContain('[📝 Segunda Nota](note:note-2)');
+
+    // 2. Reabre e testa aba Livro
+    await wrapper.find('button[data-testid="btn-link-canvas"]').trigger('click');
+    await new Promise((r) => setTimeout(r, 50));
+    await wrapper.find('[data-testid="tab-link-book"]').trigger('click');
+    expect(wrapper.text()).toContain('Clean Code');
+    const bookSelectBtn = wrapper.find('[data-testid="btn-select-book"]');
+    expect(bookSelectBtn.exists()).toBe(true);
+    await bookSelectBtn.trigger('click');
+
+    updateEvents = wrapper.emitted('update:note');
+    lastUpdate = (updateEvents as any)[(updateEvents as any).length - 1][0] as NoteItem;
+    expect(lastUpdate.content).toContain('[📖 Clean Code](book:42)');
+
+    // 3. Reabre e testa aba Livreto
+    await wrapper.find('button[data-testid="btn-link-canvas"]').trigger('click');
+    await new Promise((r) => setTimeout(r, 50));
+    await wrapper.find('[data-testid="tab-link-booklet"]').trigger('click');
+    expect(wrapper.text()).toContain('Livreto de Algoritmos');
+    const bookletSelectBtn = wrapper.find('[data-testid="btn-select-booklet"]');
+    expect(bookletSelectBtn.exists()).toBe(true);
+    await bookletSelectBtn.trigger('click');
+
+    updateEvents = wrapper.emitted('update:note');
+    lastUpdate = (updateEvents as any)[(updateEvents as any).length - 1][0] as NoteItem;
+    expect(lastUpdate.content).toContain('[📚 Livreto de Algoritmos](booklet:99)');
   });
 });
