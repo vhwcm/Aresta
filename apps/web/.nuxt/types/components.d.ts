@@ -56,7 +56,9 @@ interface _GlobalComponents {
   CanvasDrawingAiSynthesisModal: typeof import("../../app/components/canvas/drawing/DrawingAiSynthesisModal.vue")['default']
   CanvasDrawingPageCanvas: typeof import("../../app/components/canvas/drawing/DrawingPageCanvas.vue")['default']
   CanvasDrawingToolbar: typeof import("../../app/components/canvas/drawing/DrawingToolbar.vue")['default']
+  GraphAppKnowledgeGraph: typeof import("../../app/components/graph/AppKnowledgeGraph.vue")['default']
   GraphBookAnnotationsDrawer: typeof import("../../app/components/graph/BookAnnotationsDrawer.vue")['default']
+  GraphNoteDetailDrawer: typeof import("../../app/components/graph/NoteDetailDrawer.vue")['default']
   GraphThemeCanvasOverlay: typeof import("../../app/components/graph/ThemeCanvasOverlay.vue")['default']
   NotesNoteCompositeRenderer: typeof import("../../app/components/notes/NoteCompositeRenderer.vue")['default']
   NotesNoteEditorPane: typeof import("../../app/components/notes/NoteEditorPane.vue")['default']
@@ -142,7 +144,9 @@ interface _GlobalComponents {
   LazyCanvasDrawingAiSynthesisModal: LazyComponent<typeof import("../../app/components/canvas/drawing/DrawingAiSynthesisModal.vue")['default']>
   LazyCanvasDrawingPageCanvas: LazyComponent<typeof import("../../app/components/canvas/drawing/DrawingPageCanvas.vue")['default']>
   LazyCanvasDrawingToolbar: LazyComponent<typeof import("../../app/components/canvas/drawing/DrawingToolbar.vue")['default']>
+  LazyGraphAppKnowledgeGraph: LazyComponent<typeof import("../../app/components/graph/AppKnowledgeGraph.vue")['default']>
   LazyGraphBookAnnotationsDrawer: LazyComponent<typeof import("../../app/components/graph/BookAnnotationsDrawer.vue")['default']>
+  LazyGraphNoteDetailDrawer: LazyComponent<typeof import("../../app/components/graph/NoteDetailDrawer.vue")['default']>
   LazyGraphThemeCanvasOverlay: LazyComponent<typeof import("../../app/components/graph/ThemeCanvasOverlay.vue")['default']>
   LazyNotesNoteCompositeRenderer: LazyComponent<typeof import("../../app/components/notes/NoteCompositeRenderer.vue")['default']>
   LazyNotesNoteEditorPane: LazyComponent<typeof import("../../app/components/notes/NoteEditorPane.vue")['default']>

@@ -56,7 +56,9 @@ export const CanvasKnowledgeGraphView: typeof import("../app/components/canvas/K
 export const CanvasDrawingAiSynthesisModal: typeof import("../app/components/canvas/drawing/DrawingAiSynthesisModal.vue")['default']
 export const CanvasDrawingPageCanvas: typeof import("../app/components/canvas/drawing/DrawingPageCanvas.vue")['default']
 export const CanvasDrawingToolbar: typeof import("../app/components/canvas/drawing/DrawingToolbar.vue")['default']
+export const GraphAppKnowledgeGraph: typeof import("../app/components/graph/AppKnowledgeGraph.vue")['default']
 export const GraphBookAnnotationsDrawer: typeof import("../app/components/graph/BookAnnotationsDrawer.vue")['default']
+export const GraphNoteDetailDrawer: typeof import("../app/components/graph/NoteDetailDrawer.vue")['default']
 export const GraphThemeCanvasOverlay: typeof import("../app/components/graph/ThemeCanvasOverlay.vue")['default']
 export const NotesNoteCompositeRenderer: typeof import("../app/components/notes/NoteCompositeRenderer.vue")['default']
 export const NotesNoteEditorPane: typeof import("../app/components/notes/NoteEditorPane.vue")['default']
@@ -142,7 +144,9 @@ export const LazyCanvasKnowledgeGraphView: LazyComponent<typeof import("../app/c
 export const LazyCanvasDrawingAiSynthesisModal: LazyComponent<typeof import("../app/components/canvas/drawing/DrawingAiSynthesisModal.vue")['default']>
 export const LazyCanvasDrawingPageCanvas: LazyComponent<typeof import("../app/components/canvas/drawing/DrawingPageCanvas.vue")['default']>
 export const LazyCanvasDrawingToolbar: LazyComponent<typeof import("../app/components/canvas/drawing/DrawingToolbar.vue")['default']>
+export const LazyGraphAppKnowledgeGraph: LazyComponent<typeof import("../app/components/graph/AppKnowledgeGraph.vue")['default']>
 export const LazyGraphBookAnnotationsDrawer: LazyComponent<typeof import("../app/components/graph/BookAnnotationsDrawer.vue")['default']>
+export const LazyGraphNoteDetailDrawer: LazyComponent<typeof import("../app/components/graph/NoteDetailDrawer.vue")['default']>
 export const LazyGraphThemeCanvasOverlay: LazyComponent<typeof import("../app/components/graph/ThemeCanvasOverlay.vue")['default']>
 export const LazyNotesNoteCompositeRenderer: LazyComponent<typeof import("../app/components/notes/NoteCompositeRenderer.vue")['default']>
 export const LazyNotesNoteEditorPane: LazyComponent<typeof import("../app/components/notes/NoteEditorPane.vue")['default']>
