@@ -66,7 +66,7 @@ describe('ReaderScrollEngine.vue', () => {
     expect(slots[3].attributes('data-page-number')).toBe('4')
   })
 
-  it('renderiza os slots de seção para documento EPUB contínuo', () => {
+  it('renderiza os slots de seção para documento EPUB contínuo e aciona renderSectionContinuous', async () => {
     const store = useReaderStore()
     const doc = createMockEpubDocument(3)
     store.setDocument(doc, 'teste.epub')
@@ -76,6 +76,7 @@ describe('ReaderScrollEngine.vue', () => {
     expect(sections.length).toBe(3)
     expect(sections[0].attributes('data-section-index')).toBe('0')
     expect(sections[2].attributes('data-section-index')).toBe('2')
+    expect(doc.renderSectionContinuous).toHaveBeenCalled()
   })
 
   it('expõe método scrollToPage', () => {

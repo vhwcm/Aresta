@@ -1134,7 +1134,7 @@ export class EpubDocumentAdapter implements IBookDocument {
       sectionWrapper.appendChild(styleTag)
 
       const contentDiv = document.createElement('div')
-      contentDiv.className = 'epub-continuous-content'
+      contentDiv.className = 'epub-continuous-content epub-text-layer-content'
       contentDiv.innerHTML = bodyContent
       sectionWrapper.appendChild(contentDiv)
 

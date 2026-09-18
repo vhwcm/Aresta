@@ -36,7 +36,7 @@
           }"
         >
           <!-- Se a página estiver na janela de visualização -->
-          <template v-if="visiblePages.has(pageNum)">
+          <template v-if="visiblePages[pageNum]">
             <canvas
               :ref="(el) => setCanvasRef(el as HTMLCanvasElement, pageNum)"
               class="scroll-page-canvas"
@@ -82,7 +82,7 @@
           }"
         >
           <div
-            v-if="visibleSections.has(sectionIdx - 1)"
+            v-if="visibleSections[sectionIdx - 1]"
             :ref="(el) => setSectionContentRef(el as HTMLElement, sectionIdx - 1)"
             class="scroll-section-content"
             @click="handleHighlightClick"
@@ -121,7 +121,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useReaderStore } from '~/stores/readerStore'
 import { useReaderScroll } from '~/composables/reader/useReaderScroll'
 import { useAnnotations } from '~/composables/useAnnotations'
@@ -150,9 +150,9 @@ const {
   totalPages: totalPagesRef,
 })
 
-// Conjuntos de visibilidade para virtualização
-const visiblePages = ref<Set<number>>(new Set())
-const visibleSections = ref<Set<number>>(new Set())
+// Conjuntos de visibilidade para virtualização (reativos)
+const visiblePages = reactive<Record<number, boolean>>({})
+const visibleSections = reactive<Record<number, boolean>>({})
 
 // Mapas de elementos
 const slotElements = new Map<number, HTMLElement>()
@@ -203,6 +203,38 @@ const sectionCount = computed(() => {
   }
   return 0
 })
+
+// Pré-preenchimento das páginas/seções no entorno da página atual
+function prefillVisibleWindow() {
+  const curPage = store.currentPage || 1
+  if (isPdfDocument.value) {
+    const total = store.totalPages || 1
+    for (let p = Math.max(1, curPage - 2); p <= Math.min(total, curPage + 3); p++) {
+      visiblePages[p] = true
+    }
+  } else if (isEpubContinuous.value) {
+    const curSec = typeof (store.document as any)?.getSectionForPage === 'function'
+      ? (store.document as any).getSectionForPage(curPage)
+      : 0
+    const totalSec = sectionCount.value || (store.document as any)?.getSectionCount?.() || 1
+    for (let s = Math.max(0, curSec - 2); s <= Math.min(totalSec - 1, curSec + 3); s++) {
+      visibleSections[s] = true
+    }
+  }
+}
+
+// Inicializa visibilidade inicial no setup
+prefillVisibleWindow()
+
+function resetVisibility() {
+  for (const key of Object.keys(visiblePages)) {
+    delete visiblePages[Number(key)]
+  }
+  for (const key of Object.keys(visibleSections)) {
+    delete visibleSections[Number(key)]
+  }
+  prefillVisibleWindow()
+}
 
 function getPageForSection(sectionIdx: number): number {
   if (
@@ -376,37 +408,39 @@ function onKeyDown(e: KeyboardEvent) {
 
 // Inicialização de IntersectionObservers
 function initObservers() {
+  prefillVisibleWindow()
+
   if (typeof IntersectionObserver === 'undefined') {
     // Fallback: marca tudo como visível se IntersectionObserver não existir no ambiente
     if (isPdfDocument.value) {
       for (let i = 1; i <= (store.totalPages || 0); i++) {
-        visiblePages.value.add(i)
+        visiblePages[i] = true
       }
     } else if (isEpubContinuous.value) {
       for (let i = 0; i < sectionCount.value; i++) {
-        visibleSections.value.add(i)
+        visibleSections[i] = true
       }
     }
     return
   }
 
-  // Observer com margem de 600px para pré-carregar páginas
+  // Observer com margem ampla para pré-carregar páginas
   pageObserver = new IntersectionObserver(
     (entries) => {
       for (const entry of entries) {
         const pageNum = Number(entry.target.getAttribute('data-page-number'))
         if (!isNaN(pageNum)) {
           if (entry.isIntersecting) {
-            visiblePages.value.add(pageNum)
+            visiblePages[pageNum] = true
           } else {
-            visiblePages.value.delete(pageNum)
+            delete visiblePages[pageNum]
           }
         }
       }
     },
     {
       root: containerRef.value,
-      rootMargin: '600px 0px 600px 0px',
+      rootMargin: '800px 0px 800px 0px',
       threshold: 0.01,
     },
   )
@@ -418,16 +452,16 @@ function initObservers() {
         const secIdx = Number(entry.target.getAttribute('data-section-index'))
         if (!isNaN(secIdx)) {
           if (entry.isIntersecting) {
-            visibleSections.value.add(secIdx)
+            visibleSections[secIdx] = true
           } else {
-            visibleSections.value.delete(secIdx)
+            delete visibleSections[secIdx]
           }
         }
       }
     },
     {
       root: containerRef.value,
-      rootMargin: '800px 0px 800px 0px',
+      rootMargin: '1000px 0px 1000px 0px',
       threshold: 0.01,
     },
   )
@@ -450,6 +484,16 @@ function initObservers() {
       threshold: 0,
     },
   )
+
+  // Conecta os elementos já montados no DOM
+  for (const el of slotElements.values()) {
+    pageObserver.observe(el)
+    baselineObserver.observe(el)
+  }
+  for (const el of sectionSlotElements.values()) {
+    sectionObserver.observe(el)
+    baselineObserver.observe(el)
+  }
 }
 
 function cleanupObservers() {
@@ -480,8 +524,7 @@ watch(
 watch(
   () => store.document,
   async () => {
-    visiblePages.value.clear()
-    visibleSections.value.clear()
+    resetVisibility()
     await nextTick()
     if (store.currentPage && store.currentPage > 1) {
       scrollToPage(store.currentPage, 'auto')
