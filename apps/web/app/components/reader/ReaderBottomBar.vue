@@ -58,7 +58,7 @@
       :class="store.readerTheme === 'sepia' ? 'bg-[#dfd5c0]' : (store.readerTheme === 'white' ? 'bg-gray-200' : 'bg-divider/60')"
     ></div>
 
-    <!-- Grupo 2: Ação de Anotação, Configurações de Leitura & Modos (Mobile: Centro | Tablet/Desktop: Centro) -->
+    <!-- Grupo 2: Ação de Anotação & Configurações de Leitura (Mobile: Centro | Tablet/Desktop: Centro) -->
     <div class="flex flex-row md:flex-col items-center gap-1.5 sm:gap-2 md:gap-2.5">
       <!-- Botão Anotar (Desativado no Modo Foco) -->
       <button
@@ -71,25 +71,7 @@
         <HighlighterIcon class="w-4 h-4 group-hover:scale-110 transition-transform" />
       </button>
 
-      <!-- Botão Modo de Foco (Leitura por X Linhas) -->
-      <button
-        @click="store.toggleFocusMode()"
-        class="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-xl border transition-all active:scale-95 group relative"
-        :class="store.isFocusMode
-          ? 'bg-accent text-white border-accent shadow-md'
-          : (store.readerTheme === 'sepia'
-            ? 'bg-[#f5eedc] border-[#dfd5c0] text-[#5c4d3c] hover:text-[#2a2521] hover:bg-[#EBE2CE]'
-            : (store.readerTheme === 'white'
-              ? 'bg-gray-100 border-gray-200 text-gray-700 hover:text-black hover:bg-gray-200'
-              : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary hover:bg-white/10'))"
-        :title="store.isFocusMode ? 'Modo de Foco ativado (Clique para desativar)' : 'Ativar Modo de Foco (Leitura por X linhas)'"
-        aria-label="Modo de Foco"
-        id="btn-focus-mode"
-      >
-        <FocusIcon class="w-4 h-4 group-hover:scale-110 transition-transform" :class="{ 'animate-pulse': store.isFocusMode }" />
-      </button>
-
-      <!-- Botão Aparência & Configurações de Leitura (Fundo, Tipografia, Folhas e Largura) -->
+      <!-- Botão Configurações de Leitura (Fundo, Modo, Tipografia, Folhas, Largura e Foco) -->
       <div class="relative" ref="appearanceWrapperRef">
         <button
           @click="isAppearancePopoverOpen = !isAppearancePopoverOpen"
@@ -101,13 +83,13 @@
               : (store.readerTheme === 'white'
                 ? 'bg-gray-100 border-gray-200 text-gray-700 hover:text-black hover:bg-gray-200'
                 : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary hover:bg-white/10'))"
-          title="Aparência e configurações de leitura (Tema, tipografia, páginas e layout)"
-          aria-label="Aparência de leitura"
+          title="Configurações de leitura (Fundo, modo, fonte, folhas e foco)"
+          aria-label="Configurações de leitura"
           id="btn-appearance-toggle"
         >
-          <!-- Ícone com indicador de cor do tema -->
+          <!-- Ícone de configuração com indicador de cor do tema -->
           <div class="relative flex items-center justify-center">
-            <PaletteIcon class="w-4 h-4 group-hover:scale-110 transition-transform" />
+            <SettingsIcon class="w-4 h-4 group-hover:rotate-45 transition-transform duration-300" />
             <span
               class="absolute -bottom-1 -right-1 w-2 h-2 rounded-full border border-black/40 shadow-xs"
               :class="{
@@ -119,10 +101,10 @@
           </div>
         </button>
 
-        <!-- Popover Flutuante de Aparência & Configurações de Leitura (Mobile: Centralizado acima da barra | Desktop: Abre para a direita) -->
+        <!-- Popover Flutuante de Configurações de Leitura (Mobile: Centralizado acima da barra | Desktop: Abre para a direita) -->
         <div
           v-if="isAppearancePopoverOpen"
-          class="fixed bottom-16 left-1/2 -translate-x-1/2 w-[92vw] max-w-[320px] md:absolute md:left-full md:top-1/2 md:translate-x-0 md:-translate-y-1/2 md:bottom-auto md:w-72 border rounded-2xl p-4 shadow-2xl z-50 flex flex-col gap-3.5 animate-fadeIn"
+          class="fixed bottom-16 left-1/2 -translate-x-1/2 w-[92vw] max-w-[320px] md:absolute md:left-full md:top-1/2 md:translate-x-0 md:-translate-y-1/2 md:bottom-auto md:w-72 border rounded-2xl p-4 shadow-2xl z-50 flex flex-col gap-3.5 animate-fadeIn max-h-[85vh] overflow-y-auto"
           :class="{
             'bg-[#f5eedc] border-[#dfd5c0] text-[#2a2521]': store.readerTheme === 'sepia',
             'bg-white border-gray-200 text-gray-900': store.readerTheme === 'white',
@@ -131,7 +113,7 @@
           role="dialog"
           aria-label="Controle de aparência e fundo de leitura"
         >
-          <!-- Seção de Fundo / Tema de Leitura -->
+          <!-- Seção 1: Fundo / Tema de Leitura -->
           <div class="flex flex-col gap-2">
             <span
               class="text-[11px] font-technical uppercase tracking-wider font-semibold"
@@ -198,7 +180,7 @@
             </div>
           </div>
 
-          <!-- Seção de Modo de Leitura (Páginas vs Scroll Contínuo) -->
+          <!-- Seção 2: Modo de Leitura (Páginas vs Scroll Contínuo) -->
           <div
             class="flex flex-col gap-2 pt-2 border-t"
             :class="store.readerTheme === 'sepia' ? 'border-[#dfd5c0]' : (store.readerTheme === 'white' ? 'border-gray-200' : 'border-white/10')"
@@ -248,7 +230,7 @@
             </div>
           </div>
 
-          <!-- Seção de Diagramação e Largura de Leitura -->
+          <!-- Seção 3: Distribuição e Largura de Leitura -->
           <div
             class="flex flex-col gap-2 pt-2 border-t"
             :class="store.readerTheme === 'sepia' ? 'border-[#dfd5c0]' : (store.readerTheme === 'white' ? 'border-gray-200' : 'border-white/10')"
@@ -272,6 +254,7 @@
                       ? 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200 hover:text-gray-900'
                       : 'bg-white/5 border-white/10 text-textSecondary hover:text-textPrimary hover:bg-white/10'))"
                 title="Exibir 1 folha (página única)"
+                id="btn-set-one-page"
               >
                 <FileTextIcon class="w-3.5 h-3.5" />
                 <span>1 Folha</span>
@@ -288,6 +271,7 @@
                       ? 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200 hover:text-gray-900'
                       : 'bg-white/5 border-white/10 text-textSecondary hover:text-textPrimary hover:bg-white/10'))"
                 title="Exibir 2 folhas lado a lado"
+                id="btn-set-two-page"
               >
                 <BookOpenIcon class="w-3.5 h-3.5" />
                 <span>2 Folhas</span>
@@ -307,6 +291,7 @@
                       ? 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200 hover:text-gray-900'
                       : 'bg-white/5 border-white/10 text-textSecondary hover:text-textPrimary hover:bg-white/10'))"
                 title="Página centralizada no meio com margens clássicas"
+                id="btn-width-centered"
               >
                 <Minimize2Icon class="w-3.5 h-3.5" />
                 <span>Centralizado</span>
@@ -323,6 +308,7 @@
                       ? 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200 hover:text-gray-900'
                       : 'bg-white/5 border-white/10 text-textSecondary hover:text-textPrimary hover:bg-white/10'))"
                 title="Páginas ocupam quase 100% do espaço de leitura"
+                id="btn-width-wide"
               >
                 <Maximize2Icon class="w-3.5 h-3.5" />
                 <span>100% Largo</span>
@@ -330,7 +316,83 @@
             </div>
           </div>
 
-          <!-- Seção de Leitura Focalizada (Modo Foco) -->
+          <!-- Seção 4: Tamanho da Fonte -->
+          <div
+            class="flex flex-col gap-2 pt-2 border-t"
+            :class="store.readerTheme === 'sepia' ? 'border-[#dfd5c0]' : (store.readerTheme === 'white' ? 'border-gray-200' : 'border-white/10')"
+          >
+            <div class="flex items-center justify-between">
+              <span
+                class="text-[11px] font-technical uppercase tracking-wider font-semibold"
+                :class="store.readerTheme === 'sepia' ? 'text-[#786C5E]' : (store.readerTheme === 'white' ? 'text-gray-500' : 'text-textSecondary')"
+              >
+                Tamanho da Fonte
+              </span>
+              <span
+                class="text-[11px] font-technical font-semibold font-mono"
+                :class="store.readerTheme === 'sepia' ? 'text-[#5c4d3c]' : (store.readerTheme === 'white' ? 'text-gray-700' : 'text-textSecondary')"
+              >
+                {{ store.fontSize || 18 }}px
+              </span>
+            </div>
+            <div class="flex items-center justify-between gap-1.5">
+              <!-- Botão Diminuir -->
+              <button
+                @click="store.decreaseFontSize(2)"
+                :disabled="(store.fontSize || 18) <= 12"
+                class="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-xl border text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                :class="store.readerTheme === 'sepia'
+                  ? 'bg-[#f0e7d3] border-[#dfd5c0] text-[#5c4d3c] hover:bg-[#ebe0c8]'
+                  : (store.readerTheme === 'white'
+                    ? 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200'
+                    : 'bg-white/5 border-white/10 text-textSecondary hover:text-white hover:bg-white/10')"
+                title="Diminuir tamanho da fonte"
+                aria-label="Diminuir tamanho da fonte"
+                id="btn-decrease-font-size"
+              >
+                <MinusIcon class="w-3.5 h-3.5" />
+                <span class="text-[11px]">A-</span>
+              </button>
+
+              <!-- Reset / Tamanho padrão -->
+              <button
+                @click="store.resetFontSize()"
+                class="px-2.5 py-1.5 rounded-xl border text-xs font-technical font-bold transition-all"
+                :class="(store.fontSize || 18) === 18
+                  ? 'bg-accent/20 border-accent text-accent'
+                  : (store.readerTheme === 'sepia'
+                    ? 'bg-[#f0e7d3] border-[#dfd5c0] text-[#5c4d3c] hover:bg-[#ebe0c8]'
+                    : (store.readerTheme === 'white'
+                      ? 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200'
+                      : 'bg-white/5 border-white/10 text-textSecondary hover:text-white hover:bg-white/10'))"
+                title="Restaurar tamanho padrão (18px)"
+                aria-label="Restaurar tamanho padrão"
+                id="btn-reset-font-size"
+              >
+                18px
+              </button>
+
+              <!-- Botão Aumentar -->
+              <button
+                @click="store.increaseFontSize(2)"
+                :disabled="(store.fontSize || 18) >= 36"
+                class="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-xl border text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                :class="store.readerTheme === 'sepia'
+                  ? 'bg-[#f0e7d3] border-[#dfd5c0] text-[#5c4d3c] hover:bg-[#ebe0c8]'
+                  : (store.readerTheme === 'white'
+                    ? 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200'
+                    : 'bg-white/5 border-white/10 text-textSecondary hover:text-white hover:bg-white/10')"
+                title="Aumentar tamanho da fonte"
+                aria-label="Aumentar tamanho da fonte"
+                id="btn-increase-font-size"
+              >
+                <PlusIcon class="w-3.5 h-3.5" />
+                <span class="text-[11px]">A+</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Seção 5: Leitura Focalizada (Modo Foco) -->
           <div
             class="flex flex-col gap-2 pt-2 border-t"
             :class="store.readerTheme === 'sepia' ? 'border-[#dfd5c0]' : (store.readerTheme === 'white' ? 'border-gray-200' : 'border-white/10')"
@@ -348,6 +410,7 @@
                 :class="store.isFocusMode
                   ? 'bg-accent text-white border-accent'
                   : (store.readerTheme === 'sepia' ? 'bg-[#f0e7d3] border-[#dfd5c0] text-[#5c4d3c]' : 'bg-white/5 border-white/10 text-textSecondary')"
+                id="btn-toggle-focus-inside-popover"
               >
                 {{ store.isFocusMode ? 'Ativo' : 'Inativo' }}
               </button>
@@ -375,72 +438,6 @@
           </div>
         </div>
       </div>
-
-      <!-- Botão Alternar Modo de Leitura: Páginas vs Scroll Contínuo (Desktop/Tablet) -->
-      <button
-        @click="store.toggleReadingMode()"
-        class="hidden md:flex flex-col items-center justify-center md:w-11 md:h-11 rounded-xl border text-xs font-semibold transition-all active:scale-95 group"
-        :class="store.isScrollMode
-          ? 'bg-accent/15 border-accent text-accent shadow-sm'
-          : (store.readerTheme === 'sepia'
-            ? 'bg-[#f5eedc] border-[#dfd5c0] text-[#5c4d3c] hover:text-[#2a2521] hover:bg-[#EBE2CE]'
-            : (store.readerTheme === 'white'
-              ? 'bg-gray-100 border-gray-200 text-gray-700 hover:text-black hover:bg-gray-200'
-              : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary hover:bg-white/10'))"
-        :title="store.isScrollMode ? 'Modo Scroll ativo (Clique para modo Páginas)' : 'Modo Páginas ativo (Clique para modo Scroll)'"
-        aria-label="Alternar modo de leitura"
-        id="btn-toggle-reading-mode"
-      >
-        <ScrollTextIcon v-if="store.isScrollMode" class="w-4 h-4 text-accent" />
-        <BookOpenIcon v-else class="w-4 h-4 text-textSecondary group-hover:text-textPrimary" />
-        <span class="text-[8px] font-technical font-medium leading-none mt-0.5">
-          {{ store.isScrollMode ? 'Scroll' : 'Páginas' }}
-        </span>
-      </button>
-
-      <!-- Botão Alternar 1 Folha / 2 Folhas (Desktop/Tablet) - Apenas quando em modo Páginas -->
-      <button
-        v-if="store.readingMode !== 'scroll' && store.totalPages > 1"
-        @click="store.toggleTwoPageMode()"
-        class="hidden md:flex flex-col items-center justify-center md:w-11 md:h-11 rounded-xl border text-xs font-semibold transition-all active:scale-95 group"
-        :class="store.isTwoPageMode
-          ? 'bg-accent/15 border-accent text-accent shadow-sm'
-          : (store.readerTheme === 'sepia'
-            ? 'bg-[#f5eedc] border-[#dfd5c0] text-[#5c4d3c] hover:text-[#2a2521] hover:bg-[#EBE2CE]'
-            : (store.readerTheme === 'white'
-              ? 'bg-gray-100 border-gray-200 text-gray-700 hover:text-black hover:bg-gray-200'
-              : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary hover:bg-white/10'))"
-        :title="store.isTwoPageMode ? 'Modo 2 Folhas ativo (Clique para 1 Folha)' : 'Modo 1 Folha ativo (Clique para 2 Folhas)'"
-        aria-label="Alternar modo de páginas"
-        id="btn-toggle-two-page"
-      >
-        <BookOpenIcon v-if="store.isTwoPageMode" class="w-4 h-4 text-accent" />
-        <FileTextIcon v-else class="w-4 h-4 text-textSecondary group-hover:text-textPrimary" />
-        <span class="text-[8px] font-technical font-medium leading-none mt-0.5">
-          {{ store.isTwoPageMode ? '2 Folhas' : '1 Folha' }}
-        </span>
-      </button>
-
-      <!-- Botão Alternar Largura: Centralizado vs 100% Largo (Desktop/Tablet) -->
-      <button
-        @click="store.toggleReaderWidthMode()"
-        class="hidden md:flex items-center justify-center md:w-11 md:h-11 rounded-xl border text-xs font-semibold transition-all active:scale-95 group"
-        :class="store.readerWidthMode === 'wide'
-          ? 'bg-accent/20 border-accent text-accent shadow-sm'
-          : (store.readerTheme === 'sepia'
-            ? 'bg-[#f5eedc] border-[#dfd5c0] text-[#786C5E] hover:text-[#2a2521] hover:bg-[#EBE2CE]'
-            : (store.readerTheme === 'white'
-              ? 'bg-gray-100 border-gray-200 text-gray-400 hover:text-gray-700 hover:bg-gray-200'
-              : 'bg-white/5 border-divider text-textSecondary/60 hover:text-textPrimary hover:bg-white/10'))"
-        :title="store.readerWidthMode === 'wide' ? 'Modo 100% Largo ativo (Clique para desativar)' : 'Modo 100% Largo inativo (Clique para ativar)'"
-        aria-label="Alternar largura de leitura"
-        id="btn-toggle-width-mode"
-      >
-        <Maximize2Icon
-          class="w-4 h-4 transition-transform group-hover:scale-110"
-          :class="store.readerWidthMode === 'wide' ? 'text-accent' : 'opacity-70 group-hover:opacity-100'"
-        />
-      </button>
     </div>
 
     <!-- Divisor sutil em telas tablet/desktop -->
@@ -585,8 +582,10 @@ import {
   HighlighterIcon,
   Maximize2Icon,
   Minimize2Icon,
-  PaletteIcon,
+  MinusIcon,
+  PlusIcon,
   ScrollTextIcon,
+  SettingsIcon,
 } from 'lucide-vue-next'
 import { useReaderStore } from '~/stores/readerStore'
 

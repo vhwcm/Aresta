@@ -115,7 +115,7 @@ describe('Reader Components', () => {
       expect(wrapper.emitted('toggleNotes')).toBeTruthy()
     })
 
-    it('alterna modo de 1 página e 2 páginas ao clicar no botão de layout', async () => {
+    it('alterna modo de 1 página e 2 páginas no popover de configurações', async () => {
       const store = useReaderStore()
       store.setDocument({
         type: 'pdf',
@@ -132,17 +132,22 @@ describe('Reader Components', () => {
         props: { isGraphActive: false },
       })
 
-      const togglePageBtn = wrapper.find('button[aria-label="Alternar modo de páginas"]')
-      expect(togglePageBtn.exists()).toBe(true)
+      const appearanceBtn = wrapper.find('#btn-appearance-toggle')
+      expect(appearanceBtn.exists()).toBe(true)
+      await appearanceBtn.trigger('click')
 
-      await togglePageBtn.trigger('click')
+      const setTwoPageBtn = wrapper.find('#btn-set-two-page')
+      expect(setTwoPageBtn.exists()).toBe(true)
+      await setTwoPageBtn.trigger('click')
       expect(store.isTwoPageMode).toBe(true)
 
-      await togglePageBtn.trigger('click')
+      const setOnePageBtn = wrapper.find('#btn-set-one-page')
+      expect(setOnePageBtn.exists()).toBe(true)
+      await setOnePageBtn.trigger('click')
       expect(store.isTwoPageMode).toBe(false)
     })
 
-    it('não exibe opções de alterar tamanho de fonte ou tipografia no leitor para respeitar o estilo original do EPUB', async () => {
+    it('permite alterar tamanho de fonte, modo de leitura, largura e modo foco no popover de configurações', async () => {
       const store = useReaderStore()
       store.setDocument({
         type: 'epub',
@@ -159,19 +164,54 @@ describe('Reader Components', () => {
         props: { isGraphActive: false },
       })
 
-      const fontBtn = wrapper.find('#btn-appearance-toggle')
-      expect(fontBtn.exists()).toBe(true)
+      const settingsBtn = wrapper.find('#btn-appearance-toggle')
+      expect(settingsBtn.exists()).toBe(true)
 
-      // Abre o popover de aparência
-      await fontBtn.trigger('click')
+      // Abre o popover de configurações
+      await settingsBtn.trigger('click')
       expect(wrapper.find('[aria-label="Controle de aparência e fundo de leitura"]').exists()).toBe(true)
 
-      // Garante que não existem botões de alteração de tamanho de fonte nem botão de mais fontes
-      expect(wrapper.find('button[aria-label="Aumentar tamanho da fonte"]').exists()).toBe(false)
-      expect(wrapper.find('button[aria-label="Diminuir tamanho da fonte"]').exists()).toBe(false)
-      expect(wrapper.find('#btn-quick-font-increase').exists()).toBe(false)
-      expect(wrapper.find('#btn-quick-font-decrease').exists()).toBe(false)
-      expect(wrapper.text()).not.toContain('Mais Fontes & Tipografia')
+      // Testa aumento e diminuição do tamanho da fonte
+      const initialFontSize = store.fontSize || 18
+      const increaseFontBtn = wrapper.find('#btn-increase-font-size')
+      expect(increaseFontBtn.exists()).toBe(true)
+      await increaseFontBtn.trigger('click')
+      expect(store.fontSize).toBe(initialFontSize + 2)
+
+      const decreaseFontBtn = wrapper.find('#btn-decrease-font-size')
+      expect(decreaseFontBtn.exists()).toBe(true)
+      await decreaseFontBtn.trigger('click')
+      expect(store.fontSize).toBe(initialFontSize)
+
+      // Testa alternância de Scroll vs Páginas
+      const scrollModeBtn = wrapper.find('#btn-mode-scroll')
+      expect(scrollModeBtn.exists()).toBe(true)
+      await scrollModeBtn.trigger('click')
+      expect(store.readingMode).toBe('scroll')
+
+      const paginatedModeBtn = wrapper.find('#btn-mode-paginated')
+      expect(paginatedModeBtn.exists()).toBe(true)
+      await paginatedModeBtn.trigger('click')
+      expect(store.readingMode).toBe('paginated')
+
+      // Testa alternância de largura Centralizado vs 100% Largo
+      const widthWideBtn = wrapper.find('#btn-width-wide')
+      expect(widthWideBtn.exists()).toBe(true)
+      await widthWideBtn.trigger('click')
+      expect(store.readerWidthMode).toBe('wide')
+
+      const widthCenteredBtn = wrapper.find('#btn-width-centered')
+      expect(widthCenteredBtn.exists()).toBe(true)
+      await widthCenteredBtn.trigger('click')
+      expect(store.readerWidthMode).toBe('centered')
+
+      // Testa Modo Foco dentro do popover
+      const toggleFocusBtn = wrapper.find('#btn-toggle-focus-inside-popover')
+      expect(toggleFocusBtn.exists()).toBe(true)
+      await toggleFocusBtn.trigger('click')
+      expect(store.isFocusMode).toBe(true)
+      await toggleFocusBtn.trigger('click')
+      expect(store.isFocusMode).toBe(false)
     })
 
     it('possui tema amarelado (sepia) por padrão e permite alternar entre Branco, Amarelado e Preto', async () => {
