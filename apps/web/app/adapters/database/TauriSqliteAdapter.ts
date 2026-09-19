@@ -10,7 +10,8 @@ import type {
   LocalNote,
   LocalDrawingNote,
   LocalUserSettings,
-  LocalDidacticBooklet
+  LocalDidacticBooklet,
+  LocalLinkItem
 } from './types';
 
 export class TauriSqliteAdapter implements IDatabaseAdapter {
@@ -161,6 +162,24 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
         depth_level TEXT DEFAULT 'standard',
         book_id INTEGER,
         theme_id INTEGER,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        deleted_at TEXT,
+        sync_status TEXT DEFAULT 'pending'
+      );
+    `);
+
+    await this.db.execute(`
+      CREATE TABLE IF NOT EXISTS links (
+        id TEXT PRIMARY KEY,
+        url TEXT NOT NULL,
+        title TEXT NOT NULL,
+        domain TEXT,
+        favicon TEXT,
+        folder TEXT,
+        tags_json TEXT,
+        source_note_id TEXT,
+        source_canvas_id TEXT,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
         deleted_at TEXT,
@@ -812,7 +831,11 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
     await this.db!.execute('DELETE FROM canvases');
     await this.db!.execute('DELETE FROM streaks');
     await this.db!.execute('DELETE FROM mutation_queue');
+    await this.db!.execute('DELETE FROM notes');
+    await this.db!.execute('DELETE FROM drawing_notes');
+    await this.db!.execute('DELETE FROM user_settings');
     await this.db!.execute('DELETE FROM didactic_booklets');
+    await this.db!.execute('DELETE FROM links');
   }
 
   // Didactic Booklets
@@ -930,6 +953,117 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
     const now = new Date().toISOString();
     await this.db!.execute(
       `UPDATE didactic_booklets SET deleted_at = ?, updated_at = ?, sync_status = 'pending' WHERE id = ?`,
+      [now, now, id]
+    );
+  }
+
+  // Links
+  async getLinks(): Promise<LocalLinkItem[]> {
+    await this.init();
+    const rows = await this.db!.select<any[]>('SELECT * FROM links WHERE deleted_at IS NULL ORDER BY updated_at DESC');
+    return rows.map((r) => ({
+      id: r.id,
+      url: r.url,
+      title: r.title,
+      domain: r.domain,
+      favicon: r.favicon,
+      folder: r.folder,
+      tags: r.tags_json ? JSON.parse(r.tags_json) : [],
+      sourceNoteId: r.source_note_id,
+      sourceCanvasId: r.source_canvas_id,
+      createdAt: r.created_at,
+      created_at: r.created_at,
+      updated_at: r.updated_at,
+      deleted_at: r.deleted_at,
+      sync_status: r.sync_status,
+    }));
+  }
+
+  async getLinksRaw(): Promise<LocalLinkItem[]> {
+    await this.init();
+    const rows = await this.db!.select<any[]>('SELECT * FROM links');
+    return rows.map((r) => ({
+      id: r.id,
+      url: r.url,
+      title: r.title,
+      domain: r.domain,
+      favicon: r.favicon,
+      folder: r.folder,
+      tags: r.tags_json ? JSON.parse(r.tags_json) : [],
+      sourceNoteId: r.source_note_id,
+      sourceCanvasId: r.source_canvas_id,
+      createdAt: r.created_at,
+      created_at: r.created_at,
+      updated_at: r.updated_at,
+      deleted_at: r.deleted_at,
+      sync_status: r.sync_status,
+    }));
+  }
+
+  async getLinkById(id: string): Promise<LocalLinkItem | null> {
+    await this.init();
+    const rows = await this.db!.select<any[]>('SELECT * FROM links WHERE id = ? AND deleted_at IS NULL', [id]);
+    if (rows.length === 0) return null;
+    const r = rows[0];
+    return {
+      id: r.id,
+      url: r.url,
+      title: r.title,
+      domain: r.domain,
+      favicon: r.favicon,
+      folder: r.folder,
+      tags: r.tags_json ? JSON.parse(r.tags_json) : [],
+      sourceNoteId: r.source_note_id,
+      sourceCanvasId: r.source_canvas_id,
+      createdAt: r.created_at,
+      created_at: r.created_at,
+      updated_at: r.updated_at,
+      deleted_at: r.deleted_at,
+      sync_status: r.sync_status,
+    };
+  }
+
+  async saveLink(link: LocalLinkItem): Promise<void> {
+    await this.init();
+    await this.db!.execute(
+      `INSERT INTO links
+         (id, url, title, domain, favicon, folder, tags_json, source_note_id, source_canvas_id, created_at, updated_at, deleted_at, sync_status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(id) DO UPDATE SET
+         url = excluded.url,
+         title = excluded.title,
+         domain = excluded.domain,
+         favicon = excluded.favicon,
+         folder = excluded.folder,
+         tags_json = excluded.tags_json,
+         source_note_id = excluded.source_note_id,
+         source_canvas_id = excluded.source_canvas_id,
+         updated_at = excluded.updated_at,
+         deleted_at = excluded.deleted_at,
+         sync_status = excluded.sync_status`,
+      [
+        link.id,
+        link.url,
+        link.title,
+        link.domain ?? null,
+        link.favicon ?? null,
+        link.folder ?? null,
+        JSON.stringify(link.tags || []),
+        link.sourceNoteId ?? null,
+        link.sourceCanvasId ?? null,
+        link.createdAt || link.created_at || new Date().toISOString(),
+        link.updated_at || new Date().toISOString(),
+        link.deleted_at ?? null,
+        link.sync_status,
+      ]
+    );
+  }
+
+  async deleteLink(id: string): Promise<void> {
+    await this.init();
+    const now = new Date().toISOString();
+    await this.db!.execute(
+      `UPDATE links SET deleted_at = ?, updated_at = ?, sync_status = 'pending' WHERE id = ?`,
       [now, now, id]
     );
   }

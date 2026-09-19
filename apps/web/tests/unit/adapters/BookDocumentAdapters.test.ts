@@ -243,7 +243,7 @@ describe('Book Document Adapters and Factory', () => {
       })
 
       const buffer = new ArrayBuffer(16)
-      await adapter.load(buffer, 'fonte.epub')
+      await adapter.load(buffer, 'fonte.epub', 18)
 
       expect(adapter.fontSize).toBe(18)
       const initialPages = adapter.totalPages

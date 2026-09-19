@@ -10,7 +10,8 @@ import type {
   LocalNote,
   LocalDrawingNote,
   LocalUserSettings,
-  LocalDidacticBooklet
+  LocalDidacticBooklet,
+  LocalLinkItem
 } from './types';
 
 class ArestaDexieDB extends Dexie {
@@ -24,6 +25,7 @@ class ArestaDexieDB extends Dexie {
   drawing_notes!: Table<LocalDrawingNote, string>;
   user_settings!: Table<LocalUserSettings, string>;
   didactic_booklets!: Table<LocalDidacticBooklet, string>;
+  links!: Table<LocalLinkItem, string>;
 
   constructor() {
     super('aresta_local_db');
@@ -57,6 +59,19 @@ class ArestaDexieDB extends Dexie {
       drawing_notes: 'id, updated_at, deleted_at, folder',
       user_settings: 'id, updated_at',
       didactic_booklets: 'id, bookId, themeId, createdAt, updated_at, deleted_at'
+    });
+    this.version(4).stores({
+      books: 'id, bookId, status, updated_at, deleted_at',
+      annotations: 'id, bookId, cfi, createdAt, updated_at, deleted_at',
+      flashcards: 'id, bookId, annotationId, nextReviewAt, repetitionLevel, updated_at, deleted_at',
+      canvases: 'id, name, updated_at, deleted_at',
+      streaks: 'id, updated_at',
+      mutation_queue: 'id, entity_type, entity_id, action, client_timestamp, sync_status',
+      notes: 'id, updated_at, deleted_at, folder',
+      drawing_notes: 'id, updated_at, deleted_at, folder',
+      user_settings: 'id, updated_at',
+      didactic_booklets: 'id, bookId, themeId, createdAt, updated_at, deleted_at',
+      links: 'id, url, updated_at, deleted_at, folder'
     });
   }
 }
@@ -355,7 +370,8 @@ export class DexieAdapter implements IDatabaseAdapter {
       this.db.notes.clear(),
       this.db.drawing_notes.clear(),
       this.db.user_settings.clear(),
-      this.db.didactic_booklets.clear()
+      this.db.didactic_booklets.clear(),
+      this.db.links.clear()
     ]);
   }
 
@@ -396,6 +412,42 @@ export class DexieAdapter implements IDatabaseAdapter {
       existing.sync_status = 'pending';
       existing.updated_at = new Date().toISOString();
       await this.db.didactic_booklets.put(toCloneable(existing));
+    }
+  }
+
+  // Links
+  async getLinks(): Promise<LocalLinkItem[]> {
+    await this.init();
+    const all = await this.db.links.toArray();
+    return all
+      .filter((l) => !l.deleted_at)
+      .sort((a, b) => new Date(b.updated_at || b.createdAt || 0).getTime() - new Date(a.updated_at || a.createdAt || 0).getTime());
+  }
+
+  async getLinksRaw(): Promise<LocalLinkItem[]> {
+    await this.init();
+    return await this.db.links.toArray();
+  }
+
+  async getLinkById(id: string): Promise<LocalLinkItem | null> {
+    await this.init();
+    const item = await this.db.links.get(id);
+    return item && !item.deleted_at ? item : null;
+  }
+
+  async saveLink(link: LocalLinkItem): Promise<void> {
+    await this.init();
+    await this.db.links.put(toCloneable(link));
+  }
+
+  async deleteLink(id: string): Promise<void> {
+    await this.init();
+    const existing = await this.db.links.get(id);
+    if (existing) {
+      existing.deleted_at = new Date().toISOString();
+      existing.sync_status = 'pending';
+      existing.updated_at = new Date().toISOString();
+      await this.db.links.put(toCloneable(existing));
     }
   }
 }

@@ -6,6 +6,7 @@ import { annotationRepo } from '~/adapters/database/repositories/AnnotationRepos
 import { noteRepo } from '~/adapters/database/repositories/NoteRepository'
 import { canvasRepo } from '~/adapters/database/repositories/CanvasRepository'
 import { drawingNoteRepo } from '~/adapters/database/repositories/DrawingNoteRepository'
+import { linkRepo } from '~/adapters/database/repositories/LinkRepository'
 import { buildLocalGraph } from '~/utils/buildLocalGraph'
 import { loadGraphMeta, saveGraphMeta } from '~/utils/graphMeta'
 
@@ -48,12 +49,13 @@ export const useGraph = () => {
     }
     error.value = null
     try {
-      const [books, annotations, notes, canvases, drawingNotes] = await Promise.all([
+      const [books, annotations, notes, canvases, drawingNotes, links] = await Promise.all([
         bookRepo.getAll().catch(() => []),
         annotationRepo.getAll().catch(() => []),
         noteRepo.getAll().catch(() => []),
         canvasRepo.getAll().catch(() => []),
         drawingNoteRepo.getAll().catch(() => []),
+        linkRepo.getAll().catch(() => []),
       ])
       const meta = loadGraphMeta()
       const assembled = buildLocalGraph({
@@ -62,6 +64,7 @@ export const useGraph = () => {
         notes,
         canvases,
         drawingNotes,
+        links,
         extraThemes: meta.themes,
         extraEdges: meta.edges,
       })

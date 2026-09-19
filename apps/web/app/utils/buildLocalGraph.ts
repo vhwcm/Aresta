@@ -1,4 +1,4 @@
-import type { LocalAnnotation, LocalBook, LocalCanvasItem, LocalDrawingNote, LocalNote } from '~/adapters/database/types'
+import type { LocalAnnotation, LocalBook, LocalCanvasItem, LocalDrawingNote, LocalNote, LocalLinkItem } from '~/adapters/database/types'
 import type { GraphData, GraphEdge, GraphNode } from '~/interfaces/graph'
 import { resolveNoteTitle } from '~/utils/noteTitle'
 
@@ -15,6 +15,7 @@ export interface BuildLocalGraphInput {
   notes?: LocalNote[]
   canvases?: LocalCanvasItem[]
   drawingNotes?: LocalDrawingNote[]
+  links?: LocalLinkItem[]
   extraThemes?: GraphThemeRecord[]
   extraEdges?: GraphEdge[]
 }
@@ -38,6 +39,7 @@ export const buildLocalGraph = (input: BuildLocalGraphInput = {}): GraphData => 
   const notes = input.notes || []
   const canvases = input.canvases || []
   const drawingNotes = input.drawingNotes || []
+  const links = input.links || []
   const extraThemes = input.extraThemes || []
   const extraEdges = input.extraEdges || []
 
@@ -251,6 +253,31 @@ export const buildLocalGraph = (input: BuildLocalGraphInput = {}): GraphData => 
     })
   }
 
+  for (const l of links) {
+    const nodeId = `link-${l.id}`
+    nodes.push({
+      id: nodeId,
+      rawId: l.id,
+      type: 'link',
+      isLink: true,
+      url: l.url,
+      domain: l.domain,
+      favicon: l.favicon,
+      name: truncateTitle(l.title || l.domain || 'Link'),
+      title: l.title || l.domain || 'Link',
+      description: l.url,
+      folder: l.folder || null,
+      tags: l.tags || [],
+      color: '#06B6D4', // Ciano / Web Link
+      createdAt: l.createdAt || l.created_at,
+      updatedAt: l.updated_at,
+    } as any)
+
+    if (l.sourceNoteId) addEdge(`note-${l.sourceNoteId}`, nodeId, 'note-link')
+    if (l.sourceCanvasId) addEdge(`canvas-${l.sourceCanvasId}`, nodeId, 'canvas-link')
+    if (l.folder?.trim()) addEdge(nodeId, `folder-${l.folder.trim()}`, 'link-folder')
+  }
+
   const activeIds = new Set(nodes.map((node) => String(node.id)))
   for (const edge of extraEdges) {
     const source = String(typeof edge.source === 'object' ? (edge.source as GraphNode).id : edge.source)
@@ -269,6 +296,7 @@ export const buildLocalGraph = (input: BuildLocalGraphInput = {}): GraphData => 
       annotations: nodes.filter((n) => n.type === 'annotation').length,
       notes: nodes.filter((n) => n.type === 'note').length,
       canvases: nodes.filter((n) => n.type === 'canvas').length,
+      links: nodes.filter((n) => n.type === 'link').length,
       folders: nodes.filter((n) => n.type === 'folder').length,
     },
   }

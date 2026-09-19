@@ -28,16 +28,22 @@ import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import * as d3 from 'd3'
 import type { CanvasSummary } from '~/interfaces/canvas'
 import type { NoteItem } from '~/interfaces/note'
+import type { LocalLinkItem } from '~/adapters/database/types'
+import { openExternalUrl } from '~/utils/urlOpener'
 
 export interface GraphNode extends d3.SimulationNodeDatum {
   id: string
   rawId: string
   title: string
-  kind: 'canvas' | 'note' | 'folder'
+  kind: 'canvas' | 'note' | 'folder' | 'link'
+  url?: string
+  domain?: string
+  favicon?: string | null
   description?: string
   folder?: string | null
   tags?: string[]
   rawNote?: NoteItem
+  rawLink?: LocalLinkItem
   color: string
   radius: number
 }
@@ -51,6 +57,7 @@ export interface GraphLink extends d3.SimulationLinkDatum<GraphNode> {
 const props = defineProps<{
   canvases: CanvasSummary[]
   notes: NoteItem[]
+  links?: LocalLinkItem[]
   searchQuery?: string
   activeFolder?: string | null
   activeTag?: string | null
@@ -60,6 +67,7 @@ const emit = defineEmits<{
   (_e: 'select-canvas', _id: string): void
   (_e: 'select-note', _note: NoteItem): void
   (_e: 'select-folder', _folder: string): void
+  (_e: 'select-link', _link: LocalLinkItem): void
 }>()
 
 const containerRef = ref<HTMLDivElement | null>(null)
@@ -104,6 +112,25 @@ const nodes = computed<GraphNode[]>(() => {
     })
   }
 
+  const linkItems = props.links || []
+  for (const l of linkItems) {
+    list.push({
+      id: `link-${l.id}`,
+      rawId: l.id,
+      title: l.title || l.domain || 'Link',
+      kind: 'link',
+      url: l.url,
+      domain: l.domain,
+      favicon: l.favicon,
+      description: l.url,
+      folder: l.folder,
+      tags: l.tags || [],
+      rawLink: l,
+      color: '#10B981', // Verde Esmeralda / Web
+      radius: 14
+    })
+  }
+
   // 3. Criação de Nós de Pastas
   const foldersSet = new Set<string>()
   for (const c of props.canvases) {
@@ -111,6 +138,9 @@ const nodes = computed<GraphNode[]>(() => {
   }
   for (const n of props.notes) {
     if (n.folder && n.folder.trim()) foldersSet.add(n.folder.trim())
+  }
+  for (const l of linkItems) {
+    if (l.folder && l.folder.trim()) foldersSet.add(l.folder.trim())
   }
 
   for (const f of foldersSet) {
@@ -193,6 +223,18 @@ const links = computed<GraphLink[]>(() => {
     const noteKey = `note-${n.id}`
     if (nodeMap.has(noteKey)) {
       processNoteLinks(n, noteKey)
+    }
+  }
+
+  // 3. Conexões de Nós de Links (Link -> Note / Canvas de origem)
+  const linkItems = props.links || []
+  for (const l of linkItems) {
+    const linkKey = `link-${l.id}`
+    if (l.sourceNoteId && nodeMap.has(`note-${l.sourceNoteId}`)) {
+      addLink(`note-${l.sourceNoteId}`, linkKey, 'embed')
+    }
+    if (l.sourceCanvasId && nodeMap.has(`canvas-${l.sourceCanvasId}`)) {
+      addLink(`canvas-${l.sourceCanvasId}`, linkKey, 'embed')
     }
   }
 
@@ -394,6 +436,9 @@ const initGraph = () => {
         emit('select-canvas', d.rawId)
       } else if (d.kind === 'folder') {
         emit('select-folder', d.rawId || d.title)
+      } else if (d.kind === 'link' && d.url) {
+        openExternalUrl(d.url)
+        if (d.rawLink) emit('select-link', d.rawLink)
       } else if (d.rawNote) {
         emit('select-note', d.rawNote)
       }

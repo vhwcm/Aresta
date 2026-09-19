@@ -90,6 +90,16 @@
               <span>Nova Nota</span>
             </button>
 
+            <!-- Novo Link -->
+            <button
+              class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-bgSurface hover:bg-emerald-500/10 text-textPrimary hover:text-emerald-500 border border-divider hover:border-emerald-500/40 text-xs font-semibold transition-all shadow-xs cursor-pointer"
+              title="Adicionar novo link com título"
+              @click="openNewLinkModal()"
+            >
+              <GlobeIcon class="w-3.5 h-3.5 text-emerald-500" />
+              <span>Novo Link</span>
+            </button>
+
             <!-- Novo Quadro -->
             <button
               class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-accent hover:bg-accent/90 text-white text-xs font-semibold transition-all shadow-sm shadow-accent/20 hover:scale-102 cursor-pointer disabled:opacity-50"
@@ -198,6 +208,16 @@
               >
                 <FileTextIcon class="w-3.5 h-3.5 text-accent" />
                 <span>Nova Nota</span>
+              </button>
+
+              <!-- Novo Link -->
+              <button
+                class="inline-flex items-center gap-1 px-2 py-1.5 rounded-xl bg-bgSurface hover:bg-emerald-500/10 text-textPrimary hover:text-emerald-500 border border-divider hover:border-emerald-500/40 text-xs font-semibold transition-all shadow-xs cursor-pointer shrink-0 whitespace-nowrap"
+                title="Adicionar novo link"
+                @click="openNewLinkModal()"
+              >
+                <GlobeIcon class="w-3.5 h-3.5 text-emerald-500" />
+                <span class="hidden xs:inline">Link</span>
               </button>
 
               <!-- Novo Quadro -->
@@ -560,6 +580,103 @@
                   >
                     <Trash2Icon class="w-3.5 h-3.5" />
                   </button>
+                </div>
+              </div>
+
+              <!-- CARD: LINK EXTERNO / NÓ DE LINK -->
+              <div
+                v-else-if="item.kind === 'link'"
+                class="group relative flex flex-col justify-between p-5 rounded-2xl bg-bgPanel border border-divider hover:border-emerald-500/60 shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all cursor-pointer overflow-hidden select-none"
+                @click="handleOpenLink(item.url)"
+              >
+                <div>
+                  <div class="flex items-center justify-between mb-2.5">
+                    <div class="flex items-center gap-1.5">
+                      <span class="inline-flex items-center gap-1 text-[10px] font-semibold tracking-wide uppercase px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/25">
+                        <GlobeIcon class="w-3 h-3" />
+                        Link
+                      </span>
+
+                      <span
+                        v-if="item.domain"
+                        class="inline-flex items-center gap-1 text-[11px] font-mono font-medium text-textSecondary bg-bgSurface px-2 py-0.5 rounded-md border border-divider truncate max-w-[120px]"
+                      >
+                        {{ item.domain }}
+                      </span>
+
+                      <span
+                        v-if="item.folder"
+                        class="inline-flex items-center gap-1 text-[11px] font-medium text-textSecondary bg-bgSurface px-2 py-0.5 rounded-md border border-divider truncate max-w-[100px]"
+                      >
+                        <FolderIcon class="w-2.5 h-2.5 text-emerald-500" />
+                        <span class="truncate">{{ item.folder }}</span>
+                      </span>
+                    </div>
+
+                    <!-- Ações Rápidas do Card no Hover -->
+                    <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity" @click.stop>
+                      <button
+                        class="p-1 rounded-lg hover:bg-bgSurface text-textSecondary hover:text-emerald-500 transition-colors cursor-pointer"
+                        title="Copiar URL"
+                        @click="copyUrl(item.url)"
+                      >
+                        <CopyIcon class="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        class="p-1 rounded-lg hover:bg-red-500/15 text-red-400 hover:text-red-300 transition-colors cursor-pointer"
+                        title="Excluir link"
+                        @click="handleDeleteLink(item.id)"
+                      >
+                        <Trash2Icon class="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Título do Link com Favicon -->
+                  <div class="flex items-start gap-2.5 mt-1">
+                    <div class="w-7 h-7 rounded-lg bg-bgElevated border border-divider/60 flex items-center justify-center shrink-0 overflow-hidden mt-0.5">
+                      <img
+                        v-if="item.favicon"
+                        :src="item.favicon"
+                        alt="Favicon"
+                        class="w-4 h-4 object-contain"
+                        @error="(e: any) => e.target.style.display = 'none'"
+                      />
+                      <GlobeIcon v-else class="w-3.5 h-3.5 text-emerald-500" />
+                    </div>
+                    <div class="min-w-0 flex-1">
+                      <h3 class="text-sm md:text-base font-semibold text-textPrimary group-hover:text-emerald-400 transition-colors line-clamp-1 font-interface">
+                        {{ item.title }}
+                      </h3>
+                      <p class="text-xs text-textSecondary/80 mt-0.5 line-clamp-1 truncate font-mono text-[11px]">
+                        {{ item.url }}
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- Tags do Link -->
+                  <div v-if="item.tags && item.tags.length > 0" class="flex flex-wrap gap-1 mt-3" @click.stop>
+                    <button
+                      v-for="tag in item.tags"
+                      :key="tag"
+                      @click="activeTag = tag"
+                      class="inline-flex items-center text-[10px] px-2 py-0.5 rounded-md font-medium transition-colors cursor-pointer"
+                      :class="activeTag === tag ? 'bg-emerald-500 text-white' : 'bg-bgSurface text-textSecondary hover:text-emerald-400 border border-divider'"
+                    >
+                      #{{ tag }}
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Rodapé do Card: Abrir no Navegador e Data -->
+                <div class="flex items-center justify-between pt-3.5 mt-3.5 border-t border-divider/60 text-[11px] text-textSecondary">
+                  <span class="inline-flex items-center gap-1 text-emerald-400 font-medium">
+                    <ExternalLinkIcon class="w-3.5 h-3.5" />
+                    <span>Abrir no navegador</span>
+                  </span>
+                  <span v-if="item.updatedAt" class="text-[10px] text-textSecondary/70 font-mono">
+                    {{ formatDate(item.updatedAt) }}
+                  </span>
                 </div>
               </div>
             </template>

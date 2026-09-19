@@ -9,7 +9,8 @@ import type {
   LocalNote,
   LocalDrawingNote,
   LocalUserSettings,
-  LocalDidacticBooklet
+  LocalDidacticBooklet,
+  LocalLinkItem
 } from './types';
 
 export class InMemoryAdapter implements IDatabaseAdapter {
@@ -23,6 +24,7 @@ export class InMemoryAdapter implements IDatabaseAdapter {
   private drawingNotes = new Map<string, LocalDrawingNote>();
   private settings: LocalUserSettings | null = null;
   private didacticBooklets = new Map<string, LocalDidacticBooklet>();
+  private links = new Map<string, LocalLinkItem>();
 
   async init(): Promise<void> {}
 
@@ -231,6 +233,7 @@ export class InMemoryAdapter implements IDatabaseAdapter {
     this.drawingNotes.clear();
     this.settings = null;
     this.didacticBooklets.clear();
+    this.links.clear();
   }
 
   // Didactic Booklets
@@ -262,6 +265,38 @@ export class InMemoryAdapter implements IDatabaseAdapter {
     const item = this.didacticBooklets.get(id);
     if (item) {
       this.didacticBooklets.set(id, {
+        ...item,
+        deleted_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        sync_status: 'pending',
+      });
+    }
+  }
+
+  // Links
+  async getLinks(): Promise<LocalLinkItem[]> {
+    return Array.from(this.links.values())
+      .filter((l) => !l.deleted_at)
+      .sort((a, b) => new Date(b.updated_at || b.createdAt || 0).getTime() - new Date(a.updated_at || a.createdAt || 0).getTime());
+  }
+
+  async getLinkById(id: string): Promise<LocalLinkItem | null> {
+    const l = this.links.get(id);
+    return l && !l.deleted_at ? l : null;
+  }
+
+  async getLinksRaw(): Promise<LocalLinkItem[]> {
+    return Array.from(this.links.values());
+  }
+
+  async saveLink(link: LocalLinkItem): Promise<void> {
+    this.links.set(link.id, { ...link });
+  }
+
+  async deleteLink(id: string): Promise<void> {
+    const item = this.links.get(id);
+    if (item) {
+      this.links.set(id, {
         ...item,
         deleted_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),

@@ -1,7 +1,12 @@
 import { ref } from 'vue'
 import { useOAuth } from './useOAuth'
 import { GoogleDriveStorageProvider } from '~/adapters/storage/cloud/GoogleDriveStorageProvider'
-import type { UploadBookPackageOptions, UploadBookPackageResult } from '~/adapters/storage/cloud/ICloudStorageProvider'
+import type {
+  UploadBookPackageOptions,
+  UploadBookPackageResult,
+  DownloadBookPackageOptions,
+  DownloadBookPackageResult,
+} from '~/adapters/storage/cloud/ICloudStorageProvider'
 
 export interface GoogleDriveSyncResult {
   synced: boolean
@@ -113,6 +118,41 @@ export const useGoogleDriveSync = () => {
     }
   }
 
+  const downloadBookFromDrive = async (options: {
+    folderId?: string
+    bookTitle?: string
+  }): Promise<DownloadBookPackageResult | null> => {
+    let token = await ensureGoogleDriveToken()
+    if (!token) return null
+    try {
+      let provider = new GoogleDriveStorageProvider(() => token)
+      try {
+        return await provider.downloadBookFile(options)
+      } catch (firstErr: any) {
+        const isAuthError =
+          firstErr?.message?.includes('401') ||
+          firstErr?.message?.includes('Unauthorized') ||
+          firstErr?.message?.includes('Invalid Credentials')
+
+        if (isAuthError) {
+          const refreshed = await refreshGoogleToken()
+          if (refreshed) {
+            token = refreshed
+            provider = new GoogleDriveStorageProvider(() => token)
+            return await provider.downloadBookFile(options)
+          } else {
+            setGoogleDriveToken(null)
+            return null
+          }
+        }
+        throw firstErr
+      }
+    } catch (err) {
+      console.warn('[GoogleDriveSync] Falha ao baixar livro do Google Drive:', err)
+      return null
+    }
+  }
+
   const deleteBookFromDrive = async (title: string, folderId?: string): Promise<boolean> => {
     let token = await ensureGoogleDriveToken()
     if (!token) return false
@@ -145,6 +185,7 @@ export const useGoogleDriveSync = () => {
     isGoogleDriveConnected,
     syncBookToDrive,
     listDriveBooks,
+    downloadBookFromDrive,
     deleteBookFromDrive,
     deleteAllDriveData,
   }

@@ -167,11 +167,12 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { ArrowLeftIcon, BookIcon, BookOpenIcon } from 'lucide-vue-next'
+import { ArrowLeftIcon, BookIcon, BookOpenIcon, Globe as GlobeIcon } from 'lucide-vue-next'
 import type { GraphNode, UserBookItem } from '~/interfaces/graph'
 import { useGraph } from '~/composables/useGraph'
 import { useUserBooks } from '~/composables/useUserBooks'
 import { getCoverUrl } from '~/utils/cover'
+import { openExternalUrl } from '~/utils/urlOpener'
 
 import GraphCanvas from '~/components/GraphCanvas.vue'
 import BookAnnotationsDrawer from '~/components/graph/BookAnnotationsDrawer.vue'
@@ -259,6 +260,15 @@ const handleSelectNode = (node: GraphNode) => {
     const folderName = node.rawId || node.name
     navigateTo(`/canvas?folder=${encodeURIComponent(String(folderName))}`)
     return
+  }
+
+  // 6. Links: abrem diretamente no navegador padrão
+  if (node.type === 'link' || (node as any).isLink || String(node.id).startsWith('link-')) {
+    const url = (node as any).url
+    if (url) {
+      openExternalUrl(url)
+      return
+    }
   }
 
   selectedNode.value = node

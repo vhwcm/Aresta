@@ -4,6 +4,8 @@ import type {
   UploadFileOptions,
   UploadBookPackageOptions,
   UploadBookPackageResult,
+  DownloadBookPackageOptions,
+  DownloadBookPackageResult,
 } from './ICloudStorageProvider'
 import type { IDataSyncProvider, DataSubFolder, DataSyncResult } from './IDataSyncProvider'
 
@@ -215,6 +217,78 @@ export class GoogleDriveStorageProvider implements IDataSyncProvider {
         .map((folder) => ({ title: folder.name, folderId: folder.id }))
     } catch {
       return []
+    }
+  }
+
+  async downloadBookFile(options: DownloadBookPackageOptions): Promise<DownloadBookPackageResult | null> {
+    try {
+      let folderId = options.folderId
+      if (!folderId && options.bookTitle) {
+        const rootFolder = await this.ensureFolder('Aresta')
+        const safeTitle = options.bookTitle.trim().replace(/'/g, "\\'")
+        const query = `'${rootFolder.id}' in parents and name = '${safeTitle}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false`
+        const headers = this.getAuthHeader()
+        const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name)`
+        const res = await fetch(url, { headers })
+        if (res.ok) {
+          const data = (await res.json()) as { files?: Array<{ id: string; name: string }> }
+          if (data.files && data.files.length > 0 && data.files[0]) {
+            folderId = data.files[0].id
+          }
+        }
+      }
+
+      if (!folderId) return null
+
+      const items = await this.listFolder(folderId)
+      if (!items || items.length === 0) return null
+
+      // Busca arquivo do livro (.epub, .pdf, didactic .json ou qualquer arquivo que não seja capa / meta)
+      const bookFile =
+        items.find(
+          (i) =>
+            i.name.toLowerCase().endsWith('.epub') ||
+            i.name.toLowerCase().endsWith('.pdf') ||
+            i.mimeType === 'application/epub+zip' ||
+            i.mimeType === 'application/pdf'
+        ) ||
+        items.find(
+          (i) =>
+            !i.name.toLowerCase().startsWith('cover') &&
+            i.mimeType !== 'application/vnd.google-apps.folder' &&
+            !i.mimeType.startsWith('image/')
+        )
+
+      if (!bookFile) return null
+
+      const blob = await this.getFile(bookFile.id)
+
+      // Busca opcional de capa
+      const coverFile = items.find(
+        (i) =>
+          i.name.toLowerCase().startsWith('cover') ||
+          i.mimeType.startsWith('image/')
+      )
+
+      let coverBlob: Blob | undefined
+      if (coverFile) {
+        try {
+          coverBlob = await this.getFile(coverFile.id)
+        } catch {
+          // Capa opcional
+        }
+      }
+
+      return {
+        blob,
+        fileName: bookFile.name,
+        mimeType: bookFile.mimeType || (bookFile.name.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 'application/epub+zip'),
+        coverBlob,
+        coverFileName: coverFile?.name,
+      }
+    } catch (err) {
+      console.warn('[GoogleDriveStorageProvider] Erro ao baixar arquivo do livro do Drive:', err)
+      return null
     }
   }
 

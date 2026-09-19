@@ -429,10 +429,19 @@
               >
                 <span>📚 Livreto</span>
               </button>
+              <button
+                type="button"
+                class="px-3 py-1.5 border-b-2 font-medium transition-colors cursor-pointer shrink-0 flex items-center gap-1.5"
+                :class="activeLinkTab === 'url' ? 'border-accent text-accent font-semibold' : 'border-transparent text-textSecondary hover:text-textPrimary'"
+                @click="activeLinkTab = 'url'"
+                data-testid="tab-link-web"
+              >
+                <span>🌐 Link Web</span>
+              </button>
             </div>
 
             <!-- Campo de Busca Universal -->
-            <div v-if="activeLinkTab !== 'canvas' || activeCanvasSubTab === 'existing'" class="p-3 border-b border-divider bg-bgSurface/20">
+            <div v-if="activeLinkTab !== 'url' && (activeLinkTab !== 'canvas' || activeCanvasSubTab === 'existing')" class="p-3 border-b border-divider bg-bgSurface/20">
               <div class="relative flex items-center">
                 <SearchIcon class="w-3.5 h-3.5 text-textSecondary absolute left-3" />
                 <input
@@ -653,6 +662,49 @@
               </div>
             </div>
 
+            <!-- ABA 5: LINK WEB -->
+            <div v-else-if="activeLinkTab === 'url'" class="p-4 sm:p-5 space-y-4 flex-1 flex flex-col justify-center">
+              <div>
+                <label class="block text-xs font-medium text-textSecondary mb-1.5">Endereço Web (URL)</label>
+                <div class="relative flex items-center">
+                  <GlobeIcon class="w-3.5 h-3.5 text-textSecondary absolute left-3.5" />
+                  <input
+                    v-model="webLinkUrl"
+                    type="url"
+                    placeholder="https://exemplo.com/artigo"
+                    class="w-full pl-9 pr-3.5 py-2 text-xs bg-bgSurface border border-divider rounded-xl text-textPrimary placeholder:text-textSecondary/50 focus:outline-none focus:border-accent"
+                    @keydown.enter.prevent="insertWebLink"
+                    data-testid="input-web-link-url"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-medium text-textSecondary mb-1.5">Título do Link (Opcional)</label>
+                <input
+                  v-model="webLinkTitle"
+                  type="text"
+                  placeholder="Ex: Artigo sobre Nuxt 3, Documentação..."
+                  class="w-full px-3.5 py-2 text-xs bg-bgSurface border border-divider rounded-xl text-textPrimary placeholder:text-textSecondary/50 focus:outline-none focus:border-accent"
+                  @keydown.enter.prevent="insertWebLink"
+                  data-testid="input-web-link-title"
+                />
+              </div>
+
+              <div class="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  class="px-4 py-2 rounded-xl bg-accent hover:bg-accent/90 text-white text-xs font-medium transition-colors cursor-pointer flex items-center gap-1.5 shadow-md disabled:opacity-50"
+                  :disabled="!webLinkUrl.trim()"
+                  @click="insertWebLink"
+                  data-testid="btn-confirm-web-link"
+                >
+                  <LinkIcon class="w-3.5 h-3.5" />
+                  <span>Vincular Link Web</span>
+                </button>
+              </div>
+            </div>
+
             <!-- Modal Footer -->
             <div class="px-4 sm:px-5 py-3 border-t border-divider bg-bgSurface/20 flex items-center justify-end">
               <button
@@ -663,6 +715,57 @@
                 Fechar
               </button>
             </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <!-- Popover Flutuante sobre Link (Abrir no Navegador + Criar Nó a partir do Link) -->
+    <Teleport to="body">
+      <Transition name="fade">
+        <div
+          v-if="activeLinkPopover"
+          class="fixed z-50 p-2.5 rounded-2xl bg-bgPanel/95 border border-divider shadow-2xl backdrop-blur-xl flex flex-col gap-2 animate-in fade-in text-xs font-interface ring-1 ring-white/10 max-w-[280px]"
+          :style="{
+            left: `${Math.max(12, Math.min(activeLinkPopover.x, 800))}px`,
+            top: `${Math.max(12, activeLinkPopover.y - 58)}px`
+          }"
+          @click.stop
+        >
+          <div class="flex items-center gap-2">
+            <GlobeIcon class="w-4 h-4 text-emerald-500 shrink-0" />
+            <span class="font-semibold text-textPrimary truncate" :title="activeLinkPopover.title">
+              {{ activeLinkPopover.title || activeLinkPopover.url }}
+            </span>
+            <button
+              type="button"
+              class="ml-auto p-1 rounded-md text-textSecondary hover:text-textPrimary hover:bg-white/5 cursor-pointer"
+              @click="activeLinkPopover = null"
+            >
+              <XIcon class="w-3 h-3" />
+            </button>
+          </div>
+
+          <div class="flex items-center gap-1.5 pt-1.5 border-t border-divider/60">
+            <button
+              type="button"
+              class="flex-1 inline-flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl bg-bgSurface hover:bg-bgElevated text-textPrimary hover:text-accent border border-divider text-[11px] font-medium transition-colors cursor-pointer"
+              title="Abrir no navegador padrão"
+              @click="openLinkFromPopover"
+            >
+              <ExternalLinkIcon class="w-3 h-3 text-accent" />
+              <span>Abrir</span>
+            </button>
+
+            <button
+              type="button"
+              class="flex-1 inline-flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500 text-emerald-400 hover:text-white border border-emerald-500/30 text-[11px] font-medium transition-colors cursor-pointer"
+              title="Criar nó no Grafo de Conhecimento a partir deste link"
+              @click="createNodeFromPopoverLink"
+            >
+              <NetworkIcon class="w-3 h-3" />
+              <span>Criar Nó</span>
+            </button>
           </div>
         </div>
       </Transition>
@@ -688,12 +791,17 @@ import {
   BookOpen as BookOpenIcon,
   FileText as FileTextIcon,
   BookMarked as BookMarkedIcon,
+  Globe as GlobeIcon,
+  ExternalLink as ExternalLinkIcon,
+  Network as NetworkIcon,
 } from 'lucide-vue-next'
 import MilkdownEditor from '~/components/MilkdownEditor.vue'
 import ReaderAnnotationModal from '~/components/reader/ReaderAnnotationModal.vue'
 import { canvasRepo } from '~/adapters/database/repositories/CanvasRepository'
 import { noteRepo } from '~/adapters/database/repositories/NoteRepository'
 import { bookRepo } from '~/adapters/database/repositories/BookRepository'
+import { linkRepo } from '~/adapters/database/repositories/LinkRepository'
+import { openExternalUrl, cleanUrlTitle, sanitizeUrl } from '~/utils/urlOpener'
 import { useDidacticBooklet } from '~/composables/useDidacticBooklet'
 import { extractTitleFromMarkdown } from '~/utils/noteTitle'
 import type { NoteItem } from '~/interfaces/note'
@@ -892,11 +1000,13 @@ const insertMarkdownLink = (label: string, protocol: string, id: string | number
 
 // Estado do Modal Universal de Vínculos
 const isUniversalLinkModalOpen = ref(false)
-const activeLinkTab = ref<'canvas' | 'note' | 'book' | 'booklet'>('canvas')
+const activeLinkTab = ref<'canvas' | 'note' | 'book' | 'booklet' | 'url'>('canvas')
 const activeCanvasSubTab = ref<'existing' | 'new'>('existing')
 const universalSearchQuery = ref('')
 const newCanvasTitle = ref('')
 const isCreatingCanvas = ref(false)
+const webLinkUrl = ref('')
+const webLinkTitle = ref('')
 
 const allNotes = ref<any[]>([])
 const allBooks = ref<LocalBook[]>([])
@@ -940,9 +1050,56 @@ onMounted(() => {
 const openUniversalLinkModal = () => {
   universalSearchQuery.value = ''
   newCanvasTitle.value = ''
+  webLinkUrl.value = ''
+  webLinkTitle.value = ''
   activeCanvasSubTab.value = (props.canvases && props.canvases.length > 0) ? 'existing' : 'new'
   isUniversalLinkModalOpen.value = true
   loadUniversalData()
+}
+
+const insertWebLink = () => {
+  const raw = webLinkUrl.value.trim()
+  if (!raw) {
+    showToast('Informe uma URL válida.')
+    return
+  }
+  const sanitized = sanitizeUrl(raw)
+  const title = cleanUrlTitle(sanitized, webLinkTitle.value)
+  isUniversalLinkModalOpen.value = false
+  insertMarkdownLink(`🌐 ${title}`, 'https', sanitized.replace(/^https?:\/\//, ''))
+  webLinkUrl.value = ''
+  webLinkTitle.value = ''
+  showToast(`Link "${title}" inserido na nota!`)
+}
+
+// Popover contextual sobre links no editor
+const activeLinkPopover = ref<{ x: number; y: number; url: string; title: string } | null>(null)
+
+const openLinkFromPopover = async () => {
+  if (activeLinkPopover.value?.url) {
+    await openExternalUrl(activeLinkPopover.value.url)
+    activeLinkPopover.value = null
+  }
+}
+
+const createNodeFromPopoverLink = async () => {
+  if (!activeLinkPopover.value) return
+  const { url, title } = activeLinkPopover.value
+  try {
+    const sanitized = sanitizeUrl(url)
+    const cleanTitle = cleanUrlTitle(sanitized, title)
+    await linkRepo.save({
+      id: `link_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      url: sanitized,
+      title: cleanTitle,
+      sourceNoteId: String(localNote.value.id)
+    })
+    showToast(`Nó "${cleanTitle}" criado no Grafo de Conhecimento!`)
+    activeLinkPopover.value = null
+  } catch (err) {
+    console.error('Erro ao criar nó do link:', err)
+    showToast('Erro ao criar nó no Grafo.')
+  }
 }
 
 const filteredCanvases = computed(() => {
@@ -1086,6 +1243,19 @@ const handleEditorClick = (event: MouseEvent) => {
     event.preventDefault()
     const bookletId = href.replace(/^booklet:/, '')
     navigateUrl(`/reader?bookId=${bookletId}`)
+    return
+  }
+
+  // 5. Links Web Externos (abre popover com opções de Abrir e Criar Nó)
+  if (href.startsWith('http://') || href.startsWith('https://') || href.startsWith('www.') || href.startsWith('//')) {
+    event.preventDefault()
+    const rect = anchor.getBoundingClientRect()
+    activeLinkPopover.value = {
+      x: rect.left,
+      y: rect.top,
+      url: href,
+      title: anchor.textContent?.trim() || cleanUrlTitle(href)
+    }
     return
   }
 }

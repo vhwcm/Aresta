@@ -5,6 +5,8 @@ import type {
   UploadFileOptions,
   UploadBookPackageOptions,
   UploadBookPackageResult,
+  DownloadBookPackageOptions,
+  DownloadBookPackageResult,
 } from './ICloudStorageProvider'
 import type { IDataSyncProvider, DataSubFolder, DataSyncResult } from './IDataSyncProvider'
 
@@ -138,6 +140,61 @@ export class OneDriveStorageProvider implements IDataSyncProvider {
       bookFolderId: bookFolder.id,
       bookFile,
       coverFile,
+    }
+  }
+
+  async downloadBookFile(options: DownloadBookPackageOptions): Promise<DownloadBookPackageResult | null> {
+    try {
+      let folderId = options.folderId
+      if (!folderId && options.bookTitle) {
+        const root = await this.ensureFolder('Aresta')
+        const bookFolder = await this.ensureFolder(options.bookTitle, root.id)
+        folderId = bookFolder.id
+      }
+      if (!folderId) return null
+
+      const items = await this.listFolder(folderId)
+      if (!items || items.length === 0) return null
+
+      const bookFile =
+        items.find(
+          (i) =>
+            i.name.toLowerCase().endsWith('.epub') ||
+            i.name.toLowerCase().endsWith('.pdf') ||
+            i.mimeType.includes('epub') ||
+            i.mimeType.includes('pdf')
+        ) ||
+        items.find(
+          (i) =>
+            !i.name.toLowerCase().startsWith('cover') &&
+            !i.name.toLowerCase().endsWith('.json') &&
+            !i.mimeType.startsWith('image/')
+        )
+
+      if (!bookFile) return null
+
+      const blob = await this.getFile(bookFile.id)
+      const coverFile = items.find(
+        (i) => i.name.toLowerCase().startsWith('cover') || i.mimeType.startsWith('image/')
+      )
+
+      let coverBlob: Blob | undefined
+      if (coverFile) {
+        try {
+          coverBlob = await this.getFile(coverFile.id)
+        } catch {}
+      }
+
+      return {
+        blob,
+        fileName: bookFile.name,
+        mimeType: bookFile.mimeType || (bookFile.name.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 'application/epub+zip'),
+        coverBlob,
+        coverFileName: coverFile?.name,
+      }
+    } catch (err) {
+      console.warn('[OneDriveStorageProvider] Erro ao baixar arquivo do livro:', err)
+      return null
     }
   }
 

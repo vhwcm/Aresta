@@ -8,7 +8,8 @@ import type {
   LocalNote,
   LocalDrawingNote,
   LocalUserSettings,
-  LocalDidacticBooklet
+  LocalDidacticBooklet,
+  LocalLinkItem
 } from './types';
 
 export interface IDatabaseAdapter {
@@ -86,6 +87,14 @@ export interface IDatabaseAdapter {
   getDidacticBookletsRaw?(): Promise<LocalDidacticBooklet[]>;
   saveDidacticBooklet(booklet: LocalDidacticBooklet): Promise<void>;
   deleteDidacticBooklet(id: string): Promise<void>;
+
+  // Links (Nós de Links)
+  getLinks(): Promise<LocalLinkItem[]>;
+  getLinkById(id: string): Promise<LocalLinkItem | null>;
+  /** Retorna todos os links sem filtrar por deleted_at (para sync). */
+  getLinksRaw?(): Promise<LocalLinkItem[]>;
+  saveLink(link: LocalLinkItem): Promise<void>;
+  deleteLink(id: string): Promise<void>;
 
   // Session Purge
   clearAll?(): Promise<void>;

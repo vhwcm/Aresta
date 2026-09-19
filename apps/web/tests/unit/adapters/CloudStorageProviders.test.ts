@@ -201,4 +201,68 @@ describe('CloudStorageProviders & Factory (SOLID)', () => {
 
     expect(deletedRoot).toBe(true)
   })
+
+  it('GoogleDriveStorageProvider deve baixar o arquivo e a capa do livro pelo folderId ou título', async () => {
+    global.fetch = vi.fn(async (url: string | URL | Request) => {
+      const urlStr = url.toString()
+      if (urlStr.includes('folder_123') && urlStr.includes('fields=files')) {
+        return new Response(
+          JSON.stringify({
+            files: [
+              { id: 'f_epub', name: 'Livro.epub', mimeType: 'application/epub+zip' },
+              { id: 'f_cover', name: 'cover.webp', mimeType: 'image/webp' },
+            ],
+          }),
+          { status: 200 }
+        )
+      }
+      if (urlStr.includes('f_epub') && urlStr.includes('alt=media')) {
+        return new Response(new Blob(['conteudo-do-epub'], { type: 'application/epub+zip' }), { status: 200 })
+      }
+      if (urlStr.includes('f_cover') && urlStr.includes('alt=media')) {
+        return new Response(new Blob(['conteudo-da-capa'], { type: 'image/webp' }), { status: 200 })
+      }
+      return new Response(JSON.stringify({ files: [] }), { status: 200 })
+    }) as any
+
+    const provider = new GoogleDriveStorageProvider('test-token')
+    const result = await provider.downloadBookFile({ folderId: 'folder_123' })
+
+    expect(result).not.toBeNull()
+    expect(result?.fileName).toBe('Livro.epub')
+    expect(result?.mimeType).toBe('application/epub+zip')
+    expect(result?.coverFileName).toBe('cover.webp')
+  })
+
+  it('OneDriveStorageProvider deve baixar o arquivo e a capa do livro pelo folderId', async () => {
+    global.fetch = vi.fn(async (url: string | URL | Request) => {
+      const urlStr = url.toString()
+      if (urlStr.includes('items/folder_od_1/children')) {
+        return new Response(
+          JSON.stringify({
+            value: [
+              { id: 'od_f_pdf', name: 'Livro.pdf', file: { mimeType: 'application/pdf' } },
+              { id: 'od_f_cover', name: 'cover.webp', file: { mimeType: 'image/webp' } },
+            ],
+          }),
+          { status: 200 }
+        )
+      }
+      if (urlStr.includes('items/od_f_pdf/content')) {
+        return new Response(new Blob(['pdf-bytes'], { type: 'application/pdf' }), { status: 200 })
+      }
+      if (urlStr.includes('items/od_f_cover/content')) {
+        return new Response(new Blob(['cover-bytes'], { type: 'image/webp' }), { status: 200 })
+      }
+      return new Response(JSON.stringify({ value: [] }), { status: 200 })
+    }) as any
+
+    const provider = new OneDriveStorageProvider('test-token')
+    const result = await provider.downloadBookFile({ folderId: 'folder_od_1' })
+
+    expect(result).not.toBeNull()
+    expect(result?.fileName).toBe('Livro.pdf')
+    expect(result?.mimeType).toBe('application/pdf')
+    expect(result?.coverFileName).toBe('cover.webp')
+  })
 })

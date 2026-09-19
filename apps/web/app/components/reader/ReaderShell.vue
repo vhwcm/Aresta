@@ -53,6 +53,7 @@ import { BookOpenIcon, UploadIcon } from 'lucide-vue-next'
 import { useReaderStore } from '~/stores/readerStore'
 import { useUserBooks } from '~/composables/useUserBooks'
 import { useAuth } from '~/composables/useAuth'
+import { useGoogleDriveSync } from '~/composables/useGoogleDriveSync'
 import { createBookDocument } from '~/adapters/BookDocumentFactory'
 
 import { readerProfiler } from '~/utils/readerProfiler'
@@ -200,59 +201,125 @@ const loadBookFromQuery = async () => {
         type = detectFileTypeFromArrayBuffer(localBytes, 'epub')
       }
     } else {
-      // 2. Buscar da API / Network
-      const fileUrl = resolveBookFileUrl(bookId, bookPath)
-      const headers = getAuthHeaders()
-      const response = await readerProfiler.measureAsync('2. Network Fetch do Arquivo', async () => {
-        return await fetch(fileUrl, { headers })
-      }, 'network')
+      // 2. Tentar baixar do Google Drive se conectado ou for livro sincronizado
+      const { isGoogleDriveConnected, downloadBookFromDrive } = useGoogleDriveSync()
+      const folderId = localBookMeta?.filePath?.startsWith('drive:')
+        ? localBookMeta.filePath.replace('drive:', '')
+        : undefined
+      const searchTitle = localBookMeta?.title || (route.query.title as string) || ''
 
-      if (!response.ok) {
-        throw new Error(`Falha ao baixar livro (HTTP ${response.status})`)
+      if (isGoogleDriveConnected.value || folderId) {
+        try {
+          const driveRes = await readerProfiler.measureAsync('2. Download do Livro do Google Drive', async () => {
+            return await downloadBookFromDrive({ folderId, bookTitle: searchTitle })
+          }, 'network')
+
+          if (driveRes && driveRes.blob) {
+            arrayBuffer = await driveRes.blob.arrayBuffer()
+            const mime = driveRes.mimeType || ''
+            if (mime.includes('pdf') || driveRes.fileName.toLowerCase().endsWith('.pdf')) {
+              type = 'pdf'
+            } else if (mime.includes('json') || driveRes.fileName.toLowerCase().endsWith('.json')) {
+              type = 'didactic'
+            } else {
+              type = detectFileTypeFromArrayBuffer(arrayBuffer, 'epub')
+            }
+
+            // Salvar capa se fornecida e não existir localmente
+            if (driveRes.coverBlob && localBookMeta && !localBookMeta.coverPath) {
+              try {
+                const reader = new FileReader()
+                reader.readAsDataURL(driveRes.coverBlob)
+                reader.onloadend = async () => {
+                  const coverDataUrl = reader.result as string
+                  if (coverDataUrl && localBookMeta) {
+                    localBookMeta.coverPath = coverDataUrl
+                    await bookRepo.save(localBookMeta).catch(() => {})
+                  }
+                }
+              } catch {}
+            }
+
+            // Salvar no armazenamento local para futuras leituras offline
+            const mimeToSave = mime || (type === 'pdf' ? 'application/pdf' : 'application/epub+zip')
+            void getBinaryStorage().saveFile(cacheKey, arrayBuffer, mimeToSave)
+            void saveCachedBook(cacheKey, arrayBuffer, title, type)
+          }
+        } catch (driveErr) {
+          console.warn('[ReaderShell] Erro ao baixar livro do Google Drive:', driveErr)
+        }
       }
 
-      // Buscar metadados do livro da API caso tenhamos bookId
-      const fetchedMeta = bookId ? await fetchBookMetadata(bookId) : null
+      // 3. Se ainda não temos o arquivo, buscar da API / Servidor
+      if (!arrayBuffer) {
+        const fileUrl = resolveBookFileUrl(bookId, bookPath)
+        const headers = getAuthHeaders()
+        let response: Response
+        try {
+          response = await readerProfiler.measureAsync('3. Network Fetch do Arquivo', async () => {
+            return await fetch(fileUrl, { headers })
+          }, 'network')
+        } catch (fetchErr: any) {
+          if (localBookMeta || folderId) {
+            throw new Error(
+              'Não foi possível carregar o arquivo do livro. Este livro foi importado em outro dispositivo e não está disponível localmente nem no Google Drive. Conecte sua conta do Google Drive ou envie o arquivo novamente neste dispositivo.'
+            )
+          }
+          throw fetchErr
+        }
 
-      if (fetchedMeta?.title) {
-        title = fetchedMeta.title
+        if (!response.ok) {
+          if (response.status === 404 && (localBookMeta || folderId)) {
+            throw new Error(
+              'Não foi possível encontrar o arquivo do livro. Este livro foi importado em outro dispositivo e ainda não foi sincronizado localmente. Conecte sua conta do Google Drive para baixar seus livros em múltiplos dispositivos ou envie o arquivo novamente.'
+            )
+          }
+          throw new Error(`Falha ao baixar livro (HTTP ${response.status})`)
+        }
+
+        // Buscar metadados do livro da API caso tenhamos bookId
+        const fetchedMeta = bookId ? await fetchBookMetadata(bookId) : null
+
+        if (fetchedMeta?.title) {
+          title = fetchedMeta.title
+        }
+
+        arrayBuffer = await readerProfiler.measureAsync('4. Conversão para ArrayBuffer em Memória', async () => {
+          return await response.arrayBuffer()
+        }, 'io', { byteLength: response.headers.get('content-length') })
+
+        // Detectar formato com prioridade: formatType -> Content-Type -> filePath -> magic bytes
+        const contentType = response.headers.get('content-type') || ''
+        let fallbackType: SupportedFileType = 'epub'
+
+        const metaAny = fetchedMeta as any
+        if (metaAny?.format_type === 'DIDACTIC' || metaAny?.formatType === 'DIDACTIC' || metaAny?.is_ai_generated || metaAny?.isAiGenerated) {
+          fallbackType = 'didactic'
+          type = 'didactic'
+        } else if (contentType.includes('application/pdf')) {
+          fallbackType = 'pdf'
+          type = detectFileTypeFromArrayBuffer(arrayBuffer, fallbackType)
+        } else if (contentType.includes('application/epub+zip')) {
+          fallbackType = 'epub'
+          type = detectFileTypeFromArrayBuffer(arrayBuffer, fallbackType)
+        } else if (contentType.includes('application/json')) {
+          fallbackType = 'didactic'
+          type = 'didactic'
+        } else if (fetchedMeta?.filePath) {
+          fallbackType = fetchedMeta.filePath.toLowerCase().endsWith('.pdf') ? 'pdf' : (fetchedMeta.filePath.includes('didactic') ? 'didactic' : 'epub')
+          type = fallbackType === 'didactic' ? 'didactic' : detectFileTypeFromArrayBuffer(arrayBuffer, fallbackType)
+        } else if (bookPath) {
+          fallbackType = bookPath.toLowerCase().endsWith('.pdf') ? 'pdf' : (bookPath.includes('didactic') ? 'didactic' : 'epub')
+          type = fallbackType === 'didactic' ? 'didactic' : detectFileTypeFromArrayBuffer(arrayBuffer, fallbackType)
+        } else {
+          type = detectFileTypeFromArrayBuffer(arrayBuffer, fallbackType)
+        }
+
+        // Salvar em background no storage manager / IndexedDB para as próximas aberturas serem instantâneas
+        const mimeToSave = contentType || (type === 'pdf' ? 'application/pdf' : (type === 'didactic' ? 'application/json' : 'application/epub+zip'))
+        void getBinaryStorage().saveFile(cacheKey, arrayBuffer, mimeToSave)
+        void saveCachedBook(cacheKey, arrayBuffer, title, type)
       }
-
-      arrayBuffer = await readerProfiler.measureAsync('3. Conversão para ArrayBuffer em Memória', async () => {
-        return await response.arrayBuffer()
-      }, 'io', { byteLength: response.headers.get('content-length') })
-
-      // Detectar formato com prioridade: formatType -> Content-Type -> filePath -> magic bytes
-      const contentType = response.headers.get('content-type') || ''
-      let fallbackType: SupportedFileType = 'epub'
-
-      const metaAny = fetchedMeta as any
-      if (metaAny?.format_type === 'DIDACTIC' || metaAny?.formatType === 'DIDACTIC' || metaAny?.is_ai_generated || metaAny?.isAiGenerated) {
-        fallbackType = 'didactic'
-        type = 'didactic'
-      } else if (contentType.includes('application/pdf')) {
-        fallbackType = 'pdf'
-        type = detectFileTypeFromArrayBuffer(arrayBuffer, fallbackType)
-      } else if (contentType.includes('application/epub+zip')) {
-        fallbackType = 'epub'
-        type = detectFileTypeFromArrayBuffer(arrayBuffer, fallbackType)
-      } else if (contentType.includes('application/json')) {
-        fallbackType = 'didactic'
-        type = 'didactic'
-      } else if (fetchedMeta?.filePath) {
-        fallbackType = fetchedMeta.filePath.toLowerCase().endsWith('.pdf') ? 'pdf' : (fetchedMeta.filePath.includes('didactic') ? 'didactic' : 'epub')
-        type = fallbackType === 'didactic' ? 'didactic' : detectFileTypeFromArrayBuffer(arrayBuffer, fallbackType)
-      } else if (bookPath) {
-        fallbackType = bookPath.toLowerCase().endsWith('.pdf') ? 'pdf' : (bookPath.includes('didactic') ? 'didactic' : 'epub')
-        type = fallbackType === 'didactic' ? 'didactic' : detectFileTypeFromArrayBuffer(arrayBuffer, fallbackType)
-      } else {
-        type = detectFileTypeFromArrayBuffer(arrayBuffer, fallbackType)
-      }
-
-      // Salvar em background no storage manager / IndexedDB para as próximas aberturas serem instantâneas
-      const mimeToSave = contentType || (type === 'pdf' ? 'application/pdf' : (type === 'didactic' ? 'application/json' : 'application/epub+zip'))
-      void getBinaryStorage().saveFile(cacheKey, arrayBuffer, mimeToSave)
-      void saveCachedBook(cacheKey, arrayBuffer, title, type)
     }
 
     store.syncSettings()
