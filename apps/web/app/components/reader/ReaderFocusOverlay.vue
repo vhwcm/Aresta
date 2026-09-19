@@ -2,7 +2,10 @@
   <div
     v-if="store.isFocusMode"
     class="reader-focus-overlay select-none"
-    :class="['reader-focus-overlay--theme-' + store.readerTheme]"
+    :class="[
+      'reader-focus-overlay--theme-' + store.readerTheme,
+      { 'reader-focus-overlay--inactive': isInactive },
+    ]"
     :style="{ pointerEvents: 'auto' }"
     role="region"
     aria-label="Máscara do modo de foco. Clique para avançar para as próximas linhas."
@@ -10,37 +13,45 @@
     @contextmenu.prevent
     @mousedown.prevent
   >
-    <!-- Painel Superior com Desfoque Intenso -->
-    <div
-      class="reader-focus-overlay__pane reader-focus-overlay__pane--top"
-      :style="{
-        height: `${Math.max(0, top)}px`,
-      }"
-    >
-      <div class="reader-focus-overlay__feather reader-focus-overlay__feather--bottom" />
-    </div>
+    <!-- Se estiver inativo (página adjacente totalmente desfocada), exibe painel integral sem corte nem indicador -->
+    <template v-if="isInactive">
+      <div class="reader-focus-overlay__pane reader-focus-overlay__pane--full" />
+    </template>
 
-    <!-- Faixa Central Nítida (Janela de Leitura Ativa) -->
-    <div
-      class="reader-focus-overlay__aperture"
-      :style="{
-        top: `${top}px`,
-        height: `${height}px`,
-      }"
-    >
-      <!-- Indicador visual sutil da linha guia na margem esquerda -->
-      <div class="reader-focus-overlay__guide-marker" />
-    </div>
+    <template v-else>
+      <!-- Painel Superior com Desfoque Intenso -->
+      <div
+        class="reader-focus-overlay__pane reader-focus-overlay__pane--top"
+        :style="{
+          height: `${Math.max(0, top)}px`,
+        }"
+      >
+        <div v-if="top > 0" class="reader-focus-overlay__feather reader-focus-overlay__feather--bottom" />
+      </div>
 
-    <!-- Painel Inferior com Desfoque Intenso -->
-    <div
-      class="reader-focus-overlay__pane reader-focus-overlay__pane--bottom"
-      :style="{
-        top: `${bottom}px`,
-      }"
-    >
-      <div class="reader-focus-overlay__feather reader-focus-overlay__feather--top" />
-    </div>
+      <!-- Faixa Central Nítida (Janela de Leitura Ativa) -->
+      <div
+        v-if="height > 0"
+        class="reader-focus-overlay__aperture"
+        :style="{
+          top: `${top}px`,
+          height: `${height}px`,
+        }"
+      >
+        <!-- Indicador visual sutil da linha guia na margem esquerda -->
+        <div class="reader-focus-overlay__guide-marker" />
+      </div>
+
+      <!-- Painel Inferior com Desfoque Intenso -->
+      <div
+        class="reader-focus-overlay__pane reader-focus-overlay__pane--bottom"
+        :style="{
+          top: `${bottom}px`,
+        }"
+      >
+        <div class="reader-focus-overlay__feather reader-focus-overlay__feather--top" />
+      </div>
+    </template>
   </div>
 </template>
 
@@ -67,8 +78,12 @@ const emit = defineEmits<{
 
 const store = useReaderStore()
 
-const top = computed(() => Math.max(0, Math.round(props.top)))
-const height = computed(() => Math.max(24, Math.round(props.height)))
+const isInactive = computed(() => {
+  return typeof props.height === 'number' && props.height <= 0
+})
+
+const top = computed(() => Math.max(0, Math.round(props.top ?? 0)))
+const height = computed(() => (isInactive.value ? 0 : Math.max(20, Math.round(props.height ?? 0))))
 const bottom = computed(() => {
   if (typeof props.bottom === 'number' && props.bottom > 0) {
     return Math.round(props.bottom)
@@ -105,6 +120,12 @@ function handleAdvance(e: MouseEvent) {
   transition: top 0.22s cubic-bezier(0.16, 1, 0.3, 1),
               height 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   will-change: top, height;
+}
+
+.reader-focus-overlay__pane--full {
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .reader-focus-overlay__pane--top {
