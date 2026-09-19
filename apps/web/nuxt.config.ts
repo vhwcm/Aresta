@@ -88,7 +88,7 @@ export default defineNuxtConfig({
       titleTemplate: 'Aresta',
       meta: [
         { charset: 'utf-8' },
-        { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+        { name: 'viewport', content: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover' },
         {
           name: 'description',
           content: 'Leitor online de EPUB e PDF com retenção de conhecimento via IA.',

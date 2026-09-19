@@ -2,7 +2,7 @@
   <div
     class="min-h-screen text-textPrimary selection:bg-accent/20 transition-all bg-bgPanel"
     :class="[
-      isImmersivePage ? '' : (isCanvasPage ? 'lg:pl-16 md:landscape:pl-16' : 'px-3 sm:px-4 md:px-6 lg:pl-[4.5rem] md:landscape:pl-[4.5rem] pt-2.5 sm:pt-3.5 pb-20 md:pb-24 lg:pb-8 md:landscape:pb-8')
+      isImmersivePage ? '' : (isCanvasPage ? 'lg:pl-16 md:landscape:pl-16' : 'px-3 sm:px-4 md:px-6 lg:pl-[4.5rem] md:landscape:pl-[4.5rem] pt-[max(0.75rem,env(safe-area-inset-top,0px))] pb-[max(5rem,env(safe-area-inset-bottom,0px))] md:pb-24 lg:pb-8 md:landscape:pb-8')
     ]"
   >
     <NuxtLayout>

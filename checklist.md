@@ -2,6 +2,7 @@
 
 
 ## ✅ Concluído
+- [19/09/2026 19:38] [Concluído] Configurar Modo Fullscreen Imersivo Total no Android (SystemBars Hidden, cutout shortEdges e safe-area)
 - [19/09/2026 19:15] [Concluído] Implementar arquitetura de Session Polling por Ticket para OAuth resolvendo autenticação no APK Android e WebView
 - [19/09/2026 18:55] [Concluído] Corrigir travamento infinito no OAuth callback com troca incondicional de token, redundância em localStorage e redirecionamento móvel
 - [19/09/2026 18:50] [Concluído] Configurar regra e automação de tag incremental a cada git push na skill git-commit e AGENTS.md
