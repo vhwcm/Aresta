@@ -56,6 +56,20 @@ function areRectsOnSameLine(
 }
 
 /**
+ * Cache de linhas extraídas por container para evitar reflows síncronos repetidos durante o scroll.
+ */
+const containerLinesCache = new WeakMap<HTMLElement, { lines: FocusLineRect[]; width: number; height: number }>()
+
+/**
+ * Limpa o cache de linhas de um container específico ou permite invalidação.
+ */
+export function invalidateContainerLinesCache(container?: HTMLElement | null) {
+  if (container) {
+    containerLinesCache.delete(container)
+  }
+}
+
+/**
  * Agrupa retângulos de caracteres, palavras, títulos ou imagens em linhas/blocos visuais discretos.
  */
 export function extractLinesFromRects(
@@ -73,12 +87,13 @@ export function extractLinesFromRects(
 
   if (validRects.length === 0) return []
 
-  // Ordena por posição vertical (top) e depois horizontal (left)
+  // Ordenação com relação de ordem estrita e transitiva (O(N log N) estável)
   const sorted = [...validRects].sort((a, b) => {
-    if (areRectsOnSameLine(a, b, tolerance)) {
+    const diffTop = a.top - b.top
+    if (Math.abs(diffTop) <= tolerance) {
       return a.left - b.left
     }
-    return a.top - b.top
+    return diffTop
   })
 
   const lines: FocusLineRect[] = []
@@ -144,6 +159,16 @@ export function extractLinesFromContainer(
   const containerRect = container.getBoundingClientRect()
   if (containerRect.width === 0 || containerRect.height === 0) return []
 
+  // Consulta cache prévio para evitar layout thrashing em repetições de frame
+  const cached = containerLinesCache.get(container)
+  if (
+    cached &&
+    Math.abs(cached.width - containerRect.width) < 2 &&
+    Math.abs(cached.height - containerRect.height) < 2
+  ) {
+    return cached.lines
+  }
+
   const cLeft = containerRect.left
   const cRight = containerRect.right
   const cTop = containerRect.top
@@ -156,7 +181,6 @@ export function extractLinesFromContainer(
   mediaElements.forEach((el) => {
     const rect = el.getBoundingClientRect()
     if (rect.width > 12 && rect.height > 12) {
-      // Garante que o elemento está visível na janela/coluna da página atual
       if (rect.right > cLeft + 4 && rect.left < cRight - 4 && rect.bottom > cTop + 2 && rect.top < cBottom - 2) {
         rawRects.push({
           top: rect.top - cTop + container.scrollTop,
@@ -201,7 +225,9 @@ export function extractLinesFromContainer(
     })
 
     let textNode = walker.nextNode()
-    while (textNode) {
+    let count = 0
+    while (textNode && count < 2500) {
+      count++
       try {
         const range = document.createRange()
         range.selectNodeContents(textNode)
@@ -209,7 +235,6 @@ export function extractLinesFromContainer(
         for (let i = 0; i < clientRects.length; i++) {
           const r = clientRects[i]
           if (r && r.width > 2 && r.height > 2) {
-            // Filtro estrito: apenas retângulos pertencentes à coluna/página visível
             if (r.right > cLeft + 4 && r.left < cRight - 4 && r.bottom > cTop + 2 && r.top < cBottom - 2) {
               rawRects.push({
                 top: r.top - cTop + container.scrollTop,
@@ -245,6 +270,12 @@ export function extractLinesFromContainer(
       })
     }
   }
+
+  containerLinesCache.set(container, {
+    lines,
+    width: containerRect.width,
+    height: containerRect.height,
+  })
 
   return lines
 }

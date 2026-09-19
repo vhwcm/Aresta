@@ -11,7 +11,6 @@
     aria-label="Máscara do modo de foco. Clique para avançar para as próximas linhas."
     @click.stop="handleAdvance"
     @contextmenu.prevent
-    @mousedown.prevent
   >
     <!-- Se estiver inativo (página adjacente totalmente desfocada), exibe painel integral sem corte nem indicador -->
     <template v-if="isInactive">

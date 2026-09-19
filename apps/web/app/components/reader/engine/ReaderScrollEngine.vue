@@ -55,13 +55,6 @@
               :bottom="focusBounds.bottom"
               @advance="handleFocusAdvance"
             />
-            <ReaderFocusOverlay
-              v-else-if="store.isFocusMode"
-              :top="0"
-              :height="0"
-              :bottom="0"
-              @advance="handleFocusAdvance"
-            />
           </template>
 
           <!-- Placeholder suave enquanto não entra na viewport -->
@@ -108,13 +101,6 @@
               :top="focusBounds.top"
               :height="focusBounds.height"
               :bottom="focusBounds.bottom"
-              @advance="handleFocusAdvance"
-            />
-            <ReaderFocusOverlay
-              v-else-if="store.isFocusMode"
-              :top="0"
-              :height="0"
-              :bottom="0"
               @advance="handleFocusAdvance"
             />
           </template>
