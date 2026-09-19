@@ -1,5 +1,7 @@
 import Database from '@tauri-apps/plugin-sql';
 import type { IDatabaseAdapter } from './IDatabaseAdapter';
+import { DexieAdapter } from './DexieAdapter';
+import { InMemoryAdapter } from './InMemoryAdapter';
 import type {
   LocalBook,
   LocalAnnotation,
@@ -17,9 +19,10 @@ import type {
 export class TauriSqliteAdapter implements IDatabaseAdapter {
   private db: Database | null = null;
   private isInitialized = false;
+  private fallbackDexie: DexieAdapter | null = null;
 
   async init(): Promise<void> {
-    if (this.isInitialized && this.db) return;
+    if (this.isInitialized && (this.db || this.fallbackDexie)) return;
     try {
       this.db = await Database.load('sqlite:aresta-reader.db');
       await this.createTables();
@@ -30,8 +33,13 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
         await this.createTables();
         this.isInitialized = true;
       } catch (err2) {
-        console.error('[TauriSqliteAdapter] Erro ao carregar SQLite nativo:', e, err2);
-        throw e;
+        console.warn('[TauriSqliteAdapter] Erro ao carregar SQLite nativo. Ativando fallback resiliente:', e, err2);
+        if (typeof window !== 'undefined' && typeof window.indexedDB !== 'undefined') {
+          this.fallbackDexie = new DexieAdapter();
+        } else {
+          this.fallbackDexie = new InMemoryAdapter() as any;
+        }
+        this.isInitialized = true;
       }
     }
   }
@@ -191,6 +199,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
   // Books
   async getBooks(): Promise<LocalBook[]> {
     await this.init();
+    if (this.fallbackDexie) return this.fallbackDexie.getBooks();
     const rows = await this.db!.select<any[]>('SELECT * FROM books WHERE deleted_at IS NULL ORDER BY updated_at DESC');
     return rows.map((r) => ({
       id: r.id,
@@ -211,6 +220,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
 
   async getBookById(id: number): Promise<LocalBook | null> {
     await this.init();
+    if (this.fallbackDexie) return this.fallbackDexie.getBookById(id);
     const rows = await this.db!.select<any[]>('SELECT * FROM books WHERE id = ? AND deleted_at IS NULL', [id]);
     if (rows.length === 0) return null;
     const r = rows[0];
@@ -233,6 +243,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
 
   async getBookRawById(id: number): Promise<LocalBook | null> {
     await this.init();
+    if (this.fallbackDexie) return (this.fallbackDexie as any).getBookRawById ? (this.fallbackDexie as any).getBookRawById(id) : this.fallbackDexie.getBookById(id);
     const rows = await this.db!.select<any[]>('SELECT * FROM books WHERE id = ?', [Number(id)]);
     if (rows.length === 0) return null;
     const r = rows[0];
@@ -255,6 +266,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
 
   async getBooksRaw(): Promise<LocalBook[]> {
     await this.init();
+    if (this.fallbackDexie) return (this.fallbackDexie as any).getBooksRaw ? (this.fallbackDexie as any).getBooksRaw() : this.fallbackDexie.getBooks();
     const rows = await this.db!.select<any[]>('SELECT * FROM books');
     return rows.map((r) => ({
       id: r.id,
@@ -275,6 +287,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
 
   async saveBook(book: LocalBook): Promise<void> {
     await this.init();
+    if (this.fallbackDexie) return this.fallbackDexie.saveBook(book);
     const cleanId = Number(book.id);
     const existing = await this.getBookRawById(cleanId);
     if (existing?.deleted_at && !book.deleted_at) {
@@ -316,6 +329,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
 
   async deleteBook(id: number): Promise<void> {
     await this.init();
+    if (this.fallbackDexie) return this.fallbackDexie.deleteBook(id);
     const numId = Number(id);
     if (isNaN(numId)) return;
     const now = new Date().toISOString();
@@ -324,12 +338,14 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
 
   async clearBooks(): Promise<void> {
     await this.init();
+    if (this.fallbackDexie) return this.fallbackDexie.clearBooks();
     await this.db!.execute('DELETE FROM books');
   }
 
   // Annotations
   async getAnnotations(filters?: { bookId?: number; themeId?: number }): Promise<LocalAnnotation[]> {
     await this.init();
+    if (this.fallbackDexie) return this.fallbackDexie.getAnnotations(filters);
     let query = 'SELECT * FROM annotations WHERE deleted_at IS NULL';
     const params: any[] = [];
     if (filters?.bookId) {
@@ -364,6 +380,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
 
   async getAnnotationsRaw(): Promise<LocalAnnotation[]> {
     await this.init();
+    if (this.fallbackDexie) return (this.fallbackDexie as any).getAnnotationsRaw ? (this.fallbackDexie as any).getAnnotationsRaw() : this.fallbackDexie.getAnnotations();
     const rows = await this.db!.select<any[]>('SELECT * FROM annotations ORDER BY created_at DESC');
     return rows.map((r) => ({
       id: r.id,
@@ -386,6 +403,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
 
   async getAnnotationById(id: number): Promise<LocalAnnotation | null> {
     await this.init();
+    if (this.fallbackDexie) return this.fallbackDexie.getAnnotationById(id);
     const rows = await this.db!.select<any[]>('SELECT * FROM annotations WHERE id = ? AND deleted_at IS NULL', [id]);
     if (rows.length === 0) return null;
     const r = rows[0];
@@ -410,6 +428,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
 
   async saveAnnotation(annotation: LocalAnnotation): Promise<void> {
     await this.init();
+    if (this.fallbackDexie) return this.fallbackDexie.saveAnnotation(annotation);
     await this.db!.execute(
       `INSERT INTO annotations (id, user_id, book_id, book_title, book_cover, cfi, selected_text, note, chapter_title, progress, themes_json, created_at, updated_at, deleted_at, sync_status)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -450,6 +469,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
 
   async deleteAnnotation(id: number): Promise<void> {
     await this.init();
+    if (this.fallbackDexie) return this.fallbackDexie.deleteAnnotation(id);
     const now = new Date().toISOString();
     await this.db!.execute('UPDATE annotations SET deleted_at = ?, sync_status = "pending", updated_at = ? WHERE id = ?', [now, now, id]);
   }
@@ -457,6 +477,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
   // Flashcards
   async getFlashcards(filters?: { dateStr?: string; onlyDue?: boolean }): Promise<LocalFlashcard[]> {
     await this.init();
+    if (this.fallbackDexie) return this.fallbackDexie.getFlashcards(filters);
     let query = 'SELECT * FROM flashcards WHERE deleted_at IS NULL';
     const params: any[] = [];
     if (filters?.onlyDue) {
@@ -494,6 +515,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
 
   async getFlashcardsRaw(): Promise<LocalFlashcard[]> {
     await this.init();
+    if (this.fallbackDexie) return (this.fallbackDexie as any).getFlashcardsRaw ? (this.fallbackDexie as any).getFlashcardsRaw() : this.fallbackDexie.getFlashcards();
     const rows = await this.db!.select<any[]>('SELECT * FROM flashcards');
     return rows.map((r) => ({
       id: r.id,
@@ -524,6 +546,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
 
   async getFlashcardById(id: number): Promise<LocalFlashcard | null> {
     await this.init();
+    if (this.fallbackDexie) return this.fallbackDexie.getFlashcardById(id);
     const rows = await this.db!.select<any[]>('SELECT * FROM flashcards WHERE id = ? AND deleted_at IS NULL', [id]);
     if (rows.length === 0) return null;
     const r = rows[0];
@@ -556,6 +579,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
 
   async saveFlashcard(flashcard: LocalFlashcard): Promise<void> {
     await this.init();
+    if (this.fallbackDexie) return this.fallbackDexie.saveFlashcard(flashcard);
     await this.db!.execute(
       `INSERT INTO flashcards (id, user_id, annotation_id, book_id, book_title, book_cover, chapter_title, selected_text, note, card_type, question, answer, context_summary, repetition_level, next_review_at, last_reviewed_at, review_count, difficulty, is_reviewed, rating, updated_at, deleted_at, sync_status)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -612,6 +636,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
 
   async deleteFlashcard(id: number): Promise<void> {
     await this.init();
+    if (this.fallbackDexie) return this.fallbackDexie.deleteFlashcard(id);
     const now = new Date().toISOString();
     await this.db!.execute('UPDATE flashcards SET deleted_at = ?, sync_status = "pending", updated_at = ? WHERE id = ?', [now, now, id]);
   }
@@ -619,6 +644,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
   // Canvas
   async getCanvases(): Promise<LocalCanvasItem[]> {
     await this.init();
+    if (this.fallbackDexie) return this.fallbackDexie.getCanvases();
     const rows = await this.db!.select<any[]>('SELECT * FROM canvases WHERE deleted_at IS NULL ORDER BY updated_at DESC');
     return rows.map((r) => ({
       id: r.id,
@@ -635,6 +661,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
 
   async getCanvasesRaw(): Promise<LocalCanvasItem[]> {
     await this.init();
+    if (this.fallbackDexie) return (this.fallbackDexie as any).getCanvasesRaw ? (this.fallbackDexie as any).getCanvasesRaw() : this.fallbackDexie.getCanvases();
     const rows = await this.db!.select<any[]>('SELECT * FROM canvases ORDER BY updated_at DESC');
     return rows.map((r) => ({
       id: r.id,
@@ -651,6 +678,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
 
   async getCanvasById(id: string): Promise<LocalCanvasItem | null> {
     await this.init();
+    if (this.fallbackDexie) return this.fallbackDexie.getCanvasById(id);
     const rows = await this.db!.select<any[]>('SELECT * FROM canvases WHERE id = ? AND deleted_at IS NULL', [id]);
     if (rows.length === 0) return null;
     const r = rows[0];
@@ -669,6 +697,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
 
   async saveCanvas(canvas: LocalCanvasItem): Promise<void> {
     await this.init();
+    if (this.fallbackDexie) return this.fallbackDexie.saveCanvas(canvas);
     await this.db!.execute(
       `INSERT INTO canvases (id, name, description, document_json, node_count, edge_count, updated_at, deleted_at, sync_status)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -697,30 +726,57 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
 
   async deleteCanvas(id: string): Promise<void> {
     await this.init();
+    if (this.fallbackDexie) return this.fallbackDexie.deleteCanvas(id);
     const now = new Date().toISOString();
     await this.db!.execute('UPDATE canvases SET deleted_at = ?, sync_status = "pending", updated_at = ? WHERE id = ?', [now, now, id]);
   }
 
   private async getPersonalRecord<T extends { id: string; deleted_at?: string | null }>(entityType: string, id: string): Promise<T | null> {
     await this.init();
+    if (this.fallbackDexie) {
+      if (entityType === 'note') return this.fallbackDexie.getNoteById(id) as any;
+      if (entityType === 'drawing_note') return this.fallbackDexie.getDrawingNoteById(id) as any;
+      if (entityType === 'settings') return this.fallbackDexie.getSettings() as any;
+    }
     const rows = await this.db!.select<any[]>('SELECT payload_json FROM personal_records WHERE entity_type = ? AND id = ? AND deleted_at IS NULL', [entityType, id]);
     return rows[0] ? JSON.parse(rows[0].payload_json) as T : null;
   }
 
   private async getPersonalRecords<T extends { deleted_at?: string | null }>(entityType: string): Promise<T[]> {
     await this.init();
+    if (this.fallbackDexie) {
+      if (entityType === 'note') return this.fallbackDexie.getNotes() as any;
+      if (entityType === 'drawing_note') return this.fallbackDexie.getDrawingNotes() as any;
+      if (entityType === 'settings') {
+        const s = await this.fallbackDexie.getSettings();
+        return s ? [s as any] : [];
+      }
+    }
     const rows = await this.db!.select<any[]>('SELECT payload_json FROM personal_records WHERE entity_type = ? AND deleted_at IS NULL ORDER BY updated_at DESC', [entityType]);
     return rows.map((row) => JSON.parse(row.payload_json) as T).filter((item) => !item.deleted_at);
   }
 
   private async getPersonalRecordsRaw<T>(entityType: string): Promise<T[]> {
     await this.init();
+    if (this.fallbackDexie) {
+      if (entityType === 'note') return (this.fallbackDexie as any).getNotesRaw ? (this.fallbackDexie as any).getNotesRaw() : this.fallbackDexie.getNotes() as any;
+      if (entityType === 'drawing_note') return (this.fallbackDexie as any).getDrawingNotesRaw ? (this.fallbackDexie as any).getDrawingNotesRaw() : this.fallbackDexie.getDrawingNotes() as any;
+      if (entityType === 'settings') {
+        const s = await this.fallbackDexie.getSettings();
+        return s ? [s as any] : [];
+      }
+    }
     const rows = await this.db!.select<any[]>('SELECT payload_json FROM personal_records WHERE entity_type = ? ORDER BY updated_at DESC', [entityType]);
     return rows.map((row) => JSON.parse(row.payload_json) as T);
   }
 
   private async savePersonalRecord<T extends { id: string; updated_at: string; deleted_at?: string | null }>(entityType: string, item: T): Promise<void> {
     await this.init();
+    if (this.fallbackDexie) {
+      if (entityType === 'note') return this.fallbackDexie.saveNote(item as any);
+      if (entityType === 'drawing_note') return this.fallbackDexie.saveDrawingNote(item as any);
+      if (entityType === 'settings') return this.fallbackDexie.saveSettings(item as any);
+    }
     await this.db!.execute(
       `INSERT INTO personal_records (entity_type, id, payload_json, updated_at, deleted_at) VALUES (?, ?, ?, ?, ?)
        ON CONFLICT(entity_type, id) DO UPDATE SET payload_json = excluded.payload_json, updated_at = excluded.updated_at, deleted_at = excluded.deleted_at`,
@@ -729,6 +785,11 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
   }
 
   private async deletePersonalRecord<T extends { id: string; updated_at: string; deleted_at?: string | null; sync_status: any }>(entityType: string, id: string): Promise<void> {
+    await this.init();
+    if (this.fallbackDexie) {
+      if (entityType === 'note') return this.fallbackDexie.deleteNote(id);
+      if (entityType === 'drawing_note') return this.fallbackDexie.deleteDrawingNote(id);
+    }
     const item = await this.getPersonalRecord<T>(entityType, id);
     if (item) await this.savePersonalRecord(entityType, { ...item, updated_at: new Date().toISOString(), deleted_at: new Date().toISOString(), sync_status: 'pending' });
   }
@@ -749,6 +810,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
   // Streak
   async getStreak(): Promise<LocalStreak | null> {
     await this.init();
+    if (this.fallbackDexie) return this.fallbackDexie.getStreak();
     const rows = await this.db!.select<any[]>('SELECT * FROM streaks WHERE id = "user_streak"');
     if (rows.length === 0) return null;
     const data = JSON.parse(rows[0].payload_json);
@@ -762,6 +824,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
 
   async saveStreak(streak: LocalStreak): Promise<void> {
     await this.init();
+    if (this.fallbackDexie) return this.fallbackDexie.saveStreak(streak);
     const now = new Date().toISOString();
     await this.db!.execute(
       `INSERT INTO streaks (id, payload_json, updated_at)
@@ -776,6 +839,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
   // Mutation Queue
   async getPendingMutations(): Promise<LocalMutation[]> {
     await this.init();
+    if (this.fallbackDexie) return this.fallbackDexie.getPendingMutations();
     const rows = await this.db!.select<any[]>('SELECT * FROM mutation_queue WHERE sync_status = "pending" ORDER BY client_timestamp ASC');
     return rows.map((r) => ({
       id: r.id,
@@ -791,6 +855,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
 
   async enqueueMutation(mutation: LocalMutation): Promise<void> {
     await this.init();
+    if (this.fallbackDexie) return this.fallbackDexie.enqueueMutation(mutation);
     await this.db!.execute(
       `INSERT INTO mutation_queue (id, entity_type, entity_id, action, payload_json, client_timestamp, sync_status, retry_count)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -812,6 +877,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
 
   async markMutationsSynced(ids: string[]): Promise<void> {
     await this.init();
+    if (this.fallbackDexie) return this.fallbackDexie.markMutationsSynced(ids);
     if (ids.length === 0) return;
     const placeholders = ids.map(() => '?').join(',');
     await this.db!.execute(`UPDATE mutation_queue SET sync_status = "synced" WHERE id IN (${placeholders})`, ids);
@@ -819,12 +885,14 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
 
   async clearPendingMutations(): Promise<void> {
     await this.init();
+    if (this.fallbackDexie) return this.fallbackDexie.clearPendingMutations();
     await this.db!.execute('DELETE FROM mutation_queue');
     await this.db!.execute('DELETE FROM personal_records');
   }
 
   async clearAll(): Promise<void> {
     await this.init();
+    if (this.fallbackDexie) return (this.fallbackDexie as any).clearAll ? (this.fallbackDexie as any).clearAll() : undefined;
     await this.db!.execute('DELETE FROM books');
     await this.db!.execute('DELETE FROM annotations');
     await this.db!.execute('DELETE FROM flashcards');
@@ -841,6 +909,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
   // Didactic Booklets
   async getDidacticBooklets(filters?: { bookId?: number; themeId?: number }): Promise<LocalDidacticBooklet[]> {
     await this.init();
+    if (this.fallbackDexie) return this.fallbackDexie.getDidacticBooklets(filters);
     let sql = 'SELECT * FROM didactic_booklets WHERE deleted_at IS NULL';
     const params: any[] = [];
     if (filters?.bookId !== undefined && filters.bookId !== null) {
@@ -872,6 +941,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
 
   async getDidacticBookletsRaw(): Promise<LocalDidacticBooklet[]> {
     await this.init();
+    if (this.fallbackDexie) return (this.fallbackDexie as any).getDidacticBookletsRaw ? (this.fallbackDexie as any).getDidacticBookletsRaw() : this.fallbackDexie.getDidacticBooklets();
     const rows = await this.db!.select<any[]>('SELECT * FROM didactic_booklets ORDER BY created_at DESC');
     return rows.map((r) => ({
       id: r.id,
@@ -892,6 +962,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
 
   async getDidacticBookletById(id: string): Promise<LocalDidacticBooklet | null> {
     await this.init();
+    if (this.fallbackDexie) return this.fallbackDexie.getDidacticBookletById(id);
     const rows = await this.db!.select<any[]>('SELECT * FROM didactic_booklets WHERE id = ? AND deleted_at IS NULL', [id]);
     if (rows.length === 0) return null;
     const r = rows[0];
@@ -914,6 +985,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
 
   async saveDidacticBooklet(booklet: LocalDidacticBooklet): Promise<void> {
     await this.init();
+    if (this.fallbackDexie) return this.fallbackDexie.saveDidacticBooklet(booklet);
     await this.db!.execute(
       `INSERT INTO didactic_booklets
          (id, title, topic, html, markdown, diagram_count, depth_level, book_id, theme_id, created_at, updated_at, deleted_at, sync_status)
@@ -950,6 +1022,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
 
   async deleteDidacticBooklet(id: string): Promise<void> {
     await this.init();
+    if (this.fallbackDexie) return this.fallbackDexie.deleteDidacticBooklet(id);
     const now = new Date().toISOString();
     await this.db!.execute(
       `UPDATE didactic_booklets SET deleted_at = ?, updated_at = ?, sync_status = 'pending' WHERE id = ?`,
@@ -960,6 +1033,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
   // Links
   async getLinks(): Promise<LocalLinkItem[]> {
     await this.init();
+    if (this.fallbackDexie) return this.fallbackDexie.getLinks();
     const rows = await this.db!.select<any[]>('SELECT * FROM links WHERE deleted_at IS NULL ORDER BY updated_at DESC');
     return rows.map((r) => ({
       id: r.id,
@@ -981,6 +1055,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
 
   async getLinksRaw(): Promise<LocalLinkItem[]> {
     await this.init();
+    if (this.fallbackDexie) return (this.fallbackDexie as any).getLinksRaw ? (this.fallbackDexie as any).getLinksRaw() : this.fallbackDexie.getLinks();
     const rows = await this.db!.select<any[]>('SELECT * FROM links');
     return rows.map((r) => ({
       id: r.id,
@@ -1002,6 +1077,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
 
   async getLinkById(id: string): Promise<LocalLinkItem | null> {
     await this.init();
+    if (this.fallbackDexie) return this.fallbackDexie.getLinkById(id);
     const rows = await this.db!.select<any[]>('SELECT * FROM links WHERE id = ? AND deleted_at IS NULL', [id]);
     if (rows.length === 0) return null;
     const r = rows[0];
@@ -1025,6 +1101,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
 
   async saveLink(link: LocalLinkItem): Promise<void> {
     await this.init();
+    if (this.fallbackDexie) return this.fallbackDexie.saveLink(link);
     await this.db!.execute(
       `INSERT INTO links
          (id, url, title, domain, favicon, folder, tags_json, source_note_id, source_canvas_id, created_at, updated_at, deleted_at, sync_status)
@@ -1061,6 +1138,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
 
   async deleteLink(id: string): Promise<void> {
     await this.init();
+    if (this.fallbackDexie) return this.fallbackDexie.deleteLink(id);
     const now = new Date().toISOString();
     await this.db!.execute(
       `UPDATE links SET deleted_at = ?, updated_at = ?, sync_status = 'pending' WHERE id = ?`,
