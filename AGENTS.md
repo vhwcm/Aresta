@@ -70,6 +70,13 @@ Toda alteração em `apps/api/prisma/schema.prisma` **EXIGE OBRIGATORIAMENTE** a
 - Qualquer alteração de schema sem migration SQL quebra o ambiente de produção/deploy.
 - Consultar detalhes e fluxo completo em [.agent/rules/database-migrations.md](file:///c:/Users/vichw/Aresta/.agent/rules/database-migrations.md).
 
+### 3.3. Versionamento Obrigatório de Tags em cada Push
+A cada `git push` realizado para o repositório remoto, é **MANDATÓRIO** criar e enviar uma tag incremental (`v1.0.X` com `+1` no patch ou `+0.1` em relação à última tag):
+- Obter a tag mais recente com `git tag -l "v*" --sort=-v:refname`.
+- Criar a nova tag com `git tag v1.0.X`.
+- Enviar a tag ao remoto com `git push origin v1.0.X` para acionar a pipeline de release de APKs assinados.
+
+
 
 
 

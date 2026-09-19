@@ -35,8 +35,9 @@ Instruções e diretrizes para versionamento, commits e sincronização (push) d
      - `test:` Criação ou ajuste de testes
      - `chore:` Tarefas de manutenção, dependências ou configurações de build
 
-5. **Envio para o Repositório Remoto (Git Push)**:
-   - Após finalizar os commits da tarefa/etapa, envie as alterações para o repositório remoto (`git push`) para manter a branch sincronizada e os commits salvos.
+5. **Envio para o Repositório Remoto e Versionamento de Tags (Git Push & Tag)**:
+   - Após finalizar os commits da tarefa/etapa, crie uma tag incremental (`v1.0.X` ou `+0.1` em relação à última tag existente) e envie para o repositório remoto (`git push origin <branch>` e `git push origin <tag>`).
+   - Isso garante o rastreamento de versões e aciona a compilação/release automática de APKs no CI/CD.
 
 ## Procedimento Passo a Passo
 
@@ -63,9 +64,17 @@ Instruções e diretrizes para versionamento, commits e sincronização (push) d
 5. **Para tarefas grandes, repetir o processo para cada grupo de alterações**:
    - Isole os arquivos de cada parte da tarefa, faça `git add` seletivo e commite individualmente antes de prosseguir para a próxima parte.
 
-6. **Enviar os commits para o repositório remoto**:
+6. **Consultar a última tag e criar a próxima tag incremental**:
    ```bash
-   git push
+   # Obter a última tag
+   git tag -l "v*" --sort=-v:refname
+   # Exemplo: se a última for v1.0.7, a próxima será v1.0.8
+   git tag v1.0.8
+   ```
+
+7. **Enviar os commits e a nova tag para o repositório remoto**:
+   ```bash
+   git push origin main && git push origin v1.0.8
    ```
    *(Caso seja o primeiro push de uma nova branch: `git push -u origin <nome-da-branch>`)*
 
