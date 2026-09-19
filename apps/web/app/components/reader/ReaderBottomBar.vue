@@ -60,14 +60,33 @@
 
     <!-- Grupo 2: Ação de Anotação, Configurações de Leitura & Modos (Mobile: Centro | Tablet/Desktop: Centro) -->
     <div class="flex flex-row md:flex-col items-center gap-1.5 sm:gap-2 md:gap-2.5">
-      <!-- Botão Anotar -->
+      <!-- Botão Anotar (Desativado no Modo Foco) -->
       <button
+        v-if="!store.isFocusMode"
         @click="$emit('openAnnotation')"
         class="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-xl bg-accent text-white hover:bg-accent/90 transition-all shadow-md active:scale-95 group"
         title="Criar anotação nesta página"
         aria-label="Criar anotação"
       >
         <HighlighterIcon class="w-4 h-4 group-hover:scale-110 transition-transform" />
+      </button>
+
+      <!-- Botão Modo de Foco (Leitura por X Linhas) -->
+      <button
+        @click="store.toggleFocusMode()"
+        class="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-xl border transition-all active:scale-95 group relative"
+        :class="store.isFocusMode
+          ? 'bg-accent text-white border-accent shadow-md'
+          : (store.readerTheme === 'sepia'
+            ? 'bg-[#f5eedc] border-[#dfd5c0] text-[#5c4d3c] hover:text-[#2a2521] hover:bg-[#EBE2CE]'
+            : (store.readerTheme === 'white'
+              ? 'bg-gray-100 border-gray-200 text-gray-700 hover:text-black hover:bg-gray-200'
+              : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary hover:bg-white/10'))"
+        :title="store.isFocusMode ? 'Modo de Foco ativado (Clique para desativar)' : 'Ativar Modo de Foco (Leitura por X linhas)'"
+        aria-label="Modo de Foco"
+        id="btn-focus-mode"
+      >
+        <FocusIcon class="w-4 h-4 group-hover:scale-110 transition-transform" :class="{ 'animate-pulse': store.isFocusMode }" />
       </button>
 
       <!-- Botão Aparência & Configurações de Leitura (Fundo, Tipografia, Folhas e Largura) -->
@@ -310,6 +329,50 @@
               </button>
             </div>
           </div>
+
+          <!-- Seção de Leitura Focalizada (Modo Foco) -->
+          <div
+            class="flex flex-col gap-2 pt-2 border-t"
+            :class="store.readerTheme === 'sepia' ? 'border-[#dfd5c0]' : (store.readerTheme === 'white' ? 'border-gray-200' : 'border-white/10')"
+          >
+            <div class="flex items-center justify-between">
+              <span
+                class="text-[11px] font-technical uppercase tracking-wider font-semibold"
+                :class="store.readerTheme === 'sepia' ? 'text-[#786C5E]' : (store.readerTheme === 'white' ? 'text-gray-500' : 'text-textSecondary')"
+              >
+                Modo Foco (X Linhas)
+              </span>
+              <button
+                @click="store.toggleFocusMode()"
+                class="text-[11px] font-semibold px-2 py-0.5 rounded-md border transition-all"
+                :class="store.isFocusMode
+                  ? 'bg-accent text-white border-accent'
+                  : (store.readerTheme === 'sepia' ? 'bg-[#f0e7d3] border-[#dfd5c0] text-[#5c4d3c]' : 'bg-white/5 border-white/10 text-textSecondary')"
+              >
+                {{ store.isFocusMode ? 'Ativo' : 'Inativo' }}
+              </button>
+            </div>
+
+            <!-- Seleção rápida de X linhas -->
+            <div class="grid grid-cols-5 gap-1">
+              <button
+                v-for="count in [1, 2, 3, 4, 5]"
+                :key="'focus-lines-' + count"
+                @click="store.setFocusLineCount(count)"
+                class="flex items-center justify-center py-1 rounded-lg border text-xs font-technical font-semibold transition-all"
+                :class="store.focusLineCount === count
+                  ? 'bg-accent/20 border-accent text-accent font-bold shadow-xs'
+                  : (store.readerTheme === 'sepia'
+                    ? 'bg-[#f0e7d3] border-[#dfd5c0] text-[#5c4d3c] hover:bg-[#ebe0c8]'
+                    : (store.readerTheme === 'white'
+                      ? 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200'
+                      : 'bg-white/5 border-white/10 text-textSecondary hover:text-white'))"
+                :title="`${count} ${count === 1 ? 'linha' : 'linhas'} por bloco`"
+              >
+                {{ count }}L
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -518,6 +581,7 @@ import {
   BookOpenIcon,
   CheckIcon,
   FileTextIcon,
+  FocusIcon,
   HighlighterIcon,
   Maximize2Icon,
   Minimize2Icon,

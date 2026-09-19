@@ -1,0 +1,176 @@
+<template>
+  <div
+    v-if="store.isFocusMode"
+    class="reader-focus-overlay select-none"
+    :class="['reader-focus-overlay--theme-' + store.readerTheme]"
+    :style="{ pointerEvents: 'auto' }"
+    role="region"
+    aria-label="Máscara do modo de foco. Clique para avançar para as próximas linhas."
+    @click.stop="handleAdvance"
+    @contextmenu.prevent
+    @mousedown.prevent
+  >
+    <!-- Painel Superior com Desfoque Intenso -->
+    <div
+      class="reader-focus-overlay__pane reader-focus-overlay__pane--top"
+      :style="{
+        height: `${Math.max(0, top)}px`,
+      }"
+    >
+      <div class="reader-focus-overlay__feather reader-focus-overlay__feather--bottom" />
+    </div>
+
+    <!-- Faixa Central Nítida (Janela de Leitura Ativa) -->
+    <div
+      class="reader-focus-overlay__aperture"
+      :style="{
+        top: `${top}px`,
+        height: `${height}px`,
+      }"
+    >
+      <!-- Indicador visual sutil da linha guia na margem esquerda -->
+      <div class="reader-focus-overlay__guide-marker" />
+    </div>
+
+    <!-- Painel Inferior com Desfoque Intenso -->
+    <div
+      class="reader-focus-overlay__pane reader-focus-overlay__pane--bottom"
+      :style="{
+        top: `${bottom}px`,
+      }"
+    >
+      <div class="reader-focus-overlay__feather reader-focus-overlay__feather--top" />
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { computed } from 'vue'
+import { useReaderStore } from '~/stores/readerStore'
+
+const props = withDefaults(
+  defineProps<{
+    top?: number
+    height?: number
+    bottom?: number
+  }>(),
+  {
+    top: 0,
+    height: 100,
+    bottom: 100,
+  },
+)
+
+const emit = defineEmits<{
+  (_e: 'advance'): void
+}>()
+
+const store = useReaderStore()
+
+const top = computed(() => Math.max(0, Math.round(props.top)))
+const height = computed(() => Math.max(24, Math.round(props.height)))
+const bottom = computed(() => {
+  if (typeof props.bottom === 'number' && props.bottom > 0) {
+    return Math.round(props.bottom)
+  }
+  return top.value + height.value
+})
+
+function handleAdvance(e: MouseEvent) {
+  e.preventDefault()
+  e.stopPropagation()
+  emit('advance')
+}
+</script>
+
+<style scoped>
+.reader-focus-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 28;
+  cursor: pointer;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.reader-focus-overlay__pane {
+  position: absolute;
+  left: 0;
+  right: 0;
+  backdrop-filter: blur(12px) saturate(85%);
+  -webkit-backdrop-filter: blur(12px) saturate(85%);
+  transition: top 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              height 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: top, height;
+}
+
+.reader-focus-overlay__pane--top {
+  top: 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.reader-focus-overlay__pane--bottom {
+  bottom: 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Temas com ajustes de opacidade e matiz */
+.reader-focus-overlay--theme-sepia .reader-focus-overlay__pane {
+  background-color: rgba(245, 238, 220, 0.65);
+}
+
+.reader-focus-overlay--theme-white .reader-focus-overlay__pane {
+  background-color: rgba(255, 255, 255, 0.72);
+}
+
+.reader-focus-overlay--theme-black .reader-focus-overlay__pane {
+  background-color: rgba(18, 18, 20, 0.78);
+  border-color: rgba(255, 255, 255, 0.04);
+}
+
+/* Transições suaves de degradê nas bordas da abertura */
+.reader-focus-overlay__feather {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 14px;
+  pointer-events: none;
+}
+
+.reader-focus-overlay__feather--bottom {
+  bottom: 0;
+  background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.03));
+}
+
+.reader-focus-overlay__feather--top {
+  top: 0;
+  background: linear-gradient(to top, transparent, rgba(0, 0, 0, 0.03));
+}
+
+/* Janela Focal Nítida */
+.reader-focus-overlay__aperture {
+  position: absolute;
+  left: 0;
+  right: 0;
+  transition: top 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              height 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+  box-shadow: 0 0 16px rgba(0, 0, 0, 0.04);
+}
+
+/* Marcador visual na borda esquerda da faixa */
+.reader-focus-overlay__guide-marker {
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 3px;
+  border-top-right-radius: 3px;
+  border-bottom-right-radius: 3px;
+  background-color: var(--color-accent, #6366f1);
+  opacity: 0.75;
+}
+</style>

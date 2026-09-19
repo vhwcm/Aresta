@@ -23,6 +23,9 @@ interface ReaderState {
   isTwoPageMode: boolean
   readerWidthMode: ReaderWidthMode
   isZenMode: boolean
+  isFocusMode: boolean
+  focusLineCount: number
+  focusBlockIndex: number
   fontSize: number
   fontFamily: string
   readerTheme: ReaderColorTheme
@@ -39,9 +42,17 @@ export const useReaderStore = defineStore('reader', {
     let defaultFontFamily = "'Newsreader', Georgia, serif"
     let defaultReaderTheme: ReaderColorTheme = 'sepia'
     let defaultReadingMode: ReadingMode = 'paginated'
+    let defaultFocusLineCount = 3
 
     if (typeof window !== 'undefined') {
       try {
+        const savedFocusLines = localStorage.getItem('aresta_focus_line_count')
+        if (savedFocusLines) {
+          const parsedLines = parseInt(savedFocusLines, 10)
+          if (!isNaN(parsedLines) && parsedLines >= 1 && parsedLines <= 10) {
+            defaultFocusLineCount = parsedLines
+          }
+        }
         const savedTheme = localStorage.getItem('aresta_reader_theme')
         if (savedTheme === 'white' || savedTheme === 'sepia' || savedTheme === 'black') {
           defaultReaderTheme = savedTheme
@@ -113,6 +124,9 @@ export const useReaderStore = defineStore('reader', {
       isTwoPageMode: defaultTwoPageMode,
       readerWidthMode: defaultWidthMode,
       isZenMode: false,
+      isFocusMode: false,
+      focusLineCount: defaultFocusLineCount,
+      focusBlockIndex: 0,
       fontSize: defaultFontSize,
       fontFamily: defaultFontFamily,
       readerTheme: defaultReaderTheme,
@@ -509,6 +523,37 @@ export const useReaderStore = defineStore('reader', {
       this.isZenMode = !this.isZenMode
     },
 
+    setFocusMode(focus: boolean) {
+      this.isFocusMode = focus
+      if (focus) {
+        this.isNotesOpen = false
+        this.isMobileNotesOpen = false
+        this.isGraphOpen = false
+        this.isMobileGraphOpen = false
+        this.focusBlockIndex = 0
+      }
+    },
+
+    toggleFocusMode() {
+      this.setFocusMode(!this.isFocusMode)
+    },
+
+    setFocusLineCount(lines: number) {
+      const clamped = Math.max(1, Math.min(10, Math.round(lines)))
+      this.focusLineCount = clamped
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('aresta_focus_line_count', String(clamped))
+        } catch {
+          /* ignorar */
+        }
+      }
+    },
+
+    setFocusBlockIndex(index: number) {
+      this.focusBlockIndex = Math.max(0, index)
+    },
+
     setLoading(loading: boolean) {
       this.isLoading = loading
     },
@@ -605,6 +650,8 @@ export const useReaderStore = defineStore('reader', {
       this.isGraphOpen = false
       this.isMobileGraphOpen = false
       this.isZenMode = false
+      this.isFocusMode = false
+      this.focusBlockIndex = 0
     },
   },
 })

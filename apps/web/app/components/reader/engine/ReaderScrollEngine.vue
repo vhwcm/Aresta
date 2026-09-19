@@ -47,6 +47,21 @@
               class="scroll-page-text-layer"
               @click="handleHighlightClick"
             />
+            <!-- Máscara do Modo de Foco no PDF Scroll -->
+            <ReaderFocusOverlay
+              v-if="store.isFocusMode && store.currentPage === pageNum"
+              :top="focusBounds.top"
+              :height="focusBounds.height"
+              :bottom="focusBounds.bottom"
+              @advance="handleFocusAdvance"
+            />
+            <ReaderFocusOverlay
+              v-else-if="store.isFocusMode"
+              :top="0"
+              :height="0"
+              :bottom="0"
+              @advance="handleFocusAdvance"
+            />
           </template>
 
           <!-- Placeholder suave enquanto não entra na viewport -->
@@ -87,6 +102,21 @@
             class="scroll-section-content"
             @click="handleHighlightClick"
           />
+          <!-- Máscara do Modo de Foco no EPUB Contínuo -->
+          <ReaderFocusOverlay
+            v-if="store.isFocusMode && currentFocusedSection === sectionIdx - 1"
+            :top="focusBounds.top"
+            :height="focusBounds.height"
+            :bottom="focusBounds.bottom"
+            @advance="handleFocusAdvance"
+          />
+          <ReaderFocusOverlay
+            v-else-if="store.isFocusMode"
+            :top="0"
+            :height="0"
+            :bottom="0"
+            @advance="handleFocusAdvance"
+          />
           <div
             v-else
             class="scroll-section-placeholder min-h-[300px] flex items-center justify-center opacity-30 select-none text-xs font-technical"
@@ -126,6 +156,8 @@ import { useReaderStore } from '~/stores/readerStore'
 import { useReaderScroll } from '~/composables/reader/useReaderScroll'
 import { useAnnotations } from '~/composables/useAnnotations'
 import { applyPageHighlights } from '~/utils/readerHighlight'
+import { useReaderFocus } from '~/composables/reader/useReaderFocus'
+import ReaderFocusOverlay from '~/components/reader/ReaderFocusOverlay.vue'
 
 const emit = defineEmits<{
   (_e: 'select-annotation', _annotationId: number): void
@@ -532,6 +564,127 @@ watch(
   },
 )
 
+// ================= MODO DE FOCO (LEITURA POR LINHAS EM SCROLL) =================
+const currentFocusedSection = ref(0)
+
+const focusController = useReaderFocus({
+  onNextPage: async () => {
+    if (isPdfDocument.value) {
+      if (store.currentPage < (store.totalPages || 1)) {
+        const nextP = store.currentPage + 1
+        store.goToPage(nextP)
+        scrollToPage(nextP)
+        await nextTick()
+        refreshFocusLines()
+      }
+    } else if (isEpubContinuous.value) {
+      if (currentFocusedSection.value < sectionCount.value - 1) {
+        currentFocusedSection.value++
+        const secSlot = sectionSlotElements.get(currentFocusedSection.value)
+        if (secSlot) {
+          secSlot.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }
+        await nextTick()
+        refreshFocusLines()
+      }
+    }
+  },
+  onPrevPage: async () => {
+    if (isPdfDocument.value) {
+      if (store.currentPage > 1) {
+        const prevP = store.currentPage - 1
+        store.goToPage(prevP)
+        scrollToPage(prevP)
+        await nextTick()
+        refreshFocusLines()
+      }
+    } else if (isEpubContinuous.value) {
+      if (currentFocusedSection.value > 0) {
+        currentFocusedSection.value--
+        const secSlot = sectionSlotElements.get(currentFocusedSection.value)
+        if (secSlot) {
+          secSlot.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }
+        await nextTick()
+        refreshFocusLines()
+      }
+    }
+  },
+})
+
+const focusBounds = computed(() => focusController.focusBounds.value)
+const focusProgressLabel = computed(() => focusController.progressLabel.value)
+
+function getActiveFocusContainer(): HTMLElement | null {
+  if (isPdfDocument.value) {
+    return textLayerElements.get(store.currentPage) || slotElements.get(store.currentPage) || null
+  } else if (isEpubContinuous.value) {
+    return sectionContentElements.get(currentFocusedSection.value) || sectionSlotElements.get(currentFocusedSection.value) || null
+  }
+  return textLayerElements.get(store.currentPage) || null
+}
+
+function refreshFocusLines() {
+  const container = getActiveFocusContainer()
+  if (container) {
+    focusController.refreshLines(container)
+  }
+}
+
+async function focusNext(): Promise<{ transitionedPage: boolean }> {
+  const res = await focusController.nextBlock()
+  if (!res.transitionedPage && containerRef.value) {
+    await nextTick()
+    const container = getActiveFocusContainer()
+    if (container) {
+      const containerRect = container.getBoundingClientRect()
+      const viewportHeight = containerRef.value.clientHeight
+      const apertureBottom = containerRect.top + focusBounds.value.bottom
+
+      if (apertureBottom > viewportHeight * 0.75) {
+        containerRef.value.scrollBy({
+          top: focusBounds.value.height * 1.5,
+          behavior: 'smooth',
+        })
+      }
+    }
+  }
+  return res
+}
+
+async function focusPrev(): Promise<{ transitionedPage: boolean }> {
+  const res = await focusController.prevBlock()
+  if (!res.transitionedPage && containerRef.value) {
+    await nextTick()
+    const container = getActiveFocusContainer()
+    if (container) {
+      const containerRect = container.getBoundingClientRect()
+      const apertureTop = containerRect.top + focusBounds.value.top
+      if (apertureTop < 100) {
+        containerRef.value.scrollBy({
+          top: -(focusBounds.value.height * 1.5),
+          behavior: 'smooth',
+        })
+      }
+    }
+  }
+  return res
+}
+
+function handleFocusAdvance() {
+  void focusNext()
+}
+
+watch(
+  [() => store.isFocusMode, () => store.focusLineCount, () => store.currentPage],
+  async ([isFocus]) => {
+    if (isFocus) {
+      await nextTick()
+      refreshFocusLines()
+    }
+  },
+)
+
 onMounted(async () => {
   initObservers()
   await nextTick()
@@ -539,6 +692,9 @@ onMounted(async () => {
   // Se já houver página definida, rola até ela
   if (store.currentPage && store.currentPage > 1) {
     scrollToPage(store.currentPage, 'auto')
+  }
+  if (store.isFocusMode) {
+    refreshFocusLines()
   }
 })
 
@@ -553,6 +709,9 @@ onUnmounted(() => {
 
 defineExpose({
   scrollToPage,
+  focusNext,
+  focusPrev,
+  focusProgressLabel,
 })
 </script>
 

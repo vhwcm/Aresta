@@ -65,6 +65,21 @@
               class="page-text-layer page-text-layer--left"
               @click="handleHighlightClick"
             />
+            <!-- Máscara de Modo de Foco na Folha Esquerda -->
+            <ReaderFocusOverlay
+              v-if="store.isFocusMode && focusPageSide === 'left'"
+              :top="focusBoundsLeft.top"
+              :height="focusBoundsLeft.height"
+              :bottom="focusBoundsLeft.bottom"
+              @advance="handleFocusAdvance"
+            />
+            <ReaderFocusOverlay
+              v-else-if="store.isFocusMode && focusPageSide === 'right'"
+              :top="0"
+              :height="0"
+              :bottom="0"
+              @advance="handleFocusAdvance"
+            />
             <!-- Sombra suave projetada quando a folha gira sobre a esquerda -->
             <div
               class="page-underlying-shadow page-underlying-shadow--left"
@@ -96,6 +111,21 @@
               ref="baseRightTextLayerRef"
               class="page-text-layer page-text-layer--right"
               @click="handleHighlightClick"
+            />
+            <!-- Máscara de Modo de Foco na Folha Direita -->
+            <ReaderFocusOverlay
+              v-if="store.isFocusMode && focusPageSide === 'right'"
+              :top="focusBoundsRight.top"
+              :height="focusBoundsRight.height"
+              :bottom="focusBoundsRight.bottom"
+              @advance="handleFocusAdvance"
+            />
+            <ReaderFocusOverlay
+              v-else-if="store.isFocusMode && focusPageSide === 'left'"
+              :top="0"
+              :height="0"
+              :bottom="0"
+              @advance="handleFocusAdvance"
             />
             <!-- Sombra suave projetada quando a folha gira sobre a direita -->
             <div
@@ -163,6 +193,14 @@
               ref="baseSingleTextLayerRef"
               class="page-text-layer page-text-layer--single"
               @click="handleHighlightClick"
+            />
+            <!-- Máscara de Modo de Foco na Folha Única -->
+            <ReaderFocusOverlay
+              v-if="store.isFocusMode"
+              :top="focusBoundsSingle.top"
+              :height="focusBoundsSingle.height"
+              :bottom="focusBoundsSingle.bottom"
+              @advance="handleFocusAdvance"
             />
             <div
               class="page-underlying-shadow"
@@ -235,6 +273,8 @@ import { rasterizeElementToCanvas, drawPlainTextToCanvas, applyThemeToCanvas } f
 import type { PageTurnDirection, DragPoint } from '~/interfaces/reader/types'
 import { useAnnotations } from '~/composables/useAnnotations'
 import { applyPageHighlights } from '~/utils/readerHighlight'
+import { useReaderFocus } from '~/composables/reader/useReaderFocus'
+import ReaderFocusOverlay from '~/components/reader/ReaderFocusOverlay.vue'
 
 const emit = defineEmits<{
   (_e: 'transition-state', _isTransitioning: boolean): void
@@ -292,6 +332,89 @@ const baseRightTextLayerRef = ref<HTMLElement | null>(null)
 const baseSingleCanvasRef = ref<HTMLCanvasElement | null>(null)
 const baseSingleTextLayerRef = ref<HTMLElement | null>(null)
 const offscreenPageRef = ref<HTMLElement | null>(null)
+
+// ================= MODO DE FOCO (LEITURA POR LINHAS) =================
+const focusPageSide = ref<'left' | 'right'>('left')
+
+const focusSingle = useReaderFocus({
+  containerRef: baseSingleTextLayerRef,
+  onNextPage: () => requestTurn('next'),
+  onPrevPage: () => requestTurn('previous'),
+})
+
+const focusLeft = useReaderFocus({
+  containerRef: baseLeftTextLayerRef,
+  onNextPage: () => {
+    focusPageSide.value = 'right'
+    store.setFocusBlockIndex(0)
+    focusRight.refreshLines(baseRightTextLayerRef.value)
+  },
+  onPrevPage: () => requestTurn('previous'),
+})
+
+const focusRight = useReaderFocus({
+  containerRef: baseRightTextLayerRef,
+  onNextPage: () => {
+    focusPageSide.value = 'left'
+    store.setFocusBlockIndex(0)
+    void requestTurn('next')
+  },
+  onPrevPage: () => {
+    focusPageSide.value = 'left'
+    const leftLineCount = focusLeft.lines.value.length
+    store.setFocusBlockIndex(Math.max(0, leftLineCount - store.focusLineCount))
+  },
+})
+
+const focusBoundsSingle = computed(() => focusSingle.focusBounds.value)
+const focusBoundsLeft = computed(() => focusLeft.focusBounds.value)
+const focusBoundsRight = computed(() => focusRight.focusBounds.value)
+
+function refreshFocusLines() {
+  if (pageLayout.value.isTwoPage) {
+    if (baseLeftTextLayerRef.value) focusLeft.refreshLines(baseLeftTextLayerRef.value)
+    if (baseRightTextLayerRef.value) focusRight.refreshLines(baseRightTextLayerRef.value)
+  } else {
+    if (baseSingleTextLayerRef.value) focusSingle.refreshLines(baseSingleTextLayerRef.value)
+  }
+}
+
+function handleFocusAdvance() {
+  void focusNext()
+}
+
+async function focusNext(): Promise<{ transitionedPage: boolean }> {
+  if (pageLayout.value.isTwoPage) {
+    if (focusPageSide.value === 'left') {
+      return await focusLeft.nextBlock()
+    } else {
+      return await focusRight.nextBlock()
+    }
+  } else {
+    return await focusSingle.nextBlock()
+  }
+}
+
+async function focusPrev(): Promise<{ transitionedPage: boolean }> {
+  if (pageLayout.value.isTwoPage) {
+    if (focusPageSide.value === 'right') {
+      return await focusRight.prevBlock()
+    } else {
+      return await focusLeft.prevBlock()
+    }
+  } else {
+    return await focusSingle.prevBlock()
+  }
+}
+
+const focusProgressLabel = computed(() => {
+  if (pageLayout.value.isTwoPage) {
+    return focusPageSide.value === 'left'
+      ? `Esq: ${focusLeft.progressLabel.value}`
+      : `Dir: ${focusRight.progressLabel.value}`
+  }
+  return focusSingle.progressLabel.value
+})
 
 // Canvases Offscreen para Texturização WebGL
 let frontOffscreenCanvas: HTMLCanvasElement | null = null
@@ -798,6 +921,7 @@ async function renderCurrentSpread(pageOverride?: number): Promise<void> {
     )
   }
 
+  refreshFocusLines()
   void prewarm3DTextures('next')
 }
 
@@ -1003,7 +1127,7 @@ function isInteractiveTextTarget(target: EventTarget | null, clientX?: number, c
 }
 
 async function onPointerDown(event: PointerEvent) {
-  if (!pageAnimationEnabled.value || event.button !== 0 || !stageRef.value || physics.isAnimating.value) return
+  if (store.isFocusMode || !pageAnimationEnabled.value || event.button !== 0 || !stageRef.value || physics.isAnimating.value) return
 
   const direction = getTurnZone(event)
   if (!direction) return
@@ -1304,9 +1428,22 @@ watch(
   { deep: true },
 )
 
+watch(
+  [() => store.isFocusMode, () => store.focusLineCount],
+  ([isFocus]) => {
+    if (isFocus) {
+      focusPageSide.value = 'left'
+      refreshFocusLines()
+    }
+  },
+)
+
 defineExpose({
   next: () => requestTurn('next'),
   previous: () => requestTurn('previous'),
+  focusNext,
+  focusPrev,
+  focusProgressLabel,
   renderCurrentSpread,
   refreshHighlights: refreshCurrentHighlights,
 })

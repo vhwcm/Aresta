@@ -244,6 +244,14 @@
       :parent-book-title="store.title"
       @close="isCreateBookletModalOpen = false"
     />
+
+    <!-- HUD Flutuante do Modo de Foco -->
+    <ReaderFocusHUD
+      v-if="store.isFocusMode"
+      :progress-label="focusProgressLabelComputed"
+      @next="handleFocusNext"
+      @prev="handleFocusPrev"
+    />
   </div>
 </template>
 
@@ -265,6 +273,7 @@ import ReaderSelectionTooltip from '~/components/reader/ReaderSelectionTooltip.v
 import ReaderDictionaryCard from '~/components/reader/ReaderDictionaryCard.vue'
 import ReaderAiOverlayCard from '~/components/reader/ReaderAiOverlayCard.vue'
 import ReaderCreateBookletModal from '~/components/reader/ReaderCreateBookletModal.vue'
+import ReaderFocusHUD from '~/components/reader/ReaderFocusHUD.vue'
 import { getApiBase } from '~/utils/apiBase'
 
 const store = useReaderStore()
@@ -413,7 +422,33 @@ function getTargetPageFromSelection(selection: Selection): number {
   return store.currentPage
 }
 
+// ================= CONTROLES DO MODO DE FOCO =================
+async function handleFocusNext() {
+  if (store.readingMode !== 'scroll') {
+    await (pageRenderer.value as any)?.focusNext?.()
+  } else {
+    await (scrollRenderer.value as any)?.focusNext?.()
+  }
+}
+
+async function handleFocusPrev() {
+  if (store.readingMode !== 'scroll') {
+    await (pageRenderer.value as any)?.focusPrev?.()
+  } else {
+    await (scrollRenderer.value as any)?.focusPrev?.()
+  }
+}
+
+const focusProgressLabelComputed = computed(() => {
+  if (store.readingMode !== 'scroll') {
+    return (pageRenderer.value as any)?.focusProgressLabel || ''
+  } else {
+    return (scrollRenderer.value as any)?.focusProgressLabel || ''
+  }
+})
+
 async function handleOpenAnnotation() {
+  if (store.isFocusMode) return
   isSelectionTooltipVisible.value = false
   const selection = typeof window !== 'undefined' ? window.getSelection() : null
   const selectedStr = selection?.toString()?.trim() || ''
@@ -442,8 +477,10 @@ async function handleOpenAnnotation() {
 
 function handleTextSelectionCheck() {
   if (typeof window === 'undefined') return
-  if (isAnnotationModalOpen.value || isCreateBookletModalOpen.value) {
+  if (store.isFocusMode || isAnnotationModalOpen.value || isCreateBookletModalOpen.value) {
     isSelectionTooltipVisible.value = false
+    isDictionaryCardVisible.value = false
+    isAiOverlayVisible.value = false
     return
   }
   const selection = window.getSelection()
@@ -625,6 +662,7 @@ function handleAnnotationCreated() {
 }
 
 function handleHighlightSelected(annotationId: number) {
+  if (store.isFocusMode) return
   const ann = (annotations.value || []).find((a: any) => a.id === annotationId)
   if (ann?.note) {
     try {
@@ -744,6 +782,11 @@ function onKeyDown(event: KeyboardEvent) {
   if (!store.hasDocument || isTransitioning.value || isTextInput(event.target)) return
 
   if (event.key === 'Escape') {
+    if (store.isFocusMode) {
+      event.preventDefault()
+      store.setFocusMode(false)
+      return
+    }
     if (isAnnotationModalOpen.value) {
       isAnnotationModalOpen.value = false
       return
@@ -781,6 +824,27 @@ function onKeyDown(event: KeyboardEvent) {
       exitZenMode()
       return
     }
+  }
+
+  // Atalhos em Modo de Foco
+  if (store.isFocusMode) {
+    if (event.key === ' ' || event.key === 'ArrowDown' || event.key === 'j' || event.key === 'J' || event.key === 'Enter') {
+      event.preventDefault()
+      void handleFocusNext()
+      return
+    }
+    if (event.key === 'ArrowUp' || event.key === 'k' || event.key === 'K') {
+      event.preventDefault()
+      void handleFocusPrev()
+      return
+    }
+  }
+
+  // Atalho 'f' ou 'F' para alternar Modo de Foco
+  if ((event.key === 'f' || event.key === 'F') && !event.ctrlKey && !event.metaKey && !event.altKey) {
+    event.preventDefault()
+    store.toggleFocusMode()
+    return
   }
 
   // Atalho 'z' ou 'Z' para alternar Modo Zen
