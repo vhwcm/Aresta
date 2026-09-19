@@ -393,6 +393,11 @@ async function renderTextLayer(pageNum: number, textLayerEl: HTMLElement) {
     if (annotations.value.length > 0) {
       applyPageHighlights(pageNum, textLayerEl, annotations.value)
     }
+
+    if (store.isFocusMode && isPdfDocument.value && pageNum === store.currentPage) {
+      await nextTick()
+      refreshFocusLines()
+    }
   } catch {
     // ignorar erro
   }
@@ -410,6 +415,11 @@ async function renderEpubSection(sectionIdx: number, container: HTMLElement) {
     const pageNum = getPageForSection(sectionIdx)
     if (annotations.value.length > 0) {
       applyPageHighlights(pageNum, container, annotations.value)
+    }
+
+    if (store.isFocusMode && isEpubContinuous.value && sectionIdx === currentFocusedSection.value) {
+      await nextTick()
+      refreshFocusLines()
     }
   } catch {
     // ignorar erro
@@ -508,6 +518,13 @@ function initObservers() {
           if (!isNaN(pageNum)) {
             onPageVisible(pageNum)
           }
+          const secIdx = Number(entry.target.getAttribute('data-section-index'))
+          if (!isNaN(secIdx) && secIdx !== currentFocusedSection.value) {
+            currentFocusedSection.value = secIdx
+            if (store.isFocusMode) {
+              refreshFocusLines()
+            }
+          }
         }
       }
     },
@@ -574,6 +591,7 @@ const focusController = useReaderFocus({
       if (store.currentPage < (store.totalPages || 1)) {
         const nextP = store.currentPage + 1
         store.goToPage(nextP)
+        store.setFocusBlockIndex(0)
         scrollToPage(nextP)
         await nextTick()
         refreshFocusLines()
@@ -581,6 +599,7 @@ const focusController = useReaderFocus({
     } else if (isEpubContinuous.value) {
       if (currentFocusedSection.value < sectionCount.value - 1) {
         currentFocusedSection.value++
+        store.setFocusBlockIndex(0)
         const secSlot = sectionSlotElements.get(currentFocusedSection.value)
         if (secSlot) {
           secSlot.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -598,16 +617,20 @@ const focusController = useReaderFocus({
         scrollToPage(prevP)
         await nextTick()
         refreshFocusLines()
+        const prevLineCount = focusController.lines.value.length
+        store.setFocusBlockIndex(Math.max(0, prevLineCount - store.focusLineCount))
       }
     } else if (isEpubContinuous.value) {
       if (currentFocusedSection.value > 0) {
         currentFocusedSection.value--
         const secSlot = sectionSlotElements.get(currentFocusedSection.value)
         if (secSlot) {
-          secSlot.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          secSlot.scrollIntoView({ behavior: 'smooth', block: 'end' })
         }
         await nextTick()
         refreshFocusLines()
+        const prevLineCount = focusController.lines.value.length
+        store.setFocusBlockIndex(Math.max(0, prevLineCount - store.focusLineCount))
       }
     }
   },
@@ -618,11 +641,11 @@ const focusProgressLabel = computed(() => focusController.progressLabel.value)
 
 function getActiveFocusContainer(): HTMLElement | null {
   if (isPdfDocument.value) {
-    return textLayerElements.get(store.currentPage) || slotElements.get(store.currentPage) || null
+    return slotElements.get(store.currentPage) || textLayerElements.get(store.currentPage) || null
   } else if (isEpubContinuous.value) {
-    return sectionContentElements.get(currentFocusedSection.value) || sectionSlotElements.get(currentFocusedSection.value) || null
+    return sectionSlotElements.get(currentFocusedSection.value) || sectionContentElements.get(currentFocusedSection.value) || null
   }
-  return textLayerElements.get(store.currentPage) || null
+  return slotElements.get(store.currentPage) || null
 }
 
 function refreshFocusLines() {
@@ -639,12 +662,14 @@ async function focusNext(): Promise<{ transitionedPage: boolean }> {
     const container = getActiveFocusContainer()
     if (container) {
       const containerRect = container.getBoundingClientRect()
-      const viewportHeight = containerRef.value.clientHeight
-      const apertureBottom = containerRect.top + focusBounds.value.bottom
+      const viewportRect = containerRef.value.getBoundingClientRect()
+      const apertureTopViewport = containerRect.top + focusBounds.value.top - viewportRect.top
+      const apertureBottomViewport = containerRect.top + focusBounds.value.bottom - viewportRect.top
 
-      if (apertureBottom > viewportHeight * 0.75) {
+      if (apertureBottomViewport > viewportRect.height * 0.70) {
+        const delta = apertureTopViewport - viewportRect.height * 0.35
         containerRef.value.scrollBy({
-          top: focusBounds.value.height * 1.5,
+          top: delta,
           behavior: 'smooth',
         })
       }
@@ -660,10 +685,13 @@ async function focusPrev(): Promise<{ transitionedPage: boolean }> {
     const container = getActiveFocusContainer()
     if (container) {
       const containerRect = container.getBoundingClientRect()
-      const apertureTop = containerRect.top + focusBounds.value.top
-      if (apertureTop < 100) {
+      const viewportRect = containerRef.value.getBoundingClientRect()
+      const apertureTopViewport = containerRect.top + focusBounds.value.top - viewportRect.top
+
+      if (apertureTopViewport < viewportRect.height * 0.15) {
+        const delta = apertureTopViewport - viewportRect.height * 0.35
         containerRef.value.scrollBy({
-          top: -(focusBounds.value.height * 1.5),
+          top: delta,
           behavior: 'smooth',
         })
       }
@@ -680,6 +708,12 @@ watch(
   [() => store.isFocusMode, () => store.focusLineCount, () => store.currentPage],
   async ([isFocus]) => {
     if (isFocus) {
+      if (isEpubContinuous.value && typeof (store.document as any)?.getSectionForPage === 'function') {
+        const sec = (store.document as any).getSectionForPage(store.currentPage)
+        if (typeof sec === 'number' && sec >= 0 && sec !== currentFocusedSection.value) {
+          currentFocusedSection.value = sec
+        }
+      }
       await nextTick()
       refreshFocusLines()
     }
