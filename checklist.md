@@ -2,6 +2,7 @@
 
 
 ## ✅ Concluído
+- [19/09/2026 18:46] [Concluído] Intensificar desfoque e opacidade da máscara do modo de foco e cobrir seções adjacentes no scroll
 - [19/09/2026 18:45] [Concluído] Implementar gatilho dinâmico de sincronização e atualização em tempo real para o Grafo de Conhecimento e Canvas
 - [19/09/2026 18:44] [Concluído] Integrar timer de leitura no leitor (Viewer) e cálculo reativo de tempo para incremento da ofensiva (streak)
 
