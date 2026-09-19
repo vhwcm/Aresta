@@ -1,7 +1,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
-- [19/09/2026 12:35] [Concluído] Aprimorar precisão de linhas de foco, altura dinâmica para títulos e exibição integral de imagens
+- [19/09/2026 12:36] [Concluído] Corrigir template condicional no fluxo EPUB contínuo eliminando placeholders indevidos durante leitura
 - [19/09/2026 12:31] [Concluído] Eliminar linha errônea e abertura fantasma no painel de foco inativo da página adjacente
 - [19/09/2026 12:24] [Concluído] Implementar Modo de Foco de leitura por X linhas para PDF e EPUB com máscara de desfoque e bloqueio de anotações e IA
 - [18/09/2026 19:33] [Concluído] Implementar arquitetura de tombstones e consultas raw para prevenir ressurreição de dados deletados na sincronização do Google Drive
