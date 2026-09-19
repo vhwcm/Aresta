@@ -210,7 +210,7 @@ export function rasterizeElementToCanvas(
   options?: RasterizeOptions,
 ): boolean {
   if (!targetCanvas) return false
-  const dpr = typeof window !== 'undefined' ? Math.max(2, Math.min(window.devicePixelRatio || 1, 3)) : 2
+  const dpr = typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 2) : 1
   const renderW = Math.round(width * dpr)
   const renderH = Math.round(height * dpr)
 
@@ -233,9 +233,6 @@ export function rasterizeElementToCanvas(
   if (pdfCanvasEl && pdfCanvasEl.width > 0 && pdfCanvasEl.height > 0) {
     try {
       ctx.drawImage(pdfCanvasEl, 0, 0, renderW, renderH)
-      if (theme === 'sepia' || theme === 'black') {
-        applyThemeToCanvas(ctx, renderW, renderH, theme)
-      }
       return true
     } catch {
       // continua para fallback de texto se drawImage falhar

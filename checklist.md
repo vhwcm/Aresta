@@ -2,6 +2,7 @@
 
 
 ## ✅ Concluído
+- [19/09/2026 20:18] [Concluído] Corrigir escala e corte vertical do PDF no leitor e unificar renderização idêntica entre virada 3D e posição de repouso
 - [19/09/2026 20:07] [Concluído] Configurar ACL e capabilities do Tauri v2 para plugin SQL, FS e Dialog resolvendo erro de permissão no APK e Desktop
 - [19/09/2026 19:43] [Concluído] Eliminar dependência externa de CDN para o worker e fontes do PDF.js com assets locais e criar skill de prevenção
 - [19/09/2026 19:38] [Concluído] Configurar Modo Fullscreen Imersivo Total no Android (SystemBars Hidden, cutout shortEdges e safe-area)

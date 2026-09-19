@@ -649,7 +649,7 @@ async function renderPageToCanvasTexture(
   visibleSourceEl?: HTMLElement | null,
   pdfCanvas?: HTMLCanvasElement | null,
 ): Promise<void> {
-  const dpr = typeof window !== 'undefined' ? Math.max(2, Math.min(window.devicePixelRatio || 1, 3)) : 2
+  const dpr = typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 2) : 1
   const renderW = Math.round(width * dpr)
   const renderH = Math.round(height * dpr)
 
@@ -676,9 +676,6 @@ async function renderPageToCanvasTexture(
     if (pdfCanvas && pdfCanvas.width > 0 && pdfCanvas.height > 0) {
       try {
         ctx.drawImage(pdfCanvas, 0, 0, renderW, renderH)
-        if (theme === 'sepia' || theme === 'black') {
-          applyThemeToCanvas(ctx, renderW, renderH, theme)
-        }
         return
       } catch {
         // continua para renderização vetorial do PDF
@@ -1649,15 +1646,6 @@ defineExpose({
   pointer-events: none;
   width: 100%;
   height: 100%;
-}
-
-.theme-sepia .page-pdf-canvas {
-  mix-blend-mode: multiply;
-  filter: sepia(0.18) brightness(0.98);
-}
-
-.theme-black .page-pdf-canvas {
-  filter: invert(0.92) hue-rotate(180deg) brightness(0.95) contrast(1.05);
 }
 
 .page-text-layer {

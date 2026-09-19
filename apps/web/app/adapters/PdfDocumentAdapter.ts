@@ -92,7 +92,7 @@ export class PdfDocumentAdapter implements IBookDocument {
 
     // Renderização nativa 1:1 calculada exatamente para o tamanho do display e DPR.
     // Isso elimina distorção de fase, serrilhamento e o efeito de letras alternando entre negrito e fino.
-    const dpr = typeof window !== 'undefined' ? (window.devicePixelRatio || 1) : 1
+    const dpr = typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 2) : 1
     let scale: number
     let offsetX = 0
     let offsetY = 0
@@ -117,8 +117,6 @@ export class PdfDocumentAdapter implements IBookDocument {
       scale = Math.max(2.0, dpr * 2.0)
     }
 
-    // Garante que a escala não fique abaixo da resolução física do display
-    scale = Math.max(scale, dpr)
     const viewport = pdfPage.getViewport({ scale, offsetX, offsetY })
 
     const pageData: PageData = {
