@@ -2,6 +2,7 @@
 
 
 ## ✅ Concluído
+- [19/09/2026 16:10] [Concluído] Corrigir pipeline do GitHub Actions para build do APK Android removendo setup-android legado e aceitando licencas do SDK diretamente
 - [19/09/2026 15:55] [Concluído] Redesenhar botão de alternância do Modo Foco com switch interativo, affordance e feedback de IHC no popover de configurações
 - [19/09/2026 15:45] [Concluído] Eliminar travamento em scroll + foco com ordenação estrita O(N log N), memoização de linhas, remoção de overlays inativos e liberação de mousedown
 - [19/09/2026 15:40] [Concluído] Definir tamanho padrão de fonte para 15px e validar identificação e carregamento de tipografia por livro e fallback global
