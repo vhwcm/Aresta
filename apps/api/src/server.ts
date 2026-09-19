@@ -47,12 +47,15 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
   : [
       'http://localhost:3000',
       'http://localhost:1420',         // Tauri dev
-      'tauri://localhost',             // Tauri production
-      'https://tauri.localhost',       // Tauri production (macOS/Linux)
+      'http://localhost:3010',         // Tauri Nuxt dev
+      'tauri://localhost',             // Tauri production (Windows/Linux)
+      'https://tauri.localhost',       // Tauri production (macOS/iOS)
+      'http://tauri.localhost',        // Tauri production (Android WebView)
     ]
 
 if (process.env.DOMAIN) {
   allowedOrigins.push(`https://${process.env.DOMAIN}`)
+  allowedOrigins.push(`http://${process.env.DOMAIN}`)
 }
 
 // ─── Global Middlewares ───────────────────────────────────────────────────────
@@ -63,10 +66,17 @@ app.use(helmet({
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (
+        !origin ||
+        allowedOrigins.includes(origin) ||
+        origin.startsWith('http://localhost:') ||
+        origin.startsWith('https://tauri.localhost') ||
+        origin.startsWith('http://tauri.localhost') ||
+        origin.startsWith('tauri://')
+      ) {
         callback(null, true)
       } else {
-        callback(new Error(`CORS: origem não permitida: ${origin}`))
+        callback(null, false)
       }
     },
     credentials: true,

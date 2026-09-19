@@ -1,6 +1,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [19/09/2026 17:18] [Concluído] Atualizar politicas de CORS no backend para origens Android Tauri e orientar sincronizacao do IP DuckDNS da AWS
 - [19/09/2026 17:15] [Concluído] Implementar download automático de livros sincronizados via Google Drive no leitor e mensagem descritiva para arquivos não encontrados em múltiplos dispositivos
 - [19/09/2026 17:04] [Concluído] Implementar suporte a nós de Links no Espaço Criativo/Grafo, abertura no navegador padrão e ação contextual em notas
 - [19/09/2026 16:47] [Concluído] Corrigir resolucao da API e redirect URI do OAuth para o aplicativo Android/Tauri com fallback de producao

@@ -768,6 +768,93 @@
       @confirm-move="handleConfirmMoveCanvas"
       @confirm-tags="handleConfirmTagsCanvas"
     />
+
+    <!-- Modal: Novo Link -->
+    <Teleport to="body">
+      <Transition name="fade">
+        <div
+          v-if="newLinkModalOpen"
+          class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs"
+          @click.self="newLinkModalOpen = false"
+        >
+          <div class="w-full max-w-md bg-bgPanel border border-divider rounded-2xl shadow-2xl p-5 flex flex-col gap-4 animate-in fade-in zoom-in-95">
+            <div class="flex items-center justify-between border-b border-divider/60 pb-3">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-500 shrink-0">
+                  <GlobeIcon class="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 class="text-sm font-bold text-textPrimary">Adicionar Novo Link</h3>
+                  <p class="text-[11px] text-textSecondary">Crie um nó de link no Grafo e Espaço Criativo</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                class="p-1 rounded-lg text-textSecondary hover:text-textPrimary hover:bg-white/5 cursor-pointer"
+                @click="newLinkModalOpen = false"
+              >
+                <XIcon class="w-4 h-4" />
+              </button>
+            </div>
+
+            <div class="space-y-3">
+              <div>
+                <label class="block text-xs font-semibold text-textPrimary mb-1">Endereço Web (URL)</label>
+                <div class="relative flex items-center">
+                  <GlobeIcon class="w-3.5 h-3.5 text-textSecondary absolute left-3" />
+                  <input
+                    v-model="newLinkUrl"
+                    type="url"
+                    placeholder="https://exemplo.com/artigo"
+                    class="w-full pl-8 pr-3 py-2 text-xs bg-bgSurface border border-divider rounded-xl text-textPrimary placeholder:text-textSecondary/50 focus:outline-none focus:border-emerald-500 shadow-inner"
+                    @keydown.enter.prevent="handleConfirmCreateLink"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-textPrimary mb-1">Título do Link (Opcional)</label>
+                <input
+                  v-model="newLinkTitle"
+                  type="text"
+                  placeholder="Ex: Documentação Oficial, Artigo..."
+                  class="w-full px-3 py-2 text-xs bg-bgSurface border border-divider rounded-xl text-textPrimary placeholder:text-textSecondary/50 focus:outline-none focus:border-emerald-500 shadow-inner"
+                  @keydown.enter.prevent="handleConfirmCreateLink"
+                />
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-textPrimary mb-1">Pasta (Opcional)</label>
+                <input
+                  v-model="newLinkFolder"
+                  type="text"
+                  placeholder="Ex: Recursos, Artigos..."
+                  class="w-full px-3 py-2 text-xs bg-bgSurface border border-divider rounded-xl text-textPrimary placeholder:text-textSecondary/50 focus:outline-none focus:border-emerald-500 shadow-inner"
+                />
+              </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-2 border-t border-divider/60">
+              <button
+                type="button"
+                class="px-3.5 py-1.5 rounded-xl border border-divider text-xs text-textSecondary hover:text-textPrimary hover:bg-bgSurface transition-colors cursor-pointer"
+                @click="newLinkModalOpen = false"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                class="px-4 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold transition-all cursor-pointer shadow-md shadow-emerald-500/20 disabled:opacity-50"
+                :disabled="!newLinkUrl.trim()"
+                @click="handleConfirmCreateLink"
+              >
+                Adicionar Link
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
@@ -793,7 +880,11 @@ import {
   Edit3Icon,
   NetworkIcon,
   PenTool as PenToolIcon,
-  Sparkles as SparklesIcon
+  Sparkles as SparklesIcon,
+  Globe as GlobeIcon,
+  ExternalLink as ExternalLinkIcon,
+  Link as LinkIcon,
+  X as XIcon,
 } from 'lucide-vue-next'
 import FolderTagSidebar, { type SidebarTreeItem } from '~/components/FolderTagSidebar.vue'
 import ArestaLogoGraph from '~/components/ArestaLogoGraph.vue'
@@ -804,6 +895,8 @@ import { useCanvas } from '~/composables/useCanvas'
 import { useNotes } from '~/composables/useNotes'
 import { useDrawing } from '~/composables/useDrawing'
 import { useGraph } from '~/composables/useGraph'
+import { useLinks } from '~/composables/useLinks'
+import { openExternalUrl, sanitizeUrl, cleanUrlTitle } from '~/utils/urlOpener'
 import type { CanvasSummary } from '~/interfaces/canvas'
 import type { NoteItem } from '~/interfaces/note'
 
@@ -884,7 +977,60 @@ const {
   deleteDrawing,
 } = useDrawing()
 
+const {
+  linksList,
+  linkFolders,
+  isLoading: isLinksLoading,
+  fetchLinks,
+  createLink,
+  removeLink,
+} = useLinks()
+
 const { graphData, fetchGraph: fetchUnifiedGraph, createConnection, linkBookToNode } = useGraph()
+
+// Modal Novo Link
+const newLinkModalOpen = ref(false)
+const newLinkUrl = ref('')
+const newLinkTitle = ref('')
+const newLinkFolder = ref('')
+
+const openNewLinkModal = () => {
+  newLinkUrl.value = ''
+  newLinkTitle.value = ''
+  newLinkFolder.value = activeFolder.value && activeFolder.value !== '__uncategorized__' ? activeFolder.value : ''
+  newLinkModalOpen.value = true
+}
+
+const handleConfirmCreateLink = async () => {
+  const url = sanitizeUrl(newLinkUrl.value)
+  if (!url) return
+  const title = cleanUrlTitle(url, newLinkTitle.value)
+  await createLink({
+    url,
+    title,
+    folder: newLinkFolder.value.trim() || null
+  })
+  newLinkModalOpen.value = false
+  newLinkUrl.value = ''
+  newLinkTitle.value = ''
+  newLinkFolder.value = ''
+  fetchUnifiedGraph()
+}
+
+const handleOpenLink = async (url: string) => {
+  await openExternalUrl(url)
+}
+
+const handleDeleteLink = async (id: string) => {
+  await removeLink(id)
+  fetchUnifiedGraph()
+}
+
+const copyUrl = (url: string) => {
+  if (typeof navigator !== 'undefined') {
+    navigator.clipboard.writeText(url)
+  }
+}
 
 const handleConnectNodesPayload = async (payload: any) => {
   try {
@@ -935,6 +1081,11 @@ const handleSelectGraphNode = async (node: any) => {
     const folderName = node.rawId || String(node.id).replace(/^folder-/, '')
     activeFolder.value = decodeURIComponent(folderName)
     viewLayout.value = 'grid'
+  } else if (node.type === 'link' || (node as any).isLink || String(node.id).startsWith('link-')) {
+    const url = node.url || (node as any).rawLink?.url
+    if (url) {
+      await openExternalUrl(url)
+    }
   } else if (node.type === 'theme') {
     viewLayout.value = 'graph'
   }
@@ -1000,6 +1151,7 @@ onMounted(async () => {
       fetchNotes(),
       fetchNoteFolders(),
       fetchDrawings(),
+      fetchLinks(),
       fetchUnifiedGraph(),
     ])
 
@@ -1031,9 +1183,9 @@ const clearAllFilters = () => {
   searchQuery.value = ''
 }
 
-// União de pastas de quadros, notas e desenhos
+// União de pastas de quadros, notas, desenhos e links
 const unifiedFolders = computed(() => {
-  const set = new Set<string>([...canvasFolders.value, ...noteFolders.value])
+  const set = new Set<string>([...canvasFolders.value, ...noteFolders.value, ...linkFolders.value])
   for (const c of canvasesList.value) {
     if (c.folder) set.add(c.folder)
   }
@@ -1042,6 +1194,9 @@ const unifiedFolders = computed(() => {
   }
   for (const d of drawingsList.value) {
     if (d.folder) set.add(d.folder)
+  }
+  for (const l of linksList.value) {
+    if (l.folder) set.add(l.folder)
   }
   return Array.from(set).sort((a, b) => a.localeCompare(b))
 })
@@ -1069,14 +1224,21 @@ const unifiedSidebarItems = computed<SidebarTreeItem[]>(() => {
     folder: d.folder,
     tags: d.tags
   }))
-  return [...cItems, ...nItems, ...dItems]
+  const lItems: SidebarTreeItem[] = linksList.value.map((l) => ({
+    id: `link-${l.id}`,
+    title: l.title || l.domain || 'Link',
+    kind: 'link' as any,
+    folder: l.folder,
+    tags: l.tags
+  }))
+  return [...cItems, ...nItems, ...dItems, ...lItems]
 })
 
 const totalCombinedCount = computed(() => {
-  return canvasesList.value.length + notesList.value.length
+  return canvasesList.value.length + notesList.value.length + linksList.value.length
 })
 
-// Lista unificada de todas as tags existentes em quadros e notas
+// Lista unificada de todas as tags existentes em quadros, notas e links
 const availableTags = computed<string[]>(() => {
   const counts: Record<string, number> = {}
   for (const item of canvasesList.value) {
@@ -1090,6 +1252,14 @@ const availableTags = computed<string[]>(() => {
   for (const note of notesList.value) {
     if (Array.isArray(note.tags)) {
       for (const t of note.tags) {
+        const clean = typeof t === 'string' ? t.trim() : ''
+        if (clean) counts[clean] = (counts[clean] || 0) + 1
+      }
+    }
+  }
+  for (const l of linksList.value) {
+    if (Array.isArray(l.tags)) {
+      for (const t of l.tags) {
         const clean = typeof t === 'string' ? t.trim() : ''
         if (clean) counts[clean] = (counts[clean] || 0) + 1
       }
@@ -1111,6 +1281,12 @@ const handleSelectItemFromTree = (item: SidebarTreeItem) => {
   if (item.kind === 'canvas') {
     const rawId = item.id.replace(/^canvas-/, '')
     openCanvas(rawId)
+  } else if ((item.kind as string) === 'link') {
+    const rawId = item.id.replace(/^link-/, '')
+    const found = linksList.value.find((l) => l.id === rawId)
+    if (found?.url) {
+      openExternalUrl(found.url)
+    }
   } else {
     const rawId = item.id.replace(/^note-/, '')
     const found = notesList.value.find((n) => n.id === rawId)
@@ -1252,6 +1428,34 @@ const filteredDrawings = computed(() => {
   })
 })
 
+// Filtros combinados de Busca + Pasta + Tag para Links
+const filteredLinks = computed(() => {
+  return linksList.value.filter((l) => {
+    if (activeFolder.value !== null) {
+      if (activeFolder.value === '__uncategorized__') {
+        if (l.folder) return false
+      } else if (l.folder !== activeFolder.value) {
+        return false
+      }
+    }
+
+    if (activeTag.value !== null) {
+      if (!l.tags || !l.tags.includes(activeTag.value)) return false
+    }
+
+    if (searchQuery.value) {
+      const q = searchQuery.value.toLowerCase()
+      const matchTitle = l.title?.toLowerCase().includes(q)
+      const matchUrl = l.url?.toLowerCase().includes(q)
+      const matchDomain = l.domain?.toLowerCase().includes(q)
+      const matchTag = l.tags?.some((t) => t.toLowerCase().includes(q))
+      if (!matchTitle && !matchUrl && !matchDomain && !matchTag) return false
+    }
+
+    return true
+  })
+})
+
 // Lista combinada de itens unificados para renderização na Grade (ordenada por data mais recente)
 interface DisplayItemBase {
   id: string
@@ -1283,7 +1487,15 @@ interface DisplayDrawingItem extends DisplayItemBase {
   rawDrawing: any
 }
 
-type DisplayItem = DisplayCanvasItem | DisplayNoteItem | DisplayDrawingItem
+interface DisplayLinkItem extends DisplayItemBase {
+  kind: 'link'
+  url: string
+  domain?: string
+  favicon?: string | null
+  rawLink: any
+}
+
+type DisplayItem = DisplayCanvasItem | DisplayNoteItem | DisplayDrawingItem | DisplayLinkItem
 
 const displayItems = computed<DisplayItem[]>(() => {
   const items: DisplayItem[] = []
@@ -1333,6 +1545,23 @@ const displayItems = computed<DisplayItem[]>(() => {
         preview_url: d.preview_url,
         updatedAt: d.updated_at,
         rawDrawing: d
+      })
+    }
+  }
+
+  if (activeTab.value === 'all' || (activeTab.value as string) === 'links') {
+    for (const l of filteredLinks.value) {
+      items.push({
+        kind: 'link',
+        id: l.id,
+        title: l.title || l.domain || 'Link',
+        url: l.url,
+        domain: l.domain,
+        favicon: l.favicon,
+        folder: l.folder,
+        tags: l.tags,
+        updatedAt: l.updated_at,
+        rawLink: l
       })
     }
   }
