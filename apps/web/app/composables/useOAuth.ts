@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue'
 import { useAuth, type AuthUser, purgeClientSession } from './useAuth'
-import { getApiRoot } from '~/utils/apiBase'
+import { getApiRoot, getOAuthRedirectUri } from '~/utils/apiBase'
 
 export interface OAuthResult {
   success: boolean
@@ -153,7 +153,7 @@ export const useOAuth = () => {
 
     try {
       const authUrl = getAuthApiUrl()
-      const redirectUri = `${typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'}/auth/callback`
+      const redirectUri = getOAuthRedirectUri()
 
       const { url } = await $fetch<{ url: string }>(
         `${authUrl}/api/auth/oauth/${provider}/url?redirectUri=${encodeURIComponent(redirectUri)}`
@@ -222,7 +222,7 @@ export const useOAuth = () => {
 
     try {
       const authUrl = getAuthApiUrl()
-      const redirectUri = `${typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'}/auth/callback`
+      const redirectUri = getOAuthRedirectUri()
 
       const { url } = await $fetch<{ url: string }>(
         `${authUrl}/api/auth/oauth/${provider}/url?redirectUri=${encodeURIComponent(redirectUri)}&mode=connect_drive`
