@@ -82,12 +82,8 @@ jobs:
         run: |
           mkdir -p release-apks
           BUILD_TOOLS_DIR="$ANDROID_HOME/build-tools/34.0.0"
+          KEYSTORE_PATH="apps/web/src-tauri/aresta-release.keystore"
           
-          # Gera uma keystore padrão de release/distribuição
-          keytool -genkey -v -keystore release.keystore -alias aresta -keyalg RSA -keysize 2048 -validity 10000 \
-            -dname "CN=Aresta, OU=Development, O=Aresta, L=SaoPaulo, S=SP, C=BR" \
-            -storepass aresta123 -keypass aresta123
-
           find apps/web/src-tauri/gen/android/app/build/outputs/apk/ -type f -name "*.apk" | while read file; do
             raw_filename=$(basename "$file")
             clean_name=$(echo "$raw_filename" | sed 's/-unsigned//')
@@ -98,8 +94,8 @@ jobs:
             # 1. Alinha com zipalign (garante alinhamento de 4 bytes)
             "$BUILD_TOOLS_DIR/zipalign" -v -p 4 "$file" "$aligned_apk"
 
-            # 2. Assina com apksigner (v2 e v3 scheme necessários para Android moderno)
-            "$BUILD_TOOLS_DIR/apksigner" sign --ks release.keystore \
+            # 2. Assina com apksigner usando a keystore persistente
+            "$BUILD_TOOLS_DIR/apksigner" sign --ks "$KEYSTORE_PATH" \
               --ks-pass pass:aresta123 \
               --key-pass pass:aresta123 \
               --ks-key-alias aresta \
