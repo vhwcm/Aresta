@@ -2,6 +2,7 @@
 
 
 ## ✅ Concluído
+- [19/09/2026 18:45] [Concluído] Implementar gatilho dinâmico de sincronização e atualização em tempo real para o Grafo de Conhecimento e Canvas
 - [19/09/2026 18:44] [Concluído] Integrar timer de leitura no leitor (Viewer) e cálculo reativo de tempo para incremento da ofensiva (streak)
 
 - [19/09/2026 18:32] [Concluído] Implementar troca direta de token e persistencia de sessao no OAuth callback para navegadores moveis e WebViews sem window.opener

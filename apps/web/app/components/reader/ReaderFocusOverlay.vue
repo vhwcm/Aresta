@@ -114,8 +114,8 @@ function handleAdvance(e: MouseEvent) {
   position: absolute;
   left: 0;
   right: 0;
-  backdrop-filter: blur(12px) saturate(85%);
-  -webkit-backdrop-filter: blur(12px) saturate(85%);
+  backdrop-filter: blur(24px) saturate(70%);
+  -webkit-backdrop-filter: blur(24px) saturate(70%);
   transition: top 0.22s cubic-bezier(0.16, 1, 0.3, 1),
               height 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   will-change: top, height;
@@ -129,26 +129,26 @@ function handleAdvance(e: MouseEvent) {
 
 .reader-focus-overlay__pane--top {
   top: 0;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .reader-focus-overlay__pane--bottom {
   bottom: 0;
-  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
 }
 
-/* Temas com ajustes de opacidade e matiz */
+/* Temas com ajustes de opacidade e matiz reforçados para ocultar o texto de fundo */
 .reader-focus-overlay--theme-sepia .reader-focus-overlay__pane {
-  background-color: rgba(245, 238, 220, 0.65);
+  background-color: rgba(245, 238, 220, 0.82);
 }
 
 .reader-focus-overlay--theme-white .reader-focus-overlay__pane {
-  background-color: rgba(255, 255, 255, 0.72);
+  background-color: rgba(255, 255, 255, 0.85);
 }
 
 .reader-focus-overlay--theme-black .reader-focus-overlay__pane {
-  background-color: rgba(18, 18, 20, 0.78);
-  border-color: rgba(255, 255, 255, 0.04);
+  background-color: rgba(18, 18, 20, 0.88);
+  border-color: rgba(255, 255, 255, 0.06);
 }
 
 /* Transições suaves de degradê nas bordas da abertura */
