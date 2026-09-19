@@ -2,6 +2,8 @@
 
 
 ## ✅ Concluído
+- [19/09/2026 18:44] [Concluído] Integrar timer de leitura no leitor (Viewer) e cálculo reativo de tempo para incremento da ofensiva (streak)
+
 - [19/09/2026 18:32] [Concluído] Implementar troca direta de token e persistencia de sessao no OAuth callback para navegadores moveis e WebViews sem window.opener
 - [19/09/2026 17:58] [Concluído] Implementar keystore persistente para assinatura de APKs Android no CI/CD prevenindo conflito de assinaturas
 - [19/09/2026 17:18] [Concluído] Atualizar politicas de CORS no backend para origens Android Tauri e orientar sincronizacao do IP DuckDNS da AWS

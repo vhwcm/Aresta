@@ -262,6 +262,7 @@ import { Minimize2Icon, ChevronLeftIcon, ChevronRightIcon } from 'lucide-vue-nex
 import { useReaderStore } from '~/stores/readerStore'
 import { useReaderTypography } from '~/composables/useReaderTypography'
 import { useAnnotations } from '~/composables/useAnnotations'
+import { useReadingTimer } from '~/composables/reader/useReadingTimer'
 
 import ReaderEnginePageCurlCanvas from '~/components/reader/engine/PageCurlCanvas.vue'
 import ReaderEngineScrollEngine from '~/components/reader/engine/ReaderScrollEngine.vue'
@@ -279,6 +280,7 @@ import { getApiBase } from '~/utils/apiBase'
 const store = useReaderStore()
 const router = useRouter()
 const { fetchAnnotations, annotations, createAnnotation } = useAnnotations()
+const { startTimer: startReadingTimer, stopTimer: stopReadingTimer } = useReadingTimer()
 
 const activeTheme = computed(() => store.readerTheme || 'sepia')
 const themeBgColor = computed(() => {
@@ -890,6 +892,7 @@ function onKeyDown(event: KeyboardEvent) {
 }
 
 onMounted(() => {
+  startReadingTimer()
   store.setGraphOpen(false)
   store.setMobileGraphOpen(false)
   updateDeviceType()
@@ -955,6 +958,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  stopReadingTimer()
   if (zenToastTimeout) clearTimeout(zenToastTimeout)
   if (touchTimer) clearTimeout(touchTimer)
   resizeObserver?.disconnect()

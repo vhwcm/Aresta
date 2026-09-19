@@ -64,5 +64,9 @@ model DailyActivity {
 ## 4. Código Relacionado
 - **Backend**:
   - `apps/api/src/modules/auth/controllers/streak.controller.ts`, `apps/api/src/modules/auth/services/streak.service.ts`, `apps/api/src/modules/auth/routes/streak.routes.ts`
-- **Frontend**:
-  - `apps/web/app/composables/useReadingStreak.ts`, `apps/web/app/components/ReadingStreak.vue`, `apps/web/app/components/StreakCelebrationModal.vue`
+- **Frontend (Local-First)**:
+  - `apps/web/app/composables/useReadingStreak.ts` (estado compartilhado reativo, cálculo de rollover de datas, meta de 10 min de leitura ou 5 flashcards, concessão de streak freeze a cada 7 dias).
+  - `apps/web/app/composables/reader/useReadingTimer.ts` (timer ativo de leitura em segundo plano com flush por lote a cada 10s, descarte de inatividade, pausamento em abas ocultas e sincronização em `beforeunload`/`onUnmounted`).
+  - `apps/web/app/components/reader/Viewer.vue` (ativação automática de contagem de leitura ao abrir qualquer obra).
+  - `apps/web/app/components/ReadingStreak.vue`, `apps/web/app/components/StreakCelebrationModal.vue` (indicadores visuais de chama, progresso de leitura, histórico semanal e celebração).
+

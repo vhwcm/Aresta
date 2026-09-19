@@ -166,7 +166,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { ArrowLeftIcon, BookIcon, BookOpenIcon, Globe as GlobeIcon } from 'lucide-vue-next'
 import type { GraphNode, UserBookItem } from '~/interfaces/graph'
 import { useGraph } from '~/composables/useGraph'
@@ -375,8 +375,22 @@ const getStatusBadgeClass = (status: string) => {
   }
 }
 
+const handleRemoteSync = () => {
+  fetchGraph()
+  fetchUserBooks()
+}
+
 onMounted(() => {
   fetchGraph()
   fetchUserBooks()
+  if (typeof window !== 'undefined') {
+    window.addEventListener('aresta:data-synced', handleRemoteSync)
+  }
+})
+
+onBeforeUnmount(() => {
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('aresta:data-synced', handleRemoteSync)
+  }
 })
 </script>

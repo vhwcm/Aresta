@@ -119,6 +119,27 @@
         <LinkIcon class="w-4 h-4 text-accent" />
         <span :class="{ 'hidden sm:inline': isCompact }">Conectar</span>
       </button>
+
+      <!-- Botão Sincronizar Grafo -->
+      <button
+        @click="handleManualSync"
+        :disabled="isSyncing"
+        class="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl border text-xs sm:text-sm transition-all active:scale-95 shrink-0 cursor-pointer disabled:opacity-60"
+        :class="isSepiaMode
+          ? 'bg-[#F5EEDC]/60 border-[#dfd5c0] text-[#2C2621] hover:bg-[#F5EEDC]'
+          : (isLightMode
+            ? 'bg-gray-50 border-gray-200 text-gray-800 hover:bg-gray-100'
+            : 'bg-white/5 border-divider text-textPrimary hover:bg-white/10')"
+        :title="isSyncing ? 'Sincronizando dados...' : (lastSyncFormatted ? `Sincronizar grafo (Último sync: ${lastSyncFormatted})` : 'Sincronizar dados com outros dispositivos')"
+      >
+        <RefreshCwIcon class="w-4 h-4 text-accent" :class="{ 'animate-spin': isSyncing }" />
+        <span :class="{ 'hidden sm:inline': isCompact }">{{ isSyncing ? 'Sincronizando...' : 'Sincronizar' }}</span>
+        <span
+          v-if="pendingCount > 0"
+          class="w-2 h-2 rounded-full bg-accent animate-pulse"
+          title="Alterações pendentes de sincronização"
+        ></span>
+      </button>
     </div>
 
     <!-- Barra de Filtros por Camadas de Nós (Chips Visíveis quando não compacto) -->
@@ -157,8 +178,9 @@
 import { ref, computed, onMounted, watch, onBeforeUnmount, nextTick } from 'vue'
 import * as d3 from 'd3'
 import type { GraphNode, GraphEdge, GraphNodeType } from '~/interfaces/graph'
-import { PlusIcon, SearchIcon, LinkIcon, TagIcon, BookOpenIcon, FileTextIcon, LayoutGridIcon, FolderIcon } from 'lucide-vue-next'
+import { PlusIcon, SearchIcon, LinkIcon, TagIcon, BookOpenIcon, FileTextIcon, LayoutGridIcon, FolderIcon, RefreshCw as RefreshCwIcon } from 'lucide-vue-next'
 import { useSettings } from '~/composables/useSettings'
+import { useDriveSync } from '~/composables/useDriveSync'
 import { getCoverUrl } from '~/utils/cover'
 import { resolveNoteTitle } from '~/utils/noteTitle'
 
@@ -210,6 +232,11 @@ const emit = defineEmits<{
 }>()
 
 const { themeMode } = useSettings()
+const { isSyncing, lastSyncFormatted, pendingCount, sync } = useDriveSync()
+
+const handleManualSync = async () => {
+  await sync()
+}
 
 const effectiveTheme = computed(() => {
   if (props.themeOverride) return props.themeOverride

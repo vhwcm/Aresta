@@ -13,11 +13,69 @@ const driveProvider = ref<SupportedCloudStorage | null>(typeof localStorage !== 
 const syncError = ref<string | null>(null)
 let interval: ReturnType<typeof setInterval> | null = null
 let listenersAttached = false
+let syncBroadcastChannel: BroadcastChannel | null = null
 
 export function useDriveSync() {
   const auth = useAuth()
   const oauth = useOAuth()
   const isConnected = computed(() => !!driveProvider.value)
+
+  const lastSyncFormatted = computed(() => {
+    if (!lastSyncAt.value) return null
+    try {
+      const d = new Date(lastSyncAt.value)
+      if (isNaN(d.getTime())) return null
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    } catch {
+      return null
+    }
+  })
+
+  const updatePendingCount = async () => {
+    try {
+      const { mutationQueueService } = await import('~/services/MutationQueueService')
+      pendingCount.value = await mutationQueueService.getPendingCount()
+    } catch {
+      pendingCount.value = 0
+    }
+  }
+
+  const revalidateAllStores = async () => {
+    try {
+      const [
+        { useUserBooks },
+        { useGraph },
+        { useCanvas },
+        { useNotes },
+        { useDrawing },
+        { useLinks }
+      ] = await Promise.all([
+        import('./useUserBooks'),
+        import('./useGraph'),
+        import('./useCanvas'),
+        import('./useNotes'),
+        import('./useDrawing'),
+        import('./useLinks')
+      ])
+
+      await Promise.all([
+        useUserBooks().fetchUserBooks().catch(() => {}),
+        useGraph().fetchGraph().catch(() => {}),
+        useCanvas().fetchCanvases().catch(() => {}),
+        useNotes().fetchNotes().catch(() => {}),
+        useDrawing().fetchDrawings().catch(() => {}),
+        useLinks().fetchLinks().catch(() => {})
+      ])
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('aresta:data-synced', {
+          detail: { timestamp: new Date().toISOString() }
+        }))
+      }
+    } catch (err) {
+      console.warn('[useDriveSync] Falha ao revalidar stores:', err)
+    }
+  }
 
   const resolveProvider = async (): Promise<IDataSyncProvider | null> => {
     if (!driveProvider.value) {
@@ -48,29 +106,30 @@ export function useDriveSync() {
 
   const sync = async () => {
     if (isSyncing.value || (typeof navigator !== 'undefined' && !navigator.onLine)) return
-    const provider = await resolveProvider()
-    if (!provider) return
     isSyncing.value = true
     syncError.value = null
     try {
+      const provider = await resolveProvider()
+      if (!provider) return
       const summary = await new DriveSyncService(provider).fullSync()
       lastSyncAt.value = summary.syncedAt
       pendingCount.value = 0
       if (typeof localStorage !== 'undefined') localStorage.setItem('aresta_drive_last_sync', summary.syncedAt)
 
-      // Revalida a biblioteca e o grafo reativamente na interface
-      try {
-        const { useUserBooks } = await import('./useUserBooks')
-        const { useGraph } = await import('./useGraph')
-        await Promise.all([
-          useUserBooks().fetchUserBooks().catch(() => {}),
-          useGraph().fetchGraph().catch(() => {}),
-        ])
-      } catch {}
+      // Revalida todas as stores do ecossistema reativamente
+      await revalidateAllStores()
+
+      // Notifica outras abas/janelas via BroadcastChannel
+      if (syncBroadcastChannel) {
+        try {
+          syncBroadcastChannel.postMessage({ type: 'SYNC_COMPLETED', timestamp: summary.syncedAt })
+        } catch {}
+      }
     } catch (error: any) {
       syncError.value = error?.message || 'Não foi possível sincronizar com o Drive.'
     } finally {
       isSyncing.value = false
+      void updatePendingCount()
     }
   }
 
@@ -97,20 +156,66 @@ export function useDriveSync() {
     if (typeof localStorage !== 'undefined') localStorage.removeItem(PROVIDER_KEY)
   }
 
+  const handleOnline = () => {
+    void sync()
+  }
+
+  const handleVisibilityOrFocus = () => {
+    if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+      void sync()
+    }
+  }
+
+  const handleStorageChange = (e: StorageEvent) => {
+    if (e.key === 'aresta_drive_last_sync' || e.key === 'aresta_last_sync_timestamp') {
+      void revalidateAllStores()
+    }
+  }
+
   const initListeners = () => {
     if (typeof window === 'undefined' || listenersAttached) return
     listenersAttached = true
-    window.addEventListener('online', sync)
-    window.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') void sync() })
-    interval = setInterval(() => void sync(), 5 * 60 * 1000)
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('visibilitychange', handleVisibilityOrFocus)
+    window.addEventListener('focus', handleVisibilityOrFocus)
+    window.addEventListener('storage', handleStorageChange)
+
+    if (typeof BroadcastChannel !== 'undefined' && !syncBroadcastChannel) {
+      try {
+        syncBroadcastChannel = new BroadcastChannel('aresta_sync_channel')
+        syncBroadcastChannel.onmessage = (event) => {
+          if (event.data?.type === 'SYNC_COMPLETED') {
+            void revalidateAllStores()
+          }
+        }
+      } catch {}
+    }
+
+    // Polling adaptativo dinâmico a cada 25 segundos se o documento estiver visível
+    interval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible' && !isSyncing.value) {
+        void sync()
+      }
+    }, 25 * 1000)
+
+    void updatePendingCount()
   }
 
   const dispose = () => {
     if (typeof window === 'undefined' || !listenersAttached) return
     listenersAttached = false
-    window.removeEventListener('online', sync)
+    window.removeEventListener('online', handleOnline)
+    window.removeEventListener('visibilitychange', handleVisibilityOrFocus)
+    window.removeEventListener('focus', handleVisibilityOrFocus)
+    window.removeEventListener('storage', handleStorageChange)
     if (interval) clearInterval(interval)
     interval = null
+    if (syncBroadcastChannel) {
+      try {
+        syncBroadcastChannel.close()
+      } catch {}
+      syncBroadcastChannel = null
+    }
   }
 
   onMounted(initListeners)
@@ -119,13 +224,17 @@ export function useDriveSync() {
   return {
     isSyncing,
     lastSyncAt,
+    lastSyncFormatted,
     pendingCount,
     driveProvider,
     syncError,
     isConnected,
     sync,
+    triggerSync: sync,
+    revalidateAllStores,
     connect,
     disconnect,
-    initListeners
+    initListeners,
   }
 }
+

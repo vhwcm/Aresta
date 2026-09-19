@@ -186,6 +186,21 @@
                   <LayoutGridIcon class="w-3.5 h-3.5" />
                 </button>
               </div>
+
+              <!-- Botão Gatilho de Sincronização Dinâmica -->
+              <button
+                class="p-2 rounded-xl bg-bgPanel hover:bg-bgSurface border border-divider transition-all cursor-pointer shrink-0 relative flex items-center justify-center"
+                :class="isSyncing ? 'text-accent border-accent/40 bg-accent/10' : 'text-textSecondary hover:text-textPrimary'"
+                :title="isSyncing ? 'Sincronizando dados com outros dispositivos...' : (lastSyncFormatted ? `Sincronizar dados (Último sync: ${lastSyncFormatted})` : 'Sincronizar agora')"
+                :disabled="isSyncing"
+                @click="triggerManualSync"
+              >
+                <RefreshCwIcon class="w-4 h-4 transition-transform" :class="{ 'animate-spin': isSyncing }" />
+                <span
+                  v-if="pendingCount > 0"
+                  class="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-accent animate-pulse"
+                ></span>
+              </button>
             </div>
 
             <!-- Grupo Direito: Novo Desenho + Nova Nota + Novo Quadro -->
@@ -885,6 +900,7 @@ import {
   ExternalLink as ExternalLinkIcon,
   Link as LinkIcon,
   X as XIcon,
+  RefreshCw as RefreshCwIcon,
 } from 'lucide-vue-next'
 import FolderTagSidebar, { type SidebarTreeItem } from '~/components/FolderTagSidebar.vue'
 import ArestaLogoGraph from '~/components/ArestaLogoGraph.vue'
@@ -896,6 +912,7 @@ import { useNotes } from '~/composables/useNotes'
 import { useDrawing } from '~/composables/useDrawing'
 import { useGraph } from '~/composables/useGraph'
 import { useLinks } from '~/composables/useLinks'
+import { useDriveSync } from '~/composables/useDriveSync'
 import { openExternalUrl, sanitizeUrl, cleanUrlTitle } from '~/utils/urlOpener'
 import type { CanvasSummary } from '~/interfaces/canvas'
 import type { NoteItem } from '~/interfaces/note'
@@ -987,6 +1004,7 @@ const {
 } = useLinks()
 
 const { graphData, fetchGraph: fetchUnifiedGraph, createConnection, linkBookToNode } = useGraph()
+const { isSyncing, lastSyncFormatted, pendingCount, sync: triggerManualSync } = useDriveSync()
 
 // Modal Novo Link
 const newLinkModalOpen = ref(false)
@@ -1137,13 +1155,7 @@ const syncFromRoute = async () => {
 
 watch(() => route.query, () => { syncFromRoute() }, { deep: true })
 
-onMounted(async () => {
-  if (typeof window !== 'undefined' && window.innerWidth < 768) {
-    isSidebarCollapsed.value = true
-  }
-
-  if (!auth.isLoggedIn.value) return
-
+const handleDataSynced = async () => {
   try {
     await Promise.all([
       fetchCanvases(),
@@ -1154,10 +1166,31 @@ onMounted(async () => {
       fetchLinks(),
       fetchUnifiedGraph(),
     ])
+  } catch {}
+}
 
+onMounted(async () => {
+  if (typeof window !== 'undefined') {
+    window.addEventListener('aresta:data-synced', handleDataSynced)
+  }
+
+  if (typeof window !== 'undefined' && window.innerWidth < 768) {
+    isSidebarCollapsed.value = true
+  }
+
+  if (!auth.isLoggedIn.value) return
+
+  try {
+    await handleDataSynced()
     await syncFromRoute()
   } catch (err: any) {
     console.error('Erro ao carregar dados do Hub:', err)
+  }
+})
+
+onBeforeUnmount(() => {
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('aresta:data-synced', handleDataSynced)
   }
 })
 
