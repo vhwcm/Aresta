@@ -2,6 +2,7 @@
 
 
 ## ✅ Concluído
+- [19/09/2026 18:55] [Concluído] Corrigir travamento infinito no OAuth callback com troca incondicional de token, redundância em localStorage e redirecionamento móvel
 - [19/09/2026 18:50] [Concluído] Configurar regra e automação de tag incremental a cada git push na skill git-commit e AGENTS.md
 - [19/09/2026 18:46] [Concluído] Intensificar desfoque e opacidade da máscara do modo de foco e cobrir seções adjacentes no scroll
 - [19/09/2026 18:45] [Concluído] Implementar gatilho dinâmico de sincronização e atualização em tempo real para o Grafo de Conhecimento e Canvas

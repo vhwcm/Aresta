@@ -67,7 +67,16 @@ const COOKIE_OPTS = {
 
 const getCookieRef = <T>(name: string) => {
   if (typeof useCookie === 'function') {
-    return useCookie<T>(name, COOKIE_OPTS)
+    const cookie = useCookie<T>(name, COOKIE_OPTS)
+    if (typeof window !== 'undefined' && !cookie.value) {
+      try {
+        const localVal = localStorage.getItem(name)
+        if (localVal) {
+          cookie.value = (name === 'aresta_user' ? JSON.parse(localVal) : localVal) as T
+        }
+      } catch {}
+    }
+    return cookie
   }
   return ref<T | null>(null)
 }
@@ -108,6 +117,10 @@ export const useAuth = () => {
       await purgeClientSession()
       tokenCookie.value = response.token
       userCookie.value = response.user
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('aresta_token', response.token)
+        localStorage.setItem('aresta_user', JSON.stringify(response.user))
+      }
       return { success: true, user: response.user, isNewUser: response.isNewUser ?? false }
     } catch (e: any) {
       console.error('Erro no login:', e)
@@ -131,6 +144,10 @@ export const useAuth = () => {
 
       tokenCookie.value = response.token
       userCookie.value = response.user
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('aresta_token', response.token)
+        localStorage.setItem('aresta_user', JSON.stringify(response.user))
+      }
       return { success: true, user: response.user, isNewUser: response.isNewUser ?? true }
     } catch (e: any) {
       console.error('Erro no registro:', e)
@@ -143,6 +160,10 @@ export const useAuth = () => {
     tokenCookie.value = null
     userCookie.value = null
     clearAllAuthCookies()
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem('aresta_token')
+      localStorage.removeItem('aresta_user')
+    }
     await purgeClientSession()
     if (typeof navigateTo === 'function') {
       await navigateTo('/', { replace: true })
