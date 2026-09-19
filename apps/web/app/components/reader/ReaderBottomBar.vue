@@ -406,13 +406,33 @@
               </span>
               <button
                 @click="store.toggleFocusMode()"
-                class="text-[11px] font-semibold px-2 py-0.5 rounded-md border transition-all"
+                role="switch"
+                :aria-checked="store.isFocusMode"
+                aria-label="Alternar Modo Foco"
+                class="flex items-center gap-1.5 px-2 py-1 rounded-full border transition-all cursor-pointer select-none active:scale-95 group focus:outline-none focus:ring-2 focus:ring-accent/40"
                 :class="store.isFocusMode
-                  ? 'bg-accent text-white border-accent'
-                  : (store.readerTheme === 'sepia' ? 'bg-[#f0e7d3] border-[#dfd5c0] text-[#5c4d3c]' : 'bg-white/5 border-white/10 text-textSecondary')"
+                  ? 'bg-accent/15 border-accent/40 text-accent font-semibold shadow-xs'
+                  : (store.readerTheme === 'sepia'
+                    ? 'bg-[#f0e7d3] border-[#dfd5c0] text-[#786C5E] hover:border-[#c8bfae] hover:text-[#5c4d3c]'
+                    : (store.readerTheme === 'white'
+                      ? 'bg-gray-100 border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-800'
+                      : 'bg-white/5 border-white/10 text-textSecondary hover:border-white/20 hover:text-textPrimary'))"
                 id="btn-toggle-focus-inside-popover"
               >
-                {{ store.isFocusMode ? 'Ativo' : 'Inativo' }}
+                <span class="text-[10px] font-semibold leading-none">
+                  {{ store.isFocusMode ? 'Ativo' : 'Inativo' }}
+                </span>
+                <!-- Switch Pill Indicator -->
+                <div
+                  class="w-7 h-4 rounded-full p-0.5 flex items-center transition-colors duration-200 ease-in-out"
+                  :class="store.isFocusMode
+                    ? 'bg-accent justify-end'
+                    : (store.readerTheme === 'sepia' ? 'bg-[#dfd5c0] justify-start' : (store.readerTheme === 'white' ? 'bg-gray-300 justify-start' : 'bg-white/20 justify-start'))"
+                >
+                  <div
+                    class="w-3 h-3 rounded-full bg-white shadow-xs transition-transform duration-200 ease-in-out"
+                  />
+                </div>
               </button>
             </div>
 
@@ -421,9 +441,9 @@
               <button
                 v-for="count in [1, 2, 3, 4, 5]"
                 :key="'focus-lines-' + count"
-                @click="store.setFocusLineCount(count)"
-                class="flex items-center justify-center py-1 rounded-lg border text-xs font-technical font-semibold transition-all"
-                :class="store.focusLineCount === count
+                @click="store.setFocusLineCount(count); if (!store.isFocusMode) store.toggleFocusMode()"
+                class="flex items-center justify-center py-1 rounded-lg border text-xs font-technical font-semibold transition-all cursor-pointer active:scale-95"
+                :class="store.focusLineCount === count && store.isFocusMode
                   ? 'bg-accent/20 border-accent text-accent font-bold shadow-xs'
                   : (store.readerTheme === 'sepia'
                     ? 'bg-[#f0e7d3] border-[#dfd5c0] text-[#5c4d3c] hover:bg-[#ebe0c8]'
