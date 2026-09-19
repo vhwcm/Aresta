@@ -295,9 +295,9 @@ describe('useReaderStore', () => {
   })
 
   describe('tamanho de fonte (fontSize)', () => {
-    it('inicia com valor padrão 18', () => {
+    it('inicia com valor padrão 15', () => {
       const store = useReaderStore()
-      expect(store.fontSize).toBe(18)
+      expect(store.fontSize).toBe(15)
     })
 
     it('ajusta tamanho de fonte com setFontSize respeitando limites e atualizando documento', () => {
@@ -322,16 +322,16 @@ describe('useReaderStore', () => {
 
     it('aumenta e diminui tamanho de fonte com increaseFontSize e decreaseFontSize', () => {
       const store = useReaderStore()
-      store.setFontSize(18)
+      store.setFontSize(15)
 
       store.increaseFontSize(2)
-      expect(store.fontSize).toBe(20)
+      expect(store.fontSize).toBe(17)
 
       store.decreaseFontSize(4)
-      expect(store.fontSize).toBe(16)
+      expect(store.fontSize).toBe(13)
 
       store.resetFontSize()
-      expect(store.fontSize).toBe(18)
+      expect(store.fontSize).toBe(15)
     })
 
     it('sincroniza tamanho da fonte configurado especificamente para o livro ao carregar documento', () => {
@@ -348,13 +348,13 @@ describe('useReaderStore', () => {
       expect(mockDoc.setFontSize).toHaveBeenCalledWith(26, 1)
     })
 
-    it('redefine para o tamanho padrão 18 com resetFontSize', () => {
+    it('redefine para o tamanho padrão 15 com resetFontSize', () => {
       const store = useReaderStore()
       store.setFontSize(30)
       expect(store.fontSize).toBe(30)
 
       store.resetFontSize()
-      expect(store.fontSize).toBe(18)
+      expect(store.fontSize).toBe(15)
     })
   })
 

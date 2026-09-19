@@ -83,7 +83,7 @@ export function drawPlainTextToCanvas(
   ctx.save()
   ctx.scale(dpr, dpr)
 
-  const fontSize = options?.fontSize && options.fontSize > 0 ? options.fontSize : 18
+  const fontSize = options?.fontSize && options.fontSize > 0 ? options.fontSize : 15
   const fontFamily = options?.fontFamily || "'Newsreader', Georgia, serif"
   const baseLineHeight = options?.lineHeight && options.lineHeight > 0
     ? options.lineHeight

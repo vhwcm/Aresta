@@ -172,7 +172,8 @@ describe('Reader Components', () => {
       expect(wrapper.find('[aria-label="Controle de aparência e fundo de leitura"]').exists()).toBe(true)
 
       // Testa aumento e diminuição do tamanho da fonte
-      const initialFontSize = store.fontSize || 18
+      const initialFontSize = store.fontSize || 15
+      expect(initialFontSize).toBe(15)
       const increaseFontBtn = wrapper.find('#btn-increase-font-size')
       expect(increaseFontBtn.exists()).toBe(true)
       await increaseFontBtn.trigger('click')
@@ -182,6 +183,14 @@ describe('Reader Components', () => {
       expect(decreaseFontBtn.exists()).toBe(true)
       await decreaseFontBtn.trigger('click')
       expect(store.fontSize).toBe(initialFontSize)
+
+      // Testa reset de fonte para 15px
+      await increaseFontBtn.trigger('click')
+      expect(store.fontSize).toBe(17)
+      const resetFontBtn = wrapper.find('#btn-reset-font-size')
+      expect(resetFontBtn.exists()).toBe(true)
+      await resetFontBtn.trigger('click')
+      expect(store.fontSize).toBe(15)
 
       // Testa alternância de Scroll vs Páginas
       const scrollModeBtn = wrapper.find('#btn-mode-scroll')
@@ -212,6 +221,57 @@ describe('Reader Components', () => {
       expect(store.isFocusMode).toBe(true)
       await toggleFocusBtn.trigger('click')
       expect(store.isFocusMode).toBe(false)
+    })
+
+    it('identifica corretamente a prioridade de tipografia: livro específico > configuração global > padrão 15px', () => {
+      const store = useReaderStore()
+      localStorage.clear()
+
+      // 1. Sem nada salvo -> Padrão 15px
+      store.setDocument({
+        type: 'epub',
+        metadata: { title: 'Livro Padrão' },
+        totalPages: 10,
+        isLoaded: true,
+        load: vi.fn(),
+        getPage: vi.fn(),
+        setFontSize: vi.fn(),
+        destroy: vi.fn(),
+      } as any, 'padrao.epub', 101)
+      expect(store.fontSize).toBe(15)
+
+      // 2. Com configuração global (ex: 20px) e livro sem customização -> 20px
+      localStorage.setItem('aresta_settings', JSON.stringify({ epubFontSize: 20 }))
+      store.setDocument({
+        type: 'epub',
+        metadata: { title: 'Livro Sem Custom' },
+        totalPages: 10,
+        isLoaded: true,
+        load: vi.fn(),
+        getPage: vi.fn(),
+        setFontSize: vi.fn(),
+        destroy: vi.fn(),
+      } as any, 'outro.epub', 102)
+      expect(store.fontSize).toBe(20)
+
+      // 3. Com tamanho customizado especificamente para o livro 103 (ex: 24px) -> 24px
+      localStorage.setItem('aresta_book_103_fontsize', '24')
+      store.setDocument({
+        type: 'epub',
+        metadata: { title: 'Livro Custom' },
+        totalPages: 10,
+        isLoaded: true,
+        load: vi.fn(),
+        getPage: vi.fn(),
+        setFontSize: vi.fn(),
+        destroy: vi.fn(),
+      } as any, 'custom.epub', 103)
+      expect(store.fontSize).toBe(24)
+
+      // 4. Ao alterar o tamanho da fonte do livro 103 para 26px, salva em aresta_book_103_fontsize
+      store.setFontSize(26)
+      expect(store.fontSize).toBe(26)
+      expect(localStorage.getItem('aresta_book_103_fontsize')).toBe('26')
     })
 
     it('possui tema amarelado (sepia) por padrão e permite alternar entre Branco, Amarelado e Preto', async () => {

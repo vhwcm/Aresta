@@ -33,7 +33,7 @@ export class DidacticDocumentAdapter implements IBookDocument {
   readonly type = 'didactic' as const
   private _metadata: BookMetadata = { title: '' }
   private _isLoaded = false
-  private _fontSize = 18
+  private _fontSize = 15
   private _fontFamily = 'newsreader'
   private _bookletData: DidacticBookletData | null = null
   private _virtualPages: VirtualDidacticPage[] = []
@@ -74,7 +74,7 @@ export class DidacticDocumentAdapter implements IBookDocument {
   async load(
     source: File | ArrayBuffer | string,
     fileName?: string,
-    initialFontSize = 18,
+    initialFontSize = 15,
     initialFontFamily = 'newsreader',
     coverUrl?: string
   ): Promise<void> {

@@ -638,7 +638,7 @@ async function findEpubCoverDataUri(
 
 function calculateSectionPages(
   doc: Document | null,
-  fontSize: number = 18,
+  fontSize: number = 15,
   fontFamily: string = "'Newsreader', Georgia, 'Times New Roman', serif",
   pageWidth: number = 700,
   pageHeight: number = 900,
@@ -649,7 +649,7 @@ function calculateSectionPages(
   const bodyEl = doc.body || (typeof doc.querySelector === 'function' ? doc.querySelector('body') : null) || (typeof doc.getElementsByTagName === 'function' ? doc.getElementsByTagName('body')[0] : null) || (doc as any)
   const textLen = (bodyEl?.textContent || '').trim().length
   if (typeof document === 'undefined' || !document.createElement) {
-    const baseCharsPerPage = Math.max(300, Math.round(1200 * (18 / Math.max(12, fontSize))))
+    const baseCharsPerPage = Math.max(300, Math.round(1200 * (15 / Math.max(12, fontSize))))
     return Math.max(1, Math.ceil(textLen / baseCharsPerPage))
   }
 
@@ -694,10 +694,10 @@ function calculateSectionPages(
     if (scrollW > safeW) {
       return Math.max(1, Math.ceil(scrollW / safeW))
     }
-    const baseCharsPerPage = Math.max(300, Math.round(1200 * (18 / Math.max(12, fontSize))))
+    const baseCharsPerPage = Math.max(300, Math.round(1200 * (15 / Math.max(12, fontSize))))
     return Math.max(1, Math.ceil(textLen / baseCharsPerPage))
   } catch {
-    const baseCharsPerPage = Math.max(300, Math.round(1200 * (18 / Math.max(12, fontSize))))
+    const baseCharsPerPage = Math.max(300, Math.round(1200 * (15 / Math.max(12, fontSize))))
     return Math.max(1, Math.ceil(textLen / baseCharsPerPage))
   }
 }
@@ -708,7 +708,7 @@ export class EpubDocumentAdapter implements IBookDocument {
   private _metadata: BookMetadata = { title: '' }
   private _totalPages = 0
   private _isLoaded = false
-  private _fontSize = 18
+  private _fontSize = 15
   private _fontFamily = "'Newsreader', Georgia, 'Times New Roman', serif"
   private _pageWidth = 700
   private _pageHeight = 900

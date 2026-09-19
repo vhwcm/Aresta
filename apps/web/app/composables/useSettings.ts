@@ -72,7 +72,7 @@ const settings = reactive<SettingsState>({
   language: 'pt-BR',
   nativeLanguage: 'pt-BR',
   targetTranslationLanguage: 'en',
-  epubFontSize: 18,
+  epubFontSize: 15,
   epubFontFamily: 'newsreader',
   themeMode: 'light',
   desktopHomeGraphOpen: true,
@@ -91,7 +91,7 @@ export function resetSettingsForTesting() {
   settings.language = 'pt-BR'
   settings.nativeLanguage = 'pt-BR'
   settings.targetTranslationLanguage = 'en'
-  settings.epubFontSize = 18
+  settings.epubFontSize = 15
   settings.epubFontFamily = 'newsreader'
   settings.themeMode = 'light'
   settings.desktopHomeGraphOpen = true

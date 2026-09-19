@@ -1,6 +1,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [19/09/2026 15:40] [Concluído] Definir tamanho padrão de fonte para 15px e validar identificação e carregamento de tipografia por livro e fallback global
 - [19/09/2026 15:35] [Concluído] Consolidar controles de leitura (foco, scroll/páginas, fonte, centralizado/largo, 1/2 folhas) exclusivamente no popover de configurações e trocar ícone para engrenagem
 - [19/09/2026 15:30] [Concluído] Alinhar coordenadas de foco no modo scroll com o offset parent do slot para enquadramento exato linha por linha
 - [19/09/2026 12:36] [Concluído] Corrigir template condicional no fluxo EPUB contínuo eliminando placeholders indevidos durante leitura

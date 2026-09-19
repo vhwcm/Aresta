@@ -38,7 +38,7 @@ export const useReaderStore = defineStore('reader', {
     const defaultGraphOpen = false
     let defaultTwoPageMode = true
     let defaultWidthMode: ReaderWidthMode = 'centered'
-    let defaultFontSize = 18
+    let defaultFontSize = 15
     let defaultFontFamily = "'Newsreader', Georgia, serif"
     let defaultReaderTheme: ReaderColorTheme = 'sepia'
     let defaultReadingMode: ReadingMode = 'paginated'
@@ -204,10 +204,38 @@ export const useReaderStore = defineStore('reader', {
 
     loadBookTypography() {
       if (typeof window === 'undefined') return
+
+      let globalFontSize = 15
+      let globalFontFamily = "'Newsreader', Georgia, serif"
+
+      try {
+        const savedSettings = localStorage.getItem('aresta_settings')
+        if (savedSettings) {
+          const parsed = JSON.parse(savedSettings)
+          if (typeof parsed.epubFontSize === 'number') {
+            globalFontSize = Math.max(12, Math.min(36, Math.round(parsed.epubFontSize)))
+          }
+          if (parsed.epubFontFamily) {
+            const fontMap: Record<string, string> = {
+              newsreader: "'Newsreader', Georgia, serif",
+              literata: "'Literata', Georgia, serif",
+              lora: "'Lora', Georgia, serif",
+              merriweather: "'Merriweather', Georgia, serif",
+              inter: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+            }
+            if (fontMap[parsed.epubFontFamily]) {
+              globalFontFamily = fontMap[parsed.epubFontFamily]!
+            }
+          }
+        }
+      } catch {
+        // ignorar erro de parse
+      }
+
       const key = this.getBookStorageKey()
       if (!key) {
-        this.fontSize = 18
-        this.fontFamily = "'Newsreader', Georgia, serif"
+        this.fontSize = globalFontSize
+        this.fontFamily = globalFontFamily
         return
       }
 
@@ -222,7 +250,7 @@ export const useReaderStore = defineStore('reader', {
             this.fontSize = Math.max(12, Math.min(36, Math.round(parsed)))
           }
         } else {
-          this.fontSize = 18
+          this.fontSize = globalFontSize
         }
 
         let savedFont = localStorage.getItem(`${key}_fontfamily`)
@@ -239,11 +267,11 @@ export const useReaderStore = defineStore('reader', {
           }
           this.fontFamily = fontMap[savedFont] || savedFont
         } else {
-          this.fontFamily = "'Newsreader', Georgia, serif"
+          this.fontFamily = globalFontFamily
         }
       } catch {
-        this.fontSize = 18
-        this.fontFamily = "'Newsreader', Georgia, serif"
+        this.fontSize = globalFontSize
+        this.fontFamily = globalFontFamily
       }
     },
 
@@ -266,15 +294,13 @@ export const useReaderStore = defineStore('reader', {
       this.isMobileGraphOpen = false
       this.syncSettings()
       this.loadBookTypography()
-      if (doc.type === 'epub') {
-        if (typeof doc.setFontSize === 'function') {
-          const preferredSize = this.fontSize || 18
-          doc.setFontSize(preferredSize, 1)
-        }
-        if (typeof doc.setFontFamily === 'function') {
-          const preferredFont = this.fontFamily || "'Newsreader', Georgia, serif"
-          doc.setFontFamily(preferredFont, 1)
-        }
+      if (typeof doc.setFontSize === 'function') {
+        const preferredSize = this.fontSize || 15
+        doc.setFontSize(preferredSize, 1)
+      }
+      if (typeof doc.setFontFamily === 'function') {
+        const preferredFont = this.fontFamily || "'Newsreader', Georgia, serif"
+        doc.setFontFamily(preferredFont, 1)
       }
       this.loadBookmarks()
     },
@@ -326,7 +352,7 @@ export const useReaderStore = defineStore('reader', {
     },
 
     resetFontSize() {
-      this.setFontSize(18)
+      this.setFontSize(15)
     },
 
     loadBookmarks() {
