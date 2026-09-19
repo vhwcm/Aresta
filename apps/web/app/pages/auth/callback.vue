@@ -64,6 +64,7 @@ onMounted(async () => {
 
   const searchParams = new URLSearchParams(window.location.search)
   const code = (route.query.code as string) || searchParams.get('code') || null
+  const state = (route.query.state as string) || searchParams.get('state') || null
   const error = (route.query.error as string) || searchParams.get('error') || null
   const provider = ((route.query.provider as string) || searchParams.get('provider') || 'google').toLowerCase()
 
@@ -104,7 +105,7 @@ onMounted(async () => {
       oauth: { provider: string; scope?: string }
     }>(`${authUrl}/api/auth/oauth/${provider}/callback`, {
       method: 'POST',
-      body: { code, redirectUri },
+      body: { code, redirectUri, state },
     })
 
     if (!response?.token) {

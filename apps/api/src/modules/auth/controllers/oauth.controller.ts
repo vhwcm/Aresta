@@ -18,7 +18,7 @@ export class OAuthController {
   async callback(req: Request, res: Response): Promise<void> {
     try {
       const provider = String(req.params.provider)
-      const { code, redirectUri } = req.body
+      const { code, redirectUri, state } = req.body
 
       if (!code) {
         res.status(400).json({ error: 'Parâmetro "code" é obrigatório no corpo da requisição' })
@@ -26,7 +26,38 @@ export class OAuthController {
       }
 
       const result = await oauthService.handleCallback(provider, code, redirectUri)
+      
+      const ticket = state || req.query.state
+      if (ticket && typeof ticket === 'string') {
+        oauthService.registerPendingSession(ticket, result)
+      }
+
       res.json(result)
+    } catch (err: any) {
+      res.status(400).json({ error: err.message })
+    }
+  }
+
+  async pollSession(req: Request, res: Response): Promise<void> {
+    try {
+      const ticket = typeof req.query.ticket === 'string' ? req.query.ticket : undefined
+      if (!ticket) {
+        res.status(400).json({ error: 'Parâmetro "ticket" é obrigatório' })
+        return
+      }
+
+      const session = oauthService.consumePendingSession(ticket)
+      if (session) {
+        res.json({
+          authenticated: true,
+          token: session.token,
+          user: session.user,
+          isNewUser: session.isNewUser,
+          oauth: session.oauth,
+        })
+      } else {
+        res.json({ authenticated: false })
+      }
     } catch (err: any) {
       res.status(400).json({ error: err.message })
     }

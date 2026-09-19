@@ -74,27 +74,61 @@ export const useOAuth = () => {
     return null
   }
 
+  const pollOAuthSession = async (
+    ticket: string,
+    timeoutMs = 120_000
+  ): Promise<{ token: string; user: AuthUser; isNewUser?: boolean; oauth: any } | null> => {
+    const startTime = Date.now()
+    const authUrl = getAuthApiUrl()
+
+    while (Date.now() - startTime < timeoutMs) {
+      await new Promise((r) => setTimeout(r, 1200))
+      try {
+        const data = await $fetch<{
+          authenticated: boolean
+          token?: string
+          user?: AuthUser
+          isNewUser?: boolean
+          oauth?: any
+        }>(`${authUrl}/api/auth/oauth/session-poll?ticket=${encodeURIComponent(ticket)}`)
+
+        if (data?.authenticated && data.token && data.user) {
+          return {
+            token: data.token,
+            user: data.user,
+            isNewUser: data.isNewUser,
+            oauth: data.oauth,
+          }
+        }
+      } catch {
+        // Ignora falhas transitórias de polling
+      }
+    }
+    return null
+  }
+
   const openOAuthPopup = async (url: string, provider: string): Promise<string> => {
     const width = 520
     const height = 650
     const left = typeof window !== 'undefined' ? window.screenX + (window.outerWidth - width) / 2 : 100
     const top = typeof window !== 'undefined' ? window.screenY + (window.outerHeight - height) / 2 : 100
 
-    const popup = window.open(
-      url,
-      `aresta_oauth_${provider}`,
-      `width=${width},height=${height},left=${left},top=${top},status=no,resizable=yes`
-    )
-
-    if (!popup) {
-      throw new Error('Popup bloqueado pelo navegador. Por favor, autorize popups para prosseguir.')
+    let popup: Window | null = null
+    try {
+      popup = window.open(
+        url,
+        `aresta_oauth_${provider}`,
+        `width=${width},height=${height},left=${left},top=${top},status=no,resizable=yes`
+      )
+    } catch {
+      // Ignora erro se popup for bloqueado pelo sistema nativo
     }
 
     return new Promise<string>((resolve, reject) => {
       let timer: any = null
 
       const messageHandler = (event: MessageEvent) => {
-        if (event.data?.type === 'ARESTA_OAUTH_CODE' && event.data?.code) {
+        if ((event.data?.type === 'ARESTA_OAUTH_CODE' || event.data?.type === 'ARESTA_OAUTH_SUCCESS') && event.data?.code) {
           cleanup()
           resolve(event.data.code)
         } else if (event.data?.type === 'ARESTA_OAUTH_ERROR') {
@@ -114,36 +148,21 @@ export const useOAuth = () => {
         window.addEventListener('message', messageHandler)
       }
 
-      timer = setInterval(() => {
-        if (popup.closed) {
-          cleanup()
-          reject(new Error('Janela fechada antes de concluir a autorização.'))
-          return
-        }
-
-        try {
-          if (popup.location && popup.location.origin === window.location.origin) {
-            const searchParams = new URLSearchParams(popup.location.search)
-            const popupCode = searchParams.get('code')
-            const popupError = searchParams.get('error')
-
-            if (popupCode) {
+      if (popup) {
+        timer = setInterval(() => {
+          try {
+            if (popup?.closed) {
               cleanup()
-              popup.close()
-              resolve(popupCode)
-            } else if (popupError) {
-              cleanup()
-              popup.close()
-              reject(new Error(popupError))
+              // Não rejeita imediatamente no mobile para permitir que o polling conclua
             }
-          }
-        } catch {}
-      }, 500)
+          } catch {}
+        }, 800)
+      }
     })
   }
 
   /**
-   * Executa o fluxo OAuth via janela popup para login/criação de conta.
+   * Executa o fluxo OAuth para login/criação de conta (suporte a Web, Popup e APK Android).
    */
   const loginWithOAuth = async (
     provider: 'google' | 'microsoft' | 'apple'
@@ -154,49 +173,69 @@ export const useOAuth = () => {
     try {
       const authUrl = getAuthApiUrl()
       const redirectUri = getOAuthRedirectUri()
+      const ticket = 'ticket_' + Math.random().toString(36).substring(2, 10) + Date.now().toString(36)
 
       const { url } = await $fetch<{ url: string }>(
-        `${authUrl}/api/auth/oauth/${provider}/url?redirectUri=${encodeURIComponent(redirectUri)}`
+        `${authUrl}/api/auth/oauth/${provider}/url?redirectUri=${encodeURIComponent(redirectUri)}&state=${ticket}`
       )
 
       if (!url) {
         throw new Error('Falha ao obter URL de autorização do provedor.')
       }
 
-      const code = await openOAuthPopup(url, provider)
+      const pollPromise = pollOAuthSession(ticket)
+      const popupPromise = openOAuthPopup(url, provider)
 
-      const response = await $fetch<{
-        token: string
-        user: AuthUser
-        isNewUser?: boolean
-        oauth: { provider: string; scope?: string }
-      }>(`${authUrl}/api/auth/oauth/${provider}/callback`, {
-        method: 'POST',
-        body: { code, redirectUri },
-      })
+      // Corrida: o que resolver primeiro (polling de background ou mensagem de popup)
+      const raceResult = await Promise.race([
+        pollPromise,
+        popupPromise.then(async (code) => {
+          const res = await $fetch<{
+            token: string
+            user: AuthUser
+            isNewUser?: boolean
+            oauth: { provider: string; scope?: string }
+          }>(`${authUrl}/api/auth/oauth/${provider}/callback`, {
+            method: 'POST',
+            body: { code, redirectUri, state: ticket },
+          })
+          return res
+        })
+      ])
+
+      const authData = raceResult || (await pollPromise)
+      if (!authData || !authData.token) {
+        throw new Error('Tempo limite de autorização excedido. Por favor, tente novamente.')
+      }
 
       const tokenCookie = useCookie<string | null>('aresta_token', { path: '/', maxAge: 60 * 60 * 24 * 7, sameSite: 'lax' })
       const userCookie = useCookie<AuthUser | null>('aresta_user', { path: '/', maxAge: 60 * 60 * 24 * 7, sameSite: 'lax' })
 
       await purgeClientSession()
 
-      tokenCookie.value = response.token
-      userCookie.value = response.user
+      tokenCookie.value = authData.token
+      userCookie.value = authData.user
+
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('aresta_token', authData.token)
+        localStorage.setItem('aresta_user', JSON.stringify(authData.user))
+        if (provider === 'google') {
+          localStorage.setItem('aresta_drive_provider', 'google')
+        }
+      }
 
       if (provider === 'google') {
         await refreshCloudToken('google')
-        if (typeof localStorage !== 'undefined') localStorage.setItem('aresta_drive_provider', 'google')
       }
       if (provider === 'microsoft') {
         await refreshCloudToken('onedrive')
-        if (typeof localStorage !== 'undefined') localStorage.setItem('aresta_drive_provider', 'onedrive')
       }
 
       return {
         success: true,
         provider,
-        user: response.user,
-        isNewUser: response.isNewUser ?? false,
+        user: authData.user,
+        isNewUser: authData.isNewUser ?? false,
         accessToken: (provider === 'google' ? getCloudToken('google') : getCloudToken('onedrive')) || undefined,
       }
     } catch (err: any) {

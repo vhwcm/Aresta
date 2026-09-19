@@ -3,10 +3,47 @@ import { prisma } from '../config/database'
 import { env } from '../../../config/env'
 import { AuthProviderFactory, type SupportedAuthProvider } from '../providers/AuthProviderFactory'
 
+export interface PendingSession {
+  token: string
+  user: {
+    id: number
+    name: string
+    email: string
+    role: string
+    isActive: boolean
+  }
+  oauth: {
+    provider: string
+    scope?: string
+  }
+  isNewUser?: boolean
+  createdAt: number
+}
+
+const pendingSessions = new Map<string, PendingSession>()
+
 export class OAuthService {
   getAuthUrl(provider: SupportedAuthProvider | string, state?: string, redirectUri?: string): string {
     const authProvider = AuthProviderFactory.getProvider(provider)
     return authProvider.getAuthUrl(state, redirectUri)
+  }
+
+  registerPendingSession(ticket: string, data: Omit<PendingSession, 'createdAt'>) {
+    if (!ticket) return
+    pendingSessions.set(ticket, {
+      ...data,
+      createdAt: Date.now(),
+    })
+  }
+
+  consumePendingSession(ticket: string): PendingSession | null {
+    if (!ticket) return null
+    const session = pendingSessions.get(ticket)
+    if (session) {
+      pendingSessions.delete(ticket)
+      return session
+    }
+    return null
   }
 
   async handleCallback(

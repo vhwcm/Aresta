@@ -2,6 +2,7 @@
 
 
 ## ✅ Concluído
+- [19/09/2026 19:15] [Concluído] Implementar arquitetura de Session Polling por Ticket para OAuth resolvendo autenticação no APK Android e WebView
 - [19/09/2026 18:55] [Concluído] Corrigir travamento infinito no OAuth callback com troca incondicional de token, redundância em localStorage e redirecionamento móvel
 - [19/09/2026 18:50] [Concluído] Configurar regra e automação de tag incremental a cada git push na skill git-commit e AGENTS.md
 - [19/09/2026 18:46] [Concluído] Intensificar desfoque e opacidade da máscara do modo de foco e cobrir seções adjacentes no scroll
