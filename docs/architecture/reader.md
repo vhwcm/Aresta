@@ -191,3 +191,38 @@ O leitor integra um mecanismo robusto e reativo de busca e marcação visual de 
 - **Sincronização Reativa**: O `PageCurlCanvas` observa o array reativo `annotations` do `useAnnotations()` e reaplica imediatamente os destaques na página ativa quando novas notas são salvas, editadas ou excluídas, além de restaurar os nós com `clearPageHighlights` e `normalize()`.
 - **Interatividade & Foco**: O clique em um destaque na página emite `select-annotation`, abrindo a gaveta de notas do livro e focando suavemente no card correspondente com animação de realce.
 
+---
+
+## 5. Arquitetura Local-First e Offline do PDF.js (`pdfjs-dist`)
+
+Para assegurar funcionamento **100% offline**, conformidade com empacotamento desktop/mobile (Tauri v2, Android APK, PWA) e eliminar qualquer dependência de redes externas (CDNs como `jsdelivr` ou `unpkg`), o Aresta gerencia os assets do PDF.js de forma estritamente local:
+
+```text
+================================================================================
+ARQUITETURA DE ASSETS LOCAIS E WORKER DO PDF.JS (OFFLINE & TAURI READY)
+================================================================================
+
+ [pdfjs-dist (NPM)] ──(postinstall / copy-pdfjs-assets.mjs)──> [apps/web/public/pdfjs/]
+                                                                      ├─ pdf.worker.min.mjs
+                                                                      ├─ cmaps/ (*.bcmap)
+                                                                      └─ standard_fonts/
+
+ [PdfDocumentAdapter / PdfCoverExtractor]
+                    │
+                    ▼
+         [apps/web/app/utils/pdfjsSetup.ts]
+                    │
+   ┌────────────────┴────────────────────────┐
+   │ 1. GlobalWorkerOptions.workerSrc        │ 2. getPdfDocumentParams()
+   │    = Vite Bundled URL (`?url`)          │    = cMapUrl: '/pdfjs/cmaps/'
+   │    || '/pdfjs/pdf.worker.min.mjs'       │    = standardFontDataUrl: '/pdfjs/standard_fonts/'
+   └─────────────────────────────────────────┘
+================================================================================
+```
+
+### Regras Inegociáveis do PDF.js:
+1. **Zero CDNs**: Nunca utilizar URLs externas como `https://cdn.jsdelivr.net/...` ou `https://unpkg.com/...` para `workerSrc`, `cMapUrl` ou `standardFontDataUrl`.
+2. **Centralização em `pdfjsSetup.ts`**: Toda inicialização do PDF.js deve passar obrigatoriamente por `setupPdfJs()` e `getPdfDocumentParams()`.
+3. **Cópia de Assets no Build**: O script `scripts/copy-pdfjs-assets.mjs` é executado no `postinstall` garantindo que os binários do worker e fontes estejam sempre sincronizados em `public/pdfjs/`.
+
+

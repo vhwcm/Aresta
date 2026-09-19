@@ -7,7 +7,7 @@
     "dev": "nuxt dev --port 3000",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare",
+    "postinstall": "nuxt prepare && node scripts/copy-pdfjs-assets.mjs",
     "lint": "eslint . --ext .js,.ts,.vue",
     "test": "vitest run",
     "test:watch": "vitest",

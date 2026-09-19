@@ -1,5 +1,6 @@
 import type { IBookDocument, BookMetadata, PageData } from '~/interfaces/reader/IBookDocument'
 import { readerProfiler } from '~/utils/readerProfiler'
+import { setupPdfJs, getPdfDocumentParams } from '~/utils/pdfjsSetup'
 
 export class PdfDocumentAdapter implements IBookDocument {
   readonly type = 'pdf' as const
@@ -31,13 +32,8 @@ export class PdfDocumentAdapter implements IBookDocument {
 
   async load(source: File | ArrayBuffer, fileName?: string, _initialFontSize?: number, _initialFontFamily?: string, _coverUrl?: string): Promise<void> {
     const pdfjsLib = await readerProfiler.measureAsync('4.1. Importação Dinâmica do PDF.js', async () => {
-      return await import('pdfjs-dist')
+      return await setupPdfJs()
     }, 'parse')
-
-    const pdfjsVersion = pdfjsLib.version || '6.1.200'
-    if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsVersion}/build/pdf.worker.min.mjs`
-    }
 
     let arrayBuffer: ArrayBuffer
     let defaultTitle = fileName || 'document.pdf'
@@ -54,14 +50,7 @@ export class PdfDocumentAdapter implements IBookDocument {
     const typedArray = new Uint8Array(arrayBuffer)
 
     await readerProfiler.measureAsync('4.2. PDF.js getDocument & Parse Estrutura', async () => {
-      const pdfjsVersion = pdfjsLib.version || '6.1.200'
-      const loadingTask = pdfjsLib.getDocument({
-        data: typedArray,
-        cMapUrl: `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsVersion}/cmaps/`,
-        cMapPacked: true,
-        standardFontDataUrl: `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsVersion}/standard_fonts/`,
-        enableXfa: false,
-      })
+      const loadingTask = pdfjsLib.getDocument(getPdfDocumentParams(typedArray))
       this._pdfDocument = await loadingTask.promise
     }, 'parse', { sizeBytes: typedArray.byteLength })
 
@@ -169,7 +158,7 @@ export class PdfDocumentAdapter implements IBookDocument {
 
   async renderTextLayer(pageNumber: number, container: HTMLElement, targetWidth?: number, targetHeight?: number): Promise<void> {
     if (!this._pdfDocument) throw new Error('PDF não carregado')
-    const pdfjsLib = await import('pdfjs-dist')
+    const pdfjsLib = await setupPdfJs()
     const pdfDoc = this._pdfDocument as import('pdfjs-dist').PDFDocumentProxy
     const pdfPage = await pdfDoc.getPage(pageNumber)
 

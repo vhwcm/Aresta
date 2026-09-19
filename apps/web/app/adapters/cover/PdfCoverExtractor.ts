@@ -1,4 +1,5 @@
 import type { ICoverExtractor, ExtractedCoverResult } from './ICoverExtractor'
+import { setupPdfJs, getPdfDocumentParams } from '~/utils/pdfjsSetup'
 
 export class PdfCoverExtractor implements ICoverExtractor {
   readonly supportedType = 'pdf' as const
@@ -8,12 +9,7 @@ export class PdfCoverExtractor implements ICoverExtractor {
     _fileName?: string
   ): Promise<ExtractedCoverResult | null> {
     try {
-      const pdfjsLib = await import('pdfjs-dist')
-
-      const pdfjsVersion = pdfjsLib.version || '6.1.200'
-      if (!pdfjsLib.GlobalWorkerOptions.workerSrc && typeof window !== 'undefined') {
-        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsVersion}/build/pdf.worker.min.mjs`
-      }
+      const pdfjsLib = await setupPdfJs()
 
       let arrayBuffer: ArrayBuffer
       if (source instanceof Blob) {
@@ -23,13 +19,7 @@ export class PdfCoverExtractor implements ICoverExtractor {
       }
 
       const typedArray = new Uint8Array(arrayBuffer)
-      const loadingTask = pdfjsLib.getDocument({
-        data: typedArray,
-        cMapUrl: `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsVersion}/cmaps/`,
-        cMapPacked: true,
-        standardFontDataUrl: `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsVersion}/standard_fonts/`,
-        enableXfa: false,
-      })
+      const loadingTask = pdfjsLib.getDocument(getPdfDocumentParams(typedArray))
 
       const pdfDoc = await loadingTask.promise
       if (pdfDoc.numPages < 1) return null
