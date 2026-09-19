@@ -96,27 +96,28 @@
             fontSize: `${store.fontSize}px`,
           }"
         >
-          <div
-            v-if="visibleSections[sectionIdx - 1]"
-            :ref="(el) => setSectionContentRef(el as HTMLElement, sectionIdx - 1)"
-            class="scroll-section-content"
-            @click="handleHighlightClick"
-          />
-          <!-- Máscara do Modo de Foco no EPUB Contínuo -->
-          <ReaderFocusOverlay
-            v-if="store.isFocusMode && currentFocusedSection === sectionIdx - 1"
-            :top="focusBounds.top"
-            :height="focusBounds.height"
-            :bottom="focusBounds.bottom"
-            @advance="handleFocusAdvance"
-          />
-          <ReaderFocusOverlay
-            v-else-if="store.isFocusMode"
-            :top="0"
-            :height="0"
-            :bottom="0"
-            @advance="handleFocusAdvance"
-          />
+          <template v-if="visibleSections[sectionIdx - 1]">
+            <div
+              :ref="(el) => setSectionContentRef(el as HTMLElement, sectionIdx - 1)"
+              class="scroll-section-content"
+              @click="handleHighlightClick"
+            />
+            <!-- Máscara do Modo de Foco no EPUB Contínuo -->
+            <ReaderFocusOverlay
+              v-if="store.isFocusMode && currentFocusedSection === sectionIdx - 1"
+              :top="focusBounds.top"
+              :height="focusBounds.height"
+              :bottom="focusBounds.bottom"
+              @advance="handleFocusAdvance"
+            />
+            <ReaderFocusOverlay
+              v-else-if="store.isFocusMode"
+              :top="0"
+              :height="0"
+              :bottom="0"
+              @advance="handleFocusAdvance"
+            />
+          </template>
           <div
             v-else
             class="scroll-section-placeholder min-h-[300px] flex items-center justify-center opacity-30 select-none text-xs font-technical"

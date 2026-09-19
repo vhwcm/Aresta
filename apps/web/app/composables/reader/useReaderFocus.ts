@@ -21,13 +21,46 @@ export interface FocusWindowBounds {
 }
 
 /**
- * Agrupa retângulos de caracteres ou palavras em linhas de texto horizontais discretas.
- * @param rects Lista de retângulos relativos ao contêiner
- * @param tolerance Tolerância vertical em pixels para considerar mesma linha
+ * Verifica se dois retângulos pertencem à mesma linha visual de leitura.
+ */
+function areRectsOnSameLine(
+  rectA: { top: number; bottom: number },
+  rectB: { top: number; bottom: number },
+  tolerance = 8,
+): boolean {
+  const heightA = rectA.bottom - rectA.top
+  const heightB = rectB.bottom - rectB.top
+  const midA = (rectA.top + rectA.bottom) / 2
+  const midB = (rectB.top + rectB.bottom) / 2
+
+  // Se a diferença entre os topos for menor que a tolerância
+  if (Math.abs(rectA.top - rectB.top) <= tolerance) {
+    return true
+  }
+
+  // Se os pontos médios estiverem alinhados com base na menor altura
+  const minHeight = Math.min(heightA, heightB)
+  if (minHeight > 10 && Math.abs(midA - midB) <= minHeight * 0.45) {
+    return true
+  }
+
+  // Se houver sobreposição vertical de pelo menos 55%
+  const overlapTop = Math.max(rectA.top, rectB.top)
+  const overlapBottom = Math.min(rectA.bottom, rectB.bottom)
+  const overlap = overlapBottom - overlapTop
+  if (overlap > 0 && overlap >= minHeight * 0.55) {
+    return true
+  }
+
+  return false
+}
+
+/**
+ * Agrupa retângulos de caracteres, palavras, títulos ou imagens em linhas/blocos visuais discretos.
  */
 export function extractLinesFromRects(
   rects: Array<{ top: number; bottom: number; left: number; right: number; width?: number; height?: number }>,
-  tolerance = 6,
+  tolerance = 8,
 ): FocusLineRect[] {
   if (!rects || rects.length === 0) return []
 
@@ -42,7 +75,7 @@ export function extractLinesFromRects(
 
   // Ordena por posição vertical (top) e depois horizontal (left)
   const sorted = [...validRects].sort((a, b) => {
-    if (Math.abs(a.top - b.top) <= tolerance) {
+    if (areRectsOnSameLine(a, b, tolerance)) {
       return a.left - b.left
     }
     return a.top - b.top
@@ -57,8 +90,10 @@ export function extractLinesFromRects(
       continue
     }
 
-    const groupTopAvg = currentGroup.reduce((sum, r) => sum + r.top, 0) / currentGroup.length
-    if (Math.abs(rect.top - groupTopAvg) <= tolerance) {
+    const groupTopMin = Math.min(...currentGroup.map((r) => r.top))
+    const groupBottomMax = Math.max(...currentGroup.map((r) => r.bottom))
+
+    if (areRectsOnSameLine({ top: groupTopMin, bottom: groupBottomMax }, rect, tolerance)) {
       currentGroup.push(rect)
     } else {
       // Fecha a linha anterior
@@ -97,37 +132,62 @@ export function extractLinesFromRects(
 }
 
 /**
- * Inspeciona o elemento DOM da página (PDF textLayer ou EPUB HTML) e extrai as linhas visuais.
+ * Inspeciona o elemento DOM da página (PDF textLayer ou EPUB HTML) e extrai com precisão as linhas visuais,
+ * títulos e imagens contidos estritamente na área visível da folha.
  */
 export function extractLinesFromContainer(
   container: HTMLElement | null,
-  tolerance = 6,
+  tolerance = 8,
 ): FocusLineRect[] {
   if (!container || typeof window === 'undefined') return []
 
   const containerRect = container.getBoundingClientRect()
   if (containerRect.width === 0 || containerRect.height === 0) return []
 
+  const cLeft = containerRect.left
+  const cRight = containerRect.right
+  const cTop = containerRect.top
+  const cBottom = containerRect.bottom
+
   const rawRects: Array<{ top: number; bottom: number; left: number; right: number }> = []
 
-  // 1. Tenta extrair primeiro de spans (comum no PDF.js .textLayer)
+  // 1. Extração de Imagens e Figuras (exibe imagens por completo)
+  const mediaElements = container.querySelectorAll('img, svg, picture, figure, table, [role="img"]')
+  mediaElements.forEach((el) => {
+    const rect = el.getBoundingClientRect()
+    if (rect.width > 12 && rect.height > 12) {
+      // Garante que o elemento está visível na janela/coluna da página atual
+      if (rect.right > cLeft + 4 && rect.left < cRight - 4 && rect.bottom > cTop + 2 && rect.top < cBottom - 2) {
+        rawRects.push({
+          top: rect.top - cTop + container.scrollTop,
+          bottom: rect.bottom - cTop + container.scrollTop,
+          left: rect.left - cLeft + container.scrollLeft,
+          right: rect.right - cLeft + container.scrollLeft,
+        })
+      }
+    }
+  })
+
+  // 2. Extração de Spans do PDF (.textLayer)
   const spans = container.querySelectorAll('.textLayer > span, span[role="presentation"]')
   if (spans.length > 0) {
     spans.forEach((span) => {
       const rect = span.getBoundingClientRect()
       if (rect.width > 0 && rect.height > 0) {
-        rawRects.push({
-          top: rect.top - containerRect.top + container.scrollTop,
-          bottom: rect.bottom - containerRect.top + container.scrollTop,
-          left: rect.left - containerRect.left + container.scrollLeft,
-          right: rect.right - containerRect.left + container.scrollLeft,
-        })
+        if (rect.right > cLeft + 2 && rect.left < cRight - 2 && rect.bottom > cTop + 2 && rect.top < cBottom - 2) {
+          rawRects.push({
+            top: rect.top - cTop + container.scrollTop,
+            bottom: rect.bottom - cTop + container.scrollTop,
+            left: rect.left - cLeft + container.scrollLeft,
+            right: rect.right - cLeft + container.scrollLeft,
+          })
+        }
       }
     })
   }
 
-  // 2. Se não houver spans de PDF, inspeciona nós de texto usando Range (EPUB / HTML)
-  if (rawRects.length === 0) {
+  // 3. Extração via Range de Nós de Texto (EPUB HTML / Reflow / Headings / Parágrafos)
+  if (spans.length === 0) {
     const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, {
       acceptNode(node) {
         const text = node.textContent?.trim() || ''
@@ -149,16 +209,19 @@ export function extractLinesFromContainer(
         for (let i = 0; i < clientRects.length; i++) {
           const r = clientRects[i]
           if (r && r.width > 2 && r.height > 2) {
-            rawRects.push({
-              top: r.top - containerRect.top + container.scrollTop,
-              bottom: r.bottom - containerRect.top + container.scrollTop,
-              left: r.left - containerRect.left + container.scrollLeft,
-              right: r.right - containerRect.left + container.scrollLeft,
-            })
+            // Filtro estrito: apenas retângulos pertencentes à coluna/página visível
+            if (r.right > cLeft + 4 && r.left < cRight - 4 && r.bottom > cTop + 2 && r.top < cBottom - 2) {
+              rawRects.push({
+                top: r.top - cTop + container.scrollTop,
+                bottom: r.bottom - cTop + container.scrollTop,
+                left: r.left - cLeft + container.scrollLeft,
+                right: r.right - cLeft + container.scrollLeft,
+              })
+            }
           }
         }
       } catch {
-        // Ignora erro em nós transitórios
+        // Ignora nós transitórios
       }
       textNode = walker.nextNode()
     }
@@ -166,9 +229,9 @@ export function extractLinesFromContainer(
 
   const lines = extractLinesFromRects(rawRects, tolerance)
 
-  // Fallback caso a página não contenha texto selecionável (ex: imagem escaneada)
+  // Fallback caso a página não contenha texto selecionável (ex: imagem escaneada ou capa pura)
   if (lines.length === 0 && containerRect.height > 50) {
-    const defaultLineHeight = 32
+    const defaultLineHeight = 36
     const totalFallbackLines = Math.max(1, Math.floor(containerRect.height / defaultLineHeight))
     for (let i = 0; i < totalFallbackLines; i++) {
       const top = i * defaultLineHeight
@@ -187,7 +250,8 @@ export function extractLinesFromContainer(
 }
 
 /**
- * Calcula os limites verticais e metadados da janela focal para o bloco de linhas solicitado.
+ * Calcula os limites verticais e metadados da janela focal para o bloco de linhas solicitado,
+ * garantindo espaçamento vertical confortável (padding) para não cortar descendentes de letras ou acentos.
  */
 export function calculateFocusWindow(
   lines: FocusLineRect[],
@@ -226,14 +290,19 @@ export function calculateFocusWindow(
   }
 
   const activeSlice = lines.slice(clampedStart, endIndex + 1)
-  const top = Math.min(...activeSlice.map((l) => l.top))
-  const bottom = Math.max(...activeSlice.map((l) => l.bottom))
-  const height = Math.max(20, bottom - top)
+  const rawTop = Math.min(...activeSlice.map((l) => l.top))
+  const rawBottom = Math.max(...activeSlice.map((l) => l.bottom))
+
+  // Margem de respiro vertical para acentuação (á, ô, É) e descendentes (g, j, p, q, y)
+  const PADDING_Y = 6
+  const top = Math.max(0, rawTop - PADDING_Y)
+  const bottom = Math.min(containerHeight, rawBottom + PADDING_Y)
+  const height = Math.max(24, bottom - top)
 
   return {
-    top: Math.max(0, top),
-    bottom,
-    height,
+    top: Math.round(top),
+    bottom: Math.round(bottom),
+    height: Math.round(height),
     isLastBlock,
     startLine: clampedStart,
     endLine: endIndex,

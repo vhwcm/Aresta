@@ -34,7 +34,7 @@ describe('useReaderFocus & Focus Mode Engine', () => {
         { top: 10, bottom: 28, left: 155, right: 220, width: 65, height: 18 },
       ]
 
-      const lines = extractLinesFromRects(rects, 5)
+      const lines = extractLinesFromRects(rects, 8)
       expect(lines.length).toBe(1)
       expect(lines[0]!.top).toBe(10)
       expect(lines[0]!.bottom).toBe(29)
@@ -53,11 +53,28 @@ describe('useReaderFocus & Focus Mode Engine', () => {
         { top: 70, bottom: 90, left: 20, right: 190, width: 170, height: 20 },
       ]
 
-      const lines = extractLinesFromRects(rects, 5)
+      const lines = extractLinesFromRects(rects, 8)
       expect(lines.length).toBe(3)
       expect(lines[0]!.top).toBe(10)
       expect(lines[1]!.top).toBe(40)
       expect(lines[2]!.top).toBe(70)
+    })
+
+    it('suporta linhas dinâmicas de títulos altos ou blocos de imagem', () => {
+      const rects = [
+        // Título H1 alto (altura 48px)
+        { top: 20, bottom: 68, left: 30, right: 350, width: 320, height: 48 },
+        // Imagem/Figura (altura 180px)
+        { top: 80, bottom: 260, left: 30, right: 400, width: 370, height: 180 },
+        // Parágrafo de texto normal (altura 20px)
+        { top: 280, bottom: 300, left: 30, right: 450, width: 420, height: 20 },
+      ]
+
+      const lines = extractLinesFromRects(rects, 8)
+      expect(lines.length).toBe(3)
+      expect(lines[0]!.height).toBe(48)
+      expect(lines[1]!.height).toBe(180)
+      expect(lines[2]!.height).toBe(20)
     })
   })
 
@@ -79,13 +96,15 @@ describe('useReaderFocus & Focus Mode Engine', () => {
       expect(bounds.height).toBe(600)
     })
 
-    it('calcula corretamente o bloco de 3 linhas no topo da página', () => {
+    it('calcula corretamente o bloco de 3 linhas no topo com margem de respiro vertical para acentos e letras', () => {
       const bounds = calculateFocusWindow(mockLines, 0, 3, 600)
       expect(bounds.startLine).toBe(0)
       expect(bounds.endLine).toBe(2)
-      expect(bounds.top).toBe(10)
-      expect(bounds.bottom).toBe(90)
-      expect(bounds.height).toBe(80)
+      // Top 10 - 6px padding = 4px
+      expect(bounds.top).toBe(4)
+      // Bottom 90 + 6px padding = 96px
+      expect(bounds.bottom).toBe(96)
+      expect(bounds.height).toBe(92)
       expect(bounds.isLastBlock).toBe(false)
       expect(bounds.totalLines).toBe(7)
     })
@@ -94,9 +113,9 @@ describe('useReaderFocus & Focus Mode Engine', () => {
       const bounds = calculateFocusWindow(mockLines, 3, 3, 600)
       expect(bounds.startLine).toBe(3)
       expect(bounds.endLine).toBe(5)
-      expect(bounds.top).toBe(100)
-      expect(bounds.bottom).toBe(180)
-      expect(bounds.height).toBe(80)
+      expect(bounds.top).toBe(94)
+      expect(bounds.bottom).toBe(186)
+      expect(bounds.height).toBe(92)
       expect(bounds.isLastBlock).toBe(false)
     })
 
@@ -105,8 +124,8 @@ describe('useReaderFocus & Focus Mode Engine', () => {
       const bounds = calculateFocusWindow(mockLines, 6, 3, 600)
       expect(bounds.startLine).toBe(6)
       expect(bounds.endLine).toBe(6)
-      expect(bounds.top).toBe(190)
-      expect(bounds.bottom).toBe(210)
+      expect(bounds.top).toBe(184)
+      expect(bounds.bottom).toBe(216)
       expect(bounds.isLastBlock).toBe(true)
     })
 
@@ -115,8 +134,8 @@ describe('useReaderFocus & Focus Mode Engine', () => {
       const bounds = calculateFocusWindow(mockLines, 4, 3, 600)
       expect(bounds.startLine).toBe(4)
       expect(bounds.endLine).toBe(6)
-      expect(bounds.top).toBe(130)
-      expect(bounds.bottom).toBe(210)
+      expect(bounds.top).toBe(124)
+      expect(bounds.bottom).toBe(216)
       expect(bounds.isLastBlock).toBe(true)
     })
   })
