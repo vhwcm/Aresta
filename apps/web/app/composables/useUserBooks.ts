@@ -90,7 +90,7 @@ export const useUserBooks = () => {
         for (const lb of localBooks) {
           const normRawTitle = (lb.title || '').trim().toLowerCase()
           if (SYSTEM_FOLDERS.has(normRawTitle) || /^v\d+$/i.test(normRawTitle)) {
-            bookRepo.deleteBook(lb.id).catch(() => {})
+            bookRepo.delete(lb.id).catch(() => {})
             continue
           }
           const item = mapLocalToUserBookItem(lb)

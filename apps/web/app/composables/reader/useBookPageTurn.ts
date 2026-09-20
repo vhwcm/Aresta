@@ -449,7 +449,15 @@ export function useBookPageTurn(
   })
 
   watch(
-    [() => store.currentPage, () => store.document, () => store.isTwoPageMode, () => store.readerWidthMode, () => store.isNotesOpen, () => store.isGraphOpen, () => store.isZenMode],
+    [
+      () => store.currentPage,
+      () => store.document,
+      () => store.isTwoPageMode,
+      () => store.readerWidthMode,
+      () => store.isNotesOpen,
+      () => store.isGraphOpen,
+      () => store.isZenMode,
+    ],
     () => {
       updateLayout()
     },

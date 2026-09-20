@@ -757,19 +757,22 @@ const initGraph = (animateTransition = true) => {
       })
 
       // Marcar toda a ilha como visitada e conectada
-      const islandQueue: string[] = [nId]
-      visitedIslands.add(nId)
-      reachableFromRoot.add(nId)
-      while (islandQueue.length > 0) {
-        const curr = islandQueue.shift()!
-        for (const neighbor of adj.get(curr) || []) {
-          if (!visitedIslands.has(neighbor)) {
-            visitedIslands.add(neighbor)
-            reachableFromRoot.add(neighbor)
-            islandQueue.push(neighbor)
+      const expandIsland = (startId: string) => {
+        const islandQueue: string[] = [startId]
+        visitedIslands.add(startId)
+        reachableFromRoot.add(startId)
+        while (islandQueue.length > 0) {
+          const curr = islandQueue.shift()!
+          for (const neighbor of adj.get(curr) || []) {
+            if (!visitedIslands.has(neighbor)) {
+              visitedIslands.add(neighbor)
+              reachableFromRoot.add(neighbor)
+              islandQueue.push(neighbor)
+            }
           }
         }
       }
+      expandIsland(nId)
     }
   }
 
@@ -806,7 +809,7 @@ const initGraph = (animateTransition = true) => {
     visited.add(tId)
     nodeRadius.set(tId, R1)
     nodeAngle.set(tId, baseAngle)
-    ;(theme as any).targetAngle = baseAngle
+    theme.targetAngle = baseAngle
     theme.x = centerX + R1 * Math.cos(baseAngle)
     theme.y = centerY + R1 * Math.sin(baseAngle)
     bfsQueue.push(tId)
@@ -823,7 +826,7 @@ const initGraph = (animateTransition = true) => {
       nodeAngle.set(iId, islandAngle)
       const targetNode = nodeMap.get(iId)
       if (targetNode) {
-        ;(targetNode as any).targetAngle = islandAngle
+        targetNode.targetAngle = islandAngle
         targetNode.x = centerX + islandR * Math.cos(islandAngle)
         targetNode.y = centerY + islandR * Math.sin(islandAngle)
       }

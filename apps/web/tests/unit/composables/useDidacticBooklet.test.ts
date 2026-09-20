@@ -36,10 +36,10 @@ describe('useDidacticBooklet Composable (Local-First AI Generation)', () => {
 
     // 1. Deve chamar a rota da IA (/api/ai/didactic) e não a rota legada (410 Gone)
     expect(mockFetch).toHaveBeenCalledTimes(1)
-    const [url, options] = mockFetch.mock.calls[0]
+    const [url, options] = (mockFetch.mock.calls[0] || []) as [string, any]
     expect(url).toContain('/ai/didactic')
     expect(url).not.toContain('/didactic/booklets')
-    expect(JSON.parse(options.body)).toEqual(
+    expect(JSON.parse(options?.body || '{}')).toEqual(
       expect.objectContaining({
         topic: 'Machine Learning',
         userLanguage: 'pt-BR',
@@ -51,7 +51,7 @@ describe('useDidacticBooklet Composable (Local-First AI Generation)', () => {
     expect(result.book?.title).toBe('Didático: Machine Learning')
     expect(result.book?.format_type).toBe('DIDACTIC')
     expect(result.booklet.chapters).toHaveLength(1)
-    expect(result.booklet.chapters[0].topic).toBe('Machine Learning')
+    expect(result.booklet.chapters?.[0]?.topic).toBe('Machine Learning')
 
     // 3. Deve persistir o livro na estante (bookRepo)
     const savedBook = await bookRepo.getById(result.book!.id)
@@ -62,8 +62,8 @@ describe('useDidacticBooklet Composable (Local-First AI Generation)', () => {
     // 4. Deve persistir o livreto na tabela local de livretos
     const localBooklets = await dbManager.getAdapter().getDidacticBooklets()
     expect(localBooklets).toHaveLength(1)
-    expect(localBooklets[0].topic).toBe('Machine Learning')
-    expect(localBooklets[0].html).toContain('Machine Learning')
+    expect(localBooklets[0]?.topic).toBe('Machine Learning')
+    expect(localBooklets[0]?.html).toContain('Machine Learning')
   })
 
   it('busca livretos didáticos do banco local via fetchBooklets', async () => {
@@ -85,8 +85,8 @@ describe('useDidacticBooklet Composable (Local-First AI Generation)', () => {
 
     const list = await didactic.fetchBooklets()
     expect(list).toHaveLength(1)
-    expect(list[0].title).toBe('Didático: Algoritmos')
-    expect(list[0].book_id).toBe(9999)
+    expect(list[0]?.title).toBe('Didático: Algoritmos')
+    expect(list[0]?.book_id).toBe(9999)
   })
 
   it('propaga erro adequadamente quando a IA falha', async () => {

@@ -58,7 +58,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
       }
     }
     this.isInitialized = true;
-    return this.fallbackDexie;
+    return this.fallbackDexie as DexieAdapter;
   }
 
   private async withDb<T>(
@@ -236,7 +236,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
 
   // Books
   async getBooks(): Promise<LocalBook[]> {
-    return this.withDb(
+    return this.withDb<LocalBook[]>(
       async (db) => {
         const rows = await db.select<any[]>('SELECT * FROM books WHERE deleted_at IS NULL ORDER BY updated_at DESC');
         return rows.map((r) => ({
@@ -260,7 +260,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
   }
 
   async getBookById(id: number): Promise<LocalBook | null> {
-    return this.withDb(
+    return this.withDb<LocalBook | null>(
       async (db) => {
         const rows = await db.select<any[]>('SELECT * FROM books WHERE id = ? AND deleted_at IS NULL', [id]);
         if (rows.length === 0) return null;
@@ -286,7 +286,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
   }
 
   async getBookRawById(id: number): Promise<LocalBook | null> {
-    return this.withDb(
+    return this.withDb<LocalBook | null>(
       async (db) => {
         const rows = await db.select<any[]>('SELECT * FROM books WHERE id = ?', [Number(id)]);
         if (rows.length === 0) return null;
@@ -403,7 +403,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
 
   // Annotations
   async getAnnotations(filters?: { bookId?: number; themeId?: number }): Promise<LocalAnnotation[]> {
-    return this.withDb(
+    return this.withDb<LocalAnnotation[]>(
       async (db) => {
         let query = 'SELECT * FROM annotations WHERE deleted_at IS NULL';
         const params: any[] = [];
@@ -441,7 +441,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
   }
 
   async getAnnotationsRaw(): Promise<LocalAnnotation[]> {
-    return this.withDb(
+    return this.withDb<LocalAnnotation[]>(
       async (db) => {
         const rows = await db.select<any[]>('SELECT * FROM annotations ORDER BY created_at DESC');
         return rows.map((r) => ({
@@ -467,7 +467,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
   }
 
   async getAnnotationById(id: number): Promise<LocalAnnotation | null> {
-    return this.withDb(
+    return this.withDb<LocalAnnotation | null>(
       async (db) => {
         const rows = await db.select<any[]>('SELECT * FROM annotations WHERE id = ? AND deleted_at IS NULL', [id]);
         if (rows.length === 0) return null;
@@ -550,7 +550,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
 
   // Flashcards
   async getFlashcards(filters?: { dateStr?: string; onlyDue?: boolean }): Promise<LocalFlashcard[]> {
-    return this.withDb(
+    return this.withDb<LocalFlashcard[]>(
       async (db) => {
         let query = 'SELECT * FROM flashcards WHERE deleted_at IS NULL';
         const params: any[] = [];
@@ -591,7 +591,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
   }
 
   async getFlashcardsRaw(): Promise<LocalFlashcard[]> {
-    return this.withDb(
+    return this.withDb<LocalFlashcard[]>(
       async (db) => {
         const rows = await db.select<any[]>('SELECT * FROM flashcards');
         return rows.map((r) => ({
@@ -625,7 +625,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
   }
 
   async getFlashcardById(id: number): Promise<LocalFlashcard | null> {
-    return this.withDb(
+    return this.withDb<LocalFlashcard | null>(
       async (db) => {
         const rows = await db.select<any[]>('SELECT * FROM flashcards WHERE id = ? AND deleted_at IS NULL', [id]);
         if (rows.length === 0) return null;
@@ -732,7 +732,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
 
   // Canvas
   async getCanvases(): Promise<LocalCanvasItem[]> {
-    return this.withDb(
+    return this.withDb<LocalCanvasItem[]>(
       async (db) => {
         const rows = await db.select<any[]>('SELECT * FROM canvases WHERE deleted_at IS NULL ORDER BY updated_at DESC');
         return rows.map((r) => ({
@@ -752,7 +752,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
   }
 
   async getCanvasesRaw(): Promise<LocalCanvasItem[]> {
-    return this.withDb(
+    return this.withDb<LocalCanvasItem[]>(
       async (db) => {
         const rows = await db.select<any[]>('SELECT * FROM canvases ORDER BY updated_at DESC');
         return rows.map((r) => ({
@@ -772,7 +772,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
   }
 
   async getCanvasById(id: string): Promise<LocalCanvasItem | null> {
-    return this.withDb(
+    return this.withDb<LocalCanvasItem | null>(
       async (db) => {
         const rows = await db.select<any[]>('SELECT * FROM canvases WHERE id = ? AND deleted_at IS NULL', [id]);
         if (rows.length === 0) return null;
@@ -903,11 +903,20 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
     );
   }
 
-  private async deletePersonalRecord<T extends { id: string; updated_at: string; deleted_at?: string | null; sync_status: any }>(entityType: string, id: string): Promise<void> {
+  private async deletePersonalRecord<
+    T extends { id: string; updated_at: string; deleted_at?: string | null; sync_status: any }
+  >(entityType: string, id: string): Promise<void> {
     return this.withDb(
       async (db) => {
         const item = await this.getPersonalRecord<T>(entityType, id);
-        if (item) await this.savePersonalRecord(entityType, { ...item, updated_at: new Date().toISOString(), deleted_at: new Date().toISOString(), sync_status: 'pending' });
+        if (item) {
+          await this.savePersonalRecord(entityType, {
+            ...item,
+            updated_at: new Date().toISOString(),
+            deleted_at: new Date().toISOString(),
+            sync_status: 'pending',
+          });
+        }
       },
       async (dexie) => {
         if (entityType === 'note') return dexie.deleteNote(id);
@@ -1049,7 +1058,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
 
   // Didactic Booklets
   async getDidacticBooklets(filters?: { bookId?: number; themeId?: number }): Promise<LocalDidacticBooklet[]> {
-    return this.withDb(
+    return this.withDb<LocalDidacticBooklet[]>(
       async (db) => {
         let sql = 'SELECT * FROM didactic_booklets WHERE deleted_at IS NULL';
         const params: any[] = [];
@@ -1084,7 +1093,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
   }
 
   async getDidacticBookletsRaw(): Promise<LocalDidacticBooklet[]> {
-    return this.withDb(
+    return this.withDb<LocalDidacticBooklet[]>(
       async (db) => {
         const rows = await db.select<any[]>('SELECT * FROM didactic_booklets ORDER BY created_at DESC');
         return rows.map((r) => ({
@@ -1108,7 +1117,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
   }
 
   async getDidacticBookletById(id: string): Promise<LocalDidacticBooklet | null> {
-    return this.withDb(
+    return this.withDb<LocalDidacticBooklet | null>(
       async (db) => {
         const rows = await db.select<any[]>('SELECT * FROM didactic_booklets WHERE id = ? AND deleted_at IS NULL', [id]);
         if (rows.length === 0) return null;
@@ -1188,7 +1197,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
 
   // Links
   async getLinks(): Promise<LocalLinkItem[]> {
-    return this.withDb(
+    return this.withDb<LocalLinkItem[]>(
       async (db) => {
         const rows = await db.select<any[]>('SELECT * FROM links WHERE deleted_at IS NULL ORDER BY updated_at DESC');
         return rows.map((r) => ({
@@ -1213,7 +1222,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
   }
 
   async getLinksRaw(): Promise<LocalLinkItem[]> {
-    return this.withDb(
+    return this.withDb<LocalLinkItem[]>(
       async (db) => {
         const rows = await db.select<any[]>('SELECT * FROM links');
         return rows.map((r) => ({
@@ -1238,7 +1247,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
   }
 
   async getLinkById(id: string): Promise<LocalLinkItem | null> {
-    return this.withDb(
+    return this.withDb<LocalLinkItem | null>(
       async (db) => {
         const rows = await db.select<any[]>('SELECT * FROM links WHERE id = ? AND deleted_at IS NULL', [id]);
         if (rows.length === 0) return null;

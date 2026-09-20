@@ -162,7 +162,7 @@
                   v-for="t in anno.themes"
                   :key="t.id"
                   class="px-2 py-0.5 rounded-md text-[10px] font-technical font-semibold bg-white/5 border border-divider text-textSecondary"
-                  :style="{ color: t.color }"
+                  :style="t.color ? { color: t.color } : undefined"
                 >
                   #{{ t.name }}
                 </span>

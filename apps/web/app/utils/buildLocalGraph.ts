@@ -209,7 +209,7 @@ export const buildLocalGraph = (input: BuildLocalGraphInput = {}): GraphData => 
       /\[.*?\]\(canvas:([a-zA-Z0-9_-]+)\)/gi,
       /\[\[canvas:([a-zA-Z0-9_-]+)(?:\|.*?)?\]\]/gi,
       /!\[\[canvas:([a-zA-Z0-9_-]+)\]\]/gi,
-      /\[.*?\]\((?:https?:\/\/[^\/\s)]+)?\/canvas\/([a-zA-Z0-9_-]+)\)/gi,
+      /\[.*?\]\((?:https?:\/\/[^/\s)]+)?\/canvas\/([a-zA-Z0-9_-]+)\)/gi,
     ]
     for (const reg of canvasRefRegexes) {
       let m: RegExpExecArray | null

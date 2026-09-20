@@ -64,15 +64,15 @@ describe('LinkRepository', () => {
 
     const frontendOnly = await repo.getAll({ folder: 'Frontend' });
     expect(frontendOnly.length).toBe(1);
-    expect(frontendOnly[0].id).toBe('link-1');
+    expect(frontendOnly[0]?.id).toBe('link-1');
 
     const searchResults = await repo.getAll({ search: 'express' });
     expect(searchResults.length).toBe(1);
-    expect(searchResults[0].id).toBe('link-2');
+    expect(searchResults[0]?.id).toBe('link-2');
 
     const tagResults = await repo.getAll({ tag: 'vue' });
     expect(tagResults.length).toBe(1);
-    expect(tagResults[0].id).toBe('link-1');
+    expect(tagResults[0]?.id).toBe('link-1');
   });
 
   it('should delete a link', async () => {

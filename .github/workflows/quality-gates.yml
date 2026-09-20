@@ -18,6 +18,17 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Install Web Dependencies for Pre-commit
+        working-directory: ./apps/web
+        run: npm ci
+
       - name: Install pre-commit
         run: pip install pre-commit
 
@@ -55,9 +66,28 @@ jobs:
   backend-quality-gates:
     name: Backend Quality Gates (Express / TypeScript / Prisma)
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: aresta
+          POSTGRES_PASSWORD: arestapassword
+          POSTGRES_DB: aresta
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     defaults:
       run:
         working-directory: ./apps/api
+    env:
+      DATABASE_URL: postgresql://aresta:arestapassword@localhost:5432/aresta?schema=public
+      JWT_SECRET: test_jwt_secret_quality_gates_123456789
+      PORT: 3001
+      NODE_ENV: test
     steps:
       - uses: actions/checkout@v4
 
@@ -73,6 +103,11 @@ jobs:
 
       - name: Build & Typecheck (Prisma generate + tsc)
         run: npm run build
+
+      - name: Deploy Prisma Migrations & Seed
+        run: |
+          npx prisma migrate deploy
+          npm run prisma:seed
 
       - name: Run Vitest Unit Tests
         run: npm run test

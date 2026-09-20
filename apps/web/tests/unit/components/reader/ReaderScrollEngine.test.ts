@@ -62,8 +62,8 @@ describe('ReaderScrollEngine.vue', () => {
     const wrapper = mount(ReaderScrollEngine)
     const slots = wrapper.findAll('.scroll-page-slot')
     expect(slots.length).toBe(4)
-    expect(slots[0].attributes('data-page-number')).toBe('1')
-    expect(slots[3].attributes('data-page-number')).toBe('4')
+    expect(slots[0]?.attributes('data-page-number')).toBe('1')
+    expect(slots[3]?.attributes('data-page-number')).toBe('4')
   })
 
   it('renderiza os slots de seção para documento EPUB contínuo e aciona renderSectionContinuous', async () => {
@@ -74,8 +74,8 @@ describe('ReaderScrollEngine.vue', () => {
     const wrapper = mount(ReaderScrollEngine)
     const sections = wrapper.findAll('.scroll-section-slot')
     expect(sections.length).toBe(3)
-    expect(sections[0].attributes('data-section-index')).toBe('0')
-    expect(sections[2].attributes('data-section-index')).toBe('2')
+    expect(sections[0]?.attributes('data-section-index')).toBe('0')
+    expect(sections[2]?.attributes('data-section-index')).toBe('2')
     expect(doc.renderSectionContinuous).toHaveBeenCalled()
   })
 

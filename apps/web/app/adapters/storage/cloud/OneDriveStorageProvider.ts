@@ -274,18 +274,39 @@ export class OneDriveStorageProvider implements IDataSyncProvider {
     return JSON.parse(text) as T
   }
 
-  async downloadDataFile<T>(fileName: string): Promise<T | null> { return this.downloadJson<T>(await this.getDataFolderId(), fileName) }
-  async downloadSubFolderDataFile<T>(subFolder: DataSubFolder, fileName: string): Promise<T | null> { return this.downloadJson<T>(await this.getSubFolderId(subFolder), fileName) }
-  async listSubFolderFiles(subFolder: DataSubFolder): Promise<string[]> { return (await this.listFolder(await this.getSubFolderId(subFolder))).filter((item) => item.mimeType === 'application/json').map((item) => item.name) }
+  async downloadDataFile<T>(fileName: string): Promise<T | null> {
+    return this.downloadJson<T>(await this.getDataFolderId(), fileName)
+  }
+
+  async downloadSubFolderDataFile<T>(subFolder: DataSubFolder, fileName: string): Promise<T | null> {
+    const parentId = await this.getSubFolderId(subFolder)
+    return this.downloadJson<T>(parentId, fileName)
+  }
+
+  async listSubFolderFiles(subFolder: DataSubFolder): Promise<string[]> {
+    const parentId = await this.getSubFolderId(subFolder)
+    const items = await this.listFolder(parentId)
+    return items.filter((item) => item.mimeType === 'application/json').map((item) => item.name)
+  }
 
   private async deleteJson(parentFolderId: string, fileName: string): Promise<void> {
     const file = await this.findFile(fileName, parentFolderId)
     if (!file) return
-    const res = await fetch(`https://graph.microsoft.com/v1.0/me/drive/items/${file.id}`, { method: 'DELETE', headers: this.getAuthHeader() })
+    const res = await fetch(`https://graph.microsoft.com/v1.0/me/drive/items/${file.id}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeader(),
+    })
     if (!res.ok && res.status !== 404) throw new Error(`Erro ao remover ${fileName} do OneDrive`)
   }
-  async deleteDataFile(fileName: string): Promise<void> { return this.deleteJson(await this.getDataFolderId(), fileName) }
-  async deleteSubFolderDataFile(subFolder: DataSubFolder, fileName: string): Promise<void> { return this.deleteJson(await this.getSubFolderId(subFolder), fileName) }
+
+  async deleteDataFile(fileName: string): Promise<void> {
+    return this.deleteJson(await this.getDataFolderId(), fileName)
+  }
+
+  async deleteSubFolderDataFile(subFolder: DataSubFolder, fileName: string): Promise<void> {
+    const parentId = await this.getSubFolderId(subFolder)
+    return this.deleteJson(parentId, fileName)
+  }
 
   /**
    * Exclui permanentemente a pasta Aresta no OneDrive.

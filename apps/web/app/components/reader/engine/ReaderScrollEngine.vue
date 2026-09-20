@@ -391,7 +391,7 @@ async function renderTextLayer(pageNum: number, textLayerEl: HTMLElement) {
 
     // Aplica destaques existentes
     if (annotations.value.length > 0) {
-      applyPageHighlights(pageNum, textLayerEl, annotations.value)
+      applyPageHighlights(textLayerEl, pageNum, annotations.value, store.bookId)
     }
 
     if (store.isFocusMode && isPdfDocument.value && pageNum === store.currentPage) {
@@ -414,7 +414,7 @@ async function renderEpubSection(sectionIdx: number, container: HTMLElement) {
     // Aplica destaques na seção
     const pageNum = getPageForSection(sectionIdx)
     if (annotations.value.length > 0) {
-      applyPageHighlights(pageNum, container, annotations.value)
+      applyPageHighlights(container, pageNum, annotations.value, store.bookId)
     }
 
     if (store.isFocusMode && isEpubContinuous.value && sectionIdx === currentFocusedSection.value) {
@@ -560,11 +560,11 @@ watch(
   () => annotations.value,
   () => {
     for (const [pageNum, el] of textLayerElements.entries()) {
-      applyPageHighlights(pageNum, el, annotations.value)
+      applyPageHighlights(el, pageNum, annotations.value, store.bookId)
     }
     for (const [secIdx, el] of sectionContentElements.entries()) {
       const pageNum = getPageForSection(secIdx)
-      applyPageHighlights(pageNum, el, annotations.value)
+      applyPageHighlights(el, pageNum, annotations.value, store.bookId)
     }
   },
   { deep: true },

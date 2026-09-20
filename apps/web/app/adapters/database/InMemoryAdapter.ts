@@ -177,16 +177,54 @@ export class InMemoryAdapter implements IDatabaseAdapter {
     }
   }
 
-  async getNotes(): Promise<LocalNote[]> { return Array.from(this.notes.values()).filter((item) => !item.deleted_at); }
-  async getNotesRaw(): Promise<LocalNote[]> { return Array.from(this.notes.values()); }
-  async getNoteById(id: string): Promise<LocalNote | null> { const item = this.notes.get(id); return item && !item.deleted_at ? item : null; }
-  async saveNote(note: LocalNote): Promise<void> { this.notes.set(note.id, { ...note }); }
-  async deleteNote(id: string): Promise<void> { const item = this.notes.get(id); if (item) this.notes.set(id, { ...item, deleted_at: new Date().toISOString(), updated_at: new Date().toISOString(), sync_status: 'pending' }); }
-  async getDrawingNotes(): Promise<LocalDrawingNote[]> { return Array.from(this.drawingNotes.values()).filter((item) => !item.deleted_at); }
-  async getDrawingNotesRaw(): Promise<LocalDrawingNote[]> { return Array.from(this.drawingNotes.values()); }
-  async getDrawingNoteById(id: string): Promise<LocalDrawingNote | null> { const item = this.drawingNotes.get(id); return item && !item.deleted_at ? item : null; }
-  async saveDrawingNote(note: LocalDrawingNote): Promise<void> { this.drawingNotes.set(note.id, { ...note }); }
-  async deleteDrawingNote(id: string): Promise<void> { const item = this.drawingNotes.get(id); if (item) this.drawingNotes.set(id, { ...item, deleted_at: new Date().toISOString(), updated_at: new Date().toISOString(), sync_status: 'pending' }); }
+  async getNotes(): Promise<LocalNote[]> {
+    return Array.from(this.notes.values()).filter((item) => !item.deleted_at);
+  }
+  async getNotesRaw(): Promise<LocalNote[]> {
+    return Array.from(this.notes.values());
+  }
+  async getNoteById(id: string): Promise<LocalNote | null> {
+    const item = this.notes.get(id);
+    return item && !item.deleted_at ? item : null;
+  }
+  async saveNote(note: LocalNote): Promise<void> {
+    this.notes.set(note.id, { ...note });
+  }
+  async deleteNote(id: string): Promise<void> {
+    const item = this.notes.get(id);
+    if (item) {
+      this.notes.set(id, {
+        ...item,
+        deleted_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        sync_status: 'pending',
+      });
+    }
+  }
+  async getDrawingNotes(): Promise<LocalDrawingNote[]> {
+    return Array.from(this.drawingNotes.values()).filter((item) => !item.deleted_at);
+  }
+  async getDrawingNotesRaw(): Promise<LocalDrawingNote[]> {
+    return Array.from(this.drawingNotes.values());
+  }
+  async getDrawingNoteById(id: string): Promise<LocalDrawingNote | null> {
+    const item = this.drawingNotes.get(id);
+    return item && !item.deleted_at ? item : null;
+  }
+  async saveDrawingNote(note: LocalDrawingNote): Promise<void> {
+    this.drawingNotes.set(note.id, { ...note });
+  }
+  async deleteDrawingNote(id: string): Promise<void> {
+    const item = this.drawingNotes.get(id);
+    if (item) {
+      this.drawingNotes.set(id, {
+        ...item,
+        deleted_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        sync_status: 'pending',
+      });
+    }
+  }
   async getSettings(): Promise<LocalUserSettings | null> { return this.settings ? { ...this.settings } : null; }
   async saveSettings(settings: LocalUserSettings): Promise<void> { this.settings = { ...settings, id: 'user_settings' }; }
 

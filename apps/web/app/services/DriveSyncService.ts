@@ -78,7 +78,7 @@ export async function withRetry<T>(
   baseDelayMs: number = 400
 ): Promise<T> {
   let attempt = 0
-  while (true) {
+  while (attempt < maxAttempts) {
     attempt++
     try {
       return await fn()

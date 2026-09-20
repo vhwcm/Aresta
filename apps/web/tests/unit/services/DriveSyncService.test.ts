@@ -1,8 +1,40 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { describe, expect, it, beforeEach } from 'vitest'
 import { InMemoryAdapter } from '~/adapters/database/InMemoryAdapter'
 import { dbManager } from '~/adapters/database/DatabaseManager'
 import { DriveSyncService } from '~/services/DriveSyncService'
 import type { IDataSyncProvider, DataSubFolder } from '~/adapters/storage/cloud/IDataSyncProvider'
+
+function createMockProvider(overrides: Partial<IDataSyncProvider> = {}): IDataSyncProvider {
+  return {
+    providerName: 'google-drive',
+    ensureDataFolders: async () => {},
+    ensureFolder: async () => ({ id: 'f-id', name: 'folder' }),
+    uploadFile: async () => ({ id: 'file-id', name: 'file' }),
+    getFile: async () => new Blob([]),
+    listFolder: async () => [],
+    uploadBookPackage: async () => ({
+      rootFolderId: 'root',
+      bookFolderId: 'book',
+      bookFile: { id: 'bf', name: 'book' },
+    }),
+    uploadDataFile: async (_fileName: string, _data: unknown) => ({
+      fileName: _fileName,
+      itemCount: 0,
+      syncedAt: new Date().toISOString(),
+    }),
+    uploadSubFolderDataFile: async (_subFolder: DataSubFolder, _fileName: string, _data: unknown) => ({
+      fileName: _fileName,
+      itemCount: 0,
+      syncedAt: new Date().toISOString(),
+    }),
+    downloadDataFile: async <T>(_fileName: string): Promise<T | null> => null,
+    downloadSubFolderDataFile: async <T>(_subFolder: DataSubFolder, _fileName: string): Promise<T | null> => null,
+    listSubFolderFiles: async (_subFolder: DataSubFolder) => [],
+    deleteDataFile: async (_fileName: string) => {},
+    deleteSubFolderDataFile: async (_subFolder: DataSubFolder, _fileName: string) => {},
+    ...overrides,
+  }
+}
 
 describe('DriveSyncService (Local-First Sync Engine)', () => {
   let db: InMemoryAdapter
@@ -24,10 +56,9 @@ describe('DriveSyncService (Local-First Sync Engine)', () => {
     })
 
     let uploadedPayload: any = null
-    const provider: IDataSyncProvider = {
+    const provider = createMockProvider({
       providerName: 'google-drive',
-      ensureDataFolders: async () => {},
-      downloadDataFile: async () => ({
+      downloadDataFile: async <T>() => ({
         schema_version: 1,
         entity_type: 'annotation',
         updated_at: '2026-01-02T00:00:00.000Z',
@@ -43,17 +74,12 @@ describe('DriveSyncService (Local-First Sync Engine)', () => {
             note: 'remota mais recente',
           },
         ],
-      }),
+      } as unknown as T),
       uploadDataFile: async (_name: string, data: unknown) => {
         uploadedPayload = data
         return { fileName: 'annotations.json', itemCount: 1, syncedAt: '2026-01-02T00:00:00.000Z' }
       },
-      uploadSubFolderDataFile: async () => ({ fileName: '', itemCount: 0, syncedAt: '' }),
-      downloadSubFolderDataFile: async () => null,
-      listSubFolderFiles: async () => [],
-      deleteDataFile: async () => {},
-      deleteSubFolderDataFile: async () => {},
-    }
+    })
 
     const service = new DriveSyncService(provider)
     await service.syncAnnotations()
@@ -75,10 +101,9 @@ describe('DriveSyncService (Local-First Sync Engine)', () => {
     })
 
     let uploadedPayload: any = null
-    const provider: IDataSyncProvider = {
+    const provider = createMockProvider({
       providerName: 'onedrive',
-      ensureDataFolders: async () => {},
-      downloadDataFile: async () => ({
+      downloadDataFile: async <T>() => ({
         schema_version: 1,
         entity_type: 'annotation',
         updated_at: '2026-01-02T00:00:00.000Z',
@@ -94,17 +119,12 @@ describe('DriveSyncService (Local-First Sync Engine)', () => {
             note: 'remota antiga',
           },
         ],
-      }),
+      } as unknown as T),
       uploadDataFile: async (_name: string, data: unknown) => {
         uploadedPayload = data
         return { fileName: 'annotations.json', itemCount: 1, syncedAt: '2026-01-05T00:00:00.000Z' }
       },
-      uploadSubFolderDataFile: async () => ({ fileName: '', itemCount: 0, syncedAt: '' }),
-      downloadSubFolderDataFile: async () => null,
-      listSubFolderFiles: async () => [],
-      deleteDataFile: async () => {},
-      deleteSubFolderDataFile: async () => {},
-    }
+    })
 
     const service = new DriveSyncService(provider)
     await service.syncAnnotations()
@@ -128,10 +148,9 @@ describe('DriveSyncService (Local-First Sync Engine)', () => {
     })
 
     let uploadedPayload: any = null
-    const provider: IDataSyncProvider = {
+    const provider = createMockProvider({
       providerName: 'icloud-folder',
-      ensureDataFolders: async () => {},
-      downloadDataFile: async () => ({
+      downloadDataFile: async <T>() => ({
         schema_version: 1,
         entity_type: 'flashcard',
         updated_at: '2026-01-10T00:00:00.000Z',
@@ -149,17 +168,12 @@ describe('DriveSyncService (Local-First Sync Engine)', () => {
             sync_status: 'synced',
           },
         ],
-      }),
+      } as unknown as T),
       uploadDataFile: async (_name: string, data: unknown) => {
         uploadedPayload = data
         return { fileName: 'flashcards.json', itemCount: 1, syncedAt: '2026-01-10T00:00:00.000Z' }
       },
-      uploadSubFolderDataFile: async () => ({ fileName: '', itemCount: 0, syncedAt: '' }),
-      downloadSubFolderDataFile: async () => null,
-      listSubFolderFiles: async () => [],
-      deleteDataFile: async () => {},
-      deleteSubFolderDataFile: async () => {},
-    }
+    })
 
     const service = new DriveSyncService(provider)
     await service.syncFlashcards()
@@ -179,20 +193,12 @@ describe('DriveSyncService (Local-First Sync Engine)', () => {
     })
 
     const subFolderUploads: Array<{ subFolder: DataSubFolder; fileName: string; data: any }> = []
-    const provider: IDataSyncProvider = {
-      providerName: 'google-drive',
-      ensureDataFolders: async () => {},
-      downloadDataFile: async () => null,
-      uploadDataFile: async () => ({ fileName: '', itemCount: 0, syncedAt: '' }),
-      listSubFolderFiles: async () => [],
-      downloadSubFolderDataFile: async () => null,
+    const provider = createMockProvider({
       uploadSubFolderDataFile: async (subFolder, fileName, data) => {
         subFolderUploads.push({ subFolder, fileName, data })
         return { fileName, itemCount: 1, syncedAt: new Date().toISOString() }
       },
-      deleteDataFile: async () => {},
-      deleteSubFolderDataFile: async () => {},
-    }
+    })
 
     const service = new DriveSyncService(provider)
     await service.syncCanvas()
@@ -204,17 +210,10 @@ describe('DriveSyncService (Local-First Sync Engine)', () => {
   })
 
   it('5. Executa fullSync integrando todas as coleções de dados', async () => {
-    const provider: IDataSyncProvider = {
-      providerName: 'google-drive',
-      ensureDataFolders: async () => {},
-      downloadDataFile: async () => null,
+    const provider = createMockProvider({
       uploadDataFile: async (fileName) => ({ fileName, itemCount: 0, syncedAt: new Date().toISOString() }),
-      listSubFolderFiles: async () => [],
-      downloadSubFolderDataFile: async () => null,
       uploadSubFolderDataFile: async (_sf, fileName) => ({ fileName, itemCount: 0, syncedAt: new Date().toISOString() }),
-      deleteDataFile: async () => {},
-      deleteSubFolderDataFile: async () => {},
-    }
+    })
 
     const service = new DriveSyncService(provider)
     const result = await service.fullSync()
@@ -236,10 +235,8 @@ describe('DriveSyncService (Local-First Sync Engine)', () => {
     })
 
     let uploadedPayload: any = null
-    const provider: IDataSyncProvider = {
-      providerName: 'google-drive',
-      ensureDataFolders: async () => {},
-      downloadDataFile: async () => ({
+    const provider = createMockProvider({
+      downloadDataFile: async <T>() => ({
         schema_version: 1,
         entity_type: 'book',
         updated_at: '2026-01-02T00:00:00.000Z',
@@ -256,17 +253,12 @@ describe('DriveSyncService (Local-First Sync Engine)', () => {
             themes: [{ id: 2, name: 'Programação' }],
           },
         ],
-      }),
+      } as unknown as T),
       uploadDataFile: async (_name: string, data: unknown) => {
         uploadedPayload = data
         return { fileName: 'library.json', itemCount: 2, syncedAt: new Date().toISOString() }
       },
-      uploadSubFolderDataFile: async () => ({ fileName: '', itemCount: 0, syncedAt: '' }),
-      downloadSubFolderDataFile: async () => null,
-      listSubFolderFiles: async () => [],
-      deleteDataFile: async () => {},
-      deleteSubFolderDataFile: async () => {},
-    }
+    })
 
     const service = new DriveSyncService(provider)
     await service.syncLibrary()
@@ -289,10 +281,8 @@ describe('DriveSyncService (Local-First Sync Engine)', () => {
     )
 
     let uploadedPayload: any = null
-    const provider: IDataSyncProvider = {
-      providerName: 'google-drive',
-      ensureDataFolders: async () => {},
-      downloadDataFile: async () => ({
+    const provider = createMockProvider({
+      downloadDataFile: async <T>() => ({
         schema_version: 1,
         entity_type: 'graph_meta',
         updated_at: '2026-01-02T00:00:00.000Z',
@@ -301,17 +291,12 @@ describe('DriveSyncService (Local-First Sync Engine)', () => {
           themes: [{ id: 2, name: 'Programação', color: '#10B981' }],
           edges: [{ id: 'edge-2', source: 'theme-2', target: 'book-2', type: 'theme-hierarchy' }],
         },
-      }),
+      } as unknown as T),
       uploadDataFile: async (_name: string, data: unknown) => {
         uploadedPayload = data
         return { fileName: 'graph_meta.json', itemCount: 2, syncedAt: new Date().toISOString() }
       },
-      uploadSubFolderDataFile: async () => ({ fileName: '', itemCount: 0, syncedAt: '' }),
-      downloadSubFolderDataFile: async () => null,
-      listSubFolderFiles: async () => [],
-      deleteDataFile: async () => {},
-      deleteSubFolderDataFile: async () => {},
-    }
+    })
 
     const service = new DriveSyncService(provider)
     await service.syncGraphMeta()
@@ -326,7 +311,6 @@ describe('DriveSyncService (Local-First Sync Engine)', () => {
   })
 
   it('8. Não ressuscita nota deletada localmente e envia tombstone para o Google Drive', async () => {
-    // 1. Cria nota localmente
     await db.saveNote({
       id: 'note-tombstone-1',
       title: 'Nota para Deletar',
@@ -335,18 +319,12 @@ describe('DriveSyncService (Local-First Sync Engine)', () => {
       sync_status: 'synced',
     })
 
-    // 2. Deleta nota localmente (gerando deleted_at e updated_at mais recentes)
     await db.deleteNote('note-tombstone-1')
 
     const subFolderUploads: Array<{ subFolder: DataSubFolder; fileName: string; data: any }> = []
-    const provider: IDataSyncProvider = {
-      providerName: 'google-drive',
-      ensureDataFolders: async () => {},
-      downloadDataFile: async () => null,
-      uploadDataFile: async () => ({ fileName: '', itemCount: 0, syncedAt: '' }),
-      // O Drive ainda possui o arquivo antigo da nota (sem deleted_at)
+    const provider = createMockProvider({
       listSubFolderFiles: async () => ['note-tombstone-1.json'],
-      downloadSubFolderDataFile: async () => ({
+      downloadSubFolderDataFile: async <T>() => ({
         schema_version: 1,
         entity_type: 'note',
         updated_at: '2026-01-01T00:00:00.000Z',
@@ -358,34 +336,28 @@ describe('DriveSyncService (Local-First Sync Engine)', () => {
           updated_at: '2026-01-01T00:00:00.000Z',
           sync_status: 'synced',
         },
-      }),
+      } as unknown as T),
       uploadSubFolderDataFile: async (subFolder, fileName, data) => {
         subFolderUploads.push({ subFolder, fileName, data })
         return { fileName, itemCount: 1, syncedAt: new Date().toISOString() }
       },
-      deleteDataFile: async () => {},
-      deleteSubFolderDataFile: async () => {},
-    }
+    })
 
     const service = new DriveSyncService(provider)
     await service.syncNotes()
 
-    // Verifica que a nota NÃO ressuscitou no getNotes()
     const activeNotes = await db.getNotes()
     expect(activeNotes.find((n) => n.id === 'note-tombstone-1')).toBeUndefined()
 
-    // Verifica que o tombstone foi preservado no getNotesRaw()
     const rawNotes = await db.getNotesRaw()
     const tombstonedNote = rawNotes.find((n) => n.id === 'note-tombstone-1')
     expect(tombstonedNote?.deleted_at).toBeDefined()
 
-    // Verifica que o tombstone foi enviado para o Google Drive
     expect(subFolderUploads.length).toBe(1)
     expect(subFolderUploads[0]?.data?.payload?.deleted_at).toBeDefined()
   })
 
   it('9. Não ressuscita anotação deletada localmente quando Google Drive tem versão anterior sem tombstone', async () => {
-    // 1. Salva anotação
     await db.saveAnnotation({
       id: 99,
       bookId: 10,
@@ -396,15 +368,11 @@ describe('DriveSyncService (Local-First Sync Engine)', () => {
       note: 'Anotação teste',
     })
 
-    // 2. Deleta localmente
     await db.deleteAnnotation(99)
 
     let uploadedPayload: any = null
-    const provider: IDataSyncProvider = {
-      providerName: 'google-drive',
-      ensureDataFolders: async () => {},
-      // Drive tem arquivo anterior sem deleted_at
-      downloadDataFile: async () => ({
+    const provider = createMockProvider({
+      downloadDataFile: async <T>() => ({
         schema_version: 1,
         entity_type: 'annotation',
         updated_at: '2026-01-01T00:00:00.000Z',
@@ -420,32 +388,24 @@ describe('DriveSyncService (Local-First Sync Engine)', () => {
             note: 'Anotação antiga no Drive',
           },
         ],
-      }),
+      } as unknown as T),
       uploadDataFile: async (_name: string, data: unknown) => {
         uploadedPayload = data
         return { fileName: 'annotations.json', itemCount: 1, syncedAt: new Date().toISOString() }
       },
-      uploadSubFolderDataFile: async () => ({ fileName: '', itemCount: 0, syncedAt: '' }),
-      downloadSubFolderDataFile: async () => null,
-      listSubFolderFiles: async () => [],
-      deleteDataFile: async () => {},
-      deleteSubFolderDataFile: async () => {},
-    }
+    })
 
     const service = new DriveSyncService(provider)
     await service.syncAnnotations()
 
-    // Não deve aparecer em getAnnotations()
     const activeAnnotations = await db.getAnnotations()
     expect(activeAnnotations.find((a) => a.id === 99)).toBeUndefined()
 
-    // Deve estar no payload uploaded como tombstone com deleted_at
     const uploadedAnn = uploadedPayload?.payload?.find((a: any) => a.id === 99)
     expect(uploadedAnn?.deleted_at).toBeDefined()
   })
 
   it('10. Aplica tombstone remoto mais recente em subpastas e apaga quadro localmente', async () => {
-    // 1. Quadro existe localmente com timestamp antigo
     await db.saveCanvas({
       id: 'canvas-del-1',
       name: 'Quadro a Deletar',
@@ -454,14 +414,9 @@ describe('DriveSyncService (Local-First Sync Engine)', () => {
       sync_status: 'synced',
     })
 
-    const provider: IDataSyncProvider = {
-      providerName: 'google-drive',
-      ensureDataFolders: async () => {},
-      downloadDataFile: async () => null,
-      uploadDataFile: async () => ({ fileName: '', itemCount: 0, syncedAt: '' }),
+    const provider = createMockProvider({
       listSubFolderFiles: async () => ['canvas-del-1.json'],
-      // O Drive envia um tombstone mais recente criado em outro dispositivo
-      downloadSubFolderDataFile: async () => ({
+      downloadSubFolderDataFile: async <T>() => ({
         schema_version: 1,
         entity_type: 'canvas',
         updated_at: '2026-01-05T00:00:00.000Z',
@@ -474,20 +429,15 @@ describe('DriveSyncService (Local-First Sync Engine)', () => {
           deleted_at: '2026-01-05T00:00:00.000Z',
           sync_status: 'synced',
         },
-      }),
-      uploadSubFolderDataFile: async () => ({ fileName: '', itemCount: 0, syncedAt: '' }),
-      deleteDataFile: async () => {},
-      deleteSubFolderDataFile: async () => {},
-    }
+      } as unknown as T),
+    })
 
     const service = new DriveSyncService(provider)
     await service.syncCanvas()
 
-    // Quadro não pode mais aparecer na listagem ativa
     const activeCanvases = await db.getCanvases()
     expect(activeCanvases.find((c) => c.id === 'canvas-del-1')).toBeUndefined()
 
-    // Quadro deve ter deleted_at gravado no banco local
     const rawCanvases = await db.getCanvasesRaw()
     const rawItem = rawCanvases.find((c) => c.id === 'canvas-del-1')
     expect(rawItem?.deleted_at).toBeDefined()

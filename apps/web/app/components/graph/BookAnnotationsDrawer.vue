@@ -338,14 +338,9 @@ const loadBookData = async () => {
       const remote = await fetchBookAnnotations(bookId)
       if (Array.isArray(remote) && remote.length > 0) {
         const normalizedRemote = remote.map(normalizeAnnotation)
-        // Combina anotações remotas com anotações locais que ainda não foram sincronizadas
-        const merged = [...normalizedRemote]
-        for (const loc of localNotes) {
-          if (!merged.some((m: any) => Number(m.id) === Number(loc.id))) {
-            merged.push(loc)
-          }
-        }
-        annotations.value = merged
+        const remoteIds = new Set(normalizedRemote.map((m: any) => Number(m.id)))
+        const unmergedLocal = localNotes.filter((loc) => !remoteIds.has(Number(loc.id)))
+        annotations.value = [...normalizedRemote, ...unmergedLocal]
       } else if (localNotes.length > 0) {
         annotations.value = localNotes
       } else {

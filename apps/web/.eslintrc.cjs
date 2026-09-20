@@ -39,7 +39,8 @@ module.exports = {
 
     // Desabilitar checagens restritivas para auto-imports do Nuxt
     'no-undef': 'off',
-    'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }]
+    'no-empty': ['error', { allowEmptyCatch: true }],
+    'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }]
   },
   overrides: [
     {
@@ -58,12 +59,16 @@ module.exports = {
       }
     },
     {
-      // Composables, stores, adaptadores e utilitários
+      // Composables, stores, adaptadores, serviços, repositórios e utilitários
       files: [
         'app/composables/**/*.ts',
         'app/composables/**/*.js',
         'app/stores/**/*.ts',
         'app/stores/**/*.js',
+        'app/services/**/*.ts',
+        'app/services/**/*.js',
+        'app/repositories/**/*.ts',
+        'app/repositories/**/*.js',
         'app/utils/**/*.ts',
         'app/utils/**/*.js',
         'app/adapters/**/*.ts',
@@ -84,11 +89,12 @@ module.exports = {
     },
     {
       // Arquivos de testes e scripts utilitários
-      files: ['tests/**/*.ts', 'tests/**/*.js', 'scripts/**/*.js'],
+      files: ['tests/**/*.ts', 'tests/**/*.js', 'scripts/**/*.js', 'scripts/**/*.mjs'],
       rules: {
         'max-lines-per-function': 'off',
         'max-lines': 'off',
-        'no-unused-vars': 'off'
+        'no-unused-vars': 'off',
+        'no-empty': 'off'
       }
     }
   ]

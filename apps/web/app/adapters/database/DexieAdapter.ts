@@ -306,7 +306,9 @@ export class DexieAdapter implements IDatabaseAdapter {
   }
 
   async getDrawingNotes(): Promise<LocalDrawingNote[]> {
-    await this.init(); return (await this.db.drawing_notes.toArray()).filter((item) => !item.deleted_at).sort((a, b) => b.updated_at.localeCompare(a.updated_at));
+    await this.init();
+    const all = await this.db.drawing_notes.toArray();
+    return all.filter((item) => !item.deleted_at).sort((a, b) => b.updated_at.localeCompare(a.updated_at));
   }
   async getDrawingNotesRaw(): Promise<LocalDrawingNote[]> {
     await this.init();

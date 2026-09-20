@@ -115,6 +115,7 @@ export interface LocalUserSettings extends BaseLocalEntity {
   desktopReaderGraphOpen?: boolean;
   readerTwoPageMode?: boolean;
   readerWidthMode?: string;
+  readerReadingMode?: string;
   values?: Record<string, unknown>;
 }
 

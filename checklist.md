@@ -1,7 +1,7 @@
 ## 🔄 Em Andamento
 
-
 ## ✅ Concluído
+- [20/09/2026 09:14] [Concluído] Corrigir Quality Gates no CI: pre-commit hooks, ESLint max-lines/regras, typings de testes do DriveSyncService e container PostgreSQL no workflow
 - [20/09/2026 08:52] [Concluído] Configurar capabilities de ACL no tauri.conf.json, desbloquear criacao local-first de notas e quadros sem bloqueio de auth e sincronizar repositorios reativos
 - [19/09/2026 20:18] [Concluído] Corrigir escala e corte vertical do PDF no leitor e unificar renderização idêntica entre virada 3D e posição de repouso
 - [19/09/2026 20:07] [Concluído] Configurar ACL e capabilities do Tauri v2 para plugin SQL, FS e Dialog resolvendo erro de permissão no APK e Desktop

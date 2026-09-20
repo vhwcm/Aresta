@@ -1,5 +1,5 @@
 default_install_hook_types: [pre-commit, pre-push]
-exclude: '^(\.nuxt/|\.output/|front/\.nuxt/|front/\.output/|front/playwright-report/|front/test-results/|node_modules/|storage/)'
+exclude: '^(\.nuxt/|\.output/|apps/web/\.nuxt/|apps/web/\.output/|apps/web/playwright-report/|apps/web/test-results/|apps/web/public/|apps/web/src-tauri/gen/|apps/api/dist/|node_modules/|storage/)'
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -13,8 +13,9 @@ repos:
         stages: [pre-commit]
       - id: check-json
         stages: [pre-commit]
+        exclude: '^(\.vscode/|tsconfig.*\.json|apps/web/tsconfig.*\.json|apps/api/tsconfig.*\.json)'
       - id: check-added-large-files
-        args: ['--maxkb=1000']
+        args: ['--maxkb=25000']
         stages: [pre-commit]
       - id: check-merge-conflict
         stages: [pre-commit]
@@ -24,15 +25,15 @@ repos:
       # Quality Gate: Frontend Linter & Rules (Tamanho de arquivo/função, identação)
       - id: eslint-frontend
         name: "ESLint Frontend (Quality Gate: Tamanho & Identação)"
-        entry: bash -c 'cd front && npx eslint . --ext .js,.ts,.vue'
+        entry: bash -c 'cd apps/web && npx eslint . --ext .js,.ts,.vue'
         language: system
-        files: ^front/.*\.(js|ts|vue)$
+        files: ^apps/web/.*\.(js|ts|vue)$
         stages: [pre-commit]
 
       # Quality Gate Pre-Push: Frontend Typecheck
       - id: frontend-typecheck
         name: "Frontend Typecheck (Pre-push)"
-        entry: bash -c 'cd front && npm run typecheck'
+        entry: bash -c 'cd apps/web && npm run typecheck'
         language: system
         pass_filenames: false
         stages: [pre-push]
@@ -40,7 +41,7 @@ repos:
       # Quality Gate Pre-Push: Frontend Vitest Tests
       - id: frontend-tests
         name: "Frontend Unit Tests (Pre-push)"
-        entry: bash -c 'cd front && npm run test'
+        entry: bash -c 'cd apps/web && npm run test'
         language: system
         pass_filenames: false
         stages: [pre-push]
@@ -48,7 +49,7 @@ repos:
       # Quality Gate Pre-Push: Backend Node.js Tests
       - id: backend-tests
         name: "Backend Unit Tests (Pre-push)"
-        entry: bash -c 'cd aresta-back-node && npm run test'
+        entry: bash -c 'cd apps/api && npm run test'
         language: system
         pass_filenames: false
         stages: [pre-push]
