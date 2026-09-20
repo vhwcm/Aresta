@@ -1,6 +1,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [20/09/2026 15:07] [Concluído] Diagnosticar e corrigir sql.load bloqueado por ACL em URL remota: adicionar remote.urls nas capabilities, corrigir devUrl :3010→:3000, corrigir android-run.js open e logger.ts (v1.1.13)
 - [20/09/2026 11:49] [Concluído] Corrigir ACL do SQLite no Tauri Android e capabilities mobile, restaurar persistência nativa e blindar adapters
 - [20/09/2026 10:05] [Concluído] Padronizar IndexedDB/Dexie e OPFS como storage adapters primarios eliminando dependencias do sistema de arquivos do dispositivo e erros de ACL
 - [20/09/2026 09:35] [Concluído] Resolver ACL sql load e capabilities mobile no Android, blindar criacao e persistencia local-first de notas, desenhos e quadros e habilitar sincronizacao
