@@ -1,6 +1,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [20/09/2026 10:05] [Concluído] Padronizar IndexedDB/Dexie e OPFS como storage adapters primarios eliminando dependencias do sistema de arquivos do dispositivo e erros de ACL
 - [20/09/2026 09:35] [Concluído] Resolver ACL sql load e capabilities mobile no Android, blindar criacao e persistencia local-first de notas, desenhos e quadros e habilitar sincronizacao
 - [20/09/2026 09:21] [Concluído] Atualizar documentações ativas e templates substituindo caminhos legados, portas e bancos para o monólito modular (apps/web, apps/api, PostgreSQL 16)
 - [20/09/2026 09:14] [Concluído] Corrigir Quality Gates no CI: pre-commit hooks, ESLint max-lines/regras, typings de testes do DriveSyncService e container PostgreSQL no workflow

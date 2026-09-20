@@ -7,7 +7,9 @@ class StorageManager {
   private adapter: IBinaryStorageAdapter;
 
   private constructor() {
-    if (typeof window !== 'undefined' && ((window as any).__TAURI_INTERNALS__ || (window as any).__TAURI__)) {
+    if (typeof window !== 'undefined' && (typeof window.indexedDB !== 'undefined' || (typeof navigator !== 'undefined' && 'storage' in navigator))) {
+      this.adapter = new OpfsStorageAdapter();
+    } else if (typeof window !== 'undefined' && ((window as any).__TAURI_INTERNALS__ || (window as any).__TAURI__)) {
       this.adapter = new TauriFsStorageAdapter();
     } else {
       this.adapter = new OpfsStorageAdapter();
