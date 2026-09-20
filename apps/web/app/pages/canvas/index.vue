@@ -1623,7 +1623,8 @@ const handleCreateNewDrawing = async () => {
       await navigateTo(`/canvas/drawing/${created.id}`)
     }
   } catch (err: any) {
-    errorMessage.value = 'Erro ao criar nota de desenho.'
+    console.error('[Canvas] Erro ao criar nota de desenho:', err)
+    errorMessage.value = err?.message ? `Erro ao criar nota de desenho: ${err.message}` : 'Erro ao criar nota de desenho.'
   }
 }
 
@@ -1631,8 +1632,9 @@ const handleDeleteDrawing = async (id: string) => {
   if (confirm('Deseja excluir esta nota de desenho?')) {
     try {
       await deleteDrawing(id)
-    } catch {
-      errorMessage.value = 'Erro ao excluir nota de desenho.'
+    } catch (err: any) {
+      console.error('[Canvas] Erro ao excluir nota de desenho:', err)
+      errorMessage.value = err?.message ? `Erro ao excluir nota de desenho: ${err.message}` : 'Erro ao excluir nota de desenho.'
     }
   }
 }
@@ -1660,7 +1662,7 @@ const handleConfirmCreateCanvas = async (payload: { title: string; description: 
     }
   } catch (err: any) {
     console.error('Erro ao criar quadro:', err)
-    errorMessage.value = 'Falha ao criar o quadro. Tente novamente.'
+    errorMessage.value = err?.message ? `Falha ao criar o quadro: ${err.message}` : 'Falha ao criar o quadro. Tente novamente.'
   } finally {
     isCreating.value = false
   }

@@ -16,9 +16,27 @@ describe('TauriSqliteAdapter & Tauri v2 Capabilities', () => {
 
     const content = JSON.parse(fs.readFileSync(capabilityPath, 'utf-8'))
     expect(content.permissions).toContain('sql:default')
+    expect(content.permissions).toContain('sql:allow-load')
+    expect(content.permissions).toContain('sql:allow-execute')
+    expect(content.permissions).toContain('sql:allow-select')
+    expect(content.permissions).toContain('sql:allow-close')
     expect(content.permissions).toContain('fs:default')
     expect(content.permissions).toContain('dialog:default')
     expect(content.permissions).toContain('core:default')
+  })
+
+  it('1b. Capabilities mobile.json do Tauri v2 deve conter todas as permissões explícitas de SQL para Android/iOS', () => {
+    const mobileCapabilityPath = path.resolve(process.cwd(), 'src-tauri/capabilities/mobile.json')
+    expect(fs.existsSync(mobileCapabilityPath)).toBe(true)
+
+    const content = JSON.parse(fs.readFileSync(mobileCapabilityPath, 'utf-8'))
+    expect(content.permissions).toContain('sql:default')
+    expect(content.permissions).toContain('sql:allow-load')
+    expect(content.permissions).toContain('sql:allow-execute')
+    expect(content.permissions).toContain('sql:allow-select')
+    expect(content.permissions).toContain('sql:allow-close')
+    expect(content.permissions).toContain('fs:default')
+    expect(content.permissions).toContain('dialog:default')
   })
 
   it('2. TauriSqliteAdapter deve ativar fallback resiliente para Dexie quando SQLite nativo falhar por ACL ou erro de driver', async () => {

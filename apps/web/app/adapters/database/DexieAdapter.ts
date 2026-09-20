@@ -97,8 +97,17 @@ export class DexieAdapter implements IDatabaseAdapter {
   async init(): Promise<void> {
     if (this.isInitialized) return;
     if (typeof window !== 'undefined') {
-      await this.db.open();
-      this.isInitialized = true;
+      try {
+        await this.db.open();
+        this.isInitialized = true;
+      } catch (err) {
+        console.warn('[DexieAdapter] Falha ao abrir IndexedDB aresta_local_db:', err);
+        try {
+          if (this.db.isOpen()) {
+            this.isInitialized = true;
+          }
+        } catch {}
+      }
     }
   }
 

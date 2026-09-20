@@ -10,10 +10,10 @@ class DatabaseManager {
   private adapter: IDatabaseAdapter;
 
   private constructor() {
-    if (typeof window !== 'undefined' && typeof window.indexedDB !== 'undefined') {
-      this.adapter = new DexieAdapter();
-    } else if (typeof window !== 'undefined' && ((window as any).__TAURI_INTERNALS__ || (window as any).__TAURI__)) {
+    if (typeof window !== 'undefined' && ((window as any).__TAURI_INTERNALS__ || (window as any).__TAURI__)) {
       this.adapter = new TauriSqliteAdapter();
+    } else if (typeof window !== 'undefined' && typeof window.indexedDB !== 'undefined') {
+      this.adapter = new DexieAdapter();
     } else {
       this.adapter = new InMemoryAdapter();
     }

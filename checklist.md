@@ -1,6 +1,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [20/09/2026 11:49] [Concluído] Corrigir ACL do SQLite no Tauri Android e capabilities mobile, restaurar persistência nativa e blindar adapters
 - [20/09/2026 10:05] [Concluído] Padronizar IndexedDB/Dexie e OPFS como storage adapters primarios eliminando dependencias do sistema de arquivos do dispositivo e erros de ACL
 - [20/09/2026 09:35] [Concluído] Resolver ACL sql load e capabilities mobile no Android, blindar criacao e persistencia local-first de notas, desenhos e quadros e habilitar sincronizacao
 - [20/09/2026 09:21] [Concluído] Atualizar documentações ativas e templates substituindo caminhos legados, portas e bancos para o monólito modular (apps/web, apps/api, PostgreSQL 16)
@@ -309,3 +310,4 @@
 - [05/09/2026 00:05] [Concluído] Ajuste de filtros na Sidebar
 - [04/09/2026 23:56] [Concluído] Correção na formatação e parser Markdown
 - [04/09/2026 22:46] [Concluído] Layout unificado para notas contextuais
+- [20/09/2026 10:30] [Concluído] Corrigir erro 'sql load not allowed by ACL' no Android adicionando escopo de permissão para o plugin SQL

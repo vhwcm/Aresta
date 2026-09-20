@@ -1,8 +1,8 @@
 node_modules/
 .env
 *.log
-.nuxt/
-.output/
+**/.nuxt/
+**/.output/
 dist/
 
 # Terraform & Infra Secrets
@@ -12,3 +12,10 @@ infra/.terraform.lock.hcl
 infra/terraform.tfstate
 infra/terraform.tfstate.backup
 infra/terraform.tfvars
+
+# Rust / Tauri builds
+**/src-tauri/target/
+**/src-tauri/gen/
+*.png
+assets/
+
