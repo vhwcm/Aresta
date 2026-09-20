@@ -5,7 +5,7 @@
   "identifier": "com.aresta.reader",
   "build": {
     "beforeDevCommand": "npm run dev",
-    "devUrl": "http://localhost:3010",
+    "devUrl": "http://localhost:3000",
     "beforeBuildCommand": "npm run generate",
     "frontendDist": "../.output/public"
   },

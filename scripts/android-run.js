@@ -71,11 +71,47 @@ if (!process.env.ANDROID_HOME && fs.existsSync(defaultAndroidSdk)) {
 
 process.env[pathKey] = currentPath;
 
+// O subcomando 'open' foi removido do Tauri CLI 2.x — abrimos o projeto direto no Android Studio
+if (action === 'open') {
+  const androidProjectDir = path.join(frontDir, 'src-tauri', 'gen', 'android');
+  console.log(`\x1b[34m[Aresta Android]\x1b[0m Abrindo projeto no Android Studio: \x1b[33m${androidProjectDir}\x1b[0m`);
+
+  // Tenta studio64.exe, studio.exe ou studio.bat no PATH e em locais comuns
+  const studioNames = ['studio64.exe', 'studio.exe', 'studio.bat', 'studio'];
+  const studioCandidateDirs = [
+    'C:\\Program Files\\Android\\Android Studio\\bin',
+    'C:\\Program Files (x86)\\Android\\Android Studio\\bin',
+    path.join(os.homedir(), 'AppData', 'Local', 'Programs', 'Android Studio', 'bin')
+  ];
+
+  let studioBin = null;
+  outer: for (const dir of studioCandidateDirs) {
+    for (const name of studioNames) {
+      const candidate = path.join(dir, name);
+      if (fs.existsSync(candidate)) {
+        studioBin = candidate;
+        break outer;
+      }
+    }
+  }
+
+  if (studioBin) {
+    console.log(`\x1b[34m[Aresta Android]\x1b[0m Executando: \x1b[36m${studioBin}\x1b[0m`);
+    try {
+      execSync(`"${studioBin}" "${androidProjectDir}"`, { stdio: 'inherit', env: process.env });
+    } catch (_) {
+      // Android Studio abre em background — erro de saída é normal
+    }
+  } else {
+    console.log(`\x1b[33m[Aresta Android]\x1b[0m Android Studio não encontrado automaticamente.`);
+    console.log(`\x1b[33m[Aresta Android]\x1b[0m Abra manualmente: File > Open > ${androidProjectDir}`);
+  }
+  process.exit(0);
+}
+
 let tauriCmd = 'tauri:android:dev';
 if (action === 'build' || action === 'apk') {
   tauriCmd = 'tauri:android:build';
-} else if (action === 'open') {
-  tauriCmd = 'tauri:android:open';
 }
 
 console.log(`\x1b[34m[Aresta Android]\x1b[0m Executando: \x1b[36mnpm run ${tauriCmd}\x1b[0m...`);

@@ -10,6 +10,9 @@
     "main",
     "*"
   ],
+  "remote": {
+    "urls": ["https://aresta.duckdns.org", "https://aresta.duckdns.org/*"]
+  },
   "permissions": [
     "core:default",
     "core:path:default",

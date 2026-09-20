@@ -4,7 +4,7 @@ export function isProductionMode(): boolean {
   }
   try {
     const config = useRuntimeConfig()
-    return Boolean(config.public?.isProduction || config.isProduction)
+    return Boolean(config.public?.isProduction)
   } catch {
     return false
   }
