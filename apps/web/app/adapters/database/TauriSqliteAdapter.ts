@@ -386,7 +386,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
         const numId = Number(id);
         if (isNaN(numId)) return;
         const now = new Date().toISOString();
-        await db.execute('UPDATE books SET deleted_at = ?, sync_status = "pending", updated_at = ? WHERE id = ? OR book_id = ?', [now, now, numId, numId]);
+        await db.execute('UPDATE books SET deleted_at = ?, sync_status = \'pending\', updated_at = ? WHERE id = ? OR book_id = ?', [now, now, numId, numId]);
       },
       (dexie) => dexie.deleteBook(id)
     );
@@ -542,7 +542,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
     return this.withDb(
       async (db) => {
         const now = new Date().toISOString();
-        await db.execute('UPDATE annotations SET deleted_at = ?, sync_status = "pending", updated_at = ? WHERE id = ?', [now, now, id]);
+        await db.execute('UPDATE annotations SET deleted_at = ?, sync_status = \'pending\', updated_at = ? WHERE id = ?', [now, now, id]);
       },
       (dexie) => dexie.deleteAnnotation(id)
     );
@@ -724,7 +724,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
     return this.withDb(
       async (db) => {
         const now = new Date().toISOString();
-        await db.execute('UPDATE flashcards SET deleted_at = ?, sync_status = "pending", updated_at = ? WHERE id = ?', [now, now, id]);
+        await db.execute('UPDATE flashcards SET deleted_at = ?, sync_status = \'pending\', updated_at = ? WHERE id = ?', [now, now, id]);
       },
       (dexie) => dexie.deleteFlashcard(id)
     );
@@ -829,7 +829,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
     return this.withDb(
       async (db) => {
         const now = new Date().toISOString();
-        await db.execute('UPDATE canvases SET deleted_at = ?, sync_status = "pending", updated_at = ? WHERE id = ?', [now, now, id]);
+        await db.execute('UPDATE canvases SET deleted_at = ?, sync_status = \'pending\', updated_at = ? WHERE id = ?', [now, now, id]);
       },
       (dexie) => dexie.deleteCanvas(id)
     );
@@ -942,7 +942,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
   async getStreak(): Promise<LocalStreak | null> {
     return this.withDb(
       async (db) => {
-        const rows = await db.select<any[]>('SELECT * FROM streaks WHERE id = "user_streak"');
+        const rows = await db.select<any[]>('SELECT * FROM streaks WHERE id = \'user_streak\'');
         if (rows.length === 0) return null;
         const data = JSON.parse(rows[0].payload_json);
         return {
@@ -962,7 +962,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
         const now = new Date().toISOString();
         await db.execute(
           `INSERT INTO streaks (id, payload_json, updated_at)
-           VALUES ("user_streak", ?, ?)
+           VALUES ('user_streak', ?, ?)
            ON CONFLICT(id) DO UPDATE SET
              payload_json = excluded.payload_json,
              updated_at = excluded.updated_at`,
@@ -977,7 +977,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
   async getPendingMutations(): Promise<LocalMutation[]> {
     return this.withDb(
       async (db) => {
-        const rows = await db.select<any[]>('SELECT * FROM mutation_queue WHERE sync_status = "pending" ORDER BY client_timestamp ASC');
+        const rows = await db.select<any[]>('SELECT * FROM mutation_queue WHERE sync_status = \'pending\' ORDER BY client_timestamp ASC');
         return rows.map((r) => ({
           id: r.id,
           entity_type: r.entity_type,
@@ -1023,7 +1023,7 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
       async (db) => {
         if (ids.length === 0) return;
         const placeholders = ids.map(() => '?').join(',');
-        await db.execute(`UPDATE mutation_queue SET sync_status = "synced" WHERE id IN (${placeholders})`, ids);
+        await db.execute(`UPDATE mutation_queue SET sync_status = 'synced' WHERE id IN (${placeholders})`, ids);
       },
       (dexie) => dexie.markMutationsSynced(ids)
     );

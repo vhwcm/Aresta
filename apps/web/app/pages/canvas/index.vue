@@ -1154,6 +1154,11 @@ const syncFromRoute = async () => {
 }
 
 watch(() => route.query, () => { syncFromRoute() }, { deep: true })
+watch(() => auth.isLoggedIn.value, (isLogged) => {
+  if (isLogged) {
+    handleDataSynced()
+  }
+})
 
 const handleDataSynced = async () => {
   try {
@@ -1177,8 +1182,6 @@ onMounted(async () => {
   if (typeof window !== 'undefined' && window.innerWidth < 768) {
     isSidebarCollapsed.value = true
   }
-
-  if (!auth.isLoggedIn.value) return
 
   try {
     await handleDataSynced()

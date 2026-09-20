@@ -88,6 +88,7 @@ export async function withRetry<T>(
       await new Promise((resolve) => setTimeout(resolve, delay))
     }
   }
+  throw new Error('withRetry: número máximo de tentativas excedido')
 }
 
 export class DriveSyncService {
