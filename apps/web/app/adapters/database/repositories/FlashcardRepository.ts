@@ -2,7 +2,9 @@ import { getDatabase, dbManager } from '../DatabaseManager';
 import type { LocalFlashcard, LocalAnnotation } from '../types';
 
 export class FlashcardRepository {
-  private db = getDatabase();
+  private get db() {
+    return getDatabase();
+  }
 
   async getAll(filters?: { dateStr?: string; onlyDue?: boolean }): Promise<LocalFlashcard[]> {
     return this.db.getFlashcards(filters);

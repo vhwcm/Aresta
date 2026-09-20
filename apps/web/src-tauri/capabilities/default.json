@@ -3,11 +3,13 @@
   "identifier": "default",
   "description": "Capacidade padrão com permissões de ACL para o Aresta",
   "windows": ["main", "*"],
+  "webviews": ["main", "*"],
   "permissions": [
     "core:default",
     "core:path:default",
     "core:event:default",
     "core:window:default",
+    "core:webview:default",
     "core:app:default",
     "core:image:default",
     "core:resources:default",

@@ -12,6 +12,7 @@
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "Aresta",
         "width": 1280,
         "height": 840,
@@ -23,7 +24,10 @@
         "theme": "Dark"
       }
     ],
-    "security": { "csp": null }
+    "security": {
+      "capabilities": ["default"],
+      "csp": null
+    }
   },
   "bundle": {
     "active": true,

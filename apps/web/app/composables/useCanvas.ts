@@ -287,12 +287,6 @@ export function useCanvas() {
     isLoading.value = true;
     error.value = null;
 
-    if (!token?.value && !user?.value) {
-      canvasesList.value = [];
-      isLoading.value = false;
-      return [];
-    }
-
     try {
       const localCanvases = await canvasRepo.getAll();
       let list = localCanvases || [];
@@ -381,11 +375,6 @@ export function useCanvas() {
     optionsOrTitle: { title?: string; description?: string | null; folder?: string | null; tags?: string[]; initialData?: string } | string = 'Quadro sem título',
     initialData?: string
   ) => {
-    if (!token?.value && !user?.value) {
-      error.value = 'É necessário estar autenticado para criar um quadro.';
-      throw new Error('É necessário estar autenticado para criar um quadro.');
-    }
-
     isLoading.value = true;
     const localId = `canvas_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
     const title = typeof optionsOrTitle === 'string' ? optionsOrTitle : (optionsOrTitle.title || 'Quadro sem título');

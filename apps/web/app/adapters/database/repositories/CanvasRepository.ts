@@ -2,7 +2,9 @@ import { getDatabase, dbManager } from '../DatabaseManager';
 import type { LocalCanvasItem } from '../types';
 
 export class CanvasRepository {
-  private db = getDatabase();
+  private get db() {
+    return getDatabase();
+  }
 
   async getAll(): Promise<LocalCanvasItem[]> {
     return this.db.getCanvases();

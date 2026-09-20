@@ -2,7 +2,9 @@ import { getDatabase, dbManager } from '../DatabaseManager';
 import type { LocalStreak } from '../types';
 
 export class StreakRepository {
-  private db = getDatabase();
+  private get db() {
+    return getDatabase();
+  }
 
   async get(): Promise<LocalStreak | null> {
     return this.db.getStreak();

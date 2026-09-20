@@ -74,4 +74,20 @@ describe('useNotes composable (Local-First Architecture)', () => {
     expect(updated?.links?.some((l) => l.targetType === 'CANVAS' && l.targetId === 'canvas-999')).toBe(true)
     expect(updated?.links?.some((l) => l.targetType === 'CANVAS' && l.targetId === 'canvas-888')).toBe(true)
   })
+
+  it('permite criar e listar notas offline mesmo sem token de autenticação ativo', async () => {
+    vi.spyOn(authComposable, 'useAuth').mockReturnValue({
+      token: ref(null),
+      user: ref(null),
+      isLoggedIn: ref(false),
+    } as any)
+
+    const { createNote, fetchNotes } = useNotes()
+    const note = await createNote({ title: 'Nota Offline', content: 'Offline content' })
+    expect(note.id).toBeDefined()
+    expect(note.title).toBe('Nota Offline')
+
+    const result = await fetchNotes()
+    expect(result.notes.some((n) => n.title === 'Nota Offline')).toBe(true)
+  })
 })

@@ -178,4 +178,18 @@ describe('useCanvas composable', () => {
     expect(canvas.strokes.value[0]?.color).toBe('#10B981');
     expect(canvas.strokes.value[0]?.points).toHaveLength(2);
   });
+
+  it('permite criar e listar quadros localmente sem exigir token ativo', async () => {
+    const canvas = useCanvas();
+    const created = await canvas.createCanvas({
+      title: 'Quadro Local Offline',
+      description: 'Descrição local',
+    });
+
+    expect(created.id).toBeDefined();
+    expect(created.title).toBe('Quadro Local Offline');
+
+    const list = await canvas.fetchCanvases();
+    expect(list.some((c) => c.title === 'Quadro Local Offline')).toBe(true);
+  });
 });

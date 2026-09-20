@@ -62,12 +62,6 @@ export function useNotes() {
     isLoading.value = true;
     error.value = null;
 
-    if (!token?.value && !user?.value) {
-      notesList.value = [];
-      isLoading.value = false;
-      return { notes: [], total: 0, page: 1, limit: 50, totalPages: 0 };
-    }
-
     try {
       const local = await noteRepo.getAll({ folder: params.folder, tag: params.tag, search: params.search });
       const mapped = local.map(mapLocalToNoteItem);
@@ -144,11 +138,6 @@ export function useNotes() {
     canvasId?: string;
     links?: Array<{ targetType: 'CANVAS' | 'BOOK' | 'NOTE'; targetId: string }>;
   }) => {
-    if (!token?.value && !user?.value) {
-      error.value = 'É necessário estar autenticado para criar uma anotação.';
-      throw new Error('É necessário estar autenticado para criar uma anotação.');
-    }
-
     isLoading.value = true;
     error.value = null;
     const localId = `note-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;

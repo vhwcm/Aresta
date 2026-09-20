@@ -19,10 +19,19 @@ import type {
 export class TauriSqliteAdapter implements IDatabaseAdapter {
   private db: Database | null = null;
   private isInitialized = false;
+  private initPromise: Promise<void> | null = null;
   private fallbackDexie: DexieAdapter | null = null;
 
   async init(): Promise<void> {
     if (this.isInitialized && (this.db || this.fallbackDexie)) return;
+    if (this.initPromise) {
+      return this.initPromise;
+    }
+    this.initPromise = this.doInit();
+    return this.initPromise;
+  }
+
+  private async doInit(): Promise<void> {
     try {
       this.db = await Database.load('sqlite:aresta-reader.db');
       await this.createTables();
@@ -34,13 +43,42 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
         this.isInitialized = true;
       } catch (err2) {
         console.warn('[TauriSqliteAdapter] Erro ao carregar SQLite nativo. Ativando fallback resiliente:', e, err2);
-        if (typeof window !== 'undefined' && typeof window.indexedDB !== 'undefined') {
-          this.fallbackDexie = new DexieAdapter();
-        } else {
-          this.fallbackDexie = new InMemoryAdapter() as any;
-        }
-        this.isInitialized = true;
+        this.activateFallback();
       }
+    }
+  }
+
+  private activateFallback(): DexieAdapter {
+    this.db = null;
+    if (!this.fallbackDexie) {
+      if (typeof window !== 'undefined' && typeof window.indexedDB !== 'undefined') {
+        this.fallbackDexie = new DexieAdapter();
+      } else {
+        this.fallbackDexie = new InMemoryAdapter() as any;
+      }
+    }
+    this.isInitialized = true;
+    return this.fallbackDexie;
+  }
+
+  private async withDb<T>(
+    operation: (db: Database) => Promise<T>,
+    fallbackOperation: (dexie: DexieAdapter) => Promise<T>
+  ): Promise<T> {
+    await this.init();
+    if (this.fallbackDexie) {
+      return fallbackOperation(this.fallbackDexie);
+    }
+    try {
+      if (!this.db) {
+        const dexie = this.activateFallback();
+        return fallbackOperation(dexie);
+      }
+      return await operation(this.db);
+    } catch (err) {
+      console.warn('[TauriSqliteAdapter] Falha na operação SQLite nativa. Comutando transparentemente para Dexie:', err);
+      const dexie = this.activateFallback();
+      return fallbackOperation(dexie);
     }
   }
 
@@ -198,600 +236,684 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
 
   // Books
   async getBooks(): Promise<LocalBook[]> {
-    await this.init();
-    if (this.fallbackDexie) return this.fallbackDexie.getBooks();
-    const rows = await this.db!.select<any[]>('SELECT * FROM books WHERE deleted_at IS NULL ORDER BY updated_at DESC');
-    return rows.map((r) => ({
-      id: r.id,
-      bookId: r.book_id,
-      title: r.title,
-      author: r.author,
-      coverPath: r.cover_path,
-      filePath: r.file_path,
-      status: r.status,
-      currentPage: r.current_page,
-      lastAccessedAt: r.last_accessed_at,
-      themes: r.themes_json ? JSON.parse(r.themes_json) : [],
-      updated_at: r.updated_at,
-      deleted_at: r.deleted_at,
-      sync_status: r.sync_status
-    }));
+    return this.withDb(
+      async (db) => {
+        const rows = await db.select<any[]>('SELECT * FROM books WHERE deleted_at IS NULL ORDER BY updated_at DESC');
+        return rows.map((r) => ({
+          id: r.id,
+          bookId: r.book_id,
+          title: r.title,
+          author: r.author,
+          coverPath: r.cover_path,
+          filePath: r.file_path,
+          status: r.status,
+          currentPage: r.current_page,
+          lastAccessedAt: r.last_accessed_at,
+          themes: r.themes_json ? JSON.parse(r.themes_json) : [],
+          updated_at: r.updated_at,
+          deleted_at: r.deleted_at,
+          sync_status: r.sync_status
+        }));
+      },
+      (dexie) => dexie.getBooks()
+    );
   }
 
   async getBookById(id: number): Promise<LocalBook | null> {
-    await this.init();
-    if (this.fallbackDexie) return this.fallbackDexie.getBookById(id);
-    const rows = await this.db!.select<any[]>('SELECT * FROM books WHERE id = ? AND deleted_at IS NULL', [id]);
-    if (rows.length === 0) return null;
-    const r = rows[0];
-    return {
-      id: r.id,
-      bookId: r.book_id,
-      title: r.title,
-      author: r.author,
-      coverPath: r.cover_path,
-      filePath: r.file_path,
-      status: r.status,
-      currentPage: r.current_page,
-      lastAccessedAt: r.last_accessed_at,
-      themes: r.themes_json ? JSON.parse(r.themes_json) : [],
-      updated_at: r.updated_at,
-      deleted_at: r.deleted_at,
-      sync_status: r.sync_status
-    };
+    return this.withDb(
+      async (db) => {
+        const rows = await db.select<any[]>('SELECT * FROM books WHERE id = ? AND deleted_at IS NULL', [id]);
+        if (rows.length === 0) return null;
+        const r = rows[0];
+        return {
+          id: r.id,
+          bookId: r.book_id,
+          title: r.title,
+          author: r.author,
+          coverPath: r.cover_path,
+          filePath: r.file_path,
+          status: r.status,
+          currentPage: r.current_page,
+          lastAccessedAt: r.last_accessed_at,
+          themes: r.themes_json ? JSON.parse(r.themes_json) : [],
+          updated_at: r.updated_at,
+          deleted_at: r.deleted_at,
+          sync_status: r.sync_status
+        };
+      },
+      (dexie) => dexie.getBookById(id)
+    );
   }
 
   async getBookRawById(id: number): Promise<LocalBook | null> {
-    await this.init();
-    if (this.fallbackDexie) return (this.fallbackDexie as any).getBookRawById ? (this.fallbackDexie as any).getBookRawById(id) : this.fallbackDexie.getBookById(id);
-    const rows = await this.db!.select<any[]>('SELECT * FROM books WHERE id = ?', [Number(id)]);
-    if (rows.length === 0) return null;
-    const r = rows[0];
-    return {
-      id: r.id,
-      bookId: r.book_id,
-      title: r.title,
-      author: r.author,
-      coverPath: r.cover_path,
-      filePath: r.file_path,
-      status: r.status,
-      currentPage: r.current_page,
-      lastAccessedAt: r.last_accessed_at,
-      themes: r.themes_json ? JSON.parse(r.themes_json) : [],
-      updated_at: r.updated_at,
-      deleted_at: r.deleted_at,
-      sync_status: r.sync_status
-    };
+    return this.withDb(
+      async (db) => {
+        const rows = await db.select<any[]>('SELECT * FROM books WHERE id = ?', [Number(id)]);
+        if (rows.length === 0) return null;
+        const r = rows[0];
+        return {
+          id: r.id,
+          bookId: r.book_id,
+          title: r.title,
+          author: r.author,
+          coverPath: r.cover_path,
+          filePath: r.file_path,
+          status: r.status,
+          currentPage: r.current_page,
+          lastAccessedAt: r.last_accessed_at,
+          themes: r.themes_json ? JSON.parse(r.themes_json) : [],
+          updated_at: r.updated_at,
+          deleted_at: r.deleted_at,
+          sync_status: r.sync_status
+        };
+      },
+      (dexie) => ((dexie as any).getBookRawById ? (dexie as any).getBookRawById(id) : dexie.getBookById(id))
+    );
   }
 
   async getBooksRaw(): Promise<LocalBook[]> {
-    await this.init();
-    if (this.fallbackDexie) return (this.fallbackDexie as any).getBooksRaw ? (this.fallbackDexie as any).getBooksRaw() : this.fallbackDexie.getBooks();
-    const rows = await this.db!.select<any[]>('SELECT * FROM books');
-    return rows.map((r) => ({
-      id: r.id,
-      bookId: r.book_id,
-      title: r.title,
-      author: r.author,
-      coverPath: r.cover_path,
-      filePath: r.file_path,
-      status: r.status,
-      currentPage: r.current_page,
-      lastAccessedAt: r.last_accessed_at,
-      themes: r.themes_json ? JSON.parse(r.themes_json) : [],
-      updated_at: r.updated_at,
-      deleted_at: r.deleted_at,
-      sync_status: r.sync_status
-    }));
+    return this.withDb(
+      async (db) => {
+        const rows = await db.select<any[]>('SELECT * FROM books');
+        return rows.map((r) => ({
+          id: r.id,
+          bookId: r.book_id,
+          title: r.title,
+          author: r.author,
+          coverPath: r.cover_path,
+          filePath: r.file_path,
+          status: r.status,
+          currentPage: r.current_page,
+          lastAccessedAt: r.last_accessed_at,
+          themes: r.themes_json ? JSON.parse(r.themes_json) : [],
+          updated_at: r.updated_at,
+          deleted_at: r.deleted_at,
+          sync_status: r.sync_status
+        }));
+      },
+      (dexie) => ((dexie as any).getBooksRaw ? (dexie as any).getBooksRaw() : dexie.getBooks())
+    );
   }
 
   async saveBook(book: LocalBook): Promise<void> {
-    await this.init();
-    if (this.fallbackDexie) return this.fallbackDexie.saveBook(book);
-    const cleanId = Number(book.id);
-    const existing = await this.getBookRawById(cleanId);
-    if (existing?.deleted_at && !book.deleted_at) {
-      return;
-    }
-    await this.db!.execute(
-      `INSERT INTO books (id, book_id, title, author, cover_path, file_path, status, current_page, last_accessed_at, themes_json, updated_at, deleted_at, sync_status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-       ON CONFLICT(id) DO UPDATE SET
-         book_id = excluded.book_id,
-         title = excluded.title,
-         author = excluded.author,
-         cover_path = excluded.cover_path,
-         file_path = excluded.file_path,
-         status = excluded.status,
-         current_page = excluded.current_page,
-         last_accessed_at = excluded.last_accessed_at,
-         themes_json = excluded.themes_json,
-         updated_at = excluded.updated_at,
-         deleted_at = excluded.deleted_at,
-         sync_status = excluded.sync_status`,
-      [
-        cleanId,
-        Number(book.bookId || book.id),
-        book.title,
-        book.author || null,
-        book.coverPath || null,
-        book.filePath || null,
-        book.status,
-        book.currentPage,
-        book.lastAccessedAt || null,
-        JSON.stringify(book.themes || []),
-        book.updated_at,
-        book.deleted_at || null,
-        book.sync_status
-      ]
+    return this.withDb(
+      async (db) => {
+        const cleanId = Number(book.id);
+        const existing = await this.getBookRawById(cleanId);
+        if (existing?.deleted_at && !book.deleted_at) {
+          return;
+        }
+        await db.execute(
+          `INSERT INTO books (id, book_id, title, author, cover_path, file_path, status, current_page, last_accessed_at, themes_json, updated_at, deleted_at, sync_status)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+             book_id = excluded.book_id,
+             title = excluded.title,
+             author = excluded.author,
+             cover_path = excluded.cover_path,
+             file_path = excluded.file_path,
+             status = excluded.status,
+             current_page = excluded.current_page,
+             last_accessed_at = excluded.last_accessed_at,
+             themes_json = excluded.themes_json,
+             updated_at = excluded.updated_at,
+             deleted_at = excluded.deleted_at,
+             sync_status = excluded.sync_status`,
+          [
+            cleanId,
+            Number(book.bookId || book.id),
+            book.title,
+            book.author || null,
+            book.coverPath || null,
+            book.filePath || null,
+            book.status,
+            book.currentPage,
+            book.lastAccessedAt || null,
+            JSON.stringify(book.themes || []),
+            book.updated_at,
+            book.deleted_at || null,
+            book.sync_status
+          ]
+        );
+      },
+      (dexie) => dexie.saveBook(book)
     );
   }
 
   async deleteBook(id: number): Promise<void> {
-    await this.init();
-    if (this.fallbackDexie) return this.fallbackDexie.deleteBook(id);
-    const numId = Number(id);
-    if (isNaN(numId)) return;
-    const now = new Date().toISOString();
-    await this.db!.execute('UPDATE books SET deleted_at = ?, sync_status = "pending", updated_at = ? WHERE id = ? OR book_id = ?', [now, now, numId, numId]);
+    return this.withDb(
+      async (db) => {
+        const numId = Number(id);
+        if (isNaN(numId)) return;
+        const now = new Date().toISOString();
+        await db.execute('UPDATE books SET deleted_at = ?, sync_status = "pending", updated_at = ? WHERE id = ? OR book_id = ?', [now, now, numId, numId]);
+      },
+      (dexie) => dexie.deleteBook(id)
+    );
   }
 
   async clearBooks(): Promise<void> {
-    await this.init();
-    if (this.fallbackDexie) return this.fallbackDexie.clearBooks();
-    await this.db!.execute('DELETE FROM books');
+    return this.withDb(
+      async (db) => {
+        await db.execute('DELETE FROM books');
+      },
+      (dexie) => dexie.clearBooks()
+    );
   }
 
   // Annotations
   async getAnnotations(filters?: { bookId?: number; themeId?: number }): Promise<LocalAnnotation[]> {
-    await this.init();
-    if (this.fallbackDexie) return this.fallbackDexie.getAnnotations(filters);
-    let query = 'SELECT * FROM annotations WHERE deleted_at IS NULL';
-    const params: any[] = [];
-    if (filters?.bookId) {
-      query += ' AND book_id = ?';
-      params.push(filters.bookId);
-    }
-    query += ' ORDER BY created_at DESC';
-    const rows = await this.db!.select<any[]>(query, params);
-    let list: LocalAnnotation[] = rows.map((r) => ({
-      id: r.id,
-      userId: r.user_id,
-      bookId: r.book_id,
-      bookTitle: r.book_title,
-      bookCover: r.book_cover,
-      cfi: r.cfi,
-      selectedText: r.selected_text,
-      note: r.note,
-      chapterTitle: r.chapter_title,
-      progress: r.progress,
-      themes: r.themes_json ? JSON.parse(r.themes_json) : [],
-      createdAt: r.created_at,
-      updated_at: r.updated_at,
-      deleted_at: r.deleted_at,
-      sync_status: r.sync_status
-    }));
+    return this.withDb(
+      async (db) => {
+        let query = 'SELECT * FROM annotations WHERE deleted_at IS NULL';
+        const params: any[] = [];
+        if (filters?.bookId) {
+          query += ' AND book_id = ?';
+          params.push(filters.bookId);
+        }
+        query += ' ORDER BY created_at DESC';
+        const rows = await db.select<any[]>(query, params);
+        let list: LocalAnnotation[] = rows.map((r) => ({
+          id: r.id,
+          userId: r.user_id,
+          bookId: r.book_id,
+          bookTitle: r.book_title,
+          bookCover: r.book_cover,
+          cfi: r.cfi,
+          selectedText: r.selected_text,
+          note: r.note,
+          chapterTitle: r.chapter_title,
+          progress: r.progress,
+          themes: r.themes_json ? JSON.parse(r.themes_json) : [],
+          createdAt: r.created_at,
+          updated_at: r.updated_at,
+          deleted_at: r.deleted_at,
+          sync_status: r.sync_status
+        }));
 
-    if (filters?.themeId) {
-      list = list.filter((a) => a.themes?.some((t) => t.id === filters.themeId));
-    }
-    return list;
+        if (filters?.themeId) {
+          list = list.filter((a) => a.themes?.some((t) => t.id === filters.themeId));
+        }
+        return list;
+      },
+      (dexie) => dexie.getAnnotations(filters)
+    );
   }
 
   async getAnnotationsRaw(): Promise<LocalAnnotation[]> {
-    await this.init();
-    if (this.fallbackDexie) return (this.fallbackDexie as any).getAnnotationsRaw ? (this.fallbackDexie as any).getAnnotationsRaw() : this.fallbackDexie.getAnnotations();
-    const rows = await this.db!.select<any[]>('SELECT * FROM annotations ORDER BY created_at DESC');
-    return rows.map((r) => ({
-      id: r.id,
-      userId: r.user_id,
-      bookId: r.book_id,
-      bookTitle: r.book_title,
-      bookCover: r.book_cover,
-      cfi: r.cfi,
-      selectedText: r.selected_text,
-      note: r.note,
-      chapterTitle: r.chapter_title,
-      progress: r.progress,
-      themes: r.themes_json ? JSON.parse(r.themes_json) : [],
-      createdAt: r.created_at,
-      updated_at: r.updated_at,
-      deleted_at: r.deleted_at,
-      sync_status: r.sync_status
-    }));
+    return this.withDb(
+      async (db) => {
+        const rows = await db.select<any[]>('SELECT * FROM annotations ORDER BY created_at DESC');
+        return rows.map((r) => ({
+          id: r.id,
+          userId: r.user_id,
+          bookId: r.book_id,
+          bookTitle: r.book_title,
+          bookCover: r.book_cover,
+          cfi: r.cfi,
+          selectedText: r.selected_text,
+          note: r.note,
+          chapterTitle: r.chapter_title,
+          progress: r.progress,
+          themes: r.themes_json ? JSON.parse(r.themes_json) : [],
+          createdAt: r.created_at,
+          updated_at: r.updated_at,
+          deleted_at: r.deleted_at,
+          sync_status: r.sync_status
+        }));
+      },
+      (dexie) => ((dexie as any).getAnnotationsRaw ? (dexie as any).getAnnotationsRaw() : dexie.getAnnotations())
+    );
   }
 
   async getAnnotationById(id: number): Promise<LocalAnnotation | null> {
-    await this.init();
-    if (this.fallbackDexie) return this.fallbackDexie.getAnnotationById(id);
-    const rows = await this.db!.select<any[]>('SELECT * FROM annotations WHERE id = ? AND deleted_at IS NULL', [id]);
-    if (rows.length === 0) return null;
-    const r = rows[0];
-    return {
-      id: r.id,
-      userId: r.user_id,
-      bookId: r.book_id,
-      bookTitle: r.book_title,
-      bookCover: r.book_cover,
-      cfi: r.cfi,
-      selectedText: r.selected_text,
-      note: r.note,
-      chapterTitle: r.chapter_title,
-      progress: r.progress,
-      themes: r.themes_json ? JSON.parse(r.themes_json) : [],
-      createdAt: r.created_at,
-      updated_at: r.updated_at,
-      deleted_at: r.deleted_at,
-      sync_status: r.sync_status
-    };
+    return this.withDb(
+      async (db) => {
+        const rows = await db.select<any[]>('SELECT * FROM annotations WHERE id = ? AND deleted_at IS NULL', [id]);
+        if (rows.length === 0) return null;
+        const r = rows[0];
+        return {
+          id: r.id,
+          userId: r.user_id,
+          bookId: r.book_id,
+          bookTitle: r.book_title,
+          bookCover: r.book_cover,
+          cfi: r.cfi,
+          selectedText: r.selected_text,
+          note: r.note,
+          chapterTitle: r.chapter_title,
+          progress: r.progress,
+          themes: r.themes_json ? JSON.parse(r.themes_json) : [],
+          createdAt: r.created_at,
+          updated_at: r.updated_at,
+          deleted_at: r.deleted_at,
+          sync_status: r.sync_status
+        };
+      },
+      (dexie) => dexie.getAnnotationById(id)
+    );
   }
 
   async saveAnnotation(annotation: LocalAnnotation): Promise<void> {
-    await this.init();
-    if (this.fallbackDexie) return this.fallbackDexie.saveAnnotation(annotation);
-    await this.db!.execute(
-      `INSERT INTO annotations (id, user_id, book_id, book_title, book_cover, cfi, selected_text, note, chapter_title, progress, themes_json, created_at, updated_at, deleted_at, sync_status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-       ON CONFLICT(id) DO UPDATE SET
-         user_id = excluded.user_id,
-         book_id = excluded.book_id,
-         book_title = excluded.book_title,
-         book_cover = excluded.book_cover,
-         cfi = excluded.cfi,
-         selected_text = excluded.selected_text,
-         note = excluded.note,
-         chapter_title = excluded.chapter_title,
-         progress = excluded.progress,
-         themes_json = excluded.themes_json,
-         created_at = excluded.created_at,
-         updated_at = excluded.updated_at,
-         deleted_at = excluded.deleted_at,
-         sync_status = excluded.sync_status`,
-      [
-        annotation.id,
-        annotation.userId || null,
-        annotation.bookId,
-        annotation.bookTitle || null,
-        annotation.bookCover || null,
-        annotation.cfi,
-        annotation.selectedText || null,
-        annotation.note || null,
-        annotation.chapterTitle || null,
-        annotation.progress || null,
-        JSON.stringify(annotation.themes || []),
-        annotation.createdAt,
-        annotation.updated_at,
-        annotation.deleted_at || null,
-        annotation.sync_status
-      ]
+    return this.withDb(
+      async (db) => {
+        await db.execute(
+          `INSERT INTO annotations (id, user_id, book_id, book_title, book_cover, cfi, selected_text, note, chapter_title, progress, themes_json, created_at, updated_at, deleted_at, sync_status)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+             user_id = excluded.user_id,
+             book_id = excluded.book_id,
+             book_title = excluded.book_title,
+             book_cover = excluded.book_cover,
+             cfi = excluded.cfi,
+             selected_text = excluded.selected_text,
+             note = excluded.note,
+             chapter_title = excluded.chapter_title,
+             progress = excluded.progress,
+             themes_json = excluded.themes_json,
+             created_at = excluded.created_at,
+             updated_at = excluded.updated_at,
+             deleted_at = excluded.deleted_at,
+             sync_status = excluded.sync_status`,
+          [
+            annotation.id,
+            annotation.userId || null,
+            annotation.bookId,
+            annotation.bookTitle || null,
+            annotation.bookCover || null,
+            annotation.cfi,
+            annotation.selectedText || null,
+            annotation.note || null,
+            annotation.chapterTitle || null,
+            annotation.progress || null,
+            JSON.stringify(annotation.themes || []),
+            annotation.createdAt,
+            annotation.updated_at,
+            annotation.deleted_at || null,
+            annotation.sync_status
+          ]
+        );
+      },
+      (dexie) => dexie.saveAnnotation(annotation)
     );
   }
 
   async deleteAnnotation(id: number): Promise<void> {
-    await this.init();
-    if (this.fallbackDexie) return this.fallbackDexie.deleteAnnotation(id);
-    const now = new Date().toISOString();
-    await this.db!.execute('UPDATE annotations SET deleted_at = ?, sync_status = "pending", updated_at = ? WHERE id = ?', [now, now, id]);
+    return this.withDb(
+      async (db) => {
+        const now = new Date().toISOString();
+        await db.execute('UPDATE annotations SET deleted_at = ?, sync_status = "pending", updated_at = ? WHERE id = ?', [now, now, id]);
+      },
+      (dexie) => dexie.deleteAnnotation(id)
+    );
   }
 
   // Flashcards
   async getFlashcards(filters?: { dateStr?: string; onlyDue?: boolean }): Promise<LocalFlashcard[]> {
-    await this.init();
-    if (this.fallbackDexie) return this.fallbackDexie.getFlashcards(filters);
-    let query = 'SELECT * FROM flashcards WHERE deleted_at IS NULL';
-    const params: any[] = [];
-    if (filters?.onlyDue) {
-      const now = filters.dateStr || new Date().toISOString();
-      query += ' AND next_review_at <= ?';
-      params.push(now);
-    }
-    const rows = await this.db!.select<any[]>(query, params);
-    return rows.map((r) => ({
-      id: r.id,
-      userId: r.user_id,
-      annotationId: r.annotation_id,
-      bookId: r.book_id,
-      bookTitle: r.book_title,
-      bookCover: r.book_cover,
-      chapterTitle: r.chapter_title,
-      selectedText: r.selected_text,
-      note: r.note,
-      cardType: r.card_type,
-      question: r.question,
-      answer: r.answer,
-      contextSummary: r.context_summary,
-      repetitionLevel: r.repetition_level,
-      nextReviewAt: r.next_review_at,
-      lastReviewedAt: r.last_reviewed_at,
-      reviewCount: r.review_count,
-      difficulty: r.difficulty,
-      isReviewed: Boolean(r.is_reviewed),
-      rating: r.rating,
-      updated_at: r.updated_at,
-      deleted_at: r.deleted_at,
-      sync_status: r.sync_status
-    }));
+    return this.withDb(
+      async (db) => {
+        let query = 'SELECT * FROM flashcards WHERE deleted_at IS NULL';
+        const params: any[] = [];
+        if (filters?.onlyDue) {
+          const now = filters.dateStr || new Date().toISOString();
+          query += ' AND next_review_at <= ?';
+          params.push(now);
+        }
+        const rows = await db.select<any[]>(query, params);
+        return rows.map((r) => ({
+          id: r.id,
+          userId: r.user_id,
+          annotationId: r.annotation_id,
+          bookId: r.book_id,
+          bookTitle: r.book_title,
+          bookCover: r.book_cover,
+          chapterTitle: r.chapter_title,
+          selectedText: r.selected_text,
+          note: r.note,
+          cardType: r.card_type,
+          question: r.question,
+          answer: r.answer,
+          contextSummary: r.context_summary,
+          repetitionLevel: r.repetition_level,
+          nextReviewAt: r.next_review_at,
+          lastReviewedAt: r.last_reviewed_at,
+          reviewCount: r.review_count,
+          difficulty: r.difficulty,
+          isReviewed: Boolean(r.is_reviewed),
+          rating: r.rating,
+          updated_at: r.updated_at,
+          deleted_at: r.deleted_at,
+          sync_status: r.sync_status
+        }));
+      },
+      (dexie) => dexie.getFlashcards(filters)
+    );
   }
 
   async getFlashcardsRaw(): Promise<LocalFlashcard[]> {
-    await this.init();
-    if (this.fallbackDexie) return (this.fallbackDexie as any).getFlashcardsRaw ? (this.fallbackDexie as any).getFlashcardsRaw() : this.fallbackDexie.getFlashcards();
-    const rows = await this.db!.select<any[]>('SELECT * FROM flashcards');
-    return rows.map((r) => ({
-      id: r.id,
-      userId: r.user_id,
-      annotationId: r.annotation_id,
-      bookId: r.book_id,
-      bookTitle: r.book_title,
-      bookCover: r.book_cover,
-      chapterTitle: r.chapter_title,
-      selectedText: r.selected_text,
-      note: r.note,
-      cardType: r.card_type,
-      question: r.question,
-      answer: r.answer,
-      contextSummary: r.context_summary,
-      repetitionLevel: r.repetition_level,
-      nextReviewAt: r.next_review_at,
-      lastReviewedAt: r.last_reviewed_at,
-      reviewCount: r.review_count,
-      difficulty: r.difficulty,
-      isReviewed: Boolean(r.is_reviewed),
-      rating: r.rating,
-      updated_at: r.updated_at,
-      deleted_at: r.deleted_at,
-      sync_status: r.sync_status
-    }));
+    return this.withDb(
+      async (db) => {
+        const rows = await db.select<any[]>('SELECT * FROM flashcards');
+        return rows.map((r) => ({
+          id: r.id,
+          userId: r.user_id,
+          annotationId: r.annotation_id,
+          bookId: r.book_id,
+          bookTitle: r.book_title,
+          bookCover: r.book_cover,
+          chapterTitle: r.chapter_title,
+          selectedText: r.selected_text,
+          note: r.note,
+          cardType: r.card_type,
+          question: r.question,
+          answer: r.answer,
+          contextSummary: r.context_summary,
+          repetitionLevel: r.repetition_level,
+          nextReviewAt: r.next_review_at,
+          lastReviewedAt: r.last_reviewed_at,
+          reviewCount: r.review_count,
+          difficulty: r.difficulty,
+          isReviewed: Boolean(r.is_reviewed),
+          rating: r.rating,
+          updated_at: r.updated_at,
+          deleted_at: r.deleted_at,
+          sync_status: r.sync_status
+        }));
+      },
+      (dexie) => ((dexie as any).getFlashcardsRaw ? (dexie as any).getFlashcardsRaw() : dexie.getFlashcards())
+    );
   }
 
   async getFlashcardById(id: number): Promise<LocalFlashcard | null> {
-    await this.init();
-    if (this.fallbackDexie) return this.fallbackDexie.getFlashcardById(id);
-    const rows = await this.db!.select<any[]>('SELECT * FROM flashcards WHERE id = ? AND deleted_at IS NULL', [id]);
-    if (rows.length === 0) return null;
-    const r = rows[0];
-    return {
-      id: r.id,
-      userId: r.user_id,
-      annotationId: r.annotation_id,
-      bookId: r.book_id,
-      bookTitle: r.book_title,
-      bookCover: r.book_cover,
-      chapterTitle: r.chapter_title,
-      selectedText: r.selected_text,
-      note: r.note,
-      cardType: r.card_type,
-      question: r.question,
-      answer: r.answer,
-      contextSummary: r.context_summary,
-      repetitionLevel: r.repetition_level,
-      nextReviewAt: r.next_review_at,
-      lastReviewedAt: r.last_reviewed_at,
-      reviewCount: r.review_count,
-      difficulty: r.difficulty,
-      isReviewed: Boolean(r.is_reviewed),
-      rating: r.rating,
-      updated_at: r.updated_at,
-      deleted_at: r.deleted_at,
-      sync_status: r.sync_status
-    };
+    return this.withDb(
+      async (db) => {
+        const rows = await db.select<any[]>('SELECT * FROM flashcards WHERE id = ? AND deleted_at IS NULL', [id]);
+        if (rows.length === 0) return null;
+        const r = rows[0];
+        return {
+          id: r.id,
+          userId: r.user_id,
+          annotationId: r.annotation_id,
+          bookId: r.book_id,
+          bookTitle: r.book_title,
+          bookCover: r.book_cover,
+          chapterTitle: r.chapter_title,
+          selectedText: r.selected_text,
+          note: r.note,
+          cardType: r.card_type,
+          question: r.question,
+          answer: r.answer,
+          contextSummary: r.context_summary,
+          repetitionLevel: r.repetition_level,
+          nextReviewAt: r.next_review_at,
+          lastReviewedAt: r.last_reviewed_at,
+          reviewCount: r.review_count,
+          difficulty: r.difficulty,
+          isReviewed: Boolean(r.is_reviewed),
+          rating: r.rating,
+          updated_at: r.updated_at,
+          deleted_at: r.deleted_at,
+          sync_status: r.sync_status
+        };
+      },
+      (dexie) => dexie.getFlashcardById(id)
+    );
   }
 
   async saveFlashcard(flashcard: LocalFlashcard): Promise<void> {
-    await this.init();
-    if (this.fallbackDexie) return this.fallbackDexie.saveFlashcard(flashcard);
-    await this.db!.execute(
-      `INSERT INTO flashcards (id, user_id, annotation_id, book_id, book_title, book_cover, chapter_title, selected_text, note, card_type, question, answer, context_summary, repetition_level, next_review_at, last_reviewed_at, review_count, difficulty, is_reviewed, rating, updated_at, deleted_at, sync_status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-       ON CONFLICT(id) DO UPDATE SET
-         user_id = excluded.user_id,
-         annotation_id = excluded.annotation_id,
-         book_id = excluded.book_id,
-         book_title = excluded.book_title,
-         book_cover = excluded.book_cover,
-         chapter_title = excluded.chapter_title,
-         selected_text = excluded.selected_text,
-         note = excluded.note,
-         card_type = excluded.card_type,
-         question = excluded.question,
-         answer = excluded.answer,
-         context_summary = excluded.context_summary,
-         repetition_level = excluded.repetition_level,
-         next_review_at = excluded.next_review_at,
-         last_reviewed_at = excluded.last_reviewed_at,
-         review_count = excluded.review_count,
-         difficulty = excluded.difficulty,
-         is_reviewed = excluded.is_reviewed,
-         rating = excluded.rating,
-         updated_at = excluded.updated_at,
-         deleted_at = excluded.deleted_at,
-         sync_status = excluded.sync_status`,
-      [
-        flashcard.id,
-        flashcard.userId || null,
-        flashcard.annotationId || null,
-        flashcard.bookId || null,
-        flashcard.bookTitle || null,
-        flashcard.bookCover || null,
-        flashcard.chapterTitle || null,
-        flashcard.selectedText || null,
-        flashcard.note || null,
-        flashcard.cardType,
-        flashcard.question,
-        flashcard.answer,
-        flashcard.contextSummary || null,
-        flashcard.repetitionLevel,
-        flashcard.nextReviewAt,
-        flashcard.lastReviewedAt || null,
-        flashcard.reviewCount || 0,
-        flashcard.difficulty || 0,
-        flashcard.isReviewed ? 1 : 0,
-        flashcard.rating || null,
-        flashcard.updated_at,
-        flashcard.deleted_at || null,
-        flashcard.sync_status
-      ]
+    return this.withDb(
+      async (db) => {
+        await db.execute(
+          `INSERT INTO flashcards (id, user_id, annotation_id, book_id, book_title, book_cover, chapter_title, selected_text, note, card_type, question, answer, context_summary, repetition_level, next_review_at, last_reviewed_at, review_count, difficulty, is_reviewed, rating, updated_at, deleted_at, sync_status)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+             user_id = excluded.user_id,
+             annotation_id = excluded.annotation_id,
+             book_id = excluded.book_id,
+             book_title = excluded.book_title,
+             book_cover = excluded.book_cover,
+             chapter_title = excluded.chapter_title,
+             selected_text = excluded.selected_text,
+             note = excluded.note,
+             card_type = excluded.card_type,
+             question = excluded.question,
+             answer = excluded.answer,
+             context_summary = excluded.context_summary,
+             repetition_level = excluded.repetition_level,
+             next_review_at = excluded.next_review_at,
+             last_reviewed_at = excluded.last_reviewed_at,
+             review_count = excluded.review_count,
+             difficulty = excluded.difficulty,
+             is_reviewed = excluded.is_reviewed,
+             rating = excluded.rating,
+             updated_at = excluded.updated_at,
+             deleted_at = excluded.deleted_at,
+             sync_status = excluded.sync_status`,
+          [
+            flashcard.id,
+            flashcard.userId || null,
+            flashcard.annotationId || null,
+            flashcard.bookId || null,
+            flashcard.bookTitle || null,
+            flashcard.bookCover || null,
+            flashcard.chapterTitle || null,
+            flashcard.selectedText || null,
+            flashcard.note || null,
+            flashcard.cardType,
+            flashcard.question,
+            flashcard.answer,
+            flashcard.contextSummary || null,
+            flashcard.repetitionLevel,
+            flashcard.nextReviewAt,
+            flashcard.lastReviewedAt || null,
+            flashcard.reviewCount || 0,
+            flashcard.difficulty || 0,
+            flashcard.isReviewed ? 1 : 0,
+            flashcard.rating || null,
+            flashcard.updated_at,
+            flashcard.deleted_at || null,
+            flashcard.sync_status
+          ]
+        );
+      },
+      (dexie) => dexie.saveFlashcard(flashcard)
     );
   }
 
   async deleteFlashcard(id: number): Promise<void> {
-    await this.init();
-    if (this.fallbackDexie) return this.fallbackDexie.deleteFlashcard(id);
-    const now = new Date().toISOString();
-    await this.db!.execute('UPDATE flashcards SET deleted_at = ?, sync_status = "pending", updated_at = ? WHERE id = ?', [now, now, id]);
+    return this.withDb(
+      async (db) => {
+        const now = new Date().toISOString();
+        await db.execute('UPDATE flashcards SET deleted_at = ?, sync_status = "pending", updated_at = ? WHERE id = ?', [now, now, id]);
+      },
+      (dexie) => dexie.deleteFlashcard(id)
+    );
   }
 
   // Canvas
   async getCanvases(): Promise<LocalCanvasItem[]> {
-    await this.init();
-    if (this.fallbackDexie) return this.fallbackDexie.getCanvases();
-    const rows = await this.db!.select<any[]>('SELECT * FROM canvases WHERE deleted_at IS NULL ORDER BY updated_at DESC');
-    return rows.map((r) => ({
-      id: r.id,
-      name: r.name,
-      description: r.description,
-      document: JSON.parse(r.document_json),
-      nodeCount: r.node_count,
-      edgeCount: r.edge_count,
-      updated_at: r.updated_at,
-      deleted_at: r.deleted_at,
-      sync_status: r.sync_status
-    }));
+    return this.withDb(
+      async (db) => {
+        const rows = await db.select<any[]>('SELECT * FROM canvases WHERE deleted_at IS NULL ORDER BY updated_at DESC');
+        return rows.map((r) => ({
+          id: r.id,
+          name: r.name,
+          description: r.description,
+          document: JSON.parse(r.document_json),
+          nodeCount: r.node_count,
+          edgeCount: r.edge_count,
+          updated_at: r.updated_at,
+          deleted_at: r.deleted_at,
+          sync_status: r.sync_status
+        }));
+      },
+      (dexie) => dexie.getCanvases()
+    );
   }
 
   async getCanvasesRaw(): Promise<LocalCanvasItem[]> {
-    await this.init();
-    if (this.fallbackDexie) return (this.fallbackDexie as any).getCanvasesRaw ? (this.fallbackDexie as any).getCanvasesRaw() : this.fallbackDexie.getCanvases();
-    const rows = await this.db!.select<any[]>('SELECT * FROM canvases ORDER BY updated_at DESC');
-    return rows.map((r) => ({
-      id: r.id,
-      name: r.name,
-      description: r.description,
-      document: JSON.parse(r.document_json),
-      nodeCount: r.node_count,
-      edgeCount: r.edge_count,
-      updated_at: r.updated_at,
-      deleted_at: r.deleted_at,
-      sync_status: r.sync_status
-    }));
+    return this.withDb(
+      async (db) => {
+        const rows = await db.select<any[]>('SELECT * FROM canvases ORDER BY updated_at DESC');
+        return rows.map((r) => ({
+          id: r.id,
+          name: r.name,
+          description: r.description,
+          document: JSON.parse(r.document_json),
+          nodeCount: r.node_count,
+          edgeCount: r.edge_count,
+          updated_at: r.updated_at,
+          deleted_at: r.deleted_at,
+          sync_status: r.sync_status
+        }));
+      },
+      (dexie) => ((dexie as any).getCanvasesRaw ? (dexie as any).getCanvasesRaw() : dexie.getCanvases())
+    );
   }
 
   async getCanvasById(id: string): Promise<LocalCanvasItem | null> {
-    await this.init();
-    if (this.fallbackDexie) return this.fallbackDexie.getCanvasById(id);
-    const rows = await this.db!.select<any[]>('SELECT * FROM canvases WHERE id = ? AND deleted_at IS NULL', [id]);
-    if (rows.length === 0) return null;
-    const r = rows[0];
-    return {
-      id: r.id,
-      name: r.name,
-      description: r.description,
-      document: JSON.parse(r.document_json),
-      nodeCount: r.node_count,
-      edgeCount: r.edge_count,
-      updated_at: r.updated_at,
-      deleted_at: r.deleted_at,
-      sync_status: r.sync_status
-    };
+    return this.withDb(
+      async (db) => {
+        const rows = await db.select<any[]>('SELECT * FROM canvases WHERE id = ? AND deleted_at IS NULL', [id]);
+        if (rows.length === 0) return null;
+        const r = rows[0];
+        return {
+          id: r.id,
+          name: r.name,
+          description: r.description,
+          document: JSON.parse(r.document_json),
+          nodeCount: r.node_count,
+          edgeCount: r.edge_count,
+          updated_at: r.updated_at,
+          deleted_at: r.deleted_at,
+          sync_status: r.sync_status
+        };
+      },
+      (dexie) => dexie.getCanvasById(id)
+    );
   }
 
   async saveCanvas(canvas: LocalCanvasItem): Promise<void> {
-    await this.init();
-    if (this.fallbackDexie) return this.fallbackDexie.saveCanvas(canvas);
-    await this.db!.execute(
-      `INSERT INTO canvases (id, name, description, document_json, node_count, edge_count, updated_at, deleted_at, sync_status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-       ON CONFLICT(id) DO UPDATE SET
-         name = excluded.name,
-         description = excluded.description,
-         document_json = excluded.document_json,
-         node_count = excluded.node_count,
-         edge_count = excluded.edge_count,
-         updated_at = excluded.updated_at,
-         deleted_at = excluded.deleted_at,
-         sync_status = excluded.sync_status`,
-      [
-        canvas.id,
-        canvas.name,
-        canvas.description || null,
-        JSON.stringify(canvas.document),
-        canvas.nodeCount || 0,
-        canvas.edgeCount || 0,
-        canvas.updated_at,
-        canvas.deleted_at || null,
-        canvas.sync_status
-      ]
+    return this.withDb(
+      async (db) => {
+        await db.execute(
+          `INSERT INTO canvases (id, name, description, document_json, node_count, edge_count, updated_at, deleted_at, sync_status)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+             name = excluded.name,
+             description = excluded.description,
+             document_json = excluded.document_json,
+             node_count = excluded.node_count,
+             edge_count = excluded.edge_count,
+             updated_at = excluded.updated_at,
+             deleted_at = excluded.deleted_at,
+             sync_status = excluded.sync_status`,
+          [
+            canvas.id,
+            canvas.name,
+            canvas.description || null,
+            JSON.stringify(canvas.document),
+            canvas.nodeCount || 0,
+            canvas.edgeCount || 0,
+            canvas.updated_at,
+            canvas.deleted_at || null,
+            canvas.sync_status
+          ]
+        );
+      },
+      (dexie) => dexie.saveCanvas(canvas)
     );
   }
 
   async deleteCanvas(id: string): Promise<void> {
-    await this.init();
-    if (this.fallbackDexie) return this.fallbackDexie.deleteCanvas(id);
-    const now = new Date().toISOString();
-    await this.db!.execute('UPDATE canvases SET deleted_at = ?, sync_status = "pending", updated_at = ? WHERE id = ?', [now, now, id]);
+    return this.withDb(
+      async (db) => {
+        const now = new Date().toISOString();
+        await db.execute('UPDATE canvases SET deleted_at = ?, sync_status = "pending", updated_at = ? WHERE id = ?', [now, now, id]);
+      },
+      (dexie) => dexie.deleteCanvas(id)
+    );
   }
 
   private async getPersonalRecord<T extends { id: string; deleted_at?: string | null }>(entityType: string, id: string): Promise<T | null> {
-    await this.init();
-    if (this.fallbackDexie) {
-      if (entityType === 'note') return this.fallbackDexie.getNoteById(id) as any;
-      if (entityType === 'drawing_note') return this.fallbackDexie.getDrawingNoteById(id) as any;
-      if (entityType === 'settings') return this.fallbackDexie.getSettings() as any;
-    }
-    const rows = await this.db!.select<any[]>('SELECT payload_json FROM personal_records WHERE entity_type = ? AND id = ? AND deleted_at IS NULL', [entityType, id]);
-    return rows[0] ? JSON.parse(rows[0].payload_json) as T : null;
+    return this.withDb(
+      async (db) => {
+        const rows = await db.select<any[]>('SELECT payload_json FROM personal_records WHERE entity_type = ? AND id = ? AND deleted_at IS NULL', [entityType, id]);
+        return rows[0] ? JSON.parse(rows[0].payload_json) as T : null;
+      },
+      async (dexie) => {
+        if (entityType === 'note') return dexie.getNoteById(id) as any;
+        if (entityType === 'drawing_note') return dexie.getDrawingNoteById(id) as any;
+        if (entityType === 'settings') return dexie.getSettings() as any;
+        return null;
+      }
+    );
   }
 
   private async getPersonalRecords<T extends { deleted_at?: string | null }>(entityType: string): Promise<T[]> {
-    await this.init();
-    if (this.fallbackDexie) {
-      if (entityType === 'note') return this.fallbackDexie.getNotes() as any;
-      if (entityType === 'drawing_note') return this.fallbackDexie.getDrawingNotes() as any;
-      if (entityType === 'settings') {
-        const s = await this.fallbackDexie.getSettings();
-        return s ? [s as any] : [];
+    return this.withDb(
+      async (db) => {
+        const rows = await db.select<any[]>('SELECT payload_json FROM personal_records WHERE entity_type = ? AND deleted_at IS NULL ORDER BY updated_at DESC', [entityType]);
+        return rows.map((row) => JSON.parse(row.payload_json) as T).filter((item) => !item.deleted_at);
+      },
+      async (dexie) => {
+        if (entityType === 'note') return dexie.getNotes() as any;
+        if (entityType === 'drawing_note') return dexie.getDrawingNotes() as any;
+        if (entityType === 'settings') {
+          const s = await dexie.getSettings();
+          return s ? [s as any] : [];
+        }
+        return [];
       }
-    }
-    const rows = await this.db!.select<any[]>('SELECT payload_json FROM personal_records WHERE entity_type = ? AND deleted_at IS NULL ORDER BY updated_at DESC', [entityType]);
-    return rows.map((row) => JSON.parse(row.payload_json) as T).filter((item) => !item.deleted_at);
+    );
   }
 
   private async getPersonalRecordsRaw<T>(entityType: string): Promise<T[]> {
-    await this.init();
-    if (this.fallbackDexie) {
-      if (entityType === 'note') return (this.fallbackDexie as any).getNotesRaw ? (this.fallbackDexie as any).getNotesRaw() : this.fallbackDexie.getNotes() as any;
-      if (entityType === 'drawing_note') return (this.fallbackDexie as any).getDrawingNotesRaw ? (this.fallbackDexie as any).getDrawingNotesRaw() : this.fallbackDexie.getDrawingNotes() as any;
-      if (entityType === 'settings') {
-        const s = await this.fallbackDexie.getSettings();
-        return s ? [s as any] : [];
+    return this.withDb(
+      async (db) => {
+        const rows = await db.select<any[]>('SELECT payload_json FROM personal_records WHERE entity_type = ? ORDER BY updated_at DESC', [entityType]);
+        return rows.map((row) => JSON.parse(row.payload_json) as T);
+      },
+      async (dexie) => {
+        if (entityType === 'note') return (dexie as any).getNotesRaw ? (dexie as any).getNotesRaw() : dexie.getNotes() as any;
+        if (entityType === 'drawing_note') return (dexie as any).getDrawingNotesRaw ? (dexie as any).getDrawingNotesRaw() : dexie.getDrawingNotes() as any;
+        if (entityType === 'settings') {
+          const s = await dexie.getSettings();
+          return s ? [s as any] : [];
+        }
+        return [];
       }
-    }
-    const rows = await this.db!.select<any[]>('SELECT payload_json FROM personal_records WHERE entity_type = ? ORDER BY updated_at DESC', [entityType]);
-    return rows.map((row) => JSON.parse(row.payload_json) as T);
+    );
   }
 
   private async savePersonalRecord<T extends { id: string; updated_at: string; deleted_at?: string | null }>(entityType: string, item: T): Promise<void> {
-    await this.init();
-    if (this.fallbackDexie) {
-      if (entityType === 'note') return this.fallbackDexie.saveNote(item as any);
-      if (entityType === 'drawing_note') return this.fallbackDexie.saveDrawingNote(item as any);
-      if (entityType === 'settings') return this.fallbackDexie.saveSettings(item as any);
-    }
-    await this.db!.execute(
-      `INSERT INTO personal_records (entity_type, id, payload_json, updated_at, deleted_at) VALUES (?, ?, ?, ?, ?)
-       ON CONFLICT(entity_type, id) DO UPDATE SET payload_json = excluded.payload_json, updated_at = excluded.updated_at, deleted_at = excluded.deleted_at`,
-      [entityType, item.id, JSON.stringify(item), item.updated_at, item.deleted_at || null]
+    return this.withDb(
+      async (db) => {
+        await db.execute(
+          `INSERT INTO personal_records (entity_type, id, payload_json, updated_at, deleted_at) VALUES (?, ?, ?, ?, ?)
+           ON CONFLICT(entity_type, id) DO UPDATE SET payload_json = excluded.payload_json, updated_at = excluded.updated_at, deleted_at = excluded.deleted_at`,
+          [entityType, item.id, JSON.stringify(item), item.updated_at, item.deleted_at || null]
+        );
+      },
+      async (dexie) => {
+        if (entityType === 'note') return dexie.saveNote(item as any);
+        if (entityType === 'drawing_note') return dexie.saveDrawingNote(item as any);
+        if (entityType === 'settings') return dexie.saveSettings(item as any);
+      }
     );
   }
 
   private async deletePersonalRecord<T extends { id: string; updated_at: string; deleted_at?: string | null; sync_status: any }>(entityType: string, id: string): Promise<void> {
-    await this.init();
-    if (this.fallbackDexie) {
-      if (entityType === 'note') return this.fallbackDexie.deleteNote(id);
-      if (entityType === 'drawing_note') return this.fallbackDexie.deleteDrawingNote(id);
-    }
-    const item = await this.getPersonalRecord<T>(entityType, id);
-    if (item) await this.savePersonalRecord(entityType, { ...item, updated_at: new Date().toISOString(), deleted_at: new Date().toISOString(), sync_status: 'pending' });
+    return this.withDb(
+      async (db) => {
+        const item = await this.getPersonalRecord<T>(entityType, id);
+        if (item) await this.savePersonalRecord(entityType, { ...item, updated_at: new Date().toISOString(), deleted_at: new Date().toISOString(), sync_status: 'pending' });
+      },
+      async (dexie) => {
+        if (entityType === 'note') return dexie.deleteNote(id);
+        if (entityType === 'drawing_note') return dexie.deleteDrawingNote(id);
+      }
+    );
   }
 
   async getNotes(): Promise<LocalNote[]> { return this.getPersonalRecords<LocalNote>('note'); }
@@ -809,340 +931,389 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
 
   // Streak
   async getStreak(): Promise<LocalStreak | null> {
-    await this.init();
-    if (this.fallbackDexie) return this.fallbackDexie.getStreak();
-    const rows = await this.db!.select<any[]>('SELECT * FROM streaks WHERE id = "user_streak"');
-    if (rows.length === 0) return null;
-    const data = JSON.parse(rows[0].payload_json);
-    return {
-      id: 'user_streak',
-      ...data,
-      updated_at: rows[0].updated_at,
-      sync_status: 'pending'
-    };
+    return this.withDb(
+      async (db) => {
+        const rows = await db.select<any[]>('SELECT * FROM streaks WHERE id = "user_streak"');
+        if (rows.length === 0) return null;
+        const data = JSON.parse(rows[0].payload_json);
+        return {
+          id: 'user_streak',
+          ...data,
+          updated_at: rows[0].updated_at,
+          sync_status: 'pending'
+        };
+      },
+      (dexie) => dexie.getStreak()
+    );
   }
 
   async saveStreak(streak: LocalStreak): Promise<void> {
-    await this.init();
-    if (this.fallbackDexie) return this.fallbackDexie.saveStreak(streak);
-    const now = new Date().toISOString();
-    await this.db!.execute(
-      `INSERT INTO streaks (id, payload_json, updated_at)
-       VALUES ("user_streak", ?, ?)
-       ON CONFLICT(id) DO UPDATE SET
-         payload_json = excluded.payload_json,
-         updated_at = excluded.updated_at`,
-      [JSON.stringify(streak), now]
+    return this.withDb(
+      async (db) => {
+        const now = new Date().toISOString();
+        await db.execute(
+          `INSERT INTO streaks (id, payload_json, updated_at)
+           VALUES ("user_streak", ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+             payload_json = excluded.payload_json,
+             updated_at = excluded.updated_at`,
+          [JSON.stringify(streak), now]
+        );
+      },
+      (dexie) => dexie.saveStreak(streak)
     );
   }
 
   // Mutation Queue
   async getPendingMutations(): Promise<LocalMutation[]> {
-    await this.init();
-    if (this.fallbackDexie) return this.fallbackDexie.getPendingMutations();
-    const rows = await this.db!.select<any[]>('SELECT * FROM mutation_queue WHERE sync_status = "pending" ORDER BY client_timestamp ASC');
-    return rows.map((r) => ({
-      id: r.id,
-      entity_type: r.entity_type,
-      entity_id: r.entity_id,
-      action: r.action,
-      payload: JSON.parse(r.payload_json),
-      client_timestamp: r.client_timestamp,
-      sync_status: r.sync_status,
-      retry_count: r.retry_count
-    }));
+    return this.withDb(
+      async (db) => {
+        const rows = await db.select<any[]>('SELECT * FROM mutation_queue WHERE sync_status = "pending" ORDER BY client_timestamp ASC');
+        return rows.map((r) => ({
+          id: r.id,
+          entity_type: r.entity_type,
+          entity_id: r.entity_id,
+          action: r.action,
+          payload: JSON.parse(r.payload_json),
+          client_timestamp: r.client_timestamp,
+          sync_status: r.sync_status,
+          retry_count: r.retry_count
+        }));
+      },
+      (dexie) => dexie.getPendingMutations()
+    );
   }
 
   async enqueueMutation(mutation: LocalMutation): Promise<void> {
-    await this.init();
-    if (this.fallbackDexie) return this.fallbackDexie.enqueueMutation(mutation);
-    await this.db!.execute(
-      `INSERT INTO mutation_queue (id, entity_type, entity_id, action, payload_json, client_timestamp, sync_status, retry_count)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-       ON CONFLICT(id) DO UPDATE SET
-         sync_status = excluded.sync_status,
-         retry_count = excluded.retry_count`,
-      [
-        mutation.id,
-        mutation.entity_type,
-        String(mutation.entity_id),
-        mutation.action,
-        JSON.stringify(mutation.payload),
-        mutation.client_timestamp,
-        mutation.sync_status,
-        mutation.retry_count
-      ]
+    return this.withDb(
+      async (db) => {
+        await db.execute(
+          `INSERT INTO mutation_queue (id, entity_type, entity_id, action, payload_json, client_timestamp, sync_status, retry_count)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+             sync_status = excluded.sync_status,
+             retry_count = excluded.retry_count`,
+          [
+            mutation.id,
+            mutation.entity_type,
+            String(mutation.entity_id),
+            mutation.action,
+            JSON.stringify(mutation.payload),
+            mutation.client_timestamp,
+            mutation.sync_status,
+            mutation.retry_count
+          ]
+        );
+      },
+      (dexie) => dexie.enqueueMutation(mutation)
     );
   }
 
   async markMutationsSynced(ids: string[]): Promise<void> {
-    await this.init();
-    if (this.fallbackDexie) return this.fallbackDexie.markMutationsSynced(ids);
-    if (ids.length === 0) return;
-    const placeholders = ids.map(() => '?').join(',');
-    await this.db!.execute(`UPDATE mutation_queue SET sync_status = "synced" WHERE id IN (${placeholders})`, ids);
+    return this.withDb(
+      async (db) => {
+        if (ids.length === 0) return;
+        const placeholders = ids.map(() => '?').join(',');
+        await db.execute(`UPDATE mutation_queue SET sync_status = "synced" WHERE id IN (${placeholders})`, ids);
+      },
+      (dexie) => dexie.markMutationsSynced(ids)
+    );
   }
 
   async clearPendingMutations(): Promise<void> {
-    await this.init();
-    if (this.fallbackDexie) return this.fallbackDexie.clearPendingMutations();
-    await this.db!.execute('DELETE FROM mutation_queue');
-    await this.db!.execute('DELETE FROM personal_records');
+    return this.withDb(
+      async (db) => {
+        await db.execute('DELETE FROM mutation_queue');
+        await db.execute('DELETE FROM personal_records');
+      },
+      (dexie) => dexie.clearPendingMutations()
+    );
   }
 
   async clearAll(): Promise<void> {
-    await this.init();
-    if (this.fallbackDexie) return (this.fallbackDexie as any).clearAll ? (this.fallbackDexie as any).clearAll() : undefined;
-    await this.db!.execute('DELETE FROM books');
-    await this.db!.execute('DELETE FROM annotations');
-    await this.db!.execute('DELETE FROM flashcards');
-    await this.db!.execute('DELETE FROM canvases');
-    await this.db!.execute('DELETE FROM streaks');
-    await this.db!.execute('DELETE FROM mutation_queue');
-    await this.db!.execute('DELETE FROM notes');
-    await this.db!.execute('DELETE FROM drawing_notes');
-    await this.db!.execute('DELETE FROM user_settings');
-    await this.db!.execute('DELETE FROM didactic_booklets');
-    await this.db!.execute('DELETE FROM links');
+    return this.withDb(
+      async (db) => {
+        await db.execute('DELETE FROM books');
+        await db.execute('DELETE FROM annotations');
+        await db.execute('DELETE FROM flashcards');
+        await db.execute('DELETE FROM canvases');
+        await db.execute('DELETE FROM streaks');
+        await db.execute('DELETE FROM mutation_queue');
+        await db.execute('DELETE FROM personal_records');
+        await db.execute('DELETE FROM didactic_booklets');
+        await db.execute('DELETE FROM links');
+      },
+      (dexie) => ((dexie as any).clearAll ? (dexie as any).clearAll() : undefined)
+    );
   }
 
   // Didactic Booklets
   async getDidacticBooklets(filters?: { bookId?: number; themeId?: number }): Promise<LocalDidacticBooklet[]> {
-    await this.init();
-    if (this.fallbackDexie) return this.fallbackDexie.getDidacticBooklets(filters);
-    let sql = 'SELECT * FROM didactic_booklets WHERE deleted_at IS NULL';
-    const params: any[] = [];
-    if (filters?.bookId !== undefined && filters.bookId !== null) {
-      sql += ' AND book_id = ?';
-      params.push(filters.bookId);
-    }
-    if (filters?.themeId !== undefined && filters.themeId !== null) {
-      sql += ' AND theme_id = ?';
-      params.push(filters.themeId);
-    }
-    sql += ' ORDER BY created_at DESC';
-    const rows = await this.db!.select<any[]>(sql, params);
-    return rows.map((r) => ({
-      id: r.id,
-      title: r.title,
-      topic: r.topic,
-      html: r.html,
-      markdown: r.markdown,
-      diagramCount: r.diagram_count,
-      depthLevel: r.depth_level as 'quick_summary' | 'standard' | 'deep_dive',
-      bookId: r.book_id,
-      themeId: r.theme_id,
-      createdAt: r.created_at,
-      updated_at: r.updated_at,
-      deleted_at: r.deleted_at,
-      sync_status: r.sync_status,
-    }));
+    return this.withDb(
+      async (db) => {
+        let sql = 'SELECT * FROM didactic_booklets WHERE deleted_at IS NULL';
+        const params: any[] = [];
+        if (filters?.bookId !== undefined && filters.bookId !== null) {
+          sql += ' AND book_id = ?';
+          params.push(filters.bookId);
+        }
+        if (filters?.themeId !== undefined && filters.themeId !== null) {
+          sql += ' AND theme_id = ?';
+          params.push(filters.themeId);
+        }
+        sql += ' ORDER BY created_at DESC';
+        const rows = await db.select<any[]>(sql, params);
+        return rows.map((r) => ({
+          id: r.id,
+          title: r.title,
+          topic: r.topic,
+          html: r.html,
+          markdown: r.markdown,
+          diagramCount: r.diagram_count,
+          depthLevel: r.depth_level as 'quick_summary' | 'standard' | 'deep_dive',
+          bookId: r.book_id,
+          themeId: r.theme_id,
+          createdAt: r.created_at,
+          updated_at: r.updated_at,
+          deleted_at: r.deleted_at,
+          sync_status: r.sync_status,
+        }));
+      },
+      (dexie) => dexie.getDidacticBooklets(filters)
+    );
   }
 
   async getDidacticBookletsRaw(): Promise<LocalDidacticBooklet[]> {
-    await this.init();
-    if (this.fallbackDexie) return (this.fallbackDexie as any).getDidacticBookletsRaw ? (this.fallbackDexie as any).getDidacticBookletsRaw() : this.fallbackDexie.getDidacticBooklets();
-    const rows = await this.db!.select<any[]>('SELECT * FROM didactic_booklets ORDER BY created_at DESC');
-    return rows.map((r) => ({
-      id: r.id,
-      title: r.title,
-      topic: r.topic,
-      html: r.html,
-      markdown: r.markdown,
-      diagramCount: r.diagram_count,
-      depthLevel: r.depth_level as 'quick_summary' | 'standard' | 'deep_dive',
-      bookId: r.book_id,
-      themeId: r.theme_id,
-      createdAt: r.created_at,
-      updated_at: r.updated_at,
-      deleted_at: r.deleted_at,
-      sync_status: r.sync_status,
-    }));
+    return this.withDb(
+      async (db) => {
+        const rows = await db.select<any[]>('SELECT * FROM didactic_booklets ORDER BY created_at DESC');
+        return rows.map((r) => ({
+          id: r.id,
+          title: r.title,
+          topic: r.topic,
+          html: r.html,
+          markdown: r.markdown,
+          diagramCount: r.diagram_count,
+          depthLevel: r.depth_level as 'quick_summary' | 'standard' | 'deep_dive',
+          bookId: r.book_id,
+          themeId: r.theme_id,
+          createdAt: r.created_at,
+          updated_at: r.updated_at,
+          deleted_at: r.deleted_at,
+          sync_status: r.sync_status,
+        }));
+      },
+      (dexie) => ((dexie as any).getDidacticBookletsRaw ? (dexie as any).getDidacticBookletsRaw() : dexie.getDidacticBooklets())
+    );
   }
 
   async getDidacticBookletById(id: string): Promise<LocalDidacticBooklet | null> {
-    await this.init();
-    if (this.fallbackDexie) return this.fallbackDexie.getDidacticBookletById(id);
-    const rows = await this.db!.select<any[]>('SELECT * FROM didactic_booklets WHERE id = ? AND deleted_at IS NULL', [id]);
-    if (rows.length === 0) return null;
-    const r = rows[0];
-    return {
-      id: r.id,
-      title: r.title,
-      topic: r.topic,
-      html: r.html,
-      markdown: r.markdown,
-      diagramCount: r.diagram_count,
-      depthLevel: r.depth_level as 'quick_summary' | 'standard' | 'deep_dive',
-      bookId: r.book_id,
-      themeId: r.theme_id,
-      createdAt: r.created_at,
-      updated_at: r.updated_at,
-      deleted_at: r.deleted_at,
-      sync_status: r.sync_status,
-    };
+    return this.withDb(
+      async (db) => {
+        const rows = await db.select<any[]>('SELECT * FROM didactic_booklets WHERE id = ? AND deleted_at IS NULL', [id]);
+        if (rows.length === 0) return null;
+        const r = rows[0];
+        return {
+          id: r.id,
+          title: r.title,
+          topic: r.topic,
+          html: r.html,
+          markdown: r.markdown,
+          diagramCount: r.diagram_count,
+          depthLevel: r.depth_level as 'quick_summary' | 'standard' | 'deep_dive',
+          bookId: r.book_id,
+          themeId: r.theme_id,
+          createdAt: r.created_at,
+          updated_at: r.updated_at,
+          deleted_at: r.deleted_at,
+          sync_status: r.sync_status,
+        };
+      },
+      (dexie) => dexie.getDidacticBookletById(id)
+    );
   }
 
   async saveDidacticBooklet(booklet: LocalDidacticBooklet): Promise<void> {
-    await this.init();
-    if (this.fallbackDexie) return this.fallbackDexie.saveDidacticBooklet(booklet);
-    await this.db!.execute(
-      `INSERT INTO didactic_booklets
-         (id, title, topic, html, markdown, diagram_count, depth_level, book_id, theme_id, created_at, updated_at, deleted_at, sync_status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-       ON CONFLICT(id) DO UPDATE SET
-         title = excluded.title,
-         topic = excluded.topic,
-         html = excluded.html,
-         markdown = excluded.markdown,
-         diagram_count = excluded.diagram_count,
-         depth_level = excluded.depth_level,
-         book_id = excluded.book_id,
-         theme_id = excluded.theme_id,
-         updated_at = excluded.updated_at,
-         deleted_at = excluded.deleted_at,
-         sync_status = excluded.sync_status`,
-      [
-        booklet.id,
-        booklet.title,
-        booklet.topic,
-        booklet.html,
-        booklet.markdown,
-        booklet.diagramCount,
-        booklet.depthLevel,
-        booklet.bookId ?? null,
-        booklet.themeId ?? null,
-        booklet.createdAt,
-        booklet.updated_at,
-        booklet.deleted_at ?? null,
-        booklet.sync_status,
-      ]
+    return this.withDb(
+      async (db) => {
+        await db.execute(
+          `INSERT INTO didactic_booklets
+             (id, title, topic, html, markdown, diagram_count, depth_level, book_id, theme_id, created_at, updated_at, deleted_at, sync_status)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+             title = excluded.title,
+             topic = excluded.topic,
+             html = excluded.html,
+             markdown = excluded.markdown,
+             diagram_count = excluded.diagram_count,
+             depth_level = excluded.depth_level,
+             book_id = excluded.book_id,
+             theme_id = excluded.theme_id,
+             updated_at = excluded.updated_at,
+             deleted_at = excluded.deleted_at,
+             sync_status = excluded.sync_status`,
+          [
+            booklet.id,
+            booklet.title,
+            booklet.topic,
+            booklet.html,
+            booklet.markdown,
+            booklet.diagramCount,
+            booklet.depthLevel,
+            booklet.bookId ?? null,
+            booklet.themeId ?? null,
+            booklet.createdAt,
+            booklet.updated_at,
+            booklet.deleted_at ?? null,
+            booklet.sync_status,
+          ]
+        );
+      },
+      (dexie) => dexie.saveDidacticBooklet(booklet)
     );
   }
 
   async deleteDidacticBooklet(id: string): Promise<void> {
-    await this.init();
-    if (this.fallbackDexie) return this.fallbackDexie.deleteDidacticBooklet(id);
-    const now = new Date().toISOString();
-    await this.db!.execute(
-      `UPDATE didactic_booklets SET deleted_at = ?, updated_at = ?, sync_status = 'pending' WHERE id = ?`,
-      [now, now, id]
+    return this.withDb(
+      async (db) => {
+        const now = new Date().toISOString();
+        await db.execute(
+          `UPDATE didactic_booklets SET deleted_at = ?, updated_at = ?, sync_status = 'pending' WHERE id = ?`,
+          [now, now, id]
+        );
+      },
+      (dexie) => dexie.deleteDidacticBooklet(id)
     );
   }
 
   // Links
   async getLinks(): Promise<LocalLinkItem[]> {
-    await this.init();
-    if (this.fallbackDexie) return this.fallbackDexie.getLinks();
-    const rows = await this.db!.select<any[]>('SELECT * FROM links WHERE deleted_at IS NULL ORDER BY updated_at DESC');
-    return rows.map((r) => ({
-      id: r.id,
-      url: r.url,
-      title: r.title,
-      domain: r.domain,
-      favicon: r.favicon,
-      folder: r.folder,
-      tags: r.tags_json ? JSON.parse(r.tags_json) : [],
-      sourceNoteId: r.source_note_id,
-      sourceCanvasId: r.source_canvas_id,
-      createdAt: r.created_at,
-      created_at: r.created_at,
-      updated_at: r.updated_at,
-      deleted_at: r.deleted_at,
-      sync_status: r.sync_status,
-    }));
+    return this.withDb(
+      async (db) => {
+        const rows = await db.select<any[]>('SELECT * FROM links WHERE deleted_at IS NULL ORDER BY updated_at DESC');
+        return rows.map((r) => ({
+          id: r.id,
+          url: r.url,
+          title: r.title,
+          domain: r.domain,
+          favicon: r.favicon,
+          folder: r.folder,
+          tags: r.tags_json ? JSON.parse(r.tags_json) : [],
+          sourceNoteId: r.source_note_id,
+          sourceCanvasId: r.source_canvas_id,
+          createdAt: r.created_at,
+          created_at: r.created_at,
+          updated_at: r.updated_at,
+          deleted_at: r.deleted_at,
+          sync_status: r.sync_status,
+        }));
+      },
+      (dexie) => dexie.getLinks()
+    );
   }
 
   async getLinksRaw(): Promise<LocalLinkItem[]> {
-    await this.init();
-    if (this.fallbackDexie) return (this.fallbackDexie as any).getLinksRaw ? (this.fallbackDexie as any).getLinksRaw() : this.fallbackDexie.getLinks();
-    const rows = await this.db!.select<any[]>('SELECT * FROM links');
-    return rows.map((r) => ({
-      id: r.id,
-      url: r.url,
-      title: r.title,
-      domain: r.domain,
-      favicon: r.favicon,
-      folder: r.folder,
-      tags: r.tags_json ? JSON.parse(r.tags_json) : [],
-      sourceNoteId: r.source_note_id,
-      sourceCanvasId: r.source_canvas_id,
-      createdAt: r.created_at,
-      created_at: r.created_at,
-      updated_at: r.updated_at,
-      deleted_at: r.deleted_at,
-      sync_status: r.sync_status,
-    }));
+    return this.withDb(
+      async (db) => {
+        const rows = await db.select<any[]>('SELECT * FROM links');
+        return rows.map((r) => ({
+          id: r.id,
+          url: r.url,
+          title: r.title,
+          domain: r.domain,
+          favicon: r.favicon,
+          folder: r.folder,
+          tags: r.tags_json ? JSON.parse(r.tags_json) : [],
+          sourceNoteId: r.source_note_id,
+          sourceCanvasId: r.source_canvas_id,
+          createdAt: r.created_at,
+          created_at: r.created_at,
+          updated_at: r.updated_at,
+          deleted_at: r.deleted_at,
+          sync_status: r.sync_status,
+        }));
+      },
+      (dexie) => ((dexie as any).getLinksRaw ? (dexie as any).getLinksRaw() : dexie.getLinks())
+    );
   }
 
   async getLinkById(id: string): Promise<LocalLinkItem | null> {
-    await this.init();
-    if (this.fallbackDexie) return this.fallbackDexie.getLinkById(id);
-    const rows = await this.db!.select<any[]>('SELECT * FROM links WHERE id = ? AND deleted_at IS NULL', [id]);
-    if (rows.length === 0) return null;
-    const r = rows[0];
-    return {
-      id: r.id,
-      url: r.url,
-      title: r.title,
-      domain: r.domain,
-      favicon: r.favicon,
-      folder: r.folder,
-      tags: r.tags_json ? JSON.parse(r.tags_json) : [],
-      sourceNoteId: r.source_note_id,
-      sourceCanvasId: r.source_canvas_id,
-      createdAt: r.created_at,
-      created_at: r.created_at,
-      updated_at: r.updated_at,
-      deleted_at: r.deleted_at,
-      sync_status: r.sync_status,
-    };
+    return this.withDb(
+      async (db) => {
+        const rows = await db.select<any[]>('SELECT * FROM links WHERE id = ? AND deleted_at IS NULL', [id]);
+        if (rows.length === 0) return null;
+        const r = rows[0];
+        return {
+          id: r.id,
+          url: r.url,
+          title: r.title,
+          domain: r.domain,
+          favicon: r.favicon,
+          folder: r.folder,
+          tags: r.tags_json ? JSON.parse(r.tags_json) : [],
+          sourceNoteId: r.source_note_id,
+          sourceCanvasId: r.source_canvas_id,
+          createdAt: r.created_at,
+          created_at: r.created_at,
+          updated_at: r.updated_at,
+          deleted_at: r.deleted_at,
+          sync_status: r.sync_status,
+        };
+      },
+      (dexie) => dexie.getLinkById(id)
+    );
   }
 
   async saveLink(link: LocalLinkItem): Promise<void> {
-    await this.init();
-    if (this.fallbackDexie) return this.fallbackDexie.saveLink(link);
-    await this.db!.execute(
-      `INSERT INTO links
-         (id, url, title, domain, favicon, folder, tags_json, source_note_id, source_canvas_id, created_at, updated_at, deleted_at, sync_status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-       ON CONFLICT(id) DO UPDATE SET
-         url = excluded.url,
-         title = excluded.title,
-         domain = excluded.domain,
-         favicon = excluded.favicon,
-         folder = excluded.folder,
-         tags_json = excluded.tags_json,
-         source_note_id = excluded.source_note_id,
-         source_canvas_id = excluded.source_canvas_id,
-         updated_at = excluded.updated_at,
-         deleted_at = excluded.deleted_at,
-         sync_status = excluded.sync_status`,
-      [
-        link.id,
-        link.url,
-        link.title,
-        link.domain ?? null,
-        link.favicon ?? null,
-        link.folder ?? null,
-        JSON.stringify(link.tags || []),
-        link.sourceNoteId ?? null,
-        link.sourceCanvasId ?? null,
-        link.createdAt || link.created_at || new Date().toISOString(),
-        link.updated_at || new Date().toISOString(),
-        link.deleted_at ?? null,
-        link.sync_status,
-      ]
+    return this.withDb(
+      async (db) => {
+        await db.execute(
+          `INSERT INTO links
+             (id, url, title, domain, favicon, folder, tags_json, source_note_id, source_canvas_id, created_at, updated_at, deleted_at, sync_status)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+             url = excluded.url,
+             title = excluded.title,
+             domain = excluded.domain,
+             favicon = excluded.favicon,
+             folder = excluded.folder,
+             tags_json = excluded.tags_json,
+             source_note_id = excluded.source_note_id,
+             source_canvas_id = excluded.source_canvas_id,
+             updated_at = excluded.updated_at,
+             deleted_at = excluded.deleted_at,
+             sync_status = excluded.sync_status`,
+          [
+            link.id,
+            link.url,
+            link.title,
+            link.domain ?? null,
+            link.favicon ?? null,
+            link.folder ?? null,
+            JSON.stringify(link.tags || []),
+            link.sourceNoteId ?? null,
+            link.sourceCanvasId ?? null,
+            link.createdAt || link.created_at || new Date().toISOString(),
+            link.updated_at || new Date().toISOString(),
+            link.deleted_at ?? null,
+            link.sync_status,
+          ]
+        );
+      },
+      (dexie) => dexie.saveLink(link)
     );
   }
 
   async deleteLink(id: string): Promise<void> {
-    await this.init();
-    if (this.fallbackDexie) return this.fallbackDexie.deleteLink(id);
-    const now = new Date().toISOString();
-    await this.db!.execute(
-      `UPDATE links SET deleted_at = ?, updated_at = ?, sync_status = 'pending' WHERE id = ?`,
-      [now, now, id]
+    return this.withDb(
+      async (db) => {
+        const now = new Date().toISOString();
+        await db.execute(
+          `UPDATE links SET deleted_at = ?, updated_at = ?, sync_status = 'pending' WHERE id = ?`,
+          [now, now, id]
+        );
+      },
+      (dexie) => dexie.deleteLink(id)
     );
   }
 }

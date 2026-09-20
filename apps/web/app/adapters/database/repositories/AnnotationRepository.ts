@@ -2,7 +2,9 @@ import { getDatabase, dbManager } from '../DatabaseManager';
 import type { LocalAnnotation } from '../types';
 
 export class AnnotationRepository {
-  private db = getDatabase();
+  private get db() {
+    return getDatabase();
+  }
 
   async getAll(filters?: { bookId?: number; themeId?: number }): Promise<LocalAnnotation[]> {
     return this.db.getAnnotations(filters);
