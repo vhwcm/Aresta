@@ -2,8 +2,14 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "mobile",
   "description": "Capacidade mobile para Android e iOS no Aresta",
-  "windows": ["main", "*"],
-  "webviews": ["main", "*"],
+  "windows": [
+    "main",
+    "*"
+  ],
+  "webviews": [
+    "main",
+    "*"
+  ],
   "permissions": [
     "core:default",
     "core:path:default",
@@ -11,11 +17,6 @@
     "core:window:default",
     "core:webview:default",
     "core:app:default",
-    "sql:default",
-    "sql:allow-load",
-    "sql:allow-execute",
-    "sql:allow-select",
-    "sql:allow-close",
     "fs:default",
     "fs:allow-read-file",
     "fs:allow-write-file",
@@ -30,6 +31,14 @@
     "dialog:allow-save",
     "dialog:allow-message",
     "dialog:allow-ask",
-    "dialog:allow-confirm"
+    "dialog:allow-confirm",
+    {
+      "identifier": "sql:default",
+      "allow": [
+        {
+          "db": "*"
+        }
+      ]
+    }
   ]
 }

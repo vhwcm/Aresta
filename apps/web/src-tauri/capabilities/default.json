@@ -2,8 +2,14 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Capacidade padrão com permissões de ACL para o Aresta",
-  "windows": ["main", "*"],
-  "webviews": ["main", "*"],
+  "windows": [
+    "main",
+    "*"
+  ],
+  "webviews": [
+    "main",
+    "*"
+  ],
   "permissions": [
     "core:default",
     "core:path:default",
@@ -15,11 +21,6 @@
     "core:resources:default",
     "core:menu:default",
     "core:tray:default",
-    "sql:default",
-    "sql:allow-load",
-    "sql:allow-execute",
-    "sql:allow-select",
-    "sql:allow-close",
     "fs:default",
     "fs:allow-read-file",
     "fs:allow-write-file",
@@ -34,6 +35,14 @@
     "dialog:allow-save",
     "dialog:allow-message",
     "dialog:allow-ask",
-    "dialog:allow-confirm"
+    "dialog:allow-confirm",
+    {
+      "identifier": "sql:default",
+      "allow": [
+        {
+          "db": "*"
+        }
+      ]
+    }
   ]
 }
