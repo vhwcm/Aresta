@@ -1,6 +1,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [20/09/2026 09:21] [Concluído] Atualizar documentações ativas e templates substituindo caminhos legados, portas e bancos para o monólito modular (apps/web, apps/api, PostgreSQL 16)
 - [20/09/2026 09:14] [Concluído] Corrigir Quality Gates no CI: pre-commit hooks, ESLint max-lines/regras, typings de testes do DriveSyncService e container PostgreSQL no workflow
 - [20/09/2026 08:52] [Concluído] Configurar capabilities de ACL no tauri.conf.json, desbloquear criacao local-first de notas e quadros sem bloqueio de auth e sincronizar repositorios reativos
 - [19/09/2026 20:18] [Concluído] Corrigir escala e corte vertical do PDF no leitor e unificar renderização idêntica entre virada 3D e posição de repouso

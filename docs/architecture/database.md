@@ -92,20 +92,23 @@ O Aresta utiliza **SQLite** com **Prisma ORM** como motor de persistência relac
 
 ---
 
-## 3. Comandos Úteis do Prisma
+## 3. Comandos Úteis do Prisma & Migrações
 
 ```bash
-cd aresta-back-node
+cd apps/api
 
 # Gerar o Prisma Client após alterações no schema
 npm run prisma:generate
 
-# Aplicar alterações no banco de desenvolvimento
-npm run prisma:push
+# Criar e versionar uma nova migration SQL (obrigatório para qualquer alteração de schema)
+npx prisma migrate dev --name <nome_da_migracao>
+
+# Aplicar migrations existentes no banco
+npx prisma migrate deploy
 
 # Popular o banco de dados com dados de seed
 npm run prisma:seed
 
 # Abrir o visualizador gráfico de banco de dados
-npm run prisma:studio
+npx prisma studio
 ```

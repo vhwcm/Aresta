@@ -1,13 +1,13 @@
 # Guia de Instalação & Execução Local
 
-Este guia orienta o setup completo do monorepositório **Aresta** em ambiente de desenvolvimento local.
+Este guia orienta o setup completo do monólito **Aresta** em ambiente de desenvolvimento local.
 
 ---
 
 ## 1. Pré-requisitos
-- **Node.js**: v18 ou v20+ (`npm` v9+)
+- **Node.js**: v20+ ou v22 (`npm` v10+)
+- **Docker & Docker Compose** (para o PostgreSQL 16 com extensão `pgvector`)
 - **Git**
-- **Python 3.12** (opcional, para testes de conversão `pdf2epub/`)
 
 ---
 
@@ -19,31 +19,31 @@ Na raiz do monorepositório:
 # 1. Instalar dependências da raiz
 npm install
 
-# 2. Instalar dependências do Frontend e Backend
-cd front && npm install && cd ../aresta-back-node && npm install && cd ..
+# 2. Instalar dependências do Frontend (apps/web) e Backend (apps/api)
+cd apps/web && npm install && cd ../api && npm install && cd ../..
 
-# 3. Gerar Prisma Client e popular banco inicial
-cd aresta-back-node
-npm run prisma:generate
-npm run prisma:push
+# 3. Subir o container de banco de dados PostgreSQL 16 + pgvector
+docker compose up -d aresta-db
+
+# 4. Executar migrations e popular banco inicial
+cd apps/api
+npx prisma migrate deploy
 npm run prisma:seed
-cd ..
+cd ../..
 ```
 
 ---
 
-## 3. Inicialização Rápida
+## 3. Inicialização dos Ambientes
 
-### Opção 1: Inicialização Concorrente (Recomendado)
+### Opção 1: Inicialização Concorrente
 ```bash
-./start.sh
-# ou:
-npm start
+npm run dev
 ```
 Isso iniciará:
-- **Frontend**: [http://localhost:3000](http://localhost:3000)
-- **Backend API**: [http://localhost:7070/api](http://localhost:7070/api)
-- **Swagger Docs**: [http://localhost:7070/api-docs](http://localhost:7070/api-docs)
+- **Frontend (Nuxt 3 & Tauri)**: [http://localhost:3000](http://localhost:3000)
+- **Backend API (Express & Prisma)**: [http://localhost:3001/api](http://localhost:3001/api)
+- **Healthcheck**: [http://localhost:3001/health](http://localhost:3001/health)
 
 ---
 
@@ -51,12 +51,18 @@ Isso iniciará:
 
 #### Apenas o Frontend:
 ```bash
-cd front
+cd apps/web
 npm run dev
 ```
 
 #### Apenas o Backend:
 ```bash
-cd aresta-back-node
+cd apps/api
 npm run dev
+```
+
+#### Aplicativo Desktop (Tauri v2):
+```bash
+cd apps/web
+npm run desktop:dev
 ```

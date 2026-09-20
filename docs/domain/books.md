@@ -30,18 +30,17 @@ model Book {
    - `.epub`: Padrão aberto de livro eletrônico com layout reflowable ou fixed.
    - `.pdf`: Documento de layout fixo renderizado página a página.
 2. **Armazenamento de Arquivos (`storage/`)**:
-   - Os arquivos de livros são salvos em `aresta-back-node/storage/epubs/` e `storage/pdfs/`.
-   - As imagens de capa extraídas ou carregadas são salvas em `storage/covers/`.
+   - Os arquivos de livros são salvos em `apps/api/storage/epubs/` e `apps/api/storage/pdfs/`.
+   - As imagens de capa extraídas ou carregadas são salvas em `apps/api/storage/covers/`.
    - O campo `file_path` armazena o caminho relativo ao root do backend para portabilidade.
 3. **Disponibilização e Streaming**:
    - O endpoint `GET /api/books/:id/download` serve o binário com cabeçalhos adequados de `Content-Type` e `Content-Disposition`.
    - O endpoint `GET /api/books/:id/cover` serve a imagem de capa em cache.
 4. **Vínculo com Nós/Temas do Grafo (`BookTheme`)**:
-   - Livros na estante do usuário (`UserBook`) podem ser associados a múltiplos nós do Grafo de Conhecimento (`Theme`).
-   - Os endpoints `PUT /api/user-books/:id/themes`, `POST /api/user-books/:id/themes` e `DELETE /api/user-books/:id/themes/:themeId` gerenciam esses vínculos.
+   - Livros na estante do usuário (`UserBookItem`) podem ser associados a múltiplos nós do Grafo de Conhecimento (`Theme`).
    - Na interface de estante (`/library`), as tags de temas são exibidas com as cores configuradas nos nós e permitem filtragem instantânea combinada com o status de leitura.
 5. **Estratégia de Sincronização Híbrida (ADR-007)**:
-   - Para usuários com múltiplos dispositivos, os metadados (posição, destaques, notas) são sincronizados via `/api/sync` com o PostgreSQL central.
+   - Para usuários com múltiplos dispositivos, os metadados (posição, destaques, notas) são sincronizados via `/api/sync` ou pelo `DriveSyncService` com a pasta privada do Google Drive.
    - Os arquivos binários (`.epub` e `.pdf`) são sincronizados diretamente com o Google Drive privado do usuário (`AppDataFolder`), com cache local em OPFS/FS. Ver `docs/decisions/ADR-007-hybrid-sync-storage.md`.
 6. **Exclusão em Cascata, Limpeza no Drive e Prevenção de Ressuscitação**:
    - Ao deletar um livro da estante (`UserBookItem`), todas as anotações (`Annotation`) e flashcards (`Flashcard`) gerados a partir do livro são automaticamente excluídos em cascata no armazenamento local (IndexedDB/SQLite).
@@ -54,11 +53,12 @@ model Book {
 ---
 
 ## 4. Código Relacionado
-- **Backend**:
-  - Controllers: `aresta-back-node/src/controllers/book.controller.ts`, `aresta-back-node/src/controllers/userBook.controller.ts`
-  - Services: `aresta-back-node/src/services/book.service.ts`, `aresta-back-node/src/services/userBook.service.ts`
-  - Routes: `aresta-back-node/src/routes/book.routes.ts`, `aresta-back-node/src/routes/userBook.routes.ts`
-  - Schemas: `aresta-back-node/src/schemas/book.schema.ts`, `aresta-back-node/src/schemas/userBook.schema.ts`
-- **Frontend**:
-  - Composables: `front/app/composables/useCatalog.ts`, `front/app/composables/useUserBooks.ts`, `front/app/composables/useGraph.ts`
-  - Páginas e Componentes: `front/app/pages/library.vue`, `front/app/components/NodeDrawer.vue`
+- **Backend (`apps/api`)**:
+  - Módulo Reader: `apps/api/src/modules/reader/controllers/book.controller.ts`
+  - Services: `apps/api/src/modules/reader/services/book.service.ts`
+  - Routes: `apps/api/src/modules/reader/routes/book.routes.ts`
+  - Schemas: `apps/api/src/modules/reader/schemas/book.schema.ts`
+- **Frontend (`apps/web`)**:
+  - Repositories: `apps/web/app/adapters/database/repositories/BookRepository.ts`
+  - Composables: `apps/web/app/composables/useUserBooks.ts`, `apps/web/app/composables/useLocalBookUpload.ts`
+  - Páginas e Componentes: `apps/web/app/pages/library.vue`, `apps/web/app/components/graph/BookAnnotationsDrawer.vue`

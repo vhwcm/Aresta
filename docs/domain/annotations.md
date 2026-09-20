@@ -58,10 +58,15 @@ model AnnotationTheme {
 ---
 
 ## 4. Código Relacionado
-- **Backend**:
-  - `src/controllers/annotation.controller.ts`, `src/controllers/ocr.controller.ts`, `src/services/annotation.service.ts`, `src/services/ocr.client.ts`, `src/schemas/annotation.schema.ts`
-- **Frontend**:
-  - `front/app/composables/useAnnotations.ts`, `front/app/components/reader/ReaderAnnotationModal.vue`, `front/app/components/reader/ReaderAnnotationDrawer.vue`, `front/app/components/reader/HandwritingCanvas.vue`, `front/app/pages/index.vue`
+- **Backend (`apps/api`)**:
+  - `apps/api/src/modules/memory/controllers/annotation.controller.ts`
+  - `apps/api/src/modules/memory/services/annotation.service.ts`
+  - `apps/api/src/modules/memory/schemas/annotation.schema.ts`
+- **Frontend (`apps/web`)**:
+  - `apps/web/app/adapters/database/repositories/AnnotationRepository.ts`
+  - `apps/web/app/composables/useAnnotations.ts`
+  - `apps/web/app/components/graph/BookAnnotationsDrawer.vue`
+  - `apps/web/app/components/reader/ReaderAnnotationDrawer.vue`
 
 ---
 

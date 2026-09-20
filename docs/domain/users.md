@@ -71,9 +71,10 @@ model UserSettings {
 ---
 
 ## 4. Código Relacionado
-- **Backend**:
-  - `src/controllers/auth.controller.ts`, `src/controllers/user.controller.ts`, `src/controllers/userSettings.controller.ts`
-  - `src/services/auth.service.ts`, `src/services/user.service.ts`, `src/services/userSettings.service.ts`
-  - `src/middlewares/auth.middleware.ts`
-- **Frontend**:
-  - `front/app/composables/useAuth.ts`, `front/app/composables/useUserSettings.ts`
+- **Backend (`apps/api`)**:
+  - `apps/api/src/modules/auth/controllers/auth.controller.ts`
+  - `apps/api/src/modules/auth/services/auth.service.ts`
+  - `apps/api/src/modules/auth/middlewares/auth.middleware.ts`
+- **Frontend (`apps/web`)**:
+  - `apps/web/app/composables/useAuth.ts`
+  - `apps/web/app/composables/useSettings.ts`

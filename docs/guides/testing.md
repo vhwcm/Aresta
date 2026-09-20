@@ -1,6 +1,6 @@
 # Guia: Suíte de Testes & Qualidade
 
-Este guia apresenta a estratégia de testes do Aresta, comandos de execução e critérios de cobertura.
+Este guia apresenta a estratégia de testes do Aresta, comandos de execução e critérios de cobertura para o Frontend (`apps/web`) e Backend (`apps/api`).
 
 ---
 
@@ -8,51 +8,44 @@ Este guia apresenta a estratégia de testes do Aresta, comandos de execução e 
 
 | Módulo | Tipo de Teste | Ferramenta | Localização |
 | :--- | :--- | :--- | :--- |
-| **Backend** | Integração & API | Vitest + Supertest | `aresta-back-node/tests/` |
-| **Frontend** | Unitário & Componentes | Vitest + @vue/test-utils | `front/tests/` |
-| **Frontend** | End-to-End (E2E) | Playwright | `front/tests/` |
-| **Conversor** | Unitário | Pytest | `pdf2epub/tests/` |
+| **Backend (`apps/api`)** | Integração & API Express | Vitest + Axios / Supertest | `apps/api/tests/` |
+| **Frontend (`apps/web`)** | Unitário & Componentes Vue/Nuxt | Vitest + @vue/test-utils | `apps/web/tests/` |
+| **Frontend (`apps/web`)** | Adapters e Sincronização Local-First | Vitest | `apps/web/tests/unit/adapters/`, `apps/web/tests/unit/services/` |
 
 ---
 
 ## 2. Executando os Testes
 
-### Testes do Backend:
+### Testes do Backend (`apps/api`):
 ```bash
-cd aresta-back-node
+cd apps/api
 
-# Executar todos os testes de integração
+# Executar todos os testes
 npm test
 
 # Executar em modo watch (reexecuta ao salvar arquivos)
 npm run test:watch
+
+# Build e validação estática de tipos (Prisma generate + tsc)
+npm run build
 ```
 
-### Testes do Frontend:
+### Testes e Quality Gates do Frontend (`apps/web`):
 ```bash
-cd front
+cd apps/web
 
-# Executar testes unitários
+# Executar testes unitários Vitest
 npm test
 
-# Checagem estática de tipos TypeScript
+# Checagem estática de tipos TypeScript (Nuxt Typecheck)
 npm run typecheck
 
 # Executar linter ESLint
 npm run lint
-
-# Executar testes E2E
-npm run test:e2e
-```
-
-### Testes do Conversor Python:
-```bash
-cd pdf2epub
-pytest
 ```
 
 ---
 
 ## 3. Diretrizes para Novos Testes
 1. **Novos Endpoints**: Devem ter cobertura de cenários felizes (200/201) e cenários de erro (400 Zod validation, 401 Unauthorized, 404 Not Found).
-2. **Novos Composables/Adapters**: Devem possuir testes validando retornos e tratamento de exceções.
+2. **Novos Composables/Adapters**: Devem possuir testes validando retornos, tratamento de exceções e persistência local-first resiliente (Dexie/SQLite fallback).

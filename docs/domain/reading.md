@@ -74,15 +74,15 @@ model UserBook {
 ---
 
 ## 4. Código Relacionado
-- **Backend**:
-  - `src/controllers/userBook.controller.ts`
-  - `src/services/userBook.service.ts`
-  - `src/schemas/userBook.schema.ts`
-- **Frontend**:
-  - `front/app/composables/useUserBooks.ts`
-  - `front/app/pages/reader/[id].vue`
-  - `front/app/pages/index.vue`
-  - `front/app/pages/por-que-ler.vue`
+- **Backend (`apps/api`)**:
+  - `apps/api/src/modules/reader/controllers/userBook.controller.ts`
+  - `apps/api/src/modules/reader/services/userBook.service.ts`
+  - `apps/api/src/modules/reader/schemas/userBook.schema.ts`
+- **Frontend (`apps/web`)**:
+  - `apps/web/app/composables/useUserBooks.ts`
+  - `apps/web/app/pages/reader/[id].vue`
+  - `apps/web/app/pages/index.vue`
+  - `apps/web/app/pages/por-que-ler.vue`
 
 ---
 
