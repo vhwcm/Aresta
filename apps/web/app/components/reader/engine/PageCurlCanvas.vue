@@ -47,12 +47,14 @@
               'page-sheet',
               'page-sheet--left',
               'page-sheet--base',
+              { 'page-sheet--pdf': store.document?.type === 'pdf' },
             ]"
             :style="{
               left: `${renderedLayout.leftPage.left}px`,
               top: `${renderedLayout.leftPage.top}px`,
               width: `${renderedLayout.leftPage.width}px`,
               height: `${renderedLayout.leftPage.height}px`,
+              backgroundColor: store.document?.type === 'pdf' ? '#ffffff' : undefined,
             }"
           >
             <canvas
@@ -94,12 +96,14 @@
               'page-sheet',
               'page-sheet--right',
               'page-sheet--base',
+              { 'page-sheet--pdf': store.document?.type === 'pdf' },
             ]"
             :style="{
               left: `${renderedLayout.rightPage.left}px`,
               top: `${renderedLayout.rightPage.top}px`,
               width: `${renderedLayout.rightPage.width}px`,
               height: `${renderedLayout.rightPage.height}px`,
+              backgroundColor: store.document?.type === 'pdf' ? '#ffffff' : undefined,
             }"
           >
             <canvas
@@ -176,12 +180,14 @@
               'page-sheet',
               'page-sheet--single',
               'page-sheet--base',
+              { 'page-sheet--pdf': store.document?.type === 'pdf' },
             ]"
             :style="{
               left: `${renderedLayout.singlePage.left}px`,
               top: `${renderedLayout.singlePage.top}px`,
               width: `${renderedLayout.singlePage.width}px`,
               height: `${renderedLayout.singlePage.height}px`,
+              backgroundColor: store.document?.type === 'pdf' ? '#ffffff' : undefined,
             }"
           >
             <canvas
@@ -625,16 +631,15 @@ async function renderPageToCanvas(pageNumber: number, targetCanvas: HTMLCanvasEl
   const ctx = targetCanvas.getContext('2d', { alpha: false })
   if (!ctx) return
 
-  ctx.fillStyle = themeBgColor.value
+  // Para PDF, o fundo da folha e o conteúdo são estritamente naturais (#ffffff), sem sofrer alteração de cor pelo tema
+  const isPdf = doc.type === 'pdf'
+  ctx.fillStyle = isPdf ? '#ffffff' : themeBgColor.value
   ctx.fillRect(0, 0, renderW, renderH)
 
   if (typeof (doc as any).getPage === 'function') {
     try {
       const pageData = await (doc as any).getPage(pageNumber, width, height)
       await pageData.render(ctx)
-      if (doc.type === 'pdf') {
-        applyThemeToCanvas(ctx, renderW, renderH, activeTheme.value as any)
-      }
     } catch {
       // fallback gracioso se render falhar
     }
@@ -661,17 +666,19 @@ async function renderPageToCanvasTexture(
   const ctx = targetCanvas.getContext('2d')
   if (!ctx) return
 
-  ctx.fillStyle = themeBgColor.value
+  const doc = store.document
+  const isPdf = doc?.type === 'pdf'
+  const theme = activeTheme.value as any
+
+  // Texturas de PDF sempre utilizam fundo limpo branco sem tonalização
+  ctx.fillStyle = isPdf ? '#ffffff' : themeBgColor.value
   ctx.fillRect(0, 0, renderW, renderH)
 
-  if (pageNumber <= 0 || !store.document || width <= 0 || height <= 0) {
+  if (pageNumber <= 0 || !doc || width <= 0 || height <= 0) {
     return
   }
 
-  const doc = store.document
-  const theme = activeTheme.value as any
-
-  // 1. PDF: Canvas nativo GPU ou renderização vetorial do PDF.js
+  // 1. PDF: Canvas nativo GPU ou renderização vetorial do PDF.js (sem alteração de tema)
   if (doc.type === 'pdf') {
     if (pdfCanvas && pdfCanvas.width > 0 && pdfCanvas.height > 0) {
       try {
@@ -686,9 +693,6 @@ async function renderPageToCanvasTexture(
       try {
         const pageData = await (doc as any).getPage(pageNumber, width, height)
         await pageData.render(ctx)
-        if (theme === 'sepia' || theme === 'black') {
-          applyThemeToCanvas(ctx, renderW, renderH, theme)
-        }
         return
       } catch {
         // continua para fallback de texto se getPage falhar
@@ -1554,6 +1558,13 @@ defineExpose({
 
 .theme-black .page-sheet {
   background-color: #19181d !important;
+}
+
+.page-sheet.page-sheet--pdf,
+.theme-sepia .page-sheet.page-sheet--pdf,
+.theme-white .page-sheet.page-sheet--pdf,
+.theme-black .page-sheet.page-sheet--pdf {
+  background-color: #ffffff !important;
 }
 
 .theme-black .page-sheet--left {

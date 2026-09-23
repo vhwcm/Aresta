@@ -1,6 +1,10 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [23/09/2026 14:08] [Concluído] Desativar alteração de cores/tema no conteúdo e páginas de PDF no leitor de livros (preservar fundo branco e cores originais da editoração)
+- [23/09/2026 13:03] [Concluído] Implementar Diário Sequencial (Daily Journal) com calendário, busca por data, editor markdown e linha do tempo cronológica
+- [23/09/2026 12:43] [Concluído] Corrigir exibição de nós de links no Grafo de Conhecimento: camadas ativas, renderização D3 SVG, layout radial e sincronização reativa
+- [23/09/2026 12:31] [Concluído] Implementar pinch-to-zoom e pan com dois dedos no módulo de desenho mobile, isolar ponteiros multi-touch e eliminar traços nas pontas dos dedos
 - [23/09/2026 12:10] [Concluído] Corrigir persistência do token de sessão no tablet Android: unificar estado reativo singleton em useAuth, sincronizar bidirecionalmente com localStorage e CookieManager flush no ciclo de vida nativo
 - [20/09/2026 15:07] [Concluído] Diagnosticar e corrigir sql.load bloqueado por ACL em URL remota: adicionar remote.urls nas capabilities, corrigir devUrl :3010→:3000, corrigir android-run.js open e logger.ts (v1.1.13)
 - [20/09/2026 11:49] [Concluído] Corrigir ACL do SQLite no Tauri Android e capabilities mobile, restaurar persistência nativa e blindar adapters

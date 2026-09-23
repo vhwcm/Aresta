@@ -75,7 +75,7 @@ describe('pageRasterizer - Rasterização de Texturas 3D', () => {
     expect(mockCtx.fillText.mock.calls.length).toBeGreaterThanOrEqual(2)
   })
 
-  it('rasterizeElementToCanvas desenha canvas PDF diretamente quando fornecido', () => {
+  it('rasterizeElementToCanvas desenha canvas PDF diretamente quando fornecido mantendo fundo branco neutro', () => {
     const targetCanvas = document.createElement('canvas')
 
     const pdfCanvas = document.createElement('canvas')
@@ -87,6 +87,8 @@ describe('pageRasterizer - Rasterização de Texturas 3D', () => {
     const result = rasterizeElementToCanvas(containerEl, targetCanvas, 400, 600, 'sepia', pdfCanvas)
 
     expect(result).toBe(true)
+    expect(mockCtx.fillStyle).toBe('#ffffff')
+    expect(mockCtx.fillRect).toHaveBeenCalledWith(0, 0, targetCanvas.width, targetCanvas.height)
     expect(mockCtx.drawImage).toHaveBeenCalledWith(pdfCanvas, 0, 0, targetCanvas.width, targetCanvas.height)
   })
 

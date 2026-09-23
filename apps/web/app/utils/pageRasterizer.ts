@@ -229,9 +229,11 @@ export function rasterizeElementToCanvas(
   ctx.fillStyle = bgColor
   ctx.fillRect(0, 0, renderW, renderH)
 
-  // 2. Se for documento PDF e o canvas nativo existir, desenha-o diretamente com aceleração GPU
+  // 2. Se for documento PDF e o canvas nativo existir, desenha-o diretamente com aceleração GPU (fundo branco neutro)
   if (pdfCanvasEl && pdfCanvasEl.width > 0 && pdfCanvasEl.height > 0) {
     try {
+      ctx.fillStyle = '#ffffff'
+      ctx.fillRect(0, 0, renderW, renderH)
       ctx.drawImage(pdfCanvasEl, 0, 0, renderW, renderH)
       return true
     } catch {

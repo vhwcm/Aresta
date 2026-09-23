@@ -32,7 +32,7 @@
           :data-page-number="pageNum"
           :style="{
             minHeight: `${getPageHeight(pageNum)}px`,
-            backgroundColor: pageSheetBgColor,
+            backgroundColor: '#ffffff',
           }"
         >
           <!-- Se a página estiver na janela de visualização -->
