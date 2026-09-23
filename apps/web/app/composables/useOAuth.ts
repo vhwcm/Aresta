@@ -208,20 +208,11 @@ export const useOAuth = () => {
         throw new Error('Tempo limite de autorização excedido. Por favor, tente novamente.')
       }
 
-      const tokenCookie = useCookie<string | null>('aresta_token', { path: '/', maxAge: 60 * 60 * 24 * 7, sameSite: 'lax' })
-      const userCookie = useCookie<AuthUser | null>('aresta_user', { path: '/', maxAge: 60 * 60 * 24 * 7, sameSite: 'lax' })
-
       await purgeClientSession()
+      auth.setSession(authData.token, authData.user)
 
-      tokenCookie.value = authData.token
-      userCookie.value = authData.user
-
-      if (typeof localStorage !== 'undefined') {
-        localStorage.setItem('aresta_token', authData.token)
-        localStorage.setItem('aresta_user', JSON.stringify(authData.user))
-        if (provider === 'google') {
-          localStorage.setItem('aresta_drive_provider', 'google')
-        }
+      if (typeof localStorage !== 'undefined' && provider === 'google') {
+        localStorage.setItem('aresta_drive_provider', 'google')
       }
 
       if (provider === 'google') {

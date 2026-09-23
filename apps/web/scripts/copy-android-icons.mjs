@@ -46,8 +46,8 @@ function configureMainActivity() {
     console.log(`• Configurando Fullscreen em ${mainActivityPath}`)
     const content = fs.readFileSync(mainActivityPath, 'utf-8')
     
-    // Se ainda não tiver o método hideSystemBars
-    if (!content.includes('hideSystemBars')) {
+    // Se ainda não tiver o gerenciamento de CookieManager ou hideSystemBars
+    if (!content.includes('CookieManager') || !content.includes('hideSystemBars')) {
       const updatedContent = `package com.aresta.reader
 
 import android.os.Build
@@ -61,7 +61,26 @@ import androidx.core.view.WindowInsetsControllerCompat
 class MainActivity : TauriActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
+    try {
+      android.webkit.WebView.setWebContentsDebuggingEnabled(true)
+      val cookieManager = android.webkit.CookieManager.getInstance()
+      cookieManager.setAcceptCookie(true)
+    } catch (e: Exception) {}
     hideSystemBars()
+  }
+
+  override fun onPause() {
+    super.onPause()
+    try {
+      android.webkit.CookieManager.getInstance().flush()
+    } catch (e: Exception) {}
+  }
+
+  override fun onStop() {
+    super.onStop()
+    try {
+      android.webkit.CookieManager.getInstance().flush()
+    } catch (e: Exception) {}
   }
 
   override fun onWindowFocusChanged(hasFocus: Boolean) {
@@ -88,7 +107,7 @@ class MainActivity : TauriActivity() {
 }
 `
       fs.writeFileSync(mainActivityPath, updatedContent, 'utf-8')
-      console.log('✓ MainActivity.kt atualizado com suporte nativo a Fullscreen Imersivo Total (SystemBars Hidden)')
+      console.log('✓ MainActivity.kt atualizado com suporte a CookieManager e Fullscreen Imersivo Total')
     }
   }
 }

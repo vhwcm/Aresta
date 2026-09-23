@@ -53,7 +53,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { getApiRoot, getOAuthRedirectUri } from '~/utils/apiBase'
-import { purgeClientSession, type AuthUser } from '~/composables/useAuth'
+import { purgeClientSession, setSession, type AuthUser } from '~/composables/useAuth'
 
 const route = useRoute()
 const errorMessage = ref<string | null>(null)
@@ -112,25 +112,10 @@ onMounted(async () => {
       throw new Error('Nenhum token foi retornado pelo servidor de autenticação.')
     }
 
-    const tokenCookie = useCookie<string | null>('aresta_token', {
-      path: '/',
-      maxAge: 60 * 60 * 24 * 7,
-      sameSite: 'lax',
-    })
-    const userCookie = useCookie<AuthUser | null>('aresta_user', {
-      path: '/',
-      maxAge: 60 * 60 * 24 * 7,
-      sameSite: 'lax',
-    })
-
     await purgeClientSession()
-
-    tokenCookie.value = response.token
-    userCookie.value = response.user
+    setSession(response.token, response.user)
 
     if (typeof localStorage !== 'undefined') {
-      localStorage.setItem('aresta_token', response.token)
-      localStorage.setItem('aresta_user', JSON.stringify(response.user))
       if (provider === 'google') {
         localStorage.setItem('aresta_drive_provider', 'google')
       }

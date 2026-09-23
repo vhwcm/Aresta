@@ -276,6 +276,7 @@ import ReaderAiOverlayCard from '~/components/reader/ReaderAiOverlayCard.vue'
 import ReaderCreateBookletModal from '~/components/reader/ReaderCreateBookletModal.vue'
 import ReaderFocusHUD from '~/components/reader/ReaderFocusHUD.vue'
 import { getApiBase } from '~/utils/apiBase'
+import { getStoredAuthToken } from '~/composables/useAuth'
 
 const store = useReaderStore()
 const router = useRouter()
@@ -572,7 +573,7 @@ async function handleRequestShortExplanationFromTooltip(payload: { text: string;
 
   try {
     const base = getApiBase()
-    const token = typeof useCookie === 'function' ? useCookie('aresta_token').value : null
+    const token = getStoredAuthToken()
 
     const res: any = await $fetch(`${base}/ai/short-explanation`, {
       method: 'POST',
@@ -913,7 +914,7 @@ onMounted(() => {
     if (!detail) return
     try {
       const base = getApiBase()
-      const token = typeof useCookie === 'function' ? useCookie('aresta_token').value : null
+      const token = getStoredAuthToken()
       await $fetch(`${base}/flashcards`, {
         method: 'POST',
         headers: { Authorization: token ? `Bearer ${token}` : '' },

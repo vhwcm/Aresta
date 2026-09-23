@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import { v4 as uuidv4 } from 'uuid'
 import { getApiBase } from '~/utils/apiBase'
+import { getStoredAuthToken } from '~/composables/useAuth'
 import { getDatabase, dbManager } from '~/adapters/database/DatabaseManager'
 import { bookRepo } from '~/adapters/database/repositories/BookRepository'
 import { saveCachedBook, getCachedBook } from '~/utils/bookCache'
@@ -43,7 +44,7 @@ const error = ref<string | null>(null)
 
 export const useDidacticBooklet = () => {
   const getHeaders = () => {
-    const token = typeof useCookie === 'function' ? useCookie('aresta_token').value : null
+    const token = getStoredAuthToken()
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     }
