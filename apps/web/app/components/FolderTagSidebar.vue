@@ -398,39 +398,19 @@
           </div>
         </div>
 
-        <!-- 4. Estrutura em Árvore (Pastas e Arquivos Aninhados) -->
-        <div class="pt-2 border-t border-divider">
-          <div class="flex items-center justify-between px-2 mb-2">
-            <div class="flex items-center gap-1.5 truncate">
-              <span class="text-[10px] font-bold tracking-wider uppercase text-textSecondary font-interface truncate">
-                Árvore de Arquivos
-              </span>
-              <button
-                v-if="selectedTag"
-                @click="$emit('select-tag', null)"
-                class="text-[10px] px-2 py-0.5 rounded-md bg-accent/15 text-accent border border-accent/25 font-mono truncate max-w-[100px] hover:bg-accent/25 transition-colors cursor-pointer flex items-center gap-1"
-                :title="'Filtro ativo #' + selectedTag + ' (clique para limpar)'"
-              >
-                <span>#{{ selectedTag }}</span>
-                <span class="text-[9px] opacity-70">✕</span>
-              </button>
-            </div>
-            <div class="flex items-center gap-1">
-              <button
-                @click="$emit('create-note')"
-                class="p-1.5 rounded-lg text-textSecondary hover:text-accent hover:bg-accent/10 transition-colors cursor-pointer"
-                title="Criar nova nota"
-              >
-                <FileTextIcon class="w-3.5 h-3.5" />
-              </button>
-              <button
-                @click="isCreatingFolder = true"
-                class="p-1.5 rounded-lg text-textSecondary hover:text-accent hover:bg-accent/10 transition-colors cursor-pointer"
-                title="Nova pasta"
-              >
-                <PlusIcon class="w-3.5 h-3.5" />
-              </button>
-            </div>
+        <!-- 3. Estrutura em Árvore (Pastas e Arquivos Aninhados) -->
+        <div class="pt-1 border-t border-divider/60">
+          <!-- Banner sutil de filtro por tag ativo se houver -->
+          <div v-if="selectedTag" class="flex items-center justify-between px-2 py-1 mb-1.5 rounded-lg bg-accent/10 border border-accent/20">
+            <span class="text-[11px] text-accent font-medium flex items-center gap-1 font-interface">
+              <span class="font-mono">#</span>{{ selectedTag }}
+            </span>
+            <button
+              @click="$emit('select-tag', null)"
+              class="text-[10px] text-accent/80 hover:text-accent font-medium hover:underline cursor-pointer"
+            >
+              Limpar ✕
+            </button>
           </div>
 
           <!-- Input inline para criar nova pasta -->

@@ -149,9 +149,13 @@ describe('FolderTagSidebar component', () => {
       },
     });
 
-    const createNoteBtn = wrapper.find('button[title="Criar nova nota"]');
-    expect(createNoteBtn.exists()).toBe(true);
-    await createNoteBtn.trigger('click');
+    const addBtn = wrapper.find('button[title="Criar novo item"]');
+    expect(addBtn.exists()).toBe(true);
+    await addBtn.trigger('click');
+
+    const noteOptionBtn = wrapper.findAll('button').find((el) => el.text().includes('Nova Nota'));
+    expect(noteOptionBtn).toBeDefined();
+    await noteOptionBtn?.trigger('click');
 
     expect(wrapper.emitted('create-note')).toBeTruthy();
   });
