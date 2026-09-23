@@ -181,7 +181,7 @@ import type { GraphNode, GraphEdge, GraphNodeType } from '~/interfaces/graph'
 import { PlusIcon, SearchIcon, LinkIcon, TagIcon, BookOpenIcon, FileTextIcon, LayoutGridIcon, FolderIcon, RefreshCw as RefreshCwIcon } from 'lucide-vue-next'
 import { useSettings } from '~/composables/useSettings'
 import { useDriveSync } from '~/composables/useDriveSync'
-import { getCoverUrl } from '~/utils/cover'
+import { getCoverUrl, resolveBookCover } from '~/utils/cover'
 import { resolveNoteTitle } from '~/utils/noteTitle'
 
 const props = withDefaults(
@@ -282,7 +282,7 @@ const tooltipPos = ref({ x: 0, y: 0 })
 
 // Filtros de camadas ativas (por padrão, todas visíveis)
 const activeLayers = ref<Set<GraphNodeType>>(
-  new Set(['theme', 'book', 'folder', 'note', 'canvas'])
+  new Set(['theme', 'book', 'folder', 'note', 'canvas', 'link'])
 )
 
 const layerDefinitions: Array<{
@@ -297,6 +297,7 @@ const layerDefinitions: Array<{
   { type: 'folder', label: 'Pastas', icon: FolderIcon, activeBg: 'bg-amber-500/20 border-amber-500/40', activeText: 'text-amber-400' },
   { type: 'note', label: 'Notas', icon: FileTextIcon, activeBg: 'bg-indigo-500/20 border-indigo-500/40', activeText: 'text-indigo-400' },
   { type: 'canvas', label: 'Quadros', icon: LayoutGridIcon, activeBg: 'bg-emerald-500/20 border-emerald-500/40', activeText: 'text-emerald-400' },
+  { type: 'link', label: 'Links', icon: LinkIcon, activeBg: 'bg-cyan-500/20 border-cyan-500/40', activeText: 'text-cyan-400' },
 ]
 
 const toggleLayer = (type: GraphNodeType) => {
@@ -337,6 +338,7 @@ const getNodeBadgeLabel = (type?: GraphNodeType) => {
     case 'folder': return 'Pasta'
     case 'note': return 'Nota'
     case 'canvas': return 'Quadro'
+    case 'link': return 'Link'
     case 'theme':
     default: return 'Tema'
   }
@@ -348,6 +350,7 @@ const getNodeBadgeClass = (type?: GraphNodeType) => {
     case 'folder': return 'bg-amber-500/20 text-amber-400'
     case 'note': return 'bg-indigo-500/20 text-indigo-400'
     case 'canvas': return 'bg-emerald-500/20 text-emerald-400'
+    case 'link': return 'bg-cyan-500/20 text-cyan-400'
     case 'theme':
     default: return 'bg-accent/20 text-accent'
   }
@@ -549,6 +552,7 @@ const getNodeRadius = (node: GraphNode) => {
   if (node.type === 'folder') return 18
   if (node.type === 'note') return 17
   if (node.type === 'canvas') return 19
+  if (node.type === 'link') return 17
   const count = node.bookCount || 0
   return Math.min(22 + count * 2, 38)
 }
@@ -666,11 +670,11 @@ const initGraph = (animateTransition = true) => {
     if (nodeMap.has(str)) return nodeMap.get(str)
 
     // Tenta remover prefixos conhecidos
-    const stripped = str.replace(/^(book-|theme-|note-|canvas-|annotation-|folder-)/, '')
+    const stripped = str.replace(/^(book-|theme-|note-|canvas-|annotation-|folder-|link-)/, '')
     if (nodeMap.has(stripped)) return nodeMap.get(stripped)
 
     // Tenta prefixos conhecidos
-    for (const prefix of ['book-', 'theme-', 'note-', 'canvas-', 'annotation-', 'folder-']) {
+    for (const prefix of ['book-', 'theme-', 'note-', 'canvas-', 'annotation-', 'folder-', 'link-']) {
       if (nodeMap.has(`${prefix}${str}`)) return nodeMap.get(`${prefix}${str}`)
       if (nodeMap.has(`${prefix}${stripped}`)) return nodeMap.get(`${prefix}${stripped}`)
     }
@@ -860,6 +864,7 @@ const initGraph = (animateTransition = true) => {
         else if (childNode.type === 'folder') deltaR = 80
         else if (childNode.type === 'note') deltaR = 85
         else if (childNode.type === 'canvas') deltaR = 85
+        else if (childNode.type === 'link') deltaR = 85
 
         const childR = parentR + deltaR
         // Se 1 filho: EXATAMENTE no mesmo ângulo (para fora!). Se K > 1: cone estreito apontando para fora
@@ -989,6 +994,10 @@ const initGraph = (animateTransition = true) => {
           return isLightMode.value ? 'rgba(16, 185, 129, 0.45)' : 'rgba(16, 185, 129, 0.35)'
         case 'note-theme':
           return isLightMode.value ? 'rgba(167, 139, 250, 0.45)' : 'rgba(167, 139, 250, 0.35)'
+        case 'note-link':
+        case 'canvas-link':
+        case 'link-folder':
+          return isLightMode.value ? 'rgba(6, 182, 212, 0.50)' : 'rgba(6, 182, 212, 0.40)'
         default:
           return isSepiaMode.value
             ? 'rgba(120, 108, 94, 0.20)'
@@ -999,7 +1008,7 @@ const initGraph = (animateTransition = true) => {
     })
     .attr('stroke-width', (d: any) => (d.isRootEdge ? 1.4 : 1.2))
     .attr('stroke-dasharray', (d: any) => {
-      if (d.type === 'book-theme' || d.type === 'annotation-theme' || d.type === 'note-theme' || d.type === 'note-folder' || d.type === 'canvas-folder') return '3,3'
+      if (d.type === 'book-theme' || d.type === 'annotation-theme' || d.type === 'note-theme' || d.type === 'note-folder' || d.type === 'canvas-folder' || d.type === 'link-folder') return '3,3'
       if (d.isRootEdge) return '4,4'
       return 'none'
     })
@@ -1038,7 +1047,12 @@ const initGraph = (animateTransition = true) => {
     const nodeEl = d3.select(this)
     nodeEl.append('title').text(d.fullTitle || d.title || d.name || '')
     const rawBookId = d.rawId || (typeof d.id === 'number' ? d.id : parseInt(String(d.id).replace('book-', ''), 10))
-    const coverUrl = getCoverUrl(d.coverPath, rawBookId)
+    const coverUrl = resolveBookCover({
+      coverPath: d.coverPath,
+      bookId: rawBookId,
+      filePath: d.filePath,
+      title: d.fullTitle || d.title || d.name,
+    })
 
     const fallbackG = nodeEl.append('g').attr('class', 'book-fallback-icon').attr('pointer-events', 'none')
     fallbackG
@@ -1287,7 +1301,52 @@ const initGraph = (animateTransition = true) => {
     .text((d: any) => getTruncatedTitle(d.title || d.name, 12))
 
   // ----------------------------------------------------
-  // F. NÓS DE TEMAS & NÓ RAIZ (TIPO 'theme' / isRoot)
+  // F. NÓS DE LINKS WEB (TIPO 'link')
+  // ----------------------------------------------------
+  const linkNodesSelection = nodesSelection.filter((d: any) => d.type === 'link')
+
+  linkNodesSelection
+    .append('rect')
+    .attr('x', -16)
+    .attr('y', -16)
+    .attr('width', 32)
+    .attr('height', 32)
+    .attr('rx', 16)
+    .attr('fill', isSepiaMode.value ? '#ECFEFF' : (isLightMode.value ? '#F0FDFA' : '#082F49'))
+    .attr('stroke', '#06B6D4')
+    .attr('stroke-width', 1.6)
+    .attr('class', 'transition-all duration-300 shadow-md')
+
+  linkNodesSelection.each(function (d: any) {
+    const nodeEl = d3.select(this)
+    nodeEl.append('title').text(d.fullTitle || d.title || d.name || d.url || '')
+    const iconG = nodeEl
+      .append('g')
+      .attr('class', 'link-icon')
+      .attr('pointer-events', 'none')
+      .attr('transform', 'translate(-7, -7) scale(0.58)')
+      .attr('fill', 'none')
+      .attr('stroke', '#06B6D4')
+      .attr('stroke-width', '2')
+      .attr('stroke-linecap', 'round')
+      .attr('stroke-linejoin', 'round')
+
+    iconG.html(`<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>`)
+  })
+
+  linkNodesSelection
+    .append('text')
+    .attr('text-anchor', 'middle')
+    .attr('dy', 28)
+    .attr('fill', isSepiaMode.value ? '#155E75' : (isLightMode.value ? '#0E7490' : '#38BDF8'))
+    .attr('font-size', '10px')
+    .attr('font-weight', '500')
+    .attr('font-family', 'system-ui, -apple-system, sans-serif')
+    .attr('pointer-events', 'none')
+    .text((d: any) => getTruncatedTitle(d.title || d.name || d.domain || 'Link', 12))
+
+  // ----------------------------------------------------
+  // G. NÓS DE TEMAS & NÓ RAIZ (TIPO 'theme' / isRoot)
   // ----------------------------------------------------
   const themeAndRootNodesSelection = nodesSelection.filter(
     (d: any) => d.type === 'theme' || d.isRoot
@@ -1619,6 +1678,10 @@ const initGraph = (animateTransition = true) => {
             case 'canvas-note':
             case 'note-canvas':
               return isLightMode.value ? 'rgba(16, 185, 129, 0.45)' : 'rgba(16, 185, 129, 0.35)'
+            case 'note-link':
+            case 'canvas-link':
+            case 'link-folder':
+              return isLightMode.value ? 'rgba(6, 182, 212, 0.50)' : 'rgba(6, 182, 212, 0.40)'
             default:
               return isSepiaMode.value
                 ? 'rgba(120, 108, 94, 0.20)'

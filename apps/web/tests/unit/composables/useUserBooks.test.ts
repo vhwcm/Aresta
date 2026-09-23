@@ -117,6 +117,8 @@ describe('useUserBooks Composable (Local-First Architecture)', () => {
       syncError: ref(null),
       syncBookToDrive: vi.fn(),
       listDriveBooks: mockListDriveBooks,
+      downloadBookFromDrive: vi.fn().mockResolvedValue(null),
+      downloadBookCoverFromDrive: vi.fn().mockResolvedValue(null),
       deleteBookFromDrive: mockDeleteFromDrive,
       deleteAllDriveData: vi.fn(),
     } as any)

@@ -114,7 +114,7 @@ export const useUserBooks = () => {
 
       // Sincroniza livros do Google Drive se conectado
       try {
-        const { isGoogleDriveConnected, listDriveBooks, deleteBookFromDrive } = useGoogleDriveSync()
+        const { isGoogleDriveConnected, listDriveBooks, deleteBookFromDrive, downloadBookCoverFromDrive } = useGoogleDriveSync()
         if (isGoogleDriveConnected.value) {
           const driveBooks = await listDriveBooks()
           const rawBooks = await bookRepo.getRawAll()
@@ -136,10 +136,11 @@ export const useUserBooks = () => {
               continue
             }
 
-            const alreadyExists = userBooks.value.some(
+            const existingIndex = userBooks.value.findIndex(
               (b) => b.title.toLowerCase().trim() === normDbTitle
             )
-            if (!alreadyExists) {
+
+            if (existingIndex === -1) {
               const driveBookId = Date.now() + Math.floor(Math.random() * 1000)
               const driveBookItem: UserBookItem = {
                 userBookId: driveBookId,
@@ -161,6 +162,49 @@ export const useUserBooks = () => {
                 status: driveBookItem.status,
                 currentPage: 0,
               })
+
+              // Busca e persiste a capa em background
+              if (dbBook.folderId) {
+                downloadBookCoverFromDrive(dbBook.folderId).then((blob) => {
+                  if (blob && typeof FileReader !== 'undefined') {
+                    const reader = new FileReader()
+                    reader.readAsDataURL(blob)
+                    reader.onloadend = async () => {
+                      const dataUrl = reader.result as string
+                      if (dataUrl) {
+                        driveBookItem.coverPath = dataUrl
+                        const saved = await bookRepo.getById(driveBookItem.userBookId)
+                        if (saved) {
+                          saved.coverPath = dataUrl
+                          await bookRepo.save(saved)
+                        }
+                      }
+                    }
+                  }
+                }).catch(() => {})
+              }
+            } else {
+              // Se o livro já existe mas está sem capa e tem pasta no Drive, recupera a capa
+              const existingBook = userBooks.value[existingIndex]
+              if (existingBook && !existingBook.coverPath && dbBook.folderId) {
+                downloadBookCoverFromDrive(dbBook.folderId).then((blob) => {
+                  if (blob && typeof FileReader !== 'undefined') {
+                    const reader = new FileReader()
+                    reader.readAsDataURL(blob)
+                    reader.onloadend = async () => {
+                      const dataUrl = reader.result as string
+                      if (dataUrl) {
+                        existingBook.coverPath = dataUrl
+                        const saved = await bookRepo.getById(existingBook.userBookId)
+                        if (saved) {
+                          saved.coverPath = dataUrl
+                          await bookRepo.save(saved)
+                        }
+                      }
+                    }
+                  }
+                }).catch(() => {})
+              }
             }
           }
         }

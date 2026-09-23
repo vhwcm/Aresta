@@ -61,4 +61,26 @@ describe('Cover Utilities (aresta-reader/cover)', () => {
     const didacticCover = resolveBookCover(didacticBookWithoutCover)
     expect(didacticCover.startsWith('data:image/svg+xml;base64,')).toBe(true)
   })
+
+  it('5. Não deve gerar URL de API para livros com ID local (> 1_000_000_000) sem capa', () => {
+    const localBookWithoutCover = {
+      coverPath: null,
+      bookId: 1727134567890,
+      filePath: '1727134567890.epub',
+      title: 'Livro Local Sincronizado',
+    }
+    // Não deve tentar gerar URL da API /api/books/1727.../cover porque falhará com 404
+    expect(getCoverUrl(undefined, 1727134567890)).toBe('')
+    expect(resolveBookCover(localBookWithoutCover)).toBe('')
+  })
+
+  it('6. Deve resolver capas Data URI (Base64) e HTTP diretamente sem prefixos espúrios', () => {
+    const dataUri = 'data:image/webp;base64,UklGRm4AAABXRUJQVlA4...'
+    expect(getCoverUrl(dataUri, 10)).toBe(dataUri)
+    expect(resolveBookCover({ coverPath: dataUri, bookId: 10 })).toBe(dataUri)
+
+    const httpUrl = 'https://example.com/cover.jpg'
+    expect(getCoverUrl(httpUrl, 10)).toBe(httpUrl)
+    expect(resolveBookCover({ coverPath: httpUrl, bookId: 10 })).toBe(httpUrl)
+  })
 })

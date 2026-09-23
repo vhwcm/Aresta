@@ -292,6 +292,23 @@ export class GoogleDriveStorageProvider implements IDataSyncProvider {
     }
   }
 
+  async downloadBookCover(folderId: string): Promise<Blob | null> {
+    try {
+      if (!folderId) return null
+      const items = await this.listFolder(folderId)
+      const coverFile = items.find(
+        (i) =>
+          i.name.toLowerCase().startsWith('cover') ||
+          i.mimeType.startsWith('image/')
+      )
+      if (!coverFile) return null
+      return await this.getFile(coverFile.id)
+    } catch (err) {
+      console.warn('[GoogleDriveStorageProvider] Erro ao buscar capa avulsa do Drive:', err)
+      return null
+    }
+  }
+
   async deleteBookFolder(bookTitle: string, folderId?: string): Promise<void> {
     const headers = this.getAuthHeader()
     if (folderId) {

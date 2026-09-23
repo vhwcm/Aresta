@@ -225,19 +225,46 @@ const loadBookFromQuery = async () => {
               type = detectFileTypeFromArrayBuffer(arrayBuffer, 'epub')
             }
 
-            // Salvar capa se fornecida e não existir localmente
-            if (driveRes.coverBlob && localBookMeta && !localBookMeta.coverPath) {
-              try {
-                const reader = new FileReader()
-                reader.readAsDataURL(driveRes.coverBlob)
-                reader.onloadend = async () => {
-                  const coverDataUrl = reader.result as string
-                  if (coverDataUrl && localBookMeta) {
-                    localBookMeta.coverPath = coverDataUrl
-                    await bookRepo.save(localBookMeta).catch(() => {})
+            // Salvar capa se fornecida ou extrair do arquivo binário e atualizar stores
+            if (localBookMeta && !localBookMeta.coverPath) {
+              if (driveRes.coverBlob) {
+                try {
+                  const reader = new FileReader()
+                  reader.readAsDataURL(driveRes.coverBlob)
+                  reader.onloadend = async () => {
+                    const coverDataUrl = reader.result as string
+                    if (coverDataUrl && localBookMeta) {
+                      localBookMeta.coverPath = coverDataUrl
+                      await bookRepo.save(localBookMeta).catch(() => {})
+                      try {
+                        const { useUserBooks } = await import('~/composables/useUserBooks')
+                        const { userBooks } = useUserBooks()
+                        const target = userBooks.value.find((b) => b.bookId === localBookMeta.id || b.bookId === localBookMeta.bookId)
+                        if (target) target.coverPath = coverDataUrl
+                      } catch {}
+                    }
                   }
-                }
-              } catch {}
+                } catch {}
+              } else if (type === 'epub' || type === 'pdf') {
+                try {
+                  const { CoverExtractorFactory } = await import('~/adapters/cover/CoverExtractorFactory')
+                  const extractor = CoverExtractorFactory.getExtractor(type)
+                  if (extractor) {
+                    extractor.extractCover(arrayBuffer, driveRes.fileName).then(async (res) => {
+                      if (res?.dataUrl && localBookMeta) {
+                        localBookMeta.coverPath = res.dataUrl
+                        await bookRepo.save(localBookMeta).catch(() => {})
+                        try {
+                          const { useUserBooks } = await import('~/composables/useUserBooks')
+                          const { userBooks } = useUserBooks()
+                          const target = userBooks.value.find((b) => b.bookId === localBookMeta.id || b.bookId === localBookMeta.bookId)
+                          if (target) target.coverPath = res.dataUrl
+                        } catch {}
+                      }
+                    }).catch(() => {})
+                  }
+                } catch {}
+              }
             }
 
             // Salvar no armazenamento local para futuras leituras offline

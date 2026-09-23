@@ -377,8 +377,19 @@ export class DriveSyncService {
         }
 
         const winner = this.newer(current, remoteItem)
+        const coverPath = winner.coverPath || current.coverPath || remoteItem.coverPath || null
+        const author = (winner.author && winner.author !== 'Google Drive'
+          ? winner.author
+          : (remoteItem.author && remoteItem.author !== 'Google Drive' ? remoteItem.author : current.author)) || 'Autor Desconhecido'
+        const themes = (winner.themes && winner.themes.length > 0)
+          ? winner.themes
+          : (remoteItem.themes && remoteItem.themes.length > 0 ? remoteItem.themes : (current.themes || []))
+
         const targetToSave: LocalBook = {
           ...winner,
+          coverPath,
+          author,
+          themes,
           id: current.id,
           bookId: current.bookId || current.id,
           sync_status: 'synced',

@@ -442,4 +442,111 @@ describe('DriveSyncService (Local-First Sync Engine)', () => {
     const rawItem = rawCanvases.find((c) => c.id === 'canvas-del-1')
     expect(rawItem?.deleted_at).toBeDefined()
   })
+
+  it('11. Preserva coverPath, author e temas remotos quando o registro local for um placeholder recente sem capa', async () => {
+    // Simula registro local criado como placeholder recente por listDriveBooks (timestamp mais recente, mas sem capa)
+    await db.saveBook({
+      id: 101,
+      bookId: 101,
+      title: 'Dom Casmurro',
+      author: 'Google Drive',
+      coverPath: null,
+      filePath: 'drive:folder_dom_casmurro',
+      status: 'QUERO_LER',
+      currentPage: 0,
+      updated_at: '2026-09-23T20:00:00.000Z',
+      sync_status: 'pending',
+      themes: [],
+    })
+
+    let uploadedPayload: any = null
+    const provider = createMockProvider({
+      downloadDataFile: async <T>() => ({
+        schema_version: 1,
+        entity_type: 'book',
+        updated_at: '2026-09-20T10:00:00.000Z',
+        updated_by: 'original_device',
+        payload: [
+          {
+            id: 101,
+            bookId: 101,
+            title: 'Dom Casmurro',
+            author: 'Machado de Assis',
+            coverPath: 'data:image/webp;base64,UklGRm4AAABXRUJQVlA4...',
+            filePath: '101.epub',
+            status: 'LENDO',
+            currentPage: 25,
+            updated_at: '2026-09-20T10:00:00.000Z',
+            sync_status: 'synced',
+            themes: [{ id: 5, name: 'Literatura Brasileira', color: '#10B981' }],
+          },
+        ],
+      } as unknown as T),
+      uploadDataFile: async (_name: string, data: unknown) => {
+        uploadedPayload = data
+        return { fileName: 'library.json', itemCount: 1, syncedAt: new Date().toISOString() }
+      },
+    })
+
+    const service = new DriveSyncService(provider)
+    await service.syncLibrary()
+
+    const savedBook = await db.getBookById(101)
+    expect(savedBook).toBeDefined()
+    expect(savedBook?.coverPath).toBe('data:image/webp;base64,UklGRm4AAABXRUJQVlA4...')
+    expect(savedBook?.author).toBe('Machado de Assis')
+    expect(savedBook?.themes?.length).toBe(1)
+    expect(savedBook?.themes?.[0]?.name).toBe('Literatura Brasileira')
+
+    const uploadedBook = uploadedPayload?.payload?.find((b: any) => b.id === 101)
+    expect(uploadedBook?.coverPath).toBe('data:image/webp;base64,UklGRm4AAABXRUJQVlA4...')
+    expect(uploadedBook?.author).toBe('Machado de Assis')
+  })
+
+  it('12. Preserva coverPath local se o registro remoto não possuir capa', async () => {
+    await db.saveBook({
+      id: 202,
+      bookId: 202,
+      title: 'O Alienista',
+      author: 'Machado de Assis',
+      coverPath: 'data:image/webp;base64,LOCAL_COVER_DATA...',
+      filePath: '202.epub',
+      status: 'LENDO',
+      currentPage: 10,
+      updated_at: '2026-09-20T10:00:00.000Z',
+      sync_status: 'synced',
+      themes: [],
+    })
+
+    const provider = createMockProvider({
+      downloadDataFile: async <T>() => ({
+        schema_version: 1,
+        entity_type: 'book',
+        updated_at: '2026-09-23T15:00:00.000Z',
+        updated_by: 'other_device',
+        payload: [
+          {
+            id: 202,
+            bookId: 202,
+            title: 'O Alienista',
+            author: 'Machado de Assis',
+            coverPath: null,
+            filePath: 'drive:folder_alienista',
+            status: 'LENDO',
+            currentPage: 40,
+            updated_at: '2026-09-23T15:00:00.000Z',
+            sync_status: 'synced',
+            themes: [],
+          },
+        ],
+      } as unknown as T),
+    })
+
+    const service = new DriveSyncService(provider)
+    await service.syncLibrary()
+
+    const savedBook = await db.getBookById(202)
+    expect(savedBook?.coverPath).toBe('data:image/webp;base64,LOCAL_COVER_DATA...')
+    expect(savedBook?.currentPage).toBe(40)
+  })
 })

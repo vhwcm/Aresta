@@ -159,8 +159,9 @@ export const getCoverUrl = (coverPath?: string, bookId?: number) => {
   if (coverPath && (coverPath.startsWith('data:') || coverPath.startsWith('blob:') || coverPath.startsWith('http://') || coverPath.startsWith('https://'))) {
     return coverPath
   }
+  const isLocalGeneratedId = Boolean(bookId && bookId > 1_000_000_000)
   const baseUrl = getResolvedApiBase()
-  if (bookId) {
+  if (bookId && !isLocalGeneratedId) {
     return `${baseUrl}/api/books/${bookId}/cover`
   }
   if (!coverPath) return ''

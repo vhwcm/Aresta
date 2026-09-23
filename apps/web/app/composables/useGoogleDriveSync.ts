@@ -153,6 +153,38 @@ export const useGoogleDriveSync = () => {
     }
   }
 
+  const downloadBookCoverFromDrive = async (folderId: string): Promise<Blob | null> => {
+    let token = await ensureGoogleDriveToken()
+    if (!token) return null
+    try {
+      let provider = new GoogleDriveStorageProvider(() => token)
+      try {
+        return await provider.downloadBookCover(folderId)
+      } catch (firstErr: any) {
+        const isAuthError =
+          firstErr?.message?.includes('401') ||
+          firstErr?.message?.includes('Unauthorized') ||
+          firstErr?.message?.includes('Invalid Credentials')
+
+        if (isAuthError) {
+          const refreshed = await refreshGoogleToken()
+          if (refreshed) {
+            token = refreshed
+            provider = new GoogleDriveStorageProvider(() => token)
+            return await provider.downloadBookCover(folderId)
+          } else {
+            setGoogleDriveToken(null)
+            return null
+          }
+        }
+        throw firstErr
+      }
+    } catch (err) {
+      console.warn('[GoogleDriveSync] Falha ao baixar capa do livro do Google Drive:', err)
+      return null
+    }
+  }
+
   const deleteBookFromDrive = async (title: string, folderId?: string): Promise<boolean> => {
     let token = await ensureGoogleDriveToken()
     if (!token) return false
@@ -186,6 +218,7 @@ export const useGoogleDriveSync = () => {
     syncBookToDrive,
     listDriveBooks,
     downloadBookFromDrive,
+    downloadBookCoverFromDrive,
     deleteBookFromDrive,
     deleteAllDriveData,
   }
