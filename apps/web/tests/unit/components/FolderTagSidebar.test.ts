@@ -156,5 +156,32 @@ describe('FolderTagSidebar component', () => {
 
     expect(wrapper.emitted('create-note')).toBeTruthy();
   });
+
+  it('abre o menu dropdown ao clicar em Adicionar e emite os eventos respectivos', async () => {
+    const wrapper = mount(FolderTagSidebar, {
+      props: {
+        items: [],
+        folders: ['Estudos'],
+      },
+    });
+
+    const addBtn = wrapper.find('button[title="Criar novo item"]');
+    expect(addBtn.exists()).toBe(true);
+    await addBtn.trigger('click');
+
+    // Opções do menu dropdown
+    expect(wrapper.text()).toContain('Nova Nota');
+    expect(wrapper.text()).toContain('Novo Desenho');
+    expect(wrapper.text()).toContain('Novo Link');
+    expect(wrapper.text()).toContain('Novo Quadro');
+    expect(wrapper.text()).toContain('Nova Pasta');
+
+    // Clica em Novo Desenho
+    const drawingBtn = wrapper.findAll('button').find((el) => el.text().includes('Novo Desenho'));
+    expect(drawingBtn).toBeDefined();
+    await drawingBtn?.trigger('click');
+
+    expect(wrapper.emitted('create-drawing')).toBeTruthy();
+  });
 });
 

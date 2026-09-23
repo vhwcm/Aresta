@@ -33,11 +33,11 @@ describe('NavbarPageConnector Component', () => {
     mockRoute.path = '/canvas'
     const wrapper = mount(NavbarPageConnector)
 
-    expect((wrapper.vm as any).activeIndex).toBe(2)
+    expect((wrapper.vm as any).activeIndex).toBe(0)
 
     mockRoute.path = '/revisao'
     await wrapper.vm.$nextTick()
-    expect((wrapper.vm as any).activeIndex).toBe(3)
+    expect((wrapper.vm as any).activeIndex).toBe(2)
   })
 
   it('is hidden on immersive reader pages', () => {
@@ -50,10 +50,10 @@ describe('NavbarPageConnector Component', () => {
   it('mantém selecionada a última aba direta quando estiver em rota indireta como /beneficios', async () => {
     mockRoute.path = '/revisao'
     const wrapper = mount(NavbarPageConnector)
-    expect((wrapper.vm as any).activeIndex).toBe(3)
+    expect((wrapper.vm as any).activeIndex).toBe(2)
 
     mockRoute.path = '/beneficios'
     await wrapper.vm.$nextTick()
-    expect((wrapper.vm as any).activeIndex).toBe(3)
+    expect((wrapper.vm as any).activeIndex).toBe(2)
   })
 })

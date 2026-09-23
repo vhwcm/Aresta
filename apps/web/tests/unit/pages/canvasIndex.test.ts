@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { ref } from 'vue'
-import CanvasIndexPage from '../../../app/pages/canvas/index.vue'
+import CanvasIndexPage from '../../../app/components/canvas/UnifiedCanvasHub.vue'
 
 vi.mock('vue-router', () => ({
   useRoute: () => ({

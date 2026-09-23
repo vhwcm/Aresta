@@ -21,7 +21,7 @@ const getInitialNavIndex = (): number => {
 const lastActiveNavIndex = ref<number>(getInitialNavIndex());
 
 export function getNavIndexFromPath(path: string): number {
-  if (!path || path === '/') return 0;
+  if (!path || path === '/' || path === '/canvas' || path.startsWith('/notes')) return 0;
   if (
     path.startsWith('/library') ||
     path.startsWith('/upload') ||
@@ -32,14 +32,11 @@ export function getNavIndexFromPath(path: string): number {
   ) {
     return 1;
   }
-  if (path === '/canvas' || path.startsWith('/notes')) {
+  if (path.startsWith('/revisao') || path.startsWith('/curva-do-esquecimento')) {
     return 2;
   }
-  if (path.startsWith('/revisao') || path.startsWith('/curva-do-esquecimento')) {
-    return 3;
-  }
   if (path.startsWith('/conta') || path.startsWith('/users') || path.startsWith('/admin')) {
-    return 4;
+    return 3;
   }
   return -1;
 }

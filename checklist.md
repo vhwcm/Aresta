@@ -1,6 +1,8 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [23/09/2026 20:25] [Concluído] Transformar rota inicial ('/') no Workspace de Canvas/Notas com banner de leitura ativa no topo e menu geral de adicionar na árvore de arquivos
+- [23/09/2026 20:15] [Concluído] Corrigir exibição de capas de livros sincronizados da nuvem na estante e no grafo de conhecimento: merge defensivo de metadados, download de capa do Drive e blindagem de resolução
 - [23/09/2026 20:10] [Concluído] Corrigir seleção de texto e criação de anotações via toque/mãos e caneta em tablets e dispositivos touch no leitor de livros
 - [23/09/2026 14:08] [Concluído] Desativar alteração de cores/tema no conteúdo e páginas de PDF no leitor de livros (preservar fundo branco e cores originais da editoração)
 - [23/09/2026 13:03] [Concluído] Implementar Diário Sequencial (Daily Journal) com calendário, busca por data, editor markdown e linha do tempo cronológica

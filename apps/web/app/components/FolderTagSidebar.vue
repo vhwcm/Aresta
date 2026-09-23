@@ -37,13 +37,47 @@
     </div>
 
     <!-- Conteúdo Scrollável -->
-    <div class="flex-1 overflow-y-auto p-2.5 space-y-4 custom-scrollbar">
+    <!-- Conteúdo Scrollável -->
+    <div class="flex-1 overflow-y-auto p-2.5 space-y-3 custom-scrollbar">
       <!-- MODO COLAPSADO: Ícones Rápidos -->
-      <div v-if="isCollapsed" class="flex flex-col items-center gap-2 pt-2">
+      <div v-if="isCollapsed" class="flex flex-col items-center gap-2 pt-1">
+        <!-- Miniatura de Leitura Ativa no modo colapsado -->
+        <NuxtLink
+          v-if="hasActiveBook"
+          :to="activeBookReaderLink"
+          class="p-1 rounded-xl transition-all cursor-pointer border border-divider hover:border-accent/50 group relative mb-1"
+          :title="`Continuar lendo: ${activeBookTitle} (${activeBookProgress}%)`"
+        >
+          <div class="w-8 h-11 rounded-md overflow-hidden bg-neutral-900 border border-divider shadow-xs relative group-hover:scale-105 transition-transform">
+            <img
+              v-if="activeBookCoverUrl && !coverError"
+              :src="activeBookCoverUrl"
+              :alt="activeBookTitle"
+              @error="coverError = true"
+              class="w-full h-full object-cover"
+            />
+            <div v-else class="w-full h-full p-0.5 flex flex-col justify-between bg-neutral-800 text-left border-l border-accent">
+              <span class="text-[6px] font-technical text-accent font-bold">A</span>
+            </div>
+          </div>
+        </NuxtLink>
+
+        <!-- Botão Diário no modo colapsado -->
+        <button
+          @click="$emit('open-journal')"
+          class="p-2.5 rounded-xl transition-all cursor-pointer border relative group"
+          :class="isJournalActive ? 'bg-amber-500/15 text-amber-500 border-amber-500/30 shadow-xs' : 'border-transparent text-textSecondary hover:text-amber-500 hover:bg-amber-500/10'"
+          title="Diário Sequencial de Anotações"
+        >
+          <BookOpenCheckIcon class="w-4 h-4 text-amber-500" />
+        </button>
+
+        <div class="w-8 h-px bg-divider/60 my-0.5"></div>
+
         <button
           @click="$emit('select-folder', null); $emit('select-tag', null)"
           class="p-2.5 rounded-xl transition-all cursor-pointer border"
-          :class="selectedFolder === null && selectedTag === null ? 'bg-accent/15 text-accent border-accent/30 shadow-xs' : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.05] dark:hover:bg-white/[0.05]'"
+          :class="!isJournalActive && selectedFolder === null && selectedTag === null ? 'bg-accent/15 text-accent border-accent/30 shadow-xs' : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.05] dark:hover:bg-white/[0.05]'"
           title="Todos os itens"
         >
           <LayersIcon class="w-4 h-4" />
@@ -52,7 +86,7 @@
         <button
           @click="$emit('select-folder', '__uncategorized__')"
           class="p-2.5 rounded-xl transition-all cursor-pointer border"
-          :class="selectedFolder === '__uncategorized__' ? 'bg-accent/15 text-accent border-accent/30 shadow-xs' : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.05] dark:hover:bg-white/[0.05]'"
+          :class="!isJournalActive && selectedFolder === '__uncategorized__' ? 'bg-accent/15 text-accent border-accent/30 shadow-xs' : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.05] dark:hover:bg-white/[0.05]'"
           title="Sem pasta"
         >
           <InboxIcon class="w-4 h-4" />
@@ -65,7 +99,7 @@
           :key="folder"
           @click="$emit('select-folder', folder)"
           class="p-2.5 rounded-xl transition-all cursor-pointer relative group border"
-          :class="selectedFolder === folder ? 'bg-accent/15 text-accent border-accent/30 shadow-xs' : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.05] dark:hover:bg-white/[0.05]'"
+          :class="!isJournalActive && selectedFolder === folder ? 'bg-accent/15 text-accent border-accent/30 shadow-xs' : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.05] dark:hover:bg-white/[0.05]'"
           :title="'Pasta: ' + folder"
         >
           <FolderIcon class="w-4 h-4 text-amber-500 dark:text-amber-400/80 group-hover:text-amber-600 dark:group-hover:text-amber-400" />
@@ -73,24 +107,101 @@
       </div>
 
       <!-- MODO EXPANDIDO: Árvore Hierárquica de Pastas & Arquivos -->
-      <div v-else class="space-y-4">
-        <!-- 1. Todos os Itens -->
+      <div v-else class="space-y-3">
+        <!-- 0. CONTINUAÇÃO DA LEITURA (BANNER HORIZONTAL NO TOPO) -->
+        <div v-if="hasActiveBook" class="pb-1">
+          <div class="text-[10px] font-bold tracking-wider uppercase text-textSecondary font-interface px-1 mb-1.5 flex items-center justify-between">
+            <span>Continuar Leitura</span>
+            <span class="text-accent font-mono text-[10px] font-semibold">{{ activeBookProgress }}%</span>
+          </div>
+          <NuxtLink
+            :to="activeBookReaderLink"
+            class="group/reading flex items-center gap-2.5 p-2 rounded-2xl bg-bgSurface/90 hover:bg-bgSurface border border-divider hover:border-accent/40 transition-all duration-200 shadow-xs cursor-pointer overflow-hidden"
+            :title="`Continuar lendo: ${activeBookTitle}`"
+          >
+            <!-- Capa Miniatura -->
+            <div class="w-10 h-14 rounded-lg overflow-hidden shrink-0 border border-divider/80 bg-neutral-900 shadow-sm relative group-hover/reading:scale-105 transition-transform duration-200">
+              <img
+                v-if="activeBookCoverUrl && !coverError"
+                :src="activeBookCoverUrl"
+                :alt="activeBookTitle"
+                @error="coverError = true"
+                class="w-full h-full object-cover"
+              />
+              <div v-else class="w-full h-full p-1 flex flex-col justify-between bg-neutral-800 text-left border-l border-accent">
+                <span class="text-[7px] font-technical text-accent uppercase font-bold">Aresta</span>
+                <span class="text-[8px] font-editorial text-white line-clamp-2 leading-none">{{ activeBookTitle }}</span>
+              </div>
+              <!-- Efeito lombada -->
+              <div class="absolute inset-y-0 left-0 w-1 bg-gradient-to-r from-black/50 to-transparent pointer-events-none"></div>
+            </div>
+
+            <!-- Detalhes do Livro & Progresso -->
+            <div class="flex-1 min-w-0 flex flex-col justify-between py-0.5 gap-1">
+              <div class="flex flex-col min-w-0">
+                <span class="font-editorial text-xs font-medium text-textPrimary group-hover/reading:text-accent transition-colors line-clamp-1 leading-tight">
+                  {{ activeBookTitle }}
+                </span>
+                <span class="font-interface text-[10px] text-textSecondary truncate">
+                  {{ latestUserBook?.author || 'Autor Desconhecido' }}
+                </span>
+              </div>
+
+              <!-- Barra de Progresso Fina -->
+              <div class="w-full flex items-center gap-1.5 pt-0.5">
+                <div class="flex-1 h-1.5 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden">
+                  <div
+                    class="h-full bg-accent rounded-full transition-all duration-300"
+                    :style="{ width: `${activeBookProgress}%` }"
+                  ></div>
+                </div>
+                <PlayIcon class="w-3 h-3 text-accent group-hover/reading:scale-110 shrink-0 transition-transform" />
+              </div>
+            </div>
+          </NuxtLink>
+        </div>
+
+        <!-- 1. Botão do Diário Sequencial -->
+        <div>
+          <button
+            @click="$emit('open-journal')"
+            class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs md:text-sm font-medium transition-all cursor-pointer border group"
+            :class="isJournalActive
+              ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30 shadow-xs font-semibold'
+              : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'"
+          >
+            <div class="flex items-center gap-2.5 truncate">
+              <BookOpenCheckIcon class="w-4 h-4 flex-shrink-0 transition-colors" :class="isJournalActive ? 'text-amber-500' : 'text-amber-500/80 group-hover:text-amber-500'" />
+              <span class="truncate font-interface">Diário</span>
+            </div>
+            <span
+              class="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full font-semibold transition-colors"
+              :class="isJournalActive
+                ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30'
+                : 'bg-amber-500/10 text-amber-600 dark:text-amber-400/90 group-hover:bg-amber-500/20'"
+            >
+              Diário
+            </span>
+          </button>
+        </div>
+
+        <!-- 2. Todos os Itens -->
         <div>
           <button
             @click="selectFolder(null); $emit('select-tag', null)"
             class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs md:text-sm font-medium transition-all cursor-pointer border group"
-            :class="selectedFolder === null && selectedTag === null
+            :class="!isJournalActive && selectedFolder === null && selectedTag === null
               ? 'bg-accent/15 text-accent border-accent/30 shadow-xs font-semibold'
               : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'"
           >
             <div class="flex items-center gap-2.5 truncate">
-              <LayersIcon class="w-4 h-4 flex-shrink-0 transition-colors" :class="selectedFolder === null && selectedTag === null ? 'text-accent' : 'text-textSecondary group-hover:text-textPrimary'" />
+              <LayersIcon class="w-4 h-4 flex-shrink-0 transition-colors" :class="!isJournalActive && selectedFolder === null && selectedTag === null ? 'text-accent' : 'text-textSecondary group-hover:text-textPrimary'" />
               <span class="truncate">Todos os {{ itemLabel }}</span>
             </div>
             <span
               class="text-xs px-2 py-0.5 rounded-full font-mono font-medium transition-colors"
-              :class="selectedFolder === null && selectedTag === null
-                ? 'bg-accent/25 text-accent border border-accent/30'
+              :class="!isJournalActive && selectedFolder === null && selectedTag === null
+                ? 'bg-accent/25 text-accent border-accent/30'
                 : 'bg-slate-100 dark:bg-white/[0.05] text-slate-700 dark:text-textSecondary/70 group-hover:text-textPrimary'"
             >
               {{ totalItemsCount }}
@@ -98,7 +209,83 @@
           </button>
         </div>
 
-        <!-- 2. Estrutura em Árvore (Pastas e Arquivos Aninhados) -->
+        <!-- 3. BOTÃO GERAL DE ADICIONAR ACIMA DA ÁRVORE -->
+        <div class="relative pt-1" ref="addDropdownRef">
+          <button
+            @click="isAddMenuOpen = !isAddMenuOpen"
+            class="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-accent hover:bg-accent/90 text-white font-semibold text-xs shadow-sm shadow-accent/20 hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer"
+            title="Criar novo item"
+          >
+            <PlusIcon class="w-4 h-4" />
+            <span>Adicionar</span>
+            <ChevronDownIcon class="w-3.5 h-3.5 opacity-80 ml-auto transition-transform" :class="{ 'rotate-180': isAddMenuOpen }" />
+          </button>
+
+          <!-- Menu Dropdown -->
+          <div
+            v-if="isAddMenuOpen"
+            class="absolute left-0 right-0 top-full mt-1.5 p-1.5 rounded-2xl bg-bgPanel border border-divider shadow-2xl z-50 flex flex-col gap-0.5 animate-in fade-in zoom-in-95 duration-150 backdrop-blur-md"
+          >
+            <button
+              @click="handleAddAction('note')"
+              class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-textPrimary hover:bg-accent/10 hover:text-accent transition-colors cursor-pointer text-left"
+            >
+              <FileTextIcon class="w-4 h-4 text-accent shrink-0" />
+              <div class="flex flex-col">
+                <span class="font-medium">Nova Nota</span>
+                <span class="text-[10px] text-textSecondary">Anotação em Markdown</span>
+              </div>
+            </button>
+
+            <button
+              @click="handleAddAction('drawing')"
+              class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-textPrimary hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer text-left"
+            >
+              <PenToolIcon class="w-4 h-4 text-primary shrink-0" />
+              <div class="flex flex-col">
+                <span class="font-medium">Novo Desenho</span>
+                <span class="text-[10px] text-textSecondary">Estilo Samsung Notes</span>
+              </div>
+            </button>
+
+            <button
+              @click="handleAddAction('link')"
+              class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-textPrimary hover:bg-emerald-500/10 hover:text-emerald-500 transition-colors cursor-pointer text-left"
+            >
+              <GlobeIcon class="w-4 h-4 text-emerald-500 shrink-0" />
+              <div class="flex flex-col">
+                <span class="font-medium">Novo Link</span>
+                <span class="text-[10px] text-textSecondary">Link web com título</span>
+              </div>
+            </button>
+
+            <button
+              @click="handleAddAction('canvas')"
+              class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-textPrimary hover:bg-accent/10 hover:text-accent transition-colors cursor-pointer text-left"
+            >
+              <LayoutGridIcon class="w-4 h-4 text-accent shrink-0" />
+              <div class="flex flex-col">
+                <span class="font-medium">Novo Quadro</span>
+                <span class="text-[10px] text-textSecondary">Canvas visual infinito</span>
+              </div>
+            </button>
+
+            <div class="h-px bg-divider/60 my-1"></div>
+
+            <button
+              @click="handleAddAction('folder')"
+              class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-textPrimary hover:bg-amber-500/10 hover:text-amber-500 transition-colors cursor-pointer text-left"
+            >
+              <FolderPlusIcon class="w-4 h-4 text-amber-500 shrink-0" />
+              <div class="flex flex-col">
+                <span class="font-medium">Nova Pasta</span>
+                <span class="text-[10px] text-textSecondary">Organizar na árvore</span>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- 4. Estrutura em Árvore (Pastas e Arquivos Aninhados) -->
         <div class="pt-2 border-t border-divider">
           <div class="flex items-center justify-between px-2 mb-2">
             <div class="flex items-center gap-1.5 truncate">
@@ -459,7 +646,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import {
   FolderIcon,
   LayersIcon,
@@ -469,9 +656,17 @@ import {
   Trash2Icon,
   SidebarIcon,
   ChevronRightIcon,
+  ChevronDown as ChevronDownIcon,
   LayoutGridIcon,
-  FileTextIcon
+  FileTextIcon,
+  PenTool as PenToolIcon,
+  Globe as GlobeIcon,
+  FolderPlus as FolderPlusIcon,
+  Play as PlayIcon,
+  BookOpenCheck as BookOpenCheckIcon
 } from 'lucide-vue-next'
+import { useUserBooks } from '~/composables/useUserBooks'
+import { resolveBookCover } from '~/utils/cover'
 
 export interface SidebarTreeItem {
   id: string
@@ -488,6 +683,7 @@ const props = withDefaults(
     selectedFolder?: string | null
     selectedTag?: string | null
     selectedItemId?: string | null
+    isJournalActive?: boolean
     title?: string
     itemLabel?: string
     collapsed?: boolean
@@ -496,6 +692,7 @@ const props = withDefaults(
     selectedFolder: null,
     selectedTag: null,
     selectedItemId: null,
+    isJournalActive: false,
     title: 'Biblioteca',
     itemLabel: 'itens',
     collapsed: false
@@ -506,7 +703,11 @@ const emit = defineEmits<{
   (_e: 'select-folder', _folder: string | null): void
   (_e: 'select-tag', _tag: string | null): void
   (_e: 'select-item', _item: SidebarTreeItem): void
+  (_e: 'open-journal'): void
   (_e: 'create-note', _folder?: string): void
+  (_e: 'create-drawing'): void
+  (_e: 'create-link'): void
+  (_e: 'create-canvas'): void
   (_e: 'create-folder', _name: string): void
   (_e: 'rename-folder', _payload: { oldName: string; newName: string }): void
   (_e: 'delete-folder', _name: string): void
@@ -515,6 +716,93 @@ const emit = defineEmits<{
 
 const isCollapsed = ref(props.collapsed ?? false)
 const expandedFolders = ref<Set<string>>(new Set(['__uncategorized__']))
+
+const { userBooks, fetchUserBooks } = useUserBooks()
+const coverError = ref(false)
+
+const isAddMenuOpen = ref(false)
+const addDropdownRef = ref<HTMLElement | null>(null)
+
+const handleGlobalClick = (e: MouseEvent) => {
+  if (addDropdownRef.value && !addDropdownRef.value.contains(e.target as Node)) {
+    isAddMenuOpen.value = false
+  }
+}
+
+onMounted(() => {
+  if (userBooks.value.length === 0) {
+    void fetchUserBooks()
+  }
+  if (typeof window !== 'undefined') {
+    window.addEventListener('click', handleGlobalClick)
+  }
+})
+
+onUnmounted(() => {
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('click', handleGlobalClick)
+  }
+})
+
+const handleAddAction = (action: 'note' | 'drawing' | 'link' | 'canvas' | 'folder') => {
+  isAddMenuOpen.value = false
+  if (action === 'note') {
+    emit('create-note', props.selectedFolder && props.selectedFolder !== '__uncategorized__' ? props.selectedFolder : undefined)
+  } else if (action === 'drawing') {
+    emit('create-drawing')
+  } else if (action === 'link') {
+    emit('create-link')
+  } else if (action === 'canvas') {
+    emit('create-canvas')
+  } else if (action === 'folder') {
+    isCreatingFolder.value = true
+    nextTick(() => {
+      newFolderInputRef.value?.focus()
+    })
+  }
+}
+
+// Leitura ativa mais recente
+const latestUserBook = computed(() => {
+  if (!userBooks.value || userBooks.value.length === 0) return null
+  const sorted = [...userBooks.value].sort((a, b) => {
+    const timeA = a.lastAccessedAt ? new Date(a.lastAccessedAt).getTime() : 0
+    const timeB = b.lastAccessedAt ? new Date(b.lastAccessedAt).getTime() : 0
+    if (timeA !== timeB) return timeB - timeA
+    return (b.userBookId || 0) - (a.userBookId || 0)
+  })
+  return sorted[0] || null
+})
+
+const hasActiveBook = computed(() => !!latestUserBook.value)
+const activeBookTitle = computed(() => latestUserBook.value?.title || '')
+const activeBookCoverUrl = computed(() => {
+  if (latestUserBook.value) {
+    return resolveBookCover(latestUserBook.value)
+  }
+  return ''
+})
+
+const activeBookCurrentPage = computed(() => latestUserBook.value?.currentPage || 0)
+const activeBookTotalPages = computed(() => (latestUserBook.value as any)?.totalPages || (latestUserBook.value as any)?.total_pages || 128)
+
+const activeBookProgress = computed(() => {
+  if (!hasActiveBook.value) return 0
+  if (latestUserBook.value?.status === 'LIDO') return 100
+  if (latestUserBook.value?.status === 'QUERO_LER' && !latestUserBook.value?.currentPage) return 0
+  if ((latestUserBook.value as any)?.progress !== undefined && (latestUserBook.value as any)?.progress !== null) {
+    return Math.min(100, Math.max(0, Math.round(Number((latestUserBook.value as any).progress))))
+  }
+  return Math.min(100, Math.round((activeBookCurrentPage.value / (activeBookTotalPages.value || 1)) * 100))
+})
+
+const activeBookReaderLink = computed(() => {
+  if (latestUserBook.value?.bookId) {
+    const page = typeof latestUserBook.value.currentPage === 'number' && latestUserBook.value.currentPage > 0 ? latestUserBook.value.currentPage : 1
+    return `/reader?bookId=${latestUserBook.value.bookId}&page=${page}`
+  }
+  return '/library'
+})
 
 watch(
   () => props.collapsed,

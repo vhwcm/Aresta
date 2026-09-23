@@ -55,6 +55,7 @@ const isOnboardingPage = computed(() => (route?.path || '') === '/onboarding')
 
 const isCanvasPage = computed(() => {
   const currentPath = route?.path || ''
+  if (currentPath === '/' && auth.isLoggedIn.value) return true
   return currentPath === '/canvas' || currentPath.startsWith('/notes')
 })
 </script>

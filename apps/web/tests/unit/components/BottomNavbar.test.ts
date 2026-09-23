@@ -30,17 +30,15 @@ describe('BottomNavbar Component', () => {
     expect(wrapper.find('nav').exists()).toBe(true)
     expect(wrapper.find('a[title="Início"]').exists()).toBe(true)
     expect(wrapper.find('button[title="Menu de Livros"]').exists()).toBe(true)
-    expect(wrapper.find('a[title="Anotações"]').exists()).toBe(true)
     expect(wrapper.find('a[title="Revisão (Flashcards & Resumos)"]').exists()).toBe(true)
     expect(wrapper.find('a[title="Sua Conta & Status Pro"]').exists()).toBe(true)
     expect(wrapper.text()).not.toContain('Início')
     expect(wrapper.text()).not.toContain('Livros')
-    expect(wrapper.text()).not.toContain('Anotações')
     expect(wrapper.text()).not.toContain('Revisão')
     expect(wrapper.text()).not.toContain('Conta')
   })
 
-  it('toggles book menu and has direct link to canvas in Anotações', async () => {
+  it('toggles book menu and has dropdown items', async () => {
     const wrapper = mount(BottomNavbar, {
       global: {
         stubs: {
@@ -63,11 +61,6 @@ describe('BottomNavbar Component', () => {
     expect(wrapper.text()).toContain('Meus Livros')
     expect(wrapper.text()).toContain('Conversor')
     expect(wrapper.text()).toContain('Loja')
-
-    // Botão de Anotações é um link direto para /canvas
-    const anotaçõesLink = wrapper.find('a[title="Anotações"]')
-    expect(anotaçõesLink.exists()).toBe(true)
-    expect(anotaçõesLink.attributes('href')).toBe('/canvas')
   })
 
   it('is always open without collapse button and renders all navigation items', async () => {
@@ -91,12 +84,10 @@ describe('BottomNavbar Component', () => {
     // A barra está sempre aberta e exibe todos os itens sem rótulos de texto
     expect(wrapper.find('a[title="Início"]').exists()).toBe(true)
     expect(wrapper.find('button[title="Menu de Livros"]').exists()).toBe(true)
-    expect(wrapper.find('a[title="Anotações"]').exists()).toBe(true)
     expect(wrapper.find('a[title="Revisão (Flashcards & Resumos)"]').exists()).toBe(true)
     expect(wrapper.find('a[title="Sua Conta & Status Pro"]').exists()).toBe(true)
     expect(wrapper.text()).not.toContain('Início')
     expect(wrapper.text()).not.toContain('Livros')
-    expect(wrapper.text()).not.toContain('Anotações')
     expect(wrapper.text()).not.toContain('Revisão')
     expect(wrapper.text()).not.toContain('Conta')
   })
@@ -131,7 +122,7 @@ describe('BottomNavbar Component', () => {
     const booksButton = wrapper.find('button[title="Menu de Livros"]')
     expect(booksButton.classes()).toContain('nav-item-active')
 
-    // Testando rota de Anotações ('/canvas')
+    // Testando rota de Canvas ('/canvas') - destaca Início
     g.useRoute = () => ({ path: '/canvas', params: {}, query: {} })
     wrapper = mount(BottomNavbar, {
       global: {
@@ -141,8 +132,8 @@ describe('BottomNavbar Component', () => {
         }
       }
     })
-    const anotaçõesLink = wrapper.find('a[title="Anotações"]')
-    expect(anotaçõesLink.classes()).toContain('nav-item-active')
+    const canvasHomeLink = wrapper.find('a[title="Início"]')
+    expect(canvasHomeLink.classes()).toContain('nav-item-active')
 
     // Testando rota de Revisão ('/revisao')
     g.useRoute = () => ({ path: '/revisao', params: {}, query: {} })

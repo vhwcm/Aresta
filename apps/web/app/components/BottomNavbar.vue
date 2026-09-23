@@ -94,22 +94,6 @@
         </div>
       </div>
 
-      <!-- Item: Anotações (Link direto para /canvas) -->
-      <NuxtLink
-        to="/canvas"
-        class="nav-item group focus:outline-none"
-        :class="{
-          'nav-item-active': isCanvasActive
-        }"
-        title="Anotações"
-        aria-label="Anotações"
-      >
-        <FileTextIcon
-          class="w-5 h-5 transition-transform duration-200 group-hover:scale-110"
-          :class="isCanvasActive ? 'text-accent' : 'text-textSecondary group-hover:text-textPrimary'"
-        />
-      </NuxtLink>
-
       <!-- Item: Revisão -->
       <NuxtLink
         to="/revisao"
@@ -145,7 +129,6 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import {
   FileCode2Icon,
-  FileTextIcon,
   BookOpenIcon,
   BookIcon,
   ShoppingBagIcon,
@@ -198,16 +181,12 @@ const isBooksActive = computed(() => {
   return activeNavIndex.value === 1
 })
 
-const isCanvasActive = computed(() => {
+const isReviewActive = computed(() => {
   return activeNavIndex.value === 2
 })
 
-const isReviewActive = computed(() => {
-  return activeNavIndex.value === 3
-})
-
 const isAccountActive = computed(() => {
-  return activeNavIndex.value === 4
+  return activeNavIndex.value === 3
 })
 
 // Fechar dropdown de livros ao clicar fora
