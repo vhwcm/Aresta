@@ -92,7 +92,7 @@
           class="p-1 rounded-xl transition-all cursor-pointer border border-divider hover:border-accent/50 group relative mb-0.5"
           :title="`Continuar lendo: ${activeBookTitle} (${activeBookProgress}%)`"
         >
-          <div class="w-8 h-11 rounded-md overflow-hidden bg-neutral-900 border border-divider shadow-xs relative group-hover:scale-105 transition-transform">
+          <div class="w-10 h-14 rounded-lg overflow-hidden bg-neutral-900 border border-divider shadow-xs relative group-hover:scale-105 transition-transform">
             <img
               v-if="activeBookCoverUrl && !coverError"
               :src="activeBookCoverUrl"
@@ -100,8 +100,8 @@
               @error="coverError = true"
               class="w-full h-full object-cover"
             />
-            <div v-else class="w-full h-full p-0.5 flex flex-col justify-between bg-neutral-800 text-left border-l border-accent">
-              <span class="text-[6px] font-technical text-accent font-bold">A</span>
+            <div v-else class="w-full h-full p-1 flex flex-col justify-between bg-neutral-800 text-left border-l border-accent">
+              <span class="text-[7px] font-technical text-accent font-bold">A</span>
             </div>
           </div>
         </NuxtLink>
@@ -259,19 +259,15 @@
             </div>
           </NuxtLink>
         </div>
-        <!-- 0. CONTINUAÇÃO DA LEITURA (BANNER HORIZONTAL NO TOPO) -->
+        <!-- 0. CARD DA LEITURA ATIVA -->
         <div v-if="hasActiveBook" class="pb-1">
-          <div class="text-[10px] font-bold tracking-wider uppercase text-textSecondary font-interface px-1 mb-1.5 flex items-center justify-between">
-            <span>Continuar Leitura</span>
-            <span class="text-accent font-mono text-[10px] font-semibold">{{ activeBookProgress }}%</span>
-          </div>
           <NuxtLink
             :to="activeBookReaderLink"
-            class="group/reading flex items-center gap-2.5 p-2 rounded-2xl bg-bgSurface/90 hover:bg-bgSurface border border-divider hover:border-accent/40 transition-all duration-200 shadow-xs cursor-pointer overflow-hidden"
+            class="group/reading flex items-center gap-3 p-2.5 rounded-2xl bg-bgSurface/90 hover:bg-bgSurface border border-divider hover:border-accent/40 transition-all duration-200 shadow-xs cursor-pointer overflow-hidden"
             :title="`Continuar lendo: ${activeBookTitle}`"
           >
-            <!-- Capa Miniatura -->
-            <div class="w-10 h-14 rounded-lg overflow-hidden shrink-0 border border-divider/80 bg-neutral-900 shadow-sm relative group-hover/reading:scale-105 transition-transform duration-200">
+            <!-- Capa do Livro em Destaque Ampliado -->
+            <div class="w-14 h-20 rounded-xl overflow-hidden shrink-0 border border-divider/80 bg-neutral-900 shadow-md relative group-hover/reading:scale-105 transition-transform duration-200">
               <img
                 v-if="activeBookCoverUrl && !coverError"
                 :src="activeBookCoverUrl"
@@ -279,34 +275,34 @@
                 @error="coverError = true"
                 class="w-full h-full object-cover"
               />
-              <div v-else class="w-full h-full p-1 flex flex-col justify-between bg-neutral-800 text-left border-l border-accent">
-                <span class="text-[7px] font-technical text-accent uppercase font-bold">Aresta</span>
-                <span class="text-[8px] font-editorial text-white line-clamp-2 leading-none">{{ activeBookTitle }}</span>
+              <div v-else class="w-full h-full p-1.5 flex flex-col justify-between bg-neutral-800 text-left border-l-2 border-accent">
+                <span class="text-[8px] font-technical text-accent uppercase font-bold tracking-wider">Aresta</span>
+                <span class="text-[9px] font-editorial text-white line-clamp-3 leading-tight font-medium">{{ activeBookTitle }}</span>
               </div>
-              <!-- Efeito lombada -->
-              <div class="absolute inset-y-0 left-0 w-1 bg-gradient-to-r from-black/50 to-transparent pointer-events-none"></div>
+              <!-- Efeito lombada / iluminação 3D -->
+              <div class="absolute inset-y-0 left-0 w-1.5 bg-gradient-to-r from-black/50 to-transparent pointer-events-none"></div>
             </div>
 
             <!-- Detalhes do Livro & Progresso -->
-            <div class="flex-1 min-w-0 flex flex-col justify-between py-0.5 gap-1">
+            <div class="flex-1 min-w-0 flex flex-col justify-between py-1 gap-1.5">
               <div class="flex flex-col min-w-0">
-                <span class="font-editorial text-xs font-medium text-textPrimary group-hover/reading:text-accent transition-colors line-clamp-1 leading-tight">
+                <span class="font-editorial text-xs sm:text-sm font-semibold text-textPrimary group-hover/reading:text-accent transition-colors line-clamp-2 leading-tight">
                   {{ activeBookTitle }}
                 </span>
-                <span class="font-interface text-[10px] text-textSecondary truncate">
+                <span class="font-interface text-[11px] text-textSecondary truncate mt-0.5">
                   {{ latestUserBook?.author || 'Autor Desconhecido' }}
                 </span>
               </div>
 
-              <!-- Barra de Progresso Fina -->
-              <div class="w-full flex items-center gap-1.5 pt-0.5">
+              <!-- Barra de Progresso Fina e Elegante -->
+              <div class="w-full flex items-center gap-2 pt-0.5">
                 <div class="flex-1 h-1.5 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden">
                   <div
                     class="h-full bg-accent rounded-full transition-all duration-300"
                     :style="{ width: `${activeBookProgress}%` }"
                   ></div>
                 </div>
-                <PlayIcon class="w-3 h-3 text-accent group-hover/reading:scale-110 shrink-0 transition-transform" />
+                <PlayIcon class="w-3.5 h-3.5 text-accent group-hover/reading:scale-110 shrink-0 transition-transform" />
               </div>
             </div>
           </NuxtLink>
