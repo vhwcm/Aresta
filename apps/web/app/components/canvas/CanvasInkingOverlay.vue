@@ -176,9 +176,42 @@ const redraw = () => {
   ctx.restore();
 };
 
+const activeTouches = new Map<number, { x: number; y: number }>();
+let isPinching = false;
+let lastPinchEnd = 0;
+const activePointerId = ref<number | null>(null);
+
 const onPointerDown = (e: PointerEvent) => {
   if (props.activeTool !== 'pen') return;
-  (e.target as HTMLElement).setPointerCapture(e.pointerId);
+
+  if (e.pointerType === 'touch') {
+    activeTouches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  }
+
+  if (e.pointerType === 'touch' && activeTouches.size >= 2) {
+    isPinching = true;
+    if (isDrawing.value) {
+      currentStroke.value = [];
+      isDrawing.value = false;
+      if (activePointerId.value !== null) {
+        try {
+          (e.target as HTMLElement).releasePointerCapture(activePointerId.value);
+        } catch {}
+        activePointerId.value = null;
+      }
+      redraw();
+    }
+    return;
+  }
+
+  if (e.pointerType === 'touch' && Date.now() - lastPinchEnd < 200) {
+    return;
+  }
+
+  activePointerId.value = e.pointerId;
+  try {
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  } catch {}
   const coords = getCanvasCoordinates(e);
   startStroke(coords);
   redraw();
@@ -186,12 +219,49 @@ const onPointerDown = (e: PointerEvent) => {
 
 const onPointerMove = (e: PointerEvent) => {
   if (!isDrawing.value || props.activeTool !== 'pen') return;
+
+  if (e.pointerType === 'touch' && activeTouches.has(e.pointerId)) {
+    activeTouches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  }
+
+  if (e.pointerType === 'touch' && (isPinching || activeTouches.size >= 2)) {
+    currentStroke.value = [];
+    isDrawing.value = false;
+    redraw();
+    return;
+  }
+
+  if (activePointerId.value !== null && e.pointerId !== activePointerId.value) {
+    return;
+  }
+
   const coords = getCanvasCoordinates(e);
   addPoint(coords);
   redraw();
 };
 
-const onPointerUp = (_e: PointerEvent) => {
+const onPointerUp = (e: PointerEvent) => {
+  if (e.pointerType === 'touch') {
+    activeTouches.delete(e.pointerId);
+  }
+
+  if (e.pointerType === 'touch' && isPinching) {
+    if (activeTouches.size < 2) {
+      isPinching = false;
+      lastPinchEnd = Date.now();
+    }
+    currentStroke.value = [];
+    isDrawing.value = false;
+    activePointerId.value = null;
+    redraw();
+    return;
+  }
+
+  if (activePointerId.value !== null && e.pointerId !== activePointerId.value) {
+    return;
+  }
+  activePointerId.value = null;
+
   if (!isDrawing.value) return;
   endStroke();
   redraw();

@@ -11,7 +11,8 @@ import type {
   LocalDrawingNote,
   LocalUserSettings,
   LocalDidacticBooklet,
-  LocalLinkItem
+  LocalLinkItem,
+  LocalJournalEntry
 } from './types';
 
 class ArestaDexieDB extends Dexie {
@@ -26,6 +27,7 @@ class ArestaDexieDB extends Dexie {
   user_settings!: Table<LocalUserSettings, string>;
   didactic_booklets!: Table<LocalDidacticBooklet, string>;
   links!: Table<LocalLinkItem, string>;
+  journals!: Table<LocalJournalEntry, string>;
 
   constructor() {
     super('aresta_local_db');
@@ -72,6 +74,20 @@ class ArestaDexieDB extends Dexie {
       user_settings: 'id, updated_at',
       didactic_booklets: 'id, bookId, themeId, createdAt, updated_at, deleted_at',
       links: 'id, url, updated_at, deleted_at, folder'
+    });
+    this.version(5).stores({
+      books: 'id, bookId, status, updated_at, deleted_at',
+      annotations: 'id, bookId, cfi, createdAt, updated_at, deleted_at',
+      flashcards: 'id, bookId, annotationId, nextReviewAt, repetitionLevel, updated_at, deleted_at',
+      canvases: 'id, name, updated_at, deleted_at',
+      streaks: 'id, updated_at',
+      mutation_queue: 'id, entity_type, entity_id, action, client_timestamp, sync_status',
+      notes: 'id, updated_at, deleted_at, folder',
+      drawing_notes: 'id, updated_at, deleted_at, folder',
+      user_settings: 'id, updated_at',
+      didactic_booklets: 'id, bookId, themeId, createdAt, updated_at, deleted_at',
+      links: 'id, url, updated_at, deleted_at, folder',
+      journals: 'id, date, updated_at, deleted_at'
     });
   }
 }
@@ -461,4 +477,41 @@ export class DexieAdapter implements IDatabaseAdapter {
       await this.db.links.put(toCloneable(existing));
     }
   }
+
+  // Journal
+  async getJournalEntries(): Promise<LocalJournalEntry[]> {
+    await this.init();
+    const all = await this.db.journals.toArray();
+    return all
+      .filter((j) => !j.deleted_at && j.content && j.content.trim().length > 0)
+      .sort((a, b) => b.date.localeCompare(a.date));
+  }
+
+  async getJournalEntriesRaw(): Promise<LocalJournalEntry[]> {
+    await this.init();
+    return await this.db.journals.toArray();
+  }
+
+  async getJournalEntryByDate(date: string): Promise<LocalJournalEntry | null> {
+    await this.init();
+    const item = await this.db.journals.get(date);
+    return item && !item.deleted_at ? item : null;
+  }
+
+  async saveJournalEntry(entry: LocalJournalEntry): Promise<void> {
+    await this.init();
+    await this.db.journals.put(toCloneable(entry));
+  }
+
+  async deleteJournalEntry(date: string): Promise<void> {
+    await this.init();
+    const existing = await this.db.journals.get(date);
+    if (existing) {
+      existing.deleted_at = new Date().toISOString();
+      existing.sync_status = 'pending';
+      existing.updated_at = new Date().toISOString();
+      await this.db.journals.put(toCloneable(existing));
+    }
+  }
 }
+

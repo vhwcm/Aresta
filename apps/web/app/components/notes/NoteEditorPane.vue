@@ -803,6 +803,7 @@ import { bookRepo } from '~/adapters/database/repositories/BookRepository'
 import { linkRepo } from '~/adapters/database/repositories/LinkRepository'
 import { openExternalUrl, cleanUrlTitle, sanitizeUrl } from '~/utils/urlOpener'
 import { useDidacticBooklet } from '~/composables/useDidacticBooklet'
+import { useGraph } from '~/composables/useGraph'
 import { extractTitleFromMarkdown } from '~/utils/noteTitle'
 import type { NoteItem } from '~/interfaces/note'
 import type { CanvasSummary } from '~/interfaces/canvas'
@@ -1094,6 +1095,8 @@ const createNodeFromPopoverLink = async () => {
       title: cleanTitle,
       sourceNoteId: String(localNote.value.id)
     })
+    const { fetchGraph } = useGraph()
+    fetchGraph().catch((e) => console.error('Erro ao atualizar grafo após salvar link:', e))
     showToast(`Nó "${cleanTitle}" criado no Grafo de Conhecimento!`)
     activeLinkPopover.value = null
   } catch (err) {

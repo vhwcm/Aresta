@@ -3,14 +3,12 @@ import { mount } from '@vue/test-utils'
 import App from '../../app/app.vue'
 
 describe('App Root (app.vue)', () => {
-  it('renders NuxtPage and persistent BottomNavbar along with global dialogs', () => {
+  it('renders NuxtPage along with global dialogs and modals', () => {
     const wrapper = mount(App, {
       global: {
         stubs: {
           NuxtLayout: { template: '<div><slot /></div>' },
           NuxtPage: { template: '<div data-testid="nuxt-page-stub">Page Content</div>' },
-          BottomNavbar: { template: '<div data-testid="bottom-navbar-stub">Navbar</div>' },
-          NavbarPageConnector: { template: '<div data-testid="navbar-page-connector-stub" />' },
           CommandPalette: { template: '<div data-testid="command-palette-stub" />' },
           SettingsModal: { template: '<div data-testid="settings-modal-stub" />' },
           StreakCelebrationModal: { template: '<div data-testid="streak-celebration-stub" />' },
@@ -20,7 +18,6 @@ describe('App Root (app.vue)', () => {
     })
 
     expect(wrapper.find('[data-testid="nuxt-page-stub"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="bottom-navbar-stub"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="command-palette-stub"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="settings-modal-stub"]').exists()).toBe(true)
     // Valida que o container padrão possui margem sutil lateral e no topo

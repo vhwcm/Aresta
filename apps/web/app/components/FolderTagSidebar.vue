@@ -20,8 +20,11 @@
       :class="isCollapsed ? 'justify-center px-2' : 'justify-between px-3 md:px-4'"
     >
       <div v-if="!isCollapsed" class="flex items-center gap-2 overflow-hidden">
-        <span class="text-sm font-semibold tracking-tight text-textPrimary truncate font-interface">{{ title }}</span>
-        <span class="text-[11px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-textSecondary border border-slate-200 dark:border-white/[0.06] font-mono font-medium">
+        <NuxtLink to="/" class="flex items-center gap-2 group cursor-pointer" title="Ir para Início">
+          <ArestaLogoGraph :size="24" use-image :to="null" class="!p-0 group-hover:scale-105 transition-transform" />
+          <span class="text-sm font-semibold tracking-tight text-textPrimary font-interface group-hover:text-accent transition-colors">{{ title || 'Aresta' }}</span>
+        </NuxtLink>
+        <span class="text-[11px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-textSecondary border border-slate-200 dark:border-white/[0.06] font-mono font-medium ml-auto">
           {{ totalItemsCount }}
         </span>
       </div>
@@ -37,15 +40,56 @@
     </div>
 
     <!-- Conteúdo Scrollável -->
-    <!-- Conteúdo Scrollável -->
     <div class="flex-1 overflow-y-auto p-2.5 space-y-3 custom-scrollbar">
-      <!-- MODO COLAPSADO: Ícones Rápidos -->
-      <div v-if="isCollapsed" class="flex flex-col items-center gap-2 pt-1">
+      <!-- MODO COLAPSADO: Ícones Rápidos de Navegação & Acesso -->
+      <div v-if="isCollapsed" class="flex flex-col items-center gap-1.5 pt-1">
+        <!-- 1. Logo / Início -->
+        <NuxtLink
+          to="/"
+          class="p-2 rounded-xl transition-all cursor-pointer border"
+          :class="isHomeActive ? 'bg-accent/15 text-accent border-accent/30 shadow-xs' : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.05] dark:hover:bg-white/[0.05]'"
+          title="Início"
+        >
+          <HomeIcon class="w-4 h-4" />
+        </NuxtLink>
+
+        <!-- 2. Livros / Biblioteca -->
+        <NuxtLink
+          to="/library"
+          class="p-2 rounded-xl transition-all cursor-pointer border"
+          :class="isBooksActive ? 'bg-accent/15 text-accent border-accent/30 shadow-xs' : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.05] dark:hover:bg-white/[0.05]'"
+          title="Meus Livros"
+        >
+          <BookOpenIcon class="w-4 h-4" />
+        </NuxtLink>
+
+        <!-- 3. Revisão -->
+        <NuxtLink
+          to="/revisao"
+          class="p-2 rounded-xl transition-all cursor-pointer border"
+          :class="isReviewActive ? 'bg-accent/15 text-accent border-accent/30 shadow-xs' : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.05] dark:hover:bg-white/[0.05]'"
+          title="Revisão (Flashcards)"
+        >
+          <BrainIcon class="w-4 h-4" />
+        </NuxtLink>
+
+        <!-- 4. Minha Conta -->
+        <NuxtLink
+          to="/conta"
+          class="p-2 rounded-xl transition-all cursor-pointer border"
+          :class="isAccountActive ? 'bg-accent/15 text-accent border-accent/30 shadow-xs' : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.05] dark:hover:bg-white/[0.05]'"
+          title="Minha Conta"
+        >
+          <UserIcon class="w-4 h-4" />
+        </NuxtLink>
+
+        <div class="w-8 h-px bg-divider/60 my-1"></div>
+
         <!-- Miniatura de Leitura Ativa no modo colapsado -->
         <NuxtLink
           v-if="hasActiveBook"
           :to="activeBookReaderLink"
-          class="p-1 rounded-xl transition-all cursor-pointer border border-divider hover:border-accent/50 group relative mb-1"
+          class="p-1 rounded-xl transition-all cursor-pointer border border-divider hover:border-accent/50 group relative mb-0.5"
           :title="`Continuar lendo: ${activeBookTitle} (${activeBookProgress}%)`"
         >
           <div class="w-8 h-11 rounded-md overflow-hidden bg-neutral-900 border border-divider shadow-xs relative group-hover:scale-105 transition-transform">
@@ -65,7 +109,7 @@
         <!-- Botão Diário no modo colapsado -->
         <button
           @click="$emit('open-journal')"
-          class="p-2.5 rounded-xl transition-all cursor-pointer border relative group"
+          class="p-2 rounded-xl transition-all cursor-pointer border relative group"
           :class="isJournalActive ? 'bg-amber-500/15 text-amber-500 border-amber-500/30 shadow-xs' : 'border-transparent text-textSecondary hover:text-amber-500 hover:bg-amber-500/10'"
           title="Diário Sequencial de Anotações"
         >
@@ -74,18 +118,20 @@
 
         <div class="w-8 h-px bg-divider/60 my-0.5"></div>
 
+        <!-- Botão Todos os Itens no modo colapsado -->
         <button
           @click="$emit('select-folder', null); $emit('select-tag', null)"
-          class="p-2.5 rounded-xl transition-all cursor-pointer border"
+          class="p-2 rounded-xl transition-all cursor-pointer border"
           :class="!isJournalActive && selectedFolder === null && selectedTag === null ? 'bg-accent/15 text-accent border-accent/30 shadow-xs' : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.05] dark:hover:bg-white/[0.05]'"
           title="Todos os itens"
         >
           <LayersIcon class="w-4 h-4" />
         </button>
 
+        <!-- Botão Sem Pasta no modo colapsado -->
         <button
           @click="$emit('select-folder', '__uncategorized__')"
-          class="p-2.5 rounded-xl transition-all cursor-pointer border"
+          class="p-2 rounded-xl transition-all cursor-pointer border"
           :class="!isJournalActive && selectedFolder === '__uncategorized__' ? 'bg-accent/15 text-accent border-accent/30 shadow-xs' : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.05] dark:hover:bg-white/[0.05]'"
           title="Sem pasta"
         >
@@ -94,11 +140,12 @@
 
         <div class="w-8 h-px bg-divider/60 my-1"></div>
 
+        <!-- Pastas no modo colapsado -->
         <div
           v-for="folder in allFolders"
           :key="folder"
           @click="$emit('select-folder', folder)"
-          class="p-2.5 rounded-xl transition-all cursor-pointer relative group border"
+          class="p-2 rounded-xl transition-all cursor-pointer relative group border"
           :class="!isJournalActive && selectedFolder === folder ? 'bg-accent/15 text-accent border-accent/30 shadow-xs' : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.05] dark:hover:bg-white/[0.05]'"
           :title="'Pasta: ' + folder"
         >
@@ -106,8 +153,112 @@
         </div>
       </div>
 
-      <!-- MODO EXPANDIDO: Árvore Hierárquica de Pastas & Arquivos -->
+      <!-- MODO EXPANDIDO: Navegação Global + Leitura Ativa + Árvore Hierárquica -->
       <div v-else class="space-y-3">
+        <!-- SEÇÃO: NAVEGAÇÃO PRINCIPAL ARESTA -->
+        <div class="space-y-0.5 pb-2.5 border-b border-divider/60">
+          <!-- Início / Workspace -->
+          <NuxtLink
+            to="/"
+            class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs md:text-sm font-medium transition-all cursor-pointer border group"
+            :class="isHomeActive && !isJournalActive && selectedFolder === null && selectedTag === null
+              ? 'bg-accent/15 text-accent border-accent/30 font-semibold shadow-xs'
+              : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'"
+            title="Início / Workspace Criativo"
+          >
+            <div class="flex items-center gap-2.5 truncate">
+              <HomeIcon class="w-4 h-4 flex-shrink-0 transition-colors" :class="isHomeActive ? 'text-accent' : 'text-textSecondary group-hover:text-textPrimary'" />
+              <span class="truncate font-interface">Início</span>
+            </div>
+          </NuxtLink>
+
+          <!-- Menu de Livros (Acordeão / Submenu) -->
+          <div class="space-y-0.5">
+            <button
+              @click="isBooksSubmenuOpen = !isBooksSubmenuOpen"
+              class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs md:text-sm font-medium transition-all cursor-pointer border group"
+              :class="isBooksActive
+                ? 'bg-accent/10 text-accent border-accent/20 font-semibold'
+                : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'"
+              title="Biblioteca & Livros"
+            >
+              <div class="flex items-center gap-2.5 truncate">
+                <BookOpenIcon class="w-4 h-4 flex-shrink-0 transition-colors" :class="isBooksActive ? 'text-accent' : 'text-textSecondary group-hover:text-textPrimary'" />
+                <span class="truncate font-interface">Livros</span>
+              </div>
+              <ChevronRightIcon
+                class="w-3.5 h-3.5 transition-transform duration-200"
+                :class="{ 'rotate-90 text-accent': isBooksSubmenuOpen }"
+              />
+            </button>
+
+            <!-- Submenu de Livros -->
+            <div
+              v-if="isBooksSubmenuOpen"
+              class="pl-4 pr-1 py-1 space-y-0.5 border-l border-divider ml-4 my-0.5"
+            >
+              <!-- 1. Minha Estante -->
+              <NuxtLink
+                to="/library"
+                class="flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs transition-colors group cursor-pointer"
+                :class="route.path.startsWith('/library') ? 'bg-accent/15 text-accent font-medium' : 'text-textSecondary hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'"
+              >
+                <BookIcon class="w-3.5 h-3.5 text-accent" />
+                <span class="font-interface truncate">Minha Estante</span>
+              </NuxtLink>
+
+              <!-- 2. Conversor -->
+              <NuxtLink
+                to="/conversor"
+                class="flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs transition-colors group cursor-pointer"
+                :class="route.path.startsWith('/conversor') ? 'bg-accent/15 text-accent font-medium' : 'text-textSecondary hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'"
+              >
+                <FileCode2Icon class="w-3.5 h-3.5 text-accent" />
+                <span class="font-interface truncate">Conversor PDF→EPUB</span>
+              </NuxtLink>
+
+              <!-- 3. Loja -->
+              <NuxtLink
+                to="/loja"
+                class="flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs transition-colors group cursor-pointer"
+                :class="route.path === '/loja' ? 'bg-accent/15 text-accent font-medium' : 'text-textSecondary hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'"
+              >
+                <ShoppingBagIcon class="w-3.5 h-3.5 text-accent" />
+                <span class="font-interface truncate">Loja & Catálogo</span>
+              </NuxtLink>
+            </div>
+          </div>
+
+          <!-- Revisão & Flashcards -->
+          <NuxtLink
+            to="/revisao"
+            class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs md:text-sm font-medium transition-all cursor-pointer border group"
+            :class="isReviewActive
+              ? 'bg-accent/15 text-accent border-accent/30 font-semibold shadow-xs'
+              : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'"
+            title="Revisão de Flashcards & Resumos"
+          >
+            <div class="flex items-center gap-2.5 truncate">
+              <BrainIcon class="w-4 h-4 flex-shrink-0 transition-colors" :class="isReviewActive ? 'text-accent' : 'text-textSecondary group-hover:text-textPrimary'" />
+              <span class="truncate font-interface">Revisão</span>
+            </div>
+          </NuxtLink>
+
+          <!-- Minha Conta -->
+          <NuxtLink
+            to="/conta"
+            class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs md:text-sm font-medium transition-all cursor-pointer border group"
+            :class="isAccountActive
+              ? 'bg-accent/15 text-accent border-accent/30 font-semibold shadow-xs'
+              : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'"
+            title="Minha Conta & Status"
+          >
+            <div class="flex items-center gap-2.5 truncate">
+              <UserIcon class="w-4 h-4 flex-shrink-0 transition-colors" :class="isAccountActive ? 'text-accent' : 'text-textSecondary group-hover:text-textPrimary'" />
+              <span class="truncate font-interface">Minha Conta</span>
+            </div>
+          </NuxtLink>
+        </div>
         <!-- 0. CONTINUAÇÃO DA LEITURA (BANNER HORIZONTAL NO TOPO) -->
         <div v-if="hasActiveBook" class="pb-1">
           <div class="text-[10px] font-bold tracking-wider uppercase text-textSecondary font-interface px-1 mb-1.5 flex items-center justify-between">
@@ -663,10 +814,19 @@ import {
   Globe as GlobeIcon,
   FolderPlus as FolderPlusIcon,
   Play as PlayIcon,
-  BookOpenCheck as BookOpenCheckIcon
+  BookOpenCheck as BookOpenCheckIcon,
+  Home as HomeIcon,
+  BookOpen as BookOpenIcon,
+  Book as BookIcon,
+  FileCode2 as FileCode2Icon,
+  ShoppingBag as ShoppingBagIcon,
+  Brain as BrainIcon,
+  User as UserIcon
 } from 'lucide-vue-next'
 import { useUserBooks } from '~/composables/useUserBooks'
 import { resolveBookCover } from '~/utils/cover'
+
+const route = useRoute()
 
 export interface SidebarTreeItem {
   id: string
@@ -716,6 +876,35 @@ const emit = defineEmits<{
 
 const isCollapsed = ref(props.collapsed ?? false)
 const expandedFolders = ref<Set<string>>(new Set(['__uncategorized__']))
+
+const isBooksSubmenuOpen = ref(false)
+
+const isHomeActive = computed(() => {
+  return route.path === '/' || route.path.startsWith('/canvas')
+})
+
+const isBooksActive = computed(() => {
+  return route.path.startsWith('/library') || route.path.startsWith('/conversor') || route.path === '/loja'
+})
+
+const isReviewActive = computed(() => {
+  return route.path.startsWith('/revisao')
+})
+
+const isAccountActive = computed(() => {
+  return route.path.startsWith('/conta')
+})
+
+// Abre o submenu automaticamente se a rota atual for de livros
+watch(
+  () => route.path,
+  (path) => {
+    if (path.startsWith('/library') || path.startsWith('/conversor') || path === '/loja') {
+      isBooksSubmenuOpen.value = true
+    }
+  },
+  { immediate: true }
+)
 
 const { userBooks, fetchUserBooks } = useUserBooks()
 const coverError = ref(false)

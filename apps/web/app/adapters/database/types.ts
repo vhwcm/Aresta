@@ -151,7 +151,7 @@ export interface LocalStreak extends BaseLocalEntity {
 
 export interface LocalMutation {
   id: string; // UUID v4
-  entity_type: 'book' | 'annotation' | 'flashcard' | 'canvas' | 'streak' | 'note' | 'drawing_note' | 'settings' | 'didactic_booklet' | 'link';
+  entity_type: 'book' | 'annotation' | 'flashcard' | 'canvas' | 'streak' | 'note' | 'drawing_note' | 'settings' | 'didactic_booklet' | 'link' | 'journal';
   entity_id: string | number;
   action: 'INSERT' | 'UPDATE' | 'DELETE';
   payload: any;
@@ -186,3 +186,12 @@ export interface LocalDidacticBooklet extends BaseLocalEntity {
   themeId?: number | null;
   createdAt: string;
 }
+
+export interface LocalJournalEntry extends BaseLocalEntity {
+  id: string; // date 'YYYY-MM-DD'
+  date: string; // 'YYYY-MM-DD'
+  content: string;
+  createdAt?: string;
+  created_at?: string;
+}
+

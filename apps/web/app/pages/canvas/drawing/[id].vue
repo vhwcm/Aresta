@@ -172,6 +172,36 @@
       </div>
     </div>
 
+    <!-- Floating Zoom Controls Pill (Acessibilidade e Usabilidade Mobile/Tablet) -->
+    <div
+      class="fixed bottom-4 right-4 z-30 flex items-center gap-1 px-2 py-1.5 rounded-xl bg-bgPanel/90 backdrop-blur-md border border-divider shadow-lg text-textSecondary select-none transition-transform active:scale-95"
+    >
+      <button
+        @click="handleZoomOut"
+        class="p-1.5 rounded-lg hover:bg-bgElevated hover:text-textPrimary transition-colors cursor-pointer"
+        title="Diminuir Zoom (-)"
+        aria-label="Diminuir Zoom"
+      >
+        <MinusIcon class="w-3.5 h-3.5" />
+      </button>
+      <button
+        @click="handleZoomFit"
+        class="px-2 py-0.5 rounded-md hover:bg-bgElevated text-[11px] font-mono font-medium text-textPrimary hover:text-primary transition-colors cursor-pointer"
+        title="Ajustar à tela (0)"
+        aria-label="Ajustar à tela"
+      >
+        {{ Math.round(pageScale * 100) }}%
+      </button>
+      <button
+        @click="handleZoomIn"
+        class="p-1.5 rounded-lg hover:bg-bgElevated hover:text-textPrimary transition-colors cursor-pointer"
+        title="Aumentar Zoom (+)"
+        aria-label="Aumentar Zoom"
+      >
+        <PlusIcon class="w-3.5 h-3.5" />
+      </button>
+    </div>
+
     <!-- Modal de Síntese de IA (Split View) -->
     <DrawingAiSynthesisModal
       v-model="showSynthesisModal"
@@ -192,6 +222,7 @@ import {
   Sun as SunIcon,
   Moon as MoonIcon,
   Plus as PlusIcon,
+  Minus as MinusIcon,
   ArrowRight as ArrowRightIcon,
   Trash as TrashIcon,
 } from 'lucide-vue-next';
@@ -326,6 +357,77 @@ function handleWheel(e: WheelEvent) {
     }
   }
 }
+
+// Gesto Multi-Touch: Pinch-to-Zoom e Pan de dois dedos em telas móveis e tablets
+let initialPinchDistance = 0;
+let initialPinchScale = 1;
+let initialPinchMidX = 0;
+let initialPinchMidY = 0;
+let initialScrollLeft = 0;
+let initialScrollTop = 0;
+let isTouchPinching = false;
+
+function getDistance(t1: Touch, t2: Touch): number {
+  return Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+}
+
+function getMidpoint(t1: Touch, t2: Touch): { x: number; y: number } {
+  return {
+    x: (t1.clientX + t2.clientX) / 2,
+    y: (t1.clientY + t2.clientY) / 2,
+  };
+}
+
+function handleTouchStart(e: TouchEvent) {
+  if (e.touches.length === 2) {
+    const t1 = e.touches[0]!;
+    const t2 = e.touches[1]!;
+    initialPinchDistance = getDistance(t1, t2);
+    initialPinchScale = pageScale.value;
+    const mid = getMidpoint(t1, t2);
+    initialPinchMidX = mid.x;
+    initialPinchMidY = mid.y;
+    if (viewportRef.value) {
+      initialScrollLeft = viewportRef.value.scrollLeft;
+      initialScrollTop = viewportRef.value.scrollTop;
+    }
+    isTouchPinching = true;
+  } else if (e.touches.length !== 2) {
+    isTouchPinching = false;
+  }
+}
+
+function handleTouchMove(e: TouchEvent) {
+  if (isTouchPinching && e.touches.length === 2) {
+    if (e.cancelable) {
+      e.preventDefault();
+    }
+    const t1 = e.touches[0]!;
+    const t2 = e.touches[1]!;
+    const currentDistance = getDistance(t1, t2);
+    if (initialPinchDistance > 10) {
+      const scaleFactor = currentDistance / initialPinchDistance;
+      const rawScale = initialPinchScale * scaleFactor;
+      pageScale.value = Math.max(0.25, Math.min(2.5, Number(rawScale.toFixed(2))));
+    }
+
+    // Pan suave acompanhando o ponto médio dos dois dedos
+    const mid = getMidpoint(t1, t2);
+    const deltaX = mid.x - initialPinchMidX;
+    const deltaY = mid.y - initialPinchMidY;
+    if (viewportRef.value) {
+      viewportRef.value.scrollLeft = initialScrollLeft - deltaX;
+      viewportRef.value.scrollTop = initialScrollTop - deltaY;
+    }
+  }
+}
+
+function handleTouchEnd(e: TouchEvent) {
+  if (e.touches.length < 2) {
+    isTouchPinching = false;
+  }
+}
+
 
 function startEditingTitle() {
   editedTitle.value = currentDrawing.value?.title || '';
@@ -519,6 +621,10 @@ onMounted(async () => {
   window.addEventListener('beforeunload', handleBeforeUnload);
   if (viewportRef.value) {
     viewportRef.value.addEventListener('wheel', handleWheel, { passive: false });
+    viewportRef.value.addEventListener('touchstart', handleTouchStart, { passive: true });
+    viewportRef.value.addEventListener('touchmove', handleTouchMove, { passive: false });
+    viewportRef.value.addEventListener('touchend', handleTouchEnd, { passive: true });
+    viewportRef.value.addEventListener('touchcancel', handleTouchEnd, { passive: true });
   }
   if (drawingId.value) {
     await loadDrawing(drawingId.value);
@@ -547,6 +653,10 @@ onBeforeUnmount(async () => {
   window.removeEventListener('beforeunload', handleBeforeUnload);
   if (viewportRef.value) {
     viewportRef.value.removeEventListener('wheel', handleWheel);
+    viewportRef.value.removeEventListener('touchstart', handleTouchStart);
+    viewportRef.value.removeEventListener('touchmove', handleTouchMove);
+    viewportRef.value.removeEventListener('touchend', handleTouchEnd);
+    viewportRef.value.removeEventListener('touchcancel', handleTouchEnd);
   }
 });
 </script>

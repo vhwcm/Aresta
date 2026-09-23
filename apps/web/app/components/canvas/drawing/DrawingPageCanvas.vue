@@ -516,11 +516,34 @@ function drawSingleStroke(
   ctx.restore();
 }
 
-// Handlers de Pointer Events (Rejeição de Palma + Botão Stylus S-Pen)
+// Handlers de Pointer Events (Rejeição de Palma + Isolamento Multi-Touch + Botão Stylus S-Pen)
 const activePointerId = ref<number | null>(null);
+const activeTouchPointers = new Map<number, { x: number; y: number }>();
+const isPinchActive = ref(false);
+let lastPinchEndTime = 0;
+const PINCH_COOLDOWN_MS = 200;
+
+function abortCurrentStroke() {
+  if (isDrawing.value || isErasing.value) {
+    isDrawing.value = false;
+    isErasing.value = false;
+    activeStrokePoints.value = [];
+    if (activePointerId.value !== null && drawCanvasRef.value) {
+      try {
+        if (drawCanvasRef.value.hasPointerCapture?.(activePointerId.value)) {
+          drawCanvasRef.value.releasePointerCapture(activePointerId.value);
+        }
+      } catch {
+        // Ignora erro ao liberar captura
+      }
+    }
+    activePointerId.value = null;
+    renderStrokes();
+  }
+}
 
 function handlePointerEnter(e: PointerEvent) {
-  if ((isDrawing.value || isErasing.value) && e.buttons === 0) {
+  if ((isDrawing.value || isErasing.value) && e.pointerType === 'mouse' && e.buttons === 0) {
     handlePointerUp(e);
   }
 }
@@ -530,8 +553,23 @@ function handlePointerDown(e: PointerEvent) {
 
   if (!isDrawingTool.value) return;
 
-  if (props.palmRejection) {
-    if (e.pointerType === 'touch') {
+  const pType = e.pointerType || (e as any).detail?.pointerType || 'mouse';
+  if (pType === 'touch') {
+    activeTouchPointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    // Se 2 ou mais dedos tocarem a tela: ABORTA IMEDIATAMENTE qualquer traço em andamento
+    if (activeTouchPointers.size >= 2) {
+      isPinchActive.value = true;
+      abortCurrentStroke();
+      return;
+    }
+
+    // Janela de cooldown pós-pinch para evitar que soltar um dedo antes do outro inicie um traço
+    if (Date.now() - lastPinchEndTime < PINCH_COOLDOWN_MS) {
+      return;
+    }
+
+    if (props.palmRejection) {
       if ((e.width && e.width > 25) || (e.height && e.height > 25)) {
         return;
       }
@@ -539,6 +577,11 @@ function handlePointerDown(e: PointerEvent) {
   }
 
   if (e.pointerType === 'mouse' && e.button !== 0) {
+    return;
+  }
+
+  // Se já há um traço em andamento com outro ponteiro, ignora este evento
+  if (isDrawing.value && activePointerId.value !== null && activePointerId.value !== e.pointerId) {
     return;
   }
 
@@ -569,7 +612,32 @@ function handlePointerDown(e: PointerEvent) {
 function handlePointerMove(e: PointerEvent) {
   if (!isDrawingTool.value) return;
 
-  if ((isDrawing.value || isErasing.value) && e.buttons === 0) {
+  const pType = e.pointerType || (e as any).detail?.pointerType || 'mouse';
+
+  // Atualiza coordenadas no rastreador de toques
+  if (pType === 'touch') {
+    if (activeTouchPointers.has(e.pointerId)) {
+      activeTouchPointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    }
+
+    // Se estiver em modo pinch ou houver múltiplos dedos na tela, garante que nenhum traço seja desenhado
+    if (isPinchActive.value || activeTouchPointers.size >= 2) {
+      abortCurrentStroke();
+      return;
+    }
+
+    // Ignora eventos de ponteiros touch que não sejam o ponteiro ativo que iniciou o traço
+    if (activePointerId.value !== null && e.pointerId !== activePointerId.value) {
+      return;
+    }
+  }
+
+  // Ignora movimentos de ponteiro mouse/pen que não correspondam ao ativo
+  if (activePointerId.value !== null && e.pointerId !== activePointerId.value) {
+    return;
+  }
+
+  if ((isDrawing.value || isErasing.value) && pType === 'mouse' && e.buttons === 0) {
     handlePointerUp(e);
     return;
   }
@@ -591,6 +659,21 @@ function handlePointerMove(e: PointerEvent) {
 }
 
 function handlePointerUp(e?: PointerEvent) {
+  const pType = e?.pointerType || (e as any)?.detail?.pointerType;
+  if (e && pType === 'touch') {
+    activeTouchPointers.delete(e.pointerId);
+
+    // Se estava em pinch e os dedos estão sendo levantados
+    if (isPinchActive.value) {
+      if (activeTouchPointers.size < 2) {
+        isPinchActive.value = false;
+        lastPinchEndTime = Date.now();
+      }
+      abortCurrentStroke();
+      return;
+    }
+  }
+
   const pointerId = e?.pointerId ?? activePointerId.value;
   if (pointerId !== null && drawCanvasRef.value && drawCanvasRef.value.hasPointerCapture?.(pointerId)) {
     try {
@@ -599,6 +682,12 @@ function handlePointerUp(e?: PointerEvent) {
       // Ignora erro ao liberar captura
     }
   }
+
+  // Se o ponteiro que subiu não é o ativo, apenas registra soltura
+  if (pointerId !== null && activePointerId.value !== null && pointerId !== activePointerId.value) {
+    return;
+  }
+
   activePointerId.value = null;
 
   if (isErasing.value) {
@@ -626,12 +715,21 @@ function handlePointerUp(e?: PointerEvent) {
 }
 
 function handleGlobalPointerUp(e: PointerEvent) {
+  if (e.pointerType === 'touch') {
+    activeTouchPointers.delete(e.pointerId);
+    if (activeTouchPointers.size === 0) {
+      isPinchActive.value = false;
+    }
+  }
+
   if (isDrawing.value || isErasing.value) {
     handlePointerUp(e);
   }
 }
 
 function handleWindowBlur() {
+  activeTouchPointers.clear();
+  isPinchActive.value = false;
   if (isDrawing.value || isErasing.value) {
     handlePointerUp();
   }

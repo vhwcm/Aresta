@@ -10,6 +10,10 @@
     }"
     tabindex="0"
     @wheel.prevent="onWheel"
+    @touchstart="onTouchStart"
+    @touchmove="onTouchMove"
+    @touchend="onTouchEnd"
+    @touchcancel="onTouchEnd"
     @pointerdown="onBackgroundPointerDown"
     @pointermove="onPointerMove"
     @pointerup="onPointerUp"
@@ -625,6 +629,58 @@ const onWheel = (e: WheelEvent) => {
 
   // Dois dedos apenas movem a tela (pan suave 2D)
   panBy(-e.deltaX, -e.deltaY);
+};
+
+// Touch Interactions (Pinch-to-Zoom e Pan com dois dedos em dispositivos móveis)
+let touchPinchDist = 0;
+let touchPinchMid = { x: 0, y: 0 };
+let isTouchPinch = false;
+
+const onTouchStart = (e: TouchEvent) => {
+  if (e.touches.length === 2) {
+    const t1 = e.touches[0]!;
+    const t2 = e.touches[1]!;
+    touchPinchDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+    touchPinchMid = {
+      x: (t1.clientX + t2.clientX) / 2,
+      y: (t1.clientY + t2.clientY) / 2,
+    };
+    isTouchPinch = true;
+  } else if (e.touches.length !== 2) {
+    isTouchPinch = false;
+  }
+};
+
+const onTouchMove = (e: TouchEvent) => {
+  if (isTouchPinch && e.touches.length === 2) {
+    if (e.cancelable) {
+      e.preventDefault();
+    }
+    const t1 = e.touches[0]!;
+    const t2 = e.touches[1]!;
+    const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+    const mid = {
+      x: (t1.clientX + t2.clientX) / 2,
+      y: (t1.clientY + t2.clientY) / 2,
+    };
+
+    if (touchPinchDist > 10) {
+      const zoomFactor = dist / touchPinchDist;
+      zoomAt(mid.x, mid.y, zoomFactor);
+      touchPinchDist = dist;
+    }
+
+    const dx = mid.x - touchPinchMid.x;
+    const dy = mid.y - touchPinchMid.y;
+    panBy(dx, dy);
+    touchPinchMid = mid;
+  }
+};
+
+const onTouchEnd = (e: TouchEvent) => {
+  if (e.touches.length < 2) {
+    isTouchPinch = false;
+  }
 };
 
 // Node Interactions

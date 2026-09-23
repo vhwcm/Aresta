@@ -163,9 +163,9 @@ describe('GraphCanvas Component', () => {
     expect(chipsBar.text()).not.toContain('📄')
     expect(chipsBar.text()).not.toContain('🖼️')
 
-    // Deve conter ícones SVG limpos da Lucide dentro dos botões de chip (Temas, Livros, Notas, Quadros, Pastas)
+    // Deve conter ícones SVG limpos da Lucide dentro dos botões de chip (Temas, Livros, Pastas, Notas, Quadros, Links)
     const chipButtons = chipsBar.findAll('button')
-    expect(chipButtons.length).toBe(5)
+    expect(chipButtons.length).toBe(6)
     for (const btn of chipButtons) {
       expect(btn.find('svg').exists()).toBe(true)
     }
@@ -461,5 +461,36 @@ describe('GraphCanvas Component', () => {
     const emittedPayload = (wrapper.emitted('connect-nodes') as any)[0][0]
     expect(emittedPayload.sourceType).toBe('book')
     expect(emittedPayload.targetType).toBe('theme')
+  })
+
+  it('renders link nodes with link icon, label and layer filter chip', () => {
+    const wrapper = mount(GraphCanvas, {
+      props: {
+        nodes: [
+          {
+            id: 'link-1',
+            rawId: 'link-1',
+            type: 'link',
+            name: 'Nuxt Docs',
+            title: 'Nuxt Docs',
+            url: 'https://nuxt.com',
+            domain: 'nuxt.com',
+            color: '#06B6D4',
+          },
+        ],
+        edges: [],
+      },
+    })
+
+    // Deve conter o chip de camada "Links"
+    expect(wrapper.text()).toContain('Links')
+
+    // Deve renderizar nó de link com ícone e texto
+    const linkG = wrapper.findAll('g.node').find((n) => n.text().includes('Nuxt Docs'))
+    expect(linkG).toBeDefined()
+    expect(linkG?.find('.link-icon').exists()).toBe(true)
+    const rect = linkG?.find('rect')
+    expect(rect?.exists()).toBe(true)
+    expect(rect?.attributes('stroke')).toBe('#06B6D4')
   })
 })

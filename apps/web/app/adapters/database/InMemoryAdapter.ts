@@ -10,7 +10,8 @@ import type {
   LocalDrawingNote,
   LocalUserSettings,
   LocalDidacticBooklet,
-  LocalLinkItem
+  LocalLinkItem,
+  LocalJournalEntry
 } from './types';
 
 export class InMemoryAdapter implements IDatabaseAdapter {
@@ -25,6 +26,7 @@ export class InMemoryAdapter implements IDatabaseAdapter {
   private settings: LocalUserSettings | null = null;
   private didacticBooklets = new Map<string, LocalDidacticBooklet>();
   private links = new Map<string, LocalLinkItem>();
+  private journals = new Map<string, LocalJournalEntry>();
 
   async init(): Promise<void> {}
 
@@ -342,4 +344,37 @@ export class InMemoryAdapter implements IDatabaseAdapter {
       });
     }
   }
+
+  // Journal
+  async getJournalEntries(): Promise<LocalJournalEntry[]> {
+    return Array.from(this.journals.values())
+      .filter((j) => !j.deleted_at && j.content && j.content.trim().length > 0)
+      .sort((a, b) => b.date.localeCompare(a.date));
+  }
+
+  async getJournalEntryByDate(date: string): Promise<LocalJournalEntry | null> {
+    const entry = this.journals.get(date);
+    return entry && !entry.deleted_at ? entry : null;
+  }
+
+  async getJournalEntriesRaw(): Promise<LocalJournalEntry[]> {
+    return Array.from(this.journals.values());
+  }
+
+  async saveJournalEntry(entry: LocalJournalEntry): Promise<void> {
+    this.journals.set(entry.date, { ...entry });
+  }
+
+  async deleteJournalEntry(date: string): Promise<void> {
+    const item = this.journals.get(date);
+    if (item) {
+      this.journals.set(date, {
+        ...item,
+        deleted_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        sync_status: 'pending',
+      });
+    }
+  }
 }
+

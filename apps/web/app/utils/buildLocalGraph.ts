@@ -198,7 +198,10 @@ export const buildLocalGraph = (input: BuildLocalGraphInput = {}): GraphData => 
     }
     for (const link of note.links || []) {
       if (link.targetType === 'BOOK') addEdge(nodeId, `book-${link.targetId}`, 'note-book')
-      if (link.targetType === 'CANVAS') addEdge(nodeId, `canvas-${link.targetId}`, 'note-canvas')
+      if (link.targetType === 'CANVAS') {
+        const cId = String(link.targetId)
+        addEdge(nodeId, cId.startsWith('canvas-') ? cId : `canvas-${cId}`, 'note-canvas')
+      }
       if (link.targetType === 'NOTE') {
         const tId = String(link.targetId)
         addEdge(nodeId, tId.startsWith('note-') ? tId : `note-${tId}`, 'note-note')
@@ -215,7 +218,8 @@ export const buildLocalGraph = (input: BuildLocalGraphInput = {}): GraphData => 
       let m: RegExpExecArray | null
       while ((m = reg.exec(noteContent)) !== null) {
         if (m[1]) {
-          addEdge(nodeId, `canvas-${m[1]}`, 'note-canvas')
+          const cId = m[1].startsWith('canvas-') ? m[1] : `canvas-${m[1]}`
+          addEdge(nodeId, cId, 'note-canvas')
         }
       }
     }
@@ -240,7 +244,8 @@ export const buildLocalGraph = (input: BuildLocalGraphInput = {}): GraphData => 
   }
 
   for (const canvas of canvases) {
-    const nodeId = `canvas-${canvas.id}`
+    const rawCanvasId = String(canvas.id)
+    const nodeId = rawCanvasId.startsWith('canvas-') ? rawCanvasId : `canvas-${rawCanvasId}`
     nodes.push({
       id: nodeId,
       rawId: canvas.id,
@@ -254,7 +259,8 @@ export const buildLocalGraph = (input: BuildLocalGraphInput = {}): GraphData => 
   }
 
   for (const l of links) {
-    const nodeId = `link-${l.id}`
+    const rawLinkId = String(l.id)
+    const nodeId = rawLinkId.startsWith('link-') ? rawLinkId : `link-${rawLinkId}`
     nodes.push({
       id: nodeId,
       rawId: l.id,
@@ -273,8 +279,14 @@ export const buildLocalGraph = (input: BuildLocalGraphInput = {}): GraphData => 
       updatedAt: l.updated_at,
     } as any)
 
-    if (l.sourceNoteId) addEdge(`note-${l.sourceNoteId}`, nodeId, 'note-link')
-    if (l.sourceCanvasId) addEdge(`canvas-${l.sourceCanvasId}`, nodeId, 'canvas-link')
+    if (l.sourceNoteId) {
+      const sId = String(l.sourceNoteId)
+      addEdge(sId.startsWith('note-') ? sId : `note-${sId}`, nodeId, 'note-link')
+    }
+    if (l.sourceCanvasId) {
+      const cId = String(l.sourceCanvasId)
+      addEdge(cId.startsWith('canvas-') ? cId : `canvas-${cId}`, nodeId, 'canvas-link')
+    }
     if (l.folder?.trim()) addEdge(nodeId, `folder-${l.folder.trim()}`, 'link-folder')
   }
 

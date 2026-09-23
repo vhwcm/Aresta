@@ -27,7 +27,7 @@ const toNodeId = (type: string, id: number | string) => {
 
 const numericId = (value: number | string | undefined | null) => {
   if (value === undefined || value === null) return NaN
-  const raw = String(value).replace(/^(book-|theme-|note-|canvas-|annotation-|folder-)/, '')
+  const raw = String(value).replace(/^(book-|theme-|note-|canvas-|annotation-|folder-|link-)/, '')
   return Number(raw)
 }
 

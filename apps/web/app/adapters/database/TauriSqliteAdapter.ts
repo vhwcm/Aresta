@@ -13,7 +13,8 @@ import type {
   LocalDrawingNote,
   LocalUserSettings,
   LocalDidacticBooklet,
-  LocalLinkItem
+  LocalLinkItem,
+  LocalJournalEntry
 } from './types';
 
 export class TauriSqliteAdapter implements IDatabaseAdapter {
@@ -226,6 +227,18 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
         tags_json TEXT,
         source_note_id TEXT,
         source_canvas_id TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        deleted_at TEXT,
+        sync_status TEXT DEFAULT 'pending'
+      );
+    `);
+
+    await this.db.execute(`
+      CREATE TABLE IF NOT EXISTS journals (
+        id TEXT PRIMARY KEY,
+        date TEXT NOT NULL,
+        content TEXT NOT NULL,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
         deleted_at TEXT,
@@ -1325,4 +1338,107 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
       (dexie) => dexie.deleteLink(id)
     );
   }
+
+  // Journal
+  async getJournalEntries(): Promise<LocalJournalEntry[]> {
+    return this.withDb<LocalJournalEntry[]>(
+      async (db) => {
+        const rows = await db.select<any[]>(
+          `SELECT * FROM journals WHERE deleted_at IS NULL AND LENGTH(TRIM(content)) > 0 ORDER BY date DESC`
+        );
+        return rows.map((r) => ({
+          id: r.id,
+          date: r.date,
+          content: r.content,
+          created_at: r.created_at,
+          updated_at: r.updated_at,
+          deleted_at: r.deleted_at,
+          sync_status: r.sync_status
+        }));
+      },
+      (dexie) => dexie.getJournalEntries()
+    );
+  }
+
+  async getJournalEntriesRaw(): Promise<LocalJournalEntry[]> {
+    return this.withDb<LocalJournalEntry[]>(
+      async (db) => {
+        const rows = await db.select<any[]>('SELECT * FROM journals ORDER BY date DESC');
+        return rows.map((r) => ({
+          id: r.id,
+          date: r.date,
+          content: r.content,
+          created_at: r.created_at,
+          updated_at: r.updated_at,
+          deleted_at: r.deleted_at,
+          sync_status: r.sync_status
+        }));
+      },
+      (dexie) => dexie.getJournalEntriesRaw?.() || dexie.getJournalEntries()
+    );
+  }
+
+  async getJournalEntryByDate(date: string): Promise<LocalJournalEntry | null> {
+    return this.withDb<LocalJournalEntry | null>(
+      async (db) => {
+        const rows = await db.select<any[]>(
+          'SELECT * FROM journals WHERE date = ? AND deleted_at IS NULL LIMIT 1',
+          [date]
+        );
+        if (rows.length === 0) return null;
+        const r = rows[0];
+        return {
+          id: r.id,
+          date: r.date,
+          content: r.content,
+          created_at: r.created_at,
+          updated_at: r.updated_at,
+          deleted_at: r.deleted_at,
+          sync_status: r.sync_status
+        };
+      },
+      (dexie) => dexie.getJournalEntryByDate(date)
+    );
+  }
+
+  async saveJournalEntry(entry: LocalJournalEntry): Promise<void> {
+    return this.withDb(
+      async (db) => {
+        await db.execute(
+          `INSERT INTO journals (id, date, content, created_at, updated_at, deleted_at, sync_status)
+           VALUES (?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+             date = excluded.date,
+             content = excluded.content,
+             updated_at = excluded.updated_at,
+             deleted_at = excluded.deleted_at,
+             sync_status = excluded.sync_status`,
+          [
+            entry.id || entry.date,
+            entry.date,
+            entry.content,
+            entry.created_at || entry.createdAt || new Date().toISOString(),
+            entry.updated_at || new Date().toISOString(),
+            entry.deleted_at ?? null,
+            entry.sync_status || 'pending'
+          ]
+        );
+      },
+      (dexie) => dexie.saveJournalEntry(entry)
+    );
+  }
+
+  async deleteJournalEntry(date: string): Promise<void> {
+    return this.withDb(
+      async (db) => {
+        const now = new Date().toISOString();
+        await db.execute(
+          `UPDATE journals SET deleted_at = ?, updated_at = ?, sync_status = 'pending' WHERE date = ? OR id = ?`,
+          [now, now, date, date]
+        );
+      },
+      (dexie) => dexie.deleteJournalEntry(date)
+    );
+  }
 }
+

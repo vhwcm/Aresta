@@ -9,7 +9,8 @@ import type {
   LocalDrawingNote,
   LocalUserSettings,
   LocalDidacticBooklet,
-  LocalLinkItem
+  LocalLinkItem,
+  LocalJournalEntry
 } from './types';
 
 export interface IDatabaseAdapter {
@@ -95,6 +96,14 @@ export interface IDatabaseAdapter {
   getLinksRaw?(): Promise<LocalLinkItem[]>;
   saveLink(link: LocalLinkItem): Promise<void>;
   deleteLink(id: string): Promise<void>;
+
+  // Journal (Diário Sequencial)
+  getJournalEntries(): Promise<LocalJournalEntry[]>;
+  getJournalEntryByDate(date: string): Promise<LocalJournalEntry | null>;
+  /** Retorna todas as entradas do diário sem filtrar por deleted_at (para sync). */
+  getJournalEntriesRaw?(): Promise<LocalJournalEntry[]>;
+  saveJournalEntry(entry: LocalJournalEntry): Promise<void>;
+  deleteJournalEntry(date: string): Promise<void>;
 
   // Session Purge
   clearAll?(): Promise<void>;

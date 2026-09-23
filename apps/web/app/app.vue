@@ -2,14 +2,12 @@
   <div
     class="min-h-screen text-textPrimary selection:bg-accent/20 transition-all bg-bgPanel"
     :class="[
-      isImmersivePage ? '' : (isCanvasPage ? 'lg:pl-16 md:landscape:pl-16' : 'px-3 sm:px-4 md:px-6 lg:pl-[4.5rem] md:landscape:pl-[4.5rem] pt-[max(0.75rem,env(safe-area-inset-top,0px))] pb-[max(5rem,env(safe-area-inset-bottom,0px))] md:pb-24 lg:pb-8 md:landscape:pb-8')
+      isImmersivePage ? '' : (isCanvasPage ? '' : 'px-3 sm:px-4 md:px-6 pt-[max(0.75rem,env(safe-area-inset-top,0px))] pb-8')
     ]"
   >
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>
-    <NavbarPageConnector v-if="!isOnboardingPage" />
-    <BottomNavbar v-if="!isOnboardingPage" />
     <CommandPalette />
     <SettingsModal />
     <StreakCelebrationModal />
@@ -19,8 +17,6 @@
 
 <script setup lang="ts">
 import { computed, onMounted, watch } from 'vue'
-import BottomNavbar from '~/components/BottomNavbar.vue'
-import NavbarPageConnector from '~/components/NavbarPageConnector.vue'
 import CommandPalette from '~/components/CommandPalette.vue'
 import SettingsModal from '~/components/SettingsModal.vue'
 import StreakCelebrationModal from '~/components/StreakCelebrationModal.vue'

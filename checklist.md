@@ -1,6 +1,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [23/09/2026 20:38] [Concluído] Remover BottomNavbar e NavbarPageConnector globais e integrar toda a navegação (Início, Livros, Revisão, Conta) diretamente no FolderTagSidebar com modos expandido e colapsado
 - [23/09/2026 20:25] [Concluído] Transformar rota inicial ('/') no Workspace de Canvas/Notas com banner de leitura ativa no topo e menu geral de adicionar na árvore de arquivos
 - [23/09/2026 20:15] [Concluído] Corrigir exibição de capas de livros sincronizados da nuvem na estante e no grafo de conhecimento: merge defensivo de metadados, download de capa do Drive e blindagem de resolução
 - [23/09/2026 20:10] [Concluído] Corrigir seleção de texto e criação de anotações via toque/mãos e caneta em tablets e dispositivos touch no leitor de livros
