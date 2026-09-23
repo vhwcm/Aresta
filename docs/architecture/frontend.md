@@ -40,3 +40,22 @@ O leitor de documentos utiliza o padrão Adapter para desacoplar bibliotecas de 
 - **Física Interativa**: Suporte a arraste de nós com fixação temporária, zoom semântico e filtragem dinâmica por temas ativos.
 
 > Para os diagramas completos de fluxo de dados do grafo, prevenção de ciclos e notas compostas, consulte [docs/architecture/canvas.md](file:///c:/Users/vichw/Aresta/docs/architecture/canvas.md).
+
+---
+
+## 4. Autenticação e Persistência de Sessão Local-First (`useAuth`)
+
+O Aresta opera sob uma arquitetura SPA client-side (`ssr: false`) distribuída na Web e em aplicativos nativos (Desktop e Android APK via Tauri v2):
+
+- **Estado Reativo Singleton**:
+  - `sharedToken` e `sharedUser` são instanciados como singletons no escopo de módulo em [useAuth.ts](file:///c:/Users/vichw/Aresta/apps/web/app/composables/useAuth.ts).
+  - Qualquer mutação de sessão (`login`, `register`, `useOAuth` ou callback) propaga reatividade imediata a todos os componentes sem recriação de refs.
+
+- **Resiliência Multi-Plataforma e Prioridade de Armazenamento**:
+  1. **LocalStorage**: Prioridade primária para clientes SPA e WebViews móveis. Garante persistência duradoura mesmo com reinicializações do app ou descarte do processo pelo Android.
+  2. **Cookies Adaptativos**: Utilizados para sincronização no navegador web padrão. A flag `secure` é calculada dinamicamente (`window.location.protocol === 'https:'`), impedindo que origens locais e WebViews (`http://tauri.localhost` ou `http://localhost`) rejeitem silenciosamente o cookie com base na RFC 6265bis.
+  3. **Leitura Unificada (`getStoredAuthToken`)**: Todos os pontos de consumo (`readerStore`, `Viewer`, `useDidacticBooklet`, `useFlashcards`) utilizam resolução unificada resiliente.
+
+- **Ciclo de Vida Nativo Android (`MainActivity.kt`)**:
+  - `CookieManager.getInstance().setAcceptCookie(true)` habilitado na inicialização.
+  - `CookieManager.getInstance().flush()` executado em `onPause()` e `onStop()`, descarregando a memória RAM para a base SQLite do WebView do sistema operacional.
