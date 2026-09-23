@@ -21,7 +21,6 @@ describe('FolderTagSidebar component', () => {
     });
 
     expect(wrapper.text()).toContain('Quadros');
-    expect(wrapper.text()).toContain('Todos os quadros');
     expect(wrapper.text()).toContain('Sem pasta');
     expect(wrapper.text()).toContain('Estudos');
     expect(wrapper.text()).toContain('Projetos');

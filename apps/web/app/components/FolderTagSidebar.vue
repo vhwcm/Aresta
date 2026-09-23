@@ -118,16 +118,6 @@
 
         <div class="w-8 h-px bg-divider/60 my-0.5"></div>
 
-        <!-- Botão Todos os Itens no modo colapsado -->
-        <button
-          @click="$emit('select-folder', null); $emit('select-tag', null)"
-          class="p-2 rounded-xl transition-all cursor-pointer border"
-          :class="!isJournalActive && selectedFolder === null && selectedTag === null ? 'bg-accent/15 text-accent border-accent/30 shadow-xs' : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.05] dark:hover:bg-white/[0.05]'"
-          title="Todos os itens"
-        >
-          <LayersIcon class="w-4 h-4" />
-        </button>
-
         <!-- Botão Sem Pasta no modo colapsado -->
         <button
           @click="$emit('select-folder', '__uncategorized__')"
@@ -332,31 +322,7 @@
           </button>
         </div>
 
-        <!-- 2. Todos os Itens -->
-        <div>
-          <button
-            @click="selectFolder(null); $emit('select-tag', null)"
-            class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs md:text-sm font-medium transition-all cursor-pointer border group"
-            :class="!isJournalActive && selectedFolder === null && selectedTag === null
-              ? 'bg-accent/15 text-accent border-accent/30 shadow-xs font-semibold'
-              : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'"
-          >
-            <div class="flex items-center gap-2.5 truncate">
-              <LayersIcon class="w-4 h-4 flex-shrink-0 transition-colors" :class="!isJournalActive && selectedFolder === null && selectedTag === null ? 'text-accent' : 'text-textSecondary group-hover:text-textPrimary'" />
-              <span class="truncate">Todos os {{ itemLabel }}</span>
-            </div>
-            <span
-              class="text-xs px-2 py-0.5 rounded-full font-mono font-medium transition-colors"
-              :class="!isJournalActive && selectedFolder === null && selectedTag === null
-                ? 'bg-accent/25 text-accent border-accent/30'
-                : 'bg-slate-100 dark:bg-white/[0.05] text-slate-700 dark:text-textSecondary/70 group-hover:text-textPrimary'"
-            >
-              {{ totalItemsCount }}
-            </span>
-          </button>
-        </div>
-
-        <!-- 3. BOTÃO GERAL DE ADICIONAR ACIMA DA ÁRVORE -->
+        <!-- 2. BOTÃO GERAL DE ADICIONAR ACIMA DA ÁRVORE -->
         <div class="relative pt-1" ref="addDropdownRef">
           <button
             @click="isAddMenuOpen = !isAddMenuOpen"

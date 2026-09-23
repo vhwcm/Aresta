@@ -1,6 +1,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [23/09/2026 20:47] [Concluído] Remover a barra/botão redundante de 'Todos os itens' do FolderTagSidebar (modos expandido e colapsado)
 - [23/09/2026 20:43] [Concluído] Aumentar tamanho da capa do livro ativo no sidebar (expandido e colapsado) e remover texto 'Continuar Leitura' com porcentagem
 - [23/09/2026 20:38] [Concluído] Remover BottomNavbar e NavbarPageConnector globais e integrar toda a navegação (Início, Livros, Revisão, Conta) diretamente no FolderTagSidebar com modos expandido e colapsado
 - [23/09/2026 20:25] [Concluído] Transformar rota inicial ('/') no Workspace de Canvas/Notas com banner de leitura ativa no topo e menu geral de adicionar na árvore de arquivos
