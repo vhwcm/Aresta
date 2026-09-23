@@ -17,22 +17,40 @@
     <!-- Top Header do Sidebar -->
     <div
       class="h-14 border-b border-divider/60 flex items-center flex-shrink-0 transition-all"
-      :class="isCollapsed ? 'justify-center px-2' : 'justify-between px-3 md:px-4'"
+      :class="isCollapsed ? 'justify-center px-2' : 'justify-between px-2.5 md:px-3 gap-2'"
     >
-      <div v-if="!isCollapsed" class="flex items-center gap-2 overflow-hidden">
-        <NuxtLink to="/" class="flex items-center gap-2 group cursor-pointer" title="Ir para Início">
+      <div v-if="!isCollapsed" class="flex items-center gap-2 overflow-hidden flex-1 min-w-0">
+        <NuxtLink to="/" class="flex items-center group cursor-pointer shrink-0" title="Ir para Início">
           <ArestaLogoGraph :size="24" use-image :to="null" class="!p-0 group-hover:scale-105 transition-transform" />
-          <span class="text-sm font-semibold tracking-tight text-textPrimary font-interface group-hover:text-accent transition-colors">{{ title || 'Aresta' }}</span>
         </NuxtLink>
-        <span class="text-[11px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-textSecondary border border-slate-200 dark:border-white/[0.06] font-mono font-medium ml-auto">
-          {{ totalItemsCount }}
-        </span>
+
+        <!-- Seletor Grafo vs. Grade no Topo -->
+        <div class="flex items-center p-0.5 rounded-xl bg-bgRoot border border-divider text-xs shrink-0 shadow-inner">
+          <button
+            class="px-2.5 py-1 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer text-xs font-medium"
+            :class="viewLayout === 'graph' ? 'bg-accent text-white font-semibold shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
+            title="Exibir Grafo de Conhecimento"
+            @click="$emit('update:view-layout', 'graph')"
+          >
+            <NetworkIcon class="w-3.5 h-3.5" />
+            <span>Grafo</span>
+          </button>
+          <button
+            class="px-2.5 py-1 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer text-xs font-medium"
+            :class="viewLayout === 'grid' ? 'bg-accent text-white font-semibold shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
+            title="Exibir Grade de Notas"
+            @click="$emit('update:view-layout', 'grid')"
+          >
+            <LayoutGridIcon class="w-3.5 h-3.5" />
+            <span>Grade</span>
+          </button>
+        </div>
       </div>
 
       <!-- Botão Minimizar/Expandir Sidebar -->
       <button
         @click="toggleCollapse"
-        class="p-1.5 rounded-lg text-textSecondary hover:text-textPrimary hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-colors cursor-pointer"
+        class="p-1.5 rounded-lg text-textSecondary hover:text-textPrimary hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-colors cursor-pointer shrink-0"
         :title="isCollapsed ? 'Expandir painel' : 'Recolher painel'"
       >
         <SidebarIcon class="w-4 h-4" />
@@ -763,7 +781,8 @@ import {
   FileCode2 as FileCode2Icon,
   ShoppingBag as ShoppingBagIcon,
   Brain as BrainIcon,
-  User as UserIcon
+  User as UserIcon,
+  Network as NetworkIcon
 } from 'lucide-vue-next'
 import { useUserBooks } from '~/composables/useUserBooks'
 import { resolveBookCover } from '~/utils/cover'
@@ -789,6 +808,7 @@ const props = withDefaults(
     title?: string
     itemLabel?: string
     collapsed?: boolean
+    viewLayout?: 'graph' | 'grid' | 'journal'
   }>(),
   {
     selectedFolder: null,
@@ -797,7 +817,8 @@ const props = withDefaults(
     isJournalActive: false,
     title: 'Biblioteca',
     itemLabel: 'itens',
-    collapsed: false
+    collapsed: false,
+    viewLayout: 'graph'
   }
 )
 
@@ -814,6 +835,7 @@ const emit = defineEmits<{
   (_e: 'rename-folder', _payload: { oldName: string; newName: string }): void
   (_e: 'delete-folder', _name: string): void
   (_e: 'update:collapsed', _collapsed: boolean): void
+  (_e: 'update:view-layout', _layout: 'graph' | 'grid'): void
 }>()
 
 const isCollapsed = ref(props.collapsed ?? false)

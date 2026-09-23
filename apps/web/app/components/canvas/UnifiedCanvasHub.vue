@@ -8,7 +8,7 @@
       :selected-tag="activeTag"
       :selected-item-id="activeNote ? `note-${activeNote.id}` : null"
       :is-journal-active="viewLayout === 'journal'"
-      title="Espaço Criativo"
+      v-model:view-layout="viewLayout"
       item-label="itens"
       v-model:collapsed="isSidebarCollapsed"
       @open-journal="handleOpenJournal"

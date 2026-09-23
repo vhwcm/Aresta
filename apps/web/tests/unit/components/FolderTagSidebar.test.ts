@@ -10,17 +10,17 @@ describe('FolderTagSidebar component', () => {
   ];
   const folders = ['Estudos', 'Projetos'];
 
-  it('renderiza contagem total e itens sem pasta', () => {
+  it('renderiza seletor de grafo/grade e itens sem pasta', () => {
     const wrapper = mount(FolderTagSidebar, {
       props: {
         items,
         folders,
-        title: 'Quadros',
         itemLabel: 'quadros',
       },
     });
 
-    expect(wrapper.text()).toContain('Quadros');
+    expect(wrapper.text()).toContain('Grafo');
+    expect(wrapper.text()).toContain('Grade');
     expect(wrapper.text()).toContain('Sem pasta');
     expect(wrapper.text()).toContain('Estudos');
     expect(wrapper.text()).toContain('Projetos');
