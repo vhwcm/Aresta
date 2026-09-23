@@ -31,6 +31,8 @@
             ref="canvasAreaRef"
             :style="{ backgroundColor: themeBgColor }"
             @mouseup="handleTextSelectionCheck"
+            @touchend="handleTouchEnd"
+            @pointerup="handleTextSelectionCheck"
           >
             <div class="reader-viewer__stage-container" :style="{ backgroundColor: themeBgColor }">
               <button
@@ -631,12 +633,20 @@ async function handleSaveAiExplanationAsAnnotation(payload: { text: string; expl
   }
 }
 
+let selectionChangeTimeout: any = null
 function onDocumentSelectionChange() {
   if (typeof window === 'undefined') return
   const selection = window.getSelection()
   if (!selection || selection.isCollapsed || !selection.toString().trim()) {
     isSelectionTooltipVisible.value = false
+    return
   }
+
+  // Em tablets e touchscreens, atualiza a seleção e posiciona o tooltip suavemente
+  if (selectionChangeTimeout) clearTimeout(selectionChangeTimeout)
+  selectionChangeTimeout = setTimeout(() => {
+    handleTextSelectionCheck()
+  }, 100)
 }
 
 let touchTimer: any = null
@@ -651,7 +661,9 @@ function handleTouchEnd() {
     clearTimeout(touchTimer)
     touchTimer = null
   }
-  handleTextSelectionCheck()
+  setTimeout(() => {
+    handleTextSelectionCheck()
+  }, 50)
 }
 
 function handleAnnotationCreated() {
@@ -901,6 +913,8 @@ onMounted(() => {
   window.addEventListener('keydown', onKeyDown)
   window.addEventListener('popstate', onPopState)
   window.addEventListener('mouseup', handleTextSelectionCheck)
+  window.addEventListener('touchend', handleTouchEnd, { passive: true })
+  window.addEventListener('pointerup', handleTextSelectionCheck, { passive: true })
   document.addEventListener('selectionchange', onDocumentSelectionChange)
   document.addEventListener('fullscreenchange', onFullscreenChange)
   if (canvasAreaRef.value && typeof ResizeObserver !== 'undefined') {
@@ -962,11 +976,14 @@ onUnmounted(() => {
   stopReadingTimer()
   if (zenToastTimeout) clearTimeout(zenToastTimeout)
   if (touchTimer) clearTimeout(touchTimer)
+  if (selectionChangeTimeout) clearTimeout(selectionChangeTimeout)
   resizeObserver?.disconnect()
   window.removeEventListener('resize', updateDeviceType)
   window.removeEventListener('keydown', onKeyDown)
   window.removeEventListener('popstate', onPopState)
   window.removeEventListener('mouseup', handleTextSelectionCheck)
+  window.removeEventListener('touchend', handleTouchEnd)
+  window.removeEventListener('pointerup', handleTextSelectionCheck)
   document.removeEventListener('selectionchange', onDocumentSelectionChange)
   document.removeEventListener('fullscreenchange', onFullscreenChange)
   if (handleAddFlashcardEvent) window.removeEventListener('aresta:add-flashcard', handleAddFlashcardEvent)

@@ -14,7 +14,9 @@
     aria-label="Leitor em modo contínuo com rolagem vertical"
     tabindex="0"
     @keydown="onKeyDown"
-    @mouseup="handleMouseUp"
+    @mouseup="handleSelectionEnd"
+    @touchend="handleSelectionEnd"
+    @pointerup="handleSelectionEnd"
   >
     <!-- Contêiner Central de Leitura com Limite de Largura Ergonômica -->
     <div
@@ -440,9 +442,9 @@ function handleHighlightClick(e: MouseEvent) {
   }
 }
 
-// Disparo de Seleção de Texto para Tooltip
-function handleMouseUp(e: MouseEvent) {
-  emit('text-selected', e)
+// Disparo de Seleção de Texto para Tooltip (Mouse / Toque / Caneta)
+function handleSelectionEnd(e: Event) {
+  emit('text-selected', e as any)
 }
 
 function onKeyDown(e: KeyboardEvent) {
@@ -803,6 +805,8 @@ defineExpose({
   user-select: text;
   -webkit-user-select: text;
   pointer-events: auto;
+  touch-action: auto !important;
+  -webkit-touch-callout: default !important;
 }
 
 .scroll-page-placeholder {
@@ -829,12 +833,18 @@ defineExpose({
   box-sizing: border-box;
   user-select: text;
   -webkit-user-select: text;
+  touch-action: auto !important;
+  -webkit-touch-callout: default !important;
 }
 
 .scroll-section-content {
   width: 100%;
   line-height: 1.75;
   word-wrap: break-word;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  touch-action: auto !important;
+  -webkit-touch-callout: default !important;
 }
 
 /* Modo Zen */

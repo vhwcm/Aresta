@@ -1105,22 +1105,19 @@ function isInteractiveTextTarget(target: EventTarget | null, clientX?: number, c
   if (!el || el.closest('.book-page-stack')) return false
 
   // 1. Elementos textuais explícitos (PDF textLayer spans, marcações de anotação, tags do EPUB)
-  if (el.closest('.textLayer span, .reader-highlight, .text-highlight')) return true
+  if (el.closest('.textLayer, .textLayer span, .reader-highlight, .text-highlight')) return true
   if (
     el.closest(
-      '.epub-text-layer-content p, .epub-text-layer-content span, .epub-text-layer-content h1, .epub-text-layer-content h2, .epub-text-layer-content h3, .epub-text-layer-content h4, .epub-text-layer-content h5, .epub-text-layer-content h6, .epub-text-layer-content a, .epub-text-layer-content em, .epub-text-layer-content strong, .epub-text-layer-content b, .epub-text-layer-content i, .epub-text-layer-content blockquote, .epub-text-layer-content li, .epub-text-layer-content code, .epub-text-layer-content mark',
+      '.epub-text-layer-content, .epub-text-layer-content *, .epub-text-layer-viewport, .epub-text-layer-viewport *',
     )
   ) {
     return true
   }
 
   // 2. Elemento com conteúdo de texto direto dentro de qualquer camada de texto da página
-  const textLayer = el.closest('.page-text-layer')
+  const textLayer = el.closest('.page-text-layer, .scroll-page-text-layer, .scroll-section-content, .scroll-section-slot')
   if (textLayer) {
-    const directText = el.innerText || el.textContent || ''
-    if (directText.trim().length > 0 && el !== textLayer) {
-      return true
-    }
+    return true
   }
 
   // 3. Verificação por caret Range na coordenada exata
@@ -1189,12 +1186,9 @@ function onPointerMove(event: PointerEvent) {
       return
     }
 
-    // Se o arraste começou em cima de texto real, não vira a página: prioriza a seleção nativa
+    // Se o arraste começou em cima de texto real, não vira a página: prioriza a seleção nativa e gestos de texto
     if (pendingDrag.isTextTarget) {
-      // Arraste vertical ou movimento curto em cima de texto é seleção ou rolagem nativa
-      if (absDy >= absDx || absDx < 32) {
-        return
-      }
+      return
     }
 
     // Para ativar a virada de folha, o movimento deve ser predominantemente horizontal em direção à lombada:
@@ -1666,6 +1660,8 @@ defineExpose({
   pointer-events: auto;
   user-select: text;
   -webkit-user-select: text;
+  touch-action: auto !important;
+  -webkit-touch-callout: default !important;
 }
 
 /* ================= PILHAS LATERAIS DE PÁGINAS (PAGE STACK EDGES) ================= */
@@ -1773,6 +1769,8 @@ defineExpose({
   -webkit-user-select: text !important;
   pointer-events: auto !important;
   cursor: text !important;
+  touch-action: auto !important;
+  -webkit-touch-callout: default !important;
 }
 
 .page-text-layer :deep(.epub-text-layer-viewport ::selection),

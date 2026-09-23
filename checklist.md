@@ -1,6 +1,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [23/09/2026 20:10] [Concluído] Corrigir seleção de texto e criação de anotações via toque/mãos e caneta em tablets e dispositivos touch no leitor de livros
 - [23/09/2026 14:08] [Concluído] Desativar alteração de cores/tema no conteúdo e páginas de PDF no leitor de livros (preservar fundo branco e cores originais da editoração)
 - [23/09/2026 13:03] [Concluído] Implementar Diário Sequencial (Daily Journal) com calendário, busca por data, editor markdown e linha do tempo cronológica
 - [23/09/2026 12:43] [Concluído] Corrigir exibição de nós de links no Grafo de Conhecimento: camadas ativas, renderização D3 SVG, layout radial e sincronização reativa

@@ -344,4 +344,57 @@ describe('TextSelectionVsPageTurn - Precisão de Seleção de Texto vs Virada de
     expect(store.currentPage).toBe(6)
     wrapper.unmount()
   })
+
+  it('não intercepta nem ativa virada de página quando o arraste em touch/caneta inicia sobre a camada de texto', async () => {
+    const store = setupReader(50, 5)
+    const wrapper = mount(PageCurlCanvas, { attachTo: document.body })
+
+    const stage = wrapper.find('.page-curl-wrapper').element as HTMLElement
+    Object.defineProperty(stage, 'clientWidth', { value: 1000, configurable: true })
+    Object.defineProperty(stage, 'clientHeight', { value: 800, configurable: true })
+    vi.spyOn(stage, 'getBoundingClientRect').mockReturnValue({
+      left: 0,
+      top: 0,
+      right: 1000,
+      bottom: 800,
+      width: 1000,
+      height: 800,
+      x: 0,
+      y: 0,
+      toJSON: () => {},
+    })
+
+    const textLayer = stage.querySelector('.page-text-layer') as HTMLElement
+    expect(textLayer).toBeTruthy()
+
+    // Touch down na camada de texto (pointerType: 'touch')
+    textLayer.dispatchEvent(
+      new PointerEvent('pointerdown', {
+        bubbles: true,
+        cancelable: true,
+        pointerId: 2,
+        pointerType: 'touch',
+        button: 0,
+        clientX: 750,
+        clientY: 300,
+      }),
+    )
+
+    // Touch drag amplo horizontal simulando seleção de texto de várias palavras no tablet (dx = -120)
+    textLayer.dispatchEvent(
+      new PointerEvent('pointermove', {
+        bubbles: true,
+        cancelable: true,
+        pointerId: 2,
+        pointerType: 'touch',
+        clientX: 630,
+        clientY: 305,
+      }),
+    )
+
+    // Não deve iniciar arraste de página 3D
+    expect(startDragMock).not.toHaveBeenCalled()
+    expect(store.currentPage).toBe(5)
+    wrapper.unmount()
+  })
 })

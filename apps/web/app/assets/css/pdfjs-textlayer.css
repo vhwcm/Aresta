@@ -24,6 +24,8 @@
   pointer-events: auto;
   user-select: text;
   -webkit-user-select: text;
+  touch-action: auto !important;
+  -webkit-touch-callout: default !important;
   --min-font-size: 1;
   --text-scale-factor: calc(var(--total-scale-factor, var(--scale-factor, 1)) * var(--min-font-size));
   --min-font-size-inv: calc(1 / var(--min-font-size));
@@ -44,6 +46,8 @@
   -moz-user-select: text;
   user-select: text;
   pointer-events: auto;
+  touch-action: auto !important;
+  -webkit-touch-callout: default !important;
 }
 
 .textLayer > :not(.markedContent),
