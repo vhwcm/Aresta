@@ -1055,6 +1055,10 @@ function getTurnZone(event: PointerEvent): PageTurnDirection | null {
   const x = event.clientX - bounds.left
   const layout = pageLayout.value
 
+  if (isMobileViewport()) {
+    return x < bounds.width * 0.5 ? 'previous' : 'next'
+  }
+
   if (layout.isTwoPage) {
     if (layout.leftPage && layout.rightPage) {
       const spineX = layout.leftPage.left + layout.leftPage.width
@@ -1128,15 +1132,18 @@ function isInteractiveTextTarget(target: EventTarget | null, clientX?: number, c
   return hasTextAtCaret(clientX, clientY)
 }
 
+function isMobileViewport(): boolean {
+  if (typeof window === 'undefined') return false
+  const stage = stageRef.value
+  const stageW = stage?.clientWidth || window.innerWidth
+  return stageW < 768 || window.innerWidth < 768
+}
+
 async function onPointerDown(event: PointerEvent) {
   if (store.isFocusMode || !pageAnimationEnabled.value || event.button !== 0 || !stageRef.value || physics.isAnimating.value) return
 
   const direction = getTurnZone(event)
   if (!direction) return
-
-  // P5/P6: Validação de limites usando getTargetPage para evitar viradas fantasma
-  const targetPage = getTargetPage(direction)
-  if (targetPage === store.currentPage) return
 
   const pt = pointFrom(event)
   const isTextTarget = isInteractiveTextTarget(event.target, event.clientX, event.clientY)
@@ -1190,28 +1197,33 @@ function onPointerMove(event: PointerEvent) {
       return
     }
 
-    // Se o arraste começou em cima de texto real, não vira a página: prioriza a seleção nativa e gestos de texto
-    if (pendingDrag.isTextTarget) {
+    const isMobile = isMobileViewport() || event.pointerType === 'touch'
+
+    // Se o arraste começou em cima de texto real no desktop/tablet grande com mouse, prioriza a seleção nativa
+    if (pendingDrag.isTextTarget && !isMobile) {
       return
     }
 
-    // Para ativar a virada de folha, o movimento deve ser predominantemente horizontal em direção à lombada:
-    // Próxima página (folha direita): puxar para a esquerda (dx < 0)
-    // Página anterior (folha esquerda): puxar para a direita (dx > 0)
-    const isNextTurn = pendingDrag.direction === 'next' && dx < -DRAG_ACTIVATION_THRESHOLD_PX && absDx > absDy * 0.8
-    const isPrevTurn = pendingDrag.direction === 'previous' && dx > DRAG_ACTIVATION_THRESHOLD_PX && absDx > absDy * 0.8
+    // Direção da virada baseada no sentido físico do arraste horizontal:
+    // Puxar para a esquerda (dx < 0): avançar para a próxima página ('next')
+    // Puxar para a direita (dx > 0): voltar para a página anterior ('previous')
+    const isNextSwipe = dx < -DRAG_ACTIVATION_THRESHOLD_PX && absDx > absDy * 0.7
+    const isPrevSwipe = dx > DRAG_ACTIVATION_THRESHOLD_PX && absDx > absDy * 0.7
 
-    // Na pilha lateral de páginas, ativa virada com deslocamento menor
-    if (pendingDrag.isPageStackTarget && dist >= 8) {
-      // ativação permitida
-    } else if (!isNextTurn && !isPrevTurn) {
-      // Movimento não corresponde à direção física de virada — não interfere na seleção de texto
+    if (!isNextSwipe && !isPrevSwipe && !(pendingDrag.isPageStackTarget && dist >= 8)) {
+      return
+    }
+
+    const direction: PageTurnDirection = isNextSwipe ? 'next' : (isPrevSwipe ? 'previous' : pendingDrag.direction)
+
+    // Se a virada atingiria além dos limites de página (ex: voltar na pág 1 ou avançar na última)
+    if (getTargetPage(direction) === store.currentPage) {
       return
     }
 
     // Limiar atingido: ativa virada 3D
     event.preventDefault()
-    const { direction, startPoint, relY, pageWidth, pageHeight } = pendingDrag
+    const { startPoint, relY, pageWidth, pageHeight } = pendingDrag
     pendingDrag = null
 
     stageRef.value?.setPointerCapture(event.pointerId)
@@ -1297,7 +1309,7 @@ function isPageMarginClick(
 function onPointerUp(event: PointerEvent) {
   if (event.pointerId !== activePointerId) return
 
-  // P1: Se o arraste pendente nunca foi ativado (clique simples sem arrastar)
+  // P1: Se o arraste pendente nunca foi ativado (clique simples / tap sem arrastar)
   if (pendingDrag) {
     const { direction, startPoint, isTextTarget, isPageStackTarget } = pendingDrag
     pendingDrag = null
@@ -1312,8 +1324,9 @@ function onPointerUp(event: PointerEvent) {
       selection && (!selection.isCollapsed || (selection.toString() && selection.toString().trim().length > 0)),
     )
 
-    // Se o clique foi sobre texto interativo ou gerou seleção, NUNCA vira a página
-    if (isTextTarget || hasSelection) {
+    // Se o clique foi sobre marcação de destaque existente ou gerou seleção, NUNCA vira a página
+    const isHighlightClick = Boolean((event.target as HTMLElement | null)?.closest('.reader-highlight'))
+    if (hasSelection || isHighlightClick) {
       return
     }
 
@@ -1323,12 +1336,29 @@ function onPointerUp(event: PointerEvent) {
       return
     }
 
-    // Se foi um clique direto nas margens laterais externas (fora do texto) sem seleção de texto, vira a página
-    if (dx < 6 && dy < 6) {
+    const isMobile = isMobileViewport() || event.pointerType === 'touch'
+
+    // Clique simples (tap) sem arrasto (dx < 14 && dy < 14)
+    if (dx < 14 && dy < 14) {
       const bounds = stageRef.value?.getBoundingClientRect()
-      if (bounds && isPageMarginClick(pt, direction, bounds, pageLayout.value)) {
-        void requestTurn(direction)
+      const clickDirection = getTurnZone(event) || direction
+
+      if (isMobile) {
+        // No mobile: toque na metade direita avança página, na metade esquerda volta página
+        if (clickDirection) {
+          void requestTurn(clickDirection)
+        }
+      } else {
+        // No desktop: se foi sobre texto interativo, não vira para permitir seleção/cursor
+        if (isTextTarget) {
+          return
+        }
+        // No desktop fora do texto, vira se clicou nas margens laterais
+        if (bounds && isPageMarginClick(pt, clickDirection, bounds, pageLayout.value)) {
+          void requestTurn(clickDirection)
+        }
       }
+      return
     }
     return
   }
@@ -1475,7 +1505,7 @@ defineExpose({
   display: flex;
   align-items: center;
   justify-content: center;
-  touch-action: pan-y;
+  touch-action: none;
   user-select: text;
   -webkit-user-select: text;
   overflow: hidden;
@@ -1681,7 +1711,7 @@ defineExpose({
   pointer-events: auto;
   user-select: text;
   -webkit-user-select: text;
-  touch-action: auto !important;
+  touch-action: none !important;
   -webkit-touch-callout: default !important;
 }
 
@@ -1803,7 +1833,7 @@ defineExpose({
   -webkit-user-select: text !important;
   pointer-events: auto !important;
   cursor: text !important;
-  touch-action: auto !important;
+  touch-action: none !important;
   -webkit-touch-callout: default !important;
 }
 

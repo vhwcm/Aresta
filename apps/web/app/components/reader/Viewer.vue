@@ -1078,6 +1078,7 @@ onUnmounted(() => {
   position: relative;
   width: 100%;
   min-height: 0;
+  touch-action: none;
 }
 
 .reader-viewer__book-title-bar {

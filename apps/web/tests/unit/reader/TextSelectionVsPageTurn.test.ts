@@ -397,4 +397,119 @@ describe('TextSelectionVsPageTurn - Precisão de Seleção de Texto vs Virada de
     expect(store.currentPage).toBe(5)
     wrapper.unmount()
   })
+
+  it('permite virar a página com tap com mouse ou mão na metade direita da tela em telas mobile', async () => {
+    const store = setupReader(50, 5)
+    const wrapper = mount(PageCurlCanvas, { attachTo: document.body })
+
+    const stage = wrapper.find('.page-curl-wrapper').element as HTMLElement
+    Object.defineProperty(stage, 'clientWidth', { value: 390, configurable: true })
+    Object.defineProperty(stage, 'clientHeight', { value: 844, configurable: true })
+    vi.spyOn(stage, 'getBoundingClientRect').mockReturnValue({
+      left: 0,
+      top: 0,
+      right: 390,
+      bottom: 844,
+      width: 390,
+      height: 844,
+      x: 0,
+      y: 0,
+      toJSON: () => {},
+    })
+
+    const textLayer = stage.querySelector('.page-text-layer') as HTMLElement
+    expect(textLayer).toBeTruthy()
+
+    vi.spyOn(window, 'getSelection').mockReturnValue(null)
+
+    // Tap rápido no lado direito da tela (x = 300 > 195)
+    textLayer.dispatchEvent(
+      new PointerEvent('pointerdown', {
+        bubbles: true,
+        cancelable: true,
+        pointerId: 10,
+        pointerType: 'touch',
+        button: 0,
+        clientX: 300,
+        clientY: 400,
+      }),
+    )
+
+    textLayer.dispatchEvent(
+      new PointerEvent('pointerup', {
+        bubbles: true,
+        cancelable: true,
+        pointerId: 10,
+        pointerType: 'touch',
+        button: 0,
+        clientX: 302,
+        clientY: 401,
+      }),
+    )
+
+    await nextTick()
+    await new Promise((resolve) => setTimeout(resolve, 20))
+
+    // Deve avançar para a página 6
+    expect(store.currentPage).toBe(6)
+    wrapper.unmount()
+  })
+
+  it('permite voltar a página com tap na metade esquerda da tela em telas mobile', async () => {
+    const store = setupReader(50, 5)
+    const wrapper = mount(PageCurlCanvas, { attachTo: document.body })
+
+    const stage = wrapper.find('.page-curl-wrapper').element as HTMLElement
+    Object.defineProperty(stage, 'clientWidth', { value: 390, configurable: true })
+    Object.defineProperty(stage, 'clientHeight', { value: 844, configurable: true })
+    vi.spyOn(stage, 'getBoundingClientRect').mockReturnValue({
+      left: 0,
+      top: 0,
+      right: 390,
+      bottom: 844,
+      width: 390,
+      height: 844,
+      x: 0,
+      y: 0,
+      toJSON: () => {},
+    })
+
+    const textLayer = stage.querySelector('.page-text-layer') as HTMLElement
+    expect(textLayer).toBeTruthy()
+
+    vi.spyOn(window, 'getSelection').mockReturnValue(null)
+
+    // Tap rápido no lado esquerdo da tela (x = 80 < 195)
+    textLayer.dispatchEvent(
+      new PointerEvent('pointerdown', {
+        bubbles: true,
+        cancelable: true,
+        pointerId: 11,
+        pointerType: 'touch',
+        button: 0,
+        clientX: 80,
+        clientY: 400,
+      }),
+    )
+
+    textLayer.dispatchEvent(
+      new PointerEvent('pointerup', {
+        bubbles: true,
+        cancelable: true,
+        pointerId: 11,
+        pointerType: 'touch',
+        button: 0,
+        clientX: 81,
+        clientY: 401,
+      }),
+    )
+
+    await nextTick()
+    await new Promise((resolve) => setTimeout(resolve, 20))
+
+    // Deve voltar para a página 4
+    expect(store.currentPage).toBe(4)
+    wrapper.unmount()
+  })
 })
+
