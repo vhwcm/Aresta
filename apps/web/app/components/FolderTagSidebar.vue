@@ -365,7 +365,7 @@
         <div v-if="hasActiveBook" class="-mx-2.5 !mt-0">
           <NuxtLink
             :to="activeBookReaderLink"
-            class="group/reading w-full flex items-center gap-3 px-3.5 py-2.5 bg-bgSurface/50 hover:bg-bgSurface border-b border-divider/60 hover:border-accent/40 transition-all duration-200 cursor-pointer select-none"
+            class="group/reading w-full flex items-center gap-3 px-3.5 py-2.5 bg-black/[0.04] dark:bg-black/30 hover:bg-black/[0.07] dark:hover:bg-black/45 border-b border-divider/60 hover:border-accent/40 transition-all duration-200 cursor-pointer select-none"
             :title="`Continuar lendo: ${activeBookTitle}`"
           >
             <!-- Capa do Livro em Destaque Ampliado -->
