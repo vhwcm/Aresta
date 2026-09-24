@@ -79,7 +79,7 @@ const settings = reactive<SettingsState>({
   desktopReaderGraphOpen: false,
   readerTwoPageMode: true,
   readerWidthMode: 'centered',
-  readerTheme: 'sepia',
+  readerTheme: 'white',
   readerReadingMode: 'paginated',
 })
 
@@ -98,9 +98,39 @@ export function resetSettingsForTesting() {
   settings.desktopReaderGraphOpen = false
   settings.readerTwoPageMode = true
   settings.readerWidthMode = 'centered'
-  settings.readerTheme = 'sepia'
+  settings.readerTheme = 'white'
   settings.readerReadingMode = 'paginated'
   isInitialized = false
+}
+
+export function setGlobalThemeFromReader(theme: ReaderColorTheme) {
+  const mode = readerThemeToThemeMode(theme)
+  settings.readerTheme = theme
+  settings.themeMode = mode
+  applyTheme(mode)
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem('aresta_reader_theme', theme)
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
+    } catch {
+      // ignore
+    }
+  }
+  settingsRepo.save({
+    pageAnimationEnabled: settings.pageAnimationEnabled,
+    pageCreaseEnabled: settings.pageCreaseEnabled,
+    language: settings.language,
+    nativeLanguage: settings.nativeLanguage,
+    targetTranslationLanguage: settings.targetTranslationLanguage,
+    epubFontSize: settings.epubFontSize,
+    epubFontFamily: settings.epubFontFamily,
+    themeMode: settings.themeMode,
+    readerTheme: settings.readerTheme,
+    desktopHomeGraphOpen: settings.desktopHomeGraphOpen,
+    desktopReaderGraphOpen: settings.desktopReaderGraphOpen,
+    readerTwoPageMode: settings.readerTwoPageMode,
+    readerWidthMode: settings.readerWidthMode,
+  }).catch(() => {})
 }
 
 export function applyTheme(mode: ThemeMode) {
@@ -143,9 +173,10 @@ function initSettings() {
       }
       if (parsed.themeMode === 'dark' || parsed.themeMode === 'light' || parsed.themeMode === 'sepia') {
         settings.themeMode = parsed.themeMode
-      }
-      if (parsed.readerTheme === 'white' || parsed.readerTheme === 'sepia' || parsed.readerTheme === 'black') {
+        settings.readerTheme = themeModeToReaderTheme(parsed.themeMode)
+      } else if (parsed.readerTheme === 'white' || parsed.readerTheme === 'sepia' || parsed.readerTheme === 'black') {
         settings.readerTheme = parsed.readerTheme
+        settings.themeMode = readerThemeToThemeMode(parsed.readerTheme)
       }
       if (typeof parsed.desktopHomeGraphOpen === 'boolean') settings.desktopHomeGraphOpen = parsed.desktopHomeGraphOpen
       if (typeof parsed.desktopReaderGraphOpen === 'boolean') settings.desktopReaderGraphOpen = parsed.desktopReaderGraphOpen
@@ -164,8 +195,13 @@ function initSettings() {
         if (typeof dbSettings.targetTranslationLanguage === 'string') settings.targetTranslationLanguage = dbSettings.targetTranslationLanguage
         if (typeof dbSettings.epubFontSize === 'number') settings.epubFontSize = dbSettings.epubFontSize
         if (dbSettings.epubFontFamily) settings.epubFontFamily = dbSettings.epubFontFamily as EpubFontFamilyId
-        if (dbSettings.themeMode) settings.themeMode = dbSettings.themeMode as ThemeMode
-        if (dbSettings.readerTheme) settings.readerTheme = dbSettings.readerTheme as ReaderColorTheme
+        if (dbSettings.themeMode) {
+          settings.themeMode = dbSettings.themeMode as ThemeMode
+          settings.readerTheme = themeModeToReaderTheme(settings.themeMode)
+        } else if (dbSettings.readerTheme) {
+          settings.readerTheme = dbSettings.readerTheme as ReaderColorTheme
+          settings.themeMode = readerThemeToThemeMode(settings.readerTheme)
+        }
         if (typeof dbSettings.desktopHomeGraphOpen === 'boolean') settings.desktopHomeGraphOpen = dbSettings.desktopHomeGraphOpen
         if (typeof dbSettings.desktopReaderGraphOpen === 'boolean') settings.desktopReaderGraphOpen = dbSettings.desktopReaderGraphOpen
         if (typeof dbSettings.readerTwoPageMode === 'boolean') settings.readerTwoPageMode = dbSettings.readerTwoPageMode

@@ -57,4 +57,27 @@ describe('useSettings composable', () => {
     expect(themeMode.value).toBe('dark');
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
   });
+
+  it('sincroniza o tema do app quando o tema da leitura é alterado', () => {
+    const { themeMode, readerTheme, setReaderTheme } = useSettings();
+
+    setReaderTheme('black');
+    expect(readerTheme.value).toBe('black');
+    expect(themeMode.value).toBe('dark');
+    expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+    expect(document.documentElement.classList.contains('dark-theme')).toBe(true);
+
+    setReaderTheme('sepia');
+    expect(readerTheme.value).toBe('sepia');
+    expect(themeMode.value).toBe('sepia');
+    expect(document.documentElement.getAttribute('data-theme')).toBe('sepia');
+    expect(document.documentElement.classList.contains('sepia-theme')).toBe(true);
+
+    setReaderTheme('white');
+    expect(readerTheme.value).toBe('white');
+    expect(themeMode.value).toBe('light');
+    expect(document.documentElement.getAttribute('data-theme')).toBe('light');
+    expect(document.documentElement.classList.contains('light-theme')).toBe(true);
+  });
 });
+

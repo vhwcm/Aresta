@@ -54,26 +54,6 @@ export const useReaderStore = defineStore('reader', {
             defaultFocusLineCount = parsedLines
           }
         }
-        const savedTheme = localStorage.getItem('aresta_reader_theme')
-        if (savedTheme === 'white' || savedTheme === 'sepia' || savedTheme === 'black') {
-          defaultReaderTheme = savedTheme
-        }
-
-        const savedWidthMode = localStorage.getItem('aresta_reader_width_mode')
-        if (savedWidthMode === 'centered' || savedWidthMode === 'wide') {
-          defaultWidthMode = savedWidthMode
-        }
-
-        const savedTwoPage = localStorage.getItem('aresta_reader_two_page')
-        if (savedTwoPage !== null) {
-          defaultTwoPageMode = savedTwoPage === 'true'
-        }
-
-        const savedReadingMode = localStorage.getItem('aresta_reading_mode')
-        if (savedReadingMode === 'paginated' || savedReadingMode === 'scroll') {
-          defaultReadingMode = savedReadingMode
-        }
-
         const saved = localStorage.getItem('aresta_settings')
         if (saved) {
           const parsed = JSON.parse(saved)
@@ -89,7 +69,13 @@ export const useReaderStore = defineStore('reader', {
           if (typeof parsed.epubFontSize === 'number') {
             defaultFontSize = Math.max(12, Math.min(36, Math.round(parsed.epubFontSize)))
           }
-          if (parsed.readerTheme === 'white' || parsed.readerTheme === 'sepia' || parsed.readerTheme === 'black') {
+          if (parsed.themeMode === 'dark') {
+            defaultReaderTheme = 'black'
+          } else if (parsed.themeMode === 'sepia') {
+            defaultReaderTheme = 'sepia'
+          } else if (parsed.themeMode === 'light') {
+            defaultReaderTheme = 'white'
+          } else if (parsed.readerTheme === 'white' || parsed.readerTheme === 'sepia' || parsed.readerTheme === 'black') {
             defaultReaderTheme = parsed.readerTheme
           }
           if (parsed.epubFontFamily) {
@@ -103,6 +89,11 @@ export const useReaderStore = defineStore('reader', {
             if (fontMap[parsed.epubFontFamily]) {
               defaultFontFamily = fontMap[parsed.epubFontFamily]!
             }
+          }
+        } else {
+          const savedTheme = localStorage.getItem('aresta_reader_theme')
+          if (savedTheme === 'white' || savedTheme === 'sepia' || savedTheme === 'black') {
+            defaultReaderTheme = savedTheme
           }
         }
       } catch {
@@ -172,17 +163,24 @@ export const useReaderStore = defineStore('reader', {
           if (parsed.readerReadingMode === 'paginated' || parsed.readerReadingMode === 'scroll') {
             this.readingMode = parsed.readerReadingMode
           }
-          if (parsed.readerTheme === 'white' || parsed.readerTheme === 'sepia' || parsed.readerTheme === 'black') {
+          if (parsed.themeMode === 'dark') {
+            this.readerTheme = 'black'
+          } else if (parsed.themeMode === 'sepia') {
+            this.readerTheme = 'sepia'
+          } else if (parsed.themeMode === 'light') {
+            this.readerTheme = 'white'
+          } else if (parsed.readerTheme === 'white' || parsed.readerTheme === 'sepia' || parsed.readerTheme === 'black') {
             this.readerTheme = parsed.readerTheme
+          }
+        } else {
+          const savedTheme = localStorage.getItem('aresta_reader_theme')
+          if (savedTheme === 'white' || savedTheme === 'sepia' || savedTheme === 'black') {
+            this.readerTheme = savedTheme
           }
         }
         const savedReadingMode = localStorage.getItem('aresta_reading_mode')
         if (savedReadingMode === 'paginated' || savedReadingMode === 'scroll') {
           this.readingMode = savedReadingMode
-        }
-        const savedTheme = localStorage.getItem('aresta_reader_theme')
-        if (savedTheme === 'white' || savedTheme === 'sepia' || savedTheme === 'black') {
-          this.readerTheme = savedTheme
         }
         const savedWidthMode = localStorage.getItem('aresta_reader_width_mode')
         if (savedWidthMode === 'centered' || savedWidthMode === 'wide') {
@@ -530,6 +528,7 @@ export const useReaderStore = defineStore('reader', {
             root.classList.add('dark')
           }
           if (body) {
+            body.setAttribute('data-theme', mode)
             body.classList.remove('light-theme', 'dark-theme', 'sepia-theme', 'dark')
             body.classList.add(`${mode}-theme`)
             if (mode === 'dark') {
@@ -538,6 +537,15 @@ export const useReaderStore = defineStore('reader', {
           }
         } catch {
           // ignorar erro
+        }
+
+        // Sincronizar o estado reativo global do app e persistir no banco de dados local
+        try {
+          void import('~/composables/useSettings').then(({ setGlobalThemeFromReader }) => {
+            setGlobalThemeFromReader(theme)
+          })
+        } catch {
+          // ignorar erro de importação
         }
       }
     },
