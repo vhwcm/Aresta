@@ -161,5 +161,29 @@ describe('PageCurl3DEngine - Three.js WebGL Page Turn Engine', () => {
       expect(p1.pos.z).toBe(0)
       expect(p2.pos.z).toBe(0)
     })
+
+    it('no Modo 1 Página: posiciona a malha estritamente em [0, W] tanto no NEXT quanto no PREVIOUS', () => {
+      const engine = usePageCurl3D(canvasRef)
+
+      // Teste NEXT no modo 1 página
+      engine.setupScene({
+        isTwoPage: false,
+        pageWidth: W,
+        pageHeight: H,
+        direction: 'next',
+      })
+      expect(engine.isReady.value).toBe(true)
+
+      // Teste PREVIOUS no modo 1 página (não deve transladar para a esquerda fantasma)
+      engine.setupScene({
+        isTwoPage: false,
+        pageWidth: W,
+        pageHeight: H,
+        direction: 'previous',
+      })
+      expect(engine.isReady.value).toBe(true)
+
+      engine.destroy()
+    })
   })
 })

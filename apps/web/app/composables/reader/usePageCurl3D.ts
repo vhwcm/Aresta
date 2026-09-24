@@ -540,10 +540,15 @@ export function usePageCurl3D(canvasHostRef: Ref<HTMLCanvasElement | null>) {
     const segmentsY = Math.max(64, Math.min(128, Math.round(currentHeight / 8)))
     geometry = new THREE.PlaneGeometry(currentWidth, currentHeight, segmentsX, segmentsY)
 
-    if (currentDirection === 'next') {
-      geometry.translate(currentWidth * 0.5, 0, 0)
+    if (isTwoPageMode) {
+      if (currentDirection === 'next') {
+        geometry.translate(currentWidth * 0.5, 0, 0)
+      } else {
+        geometry.translate(-currentWidth * 0.5, 0, 0)
+      }
     } else {
-      geometry.translate(-currentWidth * 0.5, 0, 0)
+      // No modo de folha única (Single-Page), a folha reside estritamente em [0, currentWidth]
+      geometry.translate(currentWidth * 0.5, 0, 0)
     }
 
     if (!frontTexture) {

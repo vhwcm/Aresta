@@ -1,6 +1,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [24/09/2026 10:56] [Concluído] Conter animação de virada 3D nos limites estritos da folha única no modo de 1 página (clipPath com border-radius e correção do posicionamento da malha no Single-Page)
 - [24/09/2026 10:47] [Concluído] Garantir alta resolução e nitidez vetorial no zoom de PDF (remoção do teto restritivo de DPR e re-renderização dinâmica ao alterar zoom do navegador)
 - [24/09/2026 10:37] [Concluído] Aumentar margens e respiro no leitor de livros em modo página (laterais, topo, rodapé e medianiz central) e blindar transparência e alinhamento 1:1 do PDF no modo scroll
 - [24/09/2026 10:10] [Concluído] Remover linha duplicada de limpar tag, permitir toggle direto na tag e corrigir exibição de nós conectados à tag no Grafo de Conhecimento

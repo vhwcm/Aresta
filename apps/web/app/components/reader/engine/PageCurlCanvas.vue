@@ -582,6 +582,8 @@ const webglCanvasStyle = computed(() => {
   if (layout.singlePage) {
     const pageW = layout.singlePage.width
     const pageH = layout.singlePage.height
+    const isMobile = typeof window !== 'undefined' ? window.innerWidth <= 767 : false
+    const borderRadius = isMobile ? 0 : 6
 
     return {
       display: 'block',
@@ -594,6 +596,8 @@ const webglCanvasStyle = computed(() => {
       opacity: visible ? 1 : 0,
       visibility: (visible ? 'visible' : 'hidden') as any,
       pointerEvents: 'none' as const,
+      clipPath: `inset(${BLEED_Y}px ${BLEED_X}px ${BLEED_Y}px ${pageW + BLEED_X}px round ${borderRadius}px)`,
+      WebkitClipPath: `inset(${BLEED_Y}px ${BLEED_X}px ${BLEED_Y}px ${pageW + BLEED_X}px round ${borderRadius}px)`,
     }
   }
 
