@@ -394,4 +394,27 @@ describe('GraphCanvas Component', () => {
     expect(rect?.exists()).toBe(true)
     expect(rect?.attributes('stroke')).toBe('#06B6D4')
   })
+
+  it('renders desktop graph with multiple themes and calculates responsive layout', () => {
+    const wrapper = mount(GraphCanvas, {
+      props: {
+        isCompact: false,
+        showControls: false,
+        nodes: [
+          { id: 'theme-1', rawId: 1, type: 'theme', name: 'Leitura', color: '#E57B55' },
+          { id: 'theme-2', rawId: 2, type: 'theme', name: 'Programação', color: '#3B82F6' },
+          { id: 'theme-3', rawId: 3, type: 'theme', name: 'Faculdade', color: '#10B981' },
+          { id: 'book-1', rawId: 10, type: 'book', name: 'Clean Code', color: '#3B82F6' },
+        ],
+        edges: [
+          { id: 'e1', source: 'theme-2', target: 'book-1', type: 'book-theme' },
+        ],
+      },
+    })
+
+    expect(wrapper.find('svg').exists()).toBe(true)
+    const nodes = wrapper.findAll('g.node')
+    expect(nodes.length).toBeGreaterThanOrEqual(4)
+  })
 })
+

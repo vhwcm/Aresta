@@ -87,10 +87,10 @@
           class="w-full bg-bgApp/70 border border-divider rounded-xl p-3 text-xs text-textPrimary placeholder:text-textSecondary/50 focus:outline-none focus:border-accent transition-all resize-none"
         ></textarea>
 
-        <!-- Seleção de Temas do Livro -->
+        <!-- Seleção de Tags do Livro -->
         <div v-if="availableThemes.length > 0" class="flex flex-col gap-1.5">
           <label class="text-[10px] font-technical uppercase tracking-wider text-textSecondary">
-            Vincular a temas deste livro:
+            Vincular a tags deste livro:
           </label>
           <div class="flex flex-wrap gap-1.5">
             <button

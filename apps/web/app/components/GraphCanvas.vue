@@ -349,9 +349,8 @@ const fitToScreen = () => {
   const containerHeight = clientH > 10 ? clientH : (isTest ? 800 : 0)
   if (!containerWidth || !containerHeight) return
 
-  const hasLayersBar = !props.isCompact
-  // Altura reservada no topo para evitar qualquer sobreposição de nós com a barra de camadas e/ou controles
-  const topBarHeight = hasLayersBar ? (props.showControls ? 130 : 72) : (props.showControls ? 64 : 0)
+  // Altura reservada no topo: apenas se os controles flutuantes estiverem visíveis
+  const topBarHeight = props.showControls ? (props.isCompact ? 44 : 56) : 0
 
   const rootNode = currentSimulationNodes.find((n) => n.isRoot || n.id === 'root') || currentSimulationNodes[0]
   const rootX = Number.isFinite(rootNode?.x) ? rootNode.x : (containerWidth / 2)
@@ -385,9 +384,12 @@ const fitToScreen = () => {
       ? d.targetY
       : (Number.isFinite(d.y) ? d.y : (Number.isFinite(d.baseY) ? d.baseY : rootY))
 
-    const r = getNodeRadius(d) + (d.type === 'book' ? 52 : 36)
+    const isCompact = props.isCompact
+    const extraR = isCompact ? (d.type === 'book' ? 22 : 14) : (d.type === 'book' ? 52 : 36)
+    const extraBottom = isCompact ? (d.type === 'book' ? 12 : 8) : (d.type === 'book' ? 32 : 22)
+    const r = getNodeRadius(d) + extraR
     const top = y - r
-    const bottom = y + r + (d.type === 'book' ? 32 : 22)
+    const bottom = y + r + extraBottom
     const left = x - r
     const right = x + r
 
@@ -411,8 +413,8 @@ const fitToScreen = () => {
   const graphW = Math.max(maxX - minX, 1)
   const graphH = Math.max(maxY - minY, 1)
 
-  const paddingX = props.isCompact ? 28 : 56
-  const paddingY = props.isCompact ? 20 : 36
+  const paddingX = props.isCompact ? 8 : 28
+  const paddingY = props.isCompact ? 8 : 20
 
   const usableWidth = Math.max(containerWidth - paddingX * 2, 80)
   const usableHeight = Math.max(containerHeight - topBarHeight - paddingY * 2, 80)
@@ -422,8 +424,8 @@ const fitToScreen = () => {
   const rawScale = Math.min(scaleX, scaleY)
   if (!Number.isFinite(rawScale) || rawScale <= 0) return
 
-  const minScale = props.isCompact ? 0.15 : 0.20
-  const maxScale = props.isCompact ? 1.05 : 1.15
+  const minScale = props.isCompact ? 0.20 : 0.25
+  const maxScale = props.isCompact ? 2.40 : 2.50
   const scale = Math.max(minScale, Math.min(rawScale, maxScale))
 
   const midX = (minX + maxX) / 2
@@ -593,7 +595,7 @@ const initGraph = (animateTransition = true) => {
   // Configurar Zoom e Pan com filtro estrito (ignorar pan quando clicar/arrastar a partir de um nó)
   zoomBehavior = d3
     .zoom<SVGSVGElement, unknown>()
-    .scaleExtent([0.1, 4])
+    .scaleExtent([0.1, 5])
     .filter((event) => {
       // Bloquear pan do canvas se o ponteiro estiver sobre um nó
       const target = event.target as HTMLElement | SVGElement | null
@@ -813,10 +815,16 @@ const initGraph = (animateTransition = true) => {
   nodeAngle.set('root', 0)
 
   // Nível 1: Temas distribuídos radialmente em torno do centro
+  // Em telas desktop widescreen, projeta os nós mais para os lados (formato elíptico horizontal)
+  // em perfeita harmonia com o formato panorâmico da tela sem estourar o topo/baixo
+  const isDesktop = width >= 768 && !props.isCompact
+  const stretchX = isDesktop ? 1.35 : 1.0
+  const stretchY = isDesktop ? 0.95 : 1.0
+
   const numThemes = Math.max(themeNodes.length, 1)
   const isCompactMode = props.isCompact
   const baseR = isCompactMode
-    ? Math.min(115, Math.max(85, 75 + numThemes * 4))
+    ? Math.min(95, Math.max(65, 55 + numThemes * 3))
     : Math.min(185, Math.max(115, 95 + numThemes * 7))
   const R1 = baseR
   const bfsQueue: string[] = []
@@ -828,8 +836,8 @@ const initGraph = (animateTransition = true) => {
     nodeRadius.set(tId, R1)
     nodeAngle.set(tId, baseAngle)
     theme.targetAngle = baseAngle
-    theme.x = centerX + R1 * Math.cos(baseAngle)
-    theme.y = centerY + R1 * Math.sin(baseAngle)
+    theme.x = centerX + R1 * Math.cos(baseAngle) * stretchX
+    theme.y = centerY + R1 * Math.sin(baseAngle) * stretchY
     bfsQueue.push(tId)
   })
 
@@ -845,8 +853,8 @@ const initGraph = (animateTransition = true) => {
       const targetNode = nodeMap.get(iId)
       if (targetNode) {
         targetNode.targetAngle = islandAngle
-        targetNode.x = centerX + islandR * Math.cos(islandAngle)
-        targetNode.y = centerY + islandR * Math.sin(islandAngle)
+        targetNode.x = centerX + islandR * Math.cos(islandAngle) * stretchX
+        targetNode.y = centerY + islandR * Math.sin(islandAngle) * stretchY
       }
       bfsQueue.push(iId)
     }
@@ -871,13 +879,13 @@ const initGraph = (animateTransition = true) => {
         const childNode = nodeMap.get(childId)
         if (!childNode) return
 
-        // Distância radial incremental para fora (ajustada sutilmente para maior proximidade orgânica):
-        let deltaR = isCompactMode ? 82 : 108
-        if (childNode.type === 'annotation') deltaR = isCompactMode ? 65 : 90
-        else if (childNode.type === 'folder') deltaR = isCompactMode ? 70 : 98
-        else if (childNode.type === 'note') deltaR = isCompactMode ? 74 : 102
-        else if (childNode.type === 'canvas') deltaR = isCompactMode ? 74 : 102
-        else if (childNode.type === 'link') deltaR = isCompactMode ? 74 : 102
+        // Distância radial incremental para fora (otimizada para preenchimento compacto):
+        let deltaR = isCompactMode ? 62 : 108
+        if (childNode.type === 'annotation') deltaR = isCompactMode ? 46 : 90
+        else if (childNode.type === 'folder') deltaR = isCompactMode ? 50 : 98
+        else if (childNode.type === 'note') deltaR = isCompactMode ? 52 : 102
+        else if (childNode.type === 'canvas') deltaR = isCompactMode ? 52 : 102
+        else if (childNode.type === 'link') deltaR = isCompactMode ? 52 : 102
 
         const childR = parentR + deltaR
         // Se 1 filho: EXATAMENTE no mesmo ângulo (para fora!). Se K > 1: cone estreito apontando para fora
@@ -889,8 +897,8 @@ const initGraph = (animateTransition = true) => {
         nodeAngle.set(childId, childAngle)
         ;(childNode as any).targetAngle = childAngle
 
-        childNode.x = centerX + childR * Math.cos(childAngle)
-        childNode.y = centerY + childR * Math.sin(childAngle)
+        childNode.x = centerX + childR * Math.cos(childAngle) * stretchX
+        childNode.y = centerY + childR * Math.sin(childAngle) * stretchY
 
         bfsQueue.push(childId)
       })
@@ -900,11 +908,11 @@ const initGraph = (animateTransition = true) => {
   // Nós órfãos ou avulsos (sem conexão a ninguém)
   const unassigned = inputNodes.filter((n) => !visited.has(String(n.id)))
   if (unassigned.length > 0) {
-    const orphanR = R1 + (isCompactMode ? 24 : 36)
+    const orphanR = R1 + (isCompactMode ? 18 : 36)
     unassigned.forEach((node, idx) => {
       const angle = (2 * Math.PI * idx) / unassigned.length + Math.PI / 4
-      node.x = centerX + orphanR * Math.cos(angle)
-      node.y = centerY + orphanR * Math.sin(angle)
+      node.x = centerX + orphanR * Math.cos(angle) * stretchX
+      node.y = centerY + orphanR * Math.sin(angle) * stretchY
       nodeRadius.set(String(node.id), orphanR)
       nodeAngle.set(String(node.id), angle)
     })
