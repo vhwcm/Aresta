@@ -1,6 +1,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [24/09/2026 11:13] [Concluído] Aumentar a largura da área clicável do botão da setinha de expansão de tags na sidebar
 - [24/09/2026 11:12] [Concluído] Inicializar a seção de Gerenciar Tags colapsada por padrão no FolderTagSidebar
 - [24/09/2026 11:03] [Concluído] Tornar nítida e visível a marcação e seleção de texto em PDFs (realce de seleção âmbar 60% e marca-texto vibrante com mix-blend-mode multiply)
 - [24/09/2026 10:56] [Concluído] Conter animação de virada 3D nos limites estritos da folha única no modo de 1 página (clipPath com border-radius e correção do posicionamento da malha no Single-Page)

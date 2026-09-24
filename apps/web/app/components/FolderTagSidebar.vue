@@ -462,12 +462,12 @@
 
                 <button
                   @click="isTagsExpanded = !isTagsExpanded"
-                  class="p-1 rounded-lg text-blue-500/80 hover:text-blue-600 hover:bg-blue-500/15 transition-all cursor-pointer"
+                  class="px-3 py-1 rounded-lg text-blue-500/80 hover:text-blue-600 hover:bg-blue-500/15 transition-all cursor-pointer flex items-center justify-center"
                   :title="isTagsExpanded ? 'Recolher tags' : 'Expandir tags'"
                   data-testid="toggle-tags-expand-btn"
                 >
                   <ChevronDownIcon
-                    class="w-3.5 h-3.5 transition-transform duration-200"
+                    class="w-4 h-4 transition-transform duration-200"
                     :class="{ '-rotate-90': !isTagsExpanded }"
                   />
                 </button>
