@@ -326,5 +326,19 @@ describe('FolderTagSidebar component', () => {
     expect(wrapper.emitted('select-tag')).toBeTruthy();
     expect(wrapper.emitted('select-tag')?.[0]).toEqual([null]);
   });
+
+  it('renderiza o indicador de ofensiva ao lado da lupa no cabecalho', () => {
+    const wrapper = mount(FolderTagSidebar, {
+      props: {
+        items: [],
+        folders: [],
+        collapsed: false,
+      },
+    });
+
+    const streakBtn = wrapper.find('[data-testid="reading-streak-trigger-btn"]');
+    expect(streakBtn.exists()).toBe(true);
+    expect(streakBtn.attributes('title')).toBe('Ofensiva de Leitura');
+  });
 });
 

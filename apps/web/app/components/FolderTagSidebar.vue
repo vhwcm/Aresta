@@ -19,7 +19,7 @@
       class="h-14 border-b border-divider/60 flex items-center flex-shrink-0 transition-all"
       :class="isCollapsed ? 'justify-center px-2' : 'justify-between px-2.5 md:px-3 gap-2'"
     >
-      <div v-if="!isCollapsed" class="flex items-center gap-2 overflow-hidden flex-1 min-w-0">
+      <div v-if="!isCollapsed" class="flex items-center gap-1.5 flex-1 min-w-0">
         <NuxtLink to="/" class="flex items-center group cursor-pointer shrink-0" title="Ir para Início">
           <ArestaLogoGraph :size="24" use-image :to="null" class="!p-0 group-hover:scale-105 transition-transform" />
         </NuxtLink>
@@ -58,6 +58,9 @@
         >
           <SearchIcon class="w-3.5 h-3.5" />
         </button>
+
+        <!-- Indicador de Ofensiva ao lado da lupa -->
+        <ReadingStreak compact align="sidebar" />
       </div>
 
       <!-- Botão Minimizar/Expandir Sidebar -->
@@ -855,6 +858,7 @@ import { resolveBookCover } from '~/utils/cover'
 import { loadGraphMeta } from '~/utils/graphMeta'
 import AppKnowledgeGraph from '~/components/graph/AppKnowledgeGraph.vue'
 import ManageThemesModal from '~/components/ManageThemesModal.vue'
+import ReadingStreak from '~/components/ReadingStreak.vue'
 import { useWorkspaceSidebar } from '~/composables/useWorkspaceSidebar'
 
 const route = useRoute()

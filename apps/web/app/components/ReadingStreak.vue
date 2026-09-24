@@ -1,17 +1,34 @@
 <template>
-  <div class="relative" ref="containerRef">
+  <div class="relative shrink-0" ref="containerRef">
     <!-- Botão Trigger da Ofensiva -->
     <button
       @click="isOpen = !isOpen"
-      class="flex items-center gap-2 px-3.5 py-2 rounded-full bg-white/5 hover:bg-white/10 border border-divider hover:border-accent/40 transition-all duration-300 group focus:outline-none focus:ring-2 focus:ring-accent/40"
-      :class="{ 'border-accent/50 bg-accent/10': isOpen }"
+      data-testid="reading-streak-trigger-btn"
+      :class="compact
+        ? [
+            'flex items-center gap-1.5 px-2 py-1 rounded-xl transition-all cursor-pointer shrink-0 border text-xs font-semibold',
+            isOpen
+              ? 'bg-accent/15 text-accent border-accent/40 shadow-xs'
+              : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.05] dark:hover:bg-white/[0.08]'
+          ]
+        : [
+            'flex items-center gap-2 px-3.5 py-2 rounded-full bg-white/5 hover:bg-white/10 border border-divider hover:border-accent/40 transition-all duration-300 group focus:outline-none focus:ring-2 focus:ring-accent/40',
+            { 'border-accent/50 bg-accent/10': isOpen }
+          ]"
       title="Ofensiva de Leitura"
       aria-label="Ofensiva de Leitura"
     >
       <!-- Ícone Chama com preenchimento/brilho -->
-      <div class="relative flex items-center justify-center w-4 h-4 sm:w-4.5 sm:h-4.5">
+      <div
+        class="relative flex items-center justify-center"
+        :class="compact ? 'w-3.5 h-3.5' : 'w-4 h-4 sm:w-4.5 sm:h-4.5'"
+      >
         <FlameIcon
-          class="w-4 h-4 sm:w-4.5 sm:h-4.5 transition-transform duration-300 group-hover:scale-110 text-textSecondary"
+          class="transition-transform duration-300 group-hover:scale-110"
+          :class="[
+            compact ? 'w-3.5 h-3.5' : 'w-4 h-4 sm:w-4.5 sm:h-4.5',
+            currentStreak > 0 ? 'text-amber-500 fill-amber-500/20' : 'text-textSecondary'
+          ]"
         />
         <div
           v-if="isGoalReachedToday || (todayActivity.flashcardsReviewed ?? 0) >= 5 || todayActivity.isReadingCompleted"
@@ -23,14 +40,22 @@
           }"
         >
           <FlameIcon
-            class="w-4 h-4 sm:w-4.5 sm:h-4.5 text-accent fill-accent"
-            :class="{ 'animate-pulse': isGoalReachedToday }"
+            class="text-accent fill-accent"
+            :class="[
+              compact ? 'w-3.5 h-3.5' : 'w-4 h-4 sm:w-4.5 sm:h-4.5',
+              { 'animate-pulse': isGoalReachedToday }
+            ]"
           />
         </div>
       </div>
 
       <!-- Contador da Ofensiva -->
-      <span class="font-technical text-xs sm:text-sm font-semibold text-textPrimary tracking-wider">
+      <span
+        :class="[
+          compact ? 'font-mono text-xs font-semibold' : 'font-technical text-xs sm:text-sm font-semibold tracking-wider',
+          currentStreak > 0 ? 'text-textPrimary' : 'text-textSecondary'
+        ]"
+      >
         {{ currentStreak }}
       </span>
     </button>
@@ -38,7 +63,14 @@
     <!-- Popover Flutuante com Estatísticas e Calendário Semanal -->
     <div
       v-if="isOpen"
-      class="absolute right-0 top-full mt-3 w-84 sm:w-92 p-5 rounded-2xl bg-bgPanel/95 backdrop-blur-xl border border-divider shadow-2xl z-50 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200"
+      class="mt-2 p-4 sm:p-5 rounded-2xl bg-bgPanel/95 backdrop-blur-xl border border-divider shadow-2xl z-50 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200"
+      :class="[
+        align === 'sidebar'
+          ? 'fixed md:absolute left-2 md:left-0 top-14 md:top-full w-[calc(100vw-16px)] md:w-84 max-w-sm'
+          : align === 'left'
+            ? 'absolute left-0 top-full w-84 sm:w-92 max-w-[calc(100vw-24px)]'
+            : 'absolute right-0 top-full w-84 sm:w-92 max-w-[calc(100vw-24px)]'
+      ]"
     >
       <!-- Header do Popover -->
       <div class="flex items-center justify-between border-b border-divider pb-3">
@@ -245,6 +277,17 @@ import {
 } from 'lucide-vue-next'
 import { useReadingStreak } from '~/composables/useReadingStreak'
 import { useStreakCelebration } from '~/composables/useStreakCelebration'
+
+const props = withDefaults(
+  defineProps<{
+    compact?: boolean
+    align?: 'left' | 'right' | 'sidebar'
+  }>(),
+  {
+    compact: false,
+    align: 'right'
+  }
+)
 
 const {
   currentStreak,
