@@ -429,66 +429,96 @@
           </div>
         </div>
 
-        <!-- 3. Seção de Filtro por Tags (Acima da Árvore de Arquivos) -->
-        <div class="pt-2 pb-1 border-t border-divider/60 space-y-2">
-          <!-- Botãosão estilo Diário, só que azul: Gerenciar Tags -->
-          <div>
-            <button
-              @click="isManageTagsModalOpen = true"
-              data-testid="manage-tags-sidebar-btn"
-              class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs md:text-sm transition-all cursor-pointer border border-blue-500/50 hover:border-blue-500 shadow-xs group bg-blue-500/[0.08] hover:bg-blue-500/[0.15] text-blue-700 dark:text-blue-300 font-semibold active:scale-95"
-              title="Gerenciar Tags"
+        <!-- 3. Seção Integrada: Gerenciar Tags com Tags Embutidas -->
+        <div class="pt-2 pb-1 border-t border-divider/60">
+          <div
+            class="rounded-2xl border transition-all duration-200 overflow-hidden"
+            :class="isTagsExpanded
+              ? 'border-blue-500/40 bg-blue-500/[0.04] dark:bg-blue-500/[0.07] shadow-xs'
+              : 'border-blue-500/30 bg-blue-500/[0.02] hover:border-blue-500/50'"
+          >
+            <!-- Cabeçalho do Card: Gerenciar Tags -->
+            <div
+              class="w-full flex items-center justify-between px-3.5 py-2.5 transition-all select-none group"
             >
-              <div class="flex items-center gap-2.5 truncate">
-                <TagIcon class="w-4 h-4 flex-shrink-0 text-blue-500 group-hover:scale-110 transition-transform" />
-                <span class="truncate font-interface font-semibold text-xs md:text-sm">Gerenciar Tags</span>
-              </div>
-              <div class="flex items-center gap-1.5">
+              <!-- Botão principal que abre o modal de gerenciar tags -->
+              <button
+                @click="isManageTagsModalOpen = true"
+                data-testid="manage-tags-sidebar-btn"
+                class="flex items-center gap-2.5 truncate flex-1 text-left cursor-pointer group/title text-blue-700 dark:text-blue-300 hover:text-blue-600"
+                title="Abrir Gerenciador de Tags"
+              >
+                <TagIcon class="w-4 h-4 flex-shrink-0 text-blue-500 group-hover/title:scale-110 transition-transform" />
+                <span class="truncate font-interface font-semibold text-xs md:text-sm text-blue-700 dark:text-blue-300">
+                  Gerenciar Tags
+                </span>
+              </button>
+
+              <!-- Ações do lado direito: Contador + Chevron de expansão/recolhimento das tags embutidas -->
+              <div class="flex items-center gap-1.5 shrink-0">
                 <span class="text-[10px] px-1.5 py-0.5 rounded-full font-mono bg-blue-500/20 text-blue-600 dark:text-blue-300 font-bold">
                   {{ availableTags.length }}
                 </span>
-                <ChevronRightIcon class="w-3.5 h-3.5 text-blue-500/70 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all" />
+
+                <button
+                  @click="isTagsExpanded = !isTagsExpanded"
+                  class="p-1 rounded-lg text-blue-500/80 hover:text-blue-600 hover:bg-blue-500/15 transition-all cursor-pointer"
+                  :title="isTagsExpanded ? 'Recolher tags' : 'Expandir tags'"
+                  data-testid="toggle-tags-expand-btn"
+                >
+                  <ChevronDownIcon
+                    class="w-3.5 h-3.5 transition-transform duration-200"
+                    :class="{ '-rotate-90': !isTagsExpanded }"
+                  />
+                </button>
               </div>
-            </button>
-          </div>
+            </div>
 
-          <div class="flex items-center justify-between px-1">
-            <span class="text-[10px] font-bold tracking-wider uppercase text-textSecondary font-interface">
-              Tags
-            </span>
-            <button
-              v-if="selectedTag"
-              @click="$emit('select-tag', null)"
-              class="text-[10px] text-accent hover:underline cursor-pointer flex items-center gap-1 font-medium"
+            <!-- Tags Embutidas diretamente dentro do bloco de Gerenciar Tags -->
+            <div
+              v-show="isTagsExpanded"
+              class="px-2.5 pb-2.5 pt-1 space-y-2 border-t border-blue-500/15 animate-in fade-in slide-in-from-top-1 duration-150"
             >
-              <span>Limpar filtro</span>
-              <span class="text-[9px]">✕</span>
-            </button>
-          </div>
+              <!-- Indicador de Tag Selecionada se houver -->
+              <div v-if="selectedTag" class="flex items-center justify-between px-2 py-1 rounded-lg bg-blue-500/15 border border-blue-500/30">
+                <span class="text-[11px] text-blue-600 dark:text-blue-300 font-medium truncate flex items-center gap-1">
+                  <span class="font-mono text-blue-500">#</span>{{ selectedTag }}
+                </span>
+                <button
+                  @click="$emit('select-tag', null)"
+                  class="text-[10px] text-blue-500 hover:text-blue-700 dark:hover:text-blue-200 hover:underline cursor-pointer ml-1 font-semibold"
+                  title="Limpar filtro de tag"
+                >
+                  Limpar ✕
+                </button>
+              </div>
 
-          <!-- Nuvem de Chips de Tags -->
-          <div class="flex flex-wrap gap-1.5 px-0.5">
-            <button
-              v-for="tagItem in availableTags"
-              :key="tagItem.name"
-              @click="toggleTag(tagItem.name)"
-              class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer border"
-              :class="selectedTag === tagItem.name
-                ? 'bg-blue-500/20 text-blue-600 dark:text-blue-300 border-blue-500/50 shadow-xs font-semibold ring-1 ring-blue-500/30'
-                : 'bg-bgSurface border-divider text-textSecondary hover:border-blue-500/30 hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'"
-            >
-              <span class="text-blue-500/70 font-mono text-[11px]">#</span>
-              <span class="font-interface">{{ tagItem.name }}</span>
-              <span
-                class="text-[10px] px-1.5 py-0.2 rounded-full font-mono transition-colors"
-                :class="selectedTag === tagItem.name ? 'bg-blue-500/30 text-blue-600 dark:text-blue-200' : 'bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-textSecondary/60'"
-              >
-                {{ tagItem.count }}
-              </span>
-            </button>
+              <!-- Nuvem de Chips das Tags Embutidas -->
+              <div class="flex flex-wrap gap-1.5">
+                <button
+                  v-for="tagItem in availableTags"
+                  :key="tagItem.name"
+                  @click="toggleTag(tagItem.name)"
+                  class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer border"
+                  :class="selectedTag === tagItem.name
+                    ? 'bg-blue-500 text-white border-blue-600 shadow-xs font-semibold ring-1 ring-blue-500/40'
+                    : 'bg-bgSurface/80 border-blue-500/20 text-textSecondary hover:border-blue-500/50 hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.06]'"
+                  :title="`Filtrar por #${tagItem.name}`"
+                >
+                  <span class="font-mono text-[11px]" :class="selectedTag === tagItem.name ? 'text-white/80' : 'text-blue-500/80'">#</span>
+                  <span class="font-interface truncate max-w-[130px]">{{ tagItem.name }}</span>
+                  <span
+                    class="text-[10px] px-1.5 py-0.2 rounded-full font-mono transition-colors"
+                    :class="selectedTag === tagItem.name ? 'bg-white/20 text-white' : 'bg-blue-500/10 text-blue-600 dark:text-blue-300'"
+                  >
+                    {{ tagItem.count }}
+                  </span>
+                </button>
 
-            <div v-if="availableTags.length === 0" class="px-1 py-1 text-[11px] text-textSecondary italic">
-              Nenhuma tag aplicada ainda.
+                <div v-if="availableTags.length === 0" class="px-1 py-1 text-[11px] text-textSecondary/70 italic">
+                  Nenhuma tag criada ainda.
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -858,6 +888,7 @@ const route = useRoute()
 const { userBooks, fetchUserBooks } = useUserBooks()
 const { graphData, fetchGraph } = useGraph()
 const isManageTagsModalOpen = ref(false)
+const isTagsExpanded = ref(true)
 
 const allModalThemes = computed(() => {
   const list: Array<{ id: string | number; rawId?: number | string; name: string; color?: string; type?: string }> = []

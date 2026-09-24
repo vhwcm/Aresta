@@ -277,5 +277,29 @@ describe('FolderTagSidebar component', () => {
     await collapsedBtn.trigger('click');
     expect(wrapper.findComponent({ name: 'ManageThemesModal' }).props('isOpen')).toBe(true);
   });
+
+  it('embute a lista de tags dentro do card azul de Gerenciar Tags e permite recolher/expandir', async () => {
+    const wrapper = mount(FolderTagSidebar, {
+      props: {
+        items: [
+          { id: '1', folder: 'Estudos', tags: ['filosofia', 'ciencias'] },
+        ],
+        folders: ['Estudos'],
+        collapsed: false,
+      },
+    });
+
+    // As tags devem estar embutidas e visíveis inicialmente
+    expect(wrapper.text()).toContain('#filosofia');
+    expect(wrapper.text()).toContain('#ciencias');
+
+    const toggleBtn = wrapper.find('[data-testid="toggle-tags-expand-btn"]');
+    expect(toggleBtn.exists()).toBe(true);
+
+    // Clica para recolher
+    await toggleBtn.trigger('click');
+    const tagsContainer = wrapper.find('.animate-in');
+    expect(tagsContainer.attributes('style')).toContain('display: none');
+  });
 });
 

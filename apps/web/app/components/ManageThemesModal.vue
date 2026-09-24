@@ -212,19 +212,31 @@
               </span>
             </div>
 
-            <div class="flex items-center gap-1 shrink-0">
+            <div class="flex items-center gap-1.5 shrink-0">
               <button
-                @click="startEdit(theme)"
+                @click.stop="toggleSelectTag(theme)"
+                class="px-2.5 py-1 rounded-lg text-xs font-interface font-medium transition-all flex items-center gap-1 cursor-pointer border"
+                :class="isTagActive(theme)
+                  ? 'bg-blue-500 text-white border-blue-600 shadow-xs'
+                  : 'bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border-blue-500/30'"
+                :title="isTagActive(theme) ? 'Desmarcar filtro de tag' : 'Filtrar no Grafo e Estante por esta tag'"
+                data-testid="select-tag-modal-btn"
+              >
+                <span>{{ isTagActive(theme) ? 'Filtro Ativo ✓' : 'Filtrar' }}</span>
+              </button>
+
+              <button
+                @click.stop="startEdit(theme)"
                 data-testid="edit-theme-btn"
-                class="p-1.5 rounded-lg text-textSecondary hover:text-textPrimary hover:bg-white/10 transition-all"
+                class="p-1.5 rounded-lg text-textSecondary hover:text-textPrimary hover:bg-white/10 transition-all cursor-pointer"
                 title="Editar nome da tag"
               >
                 <Edit2Icon class="w-3.5 h-3.5" />
               </button>
               <button
-                @click="startDelete(theme)"
+                @click.stop="startDelete(theme)"
                 data-testid="delete-theme-btn"
-                class="p-1.5 rounded-lg text-textSecondary hover:text-rose-400 hover:bg-rose-500/10 transition-all"
+                class="p-1.5 rounded-lg text-textSecondary hover:text-rose-400 hover:bg-rose-500/10 transition-all cursor-pointer"
                 title="Excluir tag"
               >
                 <Trash2Icon class="w-3.5 h-3.5" />
@@ -260,6 +272,7 @@ import {
   AlertTriangleIcon
 } from 'lucide-vue-next'
 import { useGraph } from '~/composables/useGraph'
+import { useWorkspaceSidebar } from '~/composables/useWorkspaceSidebar'
 import type { GraphNode } from '~/interfaces/graph'
 
 interface ThemeItem {
@@ -291,6 +304,21 @@ const emit = defineEmits<{
 const presetColors = ['#E57B55', '#3B82F6', '#10B981', '#8B5CF6', '#F59E0B', '#EC4899']
 
 const { createNode, updateNode, deleteNode } = useGraph()
+const { activeTag } = useWorkspaceSidebar()
+
+const isTagActive = (theme: any) => {
+  if (!activeTag.value) return false
+  const name = String(theme?.name || '').trim().toLowerCase()
+  return activeTag.value.trim().toLowerCase() === name
+}
+
+const toggleSelectTag = (theme: any) => {
+  if (isTagActive(theme)) {
+    activeTag.value = null
+  } else {
+    activeTag.value = theme.name
+  }
+}
 
 const searchQuery = ref('')
 const newThemeName = ref('')

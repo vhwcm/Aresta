@@ -1,6 +1,8 @@
 ## 🔄 Em Andamento
+- [24/09/2026 09:44] [Fazendo] Otimizar enquadramento e zoom do Grafo de Conhecimento para preencher todo o quadrado no celular (modo compacto)
 
 ## ✅ Concluído
+- [24/09/2026 09:45] [Concluído] Embutir lista e seleção de tags dentro do card azul de Gerenciar Tags na barra lateral e permitir seleção no modal
 - [24/09/2026 09:37] [Concluído] Remover seção de comparativo e assinatura do Aresta Pro na página de conta
 - [24/09/2026 09:35] [Concluído] Unificar temas e tags na sidebar com botão azul de gerenciamento, remover da estante e conectar filtro bidirecional ao Grafo e à Estante
 - [24/09/2026 09:31] [Concluído] Unificar tema de leitura com o tema do app e sincronizar alterações bidirecionalmente durante a leitura
