@@ -1,6 +1,11 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [24/09/2026 14:55] [Concluído] Fazer a capa do livro ocupar toda a altura da faixa de leitura ativa na sidebar
+- [24/09/2026 14:54] [Concluído] Aumentar o tamanho do ícone do Aresta no cabeçalho do FolderTagSidebar
+- [24/09/2026 14:53] [Concluído] Otimizar margens e bordas do texto e ocultar setas de navegação em telas mobile
+- [24/09/2026 13:00] [Concluído] Posicionar o indicador de ofensiva mais à direita no cabeçalho do FolderTagSidebar
+- [24/09/2026 12:58] [Concluído] Aumentar sutilmente o tamanho da fonte do título do livro ativo no FolderTagSidebar
 - [24/09/2026 12:55] [Concluído] Aplicar fundo mais escuro na seção do livro ativo na sidebar
 - [24/09/2026 12:51] [Concluído] Remover a visualização do Grafo de Conhecimento mobile na barra lateral FolderTagSidebar
 - [24/09/2026 12:47] [Concluído] Substituir alternador de Grafo/Grade pelo botão de alternância de tema no cabeçalho da sidebar
