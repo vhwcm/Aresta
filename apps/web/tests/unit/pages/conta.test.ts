@@ -229,7 +229,7 @@ describe('Conta Page (/conta)', () => {
       },
     })
 
-    expect(wrapperConnected.text()).toContain('Sincronizado & Ativo')
+    expect(wrapperConnected.text()).toContain('Sincronizado')
     const disconnectBtn = wrapperConnected.find('[data-testid="disconnect-drive-account-btn"]')
     expect(disconnectBtn.exists()).toBe(true)
     expect(disconnectBtn.text()).toContain('Desconectar')

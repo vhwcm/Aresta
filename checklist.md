@@ -1,6 +1,9 @@
 ## 🔄 Em Andamento
+- [24/09/2026 09:08] [Fazendo] Unificar conceitos de temas e tags como tags em todo o ecossistema e incluir temas de livros e do grafo na listagem de tags da sidebar
+- [24/09/2026 09:05] [Fazendo] Ajustar o zoom inicial do grafo para caber bem justo na tela e projetar nós mais para os lados no desktop
 
 ## ✅ Concluído
+- [24/09/2026 09:11] [Concluído] Remover '& Ativo' do status de sincronização do Google Drive mantendo apenas 'Sincronizado'
 - [24/09/2026 09:01] [Concluído] Remover badge duplicado do diário e aplicar borda amarela de destaque para aspecto clicável
 - [24/09/2026 08:58] [Concluído] Reorganizar interface: busca de nós na sidebar, botão de adicionar ao lado da conta, diário acima do livro, tags acima da árvore e remoção de camadas do grafo
 - [24/09/2026 08:46] [Concluído] Reduzir o raio central (anel entre a raiz e os temas) no grafo de conhecimento

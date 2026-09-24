@@ -378,7 +378,7 @@
                   :class="isGoogleDriveConnected ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30' : 'bg-black/5 dark:bg-white/10 text-textSecondary'"
                 >
                   <span v-if="isGoogleDriveConnected" class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                  {{ isGoogleDriveConnected ? 'Sincronizado & Ativo' : 'Desconectado' }}
+                  {{ isGoogleDriveConnected ? 'Sincronizado' : 'Desconectado' }}
                 </span>
               </div>
               <p class="font-interface text-xs text-textSecondary">
