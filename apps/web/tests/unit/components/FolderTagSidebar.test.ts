@@ -10,7 +10,7 @@ describe('FolderTagSidebar component', () => {
   ];
   const folders = ['Estudos', 'Projetos'];
 
-  it('renderiza seletor de grafo/grade e itens sem pasta', () => {
+  it('renderiza botão de alternância de tema e itens sem pasta', () => {
     const wrapper = mount(FolderTagSidebar, {
       props: {
         items,
@@ -19,8 +19,7 @@ describe('FolderTagSidebar component', () => {
       },
     });
 
-    expect(wrapper.text()).toContain('Grafo');
-    expect(wrapper.text()).toContain('Grade');
+    expect(wrapper.find('button[aria-label="Alternar tema da interface"]').exists()).toBe(true);
     expect(wrapper.text()).toContain('Sem pasta');
     expect(wrapper.text()).toContain('Estudos');
     expect(wrapper.text()).toContain('Projetos');

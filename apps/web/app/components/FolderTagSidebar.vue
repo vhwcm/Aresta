@@ -24,27 +24,17 @@
           <ArestaLogoGraph :size="24" use-image :to="null" class="!p-0 group-hover:scale-105 transition-transform" />
         </NuxtLink>
 
-        <!-- Seletor Grafo vs. Grade no Topo -->
-        <div class="flex items-center p-0.5 rounded-xl bg-bgRoot border border-divider text-xs shrink-0 shadow-inner">
-          <button
-            class="px-2.5 py-1 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer text-xs font-medium"
-            :class="viewLayout === 'graph' ? 'bg-accent text-white font-semibold shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
-            title="Exibir Grafo de Conhecimento"
-            @click="$emit('update:view-layout', 'graph')"
-          >
-            <NetworkIcon class="w-3.5 h-3.5" />
-            <span>Grafo</span>
-          </button>
-          <button
-            class="px-2.5 py-1 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer text-xs font-medium"
-            :class="viewLayout === 'grid' ? 'bg-accent text-white font-semibold shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
-            title="Exibir Grade de Notas"
-            @click="$emit('update:view-layout', 'grid')"
-          >
-            <LayoutGridIcon class="w-3.5 h-3.5" />
-            <span>Grade</span>
-          </button>
-        </div>
+        <!-- Botão de Alternância de Tema -->
+        <button
+          @click="toggleThemeMode"
+          class="p-1.5 rounded-xl transition-all cursor-pointer shrink-0 flex items-center justify-center border border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.05] dark:hover:bg-white/[0.08]"
+          :title="themeMode === 'dark' ? 'Tema: Escuro (clique para Claro)' : (themeMode === 'light' ? 'Tema: Claro (clique para Livro)' : 'Tema: Livro (clique para Escuro)')"
+          aria-label="Alternar tema da interface"
+        >
+          <SunIcon v-if="themeMode === 'light'" class="w-4 h-4 text-amber-500 hover:rotate-45 transition-transform" />
+          <PaletteIcon v-else-if="themeMode === 'sepia'" class="w-4 h-4 text-amber-600 dark:text-amber-300 hover:scale-110 transition-transform" />
+          <MoonIcon v-else class="w-4 h-4 text-accent hover:-rotate-12 transition-transform" />
+        </button>
 
         <!-- Lupa de Pesquisa dos Títulos dos Nós do Grafo -->
         <button
@@ -224,7 +214,7 @@
       <!-- MODO EXPANDIDO: Navegação Global + Leitura Ativa + Árvore Hierárquica -->
       <div v-else class="space-y-3">
         <!-- SEÇÃO: NAVEGAÇÃO PRINCIPAL ARESTA (Em retângulos sem margem lateral + ícones maiores) -->
-        <div class="-mx-2.5 -mt-2.5 mb-2.5 grid grid-cols-5 divide-x divide-divider/60 border-b border-divider/60 bg-bgRoot/40 shadow-xs">
+        <div class="-mx-2.5 -mt-2.5 grid grid-cols-5 divide-x divide-divider/60 border-b border-divider/60 bg-bgRoot/40 shadow-xs">
           <!-- 1. Início -->
           <NuxtLink
             to="/"
@@ -353,14 +343,14 @@
           </div>
         </div>
 
-        <!-- 1. Botão do Diário Sequencial (Acima do Livro - Circulado com Amarelo para aspecto clicável) -->
-        <div>
+        <!-- 1. Botão do Diário Sequencial (Colado na barra superior de navegação) -->
+        <div class="-mx-2.5 !mt-0">
           <button
             @click="$emit('open-journal')"
-            class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs md:text-sm transition-all cursor-pointer border border-amber-500/50 hover:border-amber-500 shadow-xs group"
+            class="w-full flex items-center justify-between px-3.5 py-2.5 text-xs md:text-sm transition-all cursor-pointer border-b border-amber-500/30 hover:border-amber-500/60 group"
             :class="isJournalActive
-              ? 'bg-amber-500/20 text-amber-600 dark:text-amber-300 font-semibold ring-1 ring-amber-500/30'
-              : 'bg-amber-500/[0.07] hover:bg-amber-500/[0.15] text-amber-700 dark:text-amber-300/90 font-medium'"
+              ? 'bg-amber-500/20 text-amber-600 dark:text-amber-300 font-semibold'
+              : 'bg-amber-500/[0.06] hover:bg-amber-500/[0.12] text-amber-700 dark:text-amber-300/90 font-medium'"
             title="Abrir Diário Sequencial"
           >
             <div class="flex items-center gap-2.5 truncate">
@@ -371,15 +361,15 @@
           </button>
         </div>
 
-        <!-- 2. CARD DA LEITURA ATIVA (Abaixo do Diário) -->
-        <div v-if="hasActiveBook" class="pb-1">
+        <!-- 2. SEÇÃO DA LEITURA ATIVA (Abaixo do Diário - Reta de ponta a ponta) -->
+        <div v-if="hasActiveBook" class="-mx-2.5 !mt-0">
           <NuxtLink
             :to="activeBookReaderLink"
-            class="group/reading flex items-center gap-3 p-2.5 rounded-2xl bg-bgSurface/90 hover:bg-bgSurface border border-divider hover:border-accent/40 transition-all duration-200 shadow-xs cursor-pointer overflow-hidden"
+            class="group/reading w-full flex items-center gap-3 px-3.5 py-2.5 bg-bgSurface/50 hover:bg-bgSurface border-b border-divider/60 hover:border-accent/40 transition-all duration-200 cursor-pointer select-none"
             :title="`Continuar lendo: ${activeBookTitle}`"
           >
             <!-- Capa do Livro em Destaque Ampliado -->
-            <div class="w-14 h-20 rounded-xl overflow-hidden shrink-0 border border-divider/80 bg-neutral-900 shadow-md relative group-hover/reading:scale-105 transition-transform duration-200">
+            <div class="w-14 h-20 rounded-md overflow-hidden shrink-0 border border-divider/80 bg-neutral-900 shadow-sm relative group-hover/reading:scale-105 transition-transform duration-200">
               <img
                 v-if="activeBookCoverUrl && !coverError"
                 :src="activeBookCoverUrl"
@@ -432,10 +422,10 @@
           </div>
         </div>
 
-        <!-- 3. Seção Integrada: Gerenciar Tags com Tags Embutidas -->
-        <div class="pt-2 pb-1 border-t border-divider/60">
+        <!-- 3. Seção Integrada: Gerenciar Tags com Tags Embutidas (Reta de ponta a ponta) -->
+        <div class="-mx-2.5 !mt-0">
           <div
-            class="rounded-2xl border transition-all duration-200 overflow-hidden"
+            class="border-b transition-all duration-200"
             :class="isTagsExpanded
               ? 'border-blue-500/40 bg-blue-500/[0.04] dark:bg-blue-500/[0.07] shadow-xs'
               : 'border-blue-500/30 bg-blue-500/[0.02] hover:border-blue-500/50'"
@@ -480,7 +470,7 @@
             <!-- Tags Embutidas diretamente dentro do bloco de Gerenciar Tags -->
             <div
               v-show="isTagsExpanded"
-              class="px-2.5 pb-2.5 pt-1.5 border-t border-blue-500/15 animate-in fade-in slide-in-from-top-1 duration-150"
+              class="px-3.5 pb-2.5 pt-1.5 border-t border-blue-500/15 animate-in fade-in slide-in-from-top-1 duration-150"
             >
               <!-- Nuvem de Chips das Tags Embutidas (Clique para selecionar / Clique novamente para desselecionar) -->
               <div class="flex flex-wrap gap-1.5">
@@ -513,7 +503,7 @@
         </div>
 
         <!-- 3. Estrutura em Árvore (Pastas e Arquivos Aninhados) -->
-        <div class="pt-1 border-t border-divider/60">
+        <div class="pt-1.5">
 
           <!-- Input inline para criar nova pasta -->
           <div v-if="isCreatingFolder" class="px-2 py-1 mb-2">
@@ -850,10 +840,14 @@ import {
   User as UserIcon,
   Network as NetworkIcon,
   Search as SearchIcon,
-  Tag as TagIcon
+  Tag as TagIcon,
+  Sun as SunIcon,
+  Moon as MoonIcon,
+  Palette as PaletteIcon
 } from 'lucide-vue-next'
 import { useUserBooks } from '~/composables/useUserBooks'
 import { useGraph } from '~/composables/useGraph'
+import { useSettings } from '~/composables/useSettings'
 import { resolveBookCover } from '~/utils/cover'
 import { loadGraphMeta } from '~/utils/graphMeta'
 import AppKnowledgeGraph from '~/components/graph/AppKnowledgeGraph.vue'
@@ -862,6 +856,7 @@ import ReadingStreak from '~/components/ReadingStreak.vue'
 import { useWorkspaceSidebar } from '~/composables/useWorkspaceSidebar'
 
 const route = useRoute()
+const { themeMode, toggleThemeMode } = useSettings()
 
 const { userBooks, fetchUserBooks } = useUserBooks()
 const { graphData, fetchGraph } = useGraph()
