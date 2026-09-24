@@ -1,6 +1,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [23/09/2026 21:03] [Concluído] Remover a barra superior de cabeçalho do Workspace em UnifiedCanvasHub (busca, alternador e botões rápidos)
 - [23/09/2026 20:56] [Concluído] Substituir escrita estática de Espaço Criativo pelo seletor interativo de Grafo / Grade no FolderTagSidebar e UnifiedCanvasHub
 - [23/09/2026 20:52] [Concluído] Remover a linha de cabeçalho 'Árvore de Arquivos' com os botões de ação do FolderTagSidebar
 - [23/09/2026 20:47] [Concluído] Remover a barra/botão redundante de 'Todos os itens' do FolderTagSidebar (modos expandido e colapsado)

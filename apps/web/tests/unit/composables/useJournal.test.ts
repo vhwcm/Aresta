@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { useJournal, resetJournalMemory } from '~/composables/useJournal';
+import { useJournal, resetJournalMemory, getTodayString } from '~/composables/useJournal';
 import { dbManager } from '~/adapters/database/DatabaseManager';
 import { InMemoryAdapter } from '~/adapters/database/InMemoryAdapter';
 
@@ -19,7 +19,7 @@ describe('useJournal composable', () => {
 
   it('should initialize with today as selectedDate and load entries', async () => {
     const { selectedDate, loadTimeline, timelineEntries, selectedDateContent } = useJournal();
-    const todayStr = new Date().toISOString().slice(0, 10);
+    const todayStr = getTodayString();
     expect(selectedDate.value).toBe(todayStr);
 
     await loadTimeline();
@@ -29,7 +29,7 @@ describe('useJournal composable', () => {
 
   it('should save and update today entry with autosave', async () => {
     const { selectedDate, saveEntry, selectedDateContent, timelineEntries, loadTimeline } = useJournal();
-    const todayStr = new Date().toISOString().slice(0, 10);
+    const todayStr = getTodayString();
 
     await saveEntry(todayStr, '# Hoje\nEstudos intensivos de Nuxt.');
     expect(selectedDateContent.value).toBe('# Hoje\nEstudos intensivos de Nuxt.');
