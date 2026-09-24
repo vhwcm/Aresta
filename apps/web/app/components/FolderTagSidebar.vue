@@ -291,7 +291,7 @@
         </div>
 
         <!-- Visualização do Grafo de Conhecimento no Mobile (Abaixo do Diário - 100% largura e quadrado) -->
-        <div class="block md:hidden w-full pt-1 pb-1">
+        <div v-if="isMobileScreen" class="block md:hidden w-full pt-1 pb-1">
           <div class="w-full aspect-square rounded-2xl overflow-hidden border border-divider/80 bg-bgRoot/80 shadow-md relative">
             <AppKnowledgeGraph
               :is-compact="true"
@@ -1082,6 +1082,27 @@ const handleDeleteFolder = (folder: string) => {
     emit('delete-folder', folder)
   }
 }
+
+const isMobileScreen = ref(false)
+
+const updateMobileState = () => {
+  if (typeof window !== 'undefined') {
+    isMobileScreen.value = window.innerWidth < 768
+  }
+}
+
+onMounted(() => {
+  updateMobileState()
+  if (typeof window !== 'undefined') {
+    window.addEventListener('resize', updateMobileState, { passive: true })
+  }
+})
+
+onUnmounted(() => {
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('resize', updateMobileState)
+  }
+})
 </script>
 
 <style scoped>
