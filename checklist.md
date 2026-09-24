@@ -1,6 +1,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [24/09/2026 12:51] [Concluído] Remover a visualização do Grafo de Conhecimento mobile na barra lateral FolderTagSidebar
 - [24/09/2026 12:47] [Concluído] Substituir alternador de Grafo/Grade pelo botão de alternância de tema no cabeçalho da sidebar
 - [24/09/2026 12:44] [Concluído] Transformar a seção do livro ativo em bloco reto de ponta a ponta sem cantos arredondados na sidebar
 - [24/09/2026 12:37] [Concluído] Posicionar a seção do Diário diretamente colada à barra superior de navegação na sidebar

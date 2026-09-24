@@ -410,18 +410,6 @@
           </NuxtLink>
         </div>
 
-        <!-- Visualização do Grafo de Conhecimento no Mobile (Abaixo do Livro - 100% largura e quadrado) -->
-        <div v-if="isMobileScreen" class="block md:hidden w-full pt-1 pb-1">
-          <div class="w-full aspect-square rounded-2xl overflow-hidden border border-divider/80 bg-bgRoot/80 shadow-md relative">
-            <AppKnowledgeGraph
-              :is-compact="true"
-              :search-query="activeTag || graphSearchQuery"
-              :show-controls="false"
-              class="w-full h-full"
-            />
-          </div>
-        </div>
-
         <!-- 3. Seção Integrada: Gerenciar Tags com Tags Embutidas (Reta de ponta a ponta) -->
         <div class="-mx-2.5 !mt-0">
           <div
@@ -850,7 +838,6 @@ import { useGraph } from '~/composables/useGraph'
 import { useSettings } from '~/composables/useSettings'
 import { resolveBookCover } from '~/utils/cover'
 import { loadGraphMeta } from '~/utils/graphMeta'
-import AppKnowledgeGraph from '~/components/graph/AppKnowledgeGraph.vue'
 import ManageThemesModal from '~/components/ManageThemesModal.vue'
 import ReadingStreak from '~/components/ReadingStreak.vue'
 import { useWorkspaceSidebar } from '~/composables/useWorkspaceSidebar'
@@ -1374,27 +1361,6 @@ const handleDeleteFolder = (folder: string) => {
     emit('delete-folder', folder)
   }
 }
-
-const isMobileScreen = ref(false)
-
-const updateMobileState = () => {
-  if (typeof window !== 'undefined') {
-    isMobileScreen.value = window.innerWidth < 768
-  }
-}
-
-onMounted(() => {
-  updateMobileState()
-  if (typeof window !== 'undefined') {
-    window.addEventListener('resize', updateMobileState, { passive: true })
-  }
-})
-
-onUnmounted(() => {
-  if (typeof window !== 'undefined') {
-    window.removeEventListener('resize', updateMobileState)
-  }
-})
 </script>
 
 <style scoped>
