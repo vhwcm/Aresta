@@ -59,7 +59,6 @@ describe('Conta Page (/conta)', () => {
     })
 
     expect(wrapper.text()).toContain('Sua Conta')
-    expect(wrapper.text()).toContain('Métricas de Leitura & Conhecimento')
     expect(wrapper.find('[data-testid="reading-metrics-section"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="metric-books"]').text()).toContain('8')
     expect(wrapper.find('[data-testid="metric-books"]').text()).toContain('3 em leitura ativa')

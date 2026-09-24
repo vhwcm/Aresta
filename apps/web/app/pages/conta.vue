@@ -1,19 +1,10 @@
 <template>
   <div class="flex flex-col gap-12 pb-16">
     <!-- Cabeçalho Editorial da Conta -->
-    <header class="flex flex-col md:flex-row md:items-end justify-between gap-6">
-      <div class="flex flex-col gap-3">
-        <div class="flex items-center gap-2 font-technical text-[10px] uppercase font-semibold tracking-widest text-accent">
-          <UserIcon class="w-3.5 h-3.5" />
-          Identidade & Assinatura
-        </div>
-        <h1 class="font-editorial text-4xl md:text-5xl font-light text-textPrimary leading-tight">
-          Sua Conta
-        </h1>
-        <p class="font-interface text-textSecondary text-base max-w-2xl leading-relaxed">
-          Gerencie seu perfil, acompanhe seu progresso de leitura e desbloqueie recursos avançados com o Aresta Pro.
-        </p>
-      </div>
+    <header class="flex items-center justify-between gap-6">
+      <h1 class="font-editorial text-4xl md:text-5xl font-light text-textPrimary leading-tight">
+        Sua Conta
+      </h1>
 
       <!-- Badge de Status do Plano -->
       <div class="flex items-center gap-3">
@@ -76,8 +67,6 @@
 
     <!-- Métricas Intelectuais e Estatísticas -->
     <section class="flex flex-col gap-6" data-testid="reading-metrics-section">
-      <h3 class="font-editorial text-2xl font-light text-textPrimary">Métricas de Leitura & Conhecimento</h3>
-
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <!-- Métrica 1: Livros -->
         <div class="p-6 rounded-2xl bg-bgPanel border border-divider shadow-sm flex flex-col gap-2" data-testid="metric-books">
@@ -601,7 +590,6 @@ definePageMeta({
 
 import { ref, computed, onMounted } from 'vue'
 import {
-  UserIcon,
   CrownIcon,
   BookOpenIcon,
   ClockIcon,

@@ -3,6 +3,7 @@
 - [24/09/2026 09:05] [Fazendo] Ajustar o zoom inicial do grafo para caber bem justo na tela e projetar nós mais para os lados no desktop
 
 ## ✅ Concluído
+- [24/09/2026 09:22] [Concluído] Remover subtítulos e descrições do cabeçalho da conta e título de métricas de leitura
 - [24/09/2026 09:18] [Concluído] Refinar seção de preferências na página de conta: remover cabeçalho, tema, badges/descrições e diminuir botões de dicionários
 - [24/09/2026 09:11] [Concluído] Remover '& Ativo' do status de sincronização do Google Drive mantendo apenas 'Sincronizado'
 - [24/09/2026 09:01] [Concluído] Remover badge duplicado do diário e aplicar borda amarela de destaque para aspecto clicável
