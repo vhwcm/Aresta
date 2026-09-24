@@ -350,29 +350,22 @@ async function renderPdfPage(pageNum: number, canvas: HTMLCanvasElement) {
   if (!store.document) return
   try {
     const slot = slotElements.get(pageNum)
-    const renderWidth = slot?.clientWidth || 800
+    const renderWidth = slot?.clientWidth || contentAreaRef.value?.clientWidth || 800
+    const dpr = typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 2) : 1
     const pageData = await store.document.getPage(pageNum, renderWidth)
 
-    const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1
-    const width = Math.round(pageData.width || renderWidth)
-    const height = Math.round(pageData.height || getPageHeight(pageNum))
+    const aspect = pageData.aspectRatio || store.document.getAspectRatio?.(pageNum) || 0.707
+    const cssWidth = renderWidth
+    const cssHeight = Math.round(renderWidth / Math.max(0.2, aspect))
 
-    canvas.width = Math.round(width * dpr)
-    canvas.height = Math.round(height * dpr)
-    canvas.style.width = `${width}px`
-    canvas.style.height = `${height}px`
+    canvas.width = Math.round(pageData.width || cssWidth * dpr)
+    canvas.height = Math.round(pageData.height || cssHeight * dpr)
+    canvas.style.width = `${cssWidth}px`
+    canvas.style.height = `${cssHeight}px`
 
-    const ctx = canvas.getContext('2d')
+    const ctx = canvas.getContext('2d', { alpha: false })
     if (ctx) {
-      ctx.save()
-      ctx.scale(dpr, dpr)
-      await pageData.render(ctx, {
-        width,
-        height,
-        scale: 1,
-        rotation: 0,
-      })
-      ctx.restore()
+      await pageData.render(ctx)
     }
   } catch {
     // ignorar cancelamento de render
@@ -384,11 +377,12 @@ async function renderTextLayer(pageNum: number, textLayerEl: HTMLElement) {
   if (!store.document) return
   try {
     const slot = slotElements.get(pageNum)
-    const width = slot?.clientWidth || 800
-    const height = getPageHeight(pageNum)
+    const width = slot?.clientWidth || contentAreaRef.value?.clientWidth || 800
 
     if (typeof store.document.renderTextLayer === 'function') {
-      await store.document.renderTextLayer(pageNum, textLayerEl, width, height)
+      // No modo scroll a altura da folha é natural (proporcional à largura).
+      // Passar apenas a largura evita cálculos conflitantes de aspect ratio e offsets espúrios.
+      await store.document.renderTextLayer(pageNum, textLayerEl, width)
     }
 
     // Aplica destaques existentes
@@ -863,7 +857,6 @@ defineExpose({
 .reader-scroll-engine--theme-black .scroll-section-content :deep(em),
 .reader-scroll-engine--theme-black .scroll-section-content :deep(i),
 .reader-scroll-engine--theme-black .scroll-section-content :deep(small),
-.reader-scroll-engine--theme-black .scroll-page-text-layer :deep(*),
 .reader-scroll-engine--theme-black .scroll-page-text-layer :deep(.didactic-article-body),
 .reader-scroll-engine--theme-black .scroll-page-text-layer :deep(.didactic-paragraph) {
   color: #e4e4e7 !important;
@@ -932,7 +925,6 @@ defineExpose({
 .reader-scroll-engine--theme-sepia .scroll-section-content :deep(b),
 .reader-scroll-engine--theme-sepia .scroll-section-content :deep(em),
 .reader-scroll-engine--theme-sepia .scroll-section-content :deep(i),
-.reader-scroll-engine--theme-sepia .scroll-page-text-layer :deep(*),
 .reader-scroll-engine--theme-sepia .scroll-page-text-layer :deep(.didactic-article-body),
 .reader-scroll-engine--theme-sepia .scroll-page-text-layer :deep(.didactic-paragraph) {
   color: #2a2521 !important;
@@ -982,7 +974,6 @@ defineExpose({
 .reader-scroll-engine--theme-white .scroll-section-content :deep(b),
 .reader-scroll-engine--theme-white .scroll-section-content :deep(em),
 .reader-scroll-engine--theme-white .scroll-section-content :deep(i),
-.reader-scroll-engine--theme-white .scroll-page-text-layer :deep(*),
 .reader-scroll-engine--theme-white .scroll-page-text-layer :deep(.didactic-article-body),
 .reader-scroll-engine--theme-white .scroll-page-text-layer :deep(.didactic-paragraph) {
   color: #18181b !important;
@@ -1017,6 +1008,31 @@ defineExpose({
 .reader-scroll-engine--theme-white :deep(::selection) {
   background: rgba(229, 123, 85, 0.3) !important;
   color: #18181b !important;
+}
+
+/* ================= PDF.JS TEXT LAYER ================= */
+/* A camada de texto do PDF.js deve ser estritamente invisível e alinhada ao Canvas.
+   Os glifos visuais são renderizados exclusivamente no Canvas subjacente. */
+:deep(.textLayer) {
+  opacity: 1;
+}
+
+:deep(.textLayer :is(span, br)) {
+  color: transparent !important;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  pointer-events: auto !important;
+}
+
+:deep(.textLayer ::selection),
+:deep(.textLayer *::selection) {
+  background: rgba(229, 123, 85, 0.35) !important;
+  color: transparent !important;
+}
+
+:deep(.textLayer .reader-highlight) {
+  color: transparent !important;
+  cursor: pointer;
 }
 
 /* Destaques / Highlights */

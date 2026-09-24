@@ -1,6 +1,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [24/09/2026 10:37] [Concluído] Aumentar margens e respiro no leitor de livros em modo página (laterais, topo, rodapé e medianiz central) e blindar transparência e alinhamento 1:1 do PDF no modo scroll
 - [24/09/2026 10:10] [Concluído] Remover linha duplicada de limpar tag, permitir toggle direto na tag e corrigir exibição de nós conectados à tag no Grafo de Conhecimento
 - [24/09/2026 09:58] [Concluído] Limpar tags anteriores do Git no GitHub e manter apenas a tag v1.1.31 ativa
 - [24/09/2026 09:51] [Concluído] Remover barra de tags e filtros do cabecalho da estante em library.vue

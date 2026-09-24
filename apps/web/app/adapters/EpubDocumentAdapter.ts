@@ -636,6 +636,15 @@ async function findEpubCoverDataUri(
   return null
 }
 
+function getEpubPagePadding(width: number, height: number): { paddingX: number; paddingY: number } {
+  // Bordas e margens confortáveis no modo página:
+  // - Laterais e medianiz / lombada central (dos dois lados e no meio)
+  // - Topo e rodapé (em cima e em baixo)
+  const paddingX = width > 700 ? 64 : (width > 500 ? 52 : 36)
+  const paddingY = height > 700 ? 52 : (height > 500 ? 46 : 34)
+  return { paddingX, paddingY }
+}
+
 function calculateSectionPages(
   doc: Document | null,
   fontSize: number = 15,
@@ -656,8 +665,7 @@ function calculateSectionPages(
   try {
     const safeW = Math.max(320, pageWidth)
     const safeH = Math.max(400, pageHeight)
-    const paddingX = safeW > 700 ? 48 : (safeW > 500 ? 38 : 32)
-    const paddingY = safeH > 700 ? 40 : 30
+    const { paddingX, paddingY } = getEpubPagePadding(safeW, safeH)
     const colWidth = safeW - (2 * paddingX)
     const colGap = paddingX * 2
 
@@ -1025,8 +1033,7 @@ export class EpubDocumentAdapter implements IBookDocument {
       this._pageWidth = width
       this._pageHeight = height
 
-      const paddingX = width > 700 ? 48 : (width > 500 ? 38 : 32)
-      const paddingY = height > 700 ? 40 : 30
+      const { paddingX, paddingY } = getEpubPagePadding(width, height)
       const colWidth = width - (2 * paddingX)
       const colGap = paddingX * 2
       const colOffset = mapping.pageIndexInSection * width
@@ -1206,8 +1213,7 @@ export class EpubDocumentAdapter implements IBookDocument {
         ? (bodyEl.getAttribute('class') || '')
         : ''
 
-      const paddingX = width > 700 ? 40 : (width > 500 ? 28 : 16)
-      const paddingY = height > 700 ? 36 : 24
+      const { paddingX, paddingY } = getEpubPagePadding(width, height)
       const colWidth = width - (2 * paddingX)
       const colGap = paddingX * 2
       const colOffset = mapping.pageIndexInSection * width

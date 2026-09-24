@@ -104,4 +104,23 @@ describe('ReaderScrollEngine.vue', () => {
     await wrapper.vm.$nextTick()
     expect(wrapper.find('.reader-scroll-engine').classes()).toContain('reader-scroll-engine--theme-white')
   })
+
+  it('renderiza PDF no modo scroll acionando getPage e renderTextLayer com alinhamento proporcional (apenas width)', async () => {
+    const store = useReaderStore()
+    const doc = createMockPdfDocument(2)
+    store.setDocument(doc, 'teste.pdf')
+
+    const wrapper = mount(ReaderScrollEngine)
+    await wrapper.vm.$nextTick()
+
+    // getPage deve ter sido chamado para a página 1 visível
+    expect(doc.getPage).toHaveBeenCalled()
+    // renderTextLayer deve ter sido chamado com pageNum, container, e largura (sem forçar altura fixa)
+    expect(doc.renderTextLayer).toHaveBeenCalled()
+    const callArgs = (doc.renderTextLayer as any).mock.calls[0]
+    expect(callArgs[0]).toBe(1) // pageNum
+    expect(callArgs[1]).toBeInstanceOf(HTMLElement) // textLayerEl
+    expect(typeof callArgs[2]).toBe('number') // width
+    expect(callArgs[3]).toBeUndefined() // height NÃO deve ser passado no scroll para evitar offsets espúrios
+  })
 })

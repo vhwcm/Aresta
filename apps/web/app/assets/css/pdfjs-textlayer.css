@@ -36,8 +36,11 @@
 }
 
 /* Todos os caracteres e blocos do PDF DEVEM ser transparentes. O visual vem 100% do Canvas */
+.page-text-layer .textLayer :is(span, br),
+.scroll-page-text-layer .textLayer :is(span, br),
 .textLayer :is(span, br) {
   color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
   position: absolute;
   white-space: pre;
   cursor: text;
