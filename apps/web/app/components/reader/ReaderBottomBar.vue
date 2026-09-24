@@ -336,12 +336,12 @@
                 {{ store.fontSize || 15 }}px
               </span>
             </div>
-            <div class="flex items-center justify-between gap-1.5">
+            <div class="grid grid-cols-2 gap-1.5">
               <!-- Botão Diminuir -->
               <button
                 @click="store.decreaseFontSize(2)"
                 :disabled="(store.fontSize || 15) <= 12"
-                class="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-xl border text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                class="flex items-center justify-center gap-1 py-1.5 rounded-xl border text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 :class="store.readerTheme === 'sepia'
                   ? 'bg-[#f0e7d3] border-[#dfd5c0] text-[#5c4d3c] hover:bg-[#ebe0c8]'
                   : (store.readerTheme === 'white'
@@ -355,29 +355,11 @@
                 <span class="text-[11px]">A-</span>
               </button>
 
-              <!-- Reset / Tamanho padrão -->
-              <button
-                @click="store.resetFontSize()"
-                class="px-2.5 py-1.5 rounded-xl border text-xs font-technical font-bold transition-all"
-                :class="(store.fontSize || 15) === 15
-                  ? 'bg-accent/20 border-accent text-accent'
-                  : (store.readerTheme === 'sepia'
-                    ? 'bg-[#f0e7d3] border-[#dfd5c0] text-[#5c4d3c] hover:bg-[#ebe0c8]'
-                    : (store.readerTheme === 'white'
-                      ? 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200'
-                      : 'bg-white/5 border-white/10 text-textSecondary hover:text-white hover:bg-white/10'))"
-                title="Restaurar tamanho padrão (15px)"
-                aria-label="Restaurar tamanho padrão"
-                id="btn-reset-font-size"
-              >
-                15px
-              </button>
-
               <!-- Botão Aumentar -->
               <button
                 @click="store.increaseFontSize(2)"
                 :disabled="(store.fontSize || 15) >= 36"
-                class="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-xl border text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                class="flex items-center justify-center gap-1 py-1.5 rounded-xl border text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 :class="store.readerTheme === 'sepia'
                   ? 'bg-[#f0e7d3] border-[#dfd5c0] text-[#5c4d3c] hover:bg-[#ebe0c8]'
                   : (store.readerTheme === 'white'

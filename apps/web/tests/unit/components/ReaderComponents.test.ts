@@ -184,12 +184,11 @@ describe('Reader Components', () => {
       await decreaseFontBtn.trigger('click')
       expect(store.fontSize).toBe(initialFontSize)
 
-      // Testa reset de fonte para 15px
+      // Botão de 15px do meio foi removido; reset de fonte é testado no store
       await increaseFontBtn.trigger('click')
       expect(store.fontSize).toBe(17)
-      const resetFontBtn = wrapper.find('#btn-reset-font-size')
-      expect(resetFontBtn.exists()).toBe(true)
-      await resetFontBtn.trigger('click')
+      expect(wrapper.find('#btn-reset-font-size').exists()).toBe(false)
+      store.resetFontSize()
       expect(store.fontSize).toBe(15)
 
       // Testa alternância de Scroll vs Páginas
