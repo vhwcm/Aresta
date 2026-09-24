@@ -320,12 +320,12 @@ const initGraph = () => {
       d3
         .forceLink<GraphNode, GraphLink>(graphLinks)
         .id((d) => d.id)
-        .distance((d) => (d.type === 'embed' ? 90 : 130))
+        .distance((d) => (d.type === 'embed' ? 78 : 112))
         .strength(0.3)
     )
-    .force('charge', d3.forceManyBody().strength(-220))
+    .force('charge', d3.forceManyBody().strength(-190))
     .force('center', d3.forceCenter(width / 2, height / 2))
-    .force('collide', d3.forceCollide().radius((d: any) => d.radius + 18).iterations(2))
+    .force('collide', d3.forceCollide().radius((d: any) => d.radius + 14).iterations(2))
 
   // Renderização das Arestas (Links)
   const linkElements = linkGroup

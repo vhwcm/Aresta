@@ -1,6 +1,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [24/09/2026 08:43] [Concluído] Reduzir sutilmente o espaçamento e distância entre os nós do grafo de conhecimento
 - [23/09/2026 22:25] [Concluído] Corrigir enquadramento e delimitação de viewport do Grafo de Conhecimento eliminando colisão e sobreposição com a barra de camadas
 - [23/09/2026 22:08] [Concluído] Corrigir posicionamento radial e enquadramento do Grafo de Conhecimento com centralização estrita no nó raiz eliminando corte superior
 - [23/09/2026 21:57] [Concluído] Corrigir contraste e cor das fontes no leitor em modo scroll durante o modo escuro (substituir cor herdada e forçar estilo claro #e4e4e7/#ffffff)

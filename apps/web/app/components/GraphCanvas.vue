@@ -845,8 +845,8 @@ const initGraph = (animateTransition = true) => {
   const numThemes = Math.max(themeNodes.length, 1)
   const isCompactMode = props.isCompact
   const baseR = isCompactMode
-    ? Math.min(150, Math.max(120, 105 + numThemes * 6))
-    : Math.min(280, Math.max(180, 150 + numThemes * 12))
+    ? Math.min(135, Math.max(105, 92 + numThemes * 5))
+    : Math.min(245, Math.max(155, 130 + numThemes * 10))
   const R1 = baseR
   const bfsQueue: string[] = []
 
@@ -868,7 +868,7 @@ const initGraph = (animateTransition = true) => {
     if (!visited.has(iId)) {
       visited.add(iId)
       const islandAngle = ((2 * Math.PI * (idx + 0.5)) / Math.max(validIslandLinks.length, 1)) - Math.PI / 2
-      const islandR = R1 + (isCompactMode ? 10 : 20)
+      const islandR = R1 + (isCompactMode ? 8 : 16)
       nodeRadius.set(iId, islandR)
       nodeAngle.set(iId, islandAngle)
       const targetNode = nodeMap.get(iId)
@@ -900,13 +900,13 @@ const initGraph = (animateTransition = true) => {
         const childNode = nodeMap.get(childId)
         if (!childNode) return
 
-        // Distância radial incremental para fora:
-        let deltaR = isCompactMode ? 95 : 125
-        if (childNode.type === 'annotation') deltaR = isCompactMode ? 75 : 105
-        else if (childNode.type === 'folder') deltaR = isCompactMode ? 80 : 115
-        else if (childNode.type === 'note') deltaR = isCompactMode ? 85 : 120
-        else if (childNode.type === 'canvas') deltaR = isCompactMode ? 85 : 120
-        else if (childNode.type === 'link') deltaR = isCompactMode ? 85 : 120
+        // Distância radial incremental para fora (ajustada sutilmente para maior proximidade orgânica):
+        let deltaR = isCompactMode ? 82 : 108
+        if (childNode.type === 'annotation') deltaR = isCompactMode ? 65 : 90
+        else if (childNode.type === 'folder') deltaR = isCompactMode ? 70 : 98
+        else if (childNode.type === 'note') deltaR = isCompactMode ? 74 : 102
+        else if (childNode.type === 'canvas') deltaR = isCompactMode ? 74 : 102
+        else if (childNode.type === 'link') deltaR = isCompactMode ? 74 : 102
 
         const childR = parentR + deltaR
         // Se 1 filho: EXATAMENTE no mesmo ângulo (para fora!). Se K > 1: cone estreito apontando para fora
@@ -929,7 +929,7 @@ const initGraph = (animateTransition = true) => {
   // Nós órfãos ou avulsos (sem conexão a ninguém)
   const unassigned = inputNodes.filter((n) => !visited.has(String(n.id)))
   if (unassigned.length > 0) {
-    const orphanR = R1 + (isCompactMode ? 35 : 55)
+    const orphanR = R1 + (isCompactMode ? 30 : 46)
     unassigned.forEach((node, idx) => {
       const angle = (2 * Math.PI * idx) / unassigned.length + Math.PI / 4
       node.x = centerX + orphanR * Math.cos(angle)
@@ -956,7 +956,7 @@ const initGraph = (animateTransition = true) => {
     .forceSimulation(simulationNodes)
     .force('x', d3.forceX((d: any) => d.baseX).strength(0.8))
     .force('y', d3.forceY((d: any) => d.baseY).strength(0.8))
-    .force('collide', d3.forceCollide().radius((d: any) => getNodeRadius(d) + 12).strength(0.95))
+    .force('collide', d3.forceCollide().radius((d: any) => getNodeRadius(d) + 9).strength(0.95))
 
   // 25 ticks de acomodação de colisão suave
   for (let i = 0; i < 25; ++i) {
