@@ -619,7 +619,7 @@ function getOrCreateOffscreenCanvas(name: 'front' | 'back'): HTMLCanvasElement {
 async function renderPageToCanvas(pageNumber: number, targetCanvas: HTMLCanvasElement, width: number, height: number) {
   if (pageNumber <= 0 || !store.document || width <= 0 || height <= 0) return
   const doc = store.document
-  const dpr = typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 2) : 1
+  const dpr = typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 4) : 1
 
   const renderW = Math.round(width * dpr)
   const renderH = Math.round(height * dpr)
@@ -654,7 +654,7 @@ async function renderPageToCanvasTexture(
   visibleSourceEl?: HTMLElement | null,
   pdfCanvas?: HTMLCanvasElement | null,
 ): Promise<void> {
-  const dpr = typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 2) : 1
+  const dpr = typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 4) : 1
   const renderW = Math.round(width * dpr)
   const renderH = Math.round(height * dpr)
 
@@ -1390,6 +1390,17 @@ async function requestTurn(direction: PageTurnDirection) {
   physics.triggerTurn(direction, travelWidth, h, 0.5)
 }
 
+let dprMediaQuery: MediaQueryList | null = null
+
+function handleDprChange() {
+  void renderCurrentSpread()
+  if (typeof window !== 'undefined' && window.matchMedia) {
+    dprMediaQuery?.removeEventListener('change', handleDprChange)
+    dprMediaQuery = window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`)
+    dprMediaQuery.addEventListener('change', handleDprChange)
+  }
+}
+
 onMounted(() => {
   const layout = pageLayout.value
   const w = layout.rightPage?.width || layout.singlePage?.width || 400
@@ -1400,9 +1411,15 @@ onMounted(() => {
     pageHeight: h,
     direction: 'next',
   })
+
+  if (typeof window !== 'undefined' && window.matchMedia) {
+    dprMediaQuery = window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`)
+    dprMediaQuery.addEventListener('change', handleDprChange)
+  }
 })
 
 onUnmounted(() => {
+  dprMediaQuery?.removeEventListener('change', handleDprChange)
   physics.destroy()
   pageCurl3D.destroy()
 })

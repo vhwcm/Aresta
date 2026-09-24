@@ -114,4 +114,30 @@ describe('PdfDocumentAdapter', () => {
     // 500 - 300 = 200px de sobra -> 100px para cada lado
     expect(textLayerDiv.style.left).toBe('100px')
   })
+
+  it('7. getPage deve suportar DPR alto (até 4) permitindo zoom nítido no navegador', async () => {
+    const originalDpr = window.devicePixelRatio
+    try {
+      Object.defineProperty(window, 'devicePixelRatio', { value: 3.5, configurable: true })
+      const mockPage = {
+        getViewport: vi.fn(({ scale }) => ({
+          width: 600 * scale,
+          height: 800 * scale,
+          scale,
+        })),
+        render: vi.fn(() => ({ promise: Promise.resolve() })),
+      }
+      ;(adapter as any)._pdfDocument = {
+        getPage: vi.fn(async () => mockPage),
+      }
+      ;(adapter as any)._isLoaded = true
+
+      const pageData = await adapter.getPage(1, 600)
+      // Com baseWidth = 600, targetWidth = 600 e dpr = 3.5: scale deve ser (600 * 3.5) / 600 = 3.5
+      expect(mockPage.getViewport).toHaveBeenCalledWith(expect.objectContaining({ scale: 3.5 }))
+      expect(pageData.width).toBe(600 * 3.5)
+    } finally {
+      Object.defineProperty(window, 'devicePixelRatio', { value: originalDpr, configurable: true })
+    }
+  })
 })

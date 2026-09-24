@@ -90,9 +90,9 @@ export class PdfDocumentAdapter implements IBookDocument {
     const baseHeight = baseViewport.height
     const aspectRatio = baseWidth / Math.max(1, baseHeight)
 
-    // Renderização nativa 1:1 calculada exatamente para o tamanho do display e DPR.
+    // Renderização nativa 1:1 calculada exatamente para o tamanho do display e DPR (incluindo zoom do navegador até 4x).
     // Isso elimina distorção de fase, serrilhamento e o efeito de letras alternando entre negrito e fino.
-    const dpr = typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 2) : 1
+    const dpr = typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 4) : 1
     let scale: number
     let offsetX = 0
     let offsetY = 0

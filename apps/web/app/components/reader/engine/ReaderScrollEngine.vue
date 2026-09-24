@@ -351,7 +351,7 @@ async function renderPdfPage(pageNum: number, canvas: HTMLCanvasElement) {
   try {
     const slot = slotElements.get(pageNum)
     const renderWidth = slot?.clientWidth || contentAreaRef.value?.clientWidth || 800
-    const dpr = typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 2) : 1
+    const dpr = typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 4) : 1
     const pageData = await store.document.getPage(pageNum, renderWidth)
 
     const aspect = pageData.aspectRatio || store.document.getAspectRatio?.(pageNum) || 0.707
@@ -716,9 +716,51 @@ watch(
   },
 )
 
+let zoomDebounceTimer: ReturnType<typeof setTimeout> | null = null
+let dprMediaQuery: MediaQueryList | null = null
+
+function handleDprChange() {
+  handleResizeOrZoom()
+  if (typeof window !== 'undefined' && window.matchMedia) {
+    dprMediaQuery?.removeEventListener('change', handleDprChange)
+    dprMediaQuery = window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`)
+    dprMediaQuery.addEventListener('change', handleDprChange)
+  }
+}
+
+function handleResizeOrZoom() {
+  if (zoomDebounceTimer) clearTimeout(zoomDebounceTimer)
+  zoomDebounceTimer = setTimeout(async () => {
+    if (!store.document) return
+    // Quando o usuário dá zoom no navegador (Ctrl + / Ctrl -), re-rasteriza com o novo DPR
+    if (isPdfDocument.value) {
+      for (const [pageNumStr, isVis] of Object.entries(visiblePages)) {
+        if (!isVis) continue
+        const pageNum = Number(pageNumStr)
+        const canvas = canvasElements.get(pageNum)
+        if (canvas) {
+          await renderPdfPage(pageNum, canvas)
+        }
+        const textLayerEl = textLayerElements.get(pageNum)
+        if (textLayerEl) {
+          await renderTextLayer(pageNum, textLayerEl)
+        }
+      }
+    }
+  }, 150)
+}
+
 onMounted(async () => {
   initObservers()
   await nextTick()
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('resize', handleResizeOrZoom)
+    if (window.matchMedia) {
+      dprMediaQuery = window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`)
+      dprMediaQuery.addEventListener('change', handleDprChange)
+    }
+  }
 
   // Se já houver página definida, rola até ela
   if (store.currentPage && store.currentPage > 1) {
@@ -730,6 +772,11 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
+  if (zoomDebounceTimer) clearTimeout(zoomDebounceTimer)
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('resize', handleResizeOrZoom)
+  }
+  dprMediaQuery?.removeEventListener('change', handleDprChange)
   cleanupObservers()
   slotElements.clear()
   canvasElements.clear()
