@@ -187,7 +187,7 @@ describe('FolderTagSidebar component', () => {
     expect(wrapper.emitted('create-drawing')).toBeTruthy();
   });
 
-  it('renderiza os 4 ícones de navegação principal (Início, Livros, Revisão, Conta) em linha única', () => {
+  it('renderiza os ícones de navegação principal incluindo botão de adicionar geral ao lado da conta', () => {
     const wrapper = mount(FolderTagSidebar, {
       props: {
         items: [],
@@ -200,6 +200,45 @@ describe('FolderTagSidebar component', () => {
     expect(wrapper.find('[title="Meus Livros"]').exists()).toBe(true);
     expect(wrapper.find('[title="Revisão (Flashcards & Resumos)"]').exists()).toBe(true);
     expect(wrapper.find('[title="Minha Conta"]').exists()).toBe(true);
+    expect(wrapper.find('[title="Criar novo item"]').exists()).toBe(true);
+  });
+
+  it('renderiza lupa de busca de nós ao lado de Grafo/Grade e abre input de busca', async () => {
+    const wrapper = mount(FolderTagSidebar, {
+      props: {
+        items: [],
+        folders: [],
+        collapsed: false,
+        viewLayout: 'graph',
+      },
+    });
+
+    const searchBtn = wrapper.find('button[title="Pesquisar nós do grafo"]');
+    expect(searchBtn.exists()).toBe(true);
+
+    await searchBtn.trigger('click');
+    const searchInput = wrapper.find('input[placeholder*="Pesquisar nós do grafo"]');
+    expect(searchInput.exists()).toBe(true);
+  });
+
+  it('posiciona a seção de tags antes da árvore de pastas e arquivos', () => {
+    const wrapper = mount(FolderTagSidebar, {
+      props: {
+        items: [
+          { id: '1', folder: 'Estudos', tags: ['filosofia'] },
+        ],
+        folders: ['Estudos'],
+        collapsed: false,
+      },
+    });
+
+    const html = wrapper.html();
+    const tagsIndex = html.indexOf('Tags');
+    const foldersIndex = html.indexOf('Estudos');
+
+    expect(tagsIndex).toBeGreaterThan(-1);
+    expect(foldersIndex).toBeGreaterThan(-1);
+    expect(tagsIndex).toBeLessThan(foldersIndex);
   });
 });
 

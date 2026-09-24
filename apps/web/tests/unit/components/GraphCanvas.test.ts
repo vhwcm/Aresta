@@ -68,7 +68,7 @@ describe('GraphCanvas Component', () => {
     expect(wrapper.find('.node-icon-monochrome').find('line, path').exists()).toBe(true)
   })
 
-  it('renders all 4 node types and layer filter chips', async () => {
+  it('renders all 4 node types and does not render layers filter bar', async () => {
     const wrapper = mount(GraphCanvas, {
       props: {
         nodes: [
@@ -81,20 +81,16 @@ describe('GraphCanvas Component', () => {
       },
     })
 
-    // Deve renderizar a barra de camadas sem anotações de livros
-    expect(wrapper.text()).toContain('Camadas:')
-    expect(wrapper.text()).toContain('Temas')
-    expect(wrapper.text()).toContain('Livros')
-    expect(wrapper.text()).not.toContain('Anotações')
-    expect(wrapper.text()).toContain('Notas')
-    expect(wrapper.text()).toContain('Quadros')
+    // Barra de camadas foi removida do grafo
+    expect(wrapper.text()).not.toContain('Camadas:')
+    expect(wrapper.find('[data-testid="layers-filter-bar"]').exists()).toBe(false)
 
     // Deve renderizar nós de cada categoria no SVG
     expect(wrapper.findAll('.note-icon').length).toBeGreaterThanOrEqual(1)
     expect(wrapper.findAll('.canvas-icon').length).toBeGreaterThanOrEqual(1)
   })
 
-  it('hides floating controls bar and positions layer chips at top when showControls is false', () => {
+  it('hides floating controls bar when showControls is false', () => {
     const wrapper = mount(GraphCanvas, {
       props: {
         nodes: [
@@ -109,11 +105,7 @@ describe('GraphCanvas Component', () => {
     expect(wrapper.text()).not.toContain('Novo Tema')
     expect(wrapper.text()).not.toContain('Conectar')
     expect(wrapper.find('input[placeholder*="Buscar tema"]').exists()).toBe(false)
-
-    // Barra de camadas deve estar posicionada no topo (top-4 ou top-5)
-    const layersBar = wrapper.find('.absolute.z-10')
-    expect(layersBar.classes()).toContain('top-4')
-    expect(layersBar.text()).toContain('Camadas:')
+    expect(wrapper.find('[data-testid="layers-filter-bar"]').exists()).toBe(false)
   })
 
   it('filters nodes using searchQuery passed as prop', async () => {
@@ -138,92 +130,6 @@ describe('GraphCanvas Component', () => {
     await wrapper.setProps({ searchQuery: 'Clean' })
     expect(wrapper.html()).toContain('Clean Code')
     expect(wrapper.html()).not.toContain('Estoica')
-  })
-
-  it('renders clean Lucide SVG icons in layer filter chips instead of emojis', () => {
-    const wrapper = mount(GraphCanvas, {
-      props: {
-        nodes: [
-          { id: 'theme-1', rawId: 1, type: 'theme', name: 'Filosofia' },
-          { id: 'book-1', rawId: 1, type: 'book', name: 'Livro A', fullTitle: 'Livro A' },
-          { id: 'note-1', rawId: 'n1', type: 'note', name: 'Nota A', title: 'Nota A' },
-          { id: 'canvas-1', rawId: 'c1', type: 'canvas', name: 'Quadro A', title: 'Quadro A' },
-        ],
-        edges: [],
-      },
-    })
-
-    const chipsBar = wrapper.find('[data-testid="layers-filter-bar"]')
-    expect(chipsBar.exists()).toBe(true)
-
-    // Não deve conter nenhum emoji colorido nos chips
-    expect(chipsBar.text()).not.toContain('🏷️')
-    expect(chipsBar.text()).not.toContain('📚')
-    expect(chipsBar.text()).not.toContain('📝')
-    expect(chipsBar.text()).not.toContain('📄')
-    expect(chipsBar.text()).not.toContain('🖼️')
-
-    // Deve conter ícones SVG limpos da Lucide dentro dos botões de chip (Temas, Livros, Pastas, Notas, Quadros, Links)
-    const chipButtons = chipsBar.findAll('button')
-    expect(chipButtons.length).toBe(6)
-    for (const btn of chipButtons) {
-      expect(btn.find('svg').exists()).toBe(true)
-    }
-  })
-
-  it('filters nodes on layer chip click: isolates category on first click, accumulates, and resets when empty', async () => {
-    const wrapper = mount(GraphCanvas, {
-      props: {
-        nodes: [
-          { id: 'theme-1', rawId: 1, type: 'theme', name: 'Filosofia' },
-          { id: 'book-1', rawId: 1, type: 'book', name: 'Hobbit', fullTitle: 'Hobbit' },
-          { id: 'note-1', rawId: 'n1', type: 'note', name: 'Resumo', title: 'Resumo' },
-          { id: 'canvas-1', rawId: 'c1', type: 'canvas', name: 'Quadro', title: 'Quadro' },
-        ],
-        edges: [],
-      },
-    })
-
-    const chipsBar = wrapper.find('[data-testid="layers-filter-bar"]')
-    const chipButtons = chipsBar.findAll('button')
-    const themeBtn = chipButtons.find((b) => b.text().includes('Temas'))!
-    const bookBtn = chipButtons.find((b) => b.text().includes('Livros'))!
-
-    const nodesGroup = () => wrapper.find('.nodes-group').text()
-
-    // 1. Estado inicial: todas as 4 categorias visíveis
-    expect(nodesGroup()).toContain('Filosofia')
-    expect(nodesGroup()).toContain('Hobbit')
-    expect(nodesGroup()).toContain('Resumo')
-    expect(nodesGroup()).toContain('Quadro')
-
-    // 2. Primeiro clique em 'Temas' com tudo habilitado -> Isola apenas Temas
-    await themeBtn.trigger('click')
-    expect(nodesGroup()).toContain('Filosofia')
-    expect(nodesGroup()).not.toContain('Hobbit')
-    expect(nodesGroup()).not.toContain('Resumo')
-    expect(nodesGroup()).not.toContain('Quadro')
-
-    // 3. Clique subsequente em 'Livros' -> Adiciona Livros à visualização (multi-seleção)
-    await bookBtn.trigger('click')
-    expect(nodesGroup()).toContain('Filosofia')
-    expect(nodesGroup()).toContain('Hobbit')
-    expect(nodesGroup()).not.toContain('Resumo')
-    expect(nodesGroup()).not.toContain('Quadro')
-
-    // 4. Clique em 'Temas' para desmarcá-lo -> Apenas Livros permanece ativo
-    await themeBtn.trigger('click')
-    expect(nodesGroup()).not.toContain('Filosofia')
-    expect(nodesGroup()).toContain('Hobbit')
-    expect(nodesGroup()).not.toContain('Resumo')
-    expect(nodesGroup()).not.toContain('Quadro')
-
-    // 5. Clique em 'Livros' para desmarcar o último filtro ativo -> Auto-reset para todas as camadas
-    await bookBtn.trigger('click')
-    expect(nodesGroup()).toContain('Filosofia')
-    expect(nodesGroup()).toContain('Hobbit')
-    expect(nodesGroup()).toContain('Resumo')
-    expect(nodesGroup()).toContain('Quadro')
   })
 
   it('renders magnetic wire elements and glow filter for interactive edge pulling', () => {
@@ -388,7 +294,7 @@ describe('GraphCanvas Component', () => {
     expect(distance).toBeLessThan(140)
   })
 
-  it('renders folder nodes and Pastas layer button correctly', () => {
+  it('renders folder nodes correctly', () => {
     const wrapper = mount(GraphCanvas, {
       props: {
         nodes: [
@@ -401,8 +307,6 @@ describe('GraphCanvas Component', () => {
       },
     })
 
-    // Deve conter botão da camada Pastas
-    expect(wrapper.text()).toContain('Pastas')
     // Deve renderizar nó de pasta
     const folderG = wrapper.findAll('g.node').find((n) => n.text().includes('Projetos'))
     expect(folderG).toBeDefined()
@@ -463,7 +367,7 @@ describe('GraphCanvas Component', () => {
     expect(emittedPayload.targetType).toBe('theme')
   })
 
-  it('renders link nodes with link icon, label and layer filter chip', () => {
+  it('renders link nodes with link icon and label', () => {
     const wrapper = mount(GraphCanvas, {
       props: {
         nodes: [
@@ -481,9 +385,6 @@ describe('GraphCanvas Component', () => {
         edges: [],
       },
     })
-
-    // Deve conter o chip de camada "Links"
-    expect(wrapper.text()).toContain('Links')
 
     // Deve renderizar nó de link com ícone e texto
     const linkG = wrapper.findAll('g.node').find((n) => n.text().includes('Nuxt Docs'))

@@ -1,6 +1,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [24/09/2026 08:58] [Concluído] Reorganizar interface: busca de nós na sidebar, botão de adicionar ao lado da conta, diário acima do livro, tags acima da árvore e remoção de camadas do grafo
 - [24/09/2026 08:46] [Concluído] Reduzir o raio central (anel entre a raiz e os temas) no grafo de conhecimento
 - [24/09/2026 08:43] [Concluído] Reduzir sutilmente o espaçamento e distância entre os nós do grafo de conhecimento
 - [23/09/2026 22:25] [Concluído] Corrigir enquadramento e delimitação de viewport do Grafo de Conhecimento eliminando colisão e sobreposição com a barra de camadas

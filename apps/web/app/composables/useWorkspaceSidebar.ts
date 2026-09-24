@@ -13,6 +13,7 @@ const viewLayout = ref<'graph' | 'grid' | 'journal' | 'note-editor'>('graph')
 const activeFolder = ref<string | null>(null)
 const activeTag = ref<string | null>(null)
 const activeItemId = ref<string | null>(null)
+const graphSearchQuery = ref('')
 
 // Modais globais acionados pelo sidebar
 const isNewLinkModalOpen = ref(false)
@@ -188,6 +189,7 @@ export function useWorkspaceSidebar() {
     activeFolder,
     activeTag,
     activeItemId,
+    graphSearchQuery,
     isNewLinkModalOpen,
     isNewCanvasModalOpen,
     unifiedFolders,

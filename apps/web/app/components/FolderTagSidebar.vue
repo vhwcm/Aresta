@@ -45,6 +45,19 @@
             <span>Grade</span>
           </button>
         </div>
+
+        <!-- Lupa de Pesquisa dos Títulos dos Nós do Grafo -->
+        <button
+          @click="toggleGraphSearch"
+          class="p-1.5 rounded-xl transition-all cursor-pointer shrink-0 flex items-center justify-center border"
+          :class="isGraphSearchOpen || graphSearchQuery
+            ? 'bg-accent/15 text-accent border-accent/40 shadow-xs'
+            : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.05] dark:hover:bg-white/[0.08]'"
+          title="Pesquisar nós do grafo"
+          aria-label="Pesquisar nós do grafo"
+        >
+          <SearchIcon class="w-3.5 h-3.5" />
+        </button>
       </div>
 
       <!-- Botão Minimizar/Expandir Sidebar -->
@@ -54,6 +67,38 @@
         :title="isCollapsed ? 'Expandir painel' : 'Recolher painel'"
       >
         <SidebarIcon class="w-4 h-4" />
+      </button>
+    </div>
+
+    <!-- Barra de Pesquisa de Nós do Grafo (Ativada pela Lupa) -->
+    <div
+      v-if="isGraphSearchOpen && !isCollapsed"
+      class="px-2.5 py-2 border-b border-divider/60 bg-bgRoot/70 backdrop-blur-md flex items-center gap-2 animate-in fade-in slide-in-from-top-1 duration-150"
+    >
+      <SearchIcon class="w-3.5 h-3.5 text-accent shrink-0" />
+      <input
+        ref="graphSearchInputRef"
+        v-model="graphSearchQuery"
+        type="text"
+        placeholder="Pesquisar nós do grafo..."
+        class="w-full bg-transparent text-xs text-textPrimary placeholder:text-textSecondary/50 focus:outline-none font-interface"
+        @input="onGraphSearchInput"
+        @keyup.esc="closeGraphSearch"
+      />
+      <button
+        v-if="graphSearchQuery"
+        @click="clearGraphSearch"
+        class="p-0.5 rounded text-textSecondary hover:text-textPrimary cursor-pointer text-xs"
+        title="Limpar pesquisa"
+      >
+        ✕
+      </button>
+      <button
+        @click="closeGraphSearch"
+        class="p-0.5 rounded text-textSecondary hover:text-textPrimary cursor-pointer text-xs ml-0.5"
+        title="Fechar busca"
+      >
+        ✕
       </button>
     </div>
 
@@ -103,6 +148,18 @@
 
         <div class="w-8 h-px bg-divider/60 my-1"></div>
 
+        <!-- Botão Diário no modo colapsado (Antes do Livro) -->
+        <button
+          @click="$emit('open-journal')"
+          class="p-2 rounded-xl transition-all cursor-pointer border relative group"
+          :class="isJournalActive ? 'bg-amber-500/15 text-amber-500 border-amber-500/30 shadow-xs' : 'border-transparent text-textSecondary hover:text-amber-500 hover:bg-amber-500/10'"
+          title="Diário Sequencial de Anotações"
+        >
+          <BookOpenCheckIcon class="w-4 h-4 text-amber-500" />
+        </button>
+
+        <div class="w-8 h-px bg-divider/60 my-0.5"></div>
+
         <!-- Miniatura de Leitura Ativa no modo colapsado -->
         <NuxtLink
           v-if="hasActiveBook"
@@ -123,16 +180,6 @@
             </div>
           </div>
         </NuxtLink>
-
-        <!-- Botão Diário no modo colapsado -->
-        <button
-          @click="$emit('open-journal')"
-          class="p-2 rounded-xl transition-all cursor-pointer border relative group"
-          :class="isJournalActive ? 'bg-amber-500/15 text-amber-500 border-amber-500/30 shadow-xs' : 'border-transparent text-textSecondary hover:text-amber-500 hover:bg-amber-500/10'"
-          title="Diário Sequencial de Anotações"
-        >
-          <BookOpenCheckIcon class="w-4 h-4 text-amber-500" />
-        </button>
 
         <div class="w-8 h-px bg-divider/60 my-0.5"></div>
 
@@ -163,8 +210,8 @@
 
       <!-- MODO EXPANDIDO: Navegação Global + Leitura Ativa + Árvore Hierárquica -->
       <div v-else class="space-y-3">
-        <!-- SEÇÃO: NAVEGAÇÃO PRINCIPAL ARESTA (Ícones em linha única horizontal) -->
-        <div class="grid grid-cols-4 gap-1.5 p-1 bg-bgRoot/60 rounded-2xl border border-divider/60 shadow-inner">
+        <!-- SEÇÃO: NAVEGAÇÃO PRINCIPAL ARESTA (Ícones em linha única horizontal + Botão Adicionar ao lado da Conta) -->
+        <div class="grid grid-cols-5 gap-1 p-1 bg-bgRoot/60 rounded-2xl border border-divider/60 shadow-inner">
           <!-- 1. Início -->
           <NuxtLink
             to="/"
@@ -216,8 +263,108 @@
           >
             <UserIcon class="w-4 h-4 transition-transform group-hover:scale-110" />
           </NuxtLink>
+
+          <!-- 5. Botão de Adicionar Geral (Ao lado da Conta) -->
+          <div class="relative" ref="addDropdownRef">
+            <button
+              @click="isAddMenuOpen = !isAddMenuOpen"
+              class="w-full h-full flex items-center justify-center p-2 rounded-xl transition-all cursor-pointer border bg-accent hover:bg-accent/90 text-white border-accent shadow-xs active:scale-95 group"
+              title="Criar novo item"
+              aria-label="Criar novo item"
+            >
+              <PlusIcon class="w-4 h-4 transition-transform duration-200" :class="{ 'rotate-45': isAddMenuOpen }" />
+            </button>
+
+            <!-- Menu Dropdown -->
+            <div
+              v-if="isAddMenuOpen"
+              class="absolute right-0 top-full mt-1.5 w-48 p-1.5 rounded-2xl bg-bgPanel border border-divider shadow-2xl z-50 flex flex-col gap-0.5 animate-in fade-in zoom-in-95 duration-150 backdrop-blur-md"
+            >
+              <button
+                @click="handleAddAction('note')"
+                class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-textPrimary hover:bg-accent/10 hover:text-accent transition-colors cursor-pointer text-left"
+              >
+                <FileTextIcon class="w-4 h-4 text-accent shrink-0" />
+                <div class="flex flex-col">
+                  <span class="font-medium">Nova Nota</span>
+                  <span class="text-[10px] text-textSecondary">Anotação em Markdown</span>
+                </div>
+              </button>
+
+              <button
+                @click="handleAddAction('drawing')"
+                class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-textPrimary hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer text-left"
+              >
+                <PenToolIcon class="w-4 h-4 text-primary shrink-0" />
+                <div class="flex flex-col">
+                  <span class="font-medium">Novo Desenho</span>
+                  <span class="text-[10px] text-textSecondary">Estilo Samsung Notes</span>
+                </div>
+              </button>
+
+              <button
+                @click="handleAddAction('link')"
+                class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-textPrimary hover:bg-emerald-500/10 hover:text-emerald-500 transition-colors cursor-pointer text-left"
+              >
+                <GlobeIcon class="w-4 h-4 text-emerald-500 shrink-0" />
+                <div class="flex flex-col">
+                  <span class="font-medium">Novo Link</span>
+                  <span class="text-[10px] text-textSecondary">Link web com título</span>
+                </div>
+              </button>
+
+              <button
+                @click="handleAddAction('canvas')"
+                class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-textPrimary hover:bg-accent/10 hover:text-accent transition-colors cursor-pointer text-left"
+              >
+                <LayoutGridIcon class="w-4 h-4 text-accent shrink-0" />
+                <div class="flex flex-col">
+                  <span class="font-medium">Novo Quadro</span>
+                  <span class="text-[10px] text-textSecondary">Canvas visual infinito</span>
+                </div>
+              </button>
+
+              <div class="h-px bg-divider/60 my-1"></div>
+
+              <button
+                @click="handleAddAction('folder')"
+                class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-textPrimary hover:bg-amber-500/10 hover:text-amber-500 transition-colors cursor-pointer text-left"
+              >
+                <FolderPlusIcon class="w-4 h-4 text-amber-500 shrink-0" />
+                <div class="flex flex-col">
+                  <span class="font-medium">Nova Pasta</span>
+                  <span class="text-[10px] text-textSecondary">Organizar na árvore</span>
+                </div>
+              </button>
+            </div>
+          </div>
         </div>
-        <!-- 0. CARD DA LEITURA ATIVA -->
+
+        <!-- 1. Botão do Diário Sequencial (Acima do Livro) -->
+        <div>
+          <button
+            @click="$emit('open-journal')"
+            class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs md:text-sm font-medium transition-all cursor-pointer border group"
+            :class="isJournalActive
+              ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30 shadow-xs font-semibold'
+              : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'"
+          >
+            <div class="flex items-center gap-2.5 truncate">
+              <BookOpenCheckIcon class="w-4 h-4 flex-shrink-0 transition-colors" :class="isJournalActive ? 'text-amber-500' : 'text-amber-500/80 group-hover:text-amber-500'" />
+              <span class="truncate font-interface">Diário</span>
+            </div>
+            <span
+              class="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full font-semibold transition-colors"
+              :class="isJournalActive
+                ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30'
+                : 'bg-amber-500/10 text-amber-600 dark:text-amber-400/90 group-hover:bg-amber-500/20'"
+            >
+              Diário
+            </span>
+          </button>
+        </div>
+
+        <!-- 2. CARD DA LEITURA ATIVA (Abaixo do Diário) -->
         <div v-if="hasActiveBook" class="pb-1">
           <NuxtLink
             :to="activeBookReaderLink"
@@ -266,31 +413,7 @@
           </NuxtLink>
         </div>
 
-        <!-- 1. Botão do Diário Sequencial -->
-        <div>
-          <button
-            @click="$emit('open-journal')"
-            class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs md:text-sm font-medium transition-all cursor-pointer border group"
-            :class="isJournalActive
-              ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30 shadow-xs font-semibold'
-              : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'"
-          >
-            <div class="flex items-center gap-2.5 truncate">
-              <BookOpenCheckIcon class="w-4 h-4 flex-shrink-0 transition-colors" :class="isJournalActive ? 'text-amber-500' : 'text-amber-500/80 group-hover:text-amber-500'" />
-              <span class="truncate font-interface">Diário</span>
-            </div>
-            <span
-              class="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full font-semibold transition-colors"
-              :class="isJournalActive
-                ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30'
-                : 'bg-amber-500/10 text-amber-600 dark:text-amber-400/90 group-hover:bg-amber-500/20'"
-            >
-              Diário
-            </span>
-          </button>
-        </div>
-
-        <!-- Visualização do Grafo de Conhecimento no Mobile (Abaixo do Diário - 100% largura e quadrado) -->
+        <!-- Visualização do Grafo de Conhecimento no Mobile (Abaixo do Livro - 100% largura e quadrado) -->
         <div v-if="isMobileScreen" class="block md:hidden w-full pt-1 pb-1">
           <div class="w-full aspect-square rounded-2xl overflow-hidden border border-divider/80 bg-bgRoot/80 shadow-md relative">
             <AppKnowledgeGraph
@@ -301,79 +424,46 @@
           </div>
         </div>
 
-        <!-- 2. BOTÃO GERAL DE ADICIONAR ACIMA DA ÁRVORE -->
-        <div class="relative pt-1" ref="addDropdownRef">
-          <button
-            @click="isAddMenuOpen = !isAddMenuOpen"
-            class="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-accent hover:bg-accent/90 text-white font-semibold text-xs shadow-sm shadow-accent/20 hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer"
-            title="Criar novo item"
-          >
-            <PlusIcon class="w-4 h-4" />
-            <span>Adicionar</span>
-            <ChevronDownIcon class="w-3.5 h-3.5 opacity-80 ml-auto transition-transform" :class="{ 'rotate-180': isAddMenuOpen }" />
-          </button>
-
-          <!-- Menu Dropdown -->
-          <div
-            v-if="isAddMenuOpen"
-            class="absolute left-0 right-0 top-full mt-1.5 p-1.5 rounded-2xl bg-bgPanel border border-divider shadow-2xl z-50 flex flex-col gap-0.5 animate-in fade-in zoom-in-95 duration-150 backdrop-blur-md"
-          >
+        <!-- 3. Seção de Filtro por Tags (Acima da Árvore de Arquivos) -->
+        <div class="pt-2 pb-1 border-t border-divider/60">
+          <div class="flex items-center justify-between px-1 mb-2">
+            <span class="text-[10px] font-bold tracking-wider uppercase text-textSecondary font-interface">
+              Tags
+            </span>
             <button
-              @click="handleAddAction('note')"
-              class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-textPrimary hover:bg-accent/10 hover:text-accent transition-colors cursor-pointer text-left"
+              v-if="selectedTag"
+              @click="$emit('select-tag', null)"
+              class="text-[10px] text-accent hover:underline cursor-pointer flex items-center gap-1 font-medium"
             >
-              <FileTextIcon class="w-4 h-4 text-accent shrink-0" />
-              <div class="flex flex-col">
-                <span class="font-medium">Nova Nota</span>
-                <span class="text-[10px] text-textSecondary">Anotação em Markdown</span>
-              </div>
+              <span>Limpar filtro</span>
+              <span class="text-[9px]">✕</span>
+            </button>
+          </div>
+
+          <!-- Nuvem de Chips de Tags -->
+          <div class="flex flex-wrap gap-1.5 px-0.5">
+            <button
+              v-for="tagItem in availableTags"
+              :key="tagItem.name"
+              @click="toggleTag(tagItem.name)"
+              class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer border"
+              :class="selectedTag === tagItem.name
+                ? 'bg-accent/15 text-accent border-accent/40 shadow-xs font-semibold'
+                : 'bg-bgSurface border-divider text-textSecondary hover:border-accent/30 hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'"
+            >
+              <span class="text-accent/70 font-mono text-[11px]">#</span>
+              <span class="font-interface">{{ tagItem.name }}</span>
+              <span
+                class="text-[10px] px-1.5 py-0.2 rounded-full font-mono transition-colors"
+                :class="selectedTag === tagItem.name ? 'bg-accent/25 text-accent' : 'bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-textSecondary/60'"
+              >
+                {{ tagItem.count }}
+              </span>
             </button>
 
-            <button
-              @click="handleAddAction('drawing')"
-              class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-textPrimary hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer text-left"
-            >
-              <PenToolIcon class="w-4 h-4 text-primary shrink-0" />
-              <div class="flex flex-col">
-                <span class="font-medium">Novo Desenho</span>
-                <span class="text-[10px] text-textSecondary">Estilo Samsung Notes</span>
-              </div>
-            </button>
-
-            <button
-              @click="handleAddAction('link')"
-              class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-textPrimary hover:bg-emerald-500/10 hover:text-emerald-500 transition-colors cursor-pointer text-left"
-            >
-              <GlobeIcon class="w-4 h-4 text-emerald-500 shrink-0" />
-              <div class="flex flex-col">
-                <span class="font-medium">Novo Link</span>
-                <span class="text-[10px] text-textSecondary">Link web com título</span>
-              </div>
-            </button>
-
-            <button
-              @click="handleAddAction('canvas')"
-              class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-textPrimary hover:bg-accent/10 hover:text-accent transition-colors cursor-pointer text-left"
-            >
-              <LayoutGridIcon class="w-4 h-4 text-accent shrink-0" />
-              <div class="flex flex-col">
-                <span class="font-medium">Novo Quadro</span>
-                <span class="text-[10px] text-textSecondary">Canvas visual infinito</span>
-              </div>
-            </button>
-
-            <div class="h-px bg-divider/60 my-1"></div>
-
-            <button
-              @click="handleAddAction('folder')"
-              class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-textPrimary hover:bg-amber-500/10 hover:text-amber-500 transition-colors cursor-pointer text-left"
-            >
-              <FolderPlusIcon class="w-4 h-4 text-amber-500 shrink-0" />
-              <div class="flex flex-col">
-                <span class="font-medium">Nova Pasta</span>
-                <span class="text-[10px] text-textSecondary">Organizar na árvore</span>
-              </div>
-            </button>
+            <div v-if="availableTags.length === 0" class="px-1 py-1 text-[11px] text-textSecondary italic">
+              Nenhuma tag aplicada ainda.
+            </div>
           </div>
         </div>
 
@@ -638,49 +728,6 @@
             </div>
           </div>
         </div>
-
-        <!-- 3. Seção de Tags -->
-        <div class="pt-3 border-t border-divider">
-          <div class="flex items-center justify-between px-2 mb-2">
-            <span class="text-[10px] font-bold tracking-wider uppercase text-textSecondary font-interface">
-              Tags
-            </span>
-            <button
-              v-if="selectedTag"
-              @click="$emit('select-tag', null)"
-              class="text-[10px] text-accent hover:underline cursor-pointer flex items-center gap-1 font-medium"
-            >
-              <span>Limpar filtro</span>
-              <span class="text-[9px]">✕</span>
-            </button>
-          </div>
-
-          <!-- Nuvem de Chips de Tags -->
-          <div class="flex flex-wrap gap-1.5 px-1">
-            <button
-              v-for="tagItem in availableTags"
-              :key="tagItem.name"
-              @click="toggleTag(tagItem.name)"
-              class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer border"
-              :class="selectedTag === tagItem.name
-                ? 'bg-accent/15 text-accent border-accent/40 shadow-xs font-semibold'
-                : 'bg-bgSurface border-divider text-textSecondary hover:border-accent/30 hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'"
-            >
-              <span class="text-accent/70 font-mono text-[11px]">#</span>
-              <span class="font-interface">{{ tagItem.name }}</span>
-              <span
-                class="text-[10px] px-1.5 py-0.2 rounded-full font-mono transition-colors"
-                :class="selectedTag === tagItem.name ? 'bg-accent/25 text-accent' : 'bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-textSecondary/60'"
-              >
-                {{ tagItem.count }}
-              </span>
-            </button>
-
-            <div v-if="availableTags.length === 0" class="px-2 py-1 text-[11px] text-textSecondary italic">
-              Nenhuma tag aplicada ainda.
-            </div>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -743,13 +790,48 @@ import {
   ShoppingBag as ShoppingBagIcon,
   Brain as BrainIcon,
   User as UserIcon,
-  Network as NetworkIcon
+  Network as NetworkIcon,
+  Search as SearchIcon
 } from 'lucide-vue-next'
 import { useUserBooks } from '~/composables/useUserBooks'
 import { resolveBookCover } from '~/utils/cover'
 import AppKnowledgeGraph from '~/components/graph/AppKnowledgeGraph.vue'
+import { useWorkspaceSidebar } from '~/composables/useWorkspaceSidebar'
 
 const route = useRoute()
+
+const { graphSearchQuery } = useWorkspaceSidebar()
+const isGraphSearchOpen = ref(false)
+const graphSearchInputRef = ref<HTMLInputElement | null>(null)
+
+const toggleGraphSearch = () => {
+  isGraphSearchOpen.value = !isGraphSearchOpen.value
+  if (isGraphSearchOpen.value) {
+    if (props.viewLayout !== 'graph') {
+      emit('update:view-layout', 'graph')
+    }
+    nextTick(() => {
+      graphSearchInputRef.value?.focus()
+    })
+  }
+}
+
+const onGraphSearchInput = () => {
+  if (props.viewLayout !== 'graph') {
+    emit('update:view-layout', 'graph')
+  }
+}
+
+const clearGraphSearch = () => {
+  graphSearchQuery.value = ''
+  nextTick(() => {
+    graphSearchInputRef.value?.focus()
+  })
+}
+
+const closeGraphSearch = () => {
+  isGraphSearchOpen.value = false
+}
 
 export interface SidebarTreeItem {
   id: string

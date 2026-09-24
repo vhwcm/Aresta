@@ -142,35 +142,6 @@
       </button>
     </div>
 
-    <!-- Barra de Filtros por Camadas de Nós (Chips Visíveis quando não compacto) -->
-    <div
-      v-if="!isCompact"
-      data-testid="layers-filter-bar"
-      class="absolute z-10 flex items-center gap-1.5 p-1.5 rounded-2xl backdrop-blur-md border shadow-lg transition-all duration-200 max-w-[calc(100%-3rem)] flex-wrap"
-      :class="[
-        showControls ? 'top-20 left-6' : 'top-4 sm:top-5 left-4 sm:left-6',
-        isSepiaMode
-          ? 'bg-[#FAF5E8]/90 border-[#dfd5c0] text-[#2C2621]'
-          : (isLightMode ? 'bg-white/90 border-gray-200 text-gray-800' : 'bg-bgPanel/85 border-divider text-textPrimary')
-      ]"
-    >
-      <span class="text-[11px] font-medium text-textSecondary px-2 select-none">Camadas:</span>
-
-      <button
-        v-for="layer in layerDefinitions"
-        :key="layer.type"
-        @click="toggleLayer(layer.type)"
-        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-medium transition-all cursor-pointer select-none border"
-        :class="activeLayers.has(layer.type)
-          ? `${layer.activeBg} ${layer.activeText} shadow-xs font-semibold`
-          : 'opacity-40 hover:opacity-75 bg-transparent text-textSecondary border-transparent'"
-        :title="`Alternar exibição de ${layer.label}`"
-      >
-        <component :is="layer.icon" class="w-3.5 h-3.5 shrink-0" />
-        <span>{{ layer.label }}</span>
-        <span class="text-[10px] ml-0.5 opacity-75 font-mono">({{ getLayerCount(layer.type) }})</span>
-      </button>
-    </div>
   </div>
 </template>
 
