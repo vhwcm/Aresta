@@ -1,6 +1,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [24/09/2026 09:37] [Concluído] Remover seção de comparativo e assinatura do Aresta Pro na página de conta
 - [24/09/2026 09:35] [Concluído] Unificar temas e tags na sidebar com botão azul de gerenciamento, remover da estante e conectar filtro bidirecional ao Grafo e à Estante
 - [24/09/2026 09:31] [Concluído] Unificar tema de leitura com o tema do app e sincronizar alterações bidirecionalmente durante a leitura
 - [24/09/2026 09:30] [Concluído] Ajustar o zoom inicial do grafo para caber bem justo na tela e projetar nós mais para os lados no desktop

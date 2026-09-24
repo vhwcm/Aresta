@@ -302,63 +302,6 @@
       </div>
     </section>
 
-    <!-- Comparativo e Benefícios do Upgrade Pro -->
-    <section class="flex flex-col gap-6 p-8 md:p-12 rounded-3xl bg-bgPanel border border-accent/30 shadow-xl relative overflow-hidden">
-      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-        <div class="flex flex-col gap-2 max-w-xl">
-          <div class="flex items-center gap-2">
-            <CrownIcon class="w-5 h-5 text-accent" />
-            <span class="font-technical text-xs uppercase tracking-widest text-accent font-semibold">Aresta Pro</span>
-          </div>
-          <h2 class="font-editorial text-3xl md:text-4xl font-light text-textPrimary">
-            Eleve sua jornada intelectual ao próximo nível
-          </h2>
-          <p class="font-interface text-sm text-textSecondary leading-relaxed">
-            Conversão ilimitada de livros, inteligência artificial profunda de síntese, OCR avançado e exportação de grafos para Obsidian e Notion.
-          </p>
-        </div>
-
-        <div class="flex flex-col items-start md:items-end gap-2 bg-black/[0.02] dark:bg-white/5 p-5 rounded-2xl border border-divider">
-          <span class="font-technical text-[10px] uppercase tracking-wider text-textSecondary">Assinatura Anual</span>
-          <div class="flex items-baseline gap-1">
-            <span class="font-editorial text-3xl font-light text-textPrimary">R$ 24</span>
-            <span class="font-interface text-xs text-textSecondary">/ mês</span>
-          </div>
-          <span class="font-interface text-[10px] text-emerald-500 font-medium">Economize 30% no plano anual</span>
-          <button
-            @click="showUpgradeModal = true"
-            class="mt-2 w-full px-6 py-2.5 rounded-xl bg-accent hover:bg-accent/90 text-white font-interface text-xs font-medium transition-all shadow-lg shadow-accent/20"
-          >
-            {{ isPro ? 'Gerenciar Assinatura' : 'Assinar Aresta Pro' }}
-          </button>
-        </div>
-      </div>
-
-      <!-- Tabela de Benefícios -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6 border-t border-divider text-xs">
-        <div class="flex items-start gap-3 p-3 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-divider/40">
-          <BrainIcon class="w-4 h-4 text-accent shrink-0 mt-0.5" />
-          <div class="flex flex-col gap-0.5">
-            <span class="text-textPrimary font-medium">IA Gemini Ilimitada</span>
-            <span class="text-textSecondary text-[11px]">Resumos de livros completos e geração de mapas conceituais automáticos.</span>
-          </div>
-        </div>
-        <div class="flex items-start gap-3 p-3 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-divider/40">
-          <FileCode2Icon class="w-4 h-4 text-accent shrink-0 mt-0.5" />
-          <div class="flex flex-col gap-0.5">
-            <span class="text-textPrimary font-medium">Conversor PDF OCR HD</span>
-            <span class="text-textSecondary text-[11px]">Converta documentos escaneados e obras raras para EPUB sem limites de tamanho.</span>
-          </div>
-        </div>
-        <div class="flex items-start gap-3 p-3 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-divider/40">
-          <ShieldCheckIcon class="w-4 h-4 text-accent shrink-0 mt-0.5" />
-          <div class="flex flex-col gap-0.5">
-            <span class="text-textPrimary font-medium">Sincronização & Backup Total</span>
-            <span class="text-textSecondary text-[11px]">Todos os seus destaques, notas e posições de leitura sincronizados entre dispositivos.</span>
-          </div>
-        </div>
-      </div>
-    </section>
 
     <!-- Zona de Segurança & Perigo da Conta -->
     <section class="flex flex-col gap-6 p-8 rounded-3xl bg-rose-500/[0.03] border border-rose-500/20">
@@ -584,9 +527,6 @@ import {
   ClockIcon,
   NetworkIcon,
   CheckCircle2Icon,
-  BrainIcon,
-  FileCode2Icon,
-  ShieldCheckIcon,
   ShieldAlertIcon,
   AlertTriangleIcon,
   LogOutIcon,
