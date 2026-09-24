@@ -1,6 +1,8 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [23/09/2026 22:08] [Concluído] Corrigir posicionamento radial e enquadramento do Grafo de Conhecimento com centralização estrita no nó raiz eliminando corte superior
+- [23/09/2026 21:57] [Concluído] Corrigir contraste e cor das fontes no leitor em modo scroll durante o modo escuro (substituir cor herdada e forçar estilo claro #e4e4e7/#ffffff)
 - [23/09/2026 21:52] [Concluído] Blindar dimensões ativas e enquadramento do Grafo de Conhecimento prevenindo instâncias fantasmas e cálculos fora de viewport
 - [23/09/2026 21:41] [Concluído] Exibir visualização quadrada do Grafo de Conhecimento abaixo do Diário em telas mobile no FolderTagSidebar
 - [23/09/2026 21:37] [Concluído] Corrigir enquadramento, centralização e ajuste de viewport do Grafo de Conhecimento prevenindo sobreposição e nós cortados

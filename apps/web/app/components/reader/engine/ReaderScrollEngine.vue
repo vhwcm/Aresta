@@ -847,6 +847,201 @@ defineExpose({
   -webkit-touch-callout: default !important;
 }
 
+/* ================= TEMAS E CONTRASTE DE CORES NO SCROLL ================= */
+
+/* --- TEMA ESCURO (BLACK) --- */
+.reader-scroll-engine--theme-black .scroll-section-content,
+.reader-scroll-engine--theme-black .scroll-section-content :deep(*),
+.reader-scroll-engine--theme-black .scroll-section-content :deep(.epub-text-layer-content),
+.reader-scroll-engine--theme-black .scroll-section-content :deep(.epub-continuous-content),
+.reader-scroll-engine--theme-black .scroll-section-content :deep(p),
+.reader-scroll-engine--theme-black .scroll-section-content :deep(span),
+.reader-scroll-engine--theme-black .scroll-section-content :deep(div),
+.reader-scroll-engine--theme-black .scroll-section-content :deep(li),
+.reader-scroll-engine--theme-black .scroll-section-content :deep(strong),
+.reader-scroll-engine--theme-black .scroll-section-content :deep(b),
+.reader-scroll-engine--theme-black .scroll-section-content :deep(em),
+.reader-scroll-engine--theme-black .scroll-section-content :deep(i),
+.reader-scroll-engine--theme-black .scroll-section-content :deep(small),
+.reader-scroll-engine--theme-black .scroll-page-text-layer :deep(*),
+.reader-scroll-engine--theme-black .scroll-page-text-layer :deep(.didactic-article-body),
+.reader-scroll-engine--theme-black .scroll-page-text-layer :deep(.didactic-paragraph) {
+  color: #e4e4e7 !important;
+}
+
+.reader-scroll-engine--theme-black .scroll-section-content :deep(h1),
+.reader-scroll-engine--theme-black .scroll-section-content :deep(h2),
+.reader-scroll-engine--theme-black .scroll-section-content :deep(h3),
+.reader-scroll-engine--theme-black .scroll-section-content :deep(h4),
+.reader-scroll-engine--theme-black .scroll-section-content :deep(h5),
+.reader-scroll-engine--theme-black .scroll-section-content :deep(h6),
+.reader-scroll-engine--theme-black .scroll-section-content :deep(.chapter-title),
+.reader-scroll-engine--theme-black .scroll-section-content :deep(.book-title),
+.reader-scroll-engine--theme-black .scroll-section-content :deep(.title),
+.reader-scroll-engine--theme-black .scroll-section-content :deep(.chapter-subtitle),
+.reader-scroll-engine--theme-black .scroll-section-content :deep(.book-subtitle),
+.reader-scroll-engine--theme-black .scroll-section-content :deep(.subtitle),
+.reader-scroll-engine--theme-black .scroll-page-text-layer :deep(.didactic-heading) {
+  color: #ffffff !important;
+}
+
+.reader-scroll-engine--theme-black .scroll-section-content :deep(a) {
+  color: #f97316 !important;
+}
+
+.reader-scroll-engine--theme-black .scroll-section-content :deep(blockquote) {
+  color: #d4d4d8 !important;
+  border-left-color: rgba(255, 255, 255, 0.25) !important;
+}
+
+.reader-scroll-engine--theme-black .scroll-section-content :deep(hr) {
+  border-top-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.reader-scroll-engine--theme-black .scroll-section-content :deep(table),
+.reader-scroll-engine--theme-black .scroll-section-content :deep(th),
+.reader-scroll-engine--theme-black .scroll-section-content :deep(td) {
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  color: #e4e4e7 !important;
+}
+
+.reader-scroll-engine--theme-black .scroll-section-placeholder,
+.reader-scroll-engine--theme-black .scroll-page-placeholder {
+  color: #a1a1aa !important;
+}
+
+.reader-scroll-engine--theme-black .scroll-page-slot__badge {
+  color: #71717a !important;
+}
+
+.reader-scroll-engine--theme-black :deep(::selection) {
+  background: rgba(229, 123, 85, 0.45) !important;
+  color: #ffffff !important;
+}
+
+/* --- TEMA SÉPIA (SEPIA) --- */
+.reader-scroll-engine--theme-sepia .scroll-section-content,
+.reader-scroll-engine--theme-sepia .scroll-section-content :deep(*),
+.reader-scroll-engine--theme-sepia .scroll-section-content :deep(.epub-text-layer-content),
+.reader-scroll-engine--theme-sepia .scroll-section-content :deep(.epub-continuous-content),
+.reader-scroll-engine--theme-sepia .scroll-section-content :deep(p),
+.reader-scroll-engine--theme-sepia .scroll-section-content :deep(span),
+.reader-scroll-engine--theme-sepia .scroll-section-content :deep(div),
+.reader-scroll-engine--theme-sepia .scroll-section-content :deep(li),
+.reader-scroll-engine--theme-sepia .scroll-section-content :deep(strong),
+.reader-scroll-engine--theme-sepia .scroll-section-content :deep(b),
+.reader-scroll-engine--theme-sepia .scroll-section-content :deep(em),
+.reader-scroll-engine--theme-sepia .scroll-section-content :deep(i),
+.reader-scroll-engine--theme-sepia .scroll-page-text-layer :deep(*),
+.reader-scroll-engine--theme-sepia .scroll-page-text-layer :deep(.didactic-article-body),
+.reader-scroll-engine--theme-sepia .scroll-page-text-layer :deep(.didactic-paragraph) {
+  color: #2a2521 !important;
+}
+
+.reader-scroll-engine--theme-sepia .scroll-section-content :deep(h1),
+.reader-scroll-engine--theme-sepia .scroll-section-content :deep(h2),
+.reader-scroll-engine--theme-sepia .scroll-section-content :deep(h3),
+.reader-scroll-engine--theme-sepia .scroll-section-content :deep(h4),
+.reader-scroll-engine--theme-sepia .scroll-section-content :deep(h5),
+.reader-scroll-engine--theme-sepia .scroll-section-content :deep(h6),
+.reader-scroll-engine--theme-sepia .scroll-section-content :deep(.chapter-title),
+.reader-scroll-engine--theme-sepia .scroll-section-content :deep(.book-title),
+.reader-scroll-engine--theme-sepia .scroll-section-content :deep(.title),
+.reader-scroll-engine--theme-sepia .scroll-page-text-layer :deep(.didactic-heading) {
+  color: #1a1613 !important;
+}
+
+.reader-scroll-engine--theme-sepia .scroll-section-content :deep(a) {
+  color: #c2410c !important;
+}
+
+.reader-scroll-engine--theme-sepia .scroll-section-content :deep(blockquote) {
+  color: #3f3630 !important;
+  border-left-color: rgba(60, 45, 20, 0.25) !important;
+}
+
+.reader-scroll-engine--theme-sepia .scroll-section-content :deep(hr) {
+  border-top-color: rgba(60, 45, 20, 0.15) !important;
+}
+
+.reader-scroll-engine--theme-sepia :deep(::selection) {
+  background: rgba(229, 123, 85, 0.3) !important;
+  color: #2a2521 !important;
+}
+
+/* --- TEMA BRANCO (WHITE) --- */
+.reader-scroll-engine--theme-white .scroll-section-content,
+.reader-scroll-engine--theme-white .scroll-section-content :deep(*),
+.reader-scroll-engine--theme-white .scroll-section-content :deep(.epub-text-layer-content),
+.reader-scroll-engine--theme-white .scroll-section-content :deep(.epub-continuous-content),
+.reader-scroll-engine--theme-white .scroll-section-content :deep(p),
+.reader-scroll-engine--theme-white .scroll-section-content :deep(span),
+.reader-scroll-engine--theme-white .scroll-section-content :deep(div),
+.reader-scroll-engine--theme-white .scroll-section-content :deep(li),
+.reader-scroll-engine--theme-white .scroll-section-content :deep(strong),
+.reader-scroll-engine--theme-white .scroll-section-content :deep(b),
+.reader-scroll-engine--theme-white .scroll-section-content :deep(em),
+.reader-scroll-engine--theme-white .scroll-section-content :deep(i),
+.reader-scroll-engine--theme-white .scroll-page-text-layer :deep(*),
+.reader-scroll-engine--theme-white .scroll-page-text-layer :deep(.didactic-article-body),
+.reader-scroll-engine--theme-white .scroll-page-text-layer :deep(.didactic-paragraph) {
+  color: #18181b !important;
+}
+
+.reader-scroll-engine--theme-white .scroll-section-content :deep(h1),
+.reader-scroll-engine--theme-white .scroll-section-content :deep(h2),
+.reader-scroll-engine--theme-white .scroll-section-content :deep(h3),
+.reader-scroll-engine--theme-white .scroll-section-content :deep(h4),
+.reader-scroll-engine--theme-white .scroll-section-content :deep(h5),
+.reader-scroll-engine--theme-white .scroll-section-content :deep(h6),
+.reader-scroll-engine--theme-white .scroll-section-content :deep(.chapter-title),
+.reader-scroll-engine--theme-white .scroll-section-content :deep(.book-title),
+.reader-scroll-engine--theme-white .scroll-section-content :deep(.title),
+.reader-scroll-engine--theme-white .scroll-page-text-layer :deep(.didactic-heading) {
+  color: #09090b !important;
+}
+
+.reader-scroll-engine--theme-white .scroll-section-content :deep(a) {
+  color: #ea580c !important;
+}
+
+.reader-scroll-engine--theme-white .scroll-section-content :deep(blockquote) {
+  color: #27272a !important;
+  border-left-color: rgba(0, 0, 0, 0.15) !important;
+}
+
+.reader-scroll-engine--theme-white .scroll-section-content :deep(hr) {
+  border-top-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+.reader-scroll-engine--theme-white :deep(::selection) {
+  background: rgba(229, 123, 85, 0.3) !important;
+  color: #18181b !important;
+}
+
+/* Destaques / Highlights */
+:deep(.reader-highlight) {
+  display: inline;
+  border-radius: 2px;
+  padding: 0.05em 0.15em;
+  margin: 0 -0.05em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  transition: background-color 0.15s ease, filter 0.15s ease;
+  cursor: pointer;
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
+}
+
+:deep(.reader-highlight:hover) {
+  filter: brightness(0.92);
+}
+
+.reader-scroll-engine--theme-black :deep(.reader-highlight:hover) {
+  filter: brightness(1.2);
+}
+
 /* Modo Zen */
 .reader-scroll-engine--zen .reader-scroll-engine__content {
   padding-top: 16px;

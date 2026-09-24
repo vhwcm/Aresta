@@ -83,4 +83,25 @@ describe('ReaderScrollEngine.vue', () => {
     const wrapper = mount(ReaderScrollEngine)
     expect(typeof wrapper.vm.scrollToPage).toBe('function')
   })
+
+  it('aplica classes e cores de contraste corretas para modo escuro, sépia e branco', async () => {
+    const store = useReaderStore()
+    const doc = createMockEpubDocument(2)
+    store.setDocument(doc, 'teste.epub')
+
+    // 1. Modo Escuro (Black)
+    store.setReaderTheme('black')
+    const wrapper = mount(ReaderScrollEngine)
+    expect(wrapper.find('.reader-scroll-engine').classes()).toContain('reader-scroll-engine--theme-black')
+
+    // 2. Modo Sépia
+    store.setReaderTheme('sepia')
+    await wrapper.vm.$nextTick()
+    expect(wrapper.find('.reader-scroll-engine').classes()).toContain('reader-scroll-engine--theme-sepia')
+
+    // 3. Modo Branco (White)
+    store.setReaderTheme('white')
+    await wrapper.vm.$nextTick()
+    expect(wrapper.find('.reader-scroll-engine').classes()).toContain('reader-scroll-engine--theme-white')
+  })
 })

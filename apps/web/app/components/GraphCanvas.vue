@@ -196,6 +196,7 @@ const props = withDefaults(
     showSearch?: boolean
   }>(),
   {
+    isCompact: false,
     themeOverride: null,
     searchQuery: undefined,
     showControls: true,
@@ -365,9 +366,9 @@ let currentSimulationNodes: any[] = []
 const persistentNodePositions = new Map<string, { dx: number; dy: number }>()
 let transitionStartTime = 0
 let isTransitioning = false
-const TRANSITION_DURATION = 2400 // 2.4s para deslocamento lento, fluido e orgânico
+const TRANSITION_DURATION = 500
 
-const fitToScreen = (animate = true, duration = 500) => {
+const fitToScreen = () => {
   if (!svgRef.value || !containerRef.value || currentSimulationNodes.length === 0) return
 
   const clientW = containerRef.value.clientWidth
@@ -375,73 +376,63 @@ const fitToScreen = (animate = true, duration = 500) => {
   const isTest = typeof process !== 'undefined' && process.env?.NODE_ENV === 'test'
   const containerWidth = clientW > 10 ? clientW : (isTest ? 1200 : 0)
   const containerHeight = clientH > 10 ? clientH : (isTest ? 800 : 0)
-  if (!containerWidth || !containerHeight || !Number.isFinite(containerWidth) || !Number.isFinite(containerHeight)) return
+  if (!containerWidth || !containerHeight) return
+
+  const hasLayersBar = !props.isCompact
+  const topBarHeight = hasLayersBar ? (props.showControls ? 88 : 64) : (props.showControls ? 60 : 0)
+  const usableHeight = Math.max(containerHeight - topBarHeight, 100)
+  const targetCenterX = containerWidth / 2
+  const targetCenterY = topBarHeight + usableHeight / 2
+
+  const rootNode = currentSimulationNodes.find((n) => n.isRoot || n.id === 'root') || currentSimulationNodes[0]
+  const rootX = Number.isFinite(rootNode?.x) ? rootNode.x : (containerWidth / 2)
+  const rootY = Number.isFinite(rootNode?.y) ? rootNode.y : (containerHeight / 2)
 
   if (currentSimulationNodes.length <= 1) {
-    const targetTransform = d3.zoomIdentity.translate(0, 0).scale(1.0)
-    const svg = d3.select(svgRef.value)
-    if (animate) {
-      svg.transition().duration(duration).ease(d3.easeCubicInOut).call(zoomBehavior.transform as any, targetTransform)
-    } else {
-      svg.call(zoomBehavior.transform as any, targetTransform)
+    const tx = targetCenterX - rootX
+    const ty = targetCenterY - rootY
+    const targetTransform = d3.zoomIdentity.translate(tx, ty).scale(1.0)
+    if (svgRef.value && zoomBehavior) {
+      d3.select(svgRef.value).call(zoomBehavior.transform as any, targetTransform)
+    }
+    if (gRef.value) {
+      d3.select(gRef.value).attr('transform', targetTransform)
     }
     return
   }
 
-  let minX = Infinity
-  let maxX = -Infinity
-  let minY = Infinity
-  let maxY = -Infinity
+  let maxRadiusX = 140
+  let maxRadiusY = 140
 
   for (const d of currentSimulationNodes) {
-    // Utiliza a posição de destino final prevista para que o enquadramento acompanhe o destino
-    const x = d.targetX ?? d.baseX ?? d.x ?? (containerWidth / 2)
-    const y = d.targetY ?? d.baseY ?? d.y ?? (containerHeight / 2)
-    if (!Number.isFinite(x) || !Number.isFinite(y)) continue
+    const x = Number.isFinite(d.x) ? d.x : (Number.isFinite(d.baseX) ? d.baseX : rootX)
+    const y = Number.isFinite(d.y) ? d.y : (Number.isFinite(d.baseY) ? d.baseY : rootY)
 
-    const r = getNodeRadius(d) + 36
-    if (x - r < minX) minX = x - r
-    if (x + r > maxX) maxX = x + r
-    if (y - r < minY) minY = y - r
-    if (y + r + 24 > maxY) maxY = y + r + 24
+    const r = getNodeRadius(d) + (d.type === 'book' ? 52 : 36)
+    const dx = Math.abs(x - rootX) + r
+    const dy = Math.abs(y - rootY) + r + (d.type === 'book' ? 28 : 18)
+
+    if (dx > maxRadiusX) maxRadiusX = dx
+    if (dy > maxRadiusY) maxRadiusY = dy
   }
 
-  if (
-    !Number.isFinite(minX) ||
-    !Number.isFinite(maxX) ||
-    !Number.isFinite(minY) ||
-    !Number.isFinite(maxY) ||
-    minX >= maxX ||
-    minY >= maxY
-  ) {
-    return
-  }
+  const paddingX = props.isCompact ? 40 : 80
+  const paddingY = props.isCompact ? 35 : 70
 
-  const graphW = maxX - minX
-  const graphH = maxY - minY
-  
-  // Reserva espaço superior quando a barra de camadas/controles estiver presente
-  const topBarHeight = props.isCompact ? 0 : 70
-  const usableHeight = Math.max(containerHeight - topBarHeight, 100)
-  const paddingX = 75
-  const paddingY = 60
+  const maxAllowedHalfW = Math.max((containerWidth / 2) - paddingX, 100)
+  const maxAllowedHalfH = Math.max((usableHeight / 2) - paddingY, 100)
 
-  if (!Number.isFinite(graphW) || !Number.isFinite(graphH) || graphW <= 0 || graphH <= 0) {
-    return
-  }
-
-  const scaleX = containerWidth / (graphW + paddingX * 2)
-  const scaleY = usableHeight / (graphH + paddingY * 2)
+  const scaleX = maxAllowedHalfW / maxRadiusX
+  const scaleY = maxAllowedHalfH / maxRadiusY
   const rawScale = Math.min(scaleX, scaleY)
   if (!Number.isFinite(rawScale) || rawScale <= 0) return
 
-  const scale = Math.max(0.15, Math.min(rawScale, 1.0))
+  const minScale = props.isCompact ? 0.35 : 0.45
+  const maxScale = props.isCompact ? 1.05 : 1.2
+  const scale = Math.max(minScale, Math.min(rawScale, maxScale))
 
-  const midX = (minX + maxX) / 2
-  const midY = (minY + maxY) / 2
-
-  const tx = containerWidth / 2 - midX * scale
-  const ty = (topBarHeight + usableHeight / 2) - midY * scale
+  const tx = targetCenterX - rootX * scale
+  const ty = targetCenterY - rootY * scale
 
   if (
     !zoomBehavior ||
@@ -454,12 +445,11 @@ const fitToScreen = (animate = true, duration = 500) => {
   }
 
   const targetTransform = d3.zoomIdentity.translate(tx, ty).scale(scale)
-  const svg = d3.select(svgRef.value)
-
-  if (animate) {
-    svg.transition().duration(duration).ease(d3.easeCubicInOut).call(zoomBehavior.transform as any, targetTransform)
-  } else {
-    svg.call(zoomBehavior.transform as any, targetTransform)
+  if (svgRef.value && zoomBehavior) {
+    d3.select(svgRef.value).call(zoomBehavior.transform as any, targetTransform)
+  }
+  if (gRef.value) {
+    d3.select(gRef.value).attr('transform', targetTransform)
   }
 }
 
@@ -814,9 +804,13 @@ const initGraph = (animateTransition = true) => {
   nodeRadius.set('root', 0)
   nodeAngle.set('root', 0)
 
-  // Nível 1: Temas distribuídos radialmente em torno do centro (R1 ~ 135px)
+  // Nível 1: Temas distribuídos radialmente em torno do centro
   const numThemes = Math.max(themeNodes.length, 1)
-  const R1 = Math.min(150, Math.max(120, 105 + numThemes * 10))
+  const isCompactMode = props.isCompact
+  const baseR = isCompactMode
+    ? Math.min(150, Math.max(120, 105 + numThemes * 6))
+    : Math.min(280, Math.max(180, 150 + numThemes * 12))
+  const R1 = baseR
   const bfsQueue: string[] = []
 
   themeNodes.forEach((theme, i) => {
@@ -837,7 +831,7 @@ const initGraph = (animateTransition = true) => {
     if (!visited.has(iId)) {
       visited.add(iId)
       const islandAngle = ((2 * Math.PI * (idx + 0.5)) / Math.max(validIslandLinks.length, 1)) - Math.PI / 2
-      const islandR = R1 + 10
+      const islandR = R1 + (isCompactMode ? 10 : 20)
       nodeRadius.set(iId, islandR)
       nodeAngle.set(iId, islandAngle)
       const targetNode = nodeMap.get(iId)
@@ -870,13 +864,12 @@ const initGraph = (animateTransition = true) => {
         if (!childNode) return
 
         // Distância radial incremental para fora:
-        // Livro/Livreto: +95px, Anotação: +75px, Nota: +85px, Pasta: +80px
-        let deltaR = 95
-        if (childNode.type === 'annotation') deltaR = 75
-        else if (childNode.type === 'folder') deltaR = 80
-        else if (childNode.type === 'note') deltaR = 85
-        else if (childNode.type === 'canvas') deltaR = 85
-        else if (childNode.type === 'link') deltaR = 85
+        let deltaR = isCompactMode ? 95 : 125
+        if (childNode.type === 'annotation') deltaR = isCompactMode ? 75 : 105
+        else if (childNode.type === 'folder') deltaR = isCompactMode ? 80 : 115
+        else if (childNode.type === 'note') deltaR = isCompactMode ? 85 : 120
+        else if (childNode.type === 'canvas') deltaR = isCompactMode ? 85 : 120
+        else if (childNode.type === 'link') deltaR = isCompactMode ? 85 : 120
 
         const childR = parentR + deltaR
         // Se 1 filho: EXATAMENTE no mesmo ângulo (para fora!). Se K > 1: cone estreito apontando para fora
@@ -899,7 +892,7 @@ const initGraph = (animateTransition = true) => {
   // Nós órfãos ou avulsos (sem conexão a ninguém)
   const unassigned = inputNodes.filter((n) => !visited.has(String(n.id)))
   if (unassigned.length > 0) {
-    const orphanR = R1 + 35
+    const orphanR = R1 + (isCompactMode ? 35 : 55)
     unassigned.forEach((node, idx) => {
       const angle = (2 * Math.PI * idx) / unassigned.length + Math.PI / 4
       node.x = centerX + orphanR * Math.cos(angle)
@@ -1791,7 +1784,7 @@ const initGraph = (animateTransition = true) => {
   startFloatingAnimation()
 
   nextTick(() => {
-    fitToScreen(shouldAnimate, shouldAnimate ? TRANSITION_DURATION : 500)
+    fitToScreen()
   })
 }
 
@@ -1827,16 +1820,16 @@ const handleNativeWheel = (e: WheelEvent) => {
 onMounted(() => {
   initGraph(false)
   nextTick(() => {
-    fitToScreen(false)
+    fitToScreen()
   })
   // Re-ajustar após estabilização do layout/animação de transição da página
   setTimeout(() => {
     initGraph(false)
-    fitToScreen(false)
+    fitToScreen()
   }, 100)
   setTimeout(() => {
     initGraph(false)
-    fitToScreen(false)
+    fitToScreen()
   }, 350)
 
   if (svgRef.value) {
@@ -1853,7 +1846,7 @@ onMounted(() => {
             lastWidth = width
             lastHeight = height
             initGraph(false)
-            fitToScreen(false)
+            fitToScreen()
           }
         }
       }

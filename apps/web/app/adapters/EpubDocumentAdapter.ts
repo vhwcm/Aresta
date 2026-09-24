@@ -382,7 +382,7 @@ const EPUB_TYPOGRAPHY_STYLES = `
     font-family: 'Newsreader', Georgia, serif;
     font-size: 18px;
     line-height: 1.6;
-    color: #2a2521;
+    color: inherit;
   }
   .epub-text-layer-viewport {
     display: block !important;
