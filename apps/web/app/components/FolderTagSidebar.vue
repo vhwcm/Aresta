@@ -290,6 +290,17 @@
           </button>
         </div>
 
+        <!-- Visualização do Grafo de Conhecimento no Mobile (Abaixo do Diário - 100% largura e quadrado) -->
+        <div class="block md:hidden w-full pt-1 pb-1">
+          <div class="w-full aspect-square rounded-2xl overflow-hidden border border-divider/80 bg-bgRoot/80 shadow-md relative">
+            <AppKnowledgeGraph
+              :is-compact="true"
+              :show-controls="false"
+              class="w-full h-full"
+            />
+          </div>
+        </div>
+
         <!-- 2. BOTÃO GERAL DE ADICIONAR ACIMA DA ÁRVORE -->
         <div class="relative pt-1" ref="addDropdownRef">
           <button
@@ -736,6 +747,7 @@ import {
 } from 'lucide-vue-next'
 import { useUserBooks } from '~/composables/useUserBooks'
 import { resolveBookCover } from '~/utils/cover'
+import AppKnowledgeGraph from '~/components/graph/AppKnowledgeGraph.vue'
 
 const route = useRoute()
 
