@@ -2,7 +2,7 @@
   <div
     class="min-h-screen text-textPrimary selection:bg-accent/20 transition-all bg-bgPanel"
     :class="[
-      isImmersivePage ? '' : (isCanvasPage ? '' : 'px-3 sm:px-4 md:px-6 pt-[max(0.75rem,env(safe-area-inset-top,0px))] pb-8')
+      !auth.isLoggedIn.value && !isImmersivePage ? 'px-3 sm:px-4 md:px-6 pt-[max(0.75rem,env(safe-area-inset-top,0px))] pb-8' : ''
     ]"
   >
     <NuxtLayout>

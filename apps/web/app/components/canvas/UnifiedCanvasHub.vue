@@ -1,42 +1,6 @@
 <template>
-  <div class="h-screen w-full flex bg-bgApp text-textPrimary overflow-hidden font-interface select-none">
-    <!-- Sidebar Unificada com Árvore de Pastas & Arquivos -->
-    <FolderTagSidebar
-      :items="unifiedSidebarItems"
-      :folders="unifiedFolders"
-      :selected-folder="activeFolder"
-      :selected-tag="activeTag"
-      :selected-item-id="activeNote ? `note-${activeNote.id}` : null"
-      :is-journal-active="viewLayout === 'journal'"
-      v-model:view-layout="viewLayout"
-      item-label="itens"
-      v-model:collapsed="isSidebarCollapsed"
-      @open-journal="handleOpenJournal"
-      @select-folder="handleSelectFolder"
-      @select-tag="handleSelectTag"
-      @select-item="handleSelectItemFromTree"
-      @create-note="handleCreateNewNote"
-      @create-drawing="handleCreateNewDrawing"
-      @create-link="openNewLinkModal"
-      @create-canvas="newCanvasModalOpen = true"
-      @create-folder="handleCreateFolder"
-      @rename-folder="handleRenameFolder"
-      @delete-folder="handleDeleteFolder"
-    />
-
-    <!-- Área Central / Workspace Hub -->
-    <div class="flex-1 flex flex-col h-full overflow-hidden">
-      <!-- Botão Flutuante para Abrir Sidebar no Mobile quando recolhida -->
-      <button
-        v-if="isSidebarCollapsed"
-        class="md:hidden fixed top-3 left-3 z-30 p-2 rounded-xl bg-bgPanel/90 backdrop-blur-md hover:bg-bgSurface text-textSecondary hover:text-textPrimary border border-divider shadow-lg transition-all cursor-pointer"
-        title="Abrir navegação e notas"
-        @click="isSidebarCollapsed = false"
-      >
-        <SidebarIcon class="w-4 h-4 text-accent" />
-      </button>
-
-      <!-- Mensagem de Erro Global -->
+  <div class="h-full w-full flex flex-col overflow-hidden font-interface select-none">
+    <!-- Mensagem de Erro Global -->
       <div
         v-if="errorMessage"
         class="mx-6 mt-4 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-center justify-between"
@@ -518,7 +482,6 @@
           </button>
         </div>
       </div>
-    </div>
 
     <!-- Modais Reutilizáveis de Ação (Canvas) -->
     <CanvasActionModals
@@ -670,14 +633,25 @@ import { openExternalUrl, sanitizeUrl, cleanUrlTitle } from '~/utils/urlOpener'
 import type { CanvasSummary } from '~/interfaces/canvas'
 import type { NoteItem } from '~/interfaces/note'
 
+import { useWorkspaceSidebar } from '~/composables/useWorkspaceSidebar'
+
 const auth = useAuth()
 const route = typeof useRoute === 'function' ? useRoute() : { query: {}, path: '/' }
 const router = typeof useRouter === 'function' ? useRouter() : undefined
 
-const isSidebarCollapsed = ref(false)
+const {
+  isSidebarCollapsed,
+  viewLayout,
+  activeFolder,
+  activeTag,
+  activeItemId,
+  isNewLinkModalOpen,
+  isNewCanvasModalOpen,
+  unifiedFolders,
+  unifiedSidebarItems,
+} = useWorkspaceSidebar()
+
 const searchQuery = ref('')
-const activeFolder = ref<string | null>((route?.query?.folder as string) || null)
-const activeTag = ref<string | null>((route?.query?.tag as string) || null)
 
 // Busca expansível no mobile
 const isMobileSearchOpen = ref(false)
@@ -691,17 +665,6 @@ const openMobileSearch = async () => {
 
 // Controle de abas: 'all' | 'canvases' | 'notes' | 'drawings'
 const activeTab = ref<'all' | 'canvases' | 'notes' | 'drawings'>('all')
-
-// Controle de layout: 'graph' (Grafo de Conhecimento Central) | 'grid' (Galeria) | 'note-editor' (Editor Live Preview) | 'journal' (Diário)
-const viewLayout = ref<'graph' | 'grid' | 'note-editor' | 'journal'>(
-  (route?.query?.view as string) === 'journal' || (route?.query?.tab as string) === 'journal'
-    ? 'journal'
-    : (route?.query?.view as string) === 'grid'
-      ? 'grid'
-      : (route?.query?.view as string) === 'split' || (route?.query?.view as string) === 'note-editor'
-        ? 'note-editor'
-        : 'graph'
-)
 
 const handleOpenJournal = () => {
   viewLayout.value = 'journal'
@@ -989,57 +952,6 @@ const clearAllFilters = () => {
   activeTag.value = null
   searchQuery.value = ''
 }
-
-// União de pastas de quadros, notas, desenhos e links
-const unifiedFolders = computed(() => {
-  const set = new Set<string>([...canvasFolders.value, ...noteFolders.value, ...linkFolders.value])
-  for (const c of canvasesList.value) {
-    if (c.folder) set.add(c.folder)
-  }
-  for (const n of notesList.value) {
-    if (n.folder) set.add(n.folder)
-  }
-  for (const d of drawingsList.value) {
-    if (d.folder) set.add(d.folder)
-  }
-  for (const l of linksList.value) {
-    if (l.folder) set.add(l.folder)
-  }
-  return Array.from(set).sort((a, b) => a.localeCompare(b))
-})
-
-// Itens combinados para contagem e renderização na FolderTagSidebar Tree View
-const unifiedSidebarItems = computed<SidebarTreeItem[]>(() => {
-  const cItems: SidebarTreeItem[] = canvasesList.value.map((c) => ({
-    id: `canvas-${c.id}`,
-    title: c.title || 'Quadro sem título',
-    kind: 'canvas',
-    folder: c.folder,
-    tags: c.tags
-  }))
-  const nItems: SidebarTreeItem[] = notesList.value.map((n) => ({
-    id: `note-${n.id}`,
-    title: n.title || 'Nota sem título',
-    kind: 'note',
-    folder: n.folder,
-    tags: n.tags
-  }))
-  const dItems: SidebarTreeItem[] = drawingsList.value.map((d) => ({
-    id: `drawing-${d.id}`,
-    title: d.title || 'Desenho sem título',
-    kind: 'drawing' as any,
-    folder: d.folder,
-    tags: d.tags
-  }))
-  const lItems: SidebarTreeItem[] = linksList.value.map((l) => ({
-    id: `link-${l.id}`,
-    title: l.title || l.domain || 'Link',
-    kind: 'link' as any,
-    folder: l.folder,
-    tags: l.tags
-  }))
-  return [...cItems, ...nItems, ...dItems, ...lItems]
-})
 
 const totalCombinedCount = computed(() => {
   return canvasesList.value.length + notesList.value.length + linksList.value.length

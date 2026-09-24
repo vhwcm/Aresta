@@ -87,7 +87,7 @@ describe('Canvas Index Page Header (Mobile single line & expandable search)', ()
 
     // Garante que o container principal e o grafo estão presentes
     expect(wrapper.find('header').exists()).toBe(false)
-    expect(wrapper.findComponent({ name: 'FolderTagSidebar' }).exists()).toBe(true)
+    expect(wrapper.findComponent({ name: 'AppKnowledgeGraph' }).exists()).toBe(true)
   })
 
   it('abre o NoteEditorPane ao selecionar um nó de nota emitido pelo AppKnowledgeGraph', async () => {

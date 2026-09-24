@@ -11,7 +11,7 @@
     :class="[
       isCollapsed
         ? 'hidden md:flex w-16'
-        : 'fixed md:relative inset-y-0 left-0 z-50 w-72 md:w-72 max-w-[85vw] md:max-w-none shadow-2xl md:shadow-none'
+        : 'fixed md:relative inset-y-0 left-0 z-50 w-full md:w-72 max-w-full md:max-w-none shadow-2xl md:shadow-none'
     ]"
   >
     <!-- Top Header do Sidebar -->
