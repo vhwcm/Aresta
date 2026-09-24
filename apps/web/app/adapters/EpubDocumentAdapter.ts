@@ -637,11 +637,11 @@ async function findEpubCoverDataUri(
 }
 
 function getEpubPagePadding(width: number, height: number): { paddingX: number; paddingY: number } {
-  // Bordas e margens confortáveis no modo página:
-  // - Laterais e medianiz / lombada central (dos dois lados e no meio)
-  // - Topo e rodapé (em cima e em baixo)
-  const paddingX = width > 700 ? 64 : (width > 500 ? 52 : 36)
-  const paddingY = height > 700 ? 52 : (height > 500 ? 46 : 34)
+  // Bordas e margens no modo página:
+  // - Desktop/Tablet: margens confortáveis e arejadas
+  // - Mobile/telas pequenas: bordas reduzidas para o texto ocupar mais parte da tela
+  const paddingX = width > 700 ? 64 : (width > 500 ? 52 : (width > 360 ? 18 : 14))
+  const paddingY = height > 700 ? 52 : (height > 500 ? 46 : (height > 600 ? 22 : 18))
   return { paddingX, paddingY }
 }
 

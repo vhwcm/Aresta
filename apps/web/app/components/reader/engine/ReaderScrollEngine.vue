@@ -1117,4 +1117,14 @@ defineExpose({
   padding-top: 16px;
   padding-bottom: 32px;
 }
+
+@media (max-width: 767px) {
+  .reader-scroll-engine__content {
+    padding: 12px 6px 60px 6px;
+    gap: 12px;
+  }
+  .scroll-section-slot {
+    padding: 12px 10px;
+  }
+}
 </style>

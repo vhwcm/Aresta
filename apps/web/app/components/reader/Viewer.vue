@@ -37,7 +37,7 @@
             <div class="reader-viewer__stage-container" :style="{ backgroundColor: themeBgColor }">
               <button
                 v-if="store.readingMode !== 'scroll'"
-                class="reader-viewer__nav-btn reader-viewer__nav-btn--prev"
+                class="reader-viewer__nav-btn reader-viewer__nav-btn--prev hidden md:flex"
                 :disabled="store.isFirstPage || isTransitioning"
                 @click="pageRenderer?.previous()"
                 aria-label="Página anterior"
@@ -63,7 +63,7 @@
 
               <button
                 v-if="store.readingMode !== 'scroll'"
-                class="reader-viewer__nav-btn reader-viewer__nav-btn--next"
+                class="reader-viewer__nav-btn reader-viewer__nav-btn--next hidden md:flex"
                 :disabled="store.isLastPage || isTransitioning"
                 @click="pageRenderer?.next()"
                 aria-label="Próxima página"
@@ -1214,18 +1214,7 @@ onUnmounted(() => {
     margin: 0 !important;
   }
   .reader-viewer__nav-btn {
-    opacity: 0.35;
-    padding: 0.25rem;
-  }
-  .reader-viewer__nav-btn:hover,
-  .reader-viewer__nav-btn:active {
-    opacity: 1;
-  }
-  .reader-viewer__nav-btn--prev {
-    left: 0.25rem;
-  }
-  .reader-viewer__nav-btn--next {
-    right: 0.25rem;
+    display: none !important;
   }
 }
 
