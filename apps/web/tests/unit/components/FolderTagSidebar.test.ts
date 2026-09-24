@@ -186,5 +186,20 @@ describe('FolderTagSidebar component', () => {
 
     expect(wrapper.emitted('create-drawing')).toBeTruthy();
   });
+
+  it('renderiza os 4 ícones de navegação principal (Início, Livros, Revisão, Conta) em linha única', () => {
+    const wrapper = mount(FolderTagSidebar, {
+      props: {
+        items: [],
+        folders: [],
+        collapsed: false,
+      },
+    });
+
+    expect(wrapper.find('[title="Início"]').exists()).toBe(true);
+    expect(wrapper.find('[title="Meus Livros"]').exists()).toBe(true);
+    expect(wrapper.find('[title="Revisão (Flashcards & Resumos)"]').exists()).toBe(true);
+    expect(wrapper.find('[title="Minha Conta"]').exists()).toBe(true);
+  });
 });
 

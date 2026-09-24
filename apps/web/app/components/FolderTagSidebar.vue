@@ -163,108 +163,58 @@
 
       <!-- MODO EXPANDIDO: Navegação Global + Leitura Ativa + Árvore Hierárquica -->
       <div v-else class="space-y-3">
-        <!-- SEÇÃO: NAVEGAÇÃO PRINCIPAL ARESTA -->
-        <div class="space-y-0.5 pb-2.5 border-b border-divider/60">
-          <!-- Início / Workspace -->
+        <!-- SEÇÃO: NAVEGAÇÃO PRINCIPAL ARESTA (Ícones em linha única horizontal) -->
+        <div class="grid grid-cols-4 gap-1.5 p-1 bg-bgRoot/60 rounded-2xl border border-divider/60 shadow-inner">
+          <!-- 1. Início -->
           <NuxtLink
             to="/"
-            class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs md:text-sm font-medium transition-all cursor-pointer border group"
+            class="flex items-center justify-center p-2 rounded-xl transition-all cursor-pointer border group"
             :class="isHomeActive && !isJournalActive && selectedFolder === null && selectedTag === null
-              ? 'bg-accent/15 text-accent border-accent/30 font-semibold shadow-xs'
+              ? 'bg-accent/15 text-accent border-accent/30 shadow-xs'
               : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'"
-            title="Início / Workspace Criativo"
+            title="Início"
+            aria-label="Início"
           >
-            <div class="flex items-center gap-2.5 truncate">
-              <HomeIcon class="w-4 h-4 flex-shrink-0 transition-colors" :class="isHomeActive ? 'text-accent' : 'text-textSecondary group-hover:text-textPrimary'" />
-              <span class="truncate font-interface">Início</span>
-            </div>
+            <HomeIcon class="w-4 h-4 transition-transform group-hover:scale-110" />
           </NuxtLink>
 
-          <!-- Menu de Livros (Acordeão / Submenu) -->
-          <div class="space-y-0.5">
-            <button
-              @click="isBooksSubmenuOpen = !isBooksSubmenuOpen"
-              class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs md:text-sm font-medium transition-all cursor-pointer border group"
-              :class="isBooksActive
-                ? 'bg-accent/10 text-accent border-accent/20 font-semibold'
-                : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'"
-              title="Biblioteca & Livros"
-            >
-              <div class="flex items-center gap-2.5 truncate">
-                <BookOpenIcon class="w-4 h-4 flex-shrink-0 transition-colors" :class="isBooksActive ? 'text-accent' : 'text-textSecondary group-hover:text-textPrimary'" />
-                <span class="truncate font-interface">Livros</span>
-              </div>
-              <ChevronRightIcon
-                class="w-3.5 h-3.5 transition-transform duration-200"
-                :class="{ 'rotate-90 text-accent': isBooksSubmenuOpen }"
-              />
-            </button>
+          <!-- 2. Livros (Estante) -->
+          <NuxtLink
+            to="/library"
+            class="flex items-center justify-center p-2 rounded-xl transition-all cursor-pointer border group"
+            :class="isBooksActive
+              ? 'bg-accent/15 text-accent border-accent/30 shadow-xs'
+              : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'"
+            title="Meus Livros"
+            aria-label="Meus Livros"
+          >
+            <BookOpenIcon class="w-4 h-4 transition-transform group-hover:scale-110" />
+          </NuxtLink>
 
-            <!-- Submenu de Livros -->
-            <div
-              v-if="isBooksSubmenuOpen"
-              class="pl-4 pr-1 py-1 space-y-0.5 border-l border-divider ml-4 my-0.5"
-            >
-              <!-- 1. Minha Estante -->
-              <NuxtLink
-                to="/library"
-                class="flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs transition-colors group cursor-pointer"
-                :class="route.path.startsWith('/library') ? 'bg-accent/15 text-accent font-medium' : 'text-textSecondary hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'"
-              >
-                <BookIcon class="w-3.5 h-3.5 text-accent" />
-                <span class="font-interface truncate">Minha Estante</span>
-              </NuxtLink>
-
-              <!-- 2. Conversor -->
-              <NuxtLink
-                to="/conversor"
-                class="flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs transition-colors group cursor-pointer"
-                :class="route.path.startsWith('/conversor') ? 'bg-accent/15 text-accent font-medium' : 'text-textSecondary hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'"
-              >
-                <FileCode2Icon class="w-3.5 h-3.5 text-accent" />
-                <span class="font-interface truncate">Conversor PDF→EPUB</span>
-              </NuxtLink>
-
-              <!-- 3. Loja -->
-              <NuxtLink
-                to="/loja"
-                class="flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs transition-colors group cursor-pointer"
-                :class="route.path === '/loja' ? 'bg-accent/15 text-accent font-medium' : 'text-textSecondary hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'"
-              >
-                <ShoppingBagIcon class="w-3.5 h-3.5 text-accent" />
-                <span class="font-interface truncate">Loja & Catálogo</span>
-              </NuxtLink>
-            </div>
-          </div>
-
-          <!-- Revisão & Flashcards -->
+          <!-- 3. Revisão -->
           <NuxtLink
             to="/revisao"
-            class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs md:text-sm font-medium transition-all cursor-pointer border group"
+            class="flex items-center justify-center p-2 rounded-xl transition-all cursor-pointer border group"
             :class="isReviewActive
-              ? 'bg-accent/15 text-accent border-accent/30 font-semibold shadow-xs'
+              ? 'bg-accent/15 text-accent border-accent/30 shadow-xs'
               : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'"
-            title="Revisão de Flashcards & Resumos"
+            title="Revisão (Flashcards & Resumos)"
+            aria-label="Revisão"
           >
-            <div class="flex items-center gap-2.5 truncate">
-              <BrainIcon class="w-4 h-4 flex-shrink-0 transition-colors" :class="isReviewActive ? 'text-accent' : 'text-textSecondary group-hover:text-textPrimary'" />
-              <span class="truncate font-interface">Revisão</span>
-            </div>
+            <BrainIcon class="w-4 h-4 transition-transform group-hover:scale-110" />
           </NuxtLink>
 
-          <!-- Minha Conta -->
+          <!-- 4. Minha Conta -->
           <NuxtLink
             to="/conta"
-            class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs md:text-sm font-medium transition-all cursor-pointer border group"
+            class="flex items-center justify-center p-2 rounded-xl transition-all cursor-pointer border group"
             :class="isAccountActive
-              ? 'bg-accent/15 text-accent border-accent/30 font-semibold shadow-xs'
+              ? 'bg-accent/15 text-accent border-accent/30 shadow-xs'
               : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'"
-            title="Minha Conta & Status"
+            title="Minha Conta"
+            aria-label="Minha Conta"
           >
-            <div class="flex items-center gap-2.5 truncate">
-              <UserIcon class="w-4 h-4 flex-shrink-0 transition-colors" :class="isAccountActive ? 'text-accent' : 'text-textSecondary group-hover:text-textPrimary'" />
-              <span class="truncate font-interface">Minha Conta</span>
-            </div>
+            <UserIcon class="w-4 h-4 transition-transform group-hover:scale-110" />
           </NuxtLink>
         </div>
         <!-- 0. CARD DA LEITURA ATIVA -->
