@@ -416,5 +416,32 @@ describe('GraphCanvas Component', () => {
     const nodes = wrapper.findAll('g.node')
     expect(nodes.length).toBeGreaterThanOrEqual(4)
   })
+
+  it('exibe o tema da tag e todos os nós conectados a ele via arestas ao filtrar por tag', () => {
+    const wrapper = mount(GraphCanvas, {
+      props: {
+        isCompact: false,
+        showControls: false,
+        searchQuery: 'Leitura',
+        nodes: [
+          { id: 'theme-1', rawId: 1, type: 'theme', name: 'Leitura', color: '#E57B55' },
+          { id: 'theme-2', rawId: 2, type: 'theme', name: 'Programação', color: '#3B82F6' },
+          { id: 'book-1', rawId: 10, type: 'book', name: 'Dom Casmurro', color: '#3B82F6' },
+          { id: 'book-2', rawId: 20, type: 'book', name: 'Clean Code', color: '#3B82F6' },
+        ],
+        edges: [
+          { id: 'e1', source: 'theme-1', target: 'book-1', type: 'book-theme' },
+          { id: 'e2', source: 'theme-2', target: 'book-2', type: 'book-theme' },
+        ],
+      },
+    })
+
+    // O tema 'Leitura' e o livro conectado 'Dom Casmurro' DEVEM estar no grafo
+    expect(wrapper.html()).toContain('Leitura')
+    expect(wrapper.html()).toContain('Dom Casmurro')
+
+    // O tema 'Programação' e o livro 'Clean Code' NÃO estão conectados a 'Leitura' e não devem aparecer
+    expect(wrapper.html()).not.toContain('Clean Code')
+  })
 })
 

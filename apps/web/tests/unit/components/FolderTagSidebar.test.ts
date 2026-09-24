@@ -301,5 +301,29 @@ describe('FolderTagSidebar component', () => {
     const tagsContainer = wrapper.find('.animate-in');
     expect(tagsContainer.attributes('style')).toContain('display: none');
   });
+
+  it('permite selecionar e desselecionar tag diretamente sem indicador duplicado de Limpar', async () => {
+    const wrapper = mount(FolderTagSidebar, {
+      props: {
+        items: [
+          { id: '1', folder: 'Estudos', tags: ['filosofia'] },
+        ],
+        folders: ['Estudos'],
+        collapsed: false,
+        selectedTag: 'filosofia',
+      },
+    });
+
+    // Não deve conter a barra duplicada com 'Limpar ✕'
+    expect(wrapper.text()).not.toContain('Limpar ✕');
+
+    const tagButton = wrapper.findAll('button').find((el) => el.text().includes('filosofia'));
+    expect(tagButton).toBeDefined();
+
+    // Como já está selecionada, clicar nela desseleciona
+    await tagButton?.trigger('click');
+    expect(wrapper.emitted('select-tag')).toBeTruthy();
+    expect(wrapper.emitted('select-tag')?.[0]).toEqual([null]);
+  });
 });
 

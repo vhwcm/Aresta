@@ -647,23 +647,102 @@ const initGraph = (animateTransition = true) => {
     fy: height / 2,
   }
 
-  // Filtrar nós conforme busca e camadas ativas
+  // Filtrar nós conforme busca e camadas ativas:
+  // Se houver busca/tag selecionada, exibe tanto os nós que correspondem diretamente
+  // quanto todos os nós conectados a eles via arestas (livros, notas, temas, anotações, etc.)
   const query = (currentSearchQuery.value || '').trim().toLowerCase()
-  const filteredPropsNodes = props.nodes.filter((n) => {
-    const nodeType = n.type || 'theme'
-    if (!activeLayers.value.has(nodeType)) return false
-    if (!query) return true
-    return (
-      (n.name && n.name.toLowerCase().includes(query)) ||
-      (n.title && n.title.toLowerCase().includes(query)) ||
-      (n.fullTitle && n.fullTitle.toLowerCase().includes(query)) ||
-      (n.author && n.author.toLowerCase().includes(query)) ||
-      (n.selectedText && n.selectedText.toLowerCase().includes(query)) ||
-      (n.note && n.note.toLowerCase().includes(query)) ||
-      (n.folder && n.folder.toLowerCase().includes(query)) ||
-      (n.tags && n.tags.some((t) => t.toLowerCase().includes(query)))
-    )
-  })
+  let filteredPropsNodes: GraphNode[] = []
+
+  if (!query) {
+    filteredPropsNodes = props.nodes.filter((n) => activeLayers.value.has(n.type || 'theme'))
+  } else {
+    // Mapa auxiliar com todos os nós de props para resolução de arestas
+    const allNodesMap = new Map<string, GraphNode>()
+    for (const n of props.nodes) {
+      allNodesMap.set(String(n.id), n)
+      if (n.rawId !== undefined && n.rawId !== null) {
+        allNodesMap.set(String(n.rawId), n)
+        allNodesMap.set(`${n.type || 'theme'}-${n.rawId}`, n)
+      }
+    }
+
+    const resolveAnyNode = (id: any): GraphNode | undefined => {
+      if (!id && id !== 0) return undefined
+      const str = String(typeof id === 'object' ? (id as any).id : id)
+      if (allNodesMap.has(str)) return allNodesMap.get(str)
+      const stripped = str.replace(/^(book-|theme-|note-|canvas-|annotation-|folder-|link-)/, '')
+      if (allNodesMap.has(stripped)) return allNodesMap.get(stripped)
+      for (const prefix of ['book-', 'theme-', 'note-', 'canvas-', 'annotation-', 'folder-', 'link-']) {
+        if (allNodesMap.has(`${prefix}${str}`)) return allNodesMap.get(`${prefix}${str}`)
+        if (allNodesMap.has(`${prefix}${stripped}`)) return allNodesMap.get(`${prefix}${stripped}`)
+      }
+      return undefined
+    }
+
+    // Identificar matches diretos da busca
+    const directMatches = new Set<string>()
+    for (const n of props.nodes) {
+      const isMatch = (
+        (n.name && n.name.toLowerCase().includes(query)) ||
+        (n.title && n.title.toLowerCase().includes(query)) ||
+        (n.fullTitle && n.fullTitle.toLowerCase().includes(query)) ||
+        (n.author && n.author.toLowerCase().includes(query)) ||
+        (n.selectedText && n.selectedText.toLowerCase().includes(query)) ||
+        (n.note && n.note.toLowerCase().includes(query)) ||
+        (n.folder && n.folder.toLowerCase().includes(query)) ||
+        (n.tags && n.tags.some((t) => t.toLowerCase().includes(query)))
+      )
+      if (isMatch) {
+        directMatches.add(String(n.id))
+      }
+    }
+
+    // Grafo de adjacência completo a partir de todas as arestas
+    const fullAdjacency = new Map<string, Set<string>>()
+    for (const n of props.nodes) {
+      fullAdjacency.set(String(n.id), new Set())
+    }
+    for (const e of allEdges.value) {
+      const sNode = resolveAnyNode(e.source)
+      const tNode = resolveAnyNode(e.target)
+      if (sNode && tNode) {
+        fullAdjacency.get(String(sNode.id))?.add(String(tNode.id))
+        fullAdjacency.get(String(tNode.id))?.add(String(sNode.id))
+      }
+    }
+
+    // Conjunto de IDs visíveis: nós com match direto + nós conectados a eles
+    const visibleIds = new Set<string>()
+    for (const id of directMatches) {
+      visibleIds.add(id)
+      const neighbors = fullAdjacency.get(id)
+      if (neighbors) {
+        for (const neighborId of neighbors) {
+          visibleIds.add(neighborId)
+          // Se o vizinho for um livro, também inclui as anotações conectadas a esse livro
+          const neighborNode = allNodesMap.get(neighborId)
+          if (neighborNode?.type === 'book') {
+            const secondNeighbors = fullAdjacency.get(neighborId)
+            if (secondNeighbors) {
+              for (const snId of secondNeighbors) {
+                const snNode = allNodesMap.get(snId)
+                if (snNode?.type === 'annotation') {
+                  visibleIds.add(snId)
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // Filtrar nós visíveis pelas camadas ativas
+    filteredPropsNodes = props.nodes.filter((n) => {
+      const nodeType = n.type || 'theme'
+      if (!activeLayers.value.has(nodeType)) return false
+      return visibleIds.has(String(n.id))
+    })
+  }
 
   const inputNodes = filteredPropsNodes.map((n) => ({ ...n }))
   const simulationNodes = [rootNode, ...inputNodes]

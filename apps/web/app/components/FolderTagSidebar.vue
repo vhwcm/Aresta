@@ -477,39 +477,25 @@
             <!-- Tags Embutidas diretamente dentro do bloco de Gerenciar Tags -->
             <div
               v-show="isTagsExpanded"
-              class="px-2.5 pb-2.5 pt-1 space-y-2 border-t border-blue-500/15 animate-in fade-in slide-in-from-top-1 duration-150"
+              class="px-2.5 pb-2.5 pt-1.5 border-t border-blue-500/15 animate-in fade-in slide-in-from-top-1 duration-150"
             >
-              <!-- Indicador de Tag Selecionada se houver -->
-              <div v-if="selectedTag" class="flex items-center justify-between px-2 py-1 rounded-lg bg-blue-500/15 border border-blue-500/30">
-                <span class="text-[11px] text-blue-600 dark:text-blue-300 font-medium truncate flex items-center gap-1">
-                  <span class="font-mono text-blue-500">#</span>{{ selectedTag }}
-                </span>
-                <button
-                  @click="$emit('select-tag', null)"
-                  class="text-[10px] text-blue-500 hover:text-blue-700 dark:hover:text-blue-200 hover:underline cursor-pointer ml-1 font-semibold"
-                  title="Limpar filtro de tag"
-                >
-                  Limpar ✕
-                </button>
-              </div>
-
-              <!-- Nuvem de Chips das Tags Embutidas -->
+              <!-- Nuvem de Chips das Tags Embutidas (Clique para selecionar / Clique novamente para desselecionar) -->
               <div class="flex flex-wrap gap-1.5">
                 <button
                   v-for="tagItem in availableTags"
                   :key="tagItem.name"
                   @click="toggleTag(tagItem.name)"
                   class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer border"
-                  :class="selectedTag === tagItem.name
-                    ? 'bg-blue-500 text-white border-blue-600 shadow-xs font-semibold ring-1 ring-blue-500/40'
+                  :class="isTagSelected(tagItem.name)
+                    ? 'bg-blue-600 text-white border-blue-600 shadow-xs font-semibold ring-1 ring-blue-500/40'
                     : 'bg-bgSurface/80 border-blue-500/20 text-textSecondary hover:border-blue-500/50 hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.06]'"
-                  :title="`Filtrar por #${tagItem.name}`"
+                  :title="isTagSelected(tagItem.name) ? `Desmarcar filtro #${tagItem.name}` : `Filtrar por #${tagItem.name}`"
                 >
-                  <span class="font-mono text-[11px]" :class="selectedTag === tagItem.name ? 'text-white/80' : 'text-blue-500/80'">#</span>
+                  <span class="font-mono text-[11px]" :class="isTagSelected(tagItem.name) ? 'text-white/80' : 'text-blue-500/80'">#</span>
                   <span class="font-interface truncate max-w-[130px]">{{ tagItem.name }}</span>
                   <span
                     class="text-[10px] px-1.5 py-0.2 rounded-full font-mono transition-colors"
-                    :class="selectedTag === tagItem.name ? 'bg-white/20 text-white' : 'bg-blue-500/10 text-blue-600 dark:text-blue-300'"
+                    :class="isTagSelected(tagItem.name) ? 'bg-white/20 text-white' : 'bg-blue-500/10 text-blue-600 dark:text-blue-300'"
                   >
                     {{ tagItem.count }}
                   </span>
@@ -525,18 +511,6 @@
 
         <!-- 3. Estrutura em Árvore (Pastas e Arquivos Aninhados) -->
         <div class="pt-1 border-t border-divider/60">
-          <!-- Banner sutil de filtro por tag ativo se houver -->
-          <div v-if="selectedTag" class="flex items-center justify-between px-2 py-1 mb-1.5 rounded-lg bg-accent/10 border border-accent/20">
-            <span class="text-[11px] text-accent font-medium flex items-center gap-1 font-interface">
-              <span class="font-mono">#</span>{{ selectedTag }}
-            </span>
-            <button
-              @click="$emit('select-tag', null)"
-              class="text-[10px] text-accent/80 hover:text-accent font-medium hover:underline cursor-pointer"
-            >
-              Limpar ✕
-            </button>
-          </div>
 
           <!-- Input inline para criar nova pasta -->
           <div v-if="isCreatingFolder" class="px-2 py-1 mb-2">
@@ -1350,12 +1324,19 @@ const clickItem = (item: SidebarTreeItem) => {
   emit('select-item', item)
 }
 
+const isTagSelected = (tagName: string) => {
+  const current = (props.selectedTag || activeTag.value || '').trim().toLowerCase()
+  return current !== '' && current === tagName.trim().toLowerCase()
+}
+
 const toggleTag = (tagName: string) => {
-  closeIfMobile()
-  if (props.selectedTag === tagName) {
+  if (isTagSelected(tagName)) {
+    activeTag.value = null
     emit('select-tag', null)
   } else {
-    emit('select-tag', tagName)
+    const cleanTag = tagName.trim()
+    activeTag.value = cleanTag
+    emit('select-tag', cleanTag)
   }
 }
 
