@@ -289,17 +289,18 @@ describe('FolderTagSidebar component', () => {
       },
     });
 
-    // As tags devem estar embutidas e visíveis inicialmente
-    expect(wrapper.text()).toContain('#filosofia');
-    expect(wrapper.text()).toContain('#ciencias');
+    // As tags devem começar colapsadas (recolhidas) inicialmente
+    const tagsContainer = wrapper.find('.animate-in');
+    expect(tagsContainer.attributes('style')).toContain('display: none');
 
     const toggleBtn = wrapper.find('[data-testid="toggle-tags-expand-btn"]');
     expect(toggleBtn.exists()).toBe(true);
 
-    // Clica para recolher
+    // Clica para expandir
     await toggleBtn.trigger('click');
-    const tagsContainer = wrapper.find('.animate-in');
-    expect(tagsContainer.attributes('style')).toContain('display: none');
+    expect(tagsContainer.attributes('style') || '').not.toContain('display: none');
+    expect(wrapper.text()).toContain('#filosofia');
+    expect(wrapper.text()).toContain('#ciencias');
   });
 
   it('permite selecionar e desselecionar tag diretamente sem indicador duplicado de Limpar', async () => {

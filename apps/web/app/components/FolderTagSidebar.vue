@@ -862,7 +862,7 @@ const route = useRoute()
 const { userBooks, fetchUserBooks } = useUserBooks()
 const { graphData, fetchGraph } = useGraph()
 const isManageTagsModalOpen = ref(false)
-const isTagsExpanded = ref(true)
+const isTagsExpanded = ref(false)
 
 const allModalThemes = computed(() => {
   const list: Array<{ id: string | number; rawId?: number | string; name: string; color?: string; type?: string }> = []
