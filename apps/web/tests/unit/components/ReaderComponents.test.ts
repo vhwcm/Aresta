@@ -1166,6 +1166,41 @@ describe('Reader Components', () => {
       expect(prevBtn.classes()).not.toContain('rounded-full')
       expect(nextBtn.classes()).not.toContain('rounded-full')
     })
+
+    it('reseta a store do leitor ao acionar o botão de fechar/sair', async () => {
+      const store = useReaderStore()
+      store.setDocument({
+        type: 'epub',
+        metadata: { title: 'Dom Casmurro' },
+        totalPages: 100,
+        isLoaded: true,
+        load: vi.fn(),
+        destroy: vi.fn(),
+      } as any, 'dom-casmurro.epub')
+
+      const wrapper = mount(ReaderViewer, {
+        global: {
+          stubs: {
+            ReaderEnginePageCurlCanvas: true,
+            ReaderBookNotesPanel: true,
+            ReaderGraphPanel: true,
+            ReaderBottomBar: true,
+            ReaderSavedPagesModal: true,
+            ReaderAnnotationModal: true,
+            ReaderAnnotationDrawer: true,
+            ReaderTypographyPopover: true,
+            ReaderSelectionTooltip: true,
+            ReaderDictionaryCard: true,
+          },
+        },
+      })
+
+      const bottomBarStub = wrapper.findComponent({ name: 'ReaderBottomBar' })
+      expect(bottomBarStub.exists()).toBe(true)
+      bottomBarStub.vm.$emit('close')
+
+      expect(store.hasDocument).toBe(false)
+    })
   })
 })
 

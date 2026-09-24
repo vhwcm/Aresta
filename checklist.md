@@ -1,6 +1,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [24/09/2026 15:13] [Concluído] Redirecionar botão de voltar do leitor para a página inicial ('/') e extinguir tela vazia de Comece uma leitura
 - [24/09/2026 15:06] [Concluído] Investigar e corrigir virada de página com mouse e toque (pointer/touch) em telas mobile
 - [24/09/2026 14:55] [Concluído] Fazer a capa do livro ocupar toda a altura da faixa de leitura ativa na sidebar
 - [24/09/2026 14:54] [Concluído] Aumentar o tamanho do ícone do Aresta no cabeçalho do FolderTagSidebar

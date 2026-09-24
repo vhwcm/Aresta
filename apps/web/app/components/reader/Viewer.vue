@@ -362,10 +362,10 @@ const isTransitioning = ref(false)
 
 function handleClose() {
   store.reset()
-  if (typeof window !== 'undefined' && window.history.length > 1) {
-    router.back()
-  } else {
-    router.push('/library')
+  if (router?.push) {
+    router.push('/')
+  } else if (typeof window !== 'undefined') {
+    window.location.href = '/'
   }
 }
 
