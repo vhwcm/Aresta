@@ -19,9 +19,9 @@ describe('readerHighlight utility', () => {
 
   describe('hexToRgba', () => {
     it('converte hex de 6 dígitos para rgba com transparência padrão', () => {
-      expect(hexToRgba('#F59E0B')).toBe('rgba(245, 158, 11, 0.38)')
-      expect(hexToRgba('#10B981')).toBe('rgba(16, 185, 129, 0.38)')
-      expect(hexToRgba('#E57B55')).toBe('rgba(229, 123, 85, 0.38)')
+      expect(hexToRgba('#F59E0B')).toBe('rgba(245, 158, 11, 0.58)')
+      expect(hexToRgba('#10B981')).toBe('rgba(16, 185, 129, 0.58)')
+      expect(hexToRgba('#E57B55')).toBe('rgba(229, 123, 85, 0.58)')
     })
 
     it('permite definir alpha customizado', () => {
@@ -29,13 +29,13 @@ describe('readerHighlight utility', () => {
     })
 
     it('converte hex de 3 dígitos', () => {
-      expect(hexToRgba('#FFF')).toBe('rgba(255, 255, 255, 0.38)')
+      expect(hexToRgba('#FFF')).toBe('rgba(255, 255, 255, 0.58)')
     })
 
     it('retorna fallback gracioso quando hex é inválido ou vazio', () => {
-      expect(hexToRgba(null)).toBe('rgba(229, 123, 85, 0.38)')
-      expect(hexToRgba('')).toBe('rgba(229, 123, 85, 0.38)')
-      expect(hexToRgba('invalid')).toBe('rgba(229, 123, 85, 0.38)')
+      expect(hexToRgba(null)).toBe('rgba(229, 123, 85, 0.58)')
+      expect(hexToRgba('')).toBe('rgba(229, 123, 85, 0.58)')
+      expect(hexToRgba('invalid')).toBe('rgba(229, 123, 85, 0.58)')
     })
   })
 
@@ -79,7 +79,7 @@ describe('readerHighlight utility', () => {
       const mark = marks[0] as HTMLElement
       expect(mark.textContent).toBe('Machado de Assis')
       expect(mark.getAttribute('data-annotation-id')).toBe('101')
-      expect(mark.style.backgroundColor).toBe('rgba(16, 185, 129, 0.38)')
+      expect(mark.style.backgroundColor).toBe('rgba(16, 185, 129, 0.58)')
       expect(mark.style.borderBottom).toBe('2px solid #10B981')
       expect(mark.title).toBe('Autor icônico do realismo brasileiro')
     })
