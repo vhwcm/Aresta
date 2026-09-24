@@ -328,27 +328,13 @@ describe('Library Page', () => {
     })
     await flushPromises()
 
-    // Não deve conter os textos antigos removidos
-    expect(wrapper.text()).not.toContain('Filtrar Temas')
-    expect(wrapper.text()).not.toContain('Ver Grafo')
+    // Não deve conter a barra de temas/tags no cabeçalho da estante nem o botão dropdown mobile
+    expect(wrapper.find('[data-testid="toggle-mobile-themes-btn"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="mobile-themes-dropdown"]').exists()).toBe(false)
 
-    // Deve renderizar Todas as Tags e as tags dos temas
-    expect(wrapper.text()).toContain('Todas as Tags')
+    // As tags ainda aparecem nos cards de cada livro
     expect(wrapper.text()).toContain('Filosofia')
     expect(wrapper.text()).toContain('Ficção')
-
-    // Botão de alternar lista no mobile
-    const toggleMobileBtn = wrapper.find('[data-testid="toggle-mobile-themes-btn"]')
-    expect(toggleMobileBtn.exists()).toBe(true)
-
-    // Ao clicar no botão mobile, a lista colapsável para baixo deve aparecer
-    expect(wrapper.find('[data-testid="mobile-themes-dropdown"]').exists()).toBe(false)
-    await toggleMobileBtn.trigger('click')
-    expect(wrapper.find('[data-testid="mobile-themes-dropdown"]').exists()).toBe(true)
-
-    // Ao clicar novamente, a lista colapsa
-    await toggleMobileBtn.trigger('click')
-    expect(wrapper.find('[data-testid="mobile-themes-dropdown"]').exists()).toBe(false)
   })
 
   it('não cria nem exibe tags de tema com nomes de livros ao carregar nós do grafo', async () => {
@@ -407,15 +393,10 @@ describe('Library Page', () => {
     })
     await flushPromises()
 
-    // Deve exibir o tema real
+    // Deve exibir o tema real no card do livro
     expect(wrapper.text()).toContain('Clássicos')
     // O livro 'Dom Casmurro' deve ser renderizado como livro na estante
     expect(wrapper.find('[data-testid="user-book-card"]').text()).toContain('Dom Casmurro')
-    // Mas NÃO deve existir como botão de tag de tema
-    const themeButtons = wrapper.findAll('header button')
-    const themeButtonTexts = themeButtons.map((b) => b.text())
-    expect(themeButtonTexts.some((t) => t.includes('Clássicos'))).toBe(true)
-    expect(themeButtonTexts.some((t) => t.includes('Dom Casmurro'))).toBe(false)
   })
 
   it('conta e filtra corretamente livros quando os nós do grafo possuem prefixo theme- e os livros possuem IDs numéricos ou nomes', async () => {
@@ -482,18 +463,16 @@ describe('Library Page', () => {
     })
     await flushPromises()
 
-    // A contagem deve ser correta: 2 para Programação e 1 para Literatura (não 0)
+    // Os livros devem exibir suas respectivas tags nos cards
     expect(wrapper.text()).toContain('Programação')
-    expect(wrapper.text()).toContain('(2)')
     expect(wrapper.text()).toContain('Literatura')
-    expect(wrapper.text()).toContain('(1)')
 
     // Antes do filtro, todos os 3 livros são exibidos
     let cards = wrapper.findAll('[data-testid="user-book-card"]')
     expect(cards.length).toBe(3)
 
-    // Clica no botão de filtrar por Programação
-    const progBtn = wrapper.findAll('header button').find((b) => b.text().includes('Programação'))
+    // Clica na tag 'Programação' dentro do card do livro para filtrar
+    const progBtn = wrapper.findAll('[data-testid="user-book-card"] span').find((b) => b.text().includes('Programação'))
     expect(progBtn).toBeDefined()
     await progBtn!.trigger('click')
     await flushPromises()
