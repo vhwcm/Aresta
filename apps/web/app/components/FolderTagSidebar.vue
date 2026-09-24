@@ -223,75 +223,75 @@
 
       <!-- MODO EXPANDIDO: Navegação Global + Leitura Ativa + Árvore Hierárquica -->
       <div v-else class="space-y-3">
-        <!-- SEÇÃO: NAVEGAÇÃO PRINCIPAL ARESTA (Ícones em linha única horizontal + Botão Adicionar ao lado da Conta) -->
-        <div class="grid grid-cols-5 gap-1 p-1 bg-bgRoot/60 rounded-2xl border border-divider/60 shadow-inner">
+        <!-- SEÇÃO: NAVEGAÇÃO PRINCIPAL ARESTA (Em retângulos sem margem lateral + ícones maiores) -->
+        <div class="-mx-2.5 -mt-2.5 mb-2.5 grid grid-cols-5 divide-x divide-divider/60 border-b border-divider/60 bg-bgRoot/40 shadow-xs">
           <!-- 1. Início -->
           <NuxtLink
             to="/"
-            class="flex items-center justify-center p-2 rounded-xl transition-all cursor-pointer border group"
+            class="flex items-center justify-center h-11 transition-all cursor-pointer group relative"
             :class="isHomeActive && !isJournalActive && selectedFolder === null && selectedTag === null
-              ? 'bg-accent/15 text-accent border-accent/30 shadow-xs'
-              : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'"
+              ? 'bg-accent/15 text-accent font-semibold border-b-2 border-b-accent'
+              : 'text-textSecondary hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'"
             title="Início"
             aria-label="Início"
           >
-            <HomeIcon class="w-4 h-4 transition-transform group-hover:scale-110" />
+            <HomeIcon class="w-5 h-5 transition-transform group-hover:scale-110" />
           </NuxtLink>
 
           <!-- 2. Livros (Estante) -->
           <NuxtLink
             to="/library"
-            class="flex items-center justify-center p-2 rounded-xl transition-all cursor-pointer border group"
+            class="flex items-center justify-center h-11 transition-all cursor-pointer group relative"
             :class="isBooksActive
-              ? 'bg-accent/15 text-accent border-accent/30 shadow-xs'
-              : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'"
+              ? 'bg-accent/15 text-accent font-semibold border-b-2 border-b-accent'
+              : 'text-textSecondary hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'"
             title="Meus Livros"
             aria-label="Meus Livros"
           >
-            <BookOpenIcon class="w-4 h-4 transition-transform group-hover:scale-110" />
+            <BookOpenIcon class="w-5 h-5 transition-transform group-hover:scale-110" />
           </NuxtLink>
 
           <!-- 3. Revisão -->
           <NuxtLink
             to="/revisao"
-            class="flex items-center justify-center p-2 rounded-xl transition-all cursor-pointer border group"
+            class="flex items-center justify-center h-11 transition-all cursor-pointer group relative"
             :class="isReviewActive
-              ? 'bg-accent/15 text-accent border-accent/30 shadow-xs'
-              : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'"
+              ? 'bg-accent/15 text-accent font-semibold border-b-2 border-b-accent'
+              : 'text-textSecondary hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'"
             title="Revisão (Flashcards & Resumos)"
             aria-label="Revisão"
           >
-            <BrainIcon class="w-4 h-4 transition-transform group-hover:scale-110" />
+            <BrainIcon class="w-5 h-5 transition-transform group-hover:scale-110" />
           </NuxtLink>
 
           <!-- 4. Minha Conta -->
           <NuxtLink
             to="/conta"
-            class="flex items-center justify-center p-2 rounded-xl transition-all cursor-pointer border group"
+            class="flex items-center justify-center h-11 transition-all cursor-pointer group relative"
             :class="isAccountActive
-              ? 'bg-accent/15 text-accent border-accent/30 shadow-xs'
-              : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'"
+              ? 'bg-accent/15 text-accent font-semibold border-b-2 border-b-accent'
+              : 'text-textSecondary hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'"
             title="Minha Conta"
             aria-label="Minha Conta"
           >
-            <UserIcon class="w-4 h-4 transition-transform group-hover:scale-110" />
+            <UserIcon class="w-5 h-5 transition-transform group-hover:scale-110" />
           </NuxtLink>
 
           <!-- 5. Botão de Adicionar Geral (Ao lado da Conta) -->
-          <div class="relative" ref="addDropdownRef">
+          <div class="relative h-11" ref="addDropdownRef">
             <button
               @click="isAddMenuOpen = !isAddMenuOpen"
-              class="w-full h-full flex items-center justify-center p-2 rounded-xl transition-all cursor-pointer border bg-accent hover:bg-accent/90 text-white border-accent shadow-xs active:scale-95 group"
+              class="w-full h-full flex items-center justify-center transition-all cursor-pointer bg-accent hover:bg-accent/90 text-white active:scale-95 group"
               title="Criar novo item"
               aria-label="Criar novo item"
             >
-              <PlusIcon class="w-4 h-4 transition-transform duration-200" :class="{ 'rotate-45': isAddMenuOpen }" />
+              <PlusIcon class="w-5 h-5 transition-transform duration-200" :class="{ 'rotate-45': isAddMenuOpen }" />
             </button>
 
             <!-- Menu Dropdown -->
             <div
               v-if="isAddMenuOpen"
-              class="absolute right-0 top-full mt-1.5 w-48 p-1.5 rounded-2xl bg-bgPanel border border-divider shadow-2xl z-50 flex flex-col gap-0.5 animate-in fade-in zoom-in-95 duration-150 backdrop-blur-md"
+              class="absolute right-1 top-full mt-1.5 w-48 p-1.5 rounded-2xl bg-bgPanel border border-divider shadow-2xl z-50 flex flex-col gap-0.5 animate-in fade-in zoom-in-95 duration-150 backdrop-blur-md"
             >
               <button
                 @click="handleAddAction('note')"

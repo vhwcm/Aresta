@@ -1,6 +1,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [24/09/2026 11:21] [Concluído] Transformar a barra de navegação de ícones da sidebar em retângulos sem margem lateral e aumentar tamanho dos ícones
 - [24/09/2026 11:18] [Concluído] Exibir o ícone e indicador de ofensiva (ReadingStreak) ao lado da lupa no cabeçalho do FolderTagSidebar
 - [24/09/2026 11:13] [Concluído] Aumentar a largura da área clicável do botão da setinha de expansão de tags na sidebar
 - [24/09/2026 11:12] [Concluído] Inicializar a seção de Gerenciar Tags colapsada por padrão no FolderTagSidebar
