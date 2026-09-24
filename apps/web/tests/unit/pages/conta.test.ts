@@ -69,48 +69,25 @@ describe('Conta Page (/conta)', () => {
     expect(wrapper.find('[data-testid="metric-knowledge-nodes"]').text()).toContain('Em 4 mapas conceituais')
     expect(wrapper.find('[data-testid="metric-retention-rate"]').text()).toContain('91%')
     expect(wrapper.find('[data-testid="account-preferences-section"]').exists()).toBe(true)
-    expect(wrapper.text()).toContain('Configurações da Aplicação')
+    expect(wrapper.text()).toContain('Virada de Página 3D & Efeitos de Livro Físico')
+    expect(wrapper.text()).toContain('Idiomas & Dicionário Offline')
     expect(wrapper.text()).toContain('Aresta Pro')
     expect(wrapper.text()).toContain('Zona de Perigo & Segurança')
     expect(wrapper.text()).toContain('Fazer Logout')
     expect(wrapper.text()).toContain('Deletar Minha Conta')
   })
 
-  it('permite alternar o tema unificado do app e de leitura (claro, escuro, livro)', async () => {
-
+  it('permite configurar idiomas de definições e tradução', async () => {
     const wrapper = mount(ContaPage, {
       global: {
         stubs: defaultStubs,
       },
     })
-    const { readerTheme } = useSettings()
+    const { nativeLanguage, targetTranslationLanguage } = useSettings()
 
-    const lightBtn = wrapper.find('[data-testid="theme-light-btn"]')
-    const darkBtn = wrapper.find('[data-testid="theme-dark-btn"]')
-    const sepiaBtn = wrapper.find('[data-testid="theme-sepia-btn"]')
-
-    expect(lightBtn.exists()).toBe(true)
-    expect(darkBtn.exists()).toBe(true)
-    expect(sepiaBtn.exists()).toBe(true)
-    expect(wrapper.text()).toContain('Claro (Light)')
-
-    // Clica para ativar modo escuro
-    await darkBtn.trigger('click')
-    expect(wrapper.text()).toContain('Escuro (Dark)')
-    expect(readerTheme.value).toBe('black')
-    expect(localStorage.getItem('aresta_reader_theme')).toBe('black')
-
-    // Clica para ativar modo livro/sepia
-    await sepiaBtn.trigger('click')
-    expect(wrapper.text()).toContain('Amarelado (Kindle / Livro)')
-    expect(readerTheme.value).toBe('sepia')
-    expect(localStorage.getItem('aresta_reader_theme')).toBe('sepia')
-
-    // Clica para voltar ao modo claro
-    await lightBtn.trigger('click')
-    expect(wrapper.text()).toContain('Claro (Light)')
-    expect(readerTheme.value).toBe('white')
-    expect(localStorage.getItem('aresta_reader_theme')).toBe('white')
+    expect(wrapper.find('[data-testid="dictionary-settings-section"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Minha Língua Nativa')
+    expect(wrapper.text()).toContain('Língua de Tradução / Estudo')
   })
 
   it('permite alternar o switch unificado de Virada de Página 3D e Efeitos de Livro Físico', async () => {
@@ -125,12 +102,10 @@ describe('Conta Page (/conta)', () => {
 
     // Inicia como ativado por padrão
     expect(pageAnimationToggle.attributes('aria-checked')).toBe('true')
-    expect(wrapper.text()).toContain('Ativado (3D & Livro Físico)')
 
     // Alterna para desativado
     await pageAnimationToggle.trigger('click')
     expect(pageAnimationToggle.attributes('aria-checked')).toBe('false')
-    expect(wrapper.text()).toContain('Desativado (Instantâneo)')
     let saved = JSON.parse(localStorage.getItem('aresta_settings') || '{}')
     expect(saved.pageAnimationEnabled).toBe(false)
     expect(saved.pageCreaseEnabled).toBe(false)
@@ -138,7 +113,6 @@ describe('Conta Page (/conta)', () => {
     // Alterna de volta para ativado
     await pageAnimationToggle.trigger('click')
     expect(pageAnimationToggle.attributes('aria-checked')).toBe('true')
-    expect(wrapper.text()).toContain('Ativado (3D & Livro Físico)')
     saved = JSON.parse(localStorage.getItem('aresta_settings') || '{}')
     expect(saved.pageAnimationEnabled).toBe(true)
     expect(saved.pageCreaseEnabled).toBe(true)

@@ -131,98 +131,18 @@
       </div>
     </section>
 
-    <!-- Preferências & Configurações da Aplicação -->
+    <!-- Preferências da Aplicação -->
     <section class="flex flex-col gap-6" data-testid="account-preferences-section">
-      <div class="flex flex-col gap-1">
-        <div class="flex items-center gap-2 font-technical text-[10px] uppercase font-semibold tracking-widest text-accent">
-          <SlidersIcon class="w-3.5 h-3.5" />
-          Preferências & Customização
-        </div>
-        <h3 class="font-editorial text-2xl font-light text-textPrimary">Configurações da Aplicação</h3>
-        <p class="font-interface text-xs text-textSecondary leading-relaxed max-w-2xl">
-          Personalize a experiência de leitura, comportamento dos grafos conceituais e aparência visual do ecossistema.
-        </p>
-      </div>
-
       <div class="flex flex-col rounded-3xl bg-bgPanel border border-divider divide-y divide-divider overflow-hidden shadow-sm">
-        <!-- 1. Tema Visual do App & Leitura (Escuro, Claro, Livro) -->
-        <div class="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div class="flex items-start sm:items-center gap-4 min-w-0">
-            <div class="p-3 rounded-2xl bg-accent/10 border border-accent/20 text-accent shrink-0">
-              <SunIcon v-if="themeMode === 'light'" class="w-5 h-5" />
-              <PaletteIcon v-else-if="themeMode === 'sepia'" class="w-5 h-5" />
-              <MoonIcon v-else class="w-5 h-5" />
-            </div>
-            <div class="flex flex-col gap-0.5">
-              <div class="font-interface text-sm font-medium text-textPrimary flex items-center gap-2">
-                <span>Tema do Aplicativo & Leitura</span>
-                <span
-                  class="px-2 py-0.5 rounded-full font-technical text-[10px] font-semibold"
-                  :class="themeMode === 'sepia' ? 'bg-amber-400/15 text-amber-500 dark:text-amber-300 border border-amber-400/30' : (themeMode === 'dark' ? 'bg-black/5 dark:bg-white/10 text-textSecondary' : 'bg-accent/15 text-accent border border-accent/30')"
-                >
-                  {{ themeMode === 'dark' ? 'Escuro (Dark)' : (themeMode === 'sepia' ? 'Amarelado (Kindle / Livro)' : 'Claro (Light)') }}
-                </span>
-              </div>
-              <p class="font-interface text-xs text-textSecondary">
-                Escolha entre o tema escuro editorial, claro suave ou o visual amarelado estilo livro físico / Kindle. O tema selecionado é aplicado uniformemente em todo o aplicativo e no leitor.
-              </p>
-            </div>
-          </div>
-
-          <div class="flex items-center p-1 rounded-2xl bg-black/5 dark:bg-white/5 border border-divider shrink-0 gap-1">
-            <button
-              type="button"
-              @click="setThemeMode('dark')"
-              data-testid="theme-dark-btn"
-              class="px-3.5 py-1.5 rounded-xl font-interface text-xs font-medium transition-all flex items-center gap-1.5"
-              :class="themeMode === 'dark' ? 'bg-accent text-white shadow-md' : 'text-textSecondary hover:text-textPrimary'"
-            >
-              <MoonIcon class="w-3.5 h-3.5" />
-              <span>Escuro</span>
-            </button>
-            <button
-              type="button"
-              @click="setThemeMode('light')"
-              data-testid="theme-light-btn"
-              class="px-3.5 py-1.5 rounded-xl font-interface text-xs font-medium transition-all flex items-center gap-1.5"
-              :class="themeMode === 'light' ? 'bg-accent text-white shadow-md' : 'text-textSecondary hover:text-textPrimary'"
-            >
-              <SunIcon class="w-3.5 h-3.5" />
-              <span>Claro</span>
-            </button>
-            <button
-              type="button"
-              @click="setThemeMode('sepia')"
-              data-testid="theme-sepia-btn"
-              class="px-3.5 py-1.5 rounded-xl font-interface text-xs font-medium transition-all flex items-center gap-1.5"
-              :class="themeMode === 'sepia' ? 'bg-amber-400/20 text-amber-600 dark:text-amber-300 border border-amber-400/40 shadow-sm font-semibold' : 'text-textSecondary hover:text-textPrimary'"
-            >
-              <span class="w-3 h-3 rounded-full bg-[#f5eedc] inline-block border border-amber-900/30"></span>
-              <span>Livro</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- 2. Virada de Página 3D & Efeitos de Livro Físico -->
-        <div class="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div class="flex items-start sm:items-center gap-4 min-w-0">
-            <div class="p-3 rounded-2xl bg-accent/10 border border-accent/20 text-accent shrink-0">
+        <!-- Virada de Página 3D & Efeitos de Livro Físico -->
+        <div class="p-5 flex items-center justify-between gap-4">
+          <div class="flex items-center gap-4 min-w-0">
+            <div class="p-2.5 rounded-xl bg-accent/10 border border-accent/20 text-accent shrink-0">
               <BookOpenIcon class="w-5 h-5" />
             </div>
-            <div class="flex flex-col gap-0.5">
-              <div class="font-interface text-sm font-medium text-textPrimary flex items-center gap-2">
-                <span>Virada de Página 3D & Efeitos de Livro Físico</span>
-                <span
-                  class="px-2 py-0.5 rounded-full font-technical text-[10px] font-semibold"
-                  :class="pageAnimationEnabled ? 'bg-accent/15 text-accent border border-accent/30' : 'bg-black/5 dark:bg-white/10 text-textSecondary'"
-                >
-                  {{ pageAnimationEnabled ? 'Ativado (3D & Livro Físico)' : 'Desativado (Instantâneo)' }}
-                </span>
-              </div>
-              <p class="font-interface text-xs text-textSecondary">
-                Efeito visual 3D de folhear páginas em livros e PDFs, com sombra de vinco central e camadas laterais de páginas lidas e restantes.
-              </p>
-            </div>
+            <span class="font-interface text-sm font-medium text-textPrimary">
+              Virada de Página 3D & Efeitos de Livro Físico
+            </span>
           </div>
 
           <button
@@ -242,99 +162,88 @@
           </button>
         </div>
 
-        <!-- 6. Idiomas & Dicionário Offline -->
-        <div class="p-6 flex flex-col gap-6" data-testid="dictionary-settings-section">
-          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div class="flex items-start sm:items-center gap-4 min-w-0">
-              <div class="p-3 rounded-2xl bg-accent/10 border border-accent/20 text-accent shrink-0">
-                <LanguagesIcon class="w-5 h-5" />
-              </div>
-              <div class="flex flex-col gap-0.5">
-                <div class="font-interface text-sm font-medium text-textPrimary flex items-center gap-2">
-                  <span>Idiomas & Dicionário Offline</span>
-                  <span class="px-2 py-0.5 rounded-full font-technical text-[10px] font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    100% Offline
-                  </span>
-                </div>
-                <p class="font-interface text-xs text-textSecondary">
-                  Defina seu idioma materno e a língua alvo de leitura para obter traduções e definições instantâneas durante a leitura de EPUBs.
-                </p>
-              </div>
+        <!-- Idiomas & Dicionário Offline -->
+        <div class="p-5 flex flex-col gap-4" data-testid="dictionary-settings-section">
+          <div class="flex items-center gap-4 min-w-0">
+            <div class="p-2.5 rounded-xl bg-accent/10 border border-accent/20 text-accent shrink-0">
+              <LanguagesIcon class="w-5 h-5" />
             </div>
+            <span class="font-interface text-sm font-medium text-textPrimary">
+              Idiomas & Dicionário Offline
+            </span>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             <!-- Seletor: Minha Língua Nativa -->
-            <div class="p-5 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] border border-divider flex flex-col gap-3">
+            <div class="p-3 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-divider flex flex-col gap-2">
               <div class="flex items-center justify-between">
-                <span class="font-technical text-[11px] uppercase tracking-wider text-accent font-semibold">Minha Língua Nativa</span>
-                <span class="font-interface text-xs text-textSecondary">Idioma das definições</span>
+                <span class="font-technical text-[10px] uppercase tracking-wider text-accent font-semibold">Minha Língua Nativa</span>
+                <span class="font-interface text-[10px] text-textSecondary">Idioma das definições</span>
               </div>
-              <div class="grid grid-cols-3 gap-2">
+              <div class="grid grid-cols-3 gap-1.5">
                 <button
                   type="button"
                   @click="setNativeLanguage('pt-BR')"
-                  class="px-3 py-2.5 rounded-xl border text-xs font-interface font-medium transition-all text-center flex flex-col items-center gap-1"
-                  :class="nativeLanguage.startsWith('pt') ? 'bg-accent/15 border-accent text-textPrimary font-semibold shadow-sm' : 'border-divider hover:bg-black/5 dark:hover:bg-white/5 text-textSecondary'"
+                  class="px-2 py-1.5 rounded-lg border font-interface font-medium transition-all text-center flex items-center justify-center gap-1.5"
+                  :class="nativeLanguage.startsWith('pt') ? 'bg-accent/15 border-accent text-textPrimary font-semibold shadow-xs' : 'border-divider hover:bg-black/5 dark:hover:bg-white/5 text-textSecondary'"
                 >
-                  <span class="text-base">🇧🇷</span>
-                  <span>Português</span>
+                  <span class="text-xs">🇧🇷</span>
+                  <span class="text-[11px]">Português</span>
                 </button>
                 <button
                   type="button"
                   @click="setNativeLanguage('en')"
-                  class="px-3 py-2.5 rounded-xl border text-xs font-interface font-medium transition-all text-center flex flex-col items-center gap-1"
-                  :class="nativeLanguage === 'en' ? 'bg-accent/15 border-accent text-textPrimary font-semibold shadow-sm' : 'border-divider hover:bg-black/5 dark:hover:bg-white/5 text-textSecondary'"
+                  class="px-2 py-1.5 rounded-lg border font-interface font-medium transition-all text-center flex items-center justify-center gap-1.5"
+                  :class="nativeLanguage === 'en' ? 'bg-accent/15 border-accent text-textPrimary font-semibold shadow-xs' : 'border-divider hover:bg-black/5 dark:hover:bg-white/5 text-textSecondary'"
                 >
-                  <span class="text-base">🇺🇸</span>
-                  <span>Inglês</span>
+                  <span class="text-xs">🇺🇸</span>
+                  <span class="text-[11px]">Inglês</span>
                 </button>
                 <button
                   type="button"
                   @click="setNativeLanguage('es')"
-                  class="px-3 py-2.5 rounded-xl border text-xs font-interface font-medium transition-all text-center flex flex-col items-center gap-1"
-                  :class="nativeLanguage === 'es' ? 'bg-accent/15 border-accent text-textPrimary font-semibold shadow-sm' : 'border-divider hover:bg-black/5 dark:hover:bg-white/5 text-textSecondary'"
+                  class="px-2 py-1.5 rounded-lg border font-interface font-medium transition-all text-center flex items-center justify-center gap-1.5"
+                  :class="nativeLanguage === 'es' ? 'bg-accent/15 border-accent text-textPrimary font-semibold shadow-xs' : 'border-divider hover:bg-black/5 dark:hover:bg-white/5 text-textSecondary'"
                 >
-                  <span class="text-base">🇪🇸</span>
-                  <span>Espanhol</span>
+                  <span class="text-xs">🇪🇸</span>
+                  <span class="text-[11px]">Espanhol</span>
                 </button>
               </div>
             </div>
 
             <!-- Seletor: Língua Padrão de Tradução / Leitura -->
-            <div class="p-5 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] border border-divider flex flex-col gap-3">
+            <div class="p-3 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-divider flex flex-col gap-2">
               <div class="flex items-center justify-between">
-                <span class="font-technical text-[11px] uppercase tracking-wider text-accent font-semibold">Língua de Tradução / Estudo</span>
-                <span class="font-interface text-xs text-textSecondary">Idioma principal do livro</span>
+                <span class="font-technical text-[10px] uppercase tracking-wider text-accent font-semibold">Língua de Tradução / Estudo</span>
+                <span class="font-interface text-[10px] text-textSecondary">Idioma principal do livro</span>
               </div>
-              <div class="grid grid-cols-3 gap-2">
+              <div class="grid grid-cols-3 gap-1.5">
                 <button
                   type="button"
                   @click="setTargetTranslationLanguage('en')"
-                  class="px-3 py-2.5 rounded-xl border text-xs font-interface font-medium transition-all text-center flex flex-col items-center gap-1"
-                  :class="targetTranslationLanguage === 'en' ? 'bg-accent/15 border-accent text-textPrimary font-semibold shadow-sm' : 'border-divider hover:bg-black/5 dark:hover:bg-white/5 text-textSecondary'"
+                  class="px-2 py-1.5 rounded-lg border font-interface font-medium transition-all text-center flex items-center justify-center gap-1.5"
+                  :class="targetTranslationLanguage === 'en' ? 'bg-accent/15 border-accent text-textPrimary font-semibold shadow-xs' : 'border-divider hover:bg-black/5 dark:hover:bg-white/5 text-textSecondary'"
                 >
-                  <span class="text-base">🇺🇸</span>
-                  <span>Inglês</span>
+                  <span class="text-xs">🇺🇸</span>
+                  <span class="text-[11px]">Inglês</span>
                 </button>
                 <button
                   type="button"
                   @click="setTargetTranslationLanguage('es')"
-                  class="px-3 py-2.5 rounded-xl border text-xs font-interface font-medium transition-all text-center flex flex-col items-center gap-1"
-                  :class="targetTranslationLanguage === 'es' ? 'bg-accent/15 border-accent text-textPrimary font-semibold shadow-sm' : 'border-divider hover:bg-black/5 dark:hover:bg-white/5 text-textSecondary'"
+                  class="px-2 py-1.5 rounded-lg border font-interface font-medium transition-all text-center flex items-center justify-center gap-1.5"
+                  :class="targetTranslationLanguage === 'es' ? 'bg-accent/15 border-accent text-textPrimary font-semibold shadow-xs' : 'border-divider hover:bg-black/5 dark:hover:bg-white/5 text-textSecondary'"
                 >
-                  <span class="text-base">🇪🇸</span>
-                  <span>Espanhol</span>
+                  <span class="text-xs">🇪🇸</span>
+                  <span class="text-[11px]">Espanhol</span>
                 </button>
                 <button
                   type="button"
                   @click="setTargetTranslationLanguage('pt-BR')"
-                  class="px-3 py-2.5 rounded-xl border text-xs font-interface font-medium transition-all text-center flex flex-col items-center gap-1"
-                  :class="targetTranslationLanguage.startsWith('pt') ? 'bg-accent/15 border-accent text-textPrimary font-semibold shadow-sm' : 'border-divider hover:bg-black/5 dark:hover:bg-white/5 text-textSecondary'"
+                  class="px-2 py-1.5 rounded-lg border font-interface font-medium transition-all text-center flex items-center justify-center gap-1.5"
+                  :class="targetTranslationLanguage.startsWith('pt') ? 'bg-accent/15 border-accent text-textPrimary font-semibold shadow-xs' : 'border-divider hover:bg-black/5 dark:hover:bg-white/5 text-textSecondary'"
                 >
-                  <span class="text-base">🇧🇷</span>
-                  <span>Português</span>
+                  <span class="text-xs">🇧🇷</span>
+                  <span class="text-[11px]">Português</span>
                 </button>
               </div>
             </div>
@@ -706,10 +615,6 @@ import {
   LogOutIcon,
   Trash2Icon,
   XIcon,
-  SunIcon,
-  MoonIcon,
-  PaletteIcon,
-  SlidersIcon,
   LanguagesIcon,
   CloudIcon,
   SparklesIcon
@@ -744,11 +649,9 @@ const {
 const {
   pageAnimationEnabled,
   pageCreaseEnabled,
-  themeMode,
   nativeLanguage,
   targetTranslationLanguage,
   setPageAnimationEnabled,
-  setThemeMode,
   setNativeLanguage,
   setTargetTranslationLanguage
 } = settings
