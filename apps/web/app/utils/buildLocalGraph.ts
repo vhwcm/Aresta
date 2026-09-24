@@ -49,12 +49,25 @@ export const buildLocalGraph = (input: BuildLocalGraphInput = {}): GraphData => 
     const numericId = Number(theme.id)
     const name = (theme.name || '').trim()
     if (!name && Number.isNaN(numericId)) return
+
+    // Busca se já existe um tema/tag com o mesmo nome (case-insensitive)
+    const normName = name.toLowerCase()
+    if (normName) {
+      for (const [k, v] of themeMap.entries()) {
+        if (v.name.trim().toLowerCase() === normName) {
+          if (theme.color && !v.color) v.color = theme.color
+          if (theme.description && !v.description) v.description = theme.description
+          return v.id
+        }
+      }
+    }
+
     const id = Number.isFinite(numericId) && numericId !== 0 ? numericId : Math.abs(hashString(name || String(theme.id)))
     const key = String(id)
     const existing = themeMap.get(key)
     themeMap.set(key, {
       id,
-      name: name || existing?.name || `Tema ${id}`,
+      name: name || existing?.name || `Tag ${id}`,
       color: theme.color || existing?.color || DEFAULT_THEME_COLOR,
       description: theme.description ?? existing?.description ?? null,
     })
@@ -67,6 +80,26 @@ export const buildLocalGraph = (input: BuildLocalGraphInput = {}): GraphData => 
   }
   for (const annotation of annotations) {
     for (const theme of annotation.themes || []) upsertTheme(theme)
+  }
+  for (const note of notes) {
+    for (const tag of note.tags || []) {
+      if (tag && tag.trim()) upsertTheme({ name: tag.trim() })
+    }
+  }
+  for (const drawing of drawingNotes) {
+    for (const tag of drawing.tags || []) {
+      if (tag && tag.trim()) upsertTheme({ name: tag.trim() })
+    }
+  }
+  for (const link of links) {
+    for (const tag of link.tags || []) {
+      if (tag && tag.trim()) upsertTheme({ name: tag.trim() })
+    }
+  }
+  for (const canvas of canvases) {
+    for (const tag of (canvas as any).tags || []) {
+      if (tag && tag.trim()) upsertTheme({ name: tag.trim() })
+    }
   }
 
   const nodes: GraphNode[] = []
@@ -241,6 +274,10 @@ export const buildLocalGraph = (input: BuildLocalGraphInput = {}): GraphData => 
       updatedAt: drawing.updated_at,
     })
     if (drawing.folder?.trim()) addEdge(nodeId, `folder-${drawing.folder.trim()}`, 'note-folder')
+    for (const tag of drawing.tags || []) {
+      const match = [...themeMap.values()].find((theme) => theme.name.toLowerCase() === tag.toLowerCase())
+      if (match) addEdge(nodeId, themeNodeId(match.id), 'note-theme')
+    }
   }
 
   for (const canvas of canvases) {
@@ -256,6 +293,10 @@ export const buildLocalGraph = (input: BuildLocalGraphInput = {}): GraphData => 
       color: '#10B981',
       updatedAt: canvas.updated_at,
     })
+    for (const tag of (canvas as any).tags || []) {
+      const match = [...themeMap.values()].find((theme) => theme.name.toLowerCase() === tag.toLowerCase())
+      if (match) addEdge(nodeId, themeNodeId(match.id), 'canvas-theme')
+    }
   }
 
   for (const l of links) {
@@ -288,6 +329,10 @@ export const buildLocalGraph = (input: BuildLocalGraphInput = {}): GraphData => 
       addEdge(cId.startsWith('canvas-') ? cId : `canvas-${cId}`, nodeId, 'canvas-link')
     }
     if (l.folder?.trim()) addEdge(nodeId, `folder-${l.folder.trim()}`, 'link-folder')
+    for (const tag of l.tags || []) {
+      const match = [...themeMap.values()].find((theme) => theme.name.toLowerCase() === tag.toLowerCase())
+      if (match) addEdge(nodeId, themeNodeId(match.id), 'link-theme')
+    }
   }
 
   const activeIds = new Set(nodes.map((node) => String(node.id)))

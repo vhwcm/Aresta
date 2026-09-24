@@ -16,9 +16,9 @@
             <TagIcon class="w-5 h-5" />
           </div>
           <div>
-            <h3 id="manage-themes-title" class="text-xl font-bold font-editorial">Gerenciar Temas</h3>
+            <h3 id="manage-themes-title" class="text-xl font-bold font-editorial">Gerenciar Tags</h3>
             <p class="text-xs text-textSecondary font-interface">
-              Edite ou remova temas da sua estante e do grafo de conhecimento.
+              Edite ou remova tags da sua estante e do grafo de conhecimento.
             </p>
           </div>
         </div>
@@ -32,11 +32,11 @@
         </button>
       </div>
 
-      <!-- Barra de Criação Rápida de Tema -->
+      <!-- Barra de Criação Rápida de Tag -->
       <div class="p-3.5 rounded-2xl bg-white/[0.03] border border-divider/60 flex flex-col gap-2.5 shrink-0">
         <div class="flex items-center justify-between">
           <span class="text-[11px] font-technical uppercase font-bold tracking-wider text-textSecondary">
-            Novo Tema
+            Nova Tag
           </span>
           <div class="flex items-center gap-1.5">
             <button
@@ -54,7 +54,7 @@
           <input
             v-model="newThemeName"
             type="text"
-            placeholder="Nome do novo tema..."
+            placeholder="Nome da nova tag..."
             maxlength="30"
             class="flex-1 bg-bgApp border border-divider rounded-xl px-3 py-2 text-xs text-textPrimary placeholder:text-textSecondary/50 focus:outline-none focus:border-accent"
             @keyup.enter="handleCreateTheme"
@@ -81,19 +81,19 @@
           <input
             v-model="searchQuery"
             type="text"
-            placeholder="Buscar temas..."
+            placeholder="Buscar tags..."
             class="w-full bg-bgApp border border-divider rounded-xl pl-9 pr-3 py-1.5 text-xs text-textPrimary placeholder:text-textSecondary/50 focus:outline-none focus:border-accent"
           />
         </div>
         <span class="text-xs font-technical text-textSecondary shrink-0">
-          {{ filteredThemes.length }} {{ filteredThemes.length === 1 ? 'tema' : 'temas' }}
+          {{ filteredThemes.length }} {{ filteredThemes.length === 1 ? 'tag' : 'tags' }}
         </span>
       </div>
 
-      <!-- Lista com Scroll de Temas -->
+      <!-- Lista com Scroll de Tags -->
       <div class="flex-1 overflow-y-auto space-y-2 pr-1 min-h-[160px]">
         <div v-if="filteredThemes.length === 0" class="py-8 text-center text-textSecondary text-xs">
-          Nenhum tema encontrado.
+          Nenhuma tag encontrada.
         </div>
 
         <div
@@ -161,15 +161,15 @@
           >
             <div class="flex items-center gap-2 text-rose-300 font-medium">
               <AlertTriangleIcon class="w-4 h-4 shrink-0 text-rose-400" />
-              <span>Excluir tema «{{ theme.name }}»?</span>
+              <span>Excluir tag «{{ theme.name }}»?</span>
             </div>
             <p class="text-textSecondary text-[11px] leading-relaxed">
               <template v-if="getThemeBooksCount(theme.id) > 0">
-                Este tema está vinculado a <strong class="text-rose-300">{{ getThemeBooksCount(theme.id) }}</strong> {{ getThemeBooksCount(theme.id) === 1 ? 'livro' : 'livros' }}.
-                Ele será desvinculado dos livros, notas e do grafo.
+                Esta tag está vinculada a <strong class="text-rose-300">{{ getThemeBooksCount(theme.id) }}</strong> {{ getThemeBooksCount(theme.id) === 1 ? 'livro' : 'livros' }}.
+                Ela será desvinculada dos livros, notas e do grafo.
               </template>
               <template v-else>
-                O tema será removido permanentemente do acervo e do grafo de conhecimento.
+                A tag será removida permanentemente do acervo e do grafo de conhecimento.
               </template>
             </p>
             <div class="flex items-center justify-end gap-2 pt-1">
@@ -194,7 +194,7 @@
             </span>
           </div>
 
-          <!-- Visualização Padrão da Linha do Tema -->
+          <!-- Visualização Padrão da Linha da Tag -->
           <div v-else class="flex items-center justify-between gap-3">
             <div class="flex items-center gap-2.5 min-w-0">
               <span
@@ -217,7 +217,7 @@
                 @click="startEdit(theme)"
                 data-testid="edit-theme-btn"
                 class="p-1.5 rounded-lg text-textSecondary hover:text-textPrimary hover:bg-white/10 transition-all"
-                title="Editar nome do tema"
+                title="Editar nome da tag"
               >
                 <Edit2Icon class="w-3.5 h-3.5" />
               </button>
@@ -225,7 +225,7 @@
                 @click="startDelete(theme)"
                 data-testid="delete-theme-btn"
                 class="p-1.5 rounded-lg text-textSecondary hover:text-rose-400 hover:bg-rose-500/10 transition-all"
-                title="Excluir tema"
+                title="Excluir tag"
               >
                 <Trash2Icon class="w-3.5 h-3.5" />
               </button>

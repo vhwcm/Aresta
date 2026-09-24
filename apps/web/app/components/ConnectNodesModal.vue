@@ -2,7 +2,7 @@
   <div v-if="isOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn">
     <div class="bg-bgPanel border border-divider rounded-3xl w-full max-w-md p-6 shadow-2xl space-y-6 text-textPrimary">
       <div class="flex items-center justify-between border-b border-divider pb-4">
-        <h3 class="text-lg font-semibold font-interface">Conectar Temas no Grafo</h3>
+        <h3 class="text-lg font-semibold font-interface">Conectar Tags no Grafo</h3>
         <button @click="$emit('close')" class="p-1 rounded-lg text-textSecondary hover:text-textPrimary hover:bg-black/5 dark:hover:bg-white/10 transition-all">
           <XIcon class="w-5 h-5" />
         </button>
@@ -10,17 +10,17 @@
 
       <form @submit.prevent="handleSubmit" class="space-y-4">
         <div>
-          <label class="block text-xs font-technical text-textSecondary mb-1">Tema de Origem</label>
+          <label class="block text-xs font-technical text-textSecondary mb-1">Tag de Origem</label>
           <select v-model="sourceId" required class="w-full bg-bgApp border border-divider rounded-xl px-3 py-2.5 text-sm text-textPrimary focus:outline-none focus:border-accent">
-            <option :value="null" disabled>Escolha o primeiro tema...</option>
+            <option :value="null" disabled>Escolha a primeira tag...</option>
             <option v-for="node in nodes" :key="node.id" :value="node.id">{{ node.name }}</option>
           </select>
         </div>
 
         <div>
-          <label class="block text-xs font-technical text-textSecondary mb-1">Tema de Destino</label>
+          <label class="block text-xs font-technical text-textSecondary mb-1">Tag de Destino</label>
           <select v-model="targetId" required class="w-full bg-bgApp border border-divider rounded-xl px-3 py-2.5 text-sm text-textPrimary focus:outline-none focus:border-accent">
-            <option :value="null" disabled>Escolha o segundo tema...</option>
+            <option :value="null" disabled>Escolha a segunda tag...</option>
             <option v-for="node in availableTargets" :key="node.id" :value="node.id">{{ node.name }}</option>
           </select>
         </div>

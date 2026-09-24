@@ -61,7 +61,8 @@ describe('Library Page', () => {
     await flushPromises()
     expect(wrapper.text()).toContain('Estante')
     expect(wrapper.text()).not.toContain('Biblioteca & Estante')
-    expect(wrapper.text()).toContain('Gerenciar Temas')
+    expect(wrapper.text()).not.toContain('Gerenciar Temas')
+    expect(wrapper.text()).not.toContain('Gerenciar Tags')
     expect(wrapper.text()).toContain('Novo Livreto IA')
     expect(wrapper.text()).toContain('Enviar Arquivo')
     // Não deve conter os cards de status removidos
@@ -83,7 +84,7 @@ describe('Library Page', () => {
     expect(wrapper.text()).not.toContain('Ver Grafo')
   })
 
-  it('opens manage themes modal when clicking Gerenciar Temas button', async () => {
+  it('nao exibe mais o botao de gerenciar temas na pagina de livros', async () => {
     const wrapper = mount(LibraryPage, {
       global: {
         stubs: {
@@ -94,13 +95,7 @@ describe('Library Page', () => {
     await flushPromises()
 
     const manageBtn = wrapper.find('[data-testid="manage-themes-btn"]')
-    expect(manageBtn.exists()).toBe(true)
-    await manageBtn.trigger('click')
-    await flushPromises()
-
-    // O modal deve ser aberto e exibir os controles
-    expect(wrapper.find('[role="dialog"]').exists()).toBe(true)
-    expect(wrapper.text()).toContain('Gerenciar Temas')
+    expect(manageBtn.exists()).toBe(false)
   })
 
   it('navigates to reader when clicking a book card', async () => {
@@ -337,8 +332,8 @@ describe('Library Page', () => {
     expect(wrapper.text()).not.toContain('Filtrar Temas')
     expect(wrapper.text()).not.toContain('Ver Grafo')
 
-    // Deve renderizar Todos os Temas e as tags dos temas
-    expect(wrapper.text()).toContain('Todos os Temas')
+    // Deve renderizar Todas as Tags e as tags dos temas
+    expect(wrapper.text()).toContain('Todas as Tags')
     expect(wrapper.text()).toContain('Filosofia')
     expect(wrapper.text()).toContain('Ficção')
 

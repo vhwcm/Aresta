@@ -215,6 +215,7 @@ export const useGraph = () => {
     const themeId = numericId(id)
     const meta = loadGraphMeta()
     const index = meta.themes.findIndex((theme) => Number(theme.id) === themeId)
+    const oldName = index !== -1 ? meta.themes[index]?.name : undefined
     if (index !== -1) {
       meta.themes[index] = {
         ...meta.themes[index]!,
@@ -249,6 +250,36 @@ export const useGraph = () => {
       })
     }
 
+    if (oldName && trimmed && oldName.toLowerCase() !== trimmed.toLowerCase()) {
+      const notes = await noteRepo.getAll().catch(() => [])
+      for (const note of notes) {
+        if (note.tags && note.tags.some((t) => t.toLowerCase() === oldName.toLowerCase())) {
+          await noteRepo.save({
+            ...note,
+            tags: note.tags.map((t) => t.toLowerCase() === oldName.toLowerCase() ? trimmed : t)
+          })
+        }
+      }
+      const drawings = await drawingNoteRepo.getAll().catch(() => [])
+      for (const d of drawings) {
+        if (d.tags && d.tags.some((t) => t.toLowerCase() === oldName.toLowerCase())) {
+          await drawingNoteRepo.save({
+            ...d,
+            tags: d.tags.map((t) => t.toLowerCase() === oldName.toLowerCase() ? trimmed : t)
+          })
+        }
+      }
+      const links = await linkRepo.getAll().catch(() => [])
+      for (const l of links) {
+        if (l.tags && l.tags.some((t) => t.toLowerCase() === oldName.toLowerCase())) {
+          await linkRepo.save({
+            ...l,
+            tags: l.tags.map((t) => t.toLowerCase() === oldName.toLowerCase() ? trimmed : t)
+          })
+        }
+      }
+    }
+
     await fetchGraph()
     return graphData.value.nodes.find((node) => String(node.rawId) === String(themeId) || String(node.id) === String(id))
   }
@@ -256,6 +287,8 @@ export const useGraph = () => {
   const deleteNode = async (id: number | string) => {
     const themeId = numericId(id)
     const meta = loadGraphMeta()
+    const targetTheme = meta.themes.find((theme) => Number(theme.id) === themeId)
+    const oldName = targetTheme?.name
     meta.themes = meta.themes.filter((theme) => Number(theme.id) !== themeId)
     meta.edges = meta.edges.filter((edge) => String(edge.source) !== String(id) && String(edge.target) !== String(id)
       && String(edge.source) !== toNodeId('theme', themeId) && String(edge.target) !== toNodeId('theme', themeId))
@@ -279,6 +312,36 @@ export const useGraph = () => {
         ...annotation,
         themes: themes.filter((theme) => Number(theme.id) !== themeId),
       })
+    }
+
+    if (oldName) {
+      const notes = await noteRepo.getAll().catch(() => [])
+      for (const note of notes) {
+        if (note.tags && note.tags.some((t) => t.toLowerCase() === oldName.toLowerCase())) {
+          await noteRepo.save({
+            ...note,
+            tags: note.tags.filter((t) => t.toLowerCase() !== oldName.toLowerCase())
+          })
+        }
+      }
+      const drawings = await drawingNoteRepo.getAll().catch(() => [])
+      for (const d of drawings) {
+        if (d.tags && d.tags.some((t) => t.toLowerCase() === oldName.toLowerCase())) {
+          await drawingNoteRepo.save({
+            ...d,
+            tags: d.tags.filter((t) => t.toLowerCase() !== oldName.toLowerCase())
+          })
+        }
+      }
+      const links = await linkRepo.getAll().catch(() => [])
+      for (const l of links) {
+        if (l.tags && l.tags.some((t) => t.toLowerCase() === oldName.toLowerCase())) {
+          await linkRepo.save({
+            ...l,
+            tags: l.tags.filter((t) => t.toLowerCase() !== oldName.toLowerCase())
+          })
+        }
+      }
     }
 
     await fetchGraph()

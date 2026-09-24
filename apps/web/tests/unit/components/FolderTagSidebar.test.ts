@@ -240,5 +240,42 @@ describe('FolderTagSidebar component', () => {
     expect(foldersIndex).toBeGreaterThan(-1);
     expect(tagsIndex).toBeLessThan(foldersIndex);
   });
+
+  it('renderiza o botaozao azul de Gerenciar Tags na secao de tags e abre o modal ao clicar', async () => {
+    const wrapper = mount(FolderTagSidebar, {
+      props: {
+        items: [
+          { id: '1', folder: 'Estudos', tags: ['filosofia', 'ciencias'] },
+        ],
+        folders: ['Estudos'],
+        collapsed: false,
+      },
+    });
+
+    const manageTagsBtn = wrapper.find('[data-testid="manage-tags-sidebar-btn"]');
+    expect(manageTagsBtn.exists()).toBe(true);
+    expect(manageTagsBtn.text()).toContain('Gerenciar Tags');
+    expect(manageTagsBtn.classes().some((c) => c.includes('blue'))).toBe(true);
+
+    await manageTagsBtn.trigger('click');
+    expect(wrapper.findComponent({ name: 'ManageThemesModal' }).props('isOpen')).toBe(true);
+  });
+
+  it('renderiza o botao azul de tags no modo colapsado e abre o modal ao clicar', async () => {
+    const wrapper = mount(FolderTagSidebar, {
+      props: {
+        items: [],
+        folders: [],
+        collapsed: true,
+      },
+    });
+
+    const collapsedBtn = wrapper.find('[data-testid="manage-tags-collapsed-btn"]');
+    expect(collapsedBtn.exists()).toBe(true);
+    expect(collapsedBtn.classes().some((c) => c.includes('blue'))).toBe(true);
+
+    await collapsedBtn.trigger('click');
+    expect(wrapper.findComponent({ name: 'ManageThemesModal' }).props('isOpen')).toBe(true);
+  });
 });
 

@@ -50,12 +50,12 @@
           />
         </div>
 
-        <!-- Campo Opcional de Tema do Livro -->
+        <!-- Campo Opcional de Tags do Livro -->
         <div class="w-full max-w-lg mb-6 flex flex-col items-start gap-2.5 text-left" data-testid="upload-theme-section">
           <div class="flex items-center justify-between w-full">
             <label class="text-xs font-technical uppercase tracking-wider text-textSecondary flex items-center gap-1.5">
               <TagIcon class="w-3.5 h-3.5 text-accent" />
-              <span>Tema do Livro (Opcional)</span>
+              <span>Tags do Livro (Opcional)</span>
             </label>
             <button
               type="button"
@@ -64,11 +64,11 @@
               class="text-[11px] font-technical text-accent hover:underline flex items-center gap-1 transition-colors"
             >
               <PlusIcon class="w-3 h-3" />
-              <span>{{ showCreateThemeInline ? 'Fechar' : 'Novo Tema' }}</span>
+              <span>{{ showCreateThemeInline ? 'Fechar' : 'Nova Tag' }}</span>
             </button>
           </div>
 
-          <!-- Criação Rápida de Tema Inline -->
+          <!-- Criação Rápida de Tag Inline -->
           <div
             v-if="showCreateThemeInline"
             data-testid="inline-create-theme-panel"
@@ -76,7 +76,7 @@
           >
             <div class="flex items-center justify-between">
               <span class="text-[10px] font-technical uppercase tracking-wider text-textSecondary font-bold">
-                Criar Novo Tema no Grafo
+                Criar Nova Tag no Grafo
               </span>
               <div class="flex items-center gap-1.5">
                 <button
@@ -96,7 +96,7 @@
                 v-model="newThemeName"
                 type="text"
                 maxlength="30"
-                placeholder="Nome do tema (ex: Estoicismo)..."
+                placeholder="Nome da tag (ex: Estoicismo)..."
                 data-testid="inline-theme-name-input"
                 class="flex-1 bg-bgApp border border-divider rounded-xl px-3 py-2 text-xs text-textPrimary placeholder:text-textSecondary/50 focus:outline-none focus:border-accent"
                 @keyup.enter="handleCreateThemeInline"
@@ -118,7 +118,7 @@
             </span>
           </div>
 
-          <!-- Seletor de Chips de Temas Existentes -->
+          <!-- Seletor de Chips de Tags Existentes -->
           <div v-if="availableThemes.length > 0" class="flex flex-wrap gap-1.5 w-full">
             <button
               v-for="theme in availableThemes"
@@ -151,13 +151,13 @@
             v-else-if="!showCreateThemeInline"
             class="w-full py-3 px-4 border border-dashed border-divider/60 rounded-xl text-center text-textSecondary text-xs font-interface"
           >
-            <span>Nenhum tema criado ainda. </span>
+            <span>Nenhuma tag criada ainda. </span>
             <button
               type="button"
               @click="showCreateThemeInline = true"
               class="text-accent underline font-medium hover:text-accent/90"
             >
-              Clique para criar seu primeiro tema
+              Clique para criar sua primeira tag
             </button>
           </div>
         </div>

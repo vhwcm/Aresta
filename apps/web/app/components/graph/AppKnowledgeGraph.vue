@@ -14,7 +14,7 @@
         :nodes="graphData.nodes || []"
         :edges="graphData.edges || []"
         :is-compact="isCompact"
-        :search-query="searchQuery"
+        :search-query="effectiveSearchQuery"
         :show-controls="showControls"
         @select-node="handleSelectNode"
         @open-create-node="isCreateModalOpen = true"
@@ -179,6 +179,7 @@ import BookAnnotationsDrawer from '~/components/graph/BookAnnotationsDrawer.vue'
 import NoteDetailDrawer from '~/components/graph/NoteDetailDrawer.vue'
 import CreateNodeModal from '~/components/CreateNodeModal.vue'
 import ConnectNodesModal from '~/components/ConnectNodesModal.vue'
+import { useWorkspaceSidebar } from '~/composables/useWorkspaceSidebar'
 
 const props = withDefaults(defineProps<{
   isCompact?: boolean
@@ -193,6 +194,11 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{
   (e: 'selectNode', node: GraphNode): void
 }>()
+
+const { activeTag, graphSearchQuery } = useWorkspaceSidebar()
+const effectiveSearchQuery = computed(() => {
+  return props.searchQuery || activeTag.value || graphSearchQuery.value || ''
+})
 
 const { graphData, loading, fetchGraph, createNode, createConnection, linkBookToNode } = useGraph()
 const { userBooks, fetchUserBooks } = useUserBooks()

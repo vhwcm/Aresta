@@ -18,7 +18,7 @@
       <div v-else-if="viewLayout === 'graph'" class="flex-1 relative overflow-hidden">
         <AppKnowledgeGraph
           :is-compact="false"
-          :search-query="graphSearchQuery || searchQuery"
+          :search-query="activeTag || graphSearchQuery || searchQuery"
           :show-controls="false"
           @select-node="handleSelectGraphNode"
         />

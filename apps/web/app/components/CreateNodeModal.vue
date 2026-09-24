@@ -2,7 +2,7 @@
   <div v-if="isOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn">
     <div class="bg-bgPanel border border-divider rounded-3xl w-full max-w-md p-6 shadow-2xl space-y-6 text-textPrimary">
       <div class="flex items-center justify-between border-b border-divider pb-4">
-        <h3 class="text-lg font-semibold font-interface">Criar Novo Nó de Tema</h3>
+        <h3 class="text-lg font-semibold font-interface">Criar Nova Tag no Grafo</h3>
         <button @click="$emit('close')" class="p-1 rounded-lg text-textSecondary hover:text-textPrimary hover:bg-black/5 dark:hover:bg-white/10 transition-all">
           <XIcon class="w-5 h-5" />
         </button>
@@ -10,13 +10,13 @@
 
       <form @submit.prevent="handleSubmit" class="space-y-4">
         <div>
-          <label class="block text-xs font-technical text-textSecondary mb-1">Nome do Tema * (máx. 30 caracteres)</label>
+          <label class="block text-xs font-technical text-textSecondary mb-1">Nome da Tag * (máx. 30 caracteres)</label>
           <input
             v-model="name"
             type="text"
             required
             maxlength="30"
-            placeholder="Ex: Filosofia Stoica, Algoritmos"
+            placeholder="Ex: Filosofia, Algoritmos, Design"
             class="w-full bg-bgApp border border-divider rounded-xl px-3 py-2.5 text-sm text-textPrimary placeholder:text-textSecondary/40 focus:outline-none focus:border-accent"
           />
           <p v-if="errorMessage" class="text-xs text-rose-400 mt-1">
@@ -56,7 +56,7 @@
             Cancelar
           </button>
           <button type="submit" class="px-5 py-2 rounded-xl bg-accent text-white font-semibold text-xs hover:bg-accent/90 transition-all shadow-lg">
-            Criar Tema
+            Criar Tag
           </button>
         </div>
       </form>
@@ -85,7 +85,7 @@ const handleSubmit = () => {
   const trimmed = name.value.trim()
   if (!trimmed) return
   if (trimmed.length > 30) {
-    errorMessage.value = 'O nome do tema deve ter no máximo 30 caracteres'
+    errorMessage.value = 'O nome da tag deve ter no máximo 30 caracteres'
     return
   }
   errorMessage.value = null

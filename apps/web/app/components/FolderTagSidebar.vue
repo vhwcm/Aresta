@@ -158,6 +158,16 @@
           <BookOpenCheckIcon class="w-4 h-4 text-amber-500 group-hover:scale-110 transition-transform" />
         </button>
 
+        <!-- Botão Gerenciar Tags no modo colapsado (Circulado com Azul) -->
+        <button
+          @click="isManageTagsModalOpen = true"
+          class="p-2 rounded-xl transition-all cursor-pointer border border-blue-500/40 hover:border-blue-500 bg-blue-500/[0.08] text-blue-500 hover:bg-blue-500/15 relative group"
+          title="Gerenciar Tags"
+          data-testid="manage-tags-collapsed-btn"
+        >
+          <TagIcon class="w-4 h-4 text-blue-500 group-hover:scale-110 transition-transform" />
+        </button>
+
         <div class="w-8 h-px bg-divider/60 my-0.5"></div>
 
         <!-- Miniatura de Leitura Ativa no modo colapsado -->
@@ -412,6 +422,7 @@
           <div class="w-full aspect-square rounded-2xl overflow-hidden border border-divider/80 bg-bgRoot/80 shadow-md relative">
             <AppKnowledgeGraph
               :is-compact="true"
+              :search-query="activeTag || graphSearchQuery"
               :show-controls="false"
               class="w-full h-full"
             />
@@ -419,8 +430,29 @@
         </div>
 
         <!-- 3. Seção de Filtro por Tags (Acima da Árvore de Arquivos) -->
-        <div class="pt-2 pb-1 border-t border-divider/60">
-          <div class="flex items-center justify-between px-1 mb-2">
+        <div class="pt-2 pb-1 border-t border-divider/60 space-y-2">
+          <!-- Botãosão estilo Diário, só que azul: Gerenciar Tags -->
+          <div>
+            <button
+              @click="isManageTagsModalOpen = true"
+              data-testid="manage-tags-sidebar-btn"
+              class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs md:text-sm transition-all cursor-pointer border border-blue-500/50 hover:border-blue-500 shadow-xs group bg-blue-500/[0.08] hover:bg-blue-500/[0.15] text-blue-700 dark:text-blue-300 font-semibold active:scale-95"
+              title="Gerenciar Tags"
+            >
+              <div class="flex items-center gap-2.5 truncate">
+                <TagIcon class="w-4 h-4 flex-shrink-0 text-blue-500 group-hover:scale-110 transition-transform" />
+                <span class="truncate font-interface font-semibold text-xs md:text-sm">Gerenciar Tags</span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <span class="text-[10px] px-1.5 py-0.5 rounded-full font-mono bg-blue-500/20 text-blue-600 dark:text-blue-300 font-bold">
+                  {{ availableTags.length }}
+                </span>
+                <ChevronRightIcon class="w-3.5 h-3.5 text-blue-500/70 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all" />
+              </div>
+            </button>
+          </div>
+
+          <div class="flex items-center justify-between px-1">
             <span class="text-[10px] font-bold tracking-wider uppercase text-textSecondary font-interface">
               Tags
             </span>
@@ -442,14 +474,14 @@
               @click="toggleTag(tagItem.name)"
               class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer border"
               :class="selectedTag === tagItem.name
-                ? 'bg-accent/15 text-accent border-accent/40 shadow-xs font-semibold'
-                : 'bg-bgSurface border-divider text-textSecondary hover:border-accent/30 hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'"
+                ? 'bg-blue-500/20 text-blue-600 dark:text-blue-300 border-blue-500/50 shadow-xs font-semibold ring-1 ring-blue-500/30'
+                : 'bg-bgSurface border-divider text-textSecondary hover:border-blue-500/30 hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'"
             >
-              <span class="text-accent/70 font-mono text-[11px]">#</span>
+              <span class="text-blue-500/70 font-mono text-[11px]">#</span>
               <span class="font-interface">{{ tagItem.name }}</span>
               <span
                 class="text-[10px] px-1.5 py-0.2 rounded-full font-mono transition-colors"
-                :class="selectedTag === tagItem.name ? 'bg-accent/25 text-accent' : 'bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-textSecondary/60'"
+                :class="selectedTag === tagItem.name ? 'bg-blue-500/30 text-blue-600 dark:text-blue-200' : 'bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-textSecondary/60'"
               >
                 {{ tagItem.count }}
               </span>
@@ -603,32 +635,39 @@
                   @click="clickItem(item)"
                 >
                   <div class="flex items-center gap-2 truncate min-w-0 pr-2">
-                    <!-- Ícone de Quadro ou Nota -->
+                    <!-- Ícone do Item -->
                     <div
                       class="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 transition-colors"
-                      :class="item.kind === 'canvas' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' : 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'"
+                      :class="[
+                        item.kind === 'canvas' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' :
+                        item.kind === 'book' ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' :
+                        item.kind === 'drawing' ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400' :
+                        item.kind === 'link' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' :
+                        'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'
+                      ]"
                     >
-                      <LayoutGridIcon
-                        v-if="item.kind === 'canvas'"
-                        class="w-3.5 h-3.5"
-                      />
-                      <FileTextIcon
-                        v-else
-                        class="w-3.5 h-3.5"
-                      />
+                      <LayoutGridIcon v-if="item.kind === 'canvas'" class="w-3.5 h-3.5" />
+                      <BookOpenIcon v-else-if="item.kind === 'book'" class="w-3.5 h-3.5" />
+                      <PenToolIcon v-else-if="item.kind === 'drawing'" class="w-3.5 h-3.5" />
+                      <GlobeIcon v-else-if="item.kind === 'link'" class="w-3.5 h-3.5" />
+                      <FileTextIcon v-else class="w-3.5 h-3.5" />
                     </div>
 
-                    <span class="truncate font-interface text-xs">{{ item.title || (item.kind === 'canvas' ? 'Quadro sem título' : 'Nota sem título') }}</span>
+                    <span class="truncate font-interface text-xs">{{ item.title || (item.kind === 'canvas' ? 'Quadro sem título' : item.kind === 'book' ? 'Livro sem título' : 'Nota sem título') }}</span>
                   </div>
 
                   <!-- Micro Badge Elegante -->
                   <span
                     class="text-[9px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded font-semibold transition-all"
-                    :class="item.kind === 'canvas'
-                      ? 'bg-amber-50 dark:bg-accent/10 text-amber-700 dark:text-accent/90 border border-amber-200 dark:border-accent/20'
-                      : 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400/90 border border-indigo-200 dark:border-indigo-500/20'"
+                    :class="[
+                      item.kind === 'canvas' ? 'bg-amber-50 dark:bg-accent/10 text-amber-700 dark:text-accent/90 border border-amber-200 dark:border-accent/20' :
+                      item.kind === 'book' ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400/90 border border-blue-200 dark:border-blue-500/20' :
+                      item.kind === 'drawing' ? 'bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-400/90 border border-purple-200 dark:border-purple-500/20' :
+                      item.kind === 'link' ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400/90 border border-emerald-200 dark:border-emerald-500/20' :
+                      'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400/90 border border-indigo-200 dark:border-indigo-500/20'
+                    ]"
                   >
-                    {{ item.kind === 'canvas' ? 'quadro' : 'nota' }}
+                    {{ item.kind === 'canvas' ? 'quadro' : item.kind === 'book' ? 'livro' : item.kind === 'drawing' ? 'desenho' : item.kind === 'link' ? 'link' : 'nota' }}
                   </span>
                 </div>
 
@@ -690,28 +729,35 @@
                   <div class="flex items-center gap-2 truncate min-w-0 pr-2">
                     <div
                       class="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 transition-colors"
-                      :class="item.kind === 'canvas' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' : 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'"
+                      :class="[
+                        item.kind === 'canvas' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' :
+                        item.kind === 'book' ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' :
+                        item.kind === 'drawing' ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400' :
+                        item.kind === 'link' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' :
+                        'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'
+                      ]"
                     >
-                      <LayoutGridIcon
-                        v-if="item.kind === 'canvas'"
-                        class="w-3.5 h-3.5"
-                      />
-                      <FileTextIcon
-                        v-else
-                        class="w-3.5 h-3.5"
-                      />
+                      <LayoutGridIcon v-if="item.kind === 'canvas'" class="w-3.5 h-3.5" />
+                      <BookOpenIcon v-else-if="item.kind === 'book'" class="w-3.5 h-3.5" />
+                      <PenToolIcon v-else-if="item.kind === 'drawing'" class="w-3.5 h-3.5" />
+                      <GlobeIcon v-else-if="item.kind === 'link'" class="w-3.5 h-3.5" />
+                      <FileTextIcon v-else class="w-3.5 h-3.5" />
                     </div>
-                    <span class="truncate font-interface text-xs">{{ item.title || (item.kind === 'canvas' ? 'Quadro sem título' : 'Nota sem título') }}</span>
+                    <span class="truncate font-interface text-xs">{{ item.title || (item.kind === 'canvas' ? 'Quadro sem título' : item.kind === 'book' ? 'Livro sem título' : 'Nota sem título') }}</span>
                   </div>
 
                   <!-- Micro Badge Elegante -->
                   <span
                     class="text-[9px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded font-semibold transition-all"
-                    :class="item.kind === 'canvas'
-                      ? 'bg-amber-50 dark:bg-accent/10 text-amber-700 dark:text-accent/90 border border-amber-200 dark:border-accent/20'
-                      : 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400/90 border border-indigo-200 dark:border-indigo-500/20'"
+                    :class="[
+                      item.kind === 'canvas' ? 'bg-amber-50 dark:bg-accent/10 text-amber-700 dark:text-accent/90 border border-amber-200 dark:border-accent/20' :
+                      item.kind === 'book' ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400/90 border border-blue-200 dark:border-blue-500/20' :
+                      item.kind === 'drawing' ? 'bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-400/90 border border-purple-200 dark:border-purple-500/20' :
+                      item.kind === 'link' ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400/90 border border-emerald-200 dark:border-emerald-500/20' :
+                      'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400/90 border border-indigo-200 dark:border-indigo-500/20'
+                    ]"
                   >
-                    {{ item.kind === 'canvas' ? 'quadro' : 'nota' }}
+                    {{ item.kind === 'canvas' ? 'quadro' : item.kind === 'book' ? 'livro' : item.kind === 'drawing' ? 'desenho' : item.kind === 'link' ? 'link' : 'nota' }}
                   </span>
                 </div>
 
@@ -755,6 +801,17 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal Global de Gerenciamento de Tags -->
+    <ManageThemesModal
+      :is-open="isManageTagsModalOpen"
+      :themes="allModalThemes"
+      :books-count-by-theme="getThemeBooksCount"
+      @close="isManageTagsModalOpen = false"
+      @theme-created="handleThemeCreatedOrChanged"
+      @theme-updated="handleThemeCreatedOrChanged"
+      @theme-deleted="handleThemeDeleted"
+    />
   </aside>
 </template>
 
@@ -785,16 +842,136 @@ import {
   Brain as BrainIcon,
   User as UserIcon,
   Network as NetworkIcon,
-  Search as SearchIcon
+  Search as SearchIcon,
+  Tag as TagIcon
 } from 'lucide-vue-next'
 import { useUserBooks } from '~/composables/useUserBooks'
+import { useGraph } from '~/composables/useGraph'
 import { resolveBookCover } from '~/utils/cover'
+import { loadGraphMeta } from '~/utils/graphMeta'
 import AppKnowledgeGraph from '~/components/graph/AppKnowledgeGraph.vue'
+import ManageThemesModal from '~/components/ManageThemesModal.vue'
 import { useWorkspaceSidebar } from '~/composables/useWorkspaceSidebar'
 
 const route = useRoute()
 
-const { graphSearchQuery } = useWorkspaceSidebar()
+const { userBooks, fetchUserBooks } = useUserBooks()
+const { graphData, fetchGraph } = useGraph()
+const isManageTagsModalOpen = ref(false)
+
+const allModalThemes = computed(() => {
+  const list: Array<{ id: string | number; rawId?: number | string; name: string; color?: string; type?: string }> = []
+  const seen = new Set<string>()
+
+  // 1. Temas do graphData
+  const nodes = (graphData.value.nodes || []).filter((node: any) => {
+    if (node.type && node.type !== 'theme') return false
+    if (typeof node.id === 'string' && (node.id.startsWith('book-') || node.id.startsWith('note-') || node.id.startsWith('canvas-'))) {
+      return false
+    }
+    return true
+  })
+
+  for (const n of nodes) {
+    const name = String(n.name || n.title || '').trim()
+    if (name && !seen.has(name.toLowerCase())) {
+      seen.add(name.toLowerCase())
+      list.push({
+        id: n.id,
+        rawId: n.rawId,
+        name,
+        color: n.color || '#E57B55',
+        type: 'theme'
+      })
+    }
+  }
+
+  // 2. Temas dos livros do usuário
+  if (Array.isArray(userBooks.value)) {
+    for (const b of userBooks.value) {
+      for (const t of b.themes || []) {
+        const name = String(t.name || '').trim()
+        if (name && !seen.has(name.toLowerCase())) {
+          seen.add(name.toLowerCase())
+          list.push({
+            id: t.id || `theme-${Date.now()}`,
+            rawId: t.rawId || t.id,
+            name,
+            color: t.color || '#E57B55',
+            type: 'theme'
+          })
+        }
+      }
+    }
+  }
+
+  // 3. graphMeta fallback se houver
+  try {
+    const meta = loadGraphMeta()
+    if (Array.isArray(meta?.themes)) {
+      for (const t of meta.themes) {
+        const name = String(t.name || '').trim()
+        if (name && !seen.has(name.toLowerCase())) {
+          seen.add(name.toLowerCase())
+          list.push({
+            id: t.id || `theme-${Date.now()}`,
+            rawId: t.rawId || t.id,
+            name,
+            color: t.color || '#E57B55',
+            type: 'theme'
+          })
+        }
+      }
+    }
+  } catch {}
+
+  // 4. Tags de itens da árvore
+  for (const item of props.items) {
+    for (const tag of item.tags || []) {
+      const name = String(tag || '').trim()
+      if (name && !seen.has(name.toLowerCase())) {
+        seen.add(name.toLowerCase())
+        list.push({
+          id: `tag-${name}`,
+          rawId: name,
+          name,
+          color: '#3B82F6',
+          type: 'theme'
+        })
+      }
+    }
+  }
+
+  return list
+})
+
+const getThemeBooksCount = (themeOrId: any): number => {
+  const themeName = (typeof themeOrId === 'object' ? themeOrId.name : String(themeOrId || '')).trim().toLowerCase()
+  if (!themeName || !Array.isArray(userBooks.value)) return 0
+  return userBooks.value.filter((b: any) => {
+    return (b.themes || []).some((t: any) => (t.name || '').trim().toLowerCase() === themeName)
+  }).length
+}
+
+const handleThemeCreatedOrChanged = async () => {
+  try {
+    await Promise.allSettled([
+      fetchGraph(),
+      fetchUserBooks()
+    ])
+  } catch {}
+}
+
+const handleThemeDeleted = async () => {
+  try {
+    await Promise.allSettled([
+      fetchGraph(),
+      fetchUserBooks()
+    ])
+  } catch {}
+}
+
+const { graphSearchQuery, activeTag } = useWorkspaceSidebar()
 const isGraphSearchOpen = ref(false)
 const graphSearchInputRef = ref<HTMLInputElement | null>(null)
 
@@ -830,9 +1007,10 @@ const closeGraphSearch = () => {
 export interface SidebarTreeItem {
   id: string
   title?: string
-  kind?: 'canvas' | 'note'
+  kind?: 'canvas' | 'note' | 'drawing' | 'link' | 'book'
   folder?: string | null
   tags?: string[]
+  bookId?: number
 }
 
 const props = withDefaults(
@@ -908,7 +1086,6 @@ watch(
   { immediate: true }
 )
 
-const { userBooks, fetchUserBooks } = useUserBooks()
 const coverError = ref(false)
 
 const isAddMenuOpen = ref(false)
@@ -1076,9 +1253,11 @@ watch(
   { immediate: true }
 )
 
-// Lista de tags existentes e sua respectiva frequência
+// Lista de tags existentes e sua respectiva frequência (unificando temas e tags)
 const availableTags = computed(() => {
   const counts: Record<string, number> = {}
+
+  // 1. Tags de itens passados via props (notas, livros, quadros, desenhos, links)
   for (const item of props.items) {
     const tags = Array.isArray(item.tags) ? item.tags : []
     for (const t of tags) {
@@ -1088,6 +1267,32 @@ const availableTags = computed(() => {
       }
     }
   }
+
+  // 2. Temas de livros do usuário (garante presença das tags mesmo com delay de props)
+  if (Array.isArray(userBooks.value)) {
+    for (const b of userBooks.value) {
+      const themes = Array.isArray(b.themes) ? b.themes : []
+      for (const th of themes) {
+        const clean = typeof th?.name === 'string' ? th.name.trim() : ''
+        if (clean && counts[clean] === undefined) {
+          counts[clean] = 1
+        }
+      }
+    }
+  }
+
+  // 3. Temas/Tags extras do graphMeta (tags criadas no grafo ou estante que ainda não possuem itens)
+  try {
+    const meta = loadGraphMeta()
+    if (Array.isArray(meta?.themes)) {
+      for (const th of meta.themes) {
+        const clean = typeof th?.name === 'string' ? th.name.trim() : ''
+        if (clean && counts[clean] === undefined) {
+          counts[clean] = 0
+        }
+      }
+    }
+  } catch {}
 
   return Object.entries(counts)
     .map(([name, count]) => ({ name, count }))

@@ -1,9 +1,9 @@
 ## 🔄 Em Andamento
-- [24/09/2026 09:18] [Fazendo] Mover Gerenciar Temas para a seção de tags na sidebar como botão azul estilo Diário, exibir e gerenciar tags e conectar filtro ao Grafo e à Estante
-- [24/09/2026 09:05] [Fazendo] Ajustar o zoom inicial do grafo para caber bem justo na tela e projetar nós mais para os lados no desktop
-- [24/09/2026 09:23] [Fazendo] Unificar tema de leitura com o tema do app e sincronizar alterações bidirecionalmente durante a leitura
 
 ## ✅ Concluído
+- [24/09/2026 09:35] [Concluído] Unificar temas e tags na sidebar com botão azul de gerenciamento, remover da estante e conectar filtro bidirecional ao Grafo e à Estante
+- [24/09/2026 09:31] [Concluído] Unificar tema de leitura com o tema do app e sincronizar alterações bidirecionalmente durante a leitura
+- [24/09/2026 09:30] [Concluído] Ajustar o zoom inicial do grafo para caber bem justo na tela e projetar nós mais para os lados no desktop
 - [24/09/2026 09:25] [Concluído] Remover cabeçalho e descrição da seção de sincronização em nuvem na página de conta
 - [24/09/2026 09:22] [Concluído] Remover subtítulos e descrições do cabeçalho da conta e título de métricas de leitura
 - [24/09/2026 09:18] [Concluído] Refinar seção de preferências na página de conta: remover cabeçalho, tema, badges/descrições e diminuir botões de dicionários

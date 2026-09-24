@@ -273,7 +273,7 @@
             Sínteses e Anotações Inteligentes
           </h3>
           <p class="font-technical text-xs text-textSecondary mt-0.5">
-            {{ userSummaries.length > 0 ? `${userSummaries.length} anotação(ões) organizada(s) por temas` : 'Extraídas de marcações ativas' }}
+            {{ userSummaries.length > 0 ? `${userSummaries.length} anotação(ões) organizada(s) por tags` : 'Extraídas de marcações ativas' }}
           </p>
         </div>
 
@@ -302,10 +302,10 @@
         </div>
       </div>
 
-      <!-- Barra de Filtros Rápidos por Tema (Chips / Pills) -->
+      <!-- Barra de Filtros Rápidos por Tags (Chips / Pills) -->
       <div v-if="allUniqueThemes.length > 0" class="flex items-center gap-2 overflow-x-auto pb-1 custom-scrollbar">
         <span class="font-technical text-[11px] text-textSecondary uppercase tracking-wider flex items-center gap-1 mr-1">
-          <TagIcon class="w-3 h-3" /> Temas:
+          <TagIcon class="w-3 h-3" /> Tags:
         </span>
         <button
           @click="selectedThemeFilter = 'all'"
@@ -314,7 +314,7 @@
             ? 'bg-accent text-white border-accent shadow-sm'
             : 'bg-white/5 text-textSecondary border-divider hover:text-textPrimary'"
         >
-          Todos ({{ summaries.length }})
+          Todas ({{ summaries.length }})
         </button>
         <button
           v-for="t in allUniqueThemes"
@@ -334,7 +334,7 @@
             ? 'bg-accent text-white border-accent shadow-sm'
             : 'bg-white/5 text-textSecondary border-divider hover:text-textPrimary'"
         >
-          Sem Tema
+          Sem Tag
         </button>
       </div>
 
@@ -956,7 +956,7 @@ const groupedSummariesByTheme = computed(() => {
   }
 
   if (noThemeList.length > 0) {
-    groups.push({ themeName: 'Sem Tema', items: noThemeList })
+    groups.push({ themeName: 'Sem Tag', items: noThemeList })
   }
 
   return groups

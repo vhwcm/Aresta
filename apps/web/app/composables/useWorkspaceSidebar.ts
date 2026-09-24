@@ -4,6 +4,7 @@ import { useCanvas } from '~/composables/useCanvas'
 import { useNotes } from '~/composables/useNotes'
 import { useDrawing } from '~/composables/useDrawing'
 import { useLinks } from '~/composables/useLinks'
+import { useUserBooks } from '~/composables/useUserBooks'
 import { openExternalUrl } from '~/utils/urlOpener'
 import type { SidebarTreeItem } from '~/components/FolderTagSidebar.vue'
 
@@ -53,6 +54,11 @@ export function useWorkspaceSidebar() {
     fetchLinks
   } = useLinks()
 
+  const {
+    userBooks,
+    fetchUserBooks
+  } = useUserBooks()
+
   const fetchAllWorkspaceData = async () => {
     await Promise.allSettled([
       fetchCanvases(),
@@ -60,7 +66,8 @@ export function useWorkspaceSidebar() {
       fetchNotes(),
       fetchNoteFolders(),
       fetchDrawings(),
-      fetchLinks()
+      fetchLinks(),
+      fetchUserBooks()
     ])
   }
 
@@ -74,6 +81,7 @@ export function useWorkspaceSidebar() {
     for (const n of notesList.value) if (n.folder) set.add(n.folder)
     for (const d of drawingsList.value) if (d.folder) set.add(d.folder)
     for (const l of linksList.value) if (l.folder) set.add(l.folder)
+    if (userBooks.value.length > 0) set.add('Livros')
     return Array.from(set).sort((a, b) => a.localeCompare(b))
   })
 
@@ -107,7 +115,15 @@ export function useWorkspaceSidebar() {
       folder: l.folder,
       tags: l.tags
     }))
-    return [...cItems, ...nItems, ...dItems, ...lItems]
+    const bItems: SidebarTreeItem[] = userBooks.value.map((b) => ({
+      id: `book-${b.bookId || b.userBookId}`,
+      title: b.title || 'Livro sem título',
+      kind: 'book' as any,
+      folder: 'Livros',
+      tags: Array.isArray(b.themes) ? b.themes.map((t: any) => t.name).filter(Boolean) : [],
+      bookId: b.bookId || b.userBookId
+    }))
+    return [...cItems, ...nItems, ...dItems, ...lItems, ...bItems]
   })
 
   const handleCreateNewNote = async (folder?: string) => {
@@ -147,6 +163,9 @@ export function useWorkspaceSidebar() {
       if (foundLink?.url) {
         await openExternalUrl(foundLink.url)
       }
+    } else if (item.kind === 'book' as any || item.id.startsWith('book-')) {
+      const rawId = (item as any).bookId || item.id.replace(/^book-/, '')
+      await router?.push(`/reader?bookId=${rawId}`)
     } else {
       const rawId = item.id.replace(/^note-/, '')
       if (route.path !== '/') {

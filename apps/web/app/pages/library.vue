@@ -22,7 +22,7 @@
               class="px-2.5 py-1 rounded-xl text-xs font-technical transition-all flex items-center gap-1.5 shrink-0"
               :class="selectedThemeId === null ? 'bg-textPrimary text-bgApp font-bold shadow-sm' : 'bg-white/5 text-textSecondary hover:text-textPrimary border border-divider'"
             >
-              <span>Todos os Temas</span>
+              <span>Todas as Tags</span>
               <span class="text-[10px] opacity-70">({{ userBooks.length }})</span>
             </button>
 
@@ -50,14 +50,14 @@
 
           <!-- No Mobile: Tags ao lado da palavra Estante -->
           <div class="flex sm:hidden items-center gap-1.5 min-w-0 flex-1 justify-start">
-            <!-- Quando cabe em uma linha (até 1 tema) -->
+            <!-- Quando cabe em uma linha (até 1 tag) -->
             <template v-if="availableThemes.length <= 1">
               <button
-                @click="selectedThemeId = null"
+                @click="clearThemeFilter()"
                 class="px-2.5 py-1 rounded-xl text-xs font-technical transition-all flex items-center gap-1.5 shrink-0"
                 :class="selectedThemeId === null ? 'bg-textPrimary text-bgApp font-bold shadow-sm' : 'bg-white/5 text-textSecondary hover:text-textPrimary border border-divider'"
               >
-                <span>Todos os Temas</span>
+                <span>Todas as Tags</span>
                 <span class="text-[10px] opacity-70">({{ userBooks.length }})</span>
               </button>
 
@@ -83,20 +83,20 @@
               </button>
             </template>
 
-            <!-- Quando não couber mais em uma linha (> 1 tema): exibe tag selecionada/todos + botão de lista que colapsa para baixo -->
+            <!-- Quando não couber mais em uma linha (> 1 tag): exibe tag selecionada/todas + botão de lista que colapsa para baixo -->
             <template v-else>
               <button
                 v-if="selectedThemeId === null"
                 @click="isMobileThemeListOpen = !isMobileThemeListOpen"
                 class="px-2.5 py-1 rounded-xl text-xs font-technical transition-all flex items-center gap-1.5 bg-textPrimary text-bgApp font-bold shadow-sm shrink-0 truncate max-w-[130px]"
               >
-                <span class="truncate">Todos os Temas</span>
+                <span class="truncate">Todas as Tags</span>
                 <span class="text-[10px] opacity-70">({{ userBooks.length }})</span>
               </button>
 
               <button
                 v-else-if="selectedTheme"
-                @click="selectedThemeId = null"
+                @click="clearThemeFilter()"
                 class="px-2.5 py-1 rounded-xl text-xs font-technical transition-all flex items-center gap-1.5 border shrink-0 truncate max-w-[130px]"
                 :style="{
                   backgroundColor: (selectedTheme.color || '#E57B55'),
@@ -104,7 +104,7 @@
                   color: '#FFFFFF',
                   boxShadow: '0 2px 8px ' + (selectedTheme.color || '#E57B55') + '40'
                 }"
-                title="Clique para desmarcar tema"
+                title="Clique para desmarcar tag"
               >
                 <span class="w-1.5 h-1.5 rounded-full shrink-0 bg-white"></span>
                 <span class="truncate font-medium">{{ selectedTheme.name }}</span>
@@ -116,9 +116,9 @@
                 data-testid="toggle-mobile-themes-btn"
                 class="px-2 py-1 rounded-xl border border-divider bg-white/5 hover:bg-white/10 text-textSecondary hover:text-textPrimary flex items-center gap-1 text-[11px] font-technical transition-all shrink-0"
                 :class="{ 'bg-white/10 text-accent border-accent/40': isMobileThemeListOpen }"
-                :title="isMobileThemeListOpen ? 'Fechar temas' : 'Abrir temas'"
+                :title="isMobileThemeListOpen ? 'Fechar tags' : 'Abrir tags'"
               >
-                <span>{{ availableThemes.length }} temas</span>
+                <span>{{ availableThemes.length }} tags</span>
                 <ChevronDownIcon
                   class="w-3.5 h-3.5 transition-transform duration-200"
                   :class="{ 'rotate-180': isMobileThemeListOpen }"
@@ -130,16 +130,6 @@
 
         <!-- Actions -->
         <div class="flex items-center gap-2 sm:gap-3 shrink-0 flex-wrap sm:flex-nowrap">
-          <button
-            @click="isManageThemesModalOpen = true"
-            data-testid="manage-themes-btn"
-            class="flex-1 sm:flex-initial px-4 sm:px-5 py-2 sm:py-2.5 rounded-full bg-white/5 hover:bg-white/10 text-textSecondary hover:text-white border border-divider text-xs font-interface font-semibold transition-all flex items-center justify-center gap-2"
-            title="Gerenciar e Editar Temas da Estante"
-          >
-            <TagIcon class="w-4 h-4 shrink-0" />
-            <span>Gerenciar Temas</span>
-          </button>
-
           <button
             @click="isCreateDidacticModalOpen = true"
             class="flex-1 sm:flex-initial px-4 sm:px-5 py-2 sm:py-2.5 rounded-full bg-purple-500/20 hover:bg-purple-500 text-purple-300 hover:text-white border border-purple-500/40 text-xs font-interface font-semibold transition-all flex items-center justify-center gap-2"
@@ -178,11 +168,11 @@
 
         <div class="flex flex-wrap gap-1.5 max-h-52 overflow-y-auto pr-1">
           <button
-            @click="selectedThemeId = null; isMobileThemeListOpen = false"
+            @click="clearThemeFilter(); isMobileThemeListOpen = false"
             class="px-2.5 py-1 rounded-xl text-xs font-technical transition-all flex items-center gap-1.5 shrink-0"
             :class="selectedThemeId === null ? 'bg-textPrimary text-bgApp font-bold shadow-sm' : 'bg-white/5 text-textSecondary hover:text-textPrimary border border-divider'"
           >
-            <span>Todos os Temas</span>
+            <span>Todas as Tags</span>
             <span class="text-[10px] opacity-70">({{ userBooks.length }})</span>
           </button>
 
@@ -586,17 +576,6 @@
         </div>
       </template>
     </ConfirmModal>
-
-    <!-- Modal para Gerenciar Temas da Estante -->
-    <ManageThemesModal
-      :is-open="isManageThemesModalOpen"
-      :themes="availableThemes"
-      :books-count-by-theme="countByTheme"
-      @close="isManageThemesModalOpen = false"
-      @theme-created="handleThemeCreated"
-      @theme-updated="handleThemeUpdated"
-      @theme-deleted="handleThemeDeleted"
-    />
   </div>
 </template>
 
@@ -641,14 +620,31 @@ import { getCoverUrl, getBookFormat, resolveBookCover } from '~/utils/cover'
 import { getApiBase } from '~/utils/apiBase'
 
 import ConfirmModal from '~/components/ConfirmModal.vue'
-import ManageThemesModal from '~/components/ManageThemesModal.vue'
+import { useWorkspaceSidebar } from '~/composables/useWorkspaceSidebar'
 
 const auth = useAuth()
+const { activeTag } = useWorkspaceSidebar()
 const statusFilter = ref('TODOS')
 const selectedThemeId = ref<number | string | null>(null)
 const isMobileThemeListOpen = ref(false)
 const isLoginModalOpen = ref(false)
-const isManageThemesModalOpen = ref(false)
+
+const clearThemeFilter = () => {
+  selectedThemeId.value = null
+  activeTag.value = null
+}
+
+watch(
+  () => activeTag.value,
+  (tag) => {
+    if (tag) {
+      selectedThemeId.value = tag
+    } else {
+      selectedThemeId.value = null
+    }
+  },
+  { immediate: true }
+)
 
 const router = useRouter()
 const route = useRoute()
@@ -791,8 +787,10 @@ const isThemeSelected = (theme: any): boolean => {
 const toggleThemeFilter = (theme: any) => {
   if (isThemeSelected(theme)) {
     selectedThemeId.value = null
+    activeTag.value = null
   } else {
     selectedThemeId.value = theme.rawId || theme.id
+    activeTag.value = theme.name || null
   }
 }
 

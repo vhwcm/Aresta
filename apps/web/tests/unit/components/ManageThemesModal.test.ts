@@ -53,7 +53,7 @@ describe('ManageThemesModal.vue', () => {
       }
     })
 
-    expect(wrapper.text()).toContain('Gerenciar Temas')
+    expect(wrapper.text()).toContain('Gerenciar Tags')
     expect(wrapper.text()).toContain('Filosofia')
     expect(wrapper.text()).toContain('5 livros')
     expect(wrapper.text()).toContain('Tecnologia')
@@ -69,7 +69,7 @@ describe('ManageThemesModal.vue', () => {
       }
     })
 
-    const searchInput = wrapper.find('input[placeholder="Buscar temas..."]')
+    const searchInput = wrapper.find('input[placeholder="Buscar tags..."]')
     await searchInput.setValue('tec')
 
     expect(wrapper.text()).toContain('Tecnologia')
@@ -85,7 +85,7 @@ describe('ManageThemesModal.vue', () => {
       }
     })
 
-    const nameInput = wrapper.find('input[placeholder="Nome do novo tema..."]')
+    const nameInput = wrapper.find('input[placeholder="Nome da nova tag..."]')
     await nameInput.setValue('Psicologia')
 
     const createBtn = wrapper.find('[data-testid="create-theme-submit-btn"]')
@@ -144,8 +144,8 @@ describe('ManageThemesModal.vue', () => {
     await deleteBtn?.trigger('click')
 
     // Deve exibir aviso com contagem de livros
-    expect(wrapper.text()).toContain('Excluir tema «Tecnologia»?')
-    expect(wrapper.text()).toContain('Este tema está vinculado a 3 livros')
+    expect(wrapper.text()).toContain('Excluir tag «Tecnologia»?')
+    expect(wrapper.text()).toContain('Esta tag está vinculada a 3 livros')
 
     // Confirma exclusão
     const confirmDeleteBtn = wrapper.find('[data-testid="confirm-delete-theme-btn"]')
@@ -179,7 +179,7 @@ describe('ManageThemesModal.vue', () => {
       }
     })
 
-    const nameInput = wrapper.find('input[placeholder="Nome do novo tema..."]')
+    const nameInput = wrapper.find('input[placeholder="Nome da nova tag..."]')
     await nameInput.setValue('Este nome de tema tem mais de trinta caracteres com certeza')
 
     const createBtn = wrapper.find('[data-testid="create-theme-submit-btn"]')
