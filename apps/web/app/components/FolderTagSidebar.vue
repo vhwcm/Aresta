@@ -148,14 +148,14 @@
 
         <div class="w-8 h-px bg-divider/60 my-1"></div>
 
-        <!-- Botão Diário no modo colapsado (Antes do Livro) -->
+        <!-- Botão Diário no modo colapsado (Antes do Livro - Circulado com Amarelo) -->
         <button
           @click="$emit('open-journal')"
-          class="p-2 rounded-xl transition-all cursor-pointer border relative group"
-          :class="isJournalActive ? 'bg-amber-500/15 text-amber-500 border-amber-500/30 shadow-xs' : 'border-transparent text-textSecondary hover:text-amber-500 hover:bg-amber-500/10'"
+          class="p-2 rounded-xl transition-all cursor-pointer border border-amber-500/40 hover:border-amber-500 relative group"
+          :class="isJournalActive ? 'bg-amber-500/20 text-amber-500 border-amber-500 shadow-xs' : 'bg-amber-500/[0.08] text-amber-500 hover:bg-amber-500/15'"
           title="Diário Sequencial de Anotações"
         >
-          <BookOpenCheckIcon class="w-4 h-4 text-amber-500" />
+          <BookOpenCheckIcon class="w-4 h-4 text-amber-500 group-hover:scale-110 transition-transform" />
         </button>
 
         <div class="w-8 h-px bg-divider/60 my-0.5"></div>
@@ -340,27 +340,21 @@
           </div>
         </div>
 
-        <!-- 1. Botão do Diário Sequencial (Acima do Livro) -->
+        <!-- 1. Botão do Diário Sequencial (Acima do Livro - Circulado com Amarelo para aspecto clicável) -->
         <div>
           <button
             @click="$emit('open-journal')"
-            class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs md:text-sm font-medium transition-all cursor-pointer border group"
+            class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs md:text-sm transition-all cursor-pointer border border-amber-500/50 hover:border-amber-500 shadow-xs group"
             :class="isJournalActive
-              ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30 shadow-xs font-semibold'
-              : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'"
+              ? 'bg-amber-500/20 text-amber-600 dark:text-amber-300 font-semibold ring-1 ring-amber-500/30'
+              : 'bg-amber-500/[0.07] hover:bg-amber-500/[0.15] text-amber-700 dark:text-amber-300/90 font-medium'"
+            title="Abrir Diário Sequencial"
           >
             <div class="flex items-center gap-2.5 truncate">
-              <BookOpenCheckIcon class="w-4 h-4 flex-shrink-0 transition-colors" :class="isJournalActive ? 'text-amber-500' : 'text-amber-500/80 group-hover:text-amber-500'" />
-              <span class="truncate font-interface">Diário</span>
+              <BookOpenCheckIcon class="w-4 h-4 flex-shrink-0 text-amber-500 group-hover:scale-110 transition-transform" />
+              <span class="truncate font-interface font-semibold text-xs md:text-sm">Diário</span>
             </div>
-            <span
-              class="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full font-semibold transition-colors"
-              :class="isJournalActive
-                ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30'
-                : 'bg-amber-500/10 text-amber-600 dark:text-amber-400/90 group-hover:bg-amber-500/20'"
-            >
-              Diário
-            </span>
+            <ChevronRightIcon class="w-3.5 h-3.5 text-amber-500/70 group-hover:text-amber-500 group-hover:translate-x-0.5 transition-all" />
           </button>
         </div>
 
