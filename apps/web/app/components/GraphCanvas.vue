@@ -361,8 +361,8 @@ let zoomBehavior: any = null
 let animFrameId: number | null = null
 let currentSimulationNodes: any[] = []
 
-// Cache persistente de posições anteriores dos nós para interpolação orgânica e suave
-const persistentNodePositions = new Map<string, { x: number; y: number }>()
+// Cache persistente de offsets relativos anteriores dos nós ({ dx, dy } em relação ao centro)
+const persistentNodePositions = new Map<string, { dx: number; dy: number }>()
 let transitionStartTime = 0
 let isTransitioning = false
 const TRANSITION_DURATION = 2400 // 2.4s para deslocamento lento, fluido e orgânico
@@ -416,14 +416,19 @@ const fitToScreen = (animate = true, duration = 500) => {
 
   const graphW = maxX - minX
   const graphH = maxY - minY
-  const padding = 75
+  
+  // Reserva espaço superior quando a barra de camadas/controles estiver presente
+  const topBarHeight = props.isCompact ? 0 : 70
+  const usableHeight = Math.max(containerHeight - topBarHeight, 100)
+  const paddingX = 75
+  const paddingY = 60
 
   if (!Number.isFinite(graphW) || !Number.isFinite(graphH) || graphW <= 0 || graphH <= 0) {
     return
   }
 
-  const scaleX = containerWidth / (graphW + padding * 2)
-  const scaleY = containerHeight / (graphH + padding * 2)
+  const scaleX = containerWidth / (graphW + paddingX * 2)
+  const scaleY = usableHeight / (graphH + paddingY * 2)
   const rawScale = Math.min(scaleX, scaleY)
   if (!Number.isFinite(rawScale) || rawScale <= 0) return
 
@@ -433,7 +438,7 @@ const fitToScreen = (animate = true, duration = 500) => {
   const midY = (minY + maxY) / 2
 
   const tx = containerWidth / 2 - midX * scale
-  const ty = containerHeight / 2 - midY * scale
+  const ty = (topBarHeight + usableHeight / 2) - midY * scale
 
   if (
     !zoomBehavior ||
@@ -933,12 +938,12 @@ const initGraph = (animateTransition = true) => {
 
     if (persistentNodePositions.has(nKey) && shouldAnimate) {
       const prev = persistentNodePositions.get(nKey)!
-      d.startX = prev.x
-      d.startY = prev.y
-      d.baseX = prev.x
-      d.baseY = prev.y
-      d.currentX = prev.x
-      d.currentY = prev.y
+      d.startX = centerX + prev.dx
+      d.startY = centerY + prev.dy
+      d.baseX = d.startX
+      d.baseY = d.startY
+      d.currentX = d.startX
+      d.currentY = d.startY
     } else {
       d.startX = d.targetX
       d.startY = d.targetY
@@ -946,7 +951,7 @@ const initGraph = (animateTransition = true) => {
       d.baseY = d.targetY
       d.currentX = d.targetX
       d.currentY = d.targetY
-      persistentNodePositions.set(nKey, { x: d.startX, y: d.startY })
+      persistentNodePositions.set(nKey, { dx: d.startX - centerX, dy: d.startY - centerY })
     }
   }
 
@@ -1762,8 +1767,8 @@ const initGraph = (animateTransition = true) => {
 
         if (d.id !== undefined && d.id !== null) {
           persistentNodePositions.set(String(d.id), {
-            x: d.baseX ?? d.x ?? 0,
-            y: d.baseY ?? d.y ?? 0,
+            dx: (d.baseX ?? d.x ?? centerX) - centerX,
+            dy: (d.baseY ?? d.y ?? centerY) - centerY,
           })
         }
       }
@@ -1817,13 +1822,29 @@ onMounted(() => {
   nextTick(() => {
     fitToScreen(false)
   })
+  // Re-ajustar após estabilização do layout/animação de transição da página
+  setTimeout(() => {
+    fitToScreen(false)
+  }, 120)
+  setTimeout(() => {
+    fitToScreen(false)
+  }, 350)
+
   if (svgRef.value) {
     svgRef.value.addEventListener('wheel', handleNativeWheel, { passive: false })
   }
   if (containerRef.value) {
-    resizeObserver = new ResizeObserver(() => {
-      if (containerRef.value) {
-        fitToScreen(true)
+    let lastWidth = 0
+    let lastHeight = 0
+    resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect
+        if (Math.abs(width - lastWidth) > 8 || Math.abs(height - lastHeight) > 8) {
+          lastWidth = width
+          lastHeight = height
+          initGraph(false)
+          fitToScreen(false)
+        }
       }
     })
     resizeObserver.observe(containerRef.value)

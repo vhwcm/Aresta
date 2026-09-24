@@ -1,6 +1,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [23/09/2026 21:37] [Concluído] Corrigir enquadramento, centralização e ajuste de viewport do Grafo de Conhecimento prevenindo sobreposição e nós cortados
 - [23/09/2026 21:27] [Concluído] Alinhar ícones de navegação (Início, Livros, Revisão e Conta) em linha única horizontal sem textos no FolderTagSidebar
 - [23/09/2026 21:22] [Concluído] Exibir barra lateral unificada persistente em todas as páginas com hambúrguer expansível no mobile e inicialização focada na barra
 - [23/09/2026 21:03] [Concluído] Remover a barra superior de cabeçalho do Workspace em UnifiedCanvasHub (busca, alternador e botões rápidos)
