@@ -243,17 +243,6 @@
 
     <!-- Sincronização & Armazenamento em Nuvem (Google Drive) -->
     <section class="flex flex-col gap-6" data-testid="cloud-sync-section">
-      <div class="flex flex-col gap-1">
-        <div class="flex items-center gap-2 font-technical text-[10px] uppercase font-semibold tracking-widest text-accent">
-          <CloudIcon class="w-3.5 h-3.5" />
-          Armazenamento & Nuvem
-        </div>
-        <h3 class="font-editorial text-2xl font-light text-textPrimary">Sincronização em Nuvem</h3>
-        <p class="font-interface text-xs text-textSecondary leading-relaxed max-w-2xl">
-          Mantenha seus livros, capas e metadados sincronizados automaticamente de forma transparente no seu provedor de nuvem.
-        </p>
-      </div>
-
       <div class="flex flex-col rounded-3xl bg-bgPanel border border-divider divide-y divide-divider overflow-hidden shadow-sm">
         <!-- Google Drive Integration Row -->
         <div class="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -604,7 +593,6 @@ import {
   Trash2Icon,
   XIcon,
   LanguagesIcon,
-  CloudIcon,
   SparklesIcon
 } from 'lucide-vue-next'
 import { useAuth } from '~/composables/useAuth'

@@ -186,7 +186,6 @@ describe('Conta Page (/conta)', () => {
     })
 
     expect(wrapper.find('[data-testid="cloud-sync-section"]').exists()).toBe(true)
-    expect(wrapper.text()).toContain('Sincronização em Nuvem')
     expect(wrapper.text()).toContain('Google Drive')
     expect(wrapper.text()).toContain('Desconectado')
 
