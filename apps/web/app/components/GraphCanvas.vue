@@ -379,16 +379,16 @@ const fitToScreen = () => {
   if (!containerWidth || !containerHeight) return
 
   const hasLayersBar = !props.isCompact
-  const topBarHeight = hasLayersBar ? (props.showControls ? 88 : 64) : (props.showControls ? 60 : 0)
-  const usableHeight = Math.max(containerHeight - topBarHeight, 100)
-  const targetCenterX = containerWidth / 2
-  const targetCenterY = topBarHeight + usableHeight / 2
+  // Altura reservada no topo para evitar qualquer sobreposição de nós com a barra de camadas e/ou controles
+  const topBarHeight = hasLayersBar ? (props.showControls ? 130 : 72) : (props.showControls ? 64 : 0)
 
   const rootNode = currentSimulationNodes.find((n) => n.isRoot || n.id === 'root') || currentSimulationNodes[0]
   const rootX = Number.isFinite(rootNode?.x) ? rootNode.x : (containerWidth / 2)
   const rootY = Number.isFinite(rootNode?.y) ? rootNode.y : (containerHeight / 2)
 
   if (currentSimulationNodes.length <= 1) {
+    const targetCenterX = containerWidth / 2
+    const targetCenterY = topBarHeight + Math.max(containerHeight - topBarHeight, 100) / 2
     const tx = targetCenterX - rootX
     const ty = targetCenterY - rootY
     const targetTransform = d3.zoomIdentity.translate(tx, ty).scale(1.0)
@@ -396,43 +396,80 @@ const fitToScreen = () => {
       d3.select(svgRef.value).call(zoomBehavior.transform as any, targetTransform)
     }
     if (gRef.value) {
-      d3.select(gRef.value).attr('transform', targetTransform)
+      d3.select(gRef.value).attr('transform', targetTransform.toString())
     }
     return
   }
 
-  let maxRadiusX = 140
-  let maxRadiusY = 140
+  let minX = Infinity
+  let maxX = -Infinity
+  let minY = Infinity
+  let maxY = -Infinity
 
   for (const d of currentSimulationNodes) {
-    const x = Number.isFinite(d.x) ? d.x : (Number.isFinite(d.baseX) ? d.baseX : rootX)
-    const y = Number.isFinite(d.y) ? d.y : (Number.isFinite(d.baseY) ? d.baseY : rootY)
+    const x = Number.isFinite(d.targetX)
+      ? d.targetX
+      : (Number.isFinite(d.x) ? d.x : (Number.isFinite(d.baseX) ? d.baseX : rootX))
+    const y = Number.isFinite(d.targetY)
+      ? d.targetY
+      : (Number.isFinite(d.y) ? d.y : (Number.isFinite(d.baseY) ? d.baseY : rootY))
 
     const r = getNodeRadius(d) + (d.type === 'book' ? 52 : 36)
-    const dx = Math.abs(x - rootX) + r
-    const dy = Math.abs(y - rootY) + r + (d.type === 'book' ? 28 : 18)
+    const top = y - r
+    const bottom = y + r + (d.type === 'book' ? 32 : 22)
+    const left = x - r
+    const right = x + r
 
-    if (dx > maxRadiusX) maxRadiusX = dx
-    if (dy > maxRadiusY) maxRadiusY = dy
+    if (left < minX) minX = left
+    if (right > maxX) maxX = right
+    if (top < minY) minY = top
+    if (bottom > maxY) maxY = bottom
   }
 
-  const paddingX = props.isCompact ? 40 : 80
-  const paddingY = props.isCompact ? 35 : 70
+  if (
+    !Number.isFinite(minX) ||
+    !Number.isFinite(maxX) ||
+    !Number.isFinite(minY) ||
+    !Number.isFinite(maxY) ||
+    minX >= maxX ||
+    minY >= maxY
+  ) {
+    return
+  }
 
-  const maxAllowedHalfW = Math.max((containerWidth / 2) - paddingX, 100)
-  const maxAllowedHalfH = Math.max((usableHeight / 2) - paddingY, 100)
+  const graphW = Math.max(maxX - minX, 1)
+  const graphH = Math.max(maxY - minY, 1)
 
-  const scaleX = maxAllowedHalfW / maxRadiusX
-  const scaleY = maxAllowedHalfH / maxRadiusY
+  const paddingX = props.isCompact ? 28 : 56
+  const paddingY = props.isCompact ? 20 : 36
+
+  const usableWidth = Math.max(containerWidth - paddingX * 2, 80)
+  const usableHeight = Math.max(containerHeight - topBarHeight - paddingY * 2, 80)
+
+  const scaleX = usableWidth / graphW
+  const scaleY = usableHeight / graphH
   const rawScale = Math.min(scaleX, scaleY)
   if (!Number.isFinite(rawScale) || rawScale <= 0) return
 
-  const minScale = props.isCompact ? 0.35 : 0.45
-  const maxScale = props.isCompact ? 1.05 : 1.2
+  const minScale = props.isCompact ? 0.15 : 0.20
+  const maxScale = props.isCompact ? 1.05 : 1.15
   const scale = Math.max(minScale, Math.min(rawScale, maxScale))
 
-  const tx = targetCenterX - rootX * scale
-  const ty = targetCenterY - rootY * scale
+  const midX = (minX + maxX) / 2
+  const midY = (minY + maxY) / 2
+
+  const targetCenterX = containerWidth / 2
+  const targetCenterY = topBarHeight + paddingY + usableHeight / 2
+
+  let tx = targetCenterX - midX * scale
+  let ty = targetCenterY - midY * scale
+
+  // Trava de segurança superior absoluta: garante que nenhum nó ou rótulo do grafo
+  // penetre ou fique escondido sob a barra de camadas/controles no topo
+  const topClearance = topBarHeight + paddingY
+  if (ty + minY * scale < topClearance) {
+    ty = topClearance - minY * scale
+  }
 
   if (
     !zoomBehavior ||
@@ -449,7 +486,7 @@ const fitToScreen = () => {
     d3.select(svgRef.value).call(zoomBehavior.transform as any, targetTransform)
   }
   if (gRef.value) {
-    d3.select(gRef.value).attr('transform', targetTransform)
+    d3.select(gRef.value).attr('transform', targetTransform.toString())
   }
 }
 
@@ -1786,6 +1823,11 @@ const initGraph = (animateTransition = true) => {
   nextTick(() => {
     fitToScreen()
   })
+  if (shouldAnimate) {
+    setTimeout(() => {
+      fitToScreen()
+    }, TRANSITION_DURATION + 20)
+  }
 }
 
 let resizeObserver: ResizeObserver | null = null

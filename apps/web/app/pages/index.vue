@@ -1,7 +1,7 @@
 <template>
-  <div>
+  <div :class="auth.isLoggedIn.value ? 'h-full w-full flex-1 flex flex-col min-h-0' : ''">
     <!-- ESTADO 1: USUÁRIO AUTENTICADO (Workspace Unificado de Canvas & Notas) -->
-    <UnifiedCanvasHub v-if="auth.isLoggedIn.value" data-testid="auth-home" />
+    <UnifiedCanvasHub v-if="auth.isLoggedIn.value" data-testid="auth-home" class="flex-1 min-h-0" />
 
     <!-- ESTADO 2: VISITANTE NÃO AUTENTICADO (Página Inicial Pública / Landing Page do Aresta) -->
     <div v-else data-testid="guest-landing" class="flex flex-col gap-16 md:gap-24 py-6 md:py-10 animate-in fade-in duration-500 max-w-6xl mx-auto w-full">

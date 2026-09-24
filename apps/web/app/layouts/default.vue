@@ -32,8 +32,8 @@
 
     <!-- Área Principal de Conteúdo -->
     <main
-      class="flex-1 min-w-0 h-full overflow-y-auto relative flex flex-col custom-scrollbar"
-      :class="isCanvasOrFullPage ? '' : 'p-4 sm:p-6 md:p-8 max-w-7xl w-full mx-auto'"
+      class="flex-1 min-w-0 h-full relative flex flex-col"
+      :class="isCanvasOrFullPage ? 'overflow-hidden' : 'overflow-y-auto custom-scrollbar p-4 sm:p-6 md:p-8 max-w-7xl w-full mx-auto'"
     >
       <!-- Botão Hambúrguer Mobile Flutuante quando a Sidebar estiver recolhida -->
       <button
