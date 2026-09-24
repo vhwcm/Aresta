@@ -468,6 +468,8 @@ export const useReaderStore = defineStore('reader', {
 
     setReaderWidthMode(mode: ReaderWidthMode) {
       if (mode !== 'centered' && mode !== 'wide') return
+      // Modo largo é restrito exclusivamente ao formato EPUB
+      if (this.documentType === 'pdf' && mode === 'wide') return
       this.readerWidthMode = mode
       if (typeof window !== 'undefined') {
         try {
@@ -483,6 +485,7 @@ export const useReaderStore = defineStore('reader', {
     },
 
     toggleReaderWidthMode() {
+      if (this.documentType === 'pdf') return
       this.setReaderWidthMode(this.readerWidthMode === 'centered' ? 'wide' : 'centered')
     },
 

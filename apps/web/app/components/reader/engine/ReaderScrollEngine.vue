@@ -6,7 +6,7 @@
       'reader-scroll-engine--theme-' + activeTheme,
       {
         'reader-scroll-engine--zen': store.isZenMode,
-        'reader-scroll-engine--wide': store.readerWidthMode === 'wide',
+        'reader-scroll-engine--wide': isEpubDocument && store.readerWidthMode === 'wide',
       },
     ]"
     :style="{ backgroundColor: themeBgColor, color: themeTextColor }"
@@ -22,7 +22,7 @@
     <div
       ref="contentAreaRef"
       class="reader-scroll-engine__content"
-      :class="store.readerWidthMode === 'wide' ? 'reader-scroll-engine__content--wide' : 'reader-scroll-engine__content--centered'"
+      :class="isEpubDocument && store.readerWidthMode === 'wide' ? 'reader-scroll-engine__content--wide' : 'reader-scroll-engine__content--centered'"
     >
       <!-- ================= FLUXO PDF (PÁGINAS VIRTUALIZADAS) ================= -->
       <template v-if="isPdfDocument">
@@ -225,6 +225,7 @@ const themeTextColor = computed(() => {
 
 // Tipos de Documento
 const isPdfDocument = computed(() => store.document?.type === 'pdf')
+const isEpubDocument = computed(() => store.document?.type === 'epub')
 const isEpubContinuous = computed(() => {
   return (
     store.document?.type === 'epub' &&

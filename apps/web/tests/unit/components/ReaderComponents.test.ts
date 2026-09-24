@@ -223,6 +223,36 @@ describe('Reader Components', () => {
       expect(store.isFocusMode).toBe(false)
     })
 
+    it('não exibe opções de modo largo quando o documento for PDF e impede ativação no store', async () => {
+      const store = useReaderStore()
+      store.setDocument({
+        type: 'pdf',
+        metadata: { title: 'Livro PDF' },
+        totalPages: 10,
+        isLoaded: true,
+        load: vi.fn(),
+        getPage: vi.fn(),
+        destroy: vi.fn(),
+      } as any, 'documento.pdf')
+
+      const wrapper = mount(ReaderBottomBar, {
+        props: { isNotesActive: false },
+      })
+
+      const settingsBtn = wrapper.find('#btn-appearance-toggle')
+      await settingsBtn.trigger('click')
+
+      // Em PDF, os botões de modo largo e centralizado não devem existir
+      expect(wrapper.find('#btn-width-wide').exists()).toBe(false)
+      expect(wrapper.find('#btn-width-centered').exists()).toBe(false)
+
+      // Store não deve permitir modo wide para PDF
+      store.setReaderWidthMode('wide')
+      expect(store.readerWidthMode).toBe('centered')
+      store.toggleReaderWidthMode()
+      expect(store.readerWidthMode).toBe('centered')
+    })
+
     it('identifica corretamente a prioridade de tipografia: livro específico > configuração global > padrão 15px', () => {
       const store = useReaderStore()
       localStorage.clear()

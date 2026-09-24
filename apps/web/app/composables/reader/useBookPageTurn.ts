@@ -99,7 +99,7 @@ export function useBookPageTurn(
     const isEpub = doc?.type === 'epub'
     const defaultAspectRatio = isEpub ? 0.72 : (docAspect || 0.72)
     const aspectRatio = defaultAspectRatio
-    const isWide = store.readerWidthMode === 'wide'
+    const isWide = Boolean(isEpub && store.readerWidthMode === 'wide')
     const isZen = store.isZenMode
 
     if (isTwoPage) {

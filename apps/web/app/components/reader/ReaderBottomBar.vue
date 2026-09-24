@@ -230,8 +230,9 @@
             </div>
           </div>
 
-          <!-- Seção 3: Distribuição e Largura de Leitura -->
+          <!-- Seção 3: Distribuição e Largura de Leitura (Largura exclusiva para EPUB) -->
           <div
+            v-if="store.readingMode !== 'scroll' || store.documentType === 'epub'"
             class="flex flex-col gap-2 pt-2 border-t"
             :class="store.readerTheme === 'sepia' ? 'border-[#dfd5c0]' : (store.readerTheme === 'white' ? 'border-gray-200' : 'border-white/10')"
           >
@@ -239,7 +240,7 @@
               class="text-[11px] font-technical uppercase tracking-wider font-semibold"
               :class="store.readerTheme === 'sepia' ? 'text-[#786C5E]' : (store.readerTheme === 'white' ? 'text-gray-500' : 'text-textSecondary')"
             >
-              Distribuição e Largura
+              {{ store.documentType === 'epub' ? 'Distribuição e Largura' : 'Distribuição de Folhas' }}
             </span>
             <div v-if="store.readingMode !== 'scroll'" class="grid grid-cols-2 gap-1.5">
               <!-- 1 Folha vs 2 Folhas -->
@@ -278,8 +279,8 @@
               </button>
             </div>
 
-            <div class="grid grid-cols-2 gap-1.5">
-              <!-- Centralizado vs 100% Largo -->
+            <!-- Centralizado vs 100% Largo (Exclusivo para EPUB) -->
+            <div v-if="store.documentType === 'epub'" class="grid grid-cols-2 gap-1.5">
               <button
                 @click="store.setReaderWidthMode('centered')"
                 class="flex items-center justify-center gap-1.5 p-2 rounded-xl border text-xs font-semibold transition-all"
