@@ -24,7 +24,7 @@ function escapeRegExp(str: string): string {
 /**
  * Converte cor HEX (#RGB ou #RRGGBB) para rgba(r, g, b, alpha) com transparência suave
  */
-export function hexToRgba(hex: string | null | undefined, alpha = 0.38): string {
+export function hexToRgba(hex: string | null | undefined, alpha = 0.58): string {
   if (!hex || typeof hex !== 'string') return `rgba(229, 123, 85, ${alpha})`
   const trimmed = hex.trim()
   if (trimmed.startsWith('rgb')) {
@@ -180,7 +180,7 @@ export function applyAnnotationHighlight(
   if (intersectingChunks.length === 0) return false
 
   const color = annotation.color || '#E57B55'
-  const bgColor = hexToRgba(color, 0.38)
+  const bgColor = hexToRgba(color, 0.58)
 
   // Itera em ordem reversa (do fim para o início) para que os splits não desloquem nós anteriores
   for (let i = intersectingChunks.length - 1; i >= 0; i--) {
@@ -205,12 +205,14 @@ export function applyAnnotationHighlight(
     mark.style.borderBottom = `2px solid ${color}`
     mark.style.color = 'inherit'
     mark.style.cursor = 'pointer'
-    mark.style.padding = '0.05em 0.15em'
+    mark.style.padding = '0.08em 0.18em'
     mark.style.margin = '0 -0.05em'
-    mark.style.borderRadius = '2px'
+    mark.style.borderRadius = '3px'
     mark.style.boxDecorationBreak = 'clone'
     ;(mark.style as any).webkitBoxDecorationBreak = 'clone'
     mark.style.pointerEvents = 'auto'
+    mark.style.mixBlendMode = 'multiply'
+    mark.style.boxShadow = '0 0 0 1px rgba(0, 0, 0, 0.04)'
 
     if (annotation.note) {
       mark.title = annotation.note

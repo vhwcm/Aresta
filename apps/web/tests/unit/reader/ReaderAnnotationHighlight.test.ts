@@ -80,14 +80,14 @@ describe('Reader Annotation Highlight Flow', () => {
     const simaoMark = Array.from(marks).find((m) => m.textContent === 'Simão Bacamarte') as HTMLElement
     expect(simaoMark).toBeDefined()
     expect(simaoMark.getAttribute('data-annotation-id')).toBe('1')
-    expect(simaoMark.style.backgroundColor).toBe('rgba(16, 185, 129, 0.38)')
+    expect(simaoMark.style.backgroundColor).toBe('rgba(16, 185, 129, 0.58)')
     expect(simaoMark.style.borderBottom).toBe('2px solid #10B981')
     expect(simaoMark.title).toBe('Médico alienista')
 
     const itaguaiMark = Array.from(marks).find((m) => m.textContent === 'Itaguaí') as HTMLElement
     expect(itaguaiMark).toBeDefined()
     expect(itaguaiMark.getAttribute('data-annotation-id')).toBe('2')
-    expect(itaguaiMark.style.backgroundColor).toBe('rgba(59, 130, 246, 0.38)')
+    expect(itaguaiMark.style.backgroundColor).toBe('rgba(59, 130, 246, 0.58)')
     expect(itaguaiMark.style.borderBottom).toBe('2px solid #3B82F6')
   })
 

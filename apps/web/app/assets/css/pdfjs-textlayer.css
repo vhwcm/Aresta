@@ -74,22 +74,39 @@
   cursor: default;
 }
 
-/* Seleção nativa de texto com tonalidade âmbar Aresta */
+/* Seleção nativa de texto com tonalidade âmbar Aresta viva e nítida */
 .textLayer ::selection,
-.textLayer *::selection {
-  background: rgba(229, 123, 85, 0.35) !important;
-  color: transparent !important;
+.textLayer *::selection,
+.page-text-layer .textLayer ::selection,
+.page-text-layer .textLayer *::selection,
+.scroll-page-text-layer .textLayer ::selection,
+.scroll-page-text-layer .textLayer *::selection {
+  background: rgba(229, 123, 85, 0.6) !important;
+}
+
+.textLayer ::-moz-selection,
+.textLayer *::-moz-selection,
+.page-text-layer .textLayer ::-moz-selection,
+.page-text-layer .textLayer *::-moz-selection,
+.scroll-page-text-layer .textLayer ::-moz-selection,
+.scroll-page-text-layer .textLayer *::-moz-selection {
+  background: rgba(229, 123, 85, 0.6) !important;
 }
 
 /* Marcações de anotações e destaques sobre o PDF */
-.textLayer .reader-highlight {
+.textLayer .reader-highlight,
+.page-sheet--pdf .reader-highlight {
   color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
   border-radius: 2px;
   pointer-events: auto;
   cursor: pointer;
+  mix-blend-mode: multiply !important;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05);
 }
 
 /* Compatibilidade com temas Claro, Sépia e Preto */
 .theme-black .textLayer {
   mix-blend-mode: screen;
 }
+

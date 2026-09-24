@@ -1779,7 +1779,20 @@ defineExpose({
   }
 }
 
-/* PDF.js Text Layer gerenciado de forma desacoplada via pdfjs-textlayer.css */
+/* PDF.js Text Layer — Seleção e Destaques Nítidos com Alto Contraste */
+.page-text-layer :deep(.textLayer ::selection),
+.page-text-layer :deep(.textLayer *::selection),
+.page-sheet--pdf :deep(.textLayer ::selection),
+.page-sheet--pdf :deep(.textLayer *::selection) {
+  background: rgba(229, 123, 85, 0.6) !important;
+}
+
+.page-text-layer :deep(.textLayer ::-moz-selection),
+.page-text-layer :deep(.textLayer *::-moz-selection),
+.page-sheet--pdf :deep(.textLayer ::-moz-selection),
+.page-sheet--pdf :deep(.textLayer *::-moz-selection) {
+  background: rgba(229, 123, 85, 0.6) !important;
+}
 
 /* EPUB Native Typography Layer */
 .page-text-layer :deep(.epub-text-layer-content),
@@ -1799,7 +1812,7 @@ defineExpose({
 .page-text-layer :deep(.epub-text-layer-content ::selection),
 .page-text-layer :deep(.epub-text-layer-content *::selection),
 .page-text-layer :deep(.epub-text-layer-content::selection) {
-  background: rgba(229, 123, 85, 0.3) !important;
+  background: rgba(229, 123, 85, 0.45) !important;
   color: #1a1a1a !important;
 }
 
@@ -1808,7 +1821,7 @@ defineExpose({
 .theme-sepia .page-text-layer :deep(.epub-text-layer-content ::selection),
 .theme-sepia .page-text-layer :deep(.epub-text-layer-content *::selection),
 .theme-sepia .page-text-layer :deep(.epub-text-layer-content::selection) {
-  background: rgba(229, 123, 85, 0.3) !important;
+  background: rgba(229, 123, 85, 0.45) !important;
   color: #2a2521 !important;
 }
 
@@ -1817,7 +1830,7 @@ defineExpose({
 .theme-white .page-text-layer :deep(.epub-text-layer-content ::selection),
 .theme-white .page-text-layer :deep(.epub-text-layer-content *::selection),
 .theme-white .page-text-layer :deep(.epub-text-layer-content::selection) {
-  background: rgba(229, 123, 85, 0.3) !important;
+  background: rgba(229, 123, 85, 0.45) !important;
   color: #1a1a1a !important;
 }
 
@@ -1826,7 +1839,7 @@ defineExpose({
 .theme-black .page-text-layer :deep(.epub-text-layer-content ::selection),
 .theme-black .page-text-layer :deep(.epub-text-layer-content *::selection),
 .theme-black .page-text-layer :deep(.epub-text-layer-content::selection) {
-  background: rgba(229, 123, 85, 0.45) !important;
+  background: rgba(229, 123, 85, 0.55) !important;
   color: #ffffff !important;
 }
 
@@ -1954,8 +1967,8 @@ defineExpose({
 
 :deep(.reader-highlight) {
   display: inline;
-  border-radius: 2px;
-  padding: 0.05em 0.15em;
+  border-radius: 3px;
+  padding: 0.08em 0.18em;
   margin: 0 -0.05em;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
@@ -1964,6 +1977,14 @@ defineExpose({
   position: relative;
   z-index: 2;
   pointer-events: auto;
+}
+
+:deep(.page-sheet--pdf .reader-highlight),
+:deep(.textLayer .reader-highlight) {
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  mix-blend-mode: multiply !important;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.04);
 }
 
 :deep(.reader-highlight:hover) {

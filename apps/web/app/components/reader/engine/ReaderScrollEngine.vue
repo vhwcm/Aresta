@@ -1073,20 +1073,27 @@ defineExpose({
 
 :deep(.textLayer ::selection),
 :deep(.textLayer *::selection) {
-  background: rgba(229, 123, 85, 0.35) !important;
-  color: transparent !important;
+  background: rgba(229, 123, 85, 0.6) !important;
+}
+
+:deep(.textLayer ::-moz-selection),
+:deep(.textLayer *::-moz-selection) {
+  background: rgba(229, 123, 85, 0.6) !important;
 }
 
 :deep(.textLayer .reader-highlight) {
   color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
   cursor: pointer;
+  mix-blend-mode: multiply !important;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.04);
 }
 
 /* Destaques / Highlights */
 :deep(.reader-highlight) {
   display: inline;
-  border-radius: 2px;
-  padding: 0.05em 0.15em;
+  border-radius: 3px;
+  padding: 0.08em 0.18em;
   margin: 0 -0.05em;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
