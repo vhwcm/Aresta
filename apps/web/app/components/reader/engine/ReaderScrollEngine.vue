@@ -208,13 +208,13 @@ const activeTheme = computed(() => store.readerTheme || 'sepia')
 const themeBgColor = computed(() => {
   if (store.readerTheme === 'sepia') return '#FAF5E8'
   if (store.readerTheme === 'white') return '#F4F4F5'
-  return '#121214'
+  return '#000000'
 })
 
 const pageSheetBgColor = computed(() => {
   if (store.readerTheme === 'sepia') return '#fbf0d9'
   if (store.readerTheme === 'white') return '#ffffff'
-  return '#18181b'
+  return '#08080a'
 })
 
 const themeTextColor = computed(() => {

@@ -48,7 +48,7 @@ const auth = useAuth()
 const activeTheme = computed(() => store.readerTheme || 'sepia')
 const themeBgColor = computed(() => {
   if (activeTheme.value === 'white') return '#ffffff'
-  if (activeTheme.value === 'black') return '#0c0c0e'
+  if (activeTheme.value === 'black') return '#000000'
   return '#f5eedc'
 })
 

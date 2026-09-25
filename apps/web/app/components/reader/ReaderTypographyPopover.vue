@@ -82,7 +82,7 @@
                 : 'bg-white/[0.03] border-divider hover:bg-white/[0.07] text-textSecondary hover:text-textPrimary'"
               title="Fundo preto para leitura noturna"
             >
-              <div class="w-6 h-6 rounded-full border border-white/20 bg-[#121214] shadow-inner mb-1.5 flex items-center justify-center">
+              <div class="w-6 h-6 rounded-full border border-white/20 bg-[#000000] shadow-inner mb-1.5 flex items-center justify-center">
                 <CheckIcon v-if="store.readerTheme === 'black'" class="w-3.5 h-3.5 text-white stroke-[3]" />
               </div>
               <span class="text-xs font-semibold">Preto</span>

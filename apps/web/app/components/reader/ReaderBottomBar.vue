@@ -4,7 +4,7 @@
     :class="{
       'bg-[#f5eedc] md:bg-[#f5eedc]/95 border-[#dfd5c0] text-[#2a2521] shadow-[#2a2521]/5': store.readerTheme === 'sepia',
       'bg-white md:bg-white/95 border-gray-200 text-gray-900 shadow-gray-900/5': store.readerTheme === 'white',
-      'bg-[#121315] md:bg-[#121315]/95 border-divider text-textPrimary shadow-black/40': store.readerTheme === 'black' || !store.readerTheme,
+      'bg-[#08080a] md:bg-[#08080a]/95 border-white/10 text-textPrimary shadow-black/60': store.readerTheme === 'black' || !store.readerTheme,
     }"
     role="toolbar"
     aria-label="Barra de ferramentas do leitor"
@@ -101,7 +101,7 @@
               :class="{
                 'bg-[#f5eedc]': store.readerTheme === 'sepia',
                 'bg-[#ffffff]': store.readerTheme === 'white',
-                'bg-[#121214]': store.readerTheme === 'black'
+                'bg-[#000000]': store.readerTheme === 'black'
               }"
             />
           </div>
@@ -114,7 +114,7 @@
           :class="{
             'bg-[#f5eedc] border-[#dfd5c0] text-[#2a2521]': store.readerTheme === 'sepia',
             'bg-white border-gray-200 text-gray-900': store.readerTheme === 'white',
-            'bg-[#18181b] border-white/10 text-[#f2f2f2]': store.readerTheme === 'black' || !store.readerTheme,
+            'bg-[#0d0d10] border-white/10 text-[#f2f2f2]': store.readerTheme === 'black' || !store.readerTheme,
           }"
           role="dialog"
           aria-label="Controle de aparência e fundo de leitura"
@@ -177,7 +177,7 @@
                       : 'bg-white/5 border-white/10 hover:bg-white/10 text-textSecondary hover:text-textPrimary'))"
                 title="Fundo preto noturno"
               >
-                <div class="w-5 h-5 rounded-full border border-white/30 bg-[#121214] shadow-inner mb-1 flex items-center justify-center">
+                <div class="w-5 h-5 rounded-full border border-white/30 bg-[#000000] shadow-inner mb-1 flex items-center justify-center">
                   <CheckIcon v-if="store.readerTheme === 'black'" class="w-3 h-3 text-white stroke-[3]" />
                 </div>
                 <span class="text-[11px] font-semibold">Preto</span>
@@ -495,7 +495,7 @@
           :class="{
             'bg-[#f5eedc] border-[#dfd5c0] text-[#2a2521]': store.readerTheme === 'sepia',
             'bg-white border-gray-200 text-gray-900': store.readerTheme === 'white',
-            'bg-[#18181b] border-white/10 text-[#f2f2f2]': store.readerTheme === 'black' || !store.readerTheme,
+            'bg-[#0d0d10] border-white/10 text-[#f2f2f2]': store.readerTheme === 'black' || !store.readerTheme,
           }"
           role="menu"
           aria-label="Opções de marcador"

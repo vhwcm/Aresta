@@ -6,7 +6,7 @@
       :class="{
         'bg-[#f5eedc]/95 border-[#dfd5c0] text-[#2a2521] shadow-amber-950/10': store.readerTheme === 'sepia',
         'bg-white/95 border-gray-200 text-gray-900 shadow-gray-950/10': store.readerTheme === 'white',
-        'bg-[#18181b]/95 border-white/10 text-white shadow-black/50': store.readerTheme === 'black' || !store.readerTheme,
+        'bg-[#08080a]/95 border-white/10 text-white shadow-black/60': store.readerTheme === 'black' || !store.readerTheme,
       }"
       role="toolbar"
       aria-label="Controles do Modo de Foco"

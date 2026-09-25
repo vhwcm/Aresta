@@ -288,7 +288,7 @@ const { startTimer: startReadingTimer, stopTimer: stopReadingTimer } = useReadin
 const activeTheme = computed(() => store.readerTheme || 'sepia')
 const themeBgColor = computed(() => {
   if (activeTheme.value === 'white') return '#ffffff'
-  if (activeTheme.value === 'black') return '#0c0c0e'
+  if (activeTheme.value === 'black') return '#000000'
   return '#f5eedc'
 })
 
@@ -1260,13 +1260,14 @@ onUnmounted(() => {
 .reader-viewer--theme-black,
 .reader-viewer--theme-black .reader-viewer__body,
 .reader-viewer--theme-black .reader-viewer__reader-pane,
+.reader-viewer--theme-black .reader-viewer__content-column,
 .reader-viewer--theme-black .reader-viewer__canvas-area,
 .reader-viewer--theme-black .reader-viewer__stage-container,
 .reader-viewer--theme-black .reader-viewer__book-stage,
 .reader-viewer--theme-black :deep(.page-curl-wrapper),
 .reader-viewer--theme-black :deep(.book-viewport-track),
 .reader-viewer--theme-black :deep(.spread-container) {
-  background-color: #0c0c0e !important;
+  background-color: #000000 !important;
 }
 
 /* Botões de Navegação adaptados a cada tema */

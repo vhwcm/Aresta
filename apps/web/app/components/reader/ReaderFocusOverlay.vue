@@ -147,8 +147,8 @@ function handleAdvance(e: MouseEvent) {
 }
 
 .reader-focus-overlay--theme-black .reader-focus-overlay__pane {
-  background-color: rgba(18, 18, 20, 0.88);
-  border-color: rgba(255, 255, 255, 0.06);
+  background-color: rgba(0, 0, 0, 0.92);
+  border-color: rgba(255, 255, 255, 0.05);
 }
 
 /* Transições suaves de degradê nas bordas da abertura */

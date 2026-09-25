@@ -4,7 +4,7 @@
     :class="{
       'bg-[#FAF5E8] text-[#2a2521] border-l border-[#dfd5c0]': activeTheme === 'sepia',
       'bg-[#ffffff] text-[#1a1a1a] border-l border-gray-200': activeTheme === 'white',
-      'bg-[#121214] text-[#e4e4e7] border-l border-white/10': activeTheme === 'black',
+      'bg-[#000000] text-[#e4e4e7] border-l border-white/10': activeTheme === 'black',
     }"
     :data-theme="activeTheme === 'sepia' ? 'sepia' : (activeTheme === 'white' ? 'light' : 'dark')"
   >
@@ -14,7 +14,7 @@
       :class="{
         'bg-[#FAF5E8]/95 border-[#dfd5c0] text-[#2a2521]': activeTheme === 'sepia',
         'bg-white/95 border-gray-200 text-gray-900': activeTheme === 'white',
-        'bg-[#161619]/95 border-white/10 text-[#e4e4e7]': activeTheme === 'black',
+        'bg-[#08080a]/95 border-white/10 text-[#e4e4e7]': activeTheme === 'black',
       }"
     >
       <div class="flex items-center gap-2.5 min-w-0">
@@ -256,7 +256,7 @@
           :class="{
             'bg-[#FAF5E8] border-[#dfd5c0] hover:border-accent/50 text-[#2a2521]': activeTheme === 'sepia',
             'bg-white border-gray-200 hover:border-accent/50 text-gray-900': activeTheme === 'white',
-            'bg-[#18181b] border-white/10 hover:border-accent/40 text-[#e4e4e7]': activeTheme === 'black',
+            'bg-[#08080a] border-white/10 hover:border-accent/40 text-[#e4e4e7]': activeTheme === 'black',
           }"
         >
           <!-- Topo do Card: Localização (Página/Capítulo) e Ações Rápidas -->

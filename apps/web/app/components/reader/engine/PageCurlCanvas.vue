@@ -326,7 +326,7 @@ const pageStackDepth = computed(() => {
 const activeTheme = computed(() => store.readerTheme || 'sepia')
 const themeBgColor = computed(() => {
   if (activeTheme.value === 'white') return '#f8f9fa'
-  if (activeTheme.value === 'black') return '#0c0c0e'
+  if (activeTheme.value === 'black') return '#000000'
   return '#f5eedc'
 })
 
@@ -1598,11 +1598,11 @@ defineExpose({
 .theme-black .page-curl-wrapper,
 .theme-black .book-3d-stage,
 .theme-black .spread-container {
-  background-color: #0c0c0e !important;
+  background-color: #000000 !important;
 }
 
 .theme-black .page-sheet {
-  background-color: #19181d !important;
+  background-color: #08080a !important;
 }
 
 .page-sheet.page-sheet--pdf,
@@ -1613,24 +1613,24 @@ defineExpose({
 }
 
 .theme-black .page-sheet--left {
-  box-shadow: inset -14px 0 20px -8px rgba(0, 0, 0, 0.8), -6px 8px 24px rgba(0, 0, 0, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-right: 2px solid rgba(0, 0, 0, 0.7);
+  box-shadow: inset -14px 0 20px -8px rgba(0, 0, 0, 0.95), -6px 8px 24px rgba(0, 0, 0, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-right: 2px solid rgba(0, 0, 0, 0.9);
   border-top-left-radius: 6px;
   border-bottom-left-radius: 6px;
 }
 
 .theme-black .page-sheet--right {
-  box-shadow: inset 14px 0 20px -8px rgba(0, 0, 0, 0.8), 6px 8px 24px rgba(0, 0, 0, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-left: 2px solid rgba(0, 0, 0, 0.7);
+  box-shadow: inset 14px 0 20px -8px rgba(0, 0, 0, 0.95), 6px 8px 24px rgba(0, 0, 0, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-left: 2px solid rgba(0, 0, 0, 0.9);
   border-top-right-radius: 6px;
   border-bottom-right-radius: 6px;
 }
 
 .theme-black .page-sheet--single {
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.65);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 6px;
 }
 
@@ -1783,24 +1783,24 @@ defineExpose({
 
 /* Tema Preto */
 .theme-black .book-page-stack {
-  background-color: #1e1e22;
+  background-color: #0d0d0f;
   background-image: repeating-linear-gradient(
     to right,
-    rgba(255, 255, 255, 0.1) 0px,
-    rgba(255, 255, 255, 0.1) 1px,
-    rgba(30, 30, 34, 0.95) 1px,
-    rgba(30, 30, 34, 0.95) 2.5px
+    rgba(255, 255, 255, 0.05) 0px,
+    rgba(255, 255, 255, 0.05) 1px,
+    rgba(13, 13, 15, 0.95) 1px,
+    rgba(13, 13, 15, 0.95) 2.5px
   );
 }
 
 .theme-black .book-page-stack--left {
-  box-shadow: inset 2px 0 4px rgba(0, 0, 0, 0.8), -3px 0 8px rgba(0, 0, 0, 0.6);
-  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 2px 0 4px rgba(0, 0, 0, 0.95), -3px 0 8px rgba(0, 0, 0, 0.85);
+  border-left: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .theme-black .book-page-stack--right {
-  box-shadow: inset -2px 0 4px rgba(0, 0, 0, 0.8), 3px 0 8px rgba(0, 0, 0, 0.6);
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset -2px 0 4px rgba(0, 0, 0, 0.95), 3px 0 8px rgba(0, 0, 0, 0.85);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 @media (max-width: 767px) {
@@ -1891,7 +1891,7 @@ defineExpose({
 }
 
 .theme-black .page-text-layer :deep(.epub-text-layer-viewport) {
-  background: #121214;
+  background: #08080a;
 }
 
 .page-text-layer :deep(.epub-text-layer-content) {

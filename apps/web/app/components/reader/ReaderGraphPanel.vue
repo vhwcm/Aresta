@@ -358,7 +358,7 @@ const store = useReaderStore()
 const activeTheme = computed(() => props.theme || store.readerTheme || 'sepia')
 const themeBgColor = computed(() => {
   if (activeTheme.value === 'white') return '#ffffff'
-  if (activeTheme.value === 'black') return '#121214'
+  if (activeTheme.value === 'black') return '#000000'
   return '#f5eedc'
 })
 const { graphData, loading: graphLoading, fetchGraph, createNode, createConnection, linkBookToNode } = useGraph()
