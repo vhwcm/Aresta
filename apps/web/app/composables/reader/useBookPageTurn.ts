@@ -125,8 +125,20 @@ export function useBookPageTurn(
       let targetHeight: number
 
       if (isEpub) {
-        targetWidth = maxPageWidth
-        targetHeight = maxPageHeight
+        if (isWide || isZen) {
+          targetWidth = maxPageWidth
+          targetHeight = maxPageHeight
+        } else {
+          // Modo Centralizado EPUB: Proporção clássica de livro (aspect ratio ~ 0.72)
+          const widthFromHeight = maxPageHeight * aspectRatio
+          if (widthFromHeight <= maxPageWidth) {
+            targetWidth = Math.round(widthFromHeight)
+            targetHeight = Math.round(maxPageHeight)
+          } else {
+            targetWidth = Math.round(maxPageWidth)
+            targetHeight = Math.round(maxPageWidth / aspectRatio)
+          }
+        }
       } else {
         const widthFromHeight = maxPageHeight * aspectRatio
         if (widthFromHeight <= maxPageWidth) {
@@ -183,15 +195,27 @@ export function useBookPageTurn(
       } else {
         // Modo Centralizado no Desktop/Tablet: 1 folha centralizada com proporção clássica
         maxPageHeight = Math.round(hostHeight * 0.94)
-        maxPageWidth = Math.round(Math.min(hostWidth - 32, hostWidth * 0.85))
+        maxPageWidth = Math.round(Math.min(hostWidth - 48, Math.max(480, hostWidth * 0.55)))
       }
 
       let targetWidth: number
       let targetHeight: number
 
       if (isEpub) {
-        targetWidth = maxPageWidth
-        targetHeight = maxPageHeight
+        if (isWide || isZen || isMobile) {
+          targetWidth = maxPageWidth
+          targetHeight = maxPageHeight
+        } else {
+          // Modo Centralizado EPUB: Proporção clássica de livro (aspect ratio ~ 0.72)
+          const widthFromHeight = maxPageHeight * aspectRatio
+          if (widthFromHeight <= maxPageWidth) {
+            targetWidth = Math.round(widthFromHeight)
+            targetHeight = Math.round(maxPageHeight)
+          } else {
+            targetWidth = Math.round(maxPageWidth)
+            targetHeight = Math.round(maxPageWidth / aspectRatio)
+          }
+        }
       } else {
         const widthFromHeight = maxPageHeight * aspectRatio
         if (widthFromHeight <= maxPageWidth) {

@@ -225,4 +225,19 @@ ARQUITETURA DE ASSETS LOCAIS E WORKER DO PDF.JS (OFFLINE & TAURI READY)
 2. **Centralização em `pdfjsSetup.ts`**: Toda inicialização do PDF.js deve passar obrigatoriamente por `setupPdfJs()` e `getPdfDocumentParams()`.
 3. **Cópia de Assets no Build**: O script `scripts/copy-pdfjs-assets.mjs` é executado no `postinstall` garantindo que os binários do worker e fontes estejam sempre sincronizados em `public/pdfjs/`.
 
+---
+
+## 6. Modos de Largura e Enquadramento de Leitura (`readerWidthMode`)
+
+O leitor oferece alternância de largura para documentos EPUB via `store.readerWidthMode` ('centered' | 'wide'):
+
+- **Modo Centralizado (`centered`)**:
+  - **Paginado (2 Páginas)**: Aplica a proporção clássica de livro (`aspectRatio ~ 0.72`) baseada na altura da janela (`maxPageHeight * aspectRatio`), mantendo margens ergonômicas simétricas nas laterais da tela para uma leitura confortável em monitores largos.
+  - **Paginado (1 Página)**: Enquadra a folha única centralizada com largura clássica de livro (limitada a 55% da tela ou proporção áurea) sem distorcer o espaçamento textual.
+  - **Modo Scroll Contínuo**: Restringe o bloco de leitura a `max-width: 860px`.
+- **Modo 100% Largo (`wide`)**:
+  - **Paginado**: Expande as páginas para ocupar 100% da área útil disponível (`hostWidth - 32px`), maximizando o espaço de leitura em notebooks e monitores compactos.
+  - **Modo Scroll Contínuo**: Expande o bloco de leitura para `max-width: 1180px` (96%).
+
+
 
