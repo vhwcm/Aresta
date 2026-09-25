@@ -418,7 +418,7 @@ watch(
 }
 
 .reader-shell--black {
-  background-color: #121214;
+  background-color: #000000;
 }
 
 

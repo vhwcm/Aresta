@@ -1304,7 +1304,7 @@ onUnmounted(() => {
 }
 
 .reader-viewer--zen.reader-viewer--theme-black {
-  background: #0a0a0e !important;
+  background: #000000 !important;
 }
 
 .reader-viewer--zen .reader-viewer__nav-btn {

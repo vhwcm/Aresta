@@ -1602,7 +1602,7 @@ defineExpose({
 }
 
 .theme-black .page-sheet {
-  background-color: #08080a !important;
+  background-color: #000000 !important;
 }
 
 .page-sheet.page-sheet--pdf,
@@ -1612,26 +1612,35 @@ defineExpose({
   background-color: #ffffff !important;
 }
 
+/* Tema Preto: bordas brancas como "cortes" elegantes que delimitam as páginas */
 .theme-black .page-sheet--left {
-  box-shadow: inset -14px 0 20px -8px rgba(0, 0, 0, 0.95), -6px 8px 24px rgba(0, 0, 0, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-right: 2px solid rgba(0, 0, 0, 0.9);
-  border-top-left-radius: 6px;
-  border-bottom-left-radius: 6px;
+  box-shadow:
+    inset -1px 0 0 0 rgba(255, 255, 255, 0.18),
+    -6px 0 24px rgba(0, 0, 0, 0.6);
+  border-top: 1px solid rgba(255, 255, 255, 0.22);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.22);
+  border-left: 1px solid rgba(255, 255, 255, 0.22);
+  border-right: none;
+  border-top-left-radius: 3px;
+  border-bottom-left-radius: 3px;
 }
 
 .theme-black .page-sheet--right {
-  box-shadow: inset 14px 0 20px -8px rgba(0, 0, 0, 0.95), 6px 8px 24px rgba(0, 0, 0, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-left: 2px solid rgba(0, 0, 0, 0.9);
-  border-top-right-radius: 6px;
-  border-bottom-right-radius: 6px;
+  box-shadow:
+    inset 1px 0 0 0 rgba(255, 255, 255, 0.18),
+    6px 0 24px rgba(0, 0, 0, 0.6);
+  border-top: 1px solid rgba(255, 255, 255, 0.22);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.22);
+  border-right: 1px solid rgba(255, 255, 255, 0.22);
+  border-left: none;
+  border-top-right-radius: 3px;
+  border-bottom-right-radius: 3px;
 }
 
 .theme-black .page-sheet--single {
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 6px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.22), 0 8px 32px rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 3px;
 }
 
 .page-sheet--left {
@@ -1891,7 +1900,7 @@ defineExpose({
 }
 
 .theme-black .page-text-layer :deep(.epub-text-layer-viewport) {
-  background: #08080a;
+  background: #000000;
 }
 
 .page-text-layer :deep(.epub-text-layer-content) {

@@ -1,7 +1,9 @@
 ## 🔄 Em Andamento
-- [24/09/2026 21:48] [Fazendo] Redesenhar interface do modo de desenho no estilo Samsung Notes (One UI): barra superior integrada, canetas estilizadas, popover de caneta/tinteiro/lápis/marcador, eliminação de sobreposição e acabamento de alta precisão
 
 ## ✅ Concluído
+- [24/09/2026 22:01] [Concluído] Dark mode do leitor: fundo preto puro (#000000) + páginas pretas com bordas brancas delimitadoras premium
+- [24/09/2026 21:57] [Concluído] Implementar configuração de folha no cabeçalho e páginas (folhas pretas, amarelas e brancas com pautas em linhas ou pontos) mantendo o tema do app intacto no restante da interface
+- [24/09/2026 21:52] [Concluído] Redesenhar interface do modo de desenho no estilo Samsung Notes (One UI): barra superior integrada, canetas estilizadas, popover de caneta/tinteiro/lápis/marcador, eliminação de sobreposição e acabamento de alta precisão
 - [24/09/2026 21:47] [Concluído] Escurecer o tema escuro/black do leitor para preto profundo OLED premium (#000000 e #08080a)
 - [24/09/2026 21:44] [Concluído] Implementar personalização de folha no modo de desenho (cores branco, amarelo, preto e padrões liso, linhas, pontilhado)
 - [24/09/2026 21:38] [Concluído] Ajustar proporções do modo Centralizado no leitor EPUB com enquadramento clássico e margens ergonômicas

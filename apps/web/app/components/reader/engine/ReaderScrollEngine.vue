@@ -214,7 +214,7 @@ const themeBgColor = computed(() => {
 const pageSheetBgColor = computed(() => {
   if (store.readerTheme === 'sepia') return '#fbf0d9'
   if (store.readerTheme === 'white') return '#ffffff'
-  return '#08080a'
+  return '#000000'
 })
 
 const themeTextColor = computed(() => {
@@ -834,6 +834,12 @@ defineExpose({
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
+/* Tema preto: borda branca sutil como "corte" delimitador */
+.reader-scroll-engine--theme-black .scroll-page-slot {
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2), 0 4px 24px rgba(0, 0, 0, 0.7) !important;
+  border-radius: 3px;
+}
+
 .scroll-page-canvas {
   display: block;
   width: 100%;
@@ -877,6 +883,13 @@ defineExpose({
   -webkit-user-select: text;
   touch-action: auto !important;
   -webkit-touch-callout: default !important;
+}
+
+/* Tema preto: borda branca sutil como "corte" delimitador */
+.reader-scroll-engine--theme-black .scroll-section-slot {
+  background-color: #000000 !important;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2), 0 4px 24px rgba(0, 0, 0, 0.6) !important;
+  border-radius: 3px;
 }
 
 .scroll-section-content {
