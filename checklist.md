@@ -1,6 +1,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [24/09/2026 21:14] [Concluído] Substituir métrica de progresso por porcentagem por exibição estrita por página em todos os componentes
 - [24/09/2026 15:28] [Concluído] Remover botão de 15px do meio do seletor de tamanho da fonte no popover do leitor
 - [24/09/2026 15:25] [Concluído] Remover opção de modo largo para PDF, mantendo-a exclusivamente para EPUB
 - [24/09/2026 15:16] [Concluído] Reduzir bordas e margens do leitor EPUB em todas as resoluções para expandir área de leitura

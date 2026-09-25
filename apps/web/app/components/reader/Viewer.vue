@@ -74,7 +74,7 @@
             </div>
           </main>
 
-          <!-- Título do Livro em Fonte Editorial com Porcentagem ao lado -->
+          <!-- Título do Livro em Fonte Editorial com Página ao lado -->
           <footer
             v-if="store.title && !store.isZenMode"
             class="reader-viewer__book-title-bar"
@@ -83,7 +83,7 @@
               'reader-viewer__book-title-bar--white': activeTheme === 'white',
               'reader-viewer__book-title-bar--black': activeTheme === 'black'
             }"
-            :title="`${store.title} (${store.progressPercentage}%)`"
+            :title="`${store.title} (${pageDisplay})`"
             aria-label="Título do livro"
           >
             <div class="flex items-center justify-center gap-2 max-w-[95%]">
@@ -92,9 +92,9 @@
               </h2>
               <span
                 class="reader-viewer__book-progress-badge font-technical font-bold text-accent shrink-0 text-xs sm:text-sm px-2 py-0.5 rounded-full border border-accent/30 bg-accent/10"
-                :title="`Progresso da leitura: ${store.progressPercentage}%`"
+                :title="`Progresso da leitura: ${pageDisplay}`"
               >
-                {{ store.progressPercentage }}%
+                {{ pageDisplay }}
               </span>
             </div>
           </footer>
@@ -290,6 +290,17 @@ const themeBgColor = computed(() => {
   if (activeTheme.value === 'white') return '#ffffff'
   if (activeTheme.value === 'black') return '#0c0c0e'
   return '#f5eedc'
+})
+
+const pageDisplay = computed(() => {
+  if (store.isTwoPageMode && store.totalPages > 1) {
+    const leftNum = store.currentPage % 2 !== 0 ? store.currentPage : Math.max(1, store.currentPage - 1)
+    const rightNum = Math.min(leftNum + 1, store.totalPages)
+    return leftNum === rightNum
+      ? `Pág. ${leftNum}/${store.totalPages}`
+      : `Pág. ${leftNum}-${rightNum}/${store.totalPages}`
+  }
+  return store.totalPages > 0 ? `Pág. ${store.currentPage}/${store.totalPages}` : `Pág. ${store.currentPage}`
 })
 
 const isSavedPagesOpen = ref(false)

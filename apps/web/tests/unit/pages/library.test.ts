@@ -71,9 +71,10 @@ describe('Library Page', () => {
     // Não deve exibir formato de arquivo (EPUB ou PDF)
     expect(wrapper.text()).not.toContain('EPUB')
     expect(wrapper.text()).not.toContain('PDF')
-    // Deve exibir porcentagem de leitura não editável
-    expect(wrapper.text()).toContain('45%')
-    expect(wrapper.text()).toContain('0%')
+    // Deve exibir métrica de leitura por página (não porcentagem)
+    expect(wrapper.text()).toContain('Pág. 45')
+    expect(wrapper.text()).toContain('Pág. 1')
+    expect(wrapper.text()).not.toContain('45%')
     // Botão Ler Livro e seletor de status devem ter sido removidos
     expect(wrapper.text()).not.toContain('Ler Livro')
     expect(wrapper.text()).not.toContain('Lendo')

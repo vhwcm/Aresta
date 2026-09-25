@@ -38,7 +38,7 @@
             <div class="flex-1 h-1.5 bg-bgElevated rounded-full overflow-hidden border border-divider">
               <div class="h-full bg-primary rounded-full transition-all" :style="{ width: `${Math.min(100, Math.max(0, node.bookProgress))}%` }" />
             </div>
-            <span class="text-[10px] font-mono text-textSecondary">{{ Math.round(node.bookProgress) }}%</span>
+            <span class="text-[10px] font-mono text-textSecondary">Pág. {{ (node as any).bookCurrentPage || Math.round(node.bookProgress) }}</span>
           </div>
         </div>
 

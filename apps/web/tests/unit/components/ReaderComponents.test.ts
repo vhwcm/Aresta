@@ -83,8 +83,9 @@ describe('Reader Components', () => {
         props: { isGraphActive: true },
       })
 
-      // Verifica exibição da porcentagem (5 / 20 = 25%)
-      expect(wrapper.text()).toContain('25%')
+      // Verifica exibição do progresso por página (Pág. 5-6/20) e ausência de porcentagem
+      expect(wrapper.text()).toContain('Pág. 5-6/20')
+      expect(wrapper.text()).not.toContain('%')
 
       // Botão Sair
       const closeBtn = wrapper.find('#btn-close-book')

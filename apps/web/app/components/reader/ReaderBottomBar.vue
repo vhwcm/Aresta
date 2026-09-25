@@ -28,26 +28,32 @@
         <span class="hidden xs:inline md:hidden">Sair</span>
       </button>
 
-      <!-- Indicador de Progresso e Página -->
+      <!-- Indicador de Progresso por Página -->
       <div
-        class="flex flex-row md:flex-col items-center justify-center gap-1.5 md:gap-0.5 px-2.5 py-1.5 sm:px-3 sm:py-2 md:w-11 md:py-2 md:px-0.5 rounded-xl border text-xs font-semibold text-center"
+        class="flex flex-row md:flex-col items-center justify-center gap-1.5 md:gap-0.5 px-2.5 py-1.5 sm:px-3 sm:py-2 md:w-11 md:py-2 md:px-0.5 rounded-xl border text-xs font-semibold text-center select-none"
         :class="store.readerTheme === 'sepia'
           ? 'bg-[#f5eedc] border-[#dfd5c0] text-[#5c4d3c]'
           : (store.readerTheme === 'white'
             ? 'bg-gray-100 border-gray-200 text-gray-700'
             : 'bg-white/5 border-divider text-textSecondary')"
-        :title="`Progresso da leitura: ${store.progressPercentage}% (${pageDisplay})`"
-        aria-label="Progresso da leitura"
+        :title="`Progresso da leitura: ${pageDisplay}`"
+        aria-label="Progresso da leitura por página"
       >
-        <span class="text-accent font-bold font-technical text-xs md:text-[11px] leading-tight">
-          {{ store.progressPercentage }}%
+        <!-- Mobile / Tablet (linha única) -->
+        <span class="md:hidden text-accent font-bold font-technical text-xs leading-tight">
+          {{ pageDisplay }}
+        </span>
+
+        <!-- Desktop (vertical compacto) -->
+        <span class="hidden md:inline text-accent font-bold font-technical text-xs md:text-[11px] leading-tight">
+          {{ pageDisplayShort }}
         </span>
         <span
-          class="hidden sm:inline md:inline text-[11px] md:text-[9px] font-technical leading-tight"
+          v-if="store.totalPages > 0"
+          class="hidden md:inline text-[9px] font-technical font-mono leading-tight"
           :class="store.readerTheme === 'sepia' ? 'text-[#786C5E]' : (store.readerTheme === 'white' ? 'text-gray-500' : 'text-textSecondary/60')"
         >
-          <span class="md:hidden">({{ pageDisplay }})</span>
-          <span class="hidden md:inline font-mono">{{ pageDisplayShort }}</span>
+          /{{ store.totalPages }}
         </span>
       </div>
     </div>
@@ -622,10 +628,10 @@ const pageDisplay = computed(() => {
     const leftNum = store.currentPage % 2 !== 0 ? store.currentPage : Math.max(1, store.currentPage - 1)
     const rightNum = Math.min(leftNum + 1, store.totalPages)
     return leftNum === rightNum
-      ? `${leftNum}/${store.totalPages}`
-      : `${leftNum}-${rightNum}/${store.totalPages}`
+      ? `Pág. ${leftNum}/${store.totalPages}`
+      : `Pág. ${leftNum}-${rightNum}/${store.totalPages}`
   }
-  return `${store.currentPage}/${store.totalPages}`
+  return store.totalPages > 0 ? `Pág. ${store.currentPage}/${store.totalPages}` : `Pág. ${store.currentPage}`
 })
 
 const pageDisplayShort = computed(() => {
@@ -634,7 +640,7 @@ const pageDisplayShort = computed(() => {
     const rightNum = Math.min(leftNum + 1, store.totalPages)
     return leftNum === rightNum ? `${leftNum}` : `${leftNum}-${rightNum}`
   }
-  return `${store.currentPage}/${store.totalPages}`
+  return `${store.currentPage}`
 })
 
 function handleClickOutside(event: MouseEvent) {

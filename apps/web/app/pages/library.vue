@@ -127,7 +127,7 @@
               </div>
             </div>
 
-            <!-- Progresso de Leitura (Porcentagem Não Editável) -->
+            <!-- Progresso de Leitura (Exibição por Página) -->
             <div class="flex items-center gap-2.5 text-xs font-technical text-textSecondary">
               <div class="w-16 sm:w-20 md:w-24 h-1.5 rounded-full bg-white/10 overflow-hidden shrink-0">
                 <div
@@ -135,7 +135,7 @@
                   :style="{ width: `${getBookProgress(item)}%` }"
                 ></div>
               </div>
-              <span class="font-medium shrink-0">{{ getBookProgress(item) }}%</span>
+              <span class="font-medium shrink-0">{{ getBookPageDisplay(item) }}</span>
             </div>
           </div>
 
@@ -776,6 +776,16 @@ const getBookProgress = (item: UserBookItem): number => {
     return Math.min(100, Math.max(0, Math.round(item.currentPage)))
   }
   return 0
+}
+
+const getBookPageDisplay = (item: UserBookItem): string => {
+  const current = typeof item.currentPage === 'number' && item.currentPage > 0 ? item.currentPage : 1
+  const total = (item as any).totalPages || (item as any).total_pages
+  if (item.status === 'LIDO' && total) return `Pág. ${total}/${total}`
+  if (total && total > 0) {
+    return `Pág. ${current}/${total}`
+  }
+  return `Pág. ${current}`
 }
 
 const getStatusBadgeClass = (status: string) => {

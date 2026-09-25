@@ -443,8 +443,14 @@
             }"
           >
             <span>{{ formatDate(item.createdAt) }}</span>
-            <span v-if="item.progress !== undefined && item.progress !== null">
-              Progresso: {{ Math.round(item.progress) }}%
+            <span v-if="item.page || (item.cfi && item.cfi.startsWith('page:'))">
+              Pág. {{ item.page || item.cfi.replace('page:', '') }}
+            </span>
+            <span v-else-if="item.chapterTitle">
+              {{ item.chapterTitle }}
+            </span>
+            <span v-else-if="item.progress !== undefined && item.progress !== null">
+              Pág. {{ Math.round(item.progress) }}
             </span>
           </div>
         </article>

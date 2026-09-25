@@ -30,7 +30,7 @@ describe('CanvasNodeBook Component', () => {
     // Título e Autor
     expect(wrapper.text()).toContain('O Programador Pragmático');
     expect(wrapper.text()).toContain('Andy Hunt & Dave Thomas');
-    expect(wrapper.text()).toContain('65%');
+    expect(wrapper.text()).toContain('Pág. 65');
 
     // Capa do livro
     const img = wrapper.find('img');
