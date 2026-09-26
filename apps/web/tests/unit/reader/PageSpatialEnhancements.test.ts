@@ -248,7 +248,7 @@ describe('PageSpatialEnhancements - Vinco Central e Pilhas de Páginas 3D', () =
     expect(lateralHeight).toBeGreaterThan(pageHeight)
   })
 
-  it('garante que as linhas da base são horizontais e se unem concentricamente com as verticais dos cantos', async () => {
+  it('garante que o miolo possui corte superior e inferior com cantos retos de 90 graus em todo o perímetro', async () => {
     const store = useReaderStore()
     store.setDocument({
       type: 'epub',
@@ -274,18 +274,27 @@ describe('PageSpatialEnhancements - Vinco Central e Pilhas de Páginas 3D', () =
     const bottomSvg = wrapper.find('.book-bottom-svg')
     const outerPath = bottomSvg.find('.book-stack-line--outer').attributes('d')
 
-    // Deve iniciar com traço vertical a partir de y = 0
-    expect(outerPath).toMatch(/M \d+(\.\d+)? 0 L \d+(\.\d+)? \d+/)
+    // Deve fechar em laço perimétrico completo ('Z')
+    expect(outerPath).toContain('Z')
 
-    // Encontro reto no canto esquerdo: desce verticalmente e segue horizontalmente no mesmo Y
-    const cornerLeftMatch = outerPath.match(/M (\d+(\.\d+)?) 0 L \1 (\d+(\.\d+)?) L (\d+(\.\d+)?) \3/)
-    expect(cornerLeftMatch).not.toBeNull()
+    // Canto superior esquerdo reto (90 graus): horizontal superior vira vertical descendo no mesmo X
+    expect(outerPath).toMatch(/L (\d+(\.\d+)?) 0 L \1 \d+/)
 
-    // Encontro reto no canto direito: chega horizontalmente e sobe verticalmente no mesmo X
-    const cornerRightMatch = outerPath.match(/L (\d+(\.\d+)?) (\d+(\.\d+)?) L \1 0$/)
-    expect(cornerRightMatch).not.toBeNull()
+    // Canto inferior esquerdo reto (90 graus): vertical descendo vira horizontal no mesmo Y
+    expect(outerPath).toMatch(/L \d+(\.\d+)? (\d+(\.\d+)?) L \d+(\.\d+)? \1/)
 
-    // Deve terminar com traço vertical subindo até y = 0 no canto direito
-    expect(outerPath).toMatch(/L \d+(\.\d+)? 0$/)
+    // Canto inferior direito reto (90 graus): horizontal vira vertical subindo no mesmo X
+    expect(outerPath).toMatch(/L (\d+(\.\d+)?) (\d+(\.\d+)?) L \1 0/)
+
+    // Canto superior direito reto (90 graus): vertical subindo vira horizontal no mesmo Y
+    expect(outerPath).toMatch(/L \d+(\.\d+)? 0 L \d+(\.\d+)? 0/)
+
+    // Áreas táteis superiores devem existir para navegação
+    const topLeftStack = wrapper.find('.book-page-stack-top--left')
+    const topRightStack = wrapper.find('.book-page-stack-top--right')
+    expect(topLeftStack.exists()).toBe(true)
+    expect(topRightStack.exists()).toBe(true)
+    expect(topLeftStack.attributes('role')).toBe('button')
+    expect(topRightStack.attributes('role')).toBe('button')
   })
 })

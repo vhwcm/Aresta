@@ -30,9 +30,9 @@
             :class="{ 'book-page-stack--hitbox': renderedLayout.isTwoPage }"
             :style="{
               left: `${renderedLayout.leftPage.left - pageStackDepth.leftWidth}px`,
-              top: `${renderedLayout.leftPage.top}px`,
+              top: `${renderedLayout.leftPage.top - pageStackDepth.bottomLeftHeight}px`,
               width: `${pageStackDepth.leftWidth}px`,
-              height: `${renderedLayout.leftPage.height + pageStackDepth.bottomLeftHeight}px`,
+              height: `${renderedLayout.leftPage.height + pageStackDepth.bottomLeftHeight * 2}px`,
             }"
             @click.stop="requestTurn('previous')"
             :title="`Páginas lidas (${store.currentPage - 1} de ${store.totalPages} páginas - Voltar)`"
@@ -160,9 +160,9 @@
             :class="{ 'book-page-stack--hitbox': renderedLayout.isTwoPage }"
             :style="{
               left: `${renderedLayout.rightPage.left + renderedLayout.rightPage.width}px`,
-              top: `${renderedLayout.rightPage.top}px`,
+              top: `${renderedLayout.rightPage.top - pageStackDepth.bottomRightHeight}px`,
               width: `${pageStackDepth.rightWidth}px`,
-              height: `${renderedLayout.rightPage.height + pageStackDepth.bottomRightHeight}px`,
+              height: `${renderedLayout.rightPage.height + pageStackDepth.bottomRightHeight * 2}px`,
             }"
             @click.stop="requestTurn('next')"
             :title="`Páginas restantes (${store.totalPages - store.currentPage} de ${store.totalPages} páginas - Avançar)`"
@@ -178,14 +178,14 @@
             :class="{ 'book-spine-crease--pdf': store.document?.type === 'pdf' }"
             :style="{
               left: `${renderedLayout.leftPage.left + renderedLayout.leftPage.width - 14}px`,
-              top: `${renderedLayout.leftPage.top}px`,
+              top: `${renderedLayout.leftPage.top - Math.max(pageStackDepth.bottomLeftHeight, pageStackDepth.bottomRightHeight)}px`,
               width: '28px',
-              height: `${renderedLayout.leftPage.height}px`,
+              height: `${renderedLayout.leftPage.height + Math.max(pageStackDepth.bottomLeftHeight, pageStackDepth.bottomRightHeight) * 2}px`,
             }"
             aria-hidden="true"
           />
 
-          <!-- Sistema Unificado de Linhas de Folhas (Laterais, Cantos Elípticos e Base Horizontal) -->
+          <!-- Sistema Unificado de Linhas de Folhas (Topo, Laterais, Cantos Retos e Base) -->
           <div
             v-if="pageCreaseEnabled && pageAnimationEnabled && bottomStackSvg && Math.max(pageStackDepth.bottomLeftHeight, pageStackDepth.bottomRightHeight) > 0"
             class="book-page-stack-bottom-unified"
@@ -226,12 +226,12 @@
               />
             </svg>
 
-            <!-- Área de Clique Esquerda (Voltar) -->
+            <!-- Área de Clique Inferior Esquerda (Voltar) -->
             <div
               class="book-page-stack-bottom book-page-stack-bottom--left book-bottom-hitbox"
               :style="{
                 left: `${bottomStackSvg.hitboxLeftX}px`,
-                top: `${bottomStackSvg.pageH}px`,
+                top: `${bottomStackSvg.hitboxBottomY}px`,
                 width: `${bottomStackSvg.wL}px`,
                 height: `${bottomStackSvg.hL}px`,
               }"
@@ -242,12 +242,44 @@
               aria-label="Páginas já lidas. Clique para voltar página"
             />
 
-            <!-- Área de Clique Direita (Avançar) -->
+            <!-- Área de Clique Inferior Direita (Avançar) -->
             <div
               class="book-page-stack-bottom book-page-stack-bottom--right book-bottom-hitbox"
               :style="{
                 left: `${bottomStackSvg.hitboxRightX}px`,
-                top: `${bottomStackSvg.pageH}px`,
+                top: `${bottomStackSvg.hitboxBottomY}px`,
+                width: `${bottomStackSvg.wR}px`,
+                height: `${bottomStackSvg.hR}px`,
+              }"
+              @click.stop="requestTurn('next')"
+              :title="`Páginas restantes (${store.totalPages - store.currentPage} de ${store.totalPages} páginas - Avançar)`"
+              role="button"
+              tabindex="0"
+              aria-label="Páginas restantes a ler. Clique para avançar página"
+            />
+
+            <!-- Área de Clique Superior Esquerda (Voltar) -->
+            <div
+              class="book-page-stack-top book-page-stack-top--left book-bottom-hitbox"
+              :style="{
+                left: `${bottomStackSvg.hitboxLeftX}px`,
+                top: `${bottomStackSvg.hitboxTopY}px`,
+                width: `${bottomStackSvg.wL}px`,
+                height: `${bottomStackSvg.hL}px`,
+              }"
+              @click.stop="requestTurn('previous')"
+              :title="`Páginas lidas (${store.currentPage - 1} de ${store.totalPages} páginas - Voltar)`"
+              role="button"
+              tabindex="0"
+              aria-label="Páginas já lidas. Clique para voltar página"
+            />
+
+            <!-- Área de Clique Superior Direita (Avançar) -->
+            <div
+              class="book-page-stack-top book-page-stack-top--right book-bottom-hitbox"
+              :style="{
+                left: `${bottomStackSvg.hitboxRightX}px`,
+                top: `${bottomStackSvg.hitboxTopY}px`,
                 width: `${bottomStackSvg.wR}px`,
                 height: `${bottomStackSvg.hR}px`,
               }"
@@ -488,10 +520,10 @@ const bottomStackSvg = computed(() => {
 
   const maxH = Math.max(H_L, H_R, 2)
   const totalW = W_L + totalPageW + W_R
-  const totalH = pageH + maxH
+  const totalH = maxH + pageH + maxH
   const spineX = W_L + wL
 
-  // 5 linhas concêntricas correspondendo 1-para-1 do topo lateral até a base
+  // 5 linhas concêntricas correspondendo 1-para-1 ao perímetro completo do livro (topo, laterais e base)
   const N = 5
   const lines: Array<{ k: number; d: string; isOuter: boolean }> = []
 
@@ -502,59 +534,76 @@ const bottomStackSvg = computed(() => {
     const dx_R = Math.round(fk * W_R * 10) / 10
     const dy_R = Math.round(fk * H_R * 10) / 10
 
-    let d = ''
-
-    // Ponto de início na borda lateral esquerda (linha vertical descendo)
-    if (W_L > 0) {
-      const xLeft = W_L - dx_L
-      d += `M ${xLeft} 0 `
-      // Encontro reto no canto inferior esquerdo (90 graus)
-      d += `L ${xLeft} ${pageH + dy_L} `
-    } else {
-      d += `M ${spineX} ${pageH} `
-    }
-
-    // Trecho horizontal esquerdo da base
     const spineCurveW = Math.min(18, Math.floor(wL * 0.1))
     const xSpineStart = spineX - spineCurveW
     const xSpineEnd = spineX + spineCurveW
-
-    if (W_L > 0) {
-      d += `L ${xSpineStart} ${pageH + dy_L} `
-    }
-
-    // Transição suave em S-curve na lombada
     const cpSpine1_x = spineX - Math.round(spineCurveW * 0.25)
     const cpSpine2_x = spineX + Math.round(spineCurveW * 0.25)
-    d += `C ${cpSpine1_x} ${pageH + dy_L}, ${cpSpine2_x} ${pageH + dy_R}, ${xSpineEnd} ${pageH + dy_R} `
 
-    // Trecho horizontal direito da base
+    const xLeft = W_L - dx_L
     const xRight = W_L + totalPageW + dx_R
-    // Encontro reto no canto inferior direito (90 graus)
-    d += `L ${xRight} ${pageH + dy_R} `
 
-    // Lateral direita subindo verticalmente até o topo
-    if (W_R > 0) {
-      d += `L ${xRight} 0 `
+    const yTop_L = maxH - dy_L
+    const yTop_R = maxH - dy_R
+    const yBottom_L = maxH + pageH + dy_L
+    const yBottom_R = maxH + pageH + dy_R
+
+    let d = ''
+
+    if (W_L > 0) {
+      // 1. Inicia na lombada superior esquerda
+      d += `M ${xSpineStart} ${yTop_L} `
+      // 2. Linha horizontal superior esquerda
+      d += `L ${xLeft} ${yTop_L} `
+      // 3. Canto superior esquerdo reto (90 graus) -> desce pela lateral
+      d += `L ${xLeft} ${yBottom_L} `
+      // 4. Canto inferior esquerdo reto (90 graus) -> segue pela base
+      d += `L ${xSpineStart} ${yBottom_L} `
+      if (W_R > 0) {
+        d += `C ${cpSpine1_x} ${yBottom_L}, ${cpSpine2_x} ${yBottom_R}, ${xSpineEnd} ${yBottom_R} `
+      } else {
+        d += `C ${cpSpine1_x} ${yBottom_L}, ${cpSpine2_x} ${maxH + pageH}, ${spineX} ${maxH + pageH} `
+      }
+    } else {
+      d += `M ${spineX} ${maxH + pageH} `
+      d += `C ${cpSpine1_x} ${maxH + pageH}, ${cpSpine2_x} ${yBottom_R}, ${xSpineEnd} ${yBottom_R} `
     }
 
+    if (W_R > 0) {
+      // 5. Linha horizontal inferior direita
+      d += `L ${xRight} ${yBottom_R} `
+      // 6. Canto inferior direito reto (90 graus) -> sobe pela lateral
+      d += `L ${xRight} ${yTop_R} `
+      // 7. Canto superior direito reto (90 graus) -> segue pelo topo
+      d += `L ${xSpineEnd} ${yTop_R} `
+      if (W_L > 0) {
+        d += `C ${cpSpine2_x} ${yTop_R}, ${cpSpine1_x} ${yTop_L}, ${xSpineStart} ${yTop_L} `
+      } else {
+        d += `C ${cpSpine2_x} ${yTop_R}, ${cpSpine1_x} ${maxH}, ${spineX} ${maxH} `
+      }
+    } else {
+      d += `L ${spineX} ${maxH} `
+      d += `C ${cpSpine2_x} ${maxH}, ${cpSpine1_x} ${yTop_L}, ${xSpineStart} ${yTop_L} `
+    }
+
+    d += 'Z'
     lines.push({ k, d: d.trim(), isOuter: k === N })
   }
 
   // Polígono fechado de preenchimento do bloco de folhas
   const outerLine = lines[lines.length - 1]
-  let fillPath = outerLine.d
-  fillPath += ` L ${W_L + totalPageW} 0 L ${W_L + totalPageW} ${pageH} L ${W_L} ${pageH} L ${W_L} 0 Z`
+  const fillPath = outerLine.d
 
   const strokePath = outerLine.d
   const innerLines = lines.slice(0, lines.length - 1)
 
   return {
     left: layout.leftPage.left - W_L,
-    top: layout.leftPage.top,
+    top: layout.leftPage.top - maxH,
     width: totalW,
     height: totalH,
     viewBox: `0 0 ${totalW} ${totalH}`,
+    maxH,
     pageH,
     wL,
     wR,
@@ -564,6 +613,8 @@ const bottomStackSvg = computed(() => {
     hR: H_R,
     hitboxLeftX: W_L,
     hitboxRightX: W_L + wL,
+    hitboxBottomY: maxH + pageH,
+    hitboxTopY: 0,
     lines,
     fillPath,
     strokePath,
@@ -1229,6 +1280,7 @@ async function prepare3DTextures(direction: PageTurnDirection, gripY = 0.5): Pro
     direction,
     bleedX: BLEED_X,
     bleedY: BLEED_Y,
+    theme: activeTheme.value as any,
   })
   pageCurl3D.setTextures(frontCanvas, backCanvas)
   pageCurl3D.updateUniforms({
@@ -1358,7 +1410,7 @@ function hasTextAtCaret(clientX?: number, clientY?: number): boolean {
 function isInteractiveTextTarget(target: EventTarget | null, clientX?: number, clientY?: number): boolean {
   if (!target) return false
   const el = target instanceof HTMLElement ? target : (target as any).parentElement as HTMLElement | null
-  if (!el || el.closest('.book-page-stack, .book-page-stack-bottom, .book-page-stack-bottom-unified, .book-bottom-hitbox')) return false
+  if (!el || el.closest('.book-page-stack, .book-page-stack-bottom, .book-page-stack-top, .book-page-stack-bottom-unified, .book-bottom-hitbox')) return false
 
   // 1. Elementos textuais explícitos (PDF textLayer spans, marcações de anotação, tags do EPUB)
   if (el.closest('.textLayer, .textLayer span, .reader-highlight, .text-highlight')) return true
@@ -1395,7 +1447,7 @@ async function onPointerDown(event: PointerEvent) {
 
   const pt = pointFrom(event)
   const isTextTarget = isInteractiveTextTarget(event.target, event.clientX, event.clientY)
-  const isPageStackTarget = Boolean((event.target as HTMLElement | null)?.closest('.book-page-stack, .book-page-stack-bottom, .book-page-stack-bottom-unified, .book-bottom-hitbox'))
+  const isPageStackTarget = Boolean((event.target as HTMLElement | null)?.closest('.book-page-stack, .book-page-stack-bottom, .book-page-stack-top, .book-page-stack-bottom-unified, .book-bottom-hitbox'))
 
   const layout = pageLayout.value
   const targetPageRect = layout.isTwoPage
@@ -1692,6 +1744,7 @@ onMounted(() => {
     pageWidth: w,
     pageHeight: h,
     direction: 'next',
+    theme: activeTheme.value as any,
   })
 
   if (typeof window !== 'undefined' && window.matchMedia) {
@@ -1869,8 +1922,7 @@ defineExpose({
   border-bottom: 1px solid rgba(255, 255, 255, 0.22);
   border-left: 1px solid rgba(255, 255, 255, 0.22);
   border-right: 1px solid rgba(255, 255, 255, 0.1);
-  border-top-left-radius: 3px;
-  border-bottom-left-radius: 3px;
+  border-radius: 0 !important;
 }
 
 .theme-black .page-sheet--right {
@@ -1881,8 +1933,7 @@ defineExpose({
   border-bottom: 1px solid rgba(255, 255, 255, 0.22);
   border-right: 1px solid rgba(255, 255, 255, 0.22);
   border-left: 1px solid rgba(255, 255, 255, 0.1);
-  border-top-right-radius: 3px;
-  border-bottom-right-radius: 3px;
+  border-radius: 0 !important;
 }
 
 .theme-black .page-sheet--single {
@@ -1895,16 +1946,14 @@ defineExpose({
   box-shadow: inset -7px 0 12px -8px rgba(0, 0, 0, 0.5), -4px 0 20px rgba(0, 0, 0, 0.45);
   border-left: 1px solid rgba(255, 255, 255, 0.04);
   border-right: 1px solid rgba(0, 0, 0, 0.12);
-  border-top-left-radius: 6px;
-  border-bottom-left-radius: 6px;
+  border-radius: 0 !important;
 }
 
 .page-sheet--right {
   box-shadow: inset 7px 0 12px -8px rgba(0, 0, 0, 0.5), 4px 0 20px rgba(0, 0, 0, 0.45);
   border-left: 1px solid rgba(0, 0, 0, 0.12);
   border-right: 1px solid rgba(255, 255, 255, 0.04);
-  border-top-right-radius: 6px;
-  border-bottom-right-radius: 6px;
+  border-radius: 0 !important;
 }
 
 .page-sheet--single {

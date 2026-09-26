@@ -166,5 +166,15 @@ Para elevar o modelo mental de imersão de um livro físico real na tela (especi
 * **Transição Suave na Lombada:** Todas as linhas continuam cruzando a mediana central por meio de curvas suaves em S (`C`), mantendo a ilusão contínua de blocos físicos de papel que convergem para a encadernação central.
 * **Fidelidade de Tema:** Suporte a traços luminosos de alto contraste em OLED Black (`rgba(255, 255, 255, 0.2)` e `0.35`), tons quentes em Sépia e grafite suave em White.
 
-
-
+### 7.5. Fechamento Perimétrico 360° do Miolo com Corte Superior ("Head") e Quinas Retas
+* **Geometria Editorial Completa (Head, Tail e Fore-Edges):** Em um livro físico real aberto, o bloco de folhas (miolo) é visível em três dimensões contínuas: corte superior (*head*), corte dianteiro lateral (*fore-edge*) e corte inferior (*tail*). Para eliminar o término abrupto das linhas laterais no vazio superior ($Y = 0$), o sistema expandiu o SVG unificado para envelopar todo o perímetro em 360°.
+* **Trajetória Fechada Unificada (Closed Loop SVG):**
+  1. Início na lombada superior esquerda $\to$ linha horizontal pelo topo até $X = x_{L, k}$.
+  2. Quina ortogonal reta de 90° $\to$ descida vertical contínua pela lateral esquerda até a base.
+  3. Quina ortogonal reta de 90° $\to$ linha horizontal pela base esquerda até a lombada.
+  4. Curva cúbica de Bézier em S atravessando a lombada inferior até a base direita.
+  5. Linha horizontal pela base direita $\to$ quina de 90° $\to$ subida vertical pela lateral direita até o topo.
+  6. Quina de 90° $\to$ linha horizontal pelo topo direito até a lombada superior.
+  7. Curva cúbica de Bézier em S atravessando a lombada superior de volta à esquerda, fechando o polígono com `Z`.
+* **Eliminação do Dente nos Cantos (Flush Page Sheets):** O dente/notch que ocorria na junção superior entre a folha de conteúdo e o corte do papel foi eliminado aplicando `border-radius: 0 !important` em `.page-sheet--left` e `.page-sheet--right` no modo 2 páginas. A folha de conteúdo sobrepõe o centro perfeitamente, revelando o miolo apenas nas extremidades externas.
+* **Hitboxes Interativos Superiores:** Inclusão de áreas de clique no topo (`.book-page-stack-top--left` e `.book-page-stack-top--right`) para folhear o livro com atalhos de toque/clique ergonômicos em qualquer borda do miolo.
