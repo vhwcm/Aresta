@@ -153,9 +153,19 @@ Para elevar o modelo mental de imersão de um livro físico real na tela (especi
 ### 7.3. Pilhas Inferiores Assimétricas e Transição Elíptica (`.book-page-stack-bottom-unified`)
 * **Perspectiva do Corte Inferior ("Tail"):** Emulação das folhas na parte inferior do livro aberto na mesa.
 * **Transição Elíptica Contínua na Lombada:** Para eliminar descontinuidades ou degraus retos verticais bruscos entre a espessura da página esquerda e direita, o bloco inferior é renderizado como um SVG unificado com curva de Bézier cúbica simétrica (arco elíptico suave de 36px) centrada na dobra central. A curvatura preserva derivadas horizontais (tangentes nulas) em ambas as extremidades, fundindo organicamente as duas espessuras.
-* **Unificação dos Cantos Sem Divisão:** As pilhas laterais (`.book-page-stack`) estendem sua altura contínua até o nível exato da base (`height + bottomHeight`), eliminando qualquer divisão ou corte horizontal nas quinas externas do livro e garantindo um bloco de folhas monolítico e natural.
+* **Unificação dos Cantos Sem Divisão:** As pilhas laterais estendem sua altura contínua até o nível exato da base (`height + bottomHeight`), eliminando qualquer divisão ou corte horizontal nas quinas externas do livro e garantindo um bloco de folhas monolítico e natural.
 * **Assimetria Dinâmica:**
   * **Folha Esquerda:** Altura proporcional às páginas lidas (`currentPage - 1`), partindo de 0px na capa até 8px no final da obra.
   * **Folha Direita:** Altura proporcional às páginas restantes (`totalPages - currentPage`), partindo de 8px na capa até 0px no final da obra.
 * **Interatividade Integrada:** As pilhas inferiores e laterais atuam como atalhos clicáveis para avançar ou retroceder a página com suporte pleno a acessibilidade (`role="button"`).
+
+### 7.4. Sistema Vetorial de Linhas de Folhas 1-para-1 com Cantos Elípticos (`.book-stack-line`)
+* **Orientação Física Realista (Horizontal na Base vs Vertical nas Laterais):** Em livros físicos, as bordas laterais expõem o corte vertical das páginas, enquanto a base inferior expõe o corte horizontal das folhas. Para harmonizar esses dois planos tridimensionais sem quebras, o motor vetorial adota correspondência 1-para-1 direta entre cada folha lateral e sua respectiva linha na base.
+* **Curvatura Elíptica Ampla nos Cantos (Corner Sweep):** Cada folha $k \in \{1 \dots N\}$ transiciona da lateral para a base por meio de uma elipse ampla que inicia até 36px acima da base no eixo vertical ($C_{y, k} = \min(36, \max(8, W \cdot 1.2)) \cdot \frac{k}{N}$), garantindo:
+  * **Tangência Vertical Estrita na Entrada:** Início da curva com vetor $(0, 1)$ contíguo à linha vertical lateral.
+  * **Tangência Horizontal Estrita na Saída:** Término da curva com vetor $(1, 0)$ perfeitamente paralelo à borda inferior.
+  * **Concentricidade Monotônica:** As linhas concêntricas mantêm distâncias estritamente proporcionais, eliminando cruzamento de traços mesmo com a base sendo substancialmente menor ($\approx 8\text{px}$) que as laterais ($\approx 24\text{px}$).
+* **Transição na Lombada:** Todas as linhas cruzam a mediana com curvas suaves em S (`C`), mantendo a ilusão contínua de blocos físicos de papel costurados no centro.
+* **Fidelidade de Tema:** Suporte a traços luminosos de alto contraste em OLED Black (`rgba(255, 255, 255, 0.2)` e `0.35`), tons quentes em Sépia e grafite suave em White.
+
 
