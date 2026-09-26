@@ -104,4 +104,25 @@ describe('Default Layout (Global FolderTagSidebar & Mobile Hamburger)', () => {
     expect(wrapper.findComponent({ name: 'FolderTagSidebar' }).exists()).toBe(false)
     expect(wrapper.text()).toContain('Landing Page')
   })
+
+  it('marks is-journal-active as true on FolderTagSidebar when on /diario', () => {
+    mockRoute.value = { path: '/diario', fullPath: '/diario' }
+    const wrapper = mount(DefaultLayout, {
+      global: {
+        stubs: {
+          FolderTagSidebar: {
+            name: 'FolderTagSidebar',
+            template: '<div class="sidebar-stub" :data-journal-active="isJournalActive"></div>',
+            props: ['isJournalActive']
+          },
+          MenuIcon: true
+        }
+      }
+    })
+
+    const sidebar = wrapper.findComponent({ name: 'FolderTagSidebar' })
+    expect(sidebar.props('isJournalActive')).toBe(true)
+    const main = wrapper.find('main')
+    expect(main.classes()).toContain('overflow-hidden')
+  })
 })

@@ -672,15 +672,7 @@ const handleOpenJournal = () => {
   activeNote.value = null
   activeFolder.value = null
   activeTag.value = null
-  router.replace({
-    query: {
-      ...route.query,
-      view: 'journal',
-      tab: undefined,
-      note: undefined,
-      id: undefined
-    }
-  })
+  void router.push('/diario')
 }
 
 // Nota ativa no editor
@@ -846,6 +838,11 @@ const handleSelectGraphNode = async (node: any) => {
 
 // Sincroniza query params da rota
 const syncFromRoute = async () => {
+  if (route?.query?.view === 'journal') {
+    await router.replace('/diario')
+    return
+  }
+
   let hasExplicitTab = false
   if (route?.query?.tab) {
     hasExplicitTab = true

@@ -197,8 +197,9 @@ export function useWorkspaceSidebar() {
 
   const handleOpenJournal = async () => {
     viewLayout.value = 'journal'
-    if (route.path !== '/') {
-      await router?.push('/?view=journal')
+    const path = route.path || ''
+    if (path !== '/diario' && path !== '/diário' && decodeURIComponent(path) !== '/diário') {
+      await router?.push('/diario')
     }
   }
 

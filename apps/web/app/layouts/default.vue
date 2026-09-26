@@ -13,7 +13,7 @@
       :selected-folder="activeFolder"
       :selected-tag="activeTag"
       :selected-item-id="activeItemId"
-      :is-journal-active="viewLayout === 'journal'"
+      :is-journal-active="isJournalActive"
       v-model:view-layout="viewLayout"
       item-label="itens"
       v-model:collapsed="isSidebarCollapsed"
@@ -53,13 +53,14 @@
 
 <script setup lang="ts">
 import { computed, onMounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { Menu as MenuIcon } from 'lucide-vue-next'
 import FolderTagSidebar from '~/components/FolderTagSidebar.vue'
 import { useAuth } from '~/composables/useAuth'
 import { useWorkspaceSidebar } from '~/composables/useWorkspaceSidebar'
 
 const route = useRoute()
+const router = useRouter()
 const auth = useAuth()
 
 const {
@@ -90,7 +91,12 @@ const isImmersivePage = computed(() => {
 
 const isCanvasOrFullPage = computed(() => {
   const path = route?.path || ''
-  return path === '/' || path.startsWith('/canvas')
+  return path === '/' || path.startsWith('/canvas') || path === '/diario' || path === '/diário' || decodeURIComponent(path) === '/diário'
+})
+
+const isJournalActive = computed(() => {
+  const path = route?.path || ''
+  return path === '/diario' || path === '/diário' || decodeURIComponent(path) === '/diário' || (path === '/' && route?.query?.view === 'journal')
 })
 
 const onOpenJournal = () => {
@@ -100,17 +106,25 @@ const onOpenJournal = () => {
   void handleOpenJournal()
 }
 
-const onSelectFolder = (folder: string | null) => {
+const onSelectFolder = async (folder: string | null) => {
   activeFolder.value = folder
   if (typeof window !== 'undefined' && window.innerWidth < 768) {
     isSidebarCollapsed.value = true
   }
+  const path = route?.path || ''
+  if (path === '/diario' || path === '/diário' || decodeURIComponent(path) === '/diário') {
+    await router?.push('/')
+  }
 }
 
-const onSelectTag = (tag: string | null) => {
+const onSelectTag = async (tag: string | null) => {
   activeTag.value = tag
   if (typeof window !== 'undefined' && window.innerWidth < 768) {
     isSidebarCollapsed.value = true
+  }
+  const path = route?.path || ''
+  if (path === '/diario' || path === '/diário' || decodeURIComponent(path) === '/diário') {
+    await router?.push('/')
   }
 }
 

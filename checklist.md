@@ -1,9 +1,9 @@
 ## 🔄 Em Andamento
-- [26/09/2026 13:55] [Fazendo] Configurar rota dedicada /diario para o Diário Sequencial e atualizar navegação na barra lateral
 - [26/09/2026 13:53] [Fazendo] Investigar e corrigir páginas vazias/pretas sequenciais no leitor EPUB (ex: páginas 86, 87 e 88 de Rei Arthur)
 - [26/09/2026 13:51] [Fazendo] Diagnosticar e corrigir discrepância de cor da folha na virada 3D do leitor no Dark Mode (unificar fundo preto puro #000000 e fidelidade de texturas)
 
 ## ✅ Concluído
+- [26/09/2026 14:03] [Concluído] Configurar rota dedicada /diario para o Diário Sequencial, aliases /diário e redirecionamento de view=journal
 - [26/09/2026 13:54] [Concluído] Implementar corte superior ("head") espelhado com linhas horizontais e fechamento completo do miolo 3D do livro
 - [26/09/2026 13:48] [Concluído] Diagnosticar e corrigir tela preta no Modo Zen do leitor: forçar contraste do texto no Dark Mode e preservar enquadramento ergonômico do livro
 - [26/09/2026 13:47] [Concluído] Ajustar encontro entre as linhas laterais e a base inferior para cantos retos no leitor 3D
