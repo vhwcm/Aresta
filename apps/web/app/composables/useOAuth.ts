@@ -107,7 +107,17 @@ export const useOAuth = () => {
     return null
   }
 
-  const openOAuthPopup = async (url: string, provider: string): Promise<string> => {
+  interface OAuthPopupResult {
+    code?: string
+    session?: {
+      token: string
+      user: AuthUser
+      isNewUser?: boolean
+      oauth?: any
+    }
+  }
+
+  const openOAuthPopup = async (url: string, provider: string): Promise<OAuthPopupResult> => {
     const width = 520
     const height = 650
     const left = typeof window !== 'undefined' ? window.screenX + (window.outerWidth - width) / 2 : 100
@@ -124,13 +134,24 @@ export const useOAuth = () => {
       // Ignora erro se popup for bloqueado pelo sistema nativo
     }
 
-    return new Promise<string>((resolve, reject) => {
+    return new Promise<OAuthPopupResult>((resolve, reject) => {
       let timer: any = null
 
       const messageHandler = (event: MessageEvent) => {
-        if ((event.data?.type === 'ARESTA_OAUTH_CODE' || event.data?.type === 'ARESTA_OAUTH_SUCCESS') && event.data?.code) {
+        if (event.data?.type === 'ARESTA_OAUTH_SUCCESS') {
           cleanup()
-          resolve(event.data.code)
+          resolve({
+            code: event.data.code,
+            session: event.data.token && event.data.user ? {
+              token: event.data.token,
+              user: event.data.user,
+              isNewUser: event.data.isNewUser,
+              oauth: event.data.oauth,
+            } : undefined
+          })
+        } else if (event.data?.type === 'ARESTA_OAUTH_CODE' && event.data?.code) {
+          cleanup()
+          resolve({ code: event.data.code })
         } else if (event.data?.type === 'ARESTA_OAUTH_ERROR') {
           cleanup()
           reject(new Error(event.data.error || 'Autorização cancelada'))
@@ -186,20 +207,27 @@ export const useOAuth = () => {
       const pollPromise = pollOAuthSession(ticket)
       const popupPromise = openOAuthPopup(url, provider)
 
-      // Corrida: o que resolver primeiro (polling de background ou mensagem de popup)
+      // Corrida segura: o que resolver primeiro
       const raceResult = await Promise.race([
         pollPromise,
-        popupPromise.then(async (code) => {
-          const res = await $fetch<{
-            token: string
-            user: AuthUser
-            isNewUser?: boolean
-            oauth: { provider: string; scope?: string }
-          }>(`${authUrl}/api/auth/oauth/${provider}/callback`, {
-            method: 'POST',
-            body: { code, redirectUri, state: ticket },
-          })
-          return res
+        popupPromise.then(async (popupRes) => {
+          // Se o popup já autenticou com sucesso diretamente, usa a sessão pronta sem queimar o code novamente
+          if (popupRes?.session?.token && popupRes?.session?.user) {
+            return popupRes.session
+          }
+          if (popupRes?.code) {
+            const res = await $fetch<{
+              token: string
+              user: AuthUser
+              isNewUser?: boolean
+              oauth: { provider: string; scope?: string }
+            }>(`${authUrl}/api/auth/oauth/${provider}/callback`, {
+              method: 'POST',
+              body: { code: popupRes.code, redirectUri, state: ticket },
+            })
+            return res
+          }
+          throw new Error('Nenhum dado de autorização retornado.')
         })
       ])
 
@@ -210,6 +238,11 @@ export const useOAuth = () => {
 
       await purgeClientSession()
       auth.setSession(authData.token, authData.user)
+
+      // Se for usuário existente com conta, marca onboarding para assegurar consistência local
+      if (!authData.isNewUser && authData.user?.id) {
+        auth.completeOnboarding(authData.user.id)
+      }
 
       if (typeof localStorage !== 'undefined' && provider === 'google') {
         localStorage.setItem('aresta_drive_provider', 'google')
@@ -262,7 +295,7 @@ export const useOAuth = () => {
         throw new Error('Falha ao obter URL de conexão com o Drive.')
       }
 
-      const code = await openOAuthPopup(url, provider)
+      const { code } = await openOAuthPopup(url, provider)
 
       const response = await $fetch<{
         success: boolean

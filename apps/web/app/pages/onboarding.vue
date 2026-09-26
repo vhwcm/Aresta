@@ -615,6 +615,12 @@ const toggleGoal = (id: string) => {
 const targetStreakDays = ref(7)
 
 onMounted(() => {
+  if (auth.user.value?.id && auth.isOnboardingCompleted(auth.user.value.id)) {
+    if (typeof navigateTo === 'function') {
+      navigateTo('/library', { replace: true })
+      return
+    }
+  }
   if (auth.user.value?.name) {
     displayName.value = auth.user.value.name.slice(0, 30)
   }
@@ -664,9 +670,9 @@ const finishOnboarding = async () => {
     // 3. Marca onboarding como concluído
     auth.completeOnboarding(auth.user.value?.id)
 
-    // 4. Redireciona para a página inicial
+    // 4. Redireciona para a estante de livros
     if (typeof navigateTo === 'function') {
-      await navigateTo('/', { replace: true })
+      await navigateTo('/library', { replace: true })
     }
   } catch (e) {
     console.error('Erro ao finalizar onboarding:', e)

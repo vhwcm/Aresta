@@ -182,7 +182,12 @@ const handleLogin = async () => {
   if (result.success) {
     await loadFromServer()
     resetScrollToTop()
-    await navigateTo(getRedirectUrl())
+    if (result.user?.id) {
+      auth.completeOnboarding(result.user.id)
+    }
+    const redirectPath = getRedirectUrl()
+    const targetUrl = (redirectPath && redirectPath !== '/') ? redirectPath : '/library'
+    await navigateTo(targetUrl)
   } else {
     errorMessage.value = result.error || 'Falha ao autenticar. Verifique o usuário e a senha.'
   }
@@ -206,14 +211,31 @@ const handleRegister = async () => {
 
 const handleOAuthLogin = async (provider: 'google' | 'microsoft' | 'apple') => {
   errorMessage.value = ''
+  const redirectPath = getRedirectUrl()
+  if (typeof sessionStorage !== 'undefined' && redirectPath) {
+    try {
+      sessionStorage.setItem('aresta_oauth_redirect', redirectPath)
+    } catch {}
+  }
+
   const result = await loginWithOAuth(provider)
 
   if (result.success) {
     await loadFromServer()
     resetScrollToTop()
-    const targetUrl = (result.isNewUser || !auth.isOnboardingCompleted(result.user?.id))
-      ? '/onboarding'
-      : getRedirectUrl()
+
+    // Se o usuário JÁ TEM uma conta (isNewUser === false), ele JAMAIS deve ir para onboarding
+    if (result.user?.id && !result.isNewUser) {
+      auth.completeOnboarding(result.user.id)
+    }
+
+    let targetUrl: string
+    if (result.isNewUser) {
+      targetUrl = '/onboarding'
+    } else {
+      targetUrl = (redirectPath && redirectPath !== '/') ? redirectPath : '/library'
+    }
+
     await navigateTo(targetUrl)
   } else if (result.error) {
     errorMessage.value = result.error

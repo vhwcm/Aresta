@@ -1,6 +1,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [26/09/2026 12:16] [Concluído] Diagnosticar e corrigir redirecionamento indevido para a página inicial ao fazer login via OAuth em outro dispositivo: eliminar race condition de duplo code exchange, blindar roteamento de usuários existentes para /library, preservar redirect em sessionStorage e prevenir reexibição forçada de onboarding
 - [24/09/2026 22:01] [Concluído] Dark mode do leitor: fundo preto puro (#000000) + páginas pretas com bordas brancas delimitadoras premium
 - [24/09/2026 21:57] [Concluído] Implementar configuração de folha no cabeçalho e páginas (folhas pretas, amarelas e brancas com pautas em linhas ou pontos) mantendo o tema do app intacto no restante da interface
 - [24/09/2026 21:52] [Concluído] Redesenhar interface do modo de desenho no estilo Samsung Notes (One UI): barra superior integrada, canetas estilizadas, popover de caneta/tinteiro/lápis/marcador, eliminação de sobreposição e acabamento de alta precisão

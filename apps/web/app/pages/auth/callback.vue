@@ -31,10 +31,10 @@
         Sua sessão foi iniciada. Redirecionando...
       </p>
       <a
-        href="/"
+        :href="targetUrl"
         class="mt-2 px-5 py-2.5 rounded-xl bg-accent text-white text-xs font-interface font-medium shadow-md transition-transform active:scale-95"
       >
-        Entrar no Aresta
+        {{ isNewUser ? 'Configurar Perfil' : 'Entrar no Aresta' }}
       </a>
     </div>
 
@@ -58,6 +58,8 @@ import { purgeClientSession, setSession, type AuthUser } from '~/composables/use
 const route = useRoute()
 const errorMessage = ref<string | null>(null)
 const isSuccess = ref(false)
+const isNewUser = ref(false)
+const targetUrl = ref('/library')
 
 onMounted(async () => {
   if (typeof window === 'undefined') return
@@ -86,14 +88,7 @@ onMounted(async () => {
     return
   }
 
-  // Notifica o window.opener se estiver disponível (ex: popup desktop)
-  if (window.opener) {
-    try {
-      window.opener.postMessage({ type: 'ARESTA_OAUTH_CODE', code }, '*')
-    } catch {}
-  }
-
-  // SEMPRE executa a troca direta do token no backend (mesmo com window.opener no mobile)
+  // Executa a troca direta do token no backend (fonte única de verdade)
   try {
     const authUrl = getApiRoot()
     const redirectUri = getOAuthRedirectUri()
@@ -119,8 +114,30 @@ onMounted(async () => {
       if (provider === 'google') {
         localStorage.setItem('aresta_drive_provider', 'google')
       }
+      // Se já for usuário existente, garante a flag de onboarding para compatibilidade local
+      if (response.user?.id && !response.isNewUser) {
+        localStorage.setItem(`aresta_onboarding_completed_${response.user.id}`, 'true')
+      }
     }
 
+    isNewUser.value = Boolean(response.isNewUser)
+
+    // Calcula destino correto preservando qualquer redirect pretendido
+    let savedRedirect: string | null = null
+    if (typeof sessionStorage !== 'undefined') {
+      try {
+        savedRedirect = sessionStorage.getItem('aresta_oauth_redirect')
+        sessionStorage.removeItem('aresta_oauth_redirect')
+      } catch {}
+    }
+
+    if (response.isNewUser) {
+      targetUrl.value = '/onboarding'
+    } else {
+      targetUrl.value = (savedRedirect && savedRedirect !== '/') ? savedRedirect : '/library'
+    }
+
+    // Se window.opener estiver disponível, notifica com o token e dados prontos
     if (window.opener) {
       try {
         window.opener.postMessage({
@@ -128,6 +145,8 @@ onMounted(async () => {
           code,
           token: response.token,
           user: response.user,
+          isNewUser: response.isNewUser,
+          oauth: response.oauth,
         }, '*')
       } catch {}
       try { window.close() } catch {}
@@ -135,9 +154,9 @@ onMounted(async () => {
 
     isSuccess.value = true
 
-    // Redireciona para o aplicativo / home
+    // Redireciona para o aplicativo (Biblioteca ou Onboarding)
     setTimeout(() => {
-      window.location.replace('/')
+      window.location.replace(targetUrl.value)
     }, 400)
   } catch (err: any) {
     console.error('[OAuth Callback] Erro ao autenticar:', err)

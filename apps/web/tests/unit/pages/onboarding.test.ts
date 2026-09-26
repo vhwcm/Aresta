@@ -123,8 +123,13 @@ describe('Onboarding Carousel Page', () => {
     // Botão finalizar
     const finishBtn = wrapper.find('[data-testid="onboarding-finish-btn"]')
     expect(finishBtn.exists()).toBe(true)
+
+    const navigateToMock = vi.fn()
+    ;(globalThis as any).navigateTo = navigateToMock
+
     await finishBtn.trigger('click')
 
     expect(completeOnboardingMock).toHaveBeenCalledWith(42)
+    expect(navigateToMock).toHaveBeenCalledWith('/library', { replace: true })
   })
 })

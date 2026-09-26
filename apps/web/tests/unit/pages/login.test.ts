@@ -51,7 +51,8 @@ describe('Login Dedicated Page Component', () => {
       logout: vi.fn(),
       deleteAccount: vi.fn(),
       fetchCurrentUser: vi.fn(),
-      isOnboardingCompleted: vi.fn().mockReturnValue(true)
+      isOnboardingCompleted: vi.fn().mockReturnValue(true),
+      completeOnboarding: vi.fn()
     } as any)
 
     vi.spyOn(oauthComposable, 'useOAuth').mockReturnValue({
@@ -129,6 +130,62 @@ describe('Login Dedicated Page Component', () => {
     await googleBtn.trigger('click')
 
     expect(wrapper.text()).toContain('Popup bloqueado pelo navegador. Por favor, autorize popups para entrar.')
+  })
+
+  it('redirects existing OAuth user to library and marks onboarding complete', async () => {
+    const completeOnboardingMock = vi.fn()
+    vi.spyOn(authComposable, 'useAuth').mockReturnValue({
+      token: ref('mock-token'),
+      user: ref({ id: 1, name: 'Viktor', email: 'viktor@aresta.org' }),
+      isLoggedIn: ref(true),
+      completeOnboarding: completeOnboardingMock,
+      isOnboardingCompleted: vi.fn().mockReturnValue(false)
+    } as any)
+
+    loginWithOAuthMock.mockResolvedValueOnce({
+      success: true,
+      provider: 'google',
+      isNewUser: false,
+      user: { id: 1, name: 'Viktor', email: 'viktor@aresta.org', role: 'USER', isActive: true }
+    })
+
+    const navigateToMock = vi.fn()
+    ;(globalThis as any).navigateTo = navigateToMock
+
+    const wrapper = mount(LoginPage, {
+      global: {
+        stubs: commonStubs
+      }
+    })
+
+    const googleBtn = wrapper.find('[data-testid="oauth-google-btn"]')
+    await googleBtn.trigger('click')
+
+    expect(completeOnboardingMock).toHaveBeenCalledWith(1)
+    expect(navigateToMock).toHaveBeenCalledWith('/library')
+  })
+
+  it('redirects new OAuth user to onboarding', async () => {
+    loginWithOAuthMock.mockResolvedValueOnce({
+      success: true,
+      provider: 'google',
+      isNewUser: true,
+      user: { id: 2, name: 'Novo', email: 'novo@aresta.org', role: 'USER', isActive: true }
+    })
+
+    const navigateToMock = vi.fn()
+    ;(globalThis as any).navigateTo = navigateToMock
+
+    const wrapper = mount(LoginPage, {
+      global: {
+        stubs: commonStubs
+      }
+    })
+
+    const googleBtn = wrapper.find('[data-testid="oauth-google-btn"]')
+    await googleBtn.trigger('click')
+
+    expect(navigateToMock).toHaveBeenCalledWith('/onboarding')
   })
 })
 
