@@ -87,6 +87,13 @@
               class="page-underlying-shadow page-underlying-shadow--left"
               :style="{ opacity: isTurningPrev && is3DActive ? castShadowOpacity : 0 }"
             />
+            <!-- Número da Página no Canto Inferior Esquerdo -->
+            <div
+              class="page-corner-number page-corner-number--left"
+              aria-hidden="true"
+            >
+              {{ renderedLayout.leftPage.pageNumber }}
+            </div>
           </div>
 
           <!-- Página Direita Base -->
@@ -136,6 +143,13 @@
               class="page-underlying-shadow page-underlying-shadow--right"
               :style="{ opacity: isTurningNext && is3DActive ? castShadowOpacity : 0 }"
             />
+            <!-- Número da Página no Canto Inferior Direito -->
+            <div
+              class="page-corner-number page-corner-number--right"
+              aria-hidden="true"
+            >
+              {{ renderedLayout.rightPage.pageNumber }}
+            </div>
           </div>
 
           <!-- Pilha de Páginas Restantes (Borda Direita) -->
@@ -212,6 +226,13 @@
               class="page-underlying-shadow"
               :style="{ opacity: is3DActive ? castShadowOpacity : 0 }"
             />
+            <!-- Número da Página no Canto Inferior Direito -->
+            <div
+              class="page-corner-number page-corner-number--single"
+              aria-hidden="true"
+            >
+              {{ renderedLayout.singlePage.pageNumber }}
+            </div>
           </div>
 
           <!-- Pilha de Páginas Restantes (Borda Direita no Modo 1 Página) -->
@@ -2032,5 +2053,67 @@ defineExpose({
 
 :deep(.theme-black .reader-highlight:hover) {
   filter: brightness(1.2);
+}
+
+/* ================= NÚMERO DE PÁGINA NOS CANTOS DAS FOLHAS ================= */
+.page-corner-number {
+  position: absolute;
+  bottom: 12px;
+  font-family: var(--font-technical, ui-monospace, monospace);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  pointer-events: none;
+  user-select: none;
+  z-index: 25;
+  opacity: 0.65;
+  transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+.page-corner-number--left {
+  left: 20px;
+  text-align: left;
+}
+
+.page-corner-number--right,
+.page-corner-number--single {
+  right: 20px;
+  text-align: right;
+}
+
+/* Cores por Tema para EPUB e folhas com fundo temático */
+.theme-sepia .page-corner-number {
+  color: #5c4d3c;
+}
+
+.theme-white .page-corner-number {
+  color: #52525b;
+}
+
+.theme-black .page-corner-number {
+  color: #a1a1aa;
+}
+
+/* PDF possui folha branca nativa, logo a numeração de canto em PDF é sempre escura */
+.page-sheet--pdf .page-corner-number,
+.theme-sepia .page-sheet--pdf .page-corner-number,
+.theme-white .page-sheet--pdf .page-corner-number,
+.theme-black .page-sheet--pdf .page-corner-number {
+  color: #52525b !important;
+}
+
+@media (max-width: 767px) {
+  .page-corner-number {
+    bottom: 8px;
+    font-size: 10px;
+  }
+  .page-corner-number--left {
+    left: 12px;
+  }
+  .page-corner-number--right,
+  .page-corner-number--single {
+    right: 12px;
+  }
 }
 </style>

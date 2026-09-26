@@ -1,6 +1,9 @@
 ## 🔄 Em Andamento
+- [26/09/2026 12:56] [Fazendo] Implementar vinco central no Dark Mode, ampliar destaque das pilhas laterais de folhas e adicionar pilhas inferiores assimétricas no leitor 3D
 
 ## ✅ Concluído
+- [26/09/2026 12:45] [Concluído] Posicionar numeração de páginas nos cantos das folhas em EPUBs e PDFs e remover indicador redundante ao lado do título do livro
+- [26/09/2026 12:23] [Concluído] Instalar dependências raiz resolvendo erro do executável concurrently ausente no script dev:all
 - [26/09/2026 12:16] [Concluído] Diagnosticar e corrigir redirecionamento indevido para a página inicial ao fazer login via OAuth em outro dispositivo: eliminar race condition de duplo code exchange, blindar roteamento de usuários existentes para /library, preservar redirect em sessionStorage e prevenir reexibição forçada de onboarding
 - [24/09/2026 22:01] [Concluído] Dark mode do leitor: fundo preto puro (#000000) + páginas pretas com bordas brancas delimitadoras premium
 - [24/09/2026 21:57] [Concluído] Implementar configuração de folha no cabeçalho e páginas (folhas pretas, amarelas e brancas com pautas em linhas ou pontos) mantendo o tema do app intacto no restante da interface

@@ -126,6 +126,15 @@
           >
             Carregando seção {{ sectionIdx }}...
           </div>
+
+          <!-- Indicador sutil de número da página no rodapé da seção EPUB -->
+          <div
+            v-if="getPageForSection(sectionIdx - 1) > 0"
+            class="scroll-page-slot__badge"
+            aria-hidden="true"
+          >
+            {{ getPageForSection(sectionIdx - 1) }}
+          </div>
         </div>
       </template>
 
@@ -147,6 +156,11 @@
             class="scroll-page-text-layer"
             @click="handleHighlightClick"
           />
+
+          <!-- Indicador sutil de número da página no rodapé da folha -->
+          <div class="scroll-page-slot__badge" aria-hidden="true">
+            {{ pageNum }}
+          </div>
         </div>
       </template>
     </div>
@@ -1017,6 +1031,10 @@ defineExpose({
   border-top-color: rgba(60, 45, 20, 0.15) !important;
 }
 
+.reader-scroll-engine--theme-sepia .scroll-page-slot__badge {
+  color: #786c5e !important;
+}
+
 .reader-scroll-engine--theme-sepia :deep(::selection) {
   background: rgba(229, 123, 85, 0.3) !important;
   color: #2a2521 !important;
@@ -1064,6 +1082,10 @@ defineExpose({
 
 .reader-scroll-engine--theme-white .scroll-section-content :deep(hr) {
   border-top-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+.reader-scroll-engine--theme-white .scroll-page-slot__badge {
+  color: #71717a !important;
 }
 
 .reader-scroll-engine--theme-white :deep(::selection) {
