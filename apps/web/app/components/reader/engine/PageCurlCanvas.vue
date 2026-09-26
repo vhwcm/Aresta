@@ -23,10 +23,11 @@
       >
         <!-- MODO 2 PÁGINAS -->
         <template v-if="renderedLayout.isTwoPage">
-          <!-- Pilha de Páginas Lidas (Borda Esquerda) -->
+          <!-- Pilha de Páginas Lidas (Borda Esquerda - Hitbox Interativa) -->
           <div
             v-if="pageCreaseEnabled && pageAnimationEnabled && pageStackDepth.leftWidth > 0 && renderedLayout.leftPage && renderedLayout.leftPage.pageNumber > 0"
             class="book-page-stack book-page-stack--left"
+            :class="{ 'book-page-stack--hitbox': renderedLayout.isTwoPage }"
             :style="{
               left: `${renderedLayout.leftPage.left - pageStackDepth.leftWidth}px`,
               top: `${renderedLayout.leftPage.top}px`,
@@ -152,10 +153,11 @@
             </div>
           </div>
 
-          <!-- Pilha de Páginas Restantes (Borda Direita) -->
+          <!-- Pilha de Páginas Restantes (Borda Direita - Hitbox Interativa) -->
           <div
             v-if="pageCreaseEnabled && pageAnimationEnabled && pageStackDepth.rightWidth > 0 && renderedLayout.rightPage && renderedLayout.rightPage.pageNumber > 0"
             class="book-page-stack book-page-stack--right"
+            :class="{ 'book-page-stack--hitbox': renderedLayout.isTwoPage }"
             :style="{
               left: `${renderedLayout.rightPage.left + renderedLayout.rightPage.width}px`,
               top: `${renderedLayout.rightPage.top}px`,
@@ -183,7 +185,7 @@
             aria-hidden="true"
           />
 
-          <!-- Pilha de Páginas Inferior Unificada com Transição Elíptica na Lombada -->
+          <!-- Sistema Unificado de Linhas de Folhas (Laterais, Cantos Elípticos e Base Horizontal) -->
           <div
             v-if="pageCreaseEnabled && pageAnimationEnabled && bottomStackSvg && Math.max(pageStackDepth.bottomLeftHeight, pageStackDepth.bottomRightHeight) > 0"
             class="book-page-stack-bottom-unified"
@@ -195,52 +197,44 @@
             }"
           >
             <svg
-              class="book-bottom-svg"
+              class="book-bottom-svg book-stack-lines-svg"
               :viewBox="bottomStackSvg.viewBox"
               preserveAspectRatio="none"
               width="100%"
               height="100%"
             >
-              <defs>
-                <pattern
-                  :id="`book-stack-pattern-${activeTheme}`"
-                  width="2.5"
-                  height="20"
-                  patternUnits="userSpaceOnUse"
-                >
-                  <rect
-                    width="1"
-                    height="20"
-                    :fill="activeTheme === 'black' ? 'rgba(255, 255, 255, 0.18)' : activeTheme === 'white' ? 'rgba(0, 0, 0, 0.22)' : 'rgba(120, 85, 45, 0.38)'"
-                  />
-                  <rect
-                    x="1"
-                    width="1.5"
-                    height="20"
-                    :fill="activeTheme === 'black' ? 'rgba(18, 18, 22, 0.95)' : activeTheme === 'white' ? 'rgba(240, 240, 242, 0.95)' : 'rgba(237, 226, 205, 0.95)'"
-                  />
-                </pattern>
-              </defs>
-
-              <!-- Preenchimento do Bloco com Padrão de Folhas -->
+              <!-- Preenchimento Base das Folhas -->
               <path
                 :d="bottomStackSvg.fillPath"
-                :fill="`url(#book-stack-pattern-${activeTheme})`"
+                class="book-stack-fill"
               />
 
-              <!-- Traço Contínuo da Borda Inferior -->
+              <!-- Traço Contínuo Principal / Outermost Contour (paths[1]) -->
               <path
                 :d="bottomStackSvg.strokePath"
+                class="book-stack-line book-stack-line--outer"
                 fill="none"
-                :stroke="activeTheme === 'black' ? 'rgba(255, 255, 255, 0.2)' : activeTheme === 'white' ? 'rgba(0, 0, 0, 0.2)' : 'rgba(140, 110, 70, 0.5)'"
-                stroke-width="1"
+              />
+
+              <!-- Linhas de Folhas Internas com Correspondência 1-para-1 Paralela -->
+              <path
+                v-for="line in bottomStackSvg.innerLines"
+                :key="line.k"
+                :d="line.d"
+                class="book-stack-line book-stack-line--inner"
+                fill="none"
               />
             </svg>
 
             <!-- Área de Clique Esquerda (Voltar) -->
             <div
               class="book-page-stack-bottom book-page-stack-bottom--left book-bottom-hitbox"
-              :style="{ width: `${bottomStackSvg.wL}px`, height: `${bottomStackSvg.hL}px` }"
+              :style="{
+                left: `${bottomStackSvg.hitboxLeftX}px`,
+                top: `${bottomStackSvg.pageH}px`,
+                width: `${bottomStackSvg.wL}px`,
+                height: `${bottomStackSvg.hL}px`,
+              }"
               @click.stop="requestTurn('previous')"
               :title="`Páginas lidas (${store.currentPage - 1} de ${store.totalPages} páginas - Voltar)`"
               role="button"
@@ -251,7 +245,12 @@
             <!-- Área de Clique Direita (Avançar) -->
             <div
               class="book-page-stack-bottom book-page-stack-bottom--right book-bottom-hitbox"
-              :style="{ left: `${bottomStackSvg.wL}px`, width: `${bottomStackSvg.wR}px`, height: `${bottomStackSvg.hR}px` }"
+              :style="{
+                left: `${bottomStackSvg.hitboxRightX}px`,
+                top: `${bottomStackSvg.pageH}px`,
+                width: `${bottomStackSvg.wR}px`,
+                height: `${bottomStackSvg.hR}px`,
+              }"
               @click.stop="requestTurn('next')"
               :title="`Páginas restantes (${store.totalPages - store.currentPage} de ${store.totalPages} páginas - Avançar)`"
               role="button"
@@ -475,39 +474,110 @@ const bottomStackSvg = computed(() => {
 
   const wL = layout.leftPage.width
   const wR = layout.rightPage.width
-  const totalW = wL + wR
-  const spineX = wL
+  const pageH = layout.leftPage.height
+  const totalPageW = wL + wR
 
-  const hL = pageStackDepth.value.bottomLeftHeight
-  const hR = pageStackDepth.value.bottomRightHeight
-  const maxH = Math.max(hL, hR, 2)
+  const W_L = pageStackDepth.value.leftWidth
+  const W_R = pageStackDepth.value.rightWidth
+  const H_L = pageStackDepth.value.bottomLeftHeight
+  const H_R = pageStackDepth.value.bottomRightHeight
 
-  // Curva elíptica suave e de curta duração centrada na lombada (36px total)
-  const curveW = Math.min(18, Math.floor(Math.min(wL, wR) * 0.15))
-  const xStart = spineX - curveW
-  const xEnd = spineX + curveW
-  const cp1X = spineX - Math.round(curveW * 0.25)
-  const cp2X = spineX + Math.round(curveW * 0.25)
+  if (W_L === 0 && W_R === 0) {
+    return null
+  }
 
-  // Polígono fechado para preenchimento
-  const fillPath = `M 0 0 L ${totalW} 0 L ${totalW} ${hR} L ${xEnd} ${hR} C ${cp2X} ${hR}, ${cp1X} ${hL}, ${xStart} ${hL} L 0 ${hL} Z`
+  const maxH = Math.max(H_L, H_R, 2)
+  const totalW = W_L + totalPageW + W_R
+  const totalH = pageH + maxH
+  const spineX = W_L + wL
 
-  // Traço contínuo da borda inferior
-  const strokePath = `M 0 ${hL} L ${xStart} ${hL} C ${cp1X} ${hL}, ${cp2X} ${hR}, ${xEnd} ${hR} L ${totalW} ${hR}`
+  // 5 linhas concêntricas correspondendo 1-para-1 do topo lateral até a base
+  const N = 5
+  const lines: Array<{ k: number; d: string; isOuter: boolean }> = []
+
+  for (let k = 1; k <= N; k++) {
+    const fk = k / N
+    const dx_L = Math.round(fk * W_L * 10) / 10
+    const dy_L = Math.round(fk * H_L * 10) / 10
+    // Curvatura elíptica ampla no canto lateral (sweep de até 36px na vertical)
+    const Cy_L = Math.round(Math.min(36, Math.max(8, W_L * 1.2)) * fk * 10) / 10
+
+    const dx_R = Math.round(fk * W_R * 10) / 10
+    const dy_R = Math.round(fk * H_R * 10) / 10
+    const Cy_R = Math.round(Math.min(36, Math.max(8, W_R * 1.2)) * fk * 10) / 10
+
+    let d = ''
+
+    // Ponto de início na borda lateral esquerda (linha vertical)
+    if (W_L > 0) {
+      const xLeft = W_L - dx_L
+      d += `M ${xLeft} 0 `
+      d += `L ${xLeft} ${pageH - Cy_L} `
+      // Curva elíptica do canto inferior esquerdo (tangência vertical -> tangência horizontal)
+      const cp1_y = pageH - Cy_L + Cy_L * 0.552
+      const cp2_x = W_L - dx_L * 0.448
+      d += `C ${xLeft} ${cp1_y}, ${cp2_x} ${pageH + dy_L}, ${W_L} ${pageH + dy_L} `
+    } else {
+      d += `M ${spineX} ${pageH} `
+    }
+
+    // Trecho horizontal esquerdo da base
+    const spineCurveW = Math.min(18, Math.floor(wL * 0.1))
+    const xSpineStart = spineX - spineCurveW
+    const xSpineEnd = spineX + spineCurveW
+
+    if (W_L > 0) {
+      d += `L ${xSpineStart} ${pageH + dy_L} `
+    }
+
+    // Transição suave em S-curve na lombada
+    const cpSpine1_x = spineX - Math.round(spineCurveW * 0.25)
+    const cpSpine2_x = spineX + Math.round(spineCurveW * 0.25)
+    d += `C ${cpSpine1_x} ${pageH + dy_L}, ${cpSpine2_x} ${pageH + dy_R}, ${xSpineEnd} ${pageH + dy_R} `
+
+    // Trecho horizontal direito da base
+    const rightCornerStart = W_L + totalPageW
+    d += `L ${rightCornerStart} ${pageH + dy_R} `
+
+    // Curva elíptica do canto inferior direito (tangência horizontal -> tangência vertical)
+    if (W_R > 0) {
+      const xRight = W_L + totalPageW + dx_R
+      const cp1_x = rightCornerStart + dx_R * 0.448
+      const cp2_y = pageH - Cy_R + Cy_R * 0.552
+      d += `C ${cp1_x} ${pageH + dy_R}, ${xRight} ${cp2_y}, ${xRight} ${pageH - Cy_R} `
+      d += `L ${xRight} 0 `
+    }
+
+    lines.push({ k, d: d.trim(), isOuter: k === N })
+  }
+
+  // Polígono fechado de preenchimento do bloco de folhas
+  const outerLine = lines[lines.length - 1]
+  let fillPath = outerLine.d
+  fillPath += ` L ${W_L + totalPageW} 0 L ${W_L + totalPageW} ${pageH} L ${W_L} ${pageH} L ${W_L} 0 Z`
+
+  const strokePath = outerLine.d
+  const innerLines = lines.slice(0, lines.length - 1)
 
   return {
-    left: layout.leftPage.left,
-    top: layout.leftPage.top + layout.leftPage.height,
+    left: layout.leftPage.left - W_L,
+    top: layout.leftPage.top,
     width: totalW,
-    height: maxH,
-    viewBox: `0 0 ${totalW} ${maxH}`,
-    fillPath,
-    strokePath,
-    spineX,
+    height: totalH,
+    viewBox: `0 0 ${totalW} ${totalH}`,
+    pageH,
     wL,
     wR,
-    hL,
-    hR,
+    W_L,
+    W_R,
+    hL: H_L,
+    hR: H_R,
+    hitboxLeftX: W_L,
+    hitboxRightX: W_L + wL,
+    lines,
+    fillPath,
+    strokePath,
+    innerLines,
   }
 })
 
@@ -1994,7 +2064,15 @@ defineExpose({
   border-bottom-right-radius: 4px;
 }
 
-/* Tema Sépia */
+/* No modo 2 páginas, a renderização visual é realizada com fidelidade vetorial pelo SVG unificado */
+.book-page-stack--hitbox {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  z-index: 12 !important;
+}
+
+/* Tema Sépia (Modo 1 Página) */
 .theme-sepia .book-page-stack {
   background-color: #ede2cd;
   background-image: repeating-linear-gradient(
@@ -2020,7 +2098,7 @@ defineExpose({
   border-bottom: 1px solid rgba(140, 110, 70, 0.3);
 }
 
-/* Tema Branco */
+/* Tema Branco (Modo 1 Página) */
 .theme-white .book-page-stack {
   background-color: #f0f0f2;
   background-image: repeating-linear-gradient(
@@ -2046,7 +2124,7 @@ defineExpose({
   border-bottom: 1px solid rgba(0, 0, 0, 0.12);
 }
 
-/* Tema Preto */
+/* Tema Preto (Modo 1 Página) */
 .theme-black .book-page-stack {
   background-color: #121216;
   background-image: repeating-linear-gradient(
@@ -2072,7 +2150,7 @@ defineExpose({
   border-bottom: 1px solid rgba(255, 255, 255, 0.15);
 }
 
-/* ================= PILHAS INFERIORES DE PÁGINAS (BOTTOM PAGE STACKS) ================= */
+/* ================= PILHAS INFERIORES E SISTEMA VETORIAL DE FOLHAS ================= */
 .book-page-stack-bottom {
   position: absolute;
   pointer-events: auto;
@@ -2086,8 +2164,8 @@ defineExpose({
 
 .book-page-stack-bottom-unified {
   position: absolute;
-  pointer-events: auto;
-  z-index: 10;
+  pointer-events: none;
+  z-index: 9;
   transition: height 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
   overflow: visible;
   user-select: none;
@@ -2098,30 +2176,88 @@ defineExpose({
   width: 100%;
   height: 100%;
   overflow: visible;
+  pointer-events: none;
 }
 
-.theme-black .book-bottom-svg {
-  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.95));
+/* Preenchimento do Bloco da Pilha de Páginas */
+.book-stack-fill {
+  transition: fill 0.25s ease;
 }
 
-.theme-sepia .book-bottom-svg {
-  filter: drop-shadow(0 4px 8px rgba(60, 45, 20, 0.25));
+.theme-sepia .book-stack-fill {
+  fill: #ede2cd;
 }
 
-.theme-white .book-bottom-svg {
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.12));
+.theme-white .book-stack-fill {
+  fill: #f0f0f2;
+}
+
+.theme-black .book-stack-fill {
+  fill: #121216;
+}
+
+/* Linhas Concêntricas das Folhas (Correspondência 1-para-1 Lateral e Base) */
+.book-stack-line {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  transition: stroke 0.25s ease, stroke-width 0.25s ease;
+}
+
+/* Contorno Externo Principal */
+.book-stack-line--outer {
+  stroke-width: 1.2px;
+}
+
+.theme-sepia .book-stack-line--outer {
+  stroke: rgba(130, 95, 55, 0.7);
+}
+
+.theme-white .book-stack-line--outer {
+  stroke: rgba(0, 0, 0, 0.32);
+}
+
+.theme-black .book-stack-line--outer {
+  stroke: rgba(255, 255, 255, 0.35);
+}
+
+/* Linhas Internas de Folhas */
+.book-stack-line--inner {
+  stroke-width: 0.85px;
+}
+
+.theme-sepia .book-stack-line--inner {
+  stroke: rgba(120, 85, 45, 0.42);
+}
+
+.theme-white .book-stack-line--inner {
+  stroke: rgba(0, 0, 0, 0.18);
+}
+
+.theme-black .book-stack-line--inner {
+  stroke: rgba(255, 255, 255, 0.2);
+}
+
+/* Sombras Espaciais da Pilha de Páginas */
+.theme-black .book-stack-lines-svg {
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.95));
+}
+
+.theme-sepia .book-stack-lines-svg {
+  filter: drop-shadow(0 4px 10px rgba(60, 45, 20, 0.28));
+}
+
+.theme-white .book-stack-lines-svg {
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.14));
 }
 
 .book-bottom-hitbox {
   position: absolute;
-  top: 0;
   cursor: pointer;
-  z-index: 2;
+  pointer-events: auto;
+  z-index: 12;
   box-sizing: border-box;
-}
-
-.book-page-stack-bottom--left.book-bottom-hitbox {
-  left: 0;
 }
 
 .book-page-stack-bottom--single {
@@ -2129,11 +2265,11 @@ defineExpose({
   border-bottom-right-radius: 4px;
 }
 
-/* Tema Sépia */
+/* Tema Sépia (Modo 1 Página - Linhas Horizontais na Base) */
 .theme-sepia .book-page-stack-bottom--single {
   background-color: #ede2cd;
   background-image: repeating-linear-gradient(
-    to right,
+    to bottom,
     rgba(120, 85, 45, 0.35) 0px,
     rgba(120, 85, 45, 0.35) 1px,
     rgba(237, 226, 205, 0.95) 1px,
@@ -2143,11 +2279,11 @@ defineExpose({
   border-bottom: 1px solid rgba(140, 110, 70, 0.5);
 }
 
-/* Tema Branco */
+/* Tema Branco (Modo 1 Página - Linhas Horizontais na Base) */
 .theme-white .book-page-stack-bottom--single {
   background-color: #f0f0f2;
   background-image: repeating-linear-gradient(
-    to right,
+    to bottom,
     rgba(0, 0, 0, 0.2) 0px,
     rgba(0, 0, 0, 0.2) 1px,
     rgba(240, 240, 242, 0.95) 1px,
@@ -2157,11 +2293,11 @@ defineExpose({
   border-bottom: 1px solid rgba(0, 0, 0, 0.2);
 }
 
-/* Tema Preto */
+/* Tema Preto (Modo 1 Página - Linhas Horizontais na Base) */
 .theme-black .book-page-stack-bottom--single {
   background-color: #121216;
   background-image: repeating-linear-gradient(
-    to right,
+    to bottom,
     rgba(255, 255, 255, 0.16) 0px,
     rgba(255, 255, 255, 0.16) 1px,
     rgba(18, 18, 22, 0.95) 1px,

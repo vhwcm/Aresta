@@ -219,11 +219,25 @@ describe('PageSpatialEnhancements - Vinco Central e Pilhas de Páginas 3D', () =
     const bottomSvg = wrapper.find('.book-bottom-svg')
     expect(bottomSvg.exists()).toBe(true)
 
-    // O path da borda inferior deve conter o comando 'C ' (curva cúbica de Bézier elíptica de transição)
+    // O SVG contém 6 caminhos vetoriais: 1 de preenchimento base + 5 linhas concêntricas 1-para-1
     const paths = bottomSvg.findAll('path')
-    expect(paths.length).toBe(2)
+    expect(paths.length).toBe(6)
+
+    // O contorno externo e as linhas internas devem conter o comando 'C ' (curva cúbica de Bézier elíptica)
     const strokePath = paths[1].attributes('d')
     expect(strokePath).toContain('C ')
+    expect(paths[1].classes()).toContain('book-stack-line--outer')
+
+    const innerLines = bottomSvg.findAll('.book-stack-line--inner')
+    expect(innerLines.length).toBe(4)
+
+    // Cada linha interna deve possuir curvatura elíptica nos cantos e transição na lombada
+    innerLines.forEach((line) => {
+      const d = line.attributes('d')
+      expect(d).toContain('C ')
+      expect(d).toContain('M ')
+      expect(d).toContain('L ')
+    })
 
     // As pilhas laterais devem ter a altura estendida para encontrar a base perfeitamente
     const rightLateralStack = wrapper.find('.book-page-stack--right')
@@ -232,5 +246,38 @@ describe('PageSpatialEnhancements - Vinco Central e Pilhas de Páginas 3D', () =
     const pageHeight = parseFloat((rightPageSheet.element as HTMLElement).style.height)
     const lateralHeight = parseFloat((rightLateralStack.element as HTMLElement).style.height)
     expect(lateralHeight).toBeGreaterThan(pageHeight)
+  })
+
+  it('garante que as linhas da base são horizontais e se unem concentricamente com as verticais dos cantos', async () => {
+    const store = useReaderStore()
+    store.setDocument({
+      type: 'epub',
+      metadata: { title: 'Livro de Teste' },
+      totalPages: 100,
+      isLoaded: true,
+      load: vi.fn(),
+      getPage: vi.fn(),
+      renderTextLayer: vi.fn(),
+      destroy: vi.fn(),
+    } as any, 'livro.epub')
+
+    store.isTwoPageMode = true
+    store.currentPage = 50 // Simétrico: 50% progresso
+
+    const wrapper = mount(PageCurlCanvas, { attachTo: document.body })
+    const stage = wrapper.find('.page-curl-wrapper').element as HTMLElement
+    Object.defineProperty(stage, 'clientWidth', { value: 1200, configurable: true })
+    Object.defineProperty(stage, 'clientHeight', { value: 800, configurable: true })
+    window.dispatchEvent(new Event('resize'))
+    await wrapper.vm.$nextTick()
+
+    const bottomSvg = wrapper.find('.book-bottom-svg')
+    const outerPath = bottomSvg.find('.book-stack-line--outer').attributes('d')
+
+    // Deve iniciar com traço vertical a partir de y = 0
+    expect(outerPath).toMatch(/M \d+(\.\d+)? 0 L \d+(\.\d+)? \d+/)
+
+    // Deve terminar com traço vertical subindo até y = 0 no canto direito
+    expect(outerPath).toMatch(/L \d+(\.\d+)? 0$/)
   })
 })
