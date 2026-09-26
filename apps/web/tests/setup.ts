@@ -4,6 +4,12 @@ import { renderInlineMarkdown, renderMarkdown } from '../app/utils/markdownForma
 
 const g = (typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : global) as any
 
+if (typeof Promise !== 'undefined' && typeof (Promise as any).try !== 'function') {
+  ;(Promise as any).try = function (fn: any, ...args: any[]) {
+    return new Promise((resolve) => resolve(fn(...args)))
+  }
+}
+
 if (typeof document !== 'undefined') {
   try {
     Object.defineProperty(document, 'compatMode', {

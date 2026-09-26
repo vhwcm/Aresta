@@ -170,7 +170,7 @@
           class="p-1 rounded-xl transition-all cursor-pointer border border-divider hover:border-accent/50 group relative mb-0.5"
           :title="`Continuar lendo: ${activeBookTitle} (${activeBookProgress}%)`"
         >
-          <div class="w-10 h-14 rounded-lg overflow-hidden bg-neutral-900 border border-divider shadow-xs relative group-hover:scale-105 transition-transform">
+          <div class="w-11 h-16 rounded-lg overflow-hidden bg-neutral-900 border border-divider shadow-xs relative group-hover:scale-105 transition-transform">
             <img
               v-if="activeBookCoverUrl && !coverError"
               :src="activeBookCoverUrl"
@@ -178,8 +178,8 @@
               @error="coverError = true"
               class="w-full h-full object-cover"
             />
-            <div v-else class="w-full h-full p-1 flex flex-col justify-between bg-neutral-800 text-left border-l border-accent">
-              <span class="text-[7px] font-technical text-accent font-bold">A</span>
+            <div v-else class="w-full h-full p-1.5 flex flex-col justify-between bg-neutral-800 text-left border-l border-accent">
+              <span class="text-[8px] font-technical text-accent font-bold">A</span>
             </div>
           </div>
         </NuxtLink>
@@ -365,11 +365,11 @@
         <div v-if="hasActiveBook" class="-mx-2.5 !mt-0">
           <NuxtLink
             :to="activeBookReaderLink"
-            class="group/reading w-full min-h-[76px] flex items-stretch pr-3.5 bg-black/[0.04] dark:bg-black/30 hover:bg-black/[0.07] dark:hover:bg-black/45 border-b border-divider/60 hover:border-accent/40 transition-all duration-200 cursor-pointer select-none overflow-hidden"
+            class="group/reading w-full min-h-[104px] flex items-stretch pr-3.5 bg-black/[0.04] dark:bg-black/30 hover:bg-black/[0.07] dark:hover:bg-black/45 border-b border-divider/60 hover:border-accent/40 transition-all duration-200 cursor-pointer select-none overflow-hidden"
             :title="`Continuar lendo: ${activeBookTitle}`"
           >
             <!-- Capa do Livro ocupando toda a altura da faixa -->
-            <div class="w-16 self-stretch shrink-0 bg-neutral-900 border-r border-divider/60 relative group-hover/reading:brightness-105 transition-all overflow-hidden">
+            <div class="w-20 self-stretch shrink-0 bg-neutral-900 border-r border-divider/60 relative group-hover/reading:brightness-105 transition-all overflow-hidden">
               <img
                 v-if="activeBookCoverUrl && !coverError"
                 :src="activeBookCoverUrl"
@@ -377,27 +377,27 @@
                 @error="coverError = true"
                 class="absolute inset-0 w-full h-full object-cover"
               />
-              <div v-else class="w-full h-full p-2 flex flex-col justify-between bg-neutral-800 text-left border-l-2 border-accent">
-                <span class="text-[8px] font-technical text-accent uppercase font-bold tracking-wider">Aresta</span>
-                <span class="text-[9px] font-editorial text-white line-clamp-3 leading-tight font-medium">{{ activeBookTitle }}</span>
+              <div v-else class="w-full h-full p-2.5 flex flex-col justify-between bg-neutral-800 text-left border-l-2 border-accent">
+                <span class="text-[9px] font-technical text-accent uppercase font-bold tracking-wider">Aresta</span>
+                <span class="text-[10.5px] font-editorial text-white line-clamp-3 leading-snug font-medium">{{ activeBookTitle }}</span>
               </div>
               <!-- Efeito lombada / iluminação 3D -->
-              <div class="absolute inset-y-0 left-0 w-1.5 bg-gradient-to-r from-black/50 to-transparent pointer-events-none z-10"></div>
+              <div class="absolute inset-y-0 left-0 w-2 bg-gradient-to-r from-black/50 to-transparent pointer-events-none z-10"></div>
             </div>
 
             <!-- Detalhes do Livro & Progresso -->
-            <div class="flex-1 min-w-0 flex flex-col justify-between py-2.5 pl-3 gap-1.5">
+            <div class="flex-1 min-w-0 flex flex-col justify-between py-3 pl-3.5 gap-2">
               <div class="flex flex-col min-w-0">
-                <span class="font-editorial text-[14px] sm:text-[15px] font-semibold text-textPrimary group-hover/reading:text-accent transition-colors line-clamp-2 leading-tight">
+                <span class="font-editorial text-[15px] sm:text-[16px] font-semibold text-textPrimary group-hover/reading:text-accent transition-colors line-clamp-2 leading-snug">
                   {{ activeBookTitle }}
                 </span>
-                <span class="font-interface text-[11px] text-textSecondary truncate mt-0.5">
+                <span class="font-interface text-xs text-textSecondary truncate mt-0.5">
                   {{ latestUserBook?.author || 'Autor Desconhecido' }}
                 </span>
               </div>
 
               <!-- Barra de Progresso Fina e Elegante -->
-              <div class="w-full flex items-center gap-2 pt-0.5">
+              <div class="w-full flex items-center gap-2.5 pt-0.5">
                 <div class="flex-1 h-1.5 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden">
                   <div
                     class="h-full bg-accent rounded-full transition-all duration-300"
