@@ -30,6 +30,8 @@ const mockDrawing = ref<any>({
   ],
 });
 
+const mockAddPage = vi.fn();
+
 vi.mock('../../../app/composables/useDrawing', () => ({
   useDrawing: () => ({
     currentDrawing: mockDrawing,
@@ -46,7 +48,7 @@ vi.mock('../../../app/composables/useDrawing', () => ({
     canUndo: ref(false),
     canRedo: ref(false),
     loadDrawing: vi.fn().mockResolvedValue(mockDrawing.value),
-    addPage: vi.fn(),
+    addPage: mockAddPage,
     removePage: vi.fn(),
     addStrokeToActivePage: vi.fn(),
     eraseStrokesAtPoint: vi.fn(),
@@ -176,5 +178,79 @@ describe('Drawing Page Mobile Zoom & Pinch Controls ([id].vue)', () => {
     // A escala deve ter aumentado
     const afterPinchText = zoomFitBtn.text();
     expect(afterPinchText).not.toBe(initialText);
+  });
+
+  it('configura o viewport com classes snap-x e snap-mandatory para rolagem horizontal estilo Samsung Notes', () => {
+    const wrapper = mount(DrawingPage, {
+      global: { stubs },
+    });
+
+    const viewport = wrapper.find('main');
+    expect(viewport.classes()).toContain('snap-x');
+    expect(viewport.classes()).toContain('snap-mandatory');
+
+    const slides = wrapper.findAll('.page-slide');
+    expect(slides.length).toBeGreaterThan(0);
+    expect(slides[0]!.classes()).toContain('snap-center');
+  });
+
+  it('calcula a escala no mobile para ocupar toda a largura horizontal no meio', async () => {
+    // Simula viewport mobile com 390px (iPhone / Galaxy)
+    const originalInnerWidth = window.innerWidth;
+    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 390 });
+
+    const wrapper = mount(DrawingPage, {
+      global: { stubs },
+    });
+
+    const zoomFitBtn = wrapper.find('button[aria-label="Ajustar à tela"]');
+    await zoomFitBtn.trigger('click');
+
+    // 390 / 794 = 0.4912 -> ~49%
+    expect(zoomFitBtn.text()).toBe('49%');
+
+    // Restaura window.innerWidth
+    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: originalInnerWidth });
+  });
+
+  it('renderiza o trailing slide de auto-criação no mobile e oculta o botão circular no mobile', () => {
+    const wrapper = mount(DrawingPage, {
+      global: { stubs },
+    });
+
+    // O trailing slide deve existir e ser snap-center com md:hidden
+    const trailingSlide = wrapper.find('.w-screen.md\\:hidden');
+    expect(trailingSlide.exists()).toBe(true);
+    expect(trailingSlide.classes()).toContain('snap-center');
+
+    // O botão circular manual clássico deve ter hidden md:flex
+    const desktopAddBtn = wrapper.find('.hidden.md\\:flex button');
+    expect(desktopAddBtn.exists()).toBe(true);
+  });
+
+  it('chama addPage automaticamente ao rolar até o final da trilha no mobile', async () => {
+    const originalInnerWidth = window.innerWidth;
+    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 390 });
+
+    const wrapper = mount(DrawingPage, {
+      global: { stubs },
+    });
+
+    mockAddPage.mockClear();
+
+    const viewport = wrapper.find('main');
+    const el = viewport.element as HTMLElement;
+
+    // Simula que rolou até o fim da trilha horizontal
+    Object.defineProperty(el, 'scrollLeft', { writable: true, configurable: true, value: 800 });
+    Object.defineProperty(el, 'clientWidth', { writable: true, configurable: true, value: 390 });
+    Object.defineProperty(el, 'scrollWidth', { writable: true, configurable: true, value: 1190 });
+
+    // Dispara evento de scroll no viewport
+    await viewport.trigger('scroll');
+
+    expect(mockAddPage).toHaveBeenCalledWith('blank');
+
+    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: originalInnerWidth });
   });
 });

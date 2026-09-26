@@ -1,6 +1,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [26/09/2026 14:17] [Concluído] Ajustar folha de desenho em telas mobile para ocupar toda a largura horizontal no meio e criar nova página automaticamente ao scrollar para o lado (estilo Samsung Notes)
 - [26/09/2026 14:06] [Concluído] Investigar e corrigir páginas vazias/pretas sequenciais no leitor EPUB (paridade tipográfica, sincronização dimensional da folha e eliminação de overflow órfão)
 - [26/09/2026 14:05] [Concluído] Diagnosticar e corrigir discrepância de cor da folha na virada 3D do leitor no Dark Mode (unificar fundo preto puro #000000 e fidelidade de texturas)
 - [26/09/2026 14:03] [Concluído] Configurar rota dedicada /diario para o Diário Sequencial, aliases /diário e redirecionamento de view=journal

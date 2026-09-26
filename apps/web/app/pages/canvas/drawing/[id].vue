@@ -76,7 +76,7 @@
     <!-- Main Viewport: Horizontal Pages (Centralizado vertical e horizontalmente) -->
     <main
       ref="viewportRef"
-      class="flex-1 relative w-full h-full overflow-auto bg-bgRoot/60 flex"
+      class="flex-1 relative w-full h-full overflow-x-auto overflow-y-auto bg-bgRoot/60 flex snap-x snap-mandatory scroll-smooth"
     >
       <!-- Loading State -->
       <div v-if="isLoading" class="m-auto flex flex-col items-center justify-center text-textSecondary gap-3">
@@ -87,58 +87,88 @@
       <!-- Centering Track -->
       <div
         v-else-if="currentDrawing"
-        class="min-w-full min-h-full w-max m-auto px-6 md:pl-28 md:pr-16 py-8 flex flex-row items-center justify-center gap-8"
+        class="min-w-full min-h-full w-max m-auto pt-20 pb-16 md:py-8 px-0 md:pl-28 md:pr-16 flex flex-row items-center justify-center gap-4 md:gap-8"
       >
-        <!-- Pages Container (Horizontal lado a lado) -->
+        <!-- Pages Container (Horizontal lado a lado com Snap no Mobile) -->
         <div
           v-for="(page, idx) in currentDrawing.pages"
           :key="page.id"
-          class="relative flex flex-col items-center group shrink-0"
+          :data-page-index="idx"
+          class="page-slide w-screen md:w-auto shrink-0 snap-center flex flex-col items-center justify-center group"
         >
-          <!-- Controles de Página Flutuantes no topo da folha -->
-          <div class="absolute top-2 right-2 flex items-center gap-1.5 z-20">
-            <span class="text-[10px] font-mono font-medium px-2 py-0.5 rounded-md bg-bgPanel/85 backdrop-blur-sm border border-divider/60 text-textSecondary shadow-xs">
-              {{ idx + 1 }} / {{ currentDrawing.pages.length }}
-            </span>
-            <button
-              v-if="currentDrawing.pages.length > 1"
-              @click.stop="handleRemovePage(idx)"
-              class="p-1 rounded-md bg-bgPanel/85 hover:bg-red-500/15 text-textSecondary hover:text-red-500 border border-divider/60 transition-all shadow-xs cursor-pointer opacity-40 hover:opacity-100"
-              title="Excluir esta página"
-            >
-              <TrashIcon class="w-3.5 h-3.5" />
-            </button>
-          </div>
+          <!-- Sheet Wrapper com largura exata da folha -->
+          <div
+            class="relative flex flex-col items-center"
+            :style="{ width: `${Math.round(794 * pageScale)}px` }"
+          >
+            <!-- Controles de Página Flutuantes no topo da folha -->
+            <div class="absolute top-2 right-2 flex items-center gap-1.5 z-20">
+              <span class="text-[10px] font-mono font-medium px-2 py-0.5 rounded-md bg-bgPanel/85 backdrop-blur-sm border border-divider/60 text-textSecondary shadow-xs">
+                {{ idx + 1 }} / {{ currentDrawing.pages.length }}
+              </span>
+              <button
+                v-if="currentDrawing.pages.length > 1"
+                @click.stop="handleRemovePage(idx)"
+                class="p-1 rounded-md bg-bgPanel/85 hover:bg-red-500/15 text-textSecondary hover:text-red-500 border border-divider/60 transition-all shadow-xs cursor-pointer opacity-40 hover:opacity-100"
+                title="Excluir esta página"
+              >
+                <TrashIcon class="w-3.5 h-3.5" />
+              </button>
+            </div>
 
-          <!-- Componente Canvas da Página -->
-          <DrawingPageCanvas
-            :ref="(el) => setPageCanvasRef(idx, el)"
-            :page="page"
-            :scale="pageScale"
-            :tool="activeTool"
-            :selected-shape-type="selectedShapeType"
-            :color="strokeColor"
-            :size="strokeSize"
-            :selected-node-ids="selectedNodeIds"
-            :selected-edge-id="selectedEdgeId"
-            :palm-rejection="true"
-            :is-active="activePageIndex === idx"
-            :is-dark-mode="themeMode === 'dark'"
-            @select-page="activePageIndex = idx"
-            @stroke-added="(stroke) => handleStrokeAdded(idx, stroke)"
-            @erase="(pt, radius) => handleErase(idx, pt, radius)"
-            @add-node="(node) => addNodeToPage(idx, node)"
-            @update-node="(nodeId, updates, saveHistory) => updateNodeInPage(idx, nodeId, updates, saveHistory)"
-            @delete-node="(nodeId) => removeNodeFromPage(idx, nodeId)"
-            @add-edge="(edge) => addEdgeToPage(idx, edge)"
-            @select-node="(nodeId, isShift) => handleSelectNode(nodeId, isShift)"
-            @select-edge="(edgeId) => selectedEdgeId = edgeId"
-            @update:tool="(t) => activeTool = t"
-          />
+            <!-- Componente Canvas da Página -->
+            <DrawingPageCanvas
+              :ref="(el) => setPageCanvasRef(idx, el)"
+              :page="page"
+              :scale="pageScale"
+              :tool="activeTool"
+              :selected-shape-type="selectedShapeType"
+              :color="strokeColor"
+              :size="strokeSize"
+              :selected-node-ids="selectedNodeIds"
+              :selected-edge-id="selectedEdgeId"
+              :palm-rejection="true"
+              :is-active="activePageIndex === idx"
+              :is-dark-mode="themeMode === 'dark'"
+              @select-page="activePageIndex = idx"
+              @stroke-added="(stroke) => handleStrokeAdded(idx, stroke)"
+              @erase="(pt, radius) => handleErase(idx, pt, radius)"
+              @add-node="(node) => addNodeToPage(idx, node)"
+              @update-node="(nodeId, updates, saveHistory) => updateNodeInPage(idx, nodeId, updates, saveHistory)"
+              @delete-node="(nodeId) => removeNodeFromPage(idx, nodeId)"
+              @add-edge="(edge) => addEdgeToPage(idx, edge)"
+              @select-node="(nodeId, isShift) => handleSelectNode(nodeId, isShift)"
+              @select-edge="(edgeId) => selectedEdgeId = edgeId"
+              @update:tool="(t) => activeTool = t"
+            />
+          </div>
         </div>
 
-        <!-- Botão Adicionar Página ao Lado: Seta com + -->
-        <div class="self-center flex flex-col items-center justify-center px-4 shrink-0">
+        <!-- Trailing Slide / Auto Add Page Trigger (Mobile Samsung Notes Flow) -->
+        <div
+          ref="trailingTriggerRef"
+          class="w-screen md:hidden shrink-0 snap-center flex flex-col items-center justify-center py-2"
+        >
+          <div
+            class="relative rounded-b-xl border-2 border-dashed border-divider/60 bg-bgPanel/40 flex flex-col items-center justify-center transition-all duration-300"
+            :style="{
+              width: `${Math.round(794 * pageScale)}px`,
+              height: `${Math.round(1123 * pageScale)}px`,
+            }"
+          >
+            <div class="flex flex-col items-center gap-2 text-textSecondary animate-pulse">
+              <div class="w-12 h-12 rounded-full bg-bgElevated border border-divider flex items-center justify-center shadow-md">
+                <PlusIcon class="w-6 h-6 text-primary" />
+              </div>
+              <span class="text-xs font-semibold tracking-wide text-textSecondary">
+                Criando nova página...
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Botão Adicionar Página ao Lado: Seta com + (Desktop) -->
+        <div class="self-center hidden md:flex flex-col items-center justify-center px-4 shrink-0">
           <button
             @click="handleAddPage"
             class="w-14 h-14 rounded-full bg-bgPanel hover:bg-primary text-textSecondary hover:text-white border-2 border-divider hover:border-primary shadow-xl hover:shadow-2xl transition-all duration-200 flex items-center justify-center cursor-pointer hover:scale-110 active:scale-95 group"
@@ -215,7 +245,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue';
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router';
 import {
   Sparkles as SparklesIcon,
@@ -302,6 +332,7 @@ const synthesisImages = ref<string[]>([]);
 const synthesisResult = ref<DrawingSynthesisResult | null>(null);
 
 const viewportRef = ref<HTMLElement | null>(null);
+const trailingTriggerRef = ref<HTMLElement | null>(null);
 const pageCanvasRefs = ref<Record<number, any>>({});
 
 function setPageCanvasRef(idx: number, el: any) {
@@ -310,21 +341,112 @@ function setPageCanvasRef(idx: number, el: any) {
   }
 }
 
-// Escala adaptativa de página: na inicialização a folha cabe 100% na tela do notebook
+// Escala adaptativa de página: no mobile ocupa 100% da largura (Samsung Notes), no desktop cabe na tela
 const pageScale = ref(0.7);
 
 function calculateFitScale(): number {
   if (typeof window === 'undefined') return 1;
   const isDesktop = window.innerWidth >= 768;
+  if (!isDesktop) {
+    // No mobile, a folha ocupa toda a largura horizontal da tela no meio (estilo Samsung Notes)
+    const scaleW = window.innerWidth / 794;
+    return Math.max(0.2, Number(scaleW.toFixed(4)));
+  }
   // No desktop desconta barra lateral esquerda (~100px) + botão de adicionar página à direita (~140px)
-  const availableWidth = isDesktop ? window.innerWidth - 240 : window.innerWidth - 48;
+  const availableWidth = window.innerWidth - 240;
   // Desconta header (56px) + respiro vertical superior e inferior (80px)
-  const availableHeight = isDesktop ? window.innerHeight - 136 : window.innerHeight - 140;
+  const availableHeight = window.innerHeight - 136;
   const scaleW = availableWidth / 794;
   const scaleH = availableHeight / 1123;
   const fit = Math.min(scaleW, scaleH);
   return Math.max(0.25, Math.min(Number(fit.toFixed(2)), 1.2));
 }
+
+let isAutoCreatingPage = false;
+
+function handleAutoAddPage() {
+  if (isAutoCreatingPage) return;
+  isAutoCreatingPage = true;
+  handleAddPage();
+  setTimeout(() => {
+    isAutoCreatingPage = false;
+  }, 600);
+}
+
+function onViewportScroll() {
+  if (!viewportRef.value || !currentDrawing.value) return;
+  const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768;
+  if (isDesktop) return;
+
+  const el = viewportRef.value;
+  // Se rolou até o fim da trilha horizontal no mobile
+  if (el.scrollLeft + el.clientWidth >= el.scrollWidth - 30) {
+    handleAutoAddPage();
+  }
+}
+
+let pageObserver: IntersectionObserver | null = null;
+let trailingObserver: IntersectionObserver | null = null;
+
+function setupObservers() {
+  if (typeof window === 'undefined' || !('IntersectionObserver' in window)) return;
+
+  if (pageObserver) pageObserver.disconnect();
+  pageObserver = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
+          const idxAttr = entry.target.getAttribute('data-page-index');
+          if (idxAttr !== null) {
+            const idx = parseInt(idxAttr, 10);
+            if (!isNaN(idx) && activePageIndex.value !== idx) {
+              activePageIndex.value = idx;
+            }
+          }
+        }
+      }
+    },
+    {
+      root: viewportRef.value,
+      threshold: 0.5,
+    }
+  );
+
+  if (trailingObserver) trailingObserver.disconnect();
+  trailingObserver = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.15) {
+          const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768;
+          if (!isDesktop) {
+            handleAutoAddPage();
+          }
+        }
+      }
+    },
+    {
+      root: viewportRef.value,
+      threshold: [0.15, 0.4],
+    }
+  );
+
+  nextTick(() => {
+    if (viewportRef.value) {
+      const slides = viewportRef.value.querySelectorAll('.page-slide');
+      slides.forEach((slide) => pageObserver?.observe(slide));
+    }
+    if (trailingTriggerRef.value) {
+      trailingObserver?.observe(trailingTriggerRef.value);
+    }
+  });
+}
+
+watch(
+  () => currentDrawing.value?.pages.length,
+  () => {
+    setupObservers();
+  }
+);
 
 function handleZoomFit() {
   pageScale.value = calculateFitScale();
@@ -418,6 +540,11 @@ function handleTouchMove(e: TouchEvent) {
     if (viewportRef.value) {
       viewportRef.value.scrollLeft = initialScrollLeft - deltaX;
       viewportRef.value.scrollTop = initialScrollTop - deltaY;
+
+      const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768;
+      if (!isDesktop && viewportRef.value.scrollLeft + viewportRef.value.clientWidth >= viewportRef.value.scrollWidth - 30) {
+        handleAutoAddPage();
+      }
     }
   }
 }
@@ -620,6 +747,7 @@ onMounted(async () => {
   window.addEventListener('keydown', handleKeyDown);
   window.addEventListener('beforeunload', handleBeforeUnload);
   if (viewportRef.value) {
+    viewportRef.value.addEventListener('scroll', onViewportScroll, { passive: true });
     viewportRef.value.addEventListener('wheel', handleWheel, { passive: false });
     viewportRef.value.addEventListener('touchstart', handleTouchStart, { passive: true });
     viewportRef.value.addEventListener('touchmove', handleTouchMove, { passive: false });
@@ -629,6 +757,7 @@ onMounted(async () => {
   if (drawingId.value) {
     await loadDrawing(drawingId.value);
   }
+  setupObservers();
 });
 
 onBeforeRouteLeave(async () => {
@@ -648,10 +777,19 @@ onBeforeUnmount(async () => {
   // Força salvamento imediato antes de desmontar — o autosave tem debounce de 1s
   // e pode não ter disparado ainda se o usuário sair logo após o último traço.
   await saveDrawingNow();
+  if (pageObserver) {
+    pageObserver.disconnect();
+    pageObserver = null;
+  }
+  if (trailingObserver) {
+    trailingObserver.disconnect();
+    trailingObserver = null;
+  }
   window.removeEventListener('resize', handleZoomFit);
   window.removeEventListener('keydown', handleKeyDown);
   window.removeEventListener('beforeunload', handleBeforeUnload);
   if (viewportRef.value) {
+    viewportRef.value.removeEventListener('scroll', onViewportScroll);
     viewportRef.value.removeEventListener('wheel', handleWheel);
     viewportRef.value.removeEventListener('touchstart', handleTouchStart);
     viewportRef.value.removeEventListener('touchmove', handleTouchMove);
