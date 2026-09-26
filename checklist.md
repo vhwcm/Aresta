@@ -1,7 +1,8 @@
 ## 🔄 Em Andamento
-- [26/09/2026 12:56] [Fazendo] Implementar vinco central no Dark Mode, ampliar destaque das pilhas laterais de folhas e adicionar pilhas inferiores assimétricas no leitor 3D
 
 ## ✅ Concluído
+- [26/09/2026 13:13] [Concluído] Implementar vinco central no Dark Mode, ampliar destaque das pilhas laterais de folhas e adicionar pilhas inferiores assimétricas no leitor 3D
+- [26/09/2026 13:02] [Concluído] Criar 3 skills simples: principal_engieneer, debuuger_engieneer e Designer
 - [26/09/2026 12:45] [Concluído] Posicionar numeração de páginas nos cantos das folhas em EPUBs e PDFs e remover indicador redundante ao lado do título do livro
 - [26/09/2026 12:23] [Concluído] Instalar dependências raiz resolvendo erro do executável concurrently ausente no script dev:all
 - [26/09/2026 12:16] [Concluído] Diagnosticar e corrigir redirecionamento indevido para a página inicial ao fazer login via OAuth em outro dispositivo: eliminar race condition de duplo code exchange, blindar roteamento de usuários existentes para /library, preservar redirect em sessionStorage e prevenir reexibição forçada de onboarding

@@ -168,6 +168,54 @@
             tabindex="0"
             aria-label="Páginas restantes a ler. Clique para avançar página"
           />
+
+          <!-- Faixa de Vinco Central da Lombada (Book Spine Crease) -->
+          <div
+            v-if="pageCreaseEnabled && renderedLayout.leftPage && renderedLayout.rightPage && renderedLayout.leftPage.pageNumber > 0 && renderedLayout.rightPage.pageNumber > 0"
+            class="book-spine-crease"
+            :class="{ 'book-spine-crease--pdf': store.document?.type === 'pdf' }"
+            :style="{
+              left: `${renderedLayout.leftPage.left + renderedLayout.leftPage.width - 14}px`,
+              top: `${renderedLayout.leftPage.top}px`,
+              width: '28px',
+              height: `${renderedLayout.leftPage.height}px`,
+            }"
+            aria-hidden="true"
+          />
+
+          <!-- Pilha de Páginas Inferior Esquerda (Páginas Lidas) -->
+          <div
+            v-if="pageCreaseEnabled && pageAnimationEnabled && pageStackDepth.bottomLeftHeight > 0 && renderedLayout.leftPage && renderedLayout.leftPage.pageNumber > 0"
+            class="book-page-stack-bottom book-page-stack-bottom--left"
+            :style="{
+              left: `${renderedLayout.leftPage.left - pageStackDepth.leftWidth}px`,
+              top: `${renderedLayout.leftPage.top + renderedLayout.leftPage.height}px`,
+              width: `${renderedLayout.leftPage.width + pageStackDepth.leftWidth}px`,
+              height: `${pageStackDepth.bottomLeftHeight}px`,
+            }"
+            @click.stop="requestTurn('previous')"
+            :title="`Páginas lidas (${store.currentPage - 1} de ${store.totalPages} páginas - Voltar)`"
+            role="button"
+            tabindex="0"
+            aria-label="Páginas já lidas. Clique para voltar página"
+          />
+
+          <!-- Pilha de Páginas Inferior Direita (Páginas Restantes) -->
+          <div
+            v-if="pageCreaseEnabled && pageAnimationEnabled && pageStackDepth.bottomRightHeight > 0 && renderedLayout.rightPage && renderedLayout.rightPage.pageNumber > 0"
+            class="book-page-stack-bottom book-page-stack-bottom--right"
+            :style="{
+              left: `${renderedLayout.rightPage.left}px`,
+              top: `${renderedLayout.rightPage.top + renderedLayout.rightPage.height}px`,
+              width: `${renderedLayout.rightPage.width + pageStackDepth.rightWidth}px`,
+              height: `${pageStackDepth.bottomRightHeight}px`,
+            }"
+            @click.stop="requestTurn('next')"
+            :title="`Páginas restantes (${store.totalPages - store.currentPage} de ${store.totalPages} páginas - Avançar)`"
+            role="button"
+            tabindex="0"
+            aria-label="Páginas restantes a ler. Clique para avançar página"
+          />
         </template>
 
         <!-- MODO 1 PÁGINA (DESKTOP/TABLET / MOBILE) -->
@@ -251,6 +299,19 @@
             tabindex="0"
             aria-label="Páginas restantes a ler. Clique para avançar página"
           />
+
+          <!-- Pilha de Páginas Inferior no Modo 1 Página -->
+          <div
+            v-if="pageCreaseEnabled && pageAnimationEnabled && Math.max(pageStackDepth.bottomLeftHeight, pageStackDepth.bottomRightHeight) > 0"
+            class="book-page-stack-bottom book-page-stack-bottom--single"
+            :style="{
+              left: `${renderedLayout.singlePage.left - pageStackDepth.leftWidth}px`,
+              top: `${renderedLayout.singlePage.top + renderedLayout.singlePage.height}px`,
+              width: `${renderedLayout.singlePage.width + pageStackDepth.leftWidth + pageStackDepth.rightWidth}px`,
+              height: `${Math.max(pageStackDepth.bottomLeftHeight, pageStackDepth.bottomRightHeight)}px`,
+            }"
+            aria-hidden="true"
+          />
         </template>
       </div>
 
@@ -314,7 +375,8 @@ const { pageCreaseEnabled, pageAnimationEnabled } = useSettings()
 const stageRef = ref<HTMLElement | null>(null)
 const webglCanvasRef = ref<HTMLCanvasElement | null>(null)
 
-const MAX_STACK_PX = 14
+const MAX_STACK_PX = 24
+const MAX_BOTTOM_STACK_PX = 8
 
 const pageStackDepth = computed(() => {
   if (
@@ -323,25 +385,43 @@ const pageStackDepth = computed(() => {
     !pageCreaseEnabled.value ||
     !pageAnimationEnabled.value
   ) {
-    return { leftWidth: 0, rightWidth: 0, leftLines: 0, rightLines: 0 }
+    return {
+      leftWidth: 0,
+      rightWidth: 0,
+      bottomLeftHeight: 0,
+      bottomRightHeight: 0,
+      leftLines: 0,
+      rightLines: 0,
+    }
   }
 
   const total = store.totalPages
   const current = store.currentPage
 
   // Fator de escala suave para documentos com poucas páginas
-  const maxAllowed = Math.min(MAX_STACK_PX, Math.max(4, Math.round((total / 25) * MAX_STACK_PX)))
+  const maxAllowed = Math.min(MAX_STACK_PX, Math.max(8, Math.round((total / 30) * MAX_STACK_PX)))
+  const maxBottomAllowed = Math.min(MAX_BOTTOM_STACK_PX, Math.max(3, Math.round((total / 30) * MAX_BOTTOM_STACK_PX)))
 
   const progress = Math.max(0, Math.min(1, (current - 1) / Math.max(1, total - 1)))
   const remaining = 1 - progress
 
-  const leftWidth = Math.round(progress * maxAllowed)
-  const rightWidth = Math.round(remaining * maxAllowed)
+  const leftWidth = progress > 0 ? Math.max(4, Math.round(progress * maxAllowed)) : 0
+  const rightWidth = remaining > 0 ? Math.max(4, Math.round(remaining * maxAllowed)) : 0
 
-  const leftLines = Math.min(6, Math.round(progress * 6))
-  const rightLines = Math.min(6, Math.round(remaining * 6))
+  const bottomLeftHeight = progress > 0 ? Math.max(2, Math.round(progress * maxBottomAllowed)) : 0
+  const bottomRightHeight = remaining > 0 ? Math.max(2, Math.round(remaining * maxBottomAllowed)) : 0
 
-  return { leftWidth, rightWidth, leftLines, rightLines }
+  const leftLines = Math.min(8, Math.round(progress * 8))
+  const rightLines = Math.min(8, Math.round(remaining * 8))
+
+  return {
+    leftWidth,
+    rightWidth,
+    bottomLeftHeight,
+    bottomRightHeight,
+    leftLines,
+    rightLines,
+  }
 })
 
 const activeTheme = computed(() => store.readerTheme || 'sepia')
@@ -1131,7 +1211,7 @@ function hasTextAtCaret(clientX?: number, clientY?: number): boolean {
 function isInteractiveTextTarget(target: EventTarget | null, clientX?: number, clientY?: number): boolean {
   if (!target) return false
   const el = target instanceof HTMLElement ? target : (target as any).parentElement as HTMLElement | null
-  if (!el || el.closest('.book-page-stack')) return false
+  if (!el || el.closest('.book-page-stack, .book-page-stack-bottom')) return false
 
   // 1. Elementos textuais explícitos (PDF textLayer spans, marcações de anotação, tags do EPUB)
   if (el.closest('.textLayer, .textLayer span, .reader-highlight, .text-highlight')) return true
@@ -1168,7 +1248,7 @@ async function onPointerDown(event: PointerEvent) {
 
   const pt = pointFrom(event)
   const isTextTarget = isInteractiveTextTarget(event.target, event.clientX, event.clientY)
-  const isPageStackTarget = Boolean((event.target as HTMLElement | null)?.closest('.book-page-stack'))
+  const isPageStackTarget = Boolean((event.target as HTMLElement | null)?.closest('.book-page-stack, .book-page-stack-bottom'))
 
   const layout = pageLayout.value
   const targetPageRect = layout.isTwoPage
@@ -1641,7 +1721,7 @@ defineExpose({
   border-top: 1px solid rgba(255, 255, 255, 0.22);
   border-bottom: 1px solid rgba(255, 255, 255, 0.22);
   border-left: 1px solid rgba(255, 255, 255, 0.22);
-  border-right: none;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
   border-top-left-radius: 3px;
   border-bottom-left-radius: 3px;
 }
@@ -1653,7 +1733,7 @@ defineExpose({
   border-top: 1px solid rgba(255, 255, 255, 0.22);
   border-bottom: 1px solid rgba(255, 255, 255, 0.22);
   border-right: 1px solid rgba(255, 255, 255, 0.22);
-  border-left: none;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
   border-top-right-radius: 3px;
   border-bottom-right-radius: 3px;
 }
@@ -1745,6 +1825,66 @@ defineExpose({
   -webkit-touch-callout: default !important;
 }
 
+/* ================= FAIXA DE VINCO CENTRAL DA LOMBADA (BOOK SPINE CREASE) ================= */
+.book-spine-crease {
+  position: absolute;
+  pointer-events: none;
+  z-index: 15;
+  transition: opacity 0.2s ease;
+}
+
+/* Tema Preto (Dark Mode EPUB) */
+.theme-black .book-spine-crease {
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.05) 18%,
+    rgba(0, 0, 0, 0.85) 42%,
+    rgba(255, 255, 255, 0.24) 50%,
+    rgba(0, 0, 0, 0.85) 58%,
+    rgba(255, 255, 255, 0.05) 82%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  box-shadow: 0 0 16px rgba(0, 0, 0, 0.95);
+}
+
+/* Tema Preto quando folha é PDF branca */
+.theme-black .book-spine-crease.book-spine-crease--pdf {
+  background: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0.12) 25%,
+    rgba(0, 0, 0, 0.38) 50%,
+    rgba(0, 0, 0, 0.12) 75%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  box-shadow: none;
+}
+
+/* Tema Sépia */
+.theme-sepia .book-spine-crease {
+  background: linear-gradient(
+    to right,
+    rgba(70, 50, 25, 0) 0%,
+    rgba(70, 50, 25, 0.12) 25%,
+    rgba(50, 35, 15, 0.32) 50%,
+    rgba(70, 50, 25, 0.12) 75%,
+    rgba(70, 50, 25, 0) 100%
+  );
+}
+
+/* Tema Branco */
+.theme-white .book-spine-crease {
+  background: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0.08) 25%,
+    rgba(0, 0, 0, 0.25) 50%,
+    rgba(0, 0, 0, 0.08) 75%,
+    rgba(0, 0, 0, 0) 100%
+  );
+}
+
 /* ================= PILHAS LATERAIS DE PÁGINAS (PAGE STACK EDGES) ================= */
 .book-page-stack {
   position: absolute;
@@ -1772,69 +1912,173 @@ defineExpose({
   background-color: #ede2cd;
   background-image: repeating-linear-gradient(
     to right,
-    rgba(140, 105, 65, 0.3) 0px,
-    rgba(140, 105, 65, 0.3) 1px,
+    rgba(120, 85, 45, 0.4) 0px,
+    rgba(120, 85, 45, 0.4) 1px,
     rgba(237, 226, 205, 0.95) 1px,
     rgba(237, 226, 205, 0.95) 2.5px
   );
 }
 
 .theme-sepia .book-page-stack--left {
-  box-shadow: inset 2px 0 3px rgba(0, 0, 0, 0.15), -2px 0 6px rgba(60, 45, 20, 0.2);
-  border-left: 1px solid rgba(140, 110, 70, 0.4);
+  box-shadow: inset 3px 0 4px rgba(0, 0, 0, 0.18), -3px 0 8px rgba(60, 45, 20, 0.25);
+  border-left: 1px solid rgba(140, 110, 70, 0.5);
+  border-top: 1px solid rgba(140, 110, 70, 0.3);
+  border-bottom: 1px solid rgba(140, 110, 70, 0.3);
 }
 
 .theme-sepia .book-page-stack--right {
-  box-shadow: inset -2px 0 3px rgba(0, 0, 0, 0.15), 2px 0 6px rgba(60, 45, 20, 0.2);
-  border-right: 1px solid rgba(140, 110, 70, 0.4);
+  box-shadow: inset -3px 0 4px rgba(0, 0, 0, 0.18), 3px 0 8px rgba(60, 45, 20, 0.25);
+  border-right: 1px solid rgba(140, 110, 70, 0.5);
+  border-top: 1px solid rgba(140, 110, 70, 0.3);
+  border-bottom: 1px solid rgba(140, 110, 70, 0.3);
 }
 
 /* Tema Branco */
 .theme-white .book-page-stack {
-  background-color: #f3f3f3;
+  background-color: #f0f0f2;
   background-image: repeating-linear-gradient(
     to right,
-    rgba(0, 0, 0, 0.18) 0px,
-    rgba(0, 0, 0, 0.18) 1px,
-    rgba(243, 243, 243, 0.95) 1px,
-    rgba(243, 243, 243, 0.95) 2.5px
+    rgba(0, 0, 0, 0.24) 0px,
+    rgba(0, 0, 0, 0.24) 1px,
+    rgba(240, 240, 242, 0.95) 1px,
+    rgba(240, 240, 242, 0.95) 2.5px
   );
 }
 
 .theme-white .book-page-stack--left {
-  box-shadow: inset 2px 0 3px rgba(0, 0, 0, 0.1), -2px 0 6px rgba(0, 0, 0, 0.1);
-  border-left: 1px solid rgba(0, 0, 0, 0.15);
+  box-shadow: inset 3px 0 4px rgba(0, 0, 0, 0.12), -3px 0 8px rgba(0, 0, 0, 0.12);
+  border-left: 1px solid rgba(0, 0, 0, 0.22);
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
 }
 
 .theme-white .book-page-stack--right {
-  box-shadow: inset -2px 0 3px rgba(0, 0, 0, 0.1), 2px 0 6px rgba(0, 0, 0, 0.1);
-  border-right: 1px solid rgba(0, 0, 0, 0.15);
+  box-shadow: inset -3px 0 4px rgba(0, 0, 0, 0.12), 3px 0 8px rgba(0, 0, 0, 0.12);
+  border-right: 1px solid rgba(0, 0, 0, 0.22);
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
 }
 
 /* Tema Preto */
 .theme-black .book-page-stack {
-  background-color: #0d0d0f;
+  background-color: #121216;
   background-image: repeating-linear-gradient(
     to right,
-    rgba(255, 255, 255, 0.05) 0px,
-    rgba(255, 255, 255, 0.05) 1px,
-    rgba(13, 13, 15, 0.95) 1px,
-    rgba(13, 13, 15, 0.95) 2.5px
+    rgba(255, 255, 255, 0.18) 0px,
+    rgba(255, 255, 255, 0.18) 1px,
+    rgba(18, 18, 22, 0.95) 1px,
+    rgba(18, 18, 22, 0.95) 2.5px
   );
 }
 
 .theme-black .book-page-stack--left {
-  box-shadow: inset 2px 0 4px rgba(0, 0, 0, 0.95), -3px 0 8px rgba(0, 0, 0, 0.85);
-  border-left: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: inset 3px 0 4px rgba(0, 0, 0, 0.8), -4px 0 12px rgba(0, 0, 0, 0.9);
+  border-left: 1px solid rgba(255, 255, 255, 0.22);
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .theme-black .book-page-stack--right {
-  box-shadow: inset -2px 0 4px rgba(0, 0, 0, 0.95), 3px 0 8px rgba(0, 0, 0, 0.85);
-  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: inset -3px 0 4px rgba(0, 0, 0, 0.8), 4px 0 12px rgba(0, 0, 0, 0.9);
+  border-right: 1px solid rgba(255, 255, 255, 0.22);
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* ================= PILHAS INFERIORES DE PÁGINAS (BOTTOM PAGE STACKS) ================= */
+.book-page-stack-bottom {
+  position: absolute;
+  pointer-events: auto;
+  cursor: pointer;
+  z-index: 10;
+  transition: height 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
+  overflow: hidden;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+.book-page-stack-bottom--left {
+  border-bottom-left-radius: 4px;
+}
+
+.book-page-stack-bottom--right {
+  border-bottom-right-radius: 4px;
+}
+
+.book-page-stack-bottom--single {
+  border-bottom-left-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+
+/* Tema Sépia */
+.theme-sepia .book-page-stack-bottom {
+  background-color: #ede2cd;
+  background-image: repeating-linear-gradient(
+    to right,
+    rgba(120, 85, 45, 0.35) 0px,
+    rgba(120, 85, 45, 0.35) 1px,
+    rgba(237, 226, 205, 0.95) 1px,
+    rgba(237, 226, 205, 0.95) 2.5px
+  );
+  box-shadow: 0 4px 8px rgba(60, 45, 20, 0.2), inset 0 -2px 3px rgba(0, 0, 0, 0.12);
+  border-bottom: 1px solid rgba(140, 110, 70, 0.5);
+}
+
+.theme-sepia .book-page-stack-bottom--left {
+  border-left: 1px solid rgba(140, 110, 70, 0.4);
+}
+
+.theme-sepia .book-page-stack-bottom--right {
+  border-right: 1px solid rgba(140, 110, 70, 0.4);
+}
+
+/* Tema Branco */
+.theme-white .book-page-stack-bottom {
+  background-color: #f0f0f2;
+  background-image: repeating-linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0.2) 0px,
+    rgba(0, 0, 0, 0.2) 1px,
+    rgba(240, 240, 242, 0.95) 1px,
+    rgba(240, 240, 242, 0.95) 2.5px
+  );
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1), inset 0 -2px 3px rgba(0, 0, 0, 0.08);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.theme-white .book-page-stack-bottom--left {
+  border-left: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.theme-white .book-page-stack-bottom--right {
+  border-right: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+/* Tema Preto */
+.theme-black .book-page-stack-bottom {
+  background-color: #121216;
+  background-image: repeating-linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0.16) 0px,
+    rgba(255, 255, 255, 0.16) 1px,
+    rgba(18, 18, 22, 0.95) 1px,
+    rgba(18, 18, 22, 0.95) 2.5px
+  );
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.9), inset 0 -2px 3px rgba(0, 0, 0, 0.8);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.theme-black .book-page-stack-bottom--left {
+  border-left: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.theme-black .book-page-stack-bottom--right {
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 @media (max-width: 767px) {
-  .book-page-stack {
+  .book-page-stack,
+  .book-page-stack-bottom {
     display: none !important;
   }
 }

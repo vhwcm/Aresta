@@ -134,3 +134,26 @@ Objeto global disponível no console:
 ```javascript
 window.__ARESTA_READER_PROFILE__
 ```
+
+---
+
+## 7. Experiência Espacial 3D e Realismo Tátil do Livro (`PageCurlCanvas.vue`)
+
+Para elevar o modelo mental de imersão de um livro físico real na tela (especialmente no modo 3D com página dupla e tema escuro), o motor incorpora detalhes de geometria e acabamento editorial:
+
+### 7.1. Faixa de Vinco Central da Lombada (`.book-spine-crease`)
+* **Problema Resolvido:** No tema escuro (`theme-black`), a sobreposição de duas páginas pretas (`#000000`) sobre o fundo preto causava perda visual da divisão física das páginas, já que sombras escuras tradicionais ficavam invisíveis.
+* **Mecanismo:** Um elemento dedicado de canaleta (`.book-spine-crease`) de 28px de largura posicionado exatamente sobre a mediana central (`z-index: 15`).
+* **Acabamento:** No Dark Mode, projeta uma costura central nítida (`rgba(255, 255, 255, 0.24)`) ladeada por vales de sombra e transição de curvatura luminosa do papel. Em documentos PDF (que possuem folhas brancas nativas), a classe `.book-spine-crease--pdf` aplica sombreamento escuro clássico com total fidelidade.
+
+### 7.2. Pilhas Laterais de Páginas de Alto Contraste (`.book-page-stack`)
+* **Volume Tridimensional:** A espessura máxima das folhas acumuladas nas bordas externas foi ampliada de 14px para **24px** no desktop, com escalonamento dinâmico baseado no total de páginas da obra.
+* **Contraste Aumentado:** O padrão de folhas cortadas (`repeating-linear-gradient`) no tema escuro teve o contraste reforçado com borda externa e sombras de profundidade, proporcionando sensação espacial imediata do volume de páginas restantes e já concluídas.
+
+### 7.3. Pilhas Inferiores Assimétricas (`.book-page-stack-bottom`)
+* **Perspectiva do Corte Inferior ("Tail"):** Emulação das folhas na parte inferior do livro aberto na mesa.
+* **Assimetria Dinâmica:**
+  * **Folha Esquerda:** Altura proporcional às páginas lidas (`currentPage - 1`), partindo de 0px na capa até 8px no final da obra.
+  * **Folha Direita:** Altura proporcional às páginas restantes (`totalPages - currentPage`), partindo de 8px na capa até 0px no final da obra.
+* **Interatividade Integrada:** As pilhas inferiores e laterais atuam como atalhos clicáveis para avançar ou retroceder a página com suporte pleno a acessibilidade (`role="button"`).
+
