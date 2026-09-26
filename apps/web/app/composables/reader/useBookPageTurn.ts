@@ -106,17 +106,13 @@ export function useBookPageTurn(
       let maxPageWidth: number
       let maxPageHeight: number
 
-      if (isZen) {
-        // Modo Zen: Ocupa 100% da tela do notebook
-        maxPageWidth = Math.floor(hostWidth / 2)
-        maxPageHeight = hostHeight
-      } else if (isWide) {
-        // Modo Expandido: Ocupa 100% da área útil disponível
+      if (isWide) {
+        // Modo Expandido: Ocupa a área útil disponível preservando margens seguras
         const availableWidth = Math.max(300, hostWidth - 32)
         maxPageWidth = Math.floor(availableWidth / 2)
         maxPageHeight = Math.max(300, hostHeight - 24)
       } else {
-        // Modo Centralizado: Proporção clássica de livro físico com margens elegantes
+        // Modo Centralizado / Zen: Proporção clássica de livro físico com margens elegantes
         maxPageHeight = Math.round(hostHeight * 0.94)
         maxPageWidth = Math.floor((hostWidth - 48) / 2)
       }
@@ -125,7 +121,7 @@ export function useBookPageTurn(
       let targetHeight: number
 
       if (isEpub) {
-        if (isWide || isZen) {
+        if (isWide) {
           targetWidth = maxPageWidth
           targetHeight = maxPageHeight
         } else {
@@ -184,8 +180,8 @@ export function useBookPageTurn(
       let maxPageWidth: number
       let maxPageHeight: number
 
-      if (isMobile || isZen) {
-        // No mobile ou no Modo Zen: sem bordas ou margens externas, 100% de largura e altura uniforme
+      if (isMobile) {
+        // No mobile: sem bordas ou margens externas, 100% de largura e altura uniforme
         maxPageWidth = hostWidth
         maxPageHeight = hostHeight
       } else if (isWide) {
@@ -193,7 +189,7 @@ export function useBookPageTurn(
         maxPageWidth = Math.max(300, Math.round(hostWidth - 32))
         maxPageHeight = Math.max(300, hostHeight - 24)
       } else {
-        // Modo Centralizado no Desktop/Tablet: 1 folha centralizada com proporção clássica
+        // Modo Centralizado no Desktop/Tablet (incluindo Modo Zen): 1 folha centralizada com proporção clássica
         maxPageHeight = Math.round(hostHeight * 0.94)
         maxPageWidth = Math.round(Math.min(hostWidth - 48, Math.max(480, hostWidth * 0.55)))
       }
@@ -202,7 +198,7 @@ export function useBookPageTurn(
       let targetHeight: number
 
       if (isEpub) {
-        if (isWide || isZen || isMobile) {
+        if (isWide || isMobile) {
           targetWidth = maxPageWidth
           targetHeight = maxPageHeight
         } else {

@@ -1,7 +1,7 @@
 ## 🔄 Em Andamento
-- [26/09/2026 13:46] [Fazendo] Diagnosticar e corrigir tela preta no Modo Zen do leitor: forçar contraste do texto no Dark Mode e preservar enquadramento ergonômico do livro
 
 ## ✅ Concluído
+- [26/09/2026 13:48] [Concluído] Diagnosticar e corrigir tela preta no Modo Zen do leitor: forçar contraste do texto no Dark Mode e preservar enquadramento ergonômico do livro
 - [26/09/2026 13:47] [Concluído] Ajustar encontro entre as linhas laterais e a base inferior para cantos retos no leitor 3D
 - [26/09/2026 13:40] [Concluído] Implementar sincronização do diário sequencial (journal.json) na nuvem via DriveSyncService, revalidação em tempo real e controles de sync no JournalView
 - [26/09/2026 13:34] [Concluído] Implementar sistema unificado de linhas de folhas com correspondência 1:1, curvatura elíptica nos cantos e linhas horizontais na base do leitor 3D
