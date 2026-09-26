@@ -189,4 +189,48 @@ describe('PageSpatialEnhancements - Vinco Central e Pilhas de Páginas 3D', () =
     expect(bottomLeftStack.attributes('role')).toBe('button')
     expect(bottomRightStack.attributes('role')).toBe('button')
   })
+
+  it('renderiza o SVG unificado da pilha inferior com transição elíptica contínua na lombada e sem divisão nos cantos', async () => {
+    const store = useReaderStore()
+    store.setDocument({
+      type: 'epub',
+      metadata: { title: 'Livro de Teste' },
+      totalPages: 100,
+      isLoaded: true,
+      load: vi.fn(),
+      getPage: vi.fn(),
+      renderTextLayer: vi.fn(),
+      destroy: vi.fn(),
+    } as any, 'livro.epub')
+
+    store.isTwoPageMode = true
+    store.currentPage = 15 // hL = 2px, hR = 7px
+
+    const wrapper = mount(PageCurlCanvas, { attachTo: document.body })
+    const stage = wrapper.find('.page-curl-wrapper').element as HTMLElement
+    Object.defineProperty(stage, 'clientWidth', { value: 1200, configurable: true })
+    Object.defineProperty(stage, 'clientHeight', { value: 800, configurable: true })
+    window.dispatchEvent(new Event('resize'))
+    await wrapper.vm.$nextTick()
+
+    const unifiedBottom = wrapper.find('.book-page-stack-bottom-unified')
+    expect(unifiedBottom.exists()).toBe(true)
+
+    const bottomSvg = wrapper.find('.book-bottom-svg')
+    expect(bottomSvg.exists()).toBe(true)
+
+    // O path da borda inferior deve conter o comando 'C ' (curva cúbica de Bézier elíptica de transição)
+    const paths = bottomSvg.findAll('path')
+    expect(paths.length).toBe(2)
+    const strokePath = paths[1].attributes('d')
+    expect(strokePath).toContain('C ')
+
+    // As pilhas laterais devem ter a altura estendida para encontrar a base perfeitamente
+    const rightLateralStack = wrapper.find('.book-page-stack--right')
+    expect(rightLateralStack.exists()).toBe(true)
+    const rightPageSheet = wrapper.find('.page-sheet--right')
+    const pageHeight = parseFloat((rightPageSheet.element as HTMLElement).style.height)
+    const lateralHeight = parseFloat((rightLateralStack.element as HTMLElement).style.height)
+    expect(lateralHeight).toBeGreaterThan(pageHeight)
+  })
 })

@@ -31,7 +31,7 @@
               left: `${renderedLayout.leftPage.left - pageStackDepth.leftWidth}px`,
               top: `${renderedLayout.leftPage.top}px`,
               width: `${pageStackDepth.leftWidth}px`,
-              height: `${renderedLayout.leftPage.height}px`,
+              height: `${renderedLayout.leftPage.height + pageStackDepth.bottomLeftHeight}px`,
             }"
             @click.stop="requestTurn('previous')"
             :title="`Páginas lidas (${store.currentPage - 1} de ${store.totalPages} páginas - Voltar)`"
@@ -160,7 +160,7 @@
               left: `${renderedLayout.rightPage.left + renderedLayout.rightPage.width}px`,
               top: `${renderedLayout.rightPage.top}px`,
               width: `${pageStackDepth.rightWidth}px`,
-              height: `${renderedLayout.rightPage.height}px`,
+              height: `${renderedLayout.rightPage.height + pageStackDepth.bottomRightHeight}px`,
             }"
             @click.stop="requestTurn('next')"
             :title="`Páginas restantes (${store.totalPages - store.currentPage} de ${store.totalPages} páginas - Avançar)`"
@@ -183,39 +183,82 @@
             aria-hidden="true"
           />
 
-          <!-- Pilha de Páginas Inferior Esquerda (Páginas Lidas) -->
+          <!-- Pilha de Páginas Inferior Unificada com Transição Elíptica na Lombada -->
           <div
-            v-if="pageCreaseEnabled && pageAnimationEnabled && pageStackDepth.bottomLeftHeight > 0 && renderedLayout.leftPage && renderedLayout.leftPage.pageNumber > 0"
-            class="book-page-stack-bottom book-page-stack-bottom--left"
+            v-if="pageCreaseEnabled && pageAnimationEnabled && bottomStackSvg && Math.max(pageStackDepth.bottomLeftHeight, pageStackDepth.bottomRightHeight) > 0"
+            class="book-page-stack-bottom-unified"
             :style="{
-              left: `${renderedLayout.leftPage.left - pageStackDepth.leftWidth}px`,
-              top: `${renderedLayout.leftPage.top + renderedLayout.leftPage.height}px`,
-              width: `${renderedLayout.leftPage.width + pageStackDepth.leftWidth}px`,
-              height: `${pageStackDepth.bottomLeftHeight}px`,
+              left: `${bottomStackSvg.left}px`,
+              top: `${bottomStackSvg.top}px`,
+              width: `${bottomStackSvg.width}px`,
+              height: `${bottomStackSvg.height}px`,
             }"
-            @click.stop="requestTurn('previous')"
-            :title="`Páginas lidas (${store.currentPage - 1} de ${store.totalPages} páginas - Voltar)`"
-            role="button"
-            tabindex="0"
-            aria-label="Páginas já lidas. Clique para voltar página"
-          />
+          >
+            <svg
+              class="book-bottom-svg"
+              :viewBox="bottomStackSvg.viewBox"
+              preserveAspectRatio="none"
+              width="100%"
+              height="100%"
+            >
+              <defs>
+                <pattern
+                  :id="`book-stack-pattern-${activeTheme}`"
+                  width="2.5"
+                  height="20"
+                  patternUnits="userSpaceOnUse"
+                >
+                  <rect
+                    width="1"
+                    height="20"
+                    :fill="activeTheme === 'black' ? 'rgba(255, 255, 255, 0.18)' : activeTheme === 'white' ? 'rgba(0, 0, 0, 0.22)' : 'rgba(120, 85, 45, 0.38)'"
+                  />
+                  <rect
+                    x="1"
+                    width="1.5"
+                    height="20"
+                    :fill="activeTheme === 'black' ? 'rgba(18, 18, 22, 0.95)' : activeTheme === 'white' ? 'rgba(240, 240, 242, 0.95)' : 'rgba(237, 226, 205, 0.95)'"
+                  />
+                </pattern>
+              </defs>
 
-          <!-- Pilha de Páginas Inferior Direita (Páginas Restantes) -->
-          <div
-            v-if="pageCreaseEnabled && pageAnimationEnabled && pageStackDepth.bottomRightHeight > 0 && renderedLayout.rightPage && renderedLayout.rightPage.pageNumber > 0"
-            class="book-page-stack-bottom book-page-stack-bottom--right"
-            :style="{
-              left: `${renderedLayout.rightPage.left}px`,
-              top: `${renderedLayout.rightPage.top + renderedLayout.rightPage.height}px`,
-              width: `${renderedLayout.rightPage.width + pageStackDepth.rightWidth}px`,
-              height: `${pageStackDepth.bottomRightHeight}px`,
-            }"
-            @click.stop="requestTurn('next')"
-            :title="`Páginas restantes (${store.totalPages - store.currentPage} de ${store.totalPages} páginas - Avançar)`"
-            role="button"
-            tabindex="0"
-            aria-label="Páginas restantes a ler. Clique para avançar página"
-          />
+              <!-- Preenchimento do Bloco com Padrão de Folhas -->
+              <path
+                :d="bottomStackSvg.fillPath"
+                :fill="`url(#book-stack-pattern-${activeTheme})`"
+              />
+
+              <!-- Traço Contínuo da Borda Inferior -->
+              <path
+                :d="bottomStackSvg.strokePath"
+                fill="none"
+                :stroke="activeTheme === 'black' ? 'rgba(255, 255, 255, 0.2)' : activeTheme === 'white' ? 'rgba(0, 0, 0, 0.2)' : 'rgba(140, 110, 70, 0.5)'"
+                stroke-width="1"
+              />
+            </svg>
+
+            <!-- Área de Clique Esquerda (Voltar) -->
+            <div
+              class="book-page-stack-bottom book-page-stack-bottom--left book-bottom-hitbox"
+              :style="{ width: `${bottomStackSvg.wL}px`, height: `${bottomStackSvg.hL}px` }"
+              @click.stop="requestTurn('previous')"
+              :title="`Páginas lidas (${store.currentPage - 1} de ${store.totalPages} páginas - Voltar)`"
+              role="button"
+              tabindex="0"
+              aria-label="Páginas já lidas. Clique para voltar página"
+            />
+
+            <!-- Área de Clique Direita (Avançar) -->
+            <div
+              class="book-page-stack-bottom book-page-stack-bottom--right book-bottom-hitbox"
+              :style="{ left: `${bottomStackSvg.wL}px`, width: `${bottomStackSvg.wR}px`, height: `${bottomStackSvg.hR}px` }"
+              @click.stop="requestTurn('next')"
+              :title="`Páginas restantes (${store.totalPages - store.currentPage} de ${store.totalPages} páginas - Avançar)`"
+              role="button"
+              tabindex="0"
+              aria-label="Páginas restantes a ler. Clique para avançar página"
+            />
+          </div>
         </template>
 
         <!-- MODO 1 PÁGINA (DESKTOP/TABLET / MOBILE) -->
@@ -228,7 +271,7 @@
               left: `${renderedLayout.singlePage.left - pageStackDepth.leftWidth}px`,
               top: `${renderedLayout.singlePage.top}px`,
               width: `${pageStackDepth.leftWidth}px`,
-              height: `${renderedLayout.singlePage.height}px`,
+              height: `${renderedLayout.singlePage.height + Math.max(pageStackDepth.bottomLeftHeight, pageStackDepth.bottomRightHeight)}px`,
             }"
             @click.stop="requestTurn('previous')"
             :title="`Páginas lidas (${store.currentPage - 1} de ${store.totalPages} páginas - Voltar)`"
@@ -291,7 +334,7 @@
               left: `${renderedLayout.singlePage.left + renderedLayout.singlePage.width}px`,
               top: `${renderedLayout.singlePage.top}px`,
               width: `${pageStackDepth.rightWidth}px`,
-              height: `${renderedLayout.singlePage.height}px`,
+              height: `${renderedLayout.singlePage.height + Math.max(pageStackDepth.bottomLeftHeight, pageStackDepth.bottomRightHeight)}px`,
             }"
             @click.stop="requestTurn('next')"
             :title="`Páginas restantes (${store.totalPages - store.currentPage} de ${store.totalPages} páginas - Avançar)`"
@@ -305,9 +348,9 @@
             v-if="pageCreaseEnabled && pageAnimationEnabled && Math.max(pageStackDepth.bottomLeftHeight, pageStackDepth.bottomRightHeight) > 0"
             class="book-page-stack-bottom book-page-stack-bottom--single"
             :style="{
-              left: `${renderedLayout.singlePage.left - pageStackDepth.leftWidth}px`,
+              left: `${renderedLayout.singlePage.left}px`,
               top: `${renderedLayout.singlePage.top + renderedLayout.singlePage.height}px`,
-              width: `${renderedLayout.singlePage.width + pageStackDepth.leftWidth + pageStackDepth.rightWidth}px`,
+              width: `${renderedLayout.singlePage.width}px`,
               height: `${Math.max(pageStackDepth.bottomLeftHeight, pageStackDepth.bottomRightHeight)}px`,
             }"
             aria-hidden="true"
@@ -421,6 +464,50 @@ const pageStackDepth = computed(() => {
     bottomRightHeight,
     leftLines,
     rightLines,
+  }
+})
+
+const bottomStackSvg = computed(() => {
+  const layout = renderedLayout.value
+  if (!layout.isTwoPage || !layout.leftPage || !layout.rightPage) {
+    return null
+  }
+
+  const wL = layout.leftPage.width
+  const wR = layout.rightPage.width
+  const totalW = wL + wR
+  const spineX = wL
+
+  const hL = pageStackDepth.value.bottomLeftHeight
+  const hR = pageStackDepth.value.bottomRightHeight
+  const maxH = Math.max(hL, hR, 2)
+
+  // Curva elíptica suave e de curta duração centrada na lombada (36px total)
+  const curveW = Math.min(18, Math.floor(Math.min(wL, wR) * 0.15))
+  const xStart = spineX - curveW
+  const xEnd = spineX + curveW
+  const cp1X = spineX - Math.round(curveW * 0.25)
+  const cp2X = spineX + Math.round(curveW * 0.25)
+
+  // Polígono fechado para preenchimento
+  const fillPath = `M 0 0 L ${totalW} 0 L ${totalW} ${hR} L ${xEnd} ${hR} C ${cp2X} ${hR}, ${cp1X} ${hL}, ${xStart} ${hL} L 0 ${hL} Z`
+
+  // Traço contínuo da borda inferior
+  const strokePath = `M 0 ${hL} L ${xStart} ${hL} C ${cp1X} ${hL}, ${cp2X} ${hR}, ${xEnd} ${hR} L ${totalW} ${hR}`
+
+  return {
+    left: layout.leftPage.left,
+    top: layout.leftPage.top + layout.leftPage.height,
+    width: totalW,
+    height: maxH,
+    viewBox: `0 0 ${totalW} ${maxH}`,
+    fillPath,
+    strokePath,
+    spineX,
+    wL,
+    wR,
+    hL,
+    hR,
   }
 })
 
@@ -1211,7 +1298,7 @@ function hasTextAtCaret(clientX?: number, clientY?: number): boolean {
 function isInteractiveTextTarget(target: EventTarget | null, clientX?: number, clientY?: number): boolean {
   if (!target) return false
   const el = target instanceof HTMLElement ? target : (target as any).parentElement as HTMLElement | null
-  if (!el || el.closest('.book-page-stack, .book-page-stack-bottom')) return false
+  if (!el || el.closest('.book-page-stack, .book-page-stack-bottom, .book-page-stack-bottom-unified, .book-bottom-hitbox')) return false
 
   // 1. Elementos textuais explícitos (PDF textLayer spans, marcações de anotação, tags do EPUB)
   if (el.closest('.textLayer, .textLayer span, .reader-highlight, .text-highlight')) return true
@@ -1248,7 +1335,7 @@ async function onPointerDown(event: PointerEvent) {
 
   const pt = pointFrom(event)
   const isTextTarget = isInteractiveTextTarget(event.target, event.clientX, event.clientY)
-  const isPageStackTarget = Boolean((event.target as HTMLElement | null)?.closest('.book-page-stack, .book-page-stack-bottom'))
+  const isPageStackTarget = Boolean((event.target as HTMLElement | null)?.closest('.book-page-stack, .book-page-stack-bottom, .book-page-stack-bottom-unified, .book-bottom-hitbox'))
 
   const layout = pageLayout.value
   const targetPageRect = layout.isTwoPage
@@ -1997,12 +2084,44 @@ defineExpose({
   box-sizing: border-box;
 }
 
-.book-page-stack-bottom--left {
-  border-bottom-left-radius: 4px;
+.book-page-stack-bottom-unified {
+  position: absolute;
+  pointer-events: auto;
+  z-index: 10;
+  transition: height 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
+  overflow: visible;
+  user-select: none;
 }
 
-.book-page-stack-bottom--right {
-  border-bottom-right-radius: 4px;
+.book-bottom-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.theme-black .book-bottom-svg {
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.95));
+}
+
+.theme-sepia .book-bottom-svg {
+  filter: drop-shadow(0 4px 8px rgba(60, 45, 20, 0.25));
+}
+
+.theme-white .book-bottom-svg {
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.12));
+}
+
+.book-bottom-hitbox {
+  position: absolute;
+  top: 0;
+  cursor: pointer;
+  z-index: 2;
+  box-sizing: border-box;
+}
+
+.book-page-stack-bottom--left.book-bottom-hitbox {
+  left: 0;
 }
 
 .book-page-stack-bottom--single {
@@ -2011,7 +2130,7 @@ defineExpose({
 }
 
 /* Tema Sépia */
-.theme-sepia .book-page-stack-bottom {
+.theme-sepia .book-page-stack-bottom--single {
   background-color: #ede2cd;
   background-image: repeating-linear-gradient(
     to right,
@@ -2024,16 +2143,8 @@ defineExpose({
   border-bottom: 1px solid rgba(140, 110, 70, 0.5);
 }
 
-.theme-sepia .book-page-stack-bottom--left {
-  border-left: 1px solid rgba(140, 110, 70, 0.4);
-}
-
-.theme-sepia .book-page-stack-bottom--right {
-  border-right: 1px solid rgba(140, 110, 70, 0.4);
-}
-
 /* Tema Branco */
-.theme-white .book-page-stack-bottom {
+.theme-white .book-page-stack-bottom--single {
   background-color: #f0f0f2;
   background-image: repeating-linear-gradient(
     to right,
@@ -2046,16 +2157,8 @@ defineExpose({
   border-bottom: 1px solid rgba(0, 0, 0, 0.2);
 }
 
-.theme-white .book-page-stack-bottom--left {
-  border-left: 1px solid rgba(0, 0, 0, 0.15);
-}
-
-.theme-white .book-page-stack-bottom--right {
-  border-right: 1px solid rgba(0, 0, 0, 0.15);
-}
-
 /* Tema Preto */
-.theme-black .book-page-stack-bottom {
+.theme-black .book-page-stack-bottom--single {
   background-color: #121216;
   background-image: repeating-linear-gradient(
     to right,
@@ -2068,17 +2171,10 @@ defineExpose({
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.theme-black .book-page-stack-bottom--left {
-  border-left: 1px solid rgba(255, 255, 255, 0.15);
-}
-
-.theme-black .book-page-stack-bottom--right {
-  border-right: 1px solid rgba(255, 255, 255, 0.15);
-}
-
 @media (max-width: 767px) {
   .book-page-stack,
-  .book-page-stack-bottom {
+  .book-page-stack-bottom,
+  .book-page-stack-bottom-unified {
     display: none !important;
   }
 }

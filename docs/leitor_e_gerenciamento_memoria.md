@@ -150,8 +150,10 @@ Para elevar o modelo mental de imersão de um livro físico real na tela (especi
 * **Volume Tridimensional:** A espessura máxima das folhas acumuladas nas bordas externas foi ampliada de 14px para **24px** no desktop, com escalonamento dinâmico baseado no total de páginas da obra.
 * **Contraste Aumentado:** O padrão de folhas cortadas (`repeating-linear-gradient`) no tema escuro teve o contraste reforçado com borda externa e sombras de profundidade, proporcionando sensação espacial imediata do volume de páginas restantes e já concluídas.
 
-### 7.3. Pilhas Inferiores Assimétricas (`.book-page-stack-bottom`)
+### 7.3. Pilhas Inferiores Assimétricas e Transição Elíptica (`.book-page-stack-bottom-unified`)
 * **Perspectiva do Corte Inferior ("Tail"):** Emulação das folhas na parte inferior do livro aberto na mesa.
+* **Transição Elíptica Contínua na Lombada:** Para eliminar descontinuidades ou degraus retos verticais bruscos entre a espessura da página esquerda e direita, o bloco inferior é renderizado como um SVG unificado com curva de Bézier cúbica simétrica (arco elíptico suave de 36px) centrada na dobra central. A curvatura preserva derivadas horizontais (tangentes nulas) em ambas as extremidades, fundindo organicamente as duas espessuras.
+* **Unificação dos Cantos Sem Divisão:** As pilhas laterais (`.book-page-stack`) estendem sua altura contínua até o nível exato da base (`height + bottomHeight`), eliminando qualquer divisão ou corte horizontal nas quinas externas do livro e garantindo um bloco de folhas monolítico e natural.
 * **Assimetria Dinâmica:**
   * **Folha Esquerda:** Altura proporcional às páginas lidas (`currentPage - 1`), partindo de 0px na capa até 8px no final da obra.
   * **Folha Direita:** Altura proporcional às páginas restantes (`totalPages - currentPage`), partindo de 8px na capa até 0px no final da obra.

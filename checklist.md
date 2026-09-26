@@ -1,7 +1,8 @@
 ## 🔄 Em Andamento
-- [26/09/2026 13:22] [Fazendo] Suavizar transição elíptica na lombada inferior e unificar harmoniosamente os cantos das pilhas de folhas laterais com as inferiores no leitor 3D
+- [26/09/2026 13:30] [Fazendo] Diagnosticar e corrigir sincronização do diário na nuvem
 
 ## ✅ Concluído
+- [26/09/2026 13:28] [Concluído] Suavizar transição elíptica na lombada inferior e unificar harmoniosamente os cantos das pilhas de folhas laterais com as inferiores no leitor 3D
 - [26/09/2026 13:24] [Concluído] Aumentar o tamanho do card, capa e tipografia do livro ativo no painel lateral (FolderTagSidebar)
 - [26/09/2026 13:15] [Concluído] Conectar via SSH à instância EC2 da AWS e sincronizar o arquivo .env de produção para a raiz local do projeto
 - [26/09/2026 13:13] [Concluído] Implementar vinco central no Dark Mode, ampliar destaque das pilhas laterais de folhas e adicionar pilhas inferiores assimétricas no leitor 3D
