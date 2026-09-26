@@ -159,13 +159,12 @@ Para elevar o modelo mental de imersão de um livro físico real na tela (especi
   * **Folha Direita:** Altura proporcional às páginas restantes (`totalPages - currentPage`), partindo de 8px na capa até 0px no final da obra.
 * **Interatividade Integrada:** As pilhas inferiores e laterais atuam como atalhos clicáveis para avançar ou retroceder a página com suporte pleno a acessibilidade (`role="button"`).
 
-### 7.4. Sistema Vetorial de Linhas de Folhas 1-para-1 com Cantos Elípticos (`.book-stack-line`)
+### 7.4. Sistema Vetorial de Linhas de Folhas 1-para-1 com Encontro Reto na Quina (`.book-stack-line`)
 * **Orientação Física Realista (Horizontal na Base vs Vertical nas Laterais):** Em livros físicos, as bordas laterais expõem o corte vertical das páginas, enquanto a base inferior expõe o corte horizontal das folhas. Para harmonizar esses dois planos tridimensionais sem quebras, o motor vetorial adota correspondência 1-para-1 direta entre cada folha lateral e sua respectiva linha na base.
-* **Curvatura Elíptica Ampla nos Cantos (Corner Sweep):** Cada folha $k \in \{1 \dots N\}$ transiciona da lateral para a base por meio de uma elipse ampla que inicia até 36px acima da base no eixo vertical ($C_{y, k} = \min(36, \max(8, W \cdot 1.2)) \cdot \frac{k}{N}$), garantindo:
-  * **Tangência Vertical Estrita na Entrada:** Início da curva com vetor $(0, 1)$ contíguo à linha vertical lateral.
-  * **Tangência Horizontal Estrita na Saída:** Término da curva com vetor $(1, 0)$ perfeitamente paralelo à borda inferior.
-  * **Concentricidade Monotônica:** As linhas concêntricas mantêm distâncias estritamente proporcionais, eliminando cruzamento de traços mesmo com a base sendo substancialmente menor ($\approx 8\text{px}$) que as laterais ($\approx 24\text{px}$).
-* **Transição na Lombada:** Todas as linhas cruzam a mediana com curvas suaves em S (`C`), mantendo a ilusão contínua de blocos físicos de papel costurados no centro.
+* **Encontro Reto Perpendicular nas Quinas (90° Orthogonal Corner):** Cada folha $k \in \{1 \dots N\}$ desce em traço vertical estrito pela lateral e encontra a sua respectiva linha horizontal na base em um ângulo reto perfeito de 90° (`L xLeft (pageH + dy_L) L xSpineStart (pageH + dy_L)`), eliminando curvaturas e proporcionando acabamento geométrico nítido e sólido conforme a perspectiva editorial clássica.
+* **Junção Miter sem Rebarbas:** As linhas utilizam `stroke-linejoin: miter` e `stroke-linecap: square`, assegurando quinas limpas, nítidas e sem distorções visuais.
+* **Transição Suave na Lombada:** Todas as linhas continuam cruzando a mediana central por meio de curvas suaves em S (`C`), mantendo a ilusão contínua de blocos físicos de papel que convergem para a encadernação central.
 * **Fidelidade de Tema:** Suporte a traços luminosos de alto contraste em OLED Black (`rgba(255, 255, 255, 0.2)` e `0.35`), tons quentes em Sépia e grafite suave em White.
+
 
 

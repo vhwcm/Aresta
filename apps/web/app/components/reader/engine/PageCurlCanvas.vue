@@ -499,24 +499,17 @@ const bottomStackSvg = computed(() => {
     const fk = k / N
     const dx_L = Math.round(fk * W_L * 10) / 10
     const dy_L = Math.round(fk * H_L * 10) / 10
-    // Curvatura elíptica ampla no canto lateral (sweep de até 36px na vertical)
-    const Cy_L = Math.round(Math.min(36, Math.max(8, W_L * 1.2)) * fk * 10) / 10
-
     const dx_R = Math.round(fk * W_R * 10) / 10
     const dy_R = Math.round(fk * H_R * 10) / 10
-    const Cy_R = Math.round(Math.min(36, Math.max(8, W_R * 1.2)) * fk * 10) / 10
 
     let d = ''
 
-    // Ponto de início na borda lateral esquerda (linha vertical)
+    // Ponto de início na borda lateral esquerda (linha vertical descendo)
     if (W_L > 0) {
       const xLeft = W_L - dx_L
       d += `M ${xLeft} 0 `
-      d += `L ${xLeft} ${pageH - Cy_L} `
-      // Curva elíptica do canto inferior esquerdo (tangência vertical -> tangência horizontal)
-      const cp1_y = pageH - Cy_L + Cy_L * 0.552
-      const cp2_x = W_L - dx_L * 0.448
-      d += `C ${xLeft} ${cp1_y}, ${cp2_x} ${pageH + dy_L}, ${W_L} ${pageH + dy_L} `
+      // Encontro reto no canto inferior esquerdo (90 graus)
+      d += `L ${xLeft} ${pageH + dy_L} `
     } else {
       d += `M ${spineX} ${pageH} `
     }
@@ -536,15 +529,12 @@ const bottomStackSvg = computed(() => {
     d += `C ${cpSpine1_x} ${pageH + dy_L}, ${cpSpine2_x} ${pageH + dy_R}, ${xSpineEnd} ${pageH + dy_R} `
 
     // Trecho horizontal direito da base
-    const rightCornerStart = W_L + totalPageW
-    d += `L ${rightCornerStart} ${pageH + dy_R} `
+    const xRight = W_L + totalPageW + dx_R
+    // Encontro reto no canto inferior direito (90 graus)
+    d += `L ${xRight} ${pageH + dy_R} `
 
-    // Curva elíptica do canto inferior direito (tangência horizontal -> tangência vertical)
+    // Lateral direita subindo verticalmente até o topo
     if (W_R > 0) {
-      const xRight = W_L + totalPageW + dx_R
-      const cp1_x = rightCornerStart + dx_R * 0.448
-      const cp2_y = pageH - Cy_R + Cy_R * 0.552
-      d += `C ${cp1_x} ${pageH + dy_R}, ${xRight} ${cp2_y}, ${xRight} ${pageH - Cy_R} `
       d += `L ${xRight} 0 `
     }
 
@@ -2196,11 +2186,12 @@ defineExpose({
   fill: #121216;
 }
 
-/* Linhas Concêntricas das Folhas (Correspondência 1-para-1 Lateral e Base) */
+/* Linhas Concêntricas das Folhas (Correspondência 1-para-1 com Encontro Reto na Quina) */
 .book-stack-line {
   fill: none;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+  stroke-miterlimit: 4;
   vector-effect: non-scaling-stroke;
   transition: stroke 0.25s ease, stroke-width 0.25s ease;
 }
@@ -2418,21 +2409,113 @@ defineExpose({
   color: #2a2521;
 }
 
+.theme-sepia .page-text-layer :deep(.epub-text-layer-content),
+.theme-sepia .page-text-layer :deep(.epub-text-layer-content *),
+.theme-sepia .page-text-layer :deep(p),
+.theme-sepia .page-text-layer :deep(span),
+.theme-sepia .page-text-layer :deep(div),
+.theme-sepia .page-text-layer :deep(li),
+.theme-sepia .page-text-layer :deep(strong),
+.theme-sepia .page-text-layer :deep(b),
+.theme-sepia .page-text-layer :deep(em),
+.theme-sepia .page-text-layer :deep(i),
+.theme-sepia .page-text-layer :deep(.didactic-article-body),
+.theme-sepia .page-text-layer :deep(.didactic-paragraph) {
+  color: #2a2521 !important;
+}
+
+.theme-sepia .page-text-layer :deep(h1),
+.theme-sepia .page-text-layer :deep(h2),
+.theme-sepia .page-text-layer :deep(h3),
+.theme-sepia .page-text-layer :deep(h4),
+.theme-sepia .page-text-layer :deep(h5),
+.theme-sepia .page-text-layer :deep(h6),
+.theme-sepia .page-text-layer :deep(.chapter-title),
+.theme-sepia .page-text-layer :deep(.book-title),
+.theme-sepia .page-text-layer :deep(.title),
+.theme-sepia .page-text-layer :deep(.chapter-subtitle),
+.theme-sepia .page-text-layer :deep(.book-subtitle),
+.theme-sepia .page-text-layer :deep(.subtitle),
+.theme-sepia .page-text-layer :deep(.didactic-heading) {
+  color: #1a1613 !important;
+}
+
 .theme-white .page-text-layer :deep(.epub-text-layer-content),
 .theme-white .page-text-layer :deep(.epub-text-layer-content *),
-.theme-white .page-text-layer :deep(.epub-text-layer-content p),
-.theme-white .page-text-layer :deep(.epub-text-layer-content span),
-.theme-white .page-text-layer :deep(.epub-text-layer-content div) {
-  color: #1a1a1a;
+.theme-white .page-text-layer :deep(p),
+.theme-white .page-text-layer :deep(span),
+.theme-white .page-text-layer :deep(div),
+.theme-white .page-text-layer :deep(li),
+.theme-white .page-text-layer :deep(strong),
+.theme-white .page-text-layer :deep(b),
+.theme-white .page-text-layer :deep(em),
+.theme-white .page-text-layer :deep(i),
+.theme-white .page-text-layer :deep(.didactic-article-body),
+.theme-white .page-text-layer :deep(.didactic-paragraph) {
+  color: #1a1a1a !important;
+}
+
+.theme-white .page-text-layer :deep(h1),
+.theme-white .page-text-layer :deep(h2),
+.theme-white .page-text-layer :deep(h3),
+.theme-white .page-text-layer :deep(h4),
+.theme-white .page-text-layer :deep(h5),
+.theme-white .page-text-layer :deep(h6),
+.theme-white .page-text-layer :deep(.chapter-title),
+.theme-white .page-text-layer :deep(.book-title),
+.theme-white .page-text-layer :deep(.title),
+.theme-white .page-text-layer :deep(.chapter-subtitle),
+.theme-white .page-text-layer :deep(.book-subtitle),
+.theme-white .page-text-layer :deep(.subtitle),
+.theme-white .page-text-layer :deep(.didactic-heading) {
+  color: #09090b !important;
 }
 
 .theme-black .page-text-layer :deep(.epub-text-layer-content),
 .theme-black .page-text-layer :deep(.epub-text-layer-content *),
-.theme-black .page-text-layer :deep(.epub-text-layer-content p),
-.theme-black .page-text-layer :deep(.epub-text-layer-content span),
-.theme-black .page-text-layer :deep(.epub-text-layer-content div) {
-  color: #e4e4e7;
+.theme-black .page-text-layer :deep(p),
+.theme-black .page-text-layer :deep(span),
+.theme-black .page-text-layer :deep(div),
+.theme-black .page-text-layer :deep(li),
+.theme-black .page-text-layer :deep(strong),
+.theme-black .page-text-layer :deep(b),
+.theme-black .page-text-layer :deep(em),
+.theme-black .page-text-layer :deep(i),
+.theme-black .page-text-layer :deep(small),
+.theme-black .page-text-layer :deep(.didactic-article-body),
+.theme-black .page-text-layer :deep(.didactic-paragraph) {
+  color: #e4e4e7 !important;
 }
+
+.theme-black .page-text-layer :deep(h1),
+.theme-black .page-text-layer :deep(h2),
+.theme-black .page-text-layer :deep(h3),
+.theme-black .page-text-layer :deep(h4),
+.theme-black .page-text-layer :deep(h5),
+.theme-black .page-text-layer :deep(h6),
+.theme-black .page-text-layer :deep(.chapter-title),
+.theme-black .page-text-layer :deep(.book-title),
+.theme-black .page-text-layer :deep(.title),
+.theme-black .page-text-layer :deep(.chapter-subtitle),
+.theme-black .page-text-layer :deep(.book-subtitle),
+.theme-black .page-text-layer :deep(.subtitle),
+.theme-black .page-text-layer :deep(.didactic-heading) {
+  color: #ffffff !important;
+}
+
+.theme-black .page-text-layer :deep(a) {
+  color: #fb923c !important;
+}
+
+.theme-black .page-text-layer :deep(blockquote) {
+  color: #d4d4d8 !important;
+  border-left-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.theme-black .page-text-layer :deep(hr) {
+  border-top-color: rgba(255, 255, 255, 0.15) !important;
+}
+
 
 .page-text-layer :deep(.epub-text-layer-content h1),
 .page-text-layer :deep(.epub-text-layer-content .chapter-title),

@@ -277,6 +277,14 @@ describe('PageSpatialEnhancements - Vinco Central e Pilhas de Páginas 3D', () =
     // Deve iniciar com traço vertical a partir de y = 0
     expect(outerPath).toMatch(/M \d+(\.\d+)? 0 L \d+(\.\d+)? \d+/)
 
+    // Encontro reto no canto esquerdo: desce verticalmente e segue horizontalmente no mesmo Y
+    const cornerLeftMatch = outerPath.match(/M (\d+(\.\d+)?) 0 L \1 (\d+(\.\d+)?) L (\d+(\.\d+)?) \3/)
+    expect(cornerLeftMatch).not.toBeNull()
+
+    // Encontro reto no canto direito: chega horizontalmente e sobe verticalmente no mesmo X
+    const cornerRightMatch = outerPath.match(/L (\d+(\.\d+)?) (\d+(\.\d+)?) L \1 0$/)
+    expect(cornerRightMatch).not.toBeNull()
+
     // Deve terminar com traço vertical subindo até y = 0 no canto direito
     expect(outerPath).toMatch(/L \d+(\.\d+)? 0$/)
   })
