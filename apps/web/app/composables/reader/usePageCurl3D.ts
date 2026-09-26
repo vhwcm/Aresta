@@ -11,6 +11,7 @@ export interface Page3DConfig {
   direction: 'next' | 'previous'
   bleedX?: number
   bleedY?: number
+  theme?: 'sepia' | 'white' | 'black'
 }
 
 export interface VertexPoint {
@@ -482,6 +483,11 @@ export function usePageCurl3D(canvasHostRef: Ref<HTMLCanvasElement | null>) {
       if (text) {
         ctx.fillText(text, 40, 60)
       }
+      if (bgColor === '#000000') {
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.22)'
+        ctx.lineWidth = 1
+        ctx.strokeRect(0.5, 0.5, canvas.width - 1, canvas.height - 1)
+      }
     }
     return canvas
   }
@@ -496,6 +502,8 @@ export function usePageCurl3D(canvasHostRef: Ref<HTMLCanvasElement | null>) {
     currentDirection = config.direction
     const bleedX = config.bleedX ?? BLEED_X
     const bleedY = config.bleedY ?? BLEED_Y
+    const fallbackBg = config.theme === 'black' ? '#000000' : config.theme === 'white' ? '#ffffff' : '#f5eedc'
+    const fallbackText = config.theme === 'black' ? '#e4e4e7' : config.theme === 'white' ? '#1a1a1a' : '#333333'
 
     const totalCanvasWidth = currentWidth * 2 + bleedX * 2
     const totalCanvasHeight = currentHeight + bleedY * 2
@@ -552,14 +560,14 @@ export function usePageCurl3D(canvasHostRef: Ref<HTMLCanvasElement | null>) {
     }
 
     if (!frontTexture) {
-      frontTexture = new THREE.CanvasTexture(createFallbackCanvas('', currentWidth, currentHeight))
+      frontTexture = new THREE.CanvasTexture(createFallbackCanvas('', currentWidth, currentHeight, fallbackBg, fallbackText))
       frontTexture.minFilter = THREE.LinearFilter
       frontTexture.magFilter = THREE.LinearFilter
       frontTexture.generateMipmaps = false
     }
 
     if (!backTexture) {
-      backTexture = new THREE.CanvasTexture(createFallbackCanvas('', currentWidth, currentHeight))
+      backTexture = new THREE.CanvasTexture(createFallbackCanvas('', currentWidth, currentHeight, fallbackBg, fallbackText))
       backTexture.minFilter = THREE.LinearFilter
       backTexture.magFilter = THREE.LinearFilter
       backTexture.generateMipmaps = false

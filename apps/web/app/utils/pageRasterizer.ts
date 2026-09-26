@@ -35,15 +35,15 @@ export function applyThemeToCanvas(
         const g = data[i + 1]!
         const b = data[i + 2]!
 
-        // Inversão com tom escuro suave (#121214)
-        data[i] = Math.round((255 - r) * 0.07 + 18)
-        data[i + 1] = Math.round((255 - g) * 0.07 + 18)
-        data[i + 2] = Math.round((255 - b) * 0.08 + 20)
+        // Inversão com fundo preto puro (#000000) e contraste suave de texto (#e4e4e7)
+        data[i] = Math.round((255 - r) * (228 / 255))
+        data[i + 1] = Math.round((255 - g) * (228 / 255))
+        data[i + 2] = Math.round((255 - b) * (231 / 255))
       }
       ctx.putImageData(imgData, 0, 0)
     } catch {
-      // Caso ocorra erro de contexto em ambiente restrito, preenche fundo
-      ctx.fillStyle = '#121214'
+      // Caso ocorra erro de contexto em ambiente restrito, preenche fundo com preto puro
+      ctx.fillStyle = '#000000'
       ctx.fillRect(0, 0, width, height)
     }
   }
@@ -72,7 +72,7 @@ export function drawPlainTextToCanvas(
   const ctx = targetCanvas.getContext('2d')
   if (!ctx) return
 
-  const bgColor = theme === 'sepia' ? '#f5eedc' : theme === 'black' ? '#121214' : '#ffffff'
+  const bgColor = theme === 'sepia' ? '#f5eedc' : theme === 'black' ? '#000000' : '#ffffff'
   const textColor = theme === 'sepia' ? '#2a2521' : theme === 'black' ? '#e4e4e7' : '#1a1a1a'
 
   ctx.fillStyle = bgColor
@@ -149,6 +149,16 @@ export function drawPlainTextToCanvas(
   }
 
   ctx.restore()
+
+  if (theme === 'black') {
+    ctx.save()
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.22)'
+    ctx.lineWidth = 1 * dpr
+    if (typeof ctx.strokeRect === 'function') {
+      ctx.strokeRect(0.5 * dpr, 0.5 * dpr, renderW - 1 * dpr, renderH - 1 * dpr)
+    }
+    ctx.restore()
+  }
 }
 
 function drawNodeWords(
@@ -222,7 +232,7 @@ export function rasterizeElementToCanvas(
   const ctx = targetCanvas.getContext('2d')
   if (!ctx) return false
 
-  const bgColor = theme === 'sepia' ? '#f5eedc' : theme === 'black' ? '#121214' : '#ffffff'
+  const bgColor = theme === 'sepia' ? '#f5eedc' : theme === 'black' ? '#000000' : '#ffffff'
   const textColor = theme === 'sepia' ? '#2a2521' : theme === 'black' ? '#e4e4e7' : '#1a1a1a'
 
   // 1. Fundo do tema
@@ -333,6 +343,17 @@ export function rasterizeElementToCanvas(
       return true
     }
     return false
+  }
+
+  // 3.4 Borda delimitadora no tema preto puro (corte premium de página 1px idêntico às folhas em repouso)
+  if (theme === 'black') {
+    ctx.save()
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.22)'
+    ctx.lineWidth = 1 * dpr
+    if (typeof ctx.strokeRect === 'function') {
+      ctx.strokeRect(0.5 * dpr, 0.5 * dpr, renderW - 1 * dpr, renderH - 1 * dpr)
+    }
+    ctx.restore()
   }
 
   return true

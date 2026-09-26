@@ -592,9 +592,9 @@ const bottomStackSvg = computed(() => {
 
   // Polígono fechado de preenchimento do bloco de folhas
   const outerLine = lines[lines.length - 1]
-  const fillPath = outerLine.d
+  const fillPath = outerLine?.d || ''
 
-  const strokePath = outerLine.d
+  const strokePath = outerLine?.d || ''
   const innerLines = lines.slice(0, lines.length - 1)
 
   return {
@@ -1186,6 +1186,22 @@ async function renderCurrentSpread(pageOverride?: number): Promise<void> {
 
   const layout = pageLayout.value
   const curPage = pageOverride ?? store.currentPage
+
+  // Sincroniza dimensões reais da folha no documento (elimina descompasso e páginas vazias em EPUBs)
+  const targetPageRect = layout.isTwoPage ? (layout.rightPage || layout.leftPage) : layout.singlePage
+  if (targetPageRect && store.document && typeof store.document.setPageDimensions === 'function') {
+    const updatedPage = store.document.setPageDimensions(
+      targetPageRect.width,
+      targetPageRect.height,
+      curPage,
+    )
+    if (updatedPage && updatedPage !== store.currentPage && !pageOverride) {
+      store.currentPage = updatedPage
+    }
+    if (store.document.totalPages && store.document.totalPages !== store.totalPages) {
+      store.totalPages = store.document.totalPages
+    }
+  }
 
   if (layout.isTwoPage) {
     const leftNum = curPage % 2 !== 0 ? curPage : curPage - 1

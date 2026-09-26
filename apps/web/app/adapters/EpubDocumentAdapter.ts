@@ -659,7 +659,7 @@ function calculateSectionPages(
   const bodyEl = doc.body || (typeof doc.querySelector === 'function' ? doc.querySelector('body') : null) || (typeof doc.getElementsByTagName === 'function' ? doc.getElementsByTagName('body')[0] : null) || (doc as any)
   const textLen = (bodyEl?.textContent || '').trim().length
   if (typeof document === 'undefined' || !document.createElement) {
-    const baseCharsPerPage = Math.max(300, Math.round(1200 * (15 / Math.max(12, fontSize))))
+    const baseCharsPerPage = Math.max(300, Math.round(1500 * (15 / Math.max(12, fontSize))))
     return Math.max(1, Math.ceil(textLen / baseCharsPerPage))
   }
 
@@ -684,6 +684,10 @@ function calculateSectionPages(
     container.style.columnGap = `${colGap}px`
     container.style.columnFill = 'auto'
     container.style.overflow = 'hidden'
+    container.style.fontFamily = fontFamily
+    container.style.fontSize = `${fontSize}px`
+    container.style.wordWrap = 'break-word'
+
     const docStyles = doc && typeof doc.querySelectorAll === 'function'
       ? Array.from(doc.querySelectorAll('style')).map((s) => s.innerHTML).join('\n')
       : ''
@@ -692,9 +696,8 @@ function calculateSectionPages(
     styleTag.innerHTML = `${EPUB_TYPOGRAPHY_STYLES}\n${docStyles}`
     container.appendChild(styleTag)
 
-    const contentDiv = document.createElement('div')
-    contentDiv.innerHTML = bodyEl ? (bodyEl.innerHTML || bodyEl.textContent || '') : (doc.documentElement ? doc.documentElement.innerHTML : '')
-    container.appendChild(contentDiv)
+    const rawContent = bodyEl ? (bodyEl.innerHTML || bodyEl.textContent || '') : (doc.documentElement ? doc.documentElement.innerHTML : '')
+    container.insertAdjacentHTML('beforeend', rawContent)
 
     document.body.appendChild(container)
     const scrollW = container.scrollWidth
@@ -703,10 +706,14 @@ function calculateSectionPages(
     if (scrollW > safeW) {
       return Math.max(1, Math.ceil(scrollW / safeW))
     }
-    const baseCharsPerPage = Math.max(300, Math.round(1200 * (15 / Math.max(12, fontSize))))
+    if (scrollW > 0 && scrollW <= safeW) {
+      return 1
+    }
+    // Fallback apenas para ambientes headless sem motor de layout (scrollW === 0)
+    const baseCharsPerPage = Math.max(300, Math.round(1500 * (15 / Math.max(12, fontSize))))
     return Math.max(1, Math.ceil(textLen / baseCharsPerPage))
   } catch {
-    const baseCharsPerPage = Math.max(300, Math.round(1200 * (15 / Math.max(12, fontSize))))
+    const baseCharsPerPage = Math.max(300, Math.round(1500 * (15 / Math.max(12, fontSize))))
     return Math.max(1, Math.ceil(textLen / baseCharsPerPage))
   }
 }
@@ -747,22 +754,11 @@ export class EpubDocumentAdapter implements IBookDocument {
     return this._fontFamily
   }
 
-  setFontFamily(newFontFamily: string, currentPage = 1): number {
-    if (!newFontFamily || (this._fontFamily === newFontFamily && this._isLoaded)) {
-      return currentPage
-    }
-
-    const oldMapping = this._pageMap[currentPage - 1]
-    const targetSectionIndex = oldMapping ? oldMapping.sectionIndex : 0
-    const targetFraction = oldMapping && oldMapping.totalPagesInSection > 0
-      ? oldMapping.pageIndexInSection / oldMapping.totalPagesInSection
-      : 0
-
-    this._fontFamily = newFontFamily
+  private _recalculatePageMap(targetSectionIndex: number, targetFraction: number, fallbackPage: number): number {
     this._pageCanvases.clear()
 
     if (!this._isLoaded || this._sections.length === 0) {
-      return currentPage
+      return fallbackPage
     }
 
     this._pageMap = []
@@ -792,7 +788,53 @@ export class EpubDocumentAdapter implements IBookDocument {
       return matchingPages[newIndex]?.globalPage ?? 1
     }
 
-    return Math.max(1, Math.min(currentPage, this._totalPages))
+    return Math.max(1, Math.min(fallbackPage, this._totalPages))
+  }
+
+  setPageDimensions(width: number, height: number, currentPage = 1): number {
+    const validW = Math.max(300, Math.round(width))
+    const validH = Math.max(400, Math.round(height))
+    if (!this._isLoaded) {
+      this._pageWidth = validW
+      this._pageHeight = validH
+      return currentPage
+    }
+    if (this._pageWidth === validW && this._pageHeight === validH) {
+      return currentPage
+    }
+
+    // Se a alteração for mínima (< 8px), apenas atualiza os valores sem churn
+    if (Math.abs(this._pageWidth - validW) < 8 && Math.abs(this._pageHeight - validH) < 8) {
+      this._pageWidth = validW
+      this._pageHeight = validH
+      return currentPage
+    }
+
+    const oldMapping = this._pageMap[currentPage - 1]
+    const targetSectionIndex = oldMapping ? oldMapping.sectionIndex : 0
+    const targetFraction = oldMapping && oldMapping.totalPagesInSection > 0
+      ? oldMapping.pageIndexInSection / oldMapping.totalPagesInSection
+      : 0
+
+    this._pageWidth = validW
+    this._pageHeight = validH
+
+    return this._recalculatePageMap(targetSectionIndex, targetFraction, currentPage)
+  }
+
+  setFontFamily(newFontFamily: string, currentPage = 1): number {
+    if (!newFontFamily || (this._fontFamily === newFontFamily && this._isLoaded)) {
+      return currentPage
+    }
+
+    const oldMapping = this._pageMap[currentPage - 1]
+    const targetSectionIndex = oldMapping ? oldMapping.sectionIndex : 0
+    const targetFraction = oldMapping && oldMapping.totalPagesInSection > 0
+      ? oldMapping.pageIndexInSection / oldMapping.totalPagesInSection
+      : 0
+
+    this._fontFamily = newFontFamily
+    return this._recalculatePageMap(targetSectionIndex, targetFraction, currentPage)
   }
 
   setFontSize(newFontSize: number, currentPage = 1): number {
@@ -808,40 +850,7 @@ export class EpubDocumentAdapter implements IBookDocument {
       : 0
 
     this._fontSize = clampedSize
-    this._pageCanvases.clear()
-
-    if (!this._isLoaded || this._sections.length === 0) {
-      return currentPage
-    }
-
-    this._pageMap = []
-    let globalPageCounter = 1
-
-    for (let sIdx = 0; sIdx < this._sections.length; sIdx++) {
-      const doc = this._sectionDocs.get(sIdx) || null
-      const pagesInSection = calculateSectionPages(doc, this._fontSize, this._fontFamily, this._pageWidth, this._pageHeight)
-      for (let pIdx = 0; pIdx < pagesInSection; pIdx++) {
-        this._pageMap.push({
-          globalPage: globalPageCounter++,
-          sectionIndex: sIdx,
-          pageIndexInSection: pIdx,
-          totalPagesInSection: pagesInSection,
-        })
-      }
-    }
-
-    this._totalPages = Math.max(1, this._pageMap.length)
-
-    const matchingPages = this._pageMap.filter((m) => m.sectionIndex === targetSectionIndex)
-    if (matchingPages.length > 0) {
-      const newIndex = Math.min(
-        matchingPages.length - 1,
-        Math.max(0, Math.floor(targetFraction * matchingPages.length)),
-      )
-      return matchingPages[newIndex]?.globalPage ?? 1
-    }
-
-    return Math.max(1, Math.min(currentPage, this._totalPages))
+    return this._recalculatePageMap(targetSectionIndex, targetFraction, currentPage)
   }
 
   async load(
@@ -1082,6 +1091,15 @@ export class EpubDocumentAdapter implements IBookDocument {
 
       viewportWrapper.appendChild(contentWrapper)
       container.appendChild(viewportWrapper)
+
+      // Blindagem defensiva contra páginas pretas: se colOffset ultrapassar a largura total de colunas,
+      // reposiciona para a última coluna com conteúdo
+      const actualScrollW = contentWrapper.scrollWidth
+      if (actualScrollW > 0 && colOffset >= actualScrollW && mapping.pageIndexInSection > 0) {
+        const lastValidColIndex = Math.max(0, Math.ceil(actualScrollW / width) - 1)
+        const adjustedOffset = lastValidColIndex * width
+        contentWrapper.style.marginLeft = `-${adjustedOffset}px`
+      }
     } catch (err) {
       logWarn('[EpubAdapter] textLayer render error:', err)
     }

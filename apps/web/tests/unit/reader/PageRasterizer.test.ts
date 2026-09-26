@@ -23,7 +23,10 @@ describe('pageRasterizer - Rasterização de Texturas 3D', () => {
         height: 1,
       })),
       putImageData: vi.fn(),
+      strokeRect: vi.fn(),
       fillStyle: '',
+      strokeStyle: '',
+      lineWidth: 1,
       font: '',
       globalCompositeOperation: 'source-over',
     }
@@ -44,21 +47,66 @@ describe('pageRasterizer - Rasterização de Texturas 3D', () => {
     expect(mockCtx.globalCompositeOperation).toBe('multiply')
   })
 
-  it('aplica tema black invertendo os pixels do canvas', () => {
+  it('aplica tema black invertendo os pixels do canvas para preto puro e texto legível', () => {
     const fakeImageData = {
-      data: new Uint8ClampedArray([255, 255, 255, 255]),
-      width: 1,
+      data: new Uint8ClampedArray([
+        255, 255, 255, 255, // Fundo branco
+        0, 0, 0, 255,       // Texto preto
+      ]),
+      width: 2,
       height: 1,
     } as ImageData
 
     mockCtx.getImageData.mockReturnValue(fakeImageData)
 
-    applyThemeToCanvas(mockCtx, 10, 10, 'black')
+    applyThemeToCanvas(mockCtx, 2, 1, 'black')
 
     expect(mockCtx.putImageData).toHaveBeenCalled()
-    expect(fakeImageData.data[0]).toBe(18)
-    expect(fakeImageData.data[1]).toBe(18)
-    expect(fakeImageData.data[2]).toBe(20)
+    // Fundo branco se torna preto puro (#000000)
+    expect(fakeImageData.data[0]).toBe(0)
+    expect(fakeImageData.data[1]).toBe(0)
+    expect(fakeImageData.data[2]).toBe(0)
+    // Texto preto se torna claro (#e4e4e7 -> 228, 228, 231)
+    expect(fakeImageData.data[4]).toBe(228)
+    expect(fakeImageData.data[5]).toBe(228)
+    expect(fakeImageData.data[6]).toBe(231)
+  })
+
+  it('drawPlainTextToCanvas preenche fundo preto puro (#000000) e desenha borda no tema black', () => {
+    const fillStyles: string[] = []
+    mockCtx.fillRect.mockImplementation(() => {
+      fillStyles.push(mockCtx.fillStyle)
+    })
+
+    const targetCanvas = document.createElement('canvas')
+    drawPlainTextToCanvas(targetCanvas, 'Texto teste', 400, 600, 'black')
+
+    expect(mockCtx.fillRect).toHaveBeenCalled()
+    expect(fillStyles).toContain('#000000')
+    expect(mockCtx.fillStyle).toBe('#e4e4e7')
+    expect(mockCtx.strokeStyle).toBe('rgba(255, 255, 255, 0.22)')
+    expect(mockCtx.strokeRect).toHaveBeenCalled()
+  })
+
+  it('rasterizeElementToCanvas preenche fundo preto puro (#000000) e desenha borda no tema black', () => {
+    const fillStyles: string[] = []
+    mockCtx.fillRect.mockImplementation(() => {
+      fillStyles.push(mockCtx.fillStyle)
+    })
+
+    const targetCanvas = document.createElement('canvas')
+    const containerEl = document.createElement('div')
+    const p = document.createElement('p')
+    p.textContent = 'Texto rasterizado teste'
+    containerEl.appendChild(p)
+
+    const result = rasterizeElementToCanvas(containerEl, targetCanvas, 400, 600, 'black')
+
+    expect(result).toBe(true)
+    expect(mockCtx.fillRect).toHaveBeenCalled()
+    expect(fillStyles).toContain('#000000')
+    expect(mockCtx.strokeStyle).toBe('rgba(255, 255, 255, 0.22)')
+    expect(mockCtx.strokeRect).toHaveBeenCalled()
   })
 
   it('drawPlainTextToCanvas desenha texto com quebra de linhas e preenche fundo', () => {

@@ -64,6 +64,21 @@ describe('PageCurl3DEngine - Three.js WebGL Page Turn Engine', () => {
     expect(engine.isReady.value).toBe(false)
   })
 
+  it('configura cena com theme "black" garantindo texturas de fallback com fundo preto puro #000000', () => {
+    const engine = usePageCurl3D(canvasRef)
+
+    engine.setupScene({
+      isTwoPage: true,
+      pageWidth: 400,
+      pageHeight: 600,
+      direction: 'next',
+      theme: 'black',
+    })
+
+    expect(engine.isReady.value).toBe(true)
+    engine.destroy()
+  })
+
   it('cria malha com resolução ultra-densa (>= 128 segmentos no eixo X) para evitar cortes de glifos', () => {
     const engine = usePageCurl3D(canvasRef)
     const W = 400

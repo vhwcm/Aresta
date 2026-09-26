@@ -32,6 +32,7 @@ export interface IBookDocument {
   getAspectRatio?(pageNumber?: number): number
   setFontSize?(fontSize: number, currentPage?: number): number
   setFontFamily?(fontFamily: string, currentPage?: number): number
+  setPageDimensions?(width: number, height: number, currentPage?: number): number
   load(source: File | ArrayBuffer, fileName?: string, initialFontSize?: number, initialFontFamily?: string, coverUrl?: string): Promise<void>
   getPage(pageNumber: number, targetWidth?: number, targetHeight?: number): Promise<PageData>
   getTextContent?(pageNumber: number): Promise<string>
