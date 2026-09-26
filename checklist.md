@@ -1,7 +1,8 @@
 ## 🔄 Em Andamento
-- [26/09/2026 13:30] [Fazendo] Diagnosticar e corrigir sincronização do diário na nuvem
 
 ## ✅ Concluído
+- [26/09/2026 13:40] [Concluído] Implementar sincronização do diário sequencial (journal.json) na nuvem via DriveSyncService, revalidação em tempo real e controles de sync no JournalView
+- [26/09/2026 13:34] [Concluído] Implementar sistema unificado de linhas de folhas com correspondência 1:1, curvatura elíptica nos cantos e linhas horizontais na base do leitor 3D
 - [26/09/2026 13:28] [Concluído] Suavizar transição elíptica na lombada inferior e unificar harmoniosamente os cantos das pilhas de folhas laterais com as inferiores no leitor 3D
 - [26/09/2026 13:24] [Concluído] Aumentar o tamanho do card, capa e tipografia do livro ativo no painel lateral (FolderTagSidebar)
 - [26/09/2026 13:15] [Concluído] Conectar via SSH à instância EC2 da AWS e sincronizar o arquivo .env de produção para a raiz local do projeto

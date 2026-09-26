@@ -27,6 +27,7 @@ export type DataSubFolder = 'canvas' | 'notes' | 'drawing_notes'
  * │   ├── profile.json
  * │   ├── annotations.json
  * │   ├── flashcards.json
+ * │   ├── journal.json
  * │   ├── canvas/
  * │   │   └── {uuid}.json
  * │   ├── notes/

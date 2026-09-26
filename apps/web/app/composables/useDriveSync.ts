@@ -48,14 +48,16 @@ export function useDriveSync() {
         { useCanvas },
         { useNotes },
         { useDrawing },
-        { useLinks }
+        { useLinks },
+        { useJournal }
       ] = await Promise.all([
         import('./useUserBooks'),
         import('./useGraph'),
         import('./useCanvas'),
         import('./useNotes'),
         import('./useDrawing'),
-        import('./useLinks')
+        import('./useLinks'),
+        import('./useJournal')
       ])
 
       await Promise.all([
@@ -64,7 +66,8 @@ export function useDriveSync() {
         useCanvas().fetchCanvases().catch(() => {}),
         useNotes().fetchNotes().catch(() => {}),
         useDrawing().fetchDrawings().catch(() => {}),
-        useLinks().fetchLinks().catch(() => {})
+        useLinks().fetchLinks().catch(() => {}),
+        useJournal().loadTimeline().catch(() => {})
       ])
 
       if (typeof window !== 'undefined') {

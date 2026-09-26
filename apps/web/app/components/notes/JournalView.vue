@@ -34,8 +34,27 @@
           </div>
         </div>
 
-        <!-- Seletor de Data & Atalho Hoje -->
+        <!-- Sincronização & Seletor de Data & Atalho Hoje -->
         <div class="flex items-center gap-2 shrink-0">
+          <!-- Botão Sincronizar na Nuvem -->
+          <button
+            v-if="isConnected"
+            type="button"
+            class="px-2.5 py-1.5 rounded-xl border text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-60 shrink-0"
+            :class="isSyncing ? 'bg-amber-500/15 border-amber-500/30 text-amber-500' : 'bg-bgRoot border-divider text-textSecondary hover:text-textPrimary hover:border-textSecondary/40'"
+            :title="isSyncing ? 'Sincronizando com a nuvem...' : (lastSyncFormatted ? `Sincronizado na nuvem (${lastSyncFormatted})` : 'Sincronizar com a nuvem')"
+            :disabled="isSyncing"
+            @click="triggerSync"
+          >
+            <RefreshCwIcon class="w-3.5 h-3.5" :class="{ 'animate-spin': isSyncing }" />
+            <span class="hidden sm:inline text-xs">{{ isSyncing ? 'Sincronizando...' : 'Sincronizar' }}</span>
+            <span
+              v-if="pendingCount > 0"
+              class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"
+              title="Alterações pendentes de sincronização"
+            ></span>
+          </button>
+
           <div class="relative flex items-center">
             <CalendarIcon class="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-textSecondary pointer-events-none" />
             <input
@@ -294,7 +313,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import {
   BookOpenCheck as BookOpenCheckIcon,
   Calendar as CalendarIcon,
@@ -312,6 +331,7 @@ import {
 } from 'lucide-vue-next'
 import AiMarkdown from '~/components/AiMarkdown.vue'
 import { useJournal } from '~/composables/useJournal'
+import { useDriveSync } from '~/composables/useDriveSync'
 
 const {
   selectedDate,
@@ -328,6 +348,14 @@ const {
   saveEntry,
   deleteEntry,
 } = useJournal()
+
+const {
+  isSyncing,
+  lastSyncFormatted,
+  pendingCount,
+  isConnected,
+  sync: triggerSync
+} = useDriveSync()
 
 const scrollContainerRef = ref<HTMLElement | null>(null)
 const textareaRef = ref<HTMLTextAreaElement | null>(null)
@@ -368,9 +396,27 @@ watch(
   }
 )
 
+const onDataSynced = async () => {
+  await loadTimeline()
+  const isEditing = textareaRef.value && document.activeElement === textareaRef.value
+  if (!isEditing) {
+    editorText.value = selectedDateContent.value || ''
+  }
+}
+
 onMounted(async () => {
   await loadTimeline()
   editorText.value = selectedDateContent.value || ''
+  if (typeof window !== 'undefined') {
+    window.addEventListener('aresta:data-synced', onDataSynced)
+  }
+})
+
+onBeforeUnmount(() => {
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('aresta:data-synced', onDataSynced)
+  }
+  if (debounceTimer) clearTimeout(debounceTimer)
 })
 
 const onEditorInput = () => {

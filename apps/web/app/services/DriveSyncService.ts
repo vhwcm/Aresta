@@ -1,6 +1,6 @@
 import type { IDataSyncProvider, DataSubFolder } from '~/adapters/storage/cloud/IDataSyncProvider'
 import { getDatabase } from '~/adapters/database/DatabaseManager'
-import type { BaseLocalEntity, LocalAnnotation, LocalBook, LocalCanvasItem, LocalDrawingNote, LocalFlashcard, LocalNote, LocalStreak, LocalUserSettings } from '~/adapters/database/types'
+import type { BaseLocalEntity, LocalAnnotation, LocalBook, LocalCanvasItem, LocalDrawingNote, LocalFlashcard, LocalJournalEntry, LocalNote, LocalStreak, LocalUserSettings } from '~/adapters/database/types'
 import { mutationQueueService } from './MutationQueueService'
 import { loadGraphMeta, saveGraphMeta, type GraphMeta } from '~/utils/graphMeta'
 import type { GraphEdge } from '~/interfaces/graph'
@@ -307,6 +307,17 @@ export class DriveSyncService {
     )
   }
 
+  async syncJournal(): Promise<SyncResult> {
+    const db = getDatabase()
+    return this.syncCollection<LocalJournalEntry>(
+      'journal.json',
+      'journal',
+      () => (db.getJournalEntriesRaw ? db.getJournalEntriesRaw() : db.getJournalEntries()),
+      (item) => db.saveJournalEntry(item),
+      (id) => db.deleteJournalEntry(String(id))
+    )
+  }
+
   async syncProfile(): Promise<SyncResult> {
     const db = getDatabase()
     const local = { settings: await db.getSettings(), streak: await db.getStreak() }
@@ -521,6 +532,7 @@ export class DriveSyncService {
         this.syncCanvas(),
         this.syncNotes(),
         this.syncDrawingNotes(),
+        this.syncJournal(),
       ])
       const pending = await mutationQueueService.getPending()
       if (pending.length) {
@@ -565,6 +577,7 @@ export class DriveSyncService {
         flashcards: getStat('flashcard'),
         streak: getStat('profile'),
         settings: getStat('profile'),
+        journal: getStat('journal'),
       },
     }
   }

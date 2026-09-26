@@ -218,7 +218,8 @@ describe('DriveSyncService (Local-First Sync Engine)', () => {
     const service = new DriveSyncService(provider)
     const result = await service.fullSync()
 
-    expect(result.results.length).toBe(8)
+    expect(result.results.length).toBe(9)
+    expect(result.results.some((r) => r.fileName === 'journal.json')).toBe(true)
     expect(result.syncedAt).toBeDefined()
   })
 
@@ -548,5 +549,126 @@ describe('DriveSyncService (Local-First Sync Engine)', () => {
     const savedBook = await db.getBookById(202)
     expect(savedBook?.coverPath).toBe('data:image/webp;base64,LOCAL_COVER_DATA...')
     expect(savedBook?.currentPage).toBe(40)
+  })
+
+  it('13. syncJournal sincroniza diário sequencial (journal.json) com LWW', async () => {
+    // Entrada local de ontem (local mais recente)
+    await db.saveJournalEntry({
+      id: '2026-09-25',
+      date: '2026-09-25',
+      content: 'Reflexão local mais recente',
+      created_at: '2026-09-25T10:00:00.000Z',
+      updated_at: '2026-09-25T20:00:00.000Z',
+      deleted_at: null,
+      sync_status: 'pending',
+    })
+
+    // Entrada local de hoje (remoto será mais recente)
+    await db.saveJournalEntry({
+      id: '2026-09-26',
+      date: '2026-09-26',
+      content: 'Texto antigo de hoje',
+      created_at: '2026-09-26T08:00:00.000Z',
+      updated_at: '2026-09-26T08:00:00.000Z',
+      deleted_at: null,
+      sync_status: 'synced',
+    })
+
+    let uploadedPayload: any = null
+    const provider = createMockProvider({
+      downloadDataFile: async <T>() => ({
+        schema_version: 1,
+        entity_type: 'journal',
+        updated_at: '2026-09-26T12:00:00.000Z',
+        updated_by: 'phone_device',
+        payload: [
+          {
+            id: '2026-09-25',
+            date: '2026-09-25',
+            content: 'Reflexão remota antiga',
+            created_at: '2026-09-25T10:00:00.000Z',
+            updated_at: '2026-09-25T11:00:00.000Z',
+            deleted_at: null,
+            sync_status: 'synced',
+          },
+          {
+            id: '2026-09-26',
+            date: '2026-09-26',
+            content: 'Texto atualizado vindo da nuvem',
+            created_at: '2026-09-26T08:00:00.000Z',
+            updated_at: '2026-09-26T12:00:00.000Z',
+            deleted_at: null,
+            sync_status: 'synced',
+          },
+        ],
+      } as unknown as T),
+      uploadDataFile: async (_fileName, data) => {
+        uploadedPayload = data
+        return { fileName: 'journal.json', itemCount: 2, syncedAt: new Date().toISOString() }
+      },
+    })
+
+    const service = new DriveSyncService(provider)
+    const result = await (service as any).syncJournal()
+
+    expect(result.fileName).toBe('journal.json')
+
+    // 2026-09-25 deve manter a versão local mais recente
+    const entry25 = await db.getJournalEntryByDate('2026-09-25')
+    expect(entry25?.content).toBe('Reflexão local mais recente')
+
+    // 2026-09-26 deve adotar a versão remota mais recente
+    const entry26 = await db.getJournalEntryByDate('2026-09-26')
+    expect(entry26?.content).toBe('Texto atualizado vindo da nuvem')
+
+    // Payload enviado para o Drive deve conter os 2 dias consolidados
+    expect(uploadedPayload?.payload?.length).toBe(2)
+  })
+
+  it('14. syncJournal propaga tombstones do diário sem ressuscitar entradas apagadas', async () => {
+    // Entrada local apagada com tombstone
+    await db.saveJournalEntry({
+      id: '2026-09-20',
+      date: '2026-09-20',
+      content: 'Entrada deletada',
+      created_at: '2026-09-20T10:00:00.000Z',
+      updated_at: '2026-09-20T15:00:00.000Z',
+      deleted_at: '2026-09-20T15:00:00.000Z',
+      sync_status: 'pending',
+    })
+
+    let uploadedPayload: any = null
+    const provider = createMockProvider({
+      downloadDataFile: async <T>() => ({
+        schema_version: 1,
+        entity_type: 'journal',
+        updated_at: '2026-09-20T11:00:00.000Z',
+        updated_by: 'old_device',
+        payload: [
+          {
+            id: '2026-09-20',
+            date: '2026-09-20',
+            content: 'Entrada remota anterior (sem tombstone)',
+            created_at: '2026-09-20T10:00:00.000Z',
+            updated_at: '2026-09-20T11:00:00.000Z',
+            deleted_at: null,
+            sync_status: 'synced',
+          },
+        ],
+      } as unknown as T),
+      uploadDataFile: async (_fileName, data) => {
+        uploadedPayload = data
+        return { fileName: 'journal.json', itemCount: 1, syncedAt: new Date().toISOString() }
+      },
+    })
+
+    const service = new DriveSyncService(provider)
+    await (service as any).syncJournal()
+
+    const activeEntry = await db.getJournalEntryByDate('2026-09-20')
+    expect(activeEntry).toBeNull()
+
+    const uploadedItem = uploadedPayload?.payload?.find((j: any) => j.id === '2026-09-20')
+    expect(uploadedItem?.deleted_at).toBe('2026-09-20T15:00:00.000Z')
   })
 })

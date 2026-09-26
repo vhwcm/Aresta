@@ -30,6 +30,7 @@ const mockFetchCanvases = vi.fn().mockResolvedValue(undefined)
 const mockFetchNotes = vi.fn().mockResolvedValue(undefined)
 const mockFetchDrawings = vi.fn().mockResolvedValue(undefined)
 const mockFetchLinks = vi.fn().mockResolvedValue(undefined)
+const mockLoadTimeline = vi.fn().mockResolvedValue(undefined)
 
 vi.mock('~/composables/useGraph', () => ({
   useGraph: () => ({ fetchGraph: mockFetchGraph }),
@@ -53,6 +54,10 @@ vi.mock('~/composables/useDrawing', () => ({
 
 vi.mock('~/composables/useLinks', () => ({
   useLinks: () => ({ fetchLinks: mockFetchLinks }),
+}))
+
+vi.mock('~/composables/useJournal', () => ({
+  useJournal: () => ({ loadTimeline: mockLoadTimeline }),
 }))
 
 const mockFullSync = vi.fn().mockResolvedValue({
@@ -103,6 +108,7 @@ describe('useDriveSync Composable', () => {
     expect(mockFetchNotes).toHaveBeenCalled()
     expect(mockFetchDrawings).toHaveBeenCalled()
     expect(mockFetchLinks).toHaveBeenCalled()
+    expect(mockLoadTimeline).toHaveBeenCalled()
     expect(dispatchSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'aresta:data-synced' }))
   })
 
