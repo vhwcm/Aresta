@@ -138,4 +138,124 @@ describe('CanvasNodeText Component', () => {
 
     expect(wrapper.emitted('delete')).toBeTruthy();
   });
+
+  it('inicializa com isEditing falso e pointer-events-none por padrão para permitir mover no clique único', () => {
+    const node: CanvasNode = {
+      id: 'node-drag-ready',
+      type: 'text',
+      x: 10,
+      y: 10,
+      width: 240,
+      height: 150,
+      text: 'Card pronto para mover',
+    };
+
+    const wrapper = mount(CanvasNodeText, {
+      props: {
+        node,
+        isSelected: false,
+      },
+      global: {
+        stubs: {
+          MilkdownEditor: milkdownStub,
+        },
+      },
+    });
+
+    const pointerNoneContainer = wrapper.find('.pointer-events-none');
+    expect(pointerNoneContainer.exists()).toBe(true);
+    expect((wrapper.vm as any).isEditing).toBe(false);
+  });
+
+  it('ativa o modo de edição ao receber duplo clique (dblclick)', async () => {
+    const node: CanvasNode = {
+      id: 'node-dblclick',
+      type: 'text',
+      x: 10,
+      y: 10,
+      width: 240,
+      height: 150,
+      text: 'Texto para editar',
+    };
+
+    const wrapper = mount(CanvasNodeText, {
+      props: {
+        node,
+        isSelected: true,
+      },
+      global: {
+        stubs: {
+          MilkdownEditor: milkdownStub,
+        },
+      },
+    });
+
+    expect((wrapper.vm as any).isEditing).toBe(false);
+    expect(wrapper.find('.pointer-events-none').exists()).toBe(true);
+
+    await wrapper.find('div').trigger('dblclick');
+
+    expect((wrapper.vm as any).isEditing).toBe(true);
+    expect(wrapper.find('.pointer-events-none').exists()).toBe(false);
+  });
+
+  it('inicia em modo de edição quando autofocus é true', () => {
+    const node: CanvasNode = {
+      id: 'node-autofocus',
+      type: 'text',
+      x: 10,
+      y: 10,
+      width: 240,
+      height: 150,
+      text: 'Texto novo',
+    };
+
+    const wrapper = mount(CanvasNodeText, {
+      props: {
+        node,
+        isSelected: true,
+        autofocus: true,
+      },
+      global: {
+        stubs: {
+          MilkdownEditor: milkdownStub,
+        },
+      },
+    });
+
+    expect((wrapper.vm as any).isEditing).toBe(true);
+    expect(wrapper.find('.pointer-events-none').exists()).toBe(false);
+  });
+
+  it('sai do modo de edição ao desmarcar seleção do nó', async () => {
+    const node: CanvasNode = {
+      id: 'node-deselect',
+      type: 'text',
+      x: 10,
+      y: 10,
+      width: 240,
+      height: 150,
+      text: 'Texto',
+    };
+
+    const wrapper = mount(CanvasNodeText, {
+      props: {
+        node,
+        isSelected: true,
+        autofocus: true,
+      },
+      global: {
+        stubs: {
+          MilkdownEditor: milkdownStub,
+        },
+      },
+    });
+
+    expect((wrapper.vm as any).isEditing).toBe(true);
+
+    await wrapper.setProps({ isSelected: false });
+
+    expect((wrapper.vm as any).isEditing).toBe(false);
+    expect(wrapper.find('.pointer-events-none').exists()).toBe(true);
+  });
 });

@@ -50,6 +50,7 @@
         :is-selected="selectedNodeIds.includes(node.id)"
         :is-multi-select="selectedNodeIds.length > 1"
         :zoom="viewport.zoom"
+        :autofocus-node-id="autofocusNodeId"
         @select="onSelectNode"
         @drag-start="onNodeDragStart"
         @resize-start="onNodeResizeStart"
@@ -237,6 +238,7 @@ const resizingNodeState = ref<{
 } | null>(null);
 
 const isSpacePressed = ref(false);
+const autofocusNodeId = ref<string | null>(null);
 
 // Marquee Selection State
 const isMarqueeSelecting = ref(false);
@@ -329,6 +331,8 @@ const createInitialNote = () => {
     color: '#E57B55',
   };
   addNode(newNode);
+  selectedNodeIds.value = [newNode.id];
+  autofocusNodeId.value = newNode.id;
 };
 
 // Double Click / Tap to Create Note
@@ -345,6 +349,8 @@ const onDoubleClick = (e: MouseEvent) => {
     color: '#E57B55',
   };
   addNode(newNode);
+  selectedNodeIds.value = [newNode.id];
+  autofocusNodeId.value = newNode.id;
 };
 
 // Create Free / Loose Text Node (Sem quadrado, escrita livre imediata)
@@ -361,6 +367,7 @@ const createLooseTextNode = (canvasX: number, canvasY: number) => {
   addNode(newNode);
   selectedNodeIds.value = [newNode.id];
   selectedEdgeId.value = null;
+  autofocusNodeId.value = newNode.id;
 };
 
 const createLooseTextAtCenter = () => {
@@ -402,6 +409,7 @@ const onBackgroundPointerDown = (e: PointerEvent) => {
     };
     addNode(newNode);
     selectedNodeIds.value = [newNode.id];
+    autofocusNodeId.value = newNode.id;
     activeTool.value = 'select';
     return;
   }
@@ -414,6 +422,7 @@ const onBackgroundPointerDown = (e: PointerEvent) => {
     isMarqueeSelecting.value = true;
     selectedNodeIds.value = [];
     selectedEdgeId.value = null;
+    autofocusNodeId.value = null;
     (e.target as HTMLElement)?.setPointerCapture?.(e.pointerId);
     return;
   }
@@ -422,6 +431,7 @@ const onBackgroundPointerDown = (e: PointerEvent) => {
   if (isLeftClick && !isSpacePressed.value) {
     selectedNodeIds.value = [];
     selectedEdgeId.value = null;
+    autofocusNodeId.value = null;
   }
 
   // Pan start (middle click or space + left click only — no more background drag pan)
@@ -685,6 +695,7 @@ const onTouchEnd = (e: TouchEvent) => {
 
 // Node Interactions
 const onSelectNode = (id: string, isShift: boolean, e?: PointerEvent) => {
+  autofocusNodeId.value = null;
   selectedEdgeId.value = null;
   const clientX = e?.clientX ?? 0;
   const clientY = e?.clientY ?? 0;

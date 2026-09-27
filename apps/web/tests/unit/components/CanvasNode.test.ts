@@ -273,4 +273,86 @@ describe('CanvasNode Component', () => {
     expect(wrapper.emitted('update-shape')).toBeTruthy();
     expect(wrapper.emitted('update-shape')?.[0]).toEqual(['node-shape-1', 'diamond']);
   });
+
+  it('exibe o botão Editar na mini toolbar quando nó de texto está selecionado e aciona startEditing', async () => {
+    let startEditingCalled = false;
+    const node: ICanvasNode = {
+      id: 'node-text-edit-btn',
+      type: 'text',
+      x: 100,
+      y: 100,
+      width: 260,
+      height: 160,
+      text: 'Nota para edição',
+    };
+
+    const wrapper = mount(CanvasNode, {
+      props: {
+        node,
+        isSelected: true,
+        zoom: 1,
+      },
+      global: {
+        stubs: {
+          CanvasNodeText: {
+            template: '<div class="stub-text">Texto</div>',
+            methods: {
+              startEditing() {
+                startEditingCalled = true;
+              },
+            },
+          },
+          CanvasNodeShape: true,
+          CanvasNodeBook: true,
+          CanvasNodeNote: true,
+        },
+      },
+    });
+
+    const editButton = wrapper.findAll('button').find((b) => b.attributes('title')?.includes('Editar texto'));
+    expect(editButton).toBeDefined();
+    expect(editButton?.text()).toContain('Editar');
+
+    await editButton?.trigger('click');
+    expect(startEditingCalled).toBe(true);
+  });
+
+  it('aciona startEditing ao receber dblclick no container do nó', async () => {
+    let startEditingCalled = false;
+    const node: ICanvasNode = {
+      id: 'node-text-dblclick',
+      type: 'text',
+      x: 100,
+      y: 100,
+      width: 260,
+      height: 160,
+      text: 'Nota para duplo clique',
+    };
+
+    const wrapper = mount(CanvasNode, {
+      props: {
+        node,
+        isSelected: true,
+        zoom: 1,
+      },
+      global: {
+        stubs: {
+          CanvasNodeText: {
+            template: '<div class="stub-text">Texto</div>',
+            methods: {
+              startEditing() {
+                startEditingCalled = true;
+              },
+            },
+          },
+          CanvasNodeShape: true,
+          CanvasNodeBook: true,
+          CanvasNodeNote: true,
+        },
+      },
+    });
+
+    await wrapper.trigger('dblclick');
+    expect(startEditingCalled).toBe(true);
+  });
 });

@@ -125,6 +125,20 @@ watch(
   }
 )
 
+watch(
+  () => props.readonly,
+  (newVal) => {
+    if (milkdownEditor) {
+      milkdownEditor.action((ctx) => {
+        const view = ctx.get(editorViewCtx)
+        view.setProps({
+          editable: () => !newVal
+        })
+      })
+    }
+  }
+)
+
 const focus = () => {
   if (milkdownEditor) {
     milkdownEditor.action((ctx) => {

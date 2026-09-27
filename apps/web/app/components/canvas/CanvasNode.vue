@@ -8,10 +8,12 @@
       height: `${node.height}px`,
     }"
     @pointerdown.stop="onPointerDown"
+    @dblclick.stop="onDoubleClick"
   >
     <!-- Node Content based on type -->
     <CanvasNodeText
       v-if="node.type === 'text' || node.type === 'loose_text'"
+      ref="textNodeRef"
       :node="node"
       :is-selected="isSelected"
       :autofocus="autofocusNodeId === node.id"
@@ -133,6 +135,19 @@
 
         <div v-if="node.type === 'text' || node.type === 'loose_text'" class="w-px h-3.5 bg-divider mx-0.5"></div>
 
+        <!-- Edit text button -->
+        <button
+          v-if="node.type === 'text' || node.type === 'loose_text'"
+          class="flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-bgElevated text-textSecondary hover:text-textPrimary transition-colors text-xs font-medium cursor-pointer"
+          title="Editar texto (ou dê duplo clique no bloco)"
+          @click.stop="startTextEditing"
+        >
+          <svg class="w-3.5 h-3.5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+          </svg>
+          <span class="text-[10px] hidden sm:inline">Editar</span>
+        </button>
+
         <!-- Convert / Save as Note button -->
         <button
           v-if="node.type === 'text' || node.type === 'loose_text'"
@@ -191,9 +206,20 @@ const emit = defineEmits<{
 }>();
 
 const isHovered = ref(false);
+const textNodeRef = ref<any>(null);
 const showNodeShapeMenu = ref(false);
 const nodeShapeMenuRef = ref<HTMLElement | null>(null);
 const shapesList = CANVAS_SHAPES;
+
+const startTextEditing = () => {
+  textNodeRef.value?.startEditing?.();
+};
+
+const onDoubleClick = () => {
+  if (props.node.type === 'text' || props.node.type === 'loose_text') {
+    startTextEditing();
+  }
+};
 
 const changeNodeShape = (shape: CanvasShapeType) => {
   emit('update-shape', props.node.id, shape);
