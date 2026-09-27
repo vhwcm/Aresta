@@ -14,7 +14,7 @@
       :selected-tag="activeTag"
       :selected-item-id="activeItemId"
       :is-journal-active="isJournalActive"
-      v-model:view-layout="viewLayout"
+      v-model:view-layout="sidebarViewLayout"
       item-label="itens"
       v-model:collapsed="isSidebarCollapsed"
       @open-journal="onOpenJournal"
@@ -23,21 +23,73 @@
       @select-item="onSelectItem"
       @create-note="handleCreateNewNote"
       @create-drawing="handleCreateNewDrawing"
-      @create-link="isNewLinkModalOpen = true"
-      @create-canvas="isNewCanvasModalOpen = true"
+      @create-link="handleCreateNewLink"
+      @create-canvas="handleCreateNewCanvas"
       @create-folder="handleCreateFolder"
       @rename-folder="handleRenameFolder"
       @delete-folder="handleDeleteFolder"
     />
 
     <!-- Área Principal de Conteúdo -->
-    <main
-      class="flex-1 min-w-0 h-full relative flex flex-col"
-      :class="isCanvasOrFullPage ? 'overflow-hidden' : 'overflow-y-auto custom-scrollbar p-4 sm:p-6 md:p-8 max-w-7xl w-full mx-auto'"
-    >
-      <!-- Botão Hambúrguer Mobile Flutuante quando a Sidebar estiver recolhida -->
+    <div class="flex-1 min-w-0 h-full flex flex-col overflow-hidden relative">
+      <!-- Top Bar Mobile Unificada quando a Sidebar estiver recolhida -->
+      <header
+        v-if="isSidebarCollapsed && showMobileHeader"
+        class="md:hidden shrink-0 h-14 bg-bgPanel/95 backdrop-blur-md border-b border-divider px-3 flex items-center justify-between z-30"
+        data-testid="mobile-top-header"
+      >
+        <div class="flex items-center gap-2.5 min-w-0">
+          <!-- Botão Hambúrguer Mobile -->
+          <button
+            class="p-2 rounded-xl bg-bgSurface/80 hover:bg-bgSurface text-textPrimary border border-divider shadow-xs transition-all active:scale-95 cursor-pointer flex items-center justify-center shrink-0"
+            title="Abrir menu"
+            aria-label="Abrir navegação lateral"
+            @click="isSidebarCollapsed = false"
+          >
+            <MenuIcon class="w-5 h-5 text-accent" />
+          </button>
+
+          <!-- Título da Página ao lado do Hambúrguer -->
+          <div class="flex items-center gap-2 min-w-0" data-testid="mobile-header-title-container">
+            <component :is="currentPageInfo.icon" v-if="currentPageInfo.icon" class="w-4 h-4 text-accent shrink-0" />
+            <h1 class="font-technical text-xs uppercase font-bold tracking-widest text-textSecondary truncate">
+              {{ currentPageInfo.title }}
+            </h1>
+
+            <!-- Indicador sutil de filtro ativo se houver tag na estante -->
+            <div
+              v-if="activeTag && route.path === '/library'"
+              class="flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-[10px] shrink-0"
+            >
+              <span class="font-mono text-blue-500">#</span>
+              <span class="truncate max-w-[80px]">{{ activeTag }}</span>
+              <button
+                @click="activeTag = null"
+                class="text-blue-400 hover:text-blue-200 cursor-pointer ml-0.5 text-[10px]"
+                title="Limpar filtro de tag"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ação Rápida: Alternador de Tema -->
+        <button
+          @click="toggleThemeMode"
+          class="p-2 rounded-xl text-textSecondary hover:text-textPrimary hover:bg-bgSurface transition-colors cursor-pointer shrink-0"
+          title="Alternar tema da interface"
+          aria-label="Alternar tema da interface"
+        >
+          <SunIcon v-if="themeMode === 'light'" class="w-4 h-4 text-amber-500" />
+          <PaletteIcon v-else-if="themeMode === 'sepia'" class="w-4 h-4 text-amber-600 dark:text-amber-300" />
+          <MoonIcon v-else class="w-4 h-4 text-accent" />
+        </button>
+      </header>
+
+      <!-- Botão Hambúrguer Mobile Flutuante quando a Top Bar não estiver visível -->
       <button
-        v-if="isSidebarCollapsed"
+        v-if="isSidebarCollapsed && !showMobileHeader"
         class="md:hidden fixed top-3 left-3 z-40 p-2.5 rounded-xl bg-bgPanel/95 backdrop-blur-md hover:bg-bgSurface text-textPrimary border border-divider shadow-md transition-all active:scale-95 cursor-pointer flex items-center justify-center"
         title="Abrir menu"
         aria-label="Abrir navegação lateral"
@@ -46,18 +98,36 @@
         <MenuIcon class="w-5 h-5 text-accent" />
       </button>
 
-      <slot />
-    </main>
+      <main
+        class="flex-1 min-w-0 h-full relative flex flex-col"
+        :class="isCanvasOrFullPage ? 'overflow-hidden' : 'overflow-y-auto custom-scrollbar p-4 sm:p-6 md:p-8 max-w-7xl w-full mx-auto'"
+      >
+        <slot />
+      </main>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Menu as MenuIcon } from 'lucide-vue-next'
+import {
+  Menu as MenuIcon,
+  Book as BookIcon,
+  Brain as BrainIcon,
+  User as UserIcon,
+  Upload as UploadIcon,
+  BookOpenCheck as BookOpenCheckIcon,
+  LayoutGrid as LayoutGridIcon,
+  Network as NetworkIcon,
+  Sun as SunIcon,
+  Moon as MoonIcon,
+  Palette as PaletteIcon
+} from 'lucide-vue-next'
 import FolderTagSidebar from '~/components/FolderTagSidebar.vue'
 import { useAuth } from '~/composables/useAuth'
 import { useWorkspaceSidebar } from '~/composables/useWorkspaceSidebar'
+import { useSettings } from '~/composables/useSettings'
 
 const route = useRoute()
 const router = useRouter()
@@ -76,12 +146,28 @@ const {
   fetchAllWorkspaceData,
   handleCreateNewNote,
   handleCreateNewDrawing,
+  handleCreateNewCanvas,
   handleSelectItem,
   handleCreateFolder,
   handleRenameFolder,
   handleDeleteFolder,
   handleOpenJournal
 } = useWorkspaceSidebar()
+
+const sidebarViewLayout = computed<'graph' | 'grid' | 'journal'>({
+  get: () => (viewLayout.value === 'note-editor' ? 'grid' : viewLayout.value),
+  set: (val) => {
+    viewLayout.value = val
+  }
+})
+
+const handleCreateNewLink = async () => {
+  const path = route?.path || ''
+  if (path !== '/') {
+    await router?.push('/')
+  }
+  isNewLinkModalOpen.value = true
+}
 
 // Páginas imersivas que não renderizam a barra lateral (leitor e onboarding)
 const isImmersivePage = computed(() => {
@@ -98,6 +184,69 @@ const isJournalActive = computed(() => {
   const path = route?.path || ''
   return path === '/diario' || path === '/diário' || decodeURIComponent(path) === '/diário' || (path === '/' && route?.query?.view === 'journal')
 })
+
+const showMobileHeader = computed(() => {
+  const path = route?.path || ''
+  if (isImmersivePage.value) return false
+  if (path.startsWith('/canvas/')) return false
+  return true
+})
+
+const currentPageInfo = computed(() => {
+  const path = route?.path || ''
+  if (path === '/library') {
+    return { title: 'Estante', icon: BookIcon }
+  }
+  if (path === '/revisao') {
+    return { title: 'Revisão', icon: BrainIcon }
+  }
+  if (path === '/conta') {
+    return { title: 'Sua Conta', icon: UserIcon }
+  }
+  if (path === '/upload') {
+    return { title: 'Upload de Livros', icon: UploadIcon }
+  }
+  if (
+    path === '/diario' ||
+    path === '/diário' ||
+    decodeURIComponent(path) === '/diário' ||
+    (path === '/' && route?.query?.view === 'journal')
+  ) {
+    return { title: 'Diário Sequencial', icon: BookOpenCheckIcon }
+  }
+  if (path.startsWith('/canvas')) {
+    return { title: 'Quadro', icon: LayoutGridIcon }
+  }
+  if (path === '/') {
+    if (viewLayout.value === 'graph') {
+      return { title: 'Grafo de Conhecimento', icon: NetworkIcon }
+    }
+    return { title: 'Espaço Criativo', icon: LayoutGridIcon }
+  }
+  return { title: 'Aresta', icon: BookIcon }
+})
+
+const themeMode = ref<'dark' | 'light' | 'sepia'>('dark')
+const toggleThemeMode = () => {
+  try {
+    const settings = useSettings()
+    if (settings && typeof settings.toggleThemeMode === 'function') {
+      settings.toggleThemeMode()
+      themeMode.value = settings.themeMode?.value || 'dark'
+    }
+  } catch {
+    // fallback
+  }
+}
+
+try {
+  const settings = useSettings()
+  if (settings?.themeMode) {
+    themeMode.value = settings.themeMode.value
+  }
+} catch {
+  // fallback
+}
 
 const onOpenJournal = () => {
   if (typeof window !== 'undefined' && window.innerWidth < 768) {

@@ -1,7 +1,10 @@
 ## 🔄 Em Andamento
-- [27/09/2026 17:28] [Fazendo] Diagnosticar e corrigir falha ao clicar em "Novo Quadro"
+- [27/09/2026 17:46] [Fazendo] Especificar unificação arquitetural de tags e pastas em specs/active/unified-tags-and-folders
+- [27/09/2026 17:38] [Fazendo] Investigar e corrigir abertura de desenho no mobile exibindo tela de criar nova página em vez da página existente
 
 ## ✅ Concluído
+- [27/09/2026 17:46] [Concluído] Integrar cabeçalho mobile unificado com botão hambúrguer e título de página nas telas mobile
+- [27/09/2026 17:28] [Concluído] Diagnosticar e corrigir falha ao clicar em "Novo Quadro"
 - [27/09/2026 17:29] [Concluído] Alinhar folha de desenho colada na parte superior em telas horizontais
 - [26/09/2026 14:17] [Concluído] Ajustar folha de desenho em telas mobile para ocupar toda a largura horizontal no meio e criar nova página automaticamente ao scrollar para o lado (estilo Samsung Notes)
 - [26/09/2026 14:06] [Concluído] Investigar e corrigir páginas vazias/pretas sequenciais no leitor EPUB (paridade tipográfica, sincronização dimensional da folha e eliminação de overflow órfão)

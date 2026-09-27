@@ -12,7 +12,7 @@
         </NuxtLink>
       </div>
 
-      <div class="flex flex-col gap-1">
+      <div class="hidden md:flex flex-col gap-1">
         <h1 class="font-editorial text-4xl sm:text-5xl font-light text-textPrimary leading-tight">
           Upload de Livros
         </h1>

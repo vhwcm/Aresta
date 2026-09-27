@@ -4,7 +4,7 @@
     <header class="flex flex-col gap-3.5 sm:gap-4">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 sm:gap-4">
         <!-- Lado Esquerdo: Título Estante (+ badge sutil de filtro ativo se houver) -->
-        <div class="flex items-center gap-2.5 sm:gap-3 flex-wrap min-w-0">
+        <div class="hidden md:flex items-center gap-2.5 sm:gap-3 flex-wrap min-w-0">
           <div class="flex items-center gap-2 shrink-0">
             <BookIcon class="w-4 h-4 text-accent" />
             <h1 class="font-technical text-xs uppercase font-bold tracking-widest text-textSecondary">
@@ -27,7 +27,7 @@
         </div>
 
         <!-- Actions -->
-        <div class="flex items-center gap-2 sm:gap-3 shrink-0 flex-wrap sm:flex-nowrap">
+        <div class="flex items-center gap-2 sm:gap-3 shrink-0 flex-wrap sm:flex-nowrap w-full md:w-auto">
           <button
             @click="isCreateDidacticModalOpen = true"
             class="flex-1 sm:flex-initial px-4 sm:px-5 py-2 sm:py-2.5 rounded-full bg-purple-500/20 hover:bg-purple-500 text-purple-300 hover:text-white border border-purple-500/40 text-xs font-interface font-semibold transition-all flex items-center justify-center gap-2"
