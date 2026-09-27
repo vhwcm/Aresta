@@ -84,10 +84,10 @@
         <p class="text-xs">Carregando páginas de desenho...</p>
       </div>
 
-      <!-- Centering Track: Colada no topo em telas horizontais (md / landscape) -->
+      <!-- Centering Track: Colada no topo em telas horizontais (md / landscape) e alinhada ao início no mobile (justify-start) -->
       <div
         v-else-if="currentDrawing"
-        class="min-w-full min-h-full w-max my-auto md:my-0 md:mx-auto landscape:my-0 landscape:mx-auto pt-20 pb-16 md:pt-0 md:pb-12 landscape:pt-0 landscape:pb-12 px-0 md:pl-28 md:pr-16 landscape:pl-28 landscape:pr-16 flex flex-row items-center md:items-start landscape:items-start justify-center gap-4 md:gap-8"
+        class="min-w-full min-h-full w-max my-auto md:my-0 md:mx-auto landscape:my-0 landscape:mx-auto pt-20 pb-16 md:pt-0 md:pb-12 landscape:pt-0 landscape:pb-12 px-0 md:pl-28 md:pr-16 landscape:pl-28 landscape:pr-16 flex flex-row items-center md:items-start landscape:items-start justify-start md:justify-center landscape:justify-center gap-4 md:gap-8"
       >
         <!-- Pages Container (Horizontal lado a lado com Snap no Mobile) -->
         <div
@@ -148,20 +148,24 @@
         <div
           ref="trailingTriggerRef"
           class="w-screen md:hidden shrink-0 snap-center flex flex-col items-center justify-center py-2"
+          @click="handleAddPage"
         >
           <div
-            class="relative rounded-b-xl border-2 border-dashed border-divider/60 bg-bgPanel/40 flex flex-col items-center justify-center transition-all duration-300"
+            class="relative rounded-b-xl border-2 border-dashed border-divider/60 bg-bgPanel/40 flex flex-col items-center justify-center transition-all duration-300 cursor-pointer"
             :style="{
               width: `${Math.round(794 * pageScale)}px`,
               height: `${Math.round(1123 * pageScale)}px`,
             }"
           >
-            <div class="flex flex-col items-center gap-2 text-textSecondary animate-pulse">
+            <div
+              class="flex flex-col items-center gap-2 text-textSecondary"
+              :class="{ 'animate-pulse': isAutoCreatingPage }"
+            >
               <div class="w-12 h-12 rounded-full bg-bgElevated border border-divider flex items-center justify-center shadow-md">
                 <PlusIcon class="w-6 h-6 text-primary" />
               </div>
               <span class="text-xs font-semibold tracking-wide text-textSecondary">
-                Criando nova página...
+                {{ isAutoCreatingPage ? 'Criando nova página...' : 'Nova página' }}
               </span>
             </div>
           </div>
@@ -363,25 +367,26 @@ function calculateFitScale(): number {
   return Math.max(0.25, Math.min(Number(fit.toFixed(2)), 1.2));
 }
 
-let isAutoCreatingPage = false;
+const isAutoCreatingPage = ref(false);
+const isReadyForAutoPaging = ref(false);
 
 function handleAutoAddPage() {
-  if (isAutoCreatingPage) return;
-  isAutoCreatingPage = true;
+  if (!isReadyForAutoPaging.value || isAutoCreatingPage.value) return;
+  isAutoCreatingPage.value = true;
   handleAddPage();
   setTimeout(() => {
-    isAutoCreatingPage = false;
+    isAutoCreatingPage.value = false;
   }, 600);
 }
 
 function onViewportScroll() {
-  if (!viewportRef.value || !currentDrawing.value) return;
+  if (!viewportRef.value || !currentDrawing.value || !isReadyForAutoPaging.value) return;
   const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768;
   if (isDesktop) return;
 
   const el = viewportRef.value;
-  // Se rolou até o fim da trilha horizontal no mobile
-  if (el.scrollLeft + el.clientWidth >= el.scrollWidth - 30) {
+  // Se rolou até o fim da trilha horizontal no mobile de forma intencional (com overflow real)
+  if (el.scrollWidth > el.clientWidth + 50 && el.scrollLeft + el.clientWidth >= el.scrollWidth - 30) {
     handleAutoAddPage();
   }
 }
@@ -419,7 +424,7 @@ function setupObservers() {
       for (const entry of entries) {
         if (entry.isIntersecting && entry.intersectionRatio >= 0.15) {
           const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768;
-          if (!isDesktop) {
+          if (!isDesktop && isReadyForAutoPaging.value) {
             handleAutoAddPage();
           }
         }
@@ -543,7 +548,7 @@ function handleTouchMove(e: TouchEvent) {
       viewportRef.value.scrollTop = initialScrollTop - deltaY;
 
       const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768;
-      if (!isDesktop && viewportRef.value.scrollLeft + viewportRef.value.clientWidth >= viewportRef.value.scrollWidth - 30) {
+      if (!isDesktop && isReadyForAutoPaging.value && viewportRef.value.scrollWidth > viewportRef.value.clientWidth + 50 && viewportRef.value.scrollLeft + viewportRef.value.clientWidth >= viewportRef.value.scrollWidth - 30) {
         handleAutoAddPage();
       }
     }
@@ -588,12 +593,18 @@ function handleErase(pageIndex: number, pt: DrawingPoint, radius: number) {
 function handleAddPage() {
   addPage('blank');
   nextTick(() => {
-    activePageIndex.value = (currentDrawing.value?.pages.length || 1) - 1;
+    const newIdx = (currentDrawing.value?.pages.length || 1) - 1;
+    activePageIndex.value = newIdx;
     if (viewportRef.value) {
-      viewportRef.value.scrollTo({
-        left: viewportRef.value.scrollWidth,
-        behavior: 'smooth',
-      });
+      const pageEl = viewportRef.value.querySelector(`[data-page-index="${newIdx}"]`) as HTMLElement;
+      if (pageEl && typeof pageEl.scrollIntoView === 'function') {
+        pageEl.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      } else {
+        viewportRef.value.scrollTo({
+          left: viewportRef.value.scrollWidth,
+          behavior: 'smooth',
+        });
+      }
     }
   });
 }
@@ -743,6 +754,7 @@ function handleBeforeUnload() {
 }
 
 onMounted(async () => {
+  isReadyForAutoPaging.value = false;
   handleZoomFit();
   window.addEventListener('resize', handleZoomFit);
   window.addEventListener('keydown', handleKeyDown);
@@ -758,7 +770,15 @@ onMounted(async () => {
   if (drawingId.value) {
     await loadDrawing(drawingId.value);
   }
+  activePageIndex.value = 0;
+  await nextTick();
+  if (viewportRef.value) {
+    viewportRef.value.scrollLeft = 0;
+  }
   setupObservers();
+  setTimeout(() => {
+    isReadyForAutoPaging.value = true;
+  }, 300);
 });
 
 onBeforeRouteLeave(async () => {

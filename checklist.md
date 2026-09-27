@@ -1,8 +1,8 @@
 ## 🔄 Em Andamento
 - [27/09/2026 17:46] [Fazendo] Especificar unificação arquitetural de tags e pastas em specs/active/unified-tags-and-folders
-- [27/09/2026 17:38] [Fazendo] Investigar e corrigir abertura de desenho no mobile exibindo tela de criar nova página em vez da página existente
 
 ## ✅ Concluído
+- [27/09/2026 17:47] [Concluído] Investigar e corrigir abertura de desenho no mobile exibindo tela de criar nova página em vez da página existente
 - [27/09/2026 17:46] [Concluído] Integrar cabeçalho mobile unificado com botão hambúrguer e título de página nas telas mobile
 - [27/09/2026 17:28] [Concluído] Diagnosticar e corrigir falha ao clicar em "Novo Quadro"
 - [27/09/2026 17:29] [Concluído] Alinhar folha de desenho colada na parte superior em telas horizontais

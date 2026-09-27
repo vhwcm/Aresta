@@ -228,7 +228,43 @@ describe('Drawing Page Mobile Zoom & Pinch Controls ([id].vue)', () => {
     expect(desktopAddBtn.exists()).toBe(true);
   });
 
-  it('chama addPage automaticamente ao rolar até o final da trilha no mobile', async () => {
+  it('não cria página indevida durante o carregamento inicial (mount) no mobile e ancora na página 1 com justify-start', async () => {
+    const originalInnerWidth = window.innerWidth;
+    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 390 });
+
+    mockAddPage.mockClear();
+
+    const wrapper = mount(DrawingPage, {
+      global: { stubs },
+    });
+
+    const viewport = wrapper.find('main');
+    const el = viewport.element as HTMLElement;
+
+    // Dispara scroll durante a inicialização (antes dos 300ms de estabilização)
+    Object.defineProperty(el, 'scrollLeft', { writable: true, configurable: true, value: 100 });
+    Object.defineProperty(el, 'clientWidth', { writable: true, configurable: true, value: 390 });
+    Object.defineProperty(el, 'scrollWidth', { writable: true, configurable: true, value: 780 });
+
+    await viewport.trigger('scroll');
+
+    // Não deve criar página durante o carregamento
+    expect(mockAddPage).not.toHaveBeenCalled();
+
+    // Container pai deve ter justify-start no mobile e md:justify-center
+    const track = wrapper.find('.page-slide').element.parentElement as HTMLElement;
+    expect(track.className).toContain('justify-start');
+    expect(track.className).toContain('md:justify-center');
+
+    // Trailing slide deve exibir "Nova página" em repouso
+    const trailingSlide = wrapper.find('.w-screen.md\\:hidden');
+    expect(trailingSlide.text()).toContain('Nova página');
+    expect(trailingSlide.text()).not.toContain('Criando nova página...');
+
+    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: originalInnerWidth });
+  });
+
+  it('chama addPage automaticamente ao rolar até o final da trilha no mobile após estabilização', async () => {
     const originalInnerWidth = window.innerWidth;
     Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 390 });
 
@@ -237,6 +273,9 @@ describe('Drawing Page Mobile Zoom & Pinch Controls ([id].vue)', () => {
     });
 
     mockAddPage.mockClear();
+
+    // Aguarda o tempo de estabilização (300ms)
+    await new Promise((resolve) => setTimeout(resolve, 350));
 
     const viewport = wrapper.find('main');
     const el = viewport.element as HTMLElement;
@@ -252,6 +291,21 @@ describe('Drawing Page Mobile Zoom & Pinch Controls ([id].vue)', () => {
     expect(mockAddPage).toHaveBeenCalledWith('blank');
 
     Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: originalInnerWidth });
+  });
+
+  it('permite adicionar nova página ao tocar no trailing slide', async () => {
+    const wrapper = mount(DrawingPage, {
+      global: { stubs },
+    });
+
+    mockAddPage.mockClear();
+
+    const trailingSlide = wrapper.find('.w-screen.md\\:hidden');
+    expect(trailingSlide.exists()).toBe(true);
+
+    await trailingSlide.trigger('click');
+
+    expect(mockAddPage).toHaveBeenCalledWith('blank');
   });
 
   it('configura alinhamento no topo (colada na parte superior) para a trilha e slides em telas horizontais', () => {
