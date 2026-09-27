@@ -1,8 +1,9 @@
 ## 🔄 Em Andamento
+- [27/09/2026 18:13] [Fazendo] Permitir selecionar e mover bloco de texto/nota com clique único no canvas e exigir duplo clique para edição de texto
 - [27/09/2026 18:00] [Fazendo] Diagnosticar e corrigir desalinhamento do Modo Foco no leitor EPUB ao passar por linhas vazias e espaçamentos de parágrafo
-- [27/09/2026 17:53] [Fazendo] Implementar unificação arquitetural de tags e pastas conforme spec em specs/active/unified-tags-and-folders
 
 ## ✅ Concluído
+- [27/09/2026 18:14] [Concluído] Implementar unificação arquitetural de tags e pastas com projeção multi-referência, drag-and-drop contextual e hierarquia no grafo
 - [27/09/2026 18:11] [Concluído] Centralizar folha única no centro em telas horizontais com páginas adjacentes nos cantos e troca de foco ao clicar
 - [27/09/2026 17:52] [Concluído] Especificar unificação arquitetural de tags e pastas em specs/active/unified-tags-and-folders
 - [27/09/2026 17:47] [Concluído] Investigar e corrigir abertura de desenho no mobile exibindo tela de criar nova página em vez da página existente

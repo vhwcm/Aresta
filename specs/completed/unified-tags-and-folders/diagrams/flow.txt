@@ -1,0 +1,106 @@
+================================================================================
+                    ARESTA — UNIFICAÇÃO DE TAGS E PASTAS DE ARQUIVOS
+================================================================================
+
+[ 1. ESTRUTURA CONCEITUAL: DO GRAFO PARA A ÁRVORE LATERAL ]
+
+                   +-----------------------------+
+                   |   GRAFO DE CONHECIMENTO     |
+                   |   (Tags e Nós Interligados) |
+                   +-----------------------------+
+                                  |
+               +------------------+------------------+
+               |                                     |
+               v                                     v
+       (Tag: #Filosofia)                     (Tag: #Tecnologia)
+        [Nó do Grafo]                         [Nó do Grafo]
+               \                                     /
+                \                                   /
+                 +---> [ Arquivo: Nota Platão ] <---+
+                       - ID: note-101
+                       - Tags: ['Filosofia', 'Tecnologia']
+                       - Aponta para 2 nós simultaneamente!
+
+                                  |
+                                  |  PROJEÇÃO NA BARRA LATERAL
+                                  v
+
+       +----------------------------------------------------------------+
+       | ÁRVORE DE ARQUIVOS LATERAL (FolderTagSidebar)                   |
+       | (Sem título no cabeçalho; pastas são diretamente as tags)       |
+       +----------------------------------------------------------------+
+       |                                                                |
+       |  v [Pasta] Filosofia                                      (1)  |
+       |    |                                                           |
+       |    +-- [*] Nota Platão  [🔗 2 tags]                           |
+       |                                                                |
+       |  v [Pasta] Tecnologia                                     (1)  |
+       |    |                                                           |
+       |    +-- [*] Nota Platão  [🔗 2 tags]                           |
+       |                                                                |
+       |  > [Pasta] Livros                                         (0)  |
+       |                                                                |
+       |  > [Pasta] Sem pasta                                      (0)  |
+       +----------------------------------------------------------------+
+             |
+             |---> Ambas as linhas representam o MESMO arquivo 'note-101'.
+                   Editar o conteúdo ou título em uma reflete em todas!
+
+
+[ 2. FLUXO DE DRAG-AND-DROP COM MENU CONTEXTUAL ]
+
+    [Usuário arrasta 'Nota Platão' da pasta 'Filosofia' para a pasta 'Projetos']
+                                  |
+                                  v
+                    +---------------------------+
+                    | Popover / Menu ao Soltar: |
+                    +---------------------------+
+                    | 1. Mover para Projetos    |  ==> Remove 'Filosofia'
+                    |                           |      Adiciona 'Projetos'
+                    |                           |      Tags: ['Tecnologia', 'Projetos']
+                    | 2. Adicionar referência   |  ==> Mantém 'Filosofia'
+                    |    (manter em ambas)      |      Adiciona 'Projetos'
+                    +---------------------------+      Tags: ['Filosofia', 'Tecnologia', 'Projetos']
+
+
+[ 3. SEMÂNTICA DE EXCLUSÃO DE ARQUIVO EM UMA PASTA ]
+
+             [Usuário clica em 'Opções / Excluir' na 'Nota Platão']
+                                  |
+                                  v
+              +------------------------------------------+
+              | Menu de Exclusão do Arquivo:             |
+              +------------------------------------------+
+              | 1. "Remover de #Filosofia"               |
+              |    (Apenas desvincula a tag atual.       |
+              |     Arquivo continua existindo em        |
+              |     'Tecnologia' e no Grafo)             |
+              |                                          |
+              | 2. "Excluir definitivamente" [Vermelho]  |
+              |    (Remove o arquivo fisicamente do      |
+              |     banco/IndexedDB, apagando de todas   |
+              |     as pastas e do Grafo de vez)         |
+              +------------------------------------------+
+
+
+[ 4. FLUXO DE DADOS & SINCRONIZAÇÃO LOCAL-FIRST ]
+
+    +------------------------+      +---------------------------+
+    |   FolderTagSidebar     | <--> |   useWorkspaceSidebar     |
+    +------------------------+      +---------------------------+
+                                                  |
+                    +-----------------------------+-----------------------------+
+                    |                             |                             |
+                    v                             v                             v
+           +-----------------+           +------------------+          +------------------+
+           | NoteRepository  |           | CanvasRepository |          | BookRepository   |
+           +-----------------+           +------------------+          +------------------+
+                    \                             |                             /
+                     +----------------------------+----------------------------+
+                                                  |
+                                                  v
+                                      +------------------------+
+                                      |    DatabaseManager     |
+                                      |  (IndexedDB / SQLite)  |
+                                      +------------------------+
+================================================================================

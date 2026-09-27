@@ -410,88 +410,8 @@
           </NuxtLink>
         </div>
 
-        <!-- 3. Seção Integrada: Gerenciar Tags com Tags Embutidas (Reta de ponta a ponta) -->
-        <div class="-mx-2.5 !mt-0">
-          <div
-            class="border-b transition-all duration-200"
-            :class="isTagsExpanded
-              ? 'border-blue-500/40 bg-blue-500/[0.04] dark:bg-blue-500/[0.07] shadow-xs'
-              : 'border-blue-500/30 bg-blue-500/[0.02] hover:border-blue-500/50'"
-          >
-            <!-- Cabeçalho do Card: Gerenciar Tags -->
-            <div
-              class="w-full flex items-center justify-between px-3.5 py-2.5 transition-all select-none group"
-            >
-              <!-- Botão principal que abre o modal de gerenciar tags -->
-              <button
-                @click="isManageTagsModalOpen = true"
-                data-testid="manage-tags-sidebar-btn"
-                class="flex items-center gap-2.5 truncate flex-1 text-left cursor-pointer group/title text-blue-700 dark:text-blue-300 hover:text-blue-600"
-                title="Abrir Gerenciador de Tags"
-              >
-                <TagIcon class="w-4 h-4 flex-shrink-0 text-blue-500 group-hover/title:scale-110 transition-transform" />
-                <span class="truncate font-interface font-semibold text-xs md:text-sm text-blue-700 dark:text-blue-300">
-                  Gerenciar Tags
-                </span>
-              </button>
-
-              <!-- Ações do lado direito: Contador + Chevron de expansão/recolhimento das tags embutidas -->
-              <div class="flex items-center gap-1.5 shrink-0">
-                <span class="text-[10px] px-1.5 py-0.5 rounded-full font-mono bg-blue-500/20 text-blue-600 dark:text-blue-300 font-bold">
-                  {{ availableTags.length }}
-                </span>
-
-                <button
-                  @click="isTagsExpanded = !isTagsExpanded"
-                  class="px-3 py-1 rounded-lg text-blue-500/80 hover:text-blue-600 hover:bg-blue-500/15 transition-all cursor-pointer flex items-center justify-center"
-                  :title="isTagsExpanded ? 'Recolher tags' : 'Expandir tags'"
-                  data-testid="toggle-tags-expand-btn"
-                >
-                  <ChevronDownIcon
-                    class="w-4 h-4 transition-transform duration-200"
-                    :class="{ '-rotate-90': !isTagsExpanded }"
-                  />
-                </button>
-              </div>
-            </div>
-
-            <!-- Tags Embutidas diretamente dentro do bloco de Gerenciar Tags -->
-            <div
-              v-show="isTagsExpanded"
-              class="px-3.5 pb-2.5 pt-1.5 border-t border-blue-500/15 animate-in fade-in slide-in-from-top-1 duration-150"
-            >
-              <!-- Nuvem de Chips das Tags Embutidas (Clique para selecionar / Clique novamente para desselecionar) -->
-              <div class="flex flex-wrap gap-1.5">
-                <button
-                  v-for="tagItem in availableTags"
-                  :key="tagItem.name"
-                  @click="toggleTag(tagItem.name)"
-                  class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer border"
-                  :class="isTagSelected(tagItem.name)
-                    ? 'bg-blue-600 text-white border-blue-600 shadow-xs font-semibold ring-1 ring-blue-500/40'
-                    : 'bg-bgSurface/80 border-blue-500/20 text-textSecondary hover:border-blue-500/50 hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.06]'"
-                  :title="isTagSelected(tagItem.name) ? `Desmarcar filtro #${tagItem.name}` : `Filtrar por #${tagItem.name}`"
-                >
-                  <span class="font-mono text-[11px]" :class="isTagSelected(tagItem.name) ? 'text-white/80' : 'text-blue-500/80'">#</span>
-                  <span class="font-interface truncate max-w-[130px]">{{ tagItem.name }}</span>
-                  <span
-                    class="text-[10px] px-1.5 py-0.2 rounded-full font-mono transition-colors"
-                    :class="isTagSelected(tagItem.name) ? 'bg-white/20 text-white' : 'bg-blue-500/10 text-blue-600 dark:text-blue-300'"
-                  >
-                    {{ tagItem.count }}
-                  </span>
-                </button>
-
-                <div v-if="availableTags.length === 0" class="px-1 py-1 text-[11px] text-textSecondary/70 italic">
-                  Nenhuma tag criada ainda.
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 3. Estrutura em Árvore (Pastas e Arquivos Aninhados) -->
-        <div class="pt-1.5">
+        <!-- Estrutura em Árvore (Pastas/Tags e Arquivos Aninhados) - Sem Título Redundante -->
+        <div class="pt-1">
 
           <!-- Input inline para criar nova pasta -->
           <div v-if="isCreatingFolder" class="px-2 py-1 mb-2">
@@ -501,7 +421,7 @@
                 ref="newFolderInputRef"
                 v-model="newFolderName"
                 type="text"
-                placeholder="Nome da pasta..."
+                placeholder="Nome da pasta/tag..."
                 class="w-full bg-transparent text-xs text-textPrimary focus:outline-none font-interface"
                 @keyup.enter="handleCreateFolder"
                 @keyup.esc="isCreatingFolder = false; newFolderName = ''"
@@ -521,34 +441,26 @@
             </div>
           </div>
 
-          <!-- Mensagem quando tag selecionada não tem itens -->
-          <div
-            v-if="selectedTag && visibleFolders.length === 0 && uncategorizedItems.length === 0"
-            class="px-3 py-4 text-center text-[11px] text-textSecondary/70 bg-bgSurface/40 rounded-xl border border-divider/60 space-y-1 my-2"
-          >
-            <p>Nenhum item com a tag <span class="text-accent font-mono">#{{ selectedTag }}</span></p>
-            <button
-              @click="$emit('select-tag', null)"
-              class="text-[10px] text-accent hover:underline cursor-pointer"
-            >
-              Limpar filtro de tag
-            </button>
-          </div>
-
-          <!-- Árvore: Lista de Pastas com Arquivos Aninhados -->
-          <div v-else class="space-y-1">
+          <!-- Árvore: Lista de Pastas/Tags com Arquivos Aninhados -->
+          <div class="space-y-1">
             <div
               v-for="folder in visibleFolders"
               :key="folder"
               class="space-y-0.5"
             >
-              <!-- Linha da Pasta -->
+              <!-- Linha da Pasta/Tag -->
               <div
                 class="group relative flex items-center justify-between px-2 py-1.5 rounded-xl text-xs md:text-sm transition-all cursor-pointer border"
-                :class="selectedFolder === folder
-                  ? 'bg-accent/15 text-accent border-accent/30 font-medium'
-                  : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04] font-medium'"
+                :class="[
+                  selectedFolder === folder
+                    ? 'bg-accent/15 text-accent border-accent/30 font-medium'
+                    : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04] font-medium',
+                  dragOverFolder === folder ? 'ring-2 ring-accent bg-accent/10 border-accent/40' : ''
+                ]"
                 @click="selectFolder(folder)"
+                @dragover.prevent="onDragOverFolder(folder)"
+                @dragleave="onDragLeaveFolder(folder)"
+                @drop="onDropToFolder($event, folder)"
               >
                 <div class="flex items-center gap-1.5 truncate min-w-0 pr-2">
                   <!-- Botão de Expandir/Recolher Árvore -->
@@ -613,7 +525,9 @@
                 <div
                   v-for="item in getFolderItems(folder)"
                   :key="item.id"
-                  class="group/file relative flex items-center justify-between px-2 py-1.5 rounded-lg text-xs cursor-pointer transition-all border"
+                  draggable="true"
+                  @dragstart="onDragStartItem($event, item, folder)"
+                  class="group/file relative flex items-center justify-between px-2 py-1.5 rounded-lg text-xs cursor-pointer transition-all border select-none"
                   :class="selectedItemId === item.id
                     ? 'bg-accent/15 text-accent font-medium border-accent/30 shadow-xs'
                     : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'"
@@ -639,31 +553,60 @@
                     </div>
 
                     <span class="truncate font-interface text-xs">{{ item.title || (item.kind === 'canvas' ? 'Quadro sem título' : item.kind === 'book' ? 'Livro sem título' : 'Nota sem título') }}</span>
+
+                    <!-- Indicador discreto de múltiplas referências/pastas -->
+                    <span
+                      v-if="item.tags && item.tags.length > 1"
+                      class="flex items-center text-accent/80 hover:text-accent cursor-help shrink-0 ml-0.5"
+                      :title="`Presente em ${item.tags.length} pastas: ${item.tags.map(t => '#' + t).join(', ')}`"
+                    >
+                      <LinkIcon class="w-3 h-3" />
+                    </span>
                   </div>
 
-                  <!-- Micro Badge Elegante -->
-                  <span
-                    class="text-[9px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded font-semibold transition-all"
-                    :class="[
-                      item.kind === 'canvas' ? 'bg-amber-50 dark:bg-accent/10 text-amber-700 dark:text-accent/90 border border-amber-200 dark:border-accent/20' :
-                      item.kind === 'book' ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400/90 border border-blue-200 dark:border-blue-500/20' :
-                      item.kind === 'drawing' ? 'bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-400/90 border border-purple-200 dark:border-purple-500/20' :
-                      item.kind === 'link' ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400/90 border border-emerald-200 dark:border-emerald-500/20' :
-                      'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400/90 border border-indigo-200 dark:border-indigo-500/20'
-                    ]"
-                  >
-                    {{ item.kind === 'canvas' ? 'quadro' : item.kind === 'book' ? 'livro' : item.kind === 'drawing' ? 'desenho' : item.kind === 'link' ? 'link' : 'nota' }}
-                  </span>
+                  <!-- Ações Rápidas do Arquivo + Micro Badge -->
+                  <div class="flex items-center gap-1.5 shrink-0">
+                    <div class="opacity-0 group-hover/file:opacity-100 flex items-center gap-0.5 bg-bgSurface/95 backdrop-blur-xs border border-divider/60 rounded-md p-0.5 shadow-xs transition-opacity">
+                      <button
+                        @click.stop="handleRemoveReference(item, folder)"
+                        class="p-1 hover:text-amber-500 hover:bg-amber-500/10 rounded transition-colors text-textSecondary cursor-pointer"
+                        :title="`Remover da pasta #${folder}`"
+                      >
+                        <MinusCircleIcon class="w-3 h-3" />
+                      </button>
+                      <button
+                        @click.stop="handleDeleteItemCompletely(item)"
+                        class="p-1 hover:text-red-400 hover:bg-red-400/10 rounded transition-colors text-textSecondary cursor-pointer"
+                        title="Excluir arquivo definitivamente"
+                      >
+                        <Trash2Icon class="w-3 h-3" />
+                      </button>
+                    </div>
+
+                    <!-- Micro Badge Elegante -->
+                    <span
+                      class="text-[9px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded font-semibold transition-all"
+                      :class="[
+                        item.kind === 'canvas' ? 'bg-amber-50 dark:bg-accent/10 text-amber-700 dark:text-accent/90 border border-amber-200 dark:border-accent/20' :
+                        item.kind === 'book' ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400/90 border border-blue-200 dark:border-blue-500/20' :
+                        item.kind === 'drawing' ? 'bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-400/90 border border-purple-200 dark:border-purple-500/20' :
+                        item.kind === 'link' ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400/90 border border-emerald-200 dark:border-emerald-500/20' :
+                        'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400/90 border border-indigo-200 dark:border-indigo-500/20'
+                      ]"
+                    >
+                      {{ item.kind === 'canvas' ? 'quadro' : item.kind === 'book' ? 'livro' : item.kind === 'drawing' ? 'desenho' : item.kind === 'link' ? 'link' : 'nota' }}
+                    </span>
+                  </div>
                 </div>
 
                 <div v-if="getFolderItems(folder).length === 0" class="px-2 py-1 text-[10px] text-textSecondary italic">
-                  {{ selectedTag ? 'Nenhum item com a tag nesta pasta' : 'Pasta vazia' }}
+                  Pasta vazia
                 </div>
               </div>
             </div>
 
             <!-- Seção de Arquivos Sem Pasta (Na Raiz) -->
-            <div v-if="!selectedTag || uncategorizedItems.length > 0" class="space-y-0.5 pt-1">
+            <div v-if="uncategorizedItems.length > 0" class="space-y-0.5 pt-1">
               <div
                 class="group relative flex items-center justify-between px-2 py-1.5 rounded-xl text-xs md:text-sm transition-all cursor-pointer border"
                 :class="selectedFolder === '__uncategorized__'
@@ -705,7 +648,9 @@
                 <div
                   v-for="item in uncategorizedItems"
                   :key="item.id"
-                  class="group/file relative flex items-center justify-between px-2 py-1.5 rounded-lg text-xs cursor-pointer transition-all border"
+                  draggable="true"
+                  @dragstart="onDragStartItem($event, item, '__uncategorized__')"
+                  class="group/file relative flex items-center justify-between px-2 py-1.5 rounded-lg text-xs cursor-pointer transition-all border select-none"
                   :class="selectedItemId === item.id
                     ? 'bg-accent/15 text-accent font-medium border-accent/30 shadow-xs'
                     : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'"
@@ -731,19 +676,31 @@
                     <span class="truncate font-interface text-xs">{{ item.title || (item.kind === 'canvas' ? 'Quadro sem título' : item.kind === 'book' ? 'Livro sem título' : 'Nota sem título') }}</span>
                   </div>
 
-                  <!-- Micro Badge Elegante -->
-                  <span
-                    class="text-[9px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded font-semibold transition-all"
-                    :class="[
-                      item.kind === 'canvas' ? 'bg-amber-50 dark:bg-accent/10 text-amber-700 dark:text-accent/90 border border-amber-200 dark:border-accent/20' :
-                      item.kind === 'book' ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400/90 border border-blue-200 dark:border-blue-500/20' :
-                      item.kind === 'drawing' ? 'bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-400/90 border border-purple-200 dark:border-purple-500/20' :
-                      item.kind === 'link' ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400/90 border border-emerald-200 dark:border-emerald-500/20' :
-                      'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400/90 border border-indigo-200 dark:border-indigo-500/20'
-                    ]"
-                  >
-                    {{ item.kind === 'canvas' ? 'quadro' : item.kind === 'book' ? 'livro' : item.kind === 'drawing' ? 'desenho' : item.kind === 'link' ? 'link' : 'nota' }}
-                  </span>
+                  <div class="flex items-center gap-1.5 shrink-0">
+                    <div class="opacity-0 group-hover/file:opacity-100 flex items-center gap-0.5 bg-bgSurface/95 backdrop-blur-xs border border-divider/60 rounded-md p-0.5 shadow-xs transition-opacity">
+                      <button
+                        @click.stop="handleDeleteItemCompletely(item)"
+                        class="p-1 hover:text-red-400 hover:bg-red-400/10 rounded transition-colors text-textSecondary cursor-pointer"
+                        title="Excluir arquivo definitivamente"
+                      >
+                        <Trash2Icon class="w-3 h-3" />
+                      </button>
+                    </div>
+
+                    <!-- Micro Badge Elegante -->
+                    <span
+                      class="text-[9px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded font-semibold transition-all"
+                      :class="[
+                        item.kind === 'canvas' ? 'bg-amber-50 dark:bg-accent/10 text-amber-700 dark:text-accent/90 border border-amber-200 dark:border-accent/20' :
+                        item.kind === 'book' ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400/90 border border-blue-200 dark:border-blue-500/20' :
+                        item.kind === 'drawing' ? 'bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-400/90 border border-purple-200 dark:border-purple-500/20' :
+                        item.kind === 'link' ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400/90 border border-emerald-200 dark:border-emerald-500/20' :
+                        'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400/90 border border-indigo-200 dark:border-indigo-500/20'
+                      ]"
+                    >
+                      {{ item.kind === 'canvas' ? 'quadro' : item.kind === 'book' ? 'livro' : item.kind === 'drawing' ? 'desenho' : item.kind === 'link' ? 'link' : 'nota' }}
+                    </span>
+                  </div>
                 </div>
 
                 <div v-if="uncategorizedItems.length === 0" class="px-2 py-1 text-[10px] text-textSecondary italic">
@@ -752,6 +709,48 @@
               </div>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Rápido de Drag & Drop: Mover vs Adicionar Referência -->
+    <div
+      v-if="dragActionModalOpen && draggedItem"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150"
+    >
+      <div class="bg-bgPanel border border-divider rounded-2xl p-5 max-w-sm w-full space-y-4 shadow-2xl">
+        <div class="space-y-1">
+          <h3 class="text-sm font-semibold text-textPrimary font-interface flex items-center gap-2">
+            <FolderIcon class="w-4 h-4 text-accent" />
+            Organizar em #{{ dragTargetFolder }}
+          </h3>
+          <p class="text-xs text-textSecondary">
+            Como deseja organizar <strong class="text-textPrimary">"{{ draggedItem.title }}"</strong> nesta pasta?
+          </p>
+        </div>
+
+        <div class="space-y-2 pt-1">
+          <button
+            @click="confirmDragMove"
+            class="w-full px-3.5 py-2.5 rounded-xl bg-accent hover:bg-accent/90 text-white text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-sm"
+          >
+            <span>Mover para esta pasta</span>
+          </button>
+
+          <button
+            @click="confirmDragAddReference"
+            class="w-full px-3.5 py-2.5 rounded-xl bg-bgSurface hover:bg-bgSurface/80 border border-divider hover:border-accent/40 text-textPrimary text-xs font-medium flex items-center justify-center gap-2 cursor-pointer transition-colors"
+          >
+            <LinkIcon class="w-3.5 h-3.5 text-accent" />
+            <span>Adicionar referência (manter em ambas)</span>
+          </button>
+
+          <button
+            @click="cancelDragAction"
+            class="w-full px-3 py-1.5 rounded-xl text-xs text-textSecondary hover:text-textPrimary cursor-pointer text-center"
+          >
+            Cancelar
+          </button>
         </div>
       </div>
     </div>
@@ -831,7 +830,9 @@ import {
   Tag as TagIcon,
   Sun as SunIcon,
   Moon as MoonIcon,
-  Palette as PaletteIcon
+  Palette as PaletteIcon,
+  Link as LinkIcon,
+  MinusCircle as MinusCircleIcon
 } from 'lucide-vue-next'
 import { useUserBooks } from '~/composables/useUserBooks'
 import { useGraph } from '~/composables/useGraph'
@@ -995,14 +996,8 @@ const closeGraphSearch = () => {
   isGraphSearchOpen.value = false
 }
 
-export interface SidebarTreeItem {
-  id: string
-  title?: string
-  kind?: 'canvas' | 'note' | 'drawing' | 'link' | 'book'
-  folder?: string | null
-  tags?: string[]
-  bookId?: number
-}
+export type { SidebarTreeItem } from '~/interfaces/sidebar'
+import type { SidebarTreeItem } from '~/interfaces/sidebar'
 
 const props = withDefaults(
   defineProps<{
@@ -1041,12 +1036,96 @@ const emit = defineEmits<{
   (_e: 'create-folder', _name: string): void
   (_e: 'rename-folder', _payload: { oldName: string; newName: string }): void
   (_e: 'delete-folder', _name: string): void
+  (_e: 'move-item', _payload: { itemId: string; fromFolder: string; toFolder: string }): void
+  (_e: 'add-reference', _payload: { itemId: string; toFolder: string }): void
+  (_e: 'remove-reference', _payload: { itemId: string; folder: string }): void
+  (_e: 'delete-item', _itemId: string): void
   (_e: 'update:collapsed', _collapsed: boolean): void
   (_e: 'update:view-layout', _layout: 'graph' | 'grid'): void
 }>()
 
 const isCollapsed = ref(props.collapsed ?? false)
 const expandedFolders = ref<Set<string>>(new Set(['__uncategorized__']))
+
+// Drag & Drop State
+const draggedItem = ref<SidebarTreeItem | null>(null)
+const draggedSourceFolder = ref<string | null>(null)
+const dragOverFolder = ref<string | null>(null)
+const dragActionModalOpen = ref(false)
+const dragTargetFolder = ref<string>('')
+
+const onDragStartItem = (e: DragEvent, item: SidebarTreeItem, sourceFolder: string) => {
+  draggedItem.value = item
+  draggedSourceFolder.value = sourceFolder
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = 'copyMove'
+    e.dataTransfer.setData('text/plain', item.id)
+  }
+}
+
+const onDragOverFolder = (folder: string) => {
+  dragOverFolder.value = folder
+}
+
+const onDragLeaveFolder = (folder: string) => {
+  if (dragOverFolder.value === folder) {
+    dragOverFolder.value = null
+  }
+}
+
+const onDropToFolder = (e: DragEvent, targetFolder: string) => {
+  dragOverFolder.value = null
+  if (!draggedItem.value) return
+  if (draggedSourceFolder.value === targetFolder) return
+
+  dragTargetFolder.value = targetFolder
+  dragActionModalOpen.value = true
+}
+
+const confirmDragMove = () => {
+  if (draggedItem.value && dragTargetFolder.value && draggedSourceFolder.value) {
+    emit('move-item', {
+      itemId: draggedItem.value.id,
+      fromFolder: draggedSourceFolder.value,
+      toFolder: dragTargetFolder.value
+    })
+  }
+  dragActionModalOpen.value = false
+  draggedItem.value = null
+  draggedSourceFolder.value = null
+}
+
+const confirmDragAddReference = () => {
+  if (draggedItem.value && dragTargetFolder.value) {
+    emit('add-reference', {
+      itemId: draggedItem.value.id,
+      toFolder: dragTargetFolder.value
+    })
+  }
+  dragActionModalOpen.value = false
+  draggedItem.value = null
+  draggedSourceFolder.value = null
+}
+
+const cancelDragAction = () => {
+  dragActionModalOpen.value = false
+  draggedItem.value = null
+  draggedSourceFolder.value = null
+}
+
+const handleRemoveReference = (item: SidebarTreeItem, folder: string) => {
+  emit('remove-reference', { itemId: item.id, folder })
+}
+
+const handleDeleteItemCompletely = (item: SidebarTreeItem) => {
+  const isMulti = item.tags && item.tags.length > 1
+  const msg = isMulti
+    ? `Tem certeza de que deseja excluir definitivamente "${item.title || 'este arquivo'}"? Este arquivo está presente em ${item.tags?.length} pastas (${item.tags?.join(', ')}) e será apagado por completo de todo o sistema.`
+    : `Tem certeza de que deseja excluir definitivamente "${item.title || 'este arquivo'}"?`
+  if (confirm(msg)) {
+    emit('delete-item', item.id)
+  }
+}
 
 const isBooksSubmenuOpen = ref(false)
 
@@ -1193,37 +1272,70 @@ const renameModalOpen = ref(false)
 const renamingFolderOldName = ref('')
 const renameFolderNewName = ref('')
 
-// Todas as pastas (união de pastas passadas com pastas presentes nos itens)
+// Todas as pastas (união de tags/pastas passadas com tags presentes nos itens)
 const allFolders = computed(() => {
-  const set = new Set<string>(props.folders)
-  for (const item of props.items) {
-    if (item.folder) set.add(item.folder)
+  const set = new Set<string>()
+  for (const f of props.folders || []) {
+    if (f && f.trim()) set.add(f.trim())
+  }
+  for (const item of props.items || []) {
+    for (const t of item.tags || []) {
+      if (t && t.trim()) set.add(t.trim())
+    }
+    if (item.folder && item.folder.trim()) {
+      set.add(item.folder.trim())
+    }
   }
   return Array.from(set).sort((a, b) => a.localeCompare(b))
 })
 
 const totalItemsCount = computed(() => props.items.length)
 
-// Itens filtrados pela tag ativa (se selecionada)
-const filteredTreeItems = computed(() => {
-  if (!props.selectedTag) return props.items
+// Itens sem pasta (não possuem tags nem pasta)
+const uncategorizedItems = computed(() => {
   return props.items.filter((item) => {
-    return Array.isArray(item.tags) && item.tags.includes(props.selectedTag!)
+    if (props.selectedTag) {
+      const tags = Array.isArray(item.tags) ? item.tags : []
+      if (!tags.some((t) => t.trim().toLowerCase() === props.selectedTag!.trim().toLowerCase())) {
+        return false
+      }
+    }
+    const tags = Array.isArray(item.tags) ? item.tags : []
+    const hasTags = tags.length > 0
+    const hasFolder = !!(item.folder && item.folder.trim())
+    return !hasTags && !hasFolder
   })
 })
 
-const uncategorizedItems = computed(() => {
-  return filteredTreeItems.value.filter((i) => !i.folder)
-})
-
+// Projeção Multi-Referência: Um arquivo aparece em cada pasta correspondente a uma de suas tags
 const getFolderItems = (folderName: string) => {
-  return filteredTreeItems.value.filter((i) => i.folder === folderName)
+  const norm = folderName.trim().toLowerCase()
+  return props.items.filter((item) => {
+    if (props.selectedTag) {
+      const tags = Array.isArray(item.tags) ? item.tags : []
+      if (!tags.some((t) => t.trim().toLowerCase() === props.selectedTag!.trim().toLowerCase())) {
+        return false
+      }
+    }
+    // 1. Tags do item
+    const tags = Array.isArray(item.tags) ? item.tags : []
+    if (tags.some((t) => t.trim().toLowerCase() === norm)) {
+      return true
+    }
+    // 2. Compatibilidade com campo legado folder
+    if (item.folder && item.folder.trim().toLowerCase() === norm) {
+      return true
+    }
+    return false
+  })
 }
 
-// Pastas visíveis: se uma tag estiver ativa, exibe apenas pastas com itens correspondentes
+// Pastas visíveis
 const visibleFolders = computed(() => {
-  if (!props.selectedTag) return allFolders.value
-  return allFolders.value.filter((f) => getFolderItems(f).length > 0)
+  if (props.selectedTag) {
+    return allFolders.value.filter((f) => getFolderItems(f).length > 0)
+  }
+  return allFolders.value
 })
 
 // Auto-expande pastas que contêm itens da tag selecionada

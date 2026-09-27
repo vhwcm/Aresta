@@ -119,6 +119,20 @@ export const buildLocalGraph = (input: BuildLocalGraphInput = {}): GraphData => 
     })
   }
 
+  // Conecta tags hierárquicas (ex: A/B -> A)
+  for (const theme of Array.from(themeMap.values())) {
+    if (theme.name && theme.name.includes('/')) {
+      const parts = theme.name.split('/').filter(Boolean)
+      if (parts.length > 1) {
+        const parentPath = parts.slice(0, -1).join('/')
+        const parentId = upsertTheme({ name: parentPath })
+        if (parentId) {
+          addEdge(themeNodeId(theme.id), themeNodeId(parentId), 'tag-hierarchy')
+        }
+      }
+    }
+  }
+
   for (const theme of themeMap.values()) {
     nodes.push({
       id: themeNodeId(theme.id),

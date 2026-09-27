@@ -688,6 +688,13 @@ const moveModalOpen = ref(false)
 const tagsModalOpen = ref(false)
 const targetCanvas = ref<CanvasSummary | null>(null)
 
+watch(isNewCanvasModalOpen, (val) => {
+  if (val) {
+    newCanvasModalOpen.value = true
+    isNewCanvasModalOpen.value = false
+  }
+})
+
 // Composables
 const {
   canvasesList,
@@ -745,6 +752,13 @@ const openNewLinkModal = () => {
   newLinkFolder.value = activeFolder.value && activeFolder.value !== '__uncategorized__' ? activeFolder.value : ''
   newLinkModalOpen.value = true
 }
+
+watch(isNewLinkModalOpen, (val) => {
+  if (val) {
+    openNewLinkModal()
+    isNewLinkModalOpen.value = false
+  }
+})
 
 const handleConfirmCreateLink = async () => {
   const url = sanitizeUrl(newLinkUrl.value)

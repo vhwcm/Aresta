@@ -28,6 +28,10 @@
       @create-folder="handleCreateFolder"
       @rename-folder="handleRenameFolder"
       @delete-folder="handleDeleteFolder"
+      @move-item="handleMoveItemToFolder"
+      @add-reference="handleAddReferenceToFolder"
+      @remove-reference="handleRemoveReferenceFromFolder"
+      @delete-item="handleDeleteItemCompletely"
     />
 
     <!-- Área Principal de Conteúdo -->
@@ -151,6 +155,10 @@ const {
   handleCreateFolder,
   handleRenameFolder,
   handleDeleteFolder,
+  handleMoveItemToFolder,
+  handleAddReferenceToFolder,
+  handleRemoveReferenceFromFolder,
+  handleDeleteItemCompletely,
   handleOpenJournal
 } = useWorkspaceSidebar()
 

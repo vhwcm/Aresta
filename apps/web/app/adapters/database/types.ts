@@ -67,6 +67,8 @@ export interface LocalCanvasItem extends BaseLocalEntity {
   id: string; // uuid
   name: string;
   description?: string | null;
+  folder?: string | null;
+  tags?: string[];
   document: {
     nodes: any[];
     edges: any[];

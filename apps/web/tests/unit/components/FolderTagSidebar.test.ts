@@ -2,11 +2,11 @@ import { describe, it, expect } from 'vitest';
 import { mount } from '@vue/test-utils';
 import FolderTagSidebar from '../../../app/components/FolderTagSidebar.vue';
 
-describe('FolderTagSidebar component', () => {
+describe('FolderTagSidebar component (Unificação de Tags e Pastas)', () => {
   const items = [
-    { id: '1', folder: 'Estudos', tags: ['filosofia', 'livros'] },
-    { id: '2', folder: 'Estudos', tags: ['filosofia'] },
-    { id: '3', folder: null, tags: ['ideias'] },
+    { id: '1', title: 'Nota Dupla', tags: ['filosofia', 'livros'] },
+    { id: '2', title: 'Nota Só Filo', tags: ['filosofia'] },
+    { id: '3', title: 'Nota Sem Pasta', tags: [] },
   ];
   const folders = ['Estudos', 'Projetos'];
 
@@ -25,7 +25,7 @@ describe('FolderTagSidebar component', () => {
     expect(wrapper.text()).toContain('Projetos');
   });
 
-  it('emite select-folder ao clicar em uma pasta', async () => {
+  it('emite select-folder ao clicar em uma pasta/tag', async () => {
     const wrapper = mount(FolderTagSidebar, {
       props: {
         items,
@@ -41,21 +41,55 @@ describe('FolderTagSidebar component', () => {
     expect(wrapper.emitted('select-folder')?.[0]).toEqual(['Estudos']);
   });
 
-  it('calcula tags e emite select-tag ao clicar na tag', async () => {
+  it('multi-referência: item com múltiplas tags aparece nas pastas de cada uma', async () => {
+    const multiItems = [
+      { id: 'note-multi', title: 'Conhecimento Compartilhado', kind: 'note' as const, tags: ['filosofia', 'livros'] },
+    ];
+
     const wrapper = mount(FolderTagSidebar, {
       props: {
-        items,
-        folders,
+        items: multiItems,
+        folders: ['filosofia', 'livros'],
       },
     });
 
-    expect(wrapper.text()).toContain('#filosofia');
-    const tagButton = wrapper.findAll('button').find((el) => el.text().includes('#filosofia'));
-    expect(tagButton).toBeDefined();
+    // Ambas as pastas devem estar listadas
+    expect(wrapper.text()).toContain('filosofia');
+    expect(wrapper.text()).toContain('livros');
 
-    await tagButton?.trigger('click');
-    expect(wrapper.emitted('select-tag')).toBeTruthy();
-    expect(wrapper.emitted('select-tag')?.[0]).toEqual(['filosofia']);
+    // Expande a pasta filosofia
+    const expandButtons = wrapper.findAll('button[title="Expandir ou recolher pasta"]');
+    for (const btn of expandButtons) {
+      await btn.trigger('click');
+    }
+
+    // O mesmo item deve ser renderizado em ambas as pastas!
+    const matches = wrapper.findAll('.group\\/file').filter((el) => el.text().includes('Conhecimento Compartilhado'));
+    expect(matches.length).toBe(2);
+  });
+
+  it('exibe indicador de link/referência em arquivos que pertencem a múltiplas tags', async () => {
+    const multiItems = [
+      { id: 'note-multi', title: 'Nota com 2 tags', kind: 'note' as const, tags: ['tagA', 'tagB'] },
+      { id: 'note-single', title: 'Nota com 1 tag', kind: 'note' as const, tags: ['tagA'] },
+    ];
+
+    const wrapper = mount(FolderTagSidebar, {
+      props: {
+        items: multiItems,
+        folders: ['tagA', 'tagB'],
+      },
+    });
+
+    // Expande as pastas
+    const expandButtons = wrapper.findAll('button[title="Expandir ou recolher pasta"]');
+    for (const btn of expandButtons) {
+      await btn.trigger('click');
+    }
+
+    // Deve exibir o indicador com title contendo as pastas
+    const linkIcon = wrapper.find('[title*="Presente em 2 pastas"]');
+    expect(linkIcon.exists()).toBe(true);
   });
 
   it('alterna colapso ao clicar no botão de sidebar e emite update:collapsed', async () => {
@@ -91,8 +125,8 @@ describe('FolderTagSidebar component', () => {
 
   it('expande pasta e emite select-item ao clicar em arquivo aninhado', async () => {
     const treeItems = [
-      { id: 'canvas-1', title: 'Quadro Aninhado', kind: 'canvas' as const, folder: 'Estudos' },
-      { id: 'note-1', title: 'Nota Aninhada', kind: 'note' as const, folder: 'Estudos' },
+      { id: 'canvas-1', title: 'Quadro Aninhado', kind: 'canvas' as const, tags: ['Estudos'] },
+      { id: 'note-1', title: 'Nota Aninhada', kind: 'note' as const, tags: ['Estudos'] },
     ];
 
     const wrapper = mount(FolderTagSidebar, {
@@ -102,42 +136,19 @@ describe('FolderTagSidebar component', () => {
       },
     });
 
-    // Clica no botão de expandir a pasta Estudos
     const expandChevron = wrapper.find('button[title="Expandir ou recolher pasta"]');
     expect(expandChevron.exists()).toBe(true);
     await expandChevron.trigger('click');
 
-    // Agora os arquivos aninhados aparecem
     expect(wrapper.text()).toContain('Quadro Aninhado');
     expect(wrapper.text()).toContain('Nota Aninhada');
 
-    // Clica no arquivo Quadro Aninhado
     const fileItem = wrapper.findAll('.cursor-pointer').find((el) => el.text().includes('Quadro Aninhado'));
     expect(fileItem).toBeDefined();
     await fileItem?.trigger('click');
 
     expect(wrapper.emitted('select-item')).toBeTruthy();
     expect(wrapper.emitted('select-item')?.[0]?.[0]).toMatchObject({ id: 'canvas-1', kind: 'canvas' });
-  });
-
-  it('filtra itens da árvore quando selectedTag estiver ativo', async () => {
-    const treeItems = [
-      { id: 'canvas-1', title: 'Quadro Filosofia', kind: 'canvas' as const, folder: 'Estudos', tags: ['filo'] },
-      { id: 'note-1', title: 'Nota Outra', kind: 'note' as const, folder: 'Estudos', tags: ['outra'] },
-      { id: 'note-2', title: 'Nota Raiz Filo', kind: 'note' as const, folder: null, tags: ['filo'] },
-    ];
-
-    const wrapper = mount(FolderTagSidebar, {
-      props: {
-        items: treeItems,
-        folders: ['Estudos'],
-        selectedTag: 'filo',
-      },
-    });
-
-    expect(wrapper.text()).toContain('Quadro Filosofia');
-    expect(wrapper.text()).toContain('Nota Raiz Filo');
-    expect(wrapper.text()).not.toContain('Nota Outra');
   });
 
   it('emite create-note ao clicar no botão de nova anotação', async () => {
@@ -171,19 +182,36 @@ describe('FolderTagSidebar component', () => {
     expect(addBtn.exists()).toBe(true);
     await addBtn.trigger('click');
 
-    // Opções do menu dropdown
     expect(wrapper.text()).toContain('Nova Nota');
     expect(wrapper.text()).toContain('Novo Desenho');
     expect(wrapper.text()).toContain('Novo Link');
     expect(wrapper.text()).toContain('Novo Quadro');
     expect(wrapper.text()).toContain('Nova Pasta');
 
-    // Clica em Novo Desenho
     const drawingBtn = wrapper.findAll('button').find((el) => el.text().includes('Novo Desenho'));
     expect(drawingBtn).toBeDefined();
     await drawingBtn?.trigger('click');
 
     expect(wrapper.emitted('create-drawing')).toBeTruthy();
+  });
+
+  it('emite create-canvas ao clicar na opção Novo Quadro no menu dropdown', async () => {
+    const wrapper = mount(FolderTagSidebar, {
+      props: {
+        items: [],
+        folders: ['Estudos'],
+      },
+    });
+
+    const addBtn = wrapper.find('button[title="Criar novo item"]');
+    expect(addBtn.exists()).toBe(true);
+    await addBtn.trigger('click');
+
+    const canvasBtn = wrapper.findAll('button').find((el) => el.text().includes('Novo Quadro'));
+    expect(canvasBtn).toBeDefined();
+    await canvasBtn?.trigger('click');
+
+    expect(wrapper.emitted('create-canvas')).toBeTruthy();
   });
 
   it('renderiza os ícones de navegação principal incluindo botão de adicionar geral ao lado da conta', () => {
@@ -220,44 +248,17 @@ describe('FolderTagSidebar component', () => {
     expect(searchInput.exists()).toBe(true);
   });
 
-  it('posiciona a seção de tags antes da árvore de pastas e arquivos', () => {
+  it('a árvore de arquivos não exibe título redundante de cabeçalho', () => {
     const wrapper = mount(FolderTagSidebar, {
       props: {
-        items: [
-          { id: '1', folder: 'Estudos', tags: ['filosofia'] },
-        ],
-        folders: ['Estudos'],
+        items: [{ id: '1', tags: ['filosofia'] }],
+        folders: ['filosofia'],
         collapsed: false,
       },
     });
 
-    const html = wrapper.html();
-    const tagsIndex = html.indexOf('Tags');
-    const foldersIndex = html.indexOf('Estudos');
-
-    expect(tagsIndex).toBeGreaterThan(-1);
-    expect(foldersIndex).toBeGreaterThan(-1);
-    expect(tagsIndex).toBeLessThan(foldersIndex);
-  });
-
-  it('renderiza o botaozao azul de Gerenciar Tags na secao de tags e abre o modal ao clicar', async () => {
-    const wrapper = mount(FolderTagSidebar, {
-      props: {
-        items: [
-          { id: '1', folder: 'Estudos', tags: ['filosofia', 'ciencias'] },
-        ],
-        folders: ['Estudos'],
-        collapsed: false,
-      },
-    });
-
-    const manageTagsBtn = wrapper.find('[data-testid="manage-tags-sidebar-btn"]');
-    expect(manageTagsBtn.exists()).toBe(true);
-    expect(manageTagsBtn.text()).toContain('Gerenciar Tags');
-    expect(manageTagsBtn.classes().some((c) => c.includes('blue'))).toBe(true);
-
-    await manageTagsBtn.trigger('click');
-    expect(wrapper.findComponent({ name: 'ManageThemesModal' }).props('isOpen')).toBe(true);
+    expect(wrapper.text()).not.toContain('PASTAS');
+    expect(wrapper.text()).not.toContain('ARQUIVOS');
   });
 
   it('renderiza o botao azul de tags no modo colapsado e abre o modal ao clicar', async () => {
@@ -277,55 +278,6 @@ describe('FolderTagSidebar component', () => {
     expect(wrapper.findComponent({ name: 'ManageThemesModal' }).props('isOpen')).toBe(true);
   });
 
-  it('embute a lista de tags dentro do card azul de Gerenciar Tags e permite recolher/expandir', async () => {
-    const wrapper = mount(FolderTagSidebar, {
-      props: {
-        items: [
-          { id: '1', folder: 'Estudos', tags: ['filosofia', 'ciencias'] },
-        ],
-        folders: ['Estudos'],
-        collapsed: false,
-      },
-    });
-
-    // As tags devem começar colapsadas (recolhidas) inicialmente
-    const tagsContainer = wrapper.find('.animate-in');
-    expect(tagsContainer.attributes('style')).toContain('display: none');
-
-    const toggleBtn = wrapper.find('[data-testid="toggle-tags-expand-btn"]');
-    expect(toggleBtn.exists()).toBe(true);
-
-    // Clica para expandir
-    await toggleBtn.trigger('click');
-    expect(tagsContainer.attributes('style') || '').not.toContain('display: none');
-    expect(wrapper.text()).toContain('#filosofia');
-    expect(wrapper.text()).toContain('#ciencias');
-  });
-
-  it('permite selecionar e desselecionar tag diretamente sem indicador duplicado de Limpar', async () => {
-    const wrapper = mount(FolderTagSidebar, {
-      props: {
-        items: [
-          { id: '1', folder: 'Estudos', tags: ['filosofia'] },
-        ],
-        folders: ['Estudos'],
-        collapsed: false,
-        selectedTag: 'filosofia',
-      },
-    });
-
-    // Não deve conter a barra duplicada com 'Limpar ✕'
-    expect(wrapper.text()).not.toContain('Limpar ✕');
-
-    const tagButton = wrapper.findAll('button').find((el) => el.text().includes('filosofia'));
-    expect(tagButton).toBeDefined();
-
-    // Como já está selecionada, clicar nela desseleciona
-    await tagButton?.trigger('click');
-    expect(wrapper.emitted('select-tag')).toBeTruthy();
-    expect(wrapper.emitted('select-tag')?.[0]).toEqual([null]);
-  });
-
   it('renderiza o indicador de ofensiva ao lado da lupa no cabecalho', () => {
     const wrapper = mount(FolderTagSidebar, {
       props: {
@@ -340,4 +292,3 @@ describe('FolderTagSidebar component', () => {
     expect(streakBtn.attributes('title')).toBe('Ofensiva de Leitura');
   });
 });
-
