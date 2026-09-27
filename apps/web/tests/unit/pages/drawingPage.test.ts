@@ -31,6 +31,13 @@ const mockDrawing = ref<any>({
 });
 
 const mockAddPage = vi.fn();
+const mockIsPenOnlyMode = ref(false);
+const mockTogglePenOnlyMode = vi.fn(() => {
+  mockIsPenOnlyMode.value = !mockIsPenOnlyMode.value;
+});
+const mockSetPenOnlyMode = vi.fn((val: boolean) => {
+  mockIsPenOnlyMode.value = val;
+});
 
 vi.mock('../../../app/composables/useDrawing', () => ({
   useDrawing: () => ({
@@ -42,6 +49,9 @@ vi.mock('../../../app/composables/useDrawing', () => ({
     selectedEdgeId: ref(null),
     strokeColor: ref('#E57B55'),
     strokeSize: ref(3),
+    isPenOnlyMode: mockIsPenOnlyMode,
+    setPenOnlyMode: mockSetPenOnlyMode,
+    togglePenOnlyMode: mockTogglePenOnlyMode,
     isSaving: ref(false),
     isSynthesizing: ref(false),
     isLoading: ref(false),
@@ -429,6 +439,97 @@ describe('Drawing Page Mobile Zoom & Pinch Controls ([id].vue)', () => {
 
     Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: originalInnerWidth });
     Object.defineProperty(window, 'innerHeight', { writable: true, configurable: true, value: originalInnerHeight });
+  });
+
+  it('exibe o botão do Modo Caneta no cabeçalho e alterna o estado ao clicar', async () => {
+    mockIsPenOnlyMode.value = false;
+
+    const wrapper = mount(DrawingPage, {
+      global: { stubs },
+    });
+
+    const penModeBtn = wrapper.find('button[aria-label="Alternar Modo Caneta"]');
+    expect(penModeBtn.exists()).toBe(true);
+    expect(penModeBtn.text()).toContain('Desenho livre');
+
+    await penModeBtn.trigger('click');
+    expect(mockTogglePenOnlyMode).toHaveBeenCalled();
+
+    mockIsPenOnlyMode.value = true;
+    await wrapper.vm.$nextTick();
+    expect(penModeBtn.text()).toContain('Modo Caneta');
+  });
+
+  it('desloca a viewport com 1 dedo quando o Modo Caneta está ativo', async () => {
+    mockIsPenOnlyMode.value = true;
+
+    const wrapper = mount(DrawingPage, {
+      global: { stubs },
+    });
+
+    const viewport = wrapper.find('main');
+    expect(viewport.exists()).toBe(true);
+
+    const viewportEl = viewport.element as HTMLElement;
+    viewportEl.scrollLeft = 100;
+    viewportEl.scrollTop = 50;
+
+    // Dispara touchstart com 1 dedo
+    const touchStartEvent = new Event('touchstart') as any;
+    touchStartEvent.touches = [{ clientX: 200, clientY: 200 }];
+    viewportEl.dispatchEvent(touchStartEvent);
+
+    // Dispara touchmove com 1 dedo movendo 50px para a esquerda e 30px para cima
+    const touchMoveEvent = new Event('touchmove', { cancelable: true }) as any;
+    touchMoveEvent.touches = [{ clientX: 150, clientY: 170 }];
+    touchMoveEvent.preventDefault = vi.fn();
+    viewportEl.dispatchEvent(touchMoveEvent);
+
+    expect(viewportEl.scrollLeft).toBe(150); // 100 - (150 - 200) = 100 - (-50) = 150
+    expect(viewportEl.scrollTop).toBe(80);   // 50 - (170 - 200) = 50 - (-30) = 80
+  });
+
+  it('executa pan e zoom focal com 2 dedos suspendendo scroll snap', async () => {
+    mockIsPenOnlyMode.value = false;
+
+    const wrapper = mount(DrawingPage, {
+      global: { stubs },
+    });
+
+    const viewport = wrapper.find('main');
+    const viewportEl = viewport.element as HTMLElement;
+    viewportEl.scrollLeft = 0;
+    viewportEl.scrollTop = 0;
+    viewportEl.getBoundingClientRect = vi.fn().mockReturnValue({ left: 0, top: 0, width: 400, height: 800 });
+
+    // Inicia toque de 2 dedos (distância inicial: 100px, centro: 200, 200)
+    const touchStartEvent = new Event('touchstart') as any;
+    touchStartEvent.touches = [
+      { clientX: 150, clientY: 200 },
+      { clientX: 250, clientY: 200 },
+    ];
+    viewportEl.dispatchEvent(touchStartEvent);
+
+    await wrapper.vm.$nextTick();
+    // Durante a interação, o snap deve estar desativado
+    expect(viewport.classes()).toContain('snap-none');
+
+    // Move os 2 dedos afastando-os (pinch out: distância 200px -> dobra o zoom)
+    const touchMoveEvent = new Event('touchmove', { cancelable: true }) as any;
+    touchMoveEvent.touches = [
+      { clientX: 100, clientY: 200 },
+      { clientX: 300, clientY: 200 },
+    ];
+    touchMoveEvent.preventDefault = vi.fn();
+    viewportEl.dispatchEvent(touchMoveEvent);
+
+    await wrapper.vm.$nextTick();
+    expect(touchMoveEvent.preventDefault).toHaveBeenCalled();
+
+    // Finaliza gesto
+    const touchEndEvent = new Event('touchend') as any;
+    touchEndEvent.touches = [];
+    viewportEl.dispatchEvent(touchEndEvent);
   });
 });
 

@@ -201,4 +201,16 @@ describe('useDrawing composable (Samsung Notes Style Paged Drawing)', () => {
       ])
     );
   });
+
+  it('permite alternar o Modo Caneta (isPenOnlyMode) e persiste estado', () => {
+    const drawing = useDrawing();
+    drawing.setPenOnlyMode(false);
+    expect(drawing.isPenOnlyMode.value).toBe(false);
+
+    drawing.togglePenOnlyMode();
+    expect(drawing.isPenOnlyMode.value).toBe(true);
+
+    drawing.setPenOnlyMode(false);
+    expect(drawing.isPenOnlyMode.value).toBe(false);
+  });
 });

@@ -372,5 +372,107 @@ describe('DrawingPageCanvas', () => {
       // Não deve conter o ponto (300, 300) do ponteiro espúrio
       expect(stroke.points.some((p: any) => p.x === 300 && p.y === 300)).toBe(false);
     });
+
+    it('no Modo Caneta (penMode: true), bloqueia traço por toque de dedo (touch) e permite apenas caneta (pen)', async () => {
+      const wrapper = mount(DrawingPageCanvas, {
+        props: {
+          page: defaultPage,
+          tool: 'pen',
+          color: '#000000',
+          size: 3,
+          penMode: true,
+        },
+      });
+
+      const canvas = wrapper.findAll('canvas')[1]!;
+
+      // 1. Toque com dedo (touch) não deve iniciar traço
+      await canvas.trigger('pointerdown', {
+        pointerId: 10,
+        pointerType: 'touch',
+        button: 0,
+        buttons: 1,
+        clientX: 50,
+        clientY: 50,
+      });
+
+      await canvas.trigger('pointermove', {
+        pointerId: 10,
+        pointerType: 'touch',
+        buttons: 1,
+        clientX: 70,
+        clientY: 70,
+      });
+
+      await canvas.trigger('pointerup', {
+        pointerId: 10,
+        pointerType: 'touch',
+      });
+
+      expect(wrapper.emitted('stroke-added')).toBeFalsy();
+
+      // 2. Traço com caneta/stylus (pen) DEVE desenhar normalmente
+      await canvas.trigger('pointerdown', {
+        pointerId: 11,
+        pointerType: 'pen',
+        button: 0,
+        buttons: 1,
+        clientX: 100,
+        clientY: 100,
+      });
+
+      await canvas.trigger('pointermove', {
+        pointerId: 11,
+        pointerType: 'pen',
+        buttons: 1,
+        clientX: 120,
+        clientY: 120,
+      });
+
+      await canvas.trigger('pointerup', {
+        pointerId: 11,
+        pointerType: 'pen',
+      });
+
+      expect(wrapper.emitted('stroke-added')?.length).toBe(1);
+    });
+
+    it('quando o Modo Caneta está desativado (penMode: false), toque de dedo (touch) desenha normalmente', async () => {
+      const wrapper = mount(DrawingPageCanvas, {
+        props: {
+          page: defaultPage,
+          tool: 'pen',
+          color: '#000000',
+          size: 3,
+          penMode: false,
+        },
+      });
+
+      const canvas = wrapper.findAll('canvas')[1]!;
+
+      await canvas.trigger('pointerdown', {
+        pointerId: 20,
+        pointerType: 'touch',
+        button: 0,
+        buttons: 1,
+        clientX: 50,
+        clientY: 50,
+      });
+
+      await canvas.trigger('pointermove', {
+        pointerId: 20,
+        pointerType: 'touch',
+        buttons: 1,
+        clientX: 80,
+        clientY: 80,
+      });
+
+      await canvas.trigger('pointerup', {
+        pointerId: 20,
+        pointerType: 'touch',
+      });
+
+      expect(wrapper.emitted('stroke-added')?.length).toBe(1);
+    });
   });
 });

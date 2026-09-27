@@ -43,6 +43,21 @@
       >
         <EraserIcon class="w-4 h-4" />
       </button>
+
+      <!-- 5. Modo Caneta (Apenas caneta desenha, 1 dedo navega) -->
+      <button
+        @click="$emit('update:penMode', !penMode)"
+        class="relative p-1.5 md:p-2 rounded-lg transition-all flex items-center justify-center cursor-pointer"
+        :class="penMode ? 'bg-primary text-white shadow-sm ring-1 ring-primary/40' : 'text-textSecondary hover:text-textPrimary hover:bg-bgSurface'"
+        :title="penMode ? 'Modo Caneta Ativado (Apenas caneta escreve, 1 dedo navega)' : 'Modo Caneta Desativado (Dedo escreve, 2 dedos navegam)'"
+        aria-label="Modo Caneta"
+      >
+        <PenLineIcon class="w-4 h-4" />
+        <span
+          v-if="penMode"
+          class="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 ring-1 ring-bgPanel"
+        />
+      </button>
     </div>
 
     <!-- Divisor -->
@@ -140,6 +155,7 @@ import {
   PenTool as PenToolIcon,
   Highlighter as HighlighterIcon,
   Eraser as EraserIcon,
+  PenLine as PenLineIcon,
 } from 'lucide-vue-next';
 import type { PenToolType } from '~/interfaces/drawing';
 import type { CanvasShapeType } from '~/interfaces/canvas';
@@ -151,9 +167,11 @@ const props = withDefaults(
     selectedShapeType?: CanvasShapeType;
     color: string;
     size: number;
+    penMode?: boolean;
   }>(),
   {
     selectedShapeType: 'rectangle',
+    penMode: false,
   }
 );
 
@@ -162,6 +180,7 @@ const emit = defineEmits<{
   (e: 'update:selectedShapeType', shape: CanvasShapeType): void;
   (e: 'update:color', color: string): void;
   (e: 'update:size', size: number): void;
+  (e: 'update:penMode', penMode: boolean): void;
 }>();
 
 const showShapesMenu = ref(false);

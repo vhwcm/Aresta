@@ -49,6 +49,22 @@
 
       <!-- Right Header Actions -->
       <div class="flex items-center gap-2 shrink-0">
+        <!-- Alternador Modo Caneta -->
+        <button
+          @click="togglePenOnlyMode"
+          class="px-2.5 sm:px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+          :class="isPenOnlyMode ? 'bg-primary/15 border-primary/40 text-primary shadow-sm' : 'bg-bgElevated border-divider text-textSecondary hover:text-textPrimary'"
+          :title="isPenOnlyMode ? 'Modo Caneta Ativo (1 dedo move a página, apenas caneta escreve)' : 'Modo Caneta Inativo (dedo escreve, 2 dedos movem a página)'"
+          aria-label="Alternar Modo Caneta"
+        >
+          <PenLineIcon class="w-3.5 h-3.5" />
+          <span class="hidden sm:inline">{{ isPenOnlyMode ? 'Modo Caneta' : 'Desenho livre' }}</span>
+          <span
+            class="w-1.5 h-1.5 rounded-full"
+            :class="isPenOnlyMode ? 'bg-primary animate-pulse' : 'bg-textSecondary/40'"
+          />
+        </button>
+
         <!-- Botão Transformar com IA -->
         <button
           @click="handleTriggerAiSynthesis"
@@ -76,7 +92,12 @@
     <!-- Main Viewport: Horizontal Pages (Centralizado vertical e horizontalmente) -->
     <main
       ref="viewportRef"
-      class="flex-1 relative w-full h-full overflow-x-auto overflow-y-auto bg-bgRoot/60 flex snap-x snap-mandatory scroll-smooth"
+      class="flex-1 relative w-full h-full overflow-x-auto overflow-y-auto bg-bgRoot/60 flex"
+      :class="[
+        isTouchInteracting || isZoomedIn
+          ? 'snap-none scroll-auto'
+          : 'snap-x snap-mandatory scroll-smooth'
+      ]"
     >
       <!-- Loading State -->
       <div v-if="isLoading" class="m-auto flex flex-col items-center justify-center text-textSecondary gap-3">
@@ -87,7 +108,8 @@
       <!-- Centering Track: Colada no topo em telas horizontais (md / landscape) e alinhada ao início no mobile (justify-start) -->
       <div
         v-else-if="currentDrawing"
-        class="min-w-full min-h-full w-max my-auto md:my-0 md:mx-auto landscape:my-0 landscape:mx-auto pt-20 pb-16 md:pt-0 md:pb-12 landscape:pt-0 landscape:pb-12 px-0 flex flex-row items-center md:items-start landscape:items-start justify-start gap-4 md:gap-0"
+        class="min-w-full min-h-full w-max md:my-0 md:mx-auto landscape:my-0 landscape:mx-auto pt-20 pb-16 md:pt-0 md:pb-12 landscape:pt-0 landscape:pb-12 px-0 flex flex-row items-center md:items-start landscape:items-start justify-start gap-4 md:gap-0"
+        :class="isTallerThanViewport ? 'my-0' : 'my-auto md:my-0'"
         :style="trackStyle"
       >
         <!-- Pages Container (Horizontal lado a lado com Snap no Mobile) -->
@@ -95,12 +117,17 @@
           v-for="(page, idx) in currentDrawing.pages"
           :key="page.id"
           :data-page-index="idx"
-          class="page-slide w-screen md:w-auto shrink-0 snap-center flex flex-col items-center justify-center md:justify-start landscape:justify-start group"
+          class="page-slide shrink-0 snap-center flex flex-col items-center justify-center md:justify-start landscape:justify-start group"
           :class="[
+            isHorizontal ? 'w-auto' : 'w-screen',
             isHorizontal && activePageIndex !== idx
               ? 'opacity-85 hover:opacity-100 transition-opacity'
               : ''
           ]"
+          :style="{
+            minWidth: isHorizontal ? undefined : slideWidth,
+            width: isHorizontal ? undefined : slideWidth,
+          }"
         >
           <!-- Sheet Wrapper com largura exata da folha -->
           <div
@@ -146,6 +173,7 @@
               :selected-node-ids="selectedNodeIds"
               :selected-edge-id="selectedEdgeId"
               :palm-rejection="true"
+              :pen-mode="isPenOnlyMode"
               :is-active="activePageIndex === idx"
               :is-dark-mode="themeMode === 'dark'"
               @select-page="focusPage(idx)"
@@ -221,6 +249,8 @@
           v-model:selected-shape-type="selectedShapeType"
           v-model:color="strokeColor"
           v-model:size="strokeSize"
+          :pen-mode="isPenOnlyMode"
+          @update:pen-mode="setPenOnlyMode"
         />
       </div>
     </div>
@@ -278,6 +308,7 @@ import {
   Minus as MinusIcon,
   ArrowRight as ArrowRightIcon,
   Trash as TrashIcon,
+  PenLine as PenLineIcon,
 } from 'lucide-vue-next';
 import { useDrawing } from '~/composables/useDrawing';
 import { useSettings } from '~/composables/useSettings';
@@ -306,6 +337,9 @@ const {
   selectedEdgeId,
   strokeColor,
   strokeSize,
+  isPenOnlyMode,
+  setPenOnlyMode,
+  togglePenOnlyMode,
   isSaving,
   isSynthesizing,
   isLoading,
@@ -371,13 +405,13 @@ const isHorizontal = ref(
     : false
 );
 
+const windowWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 390);
+
 function updateIsHorizontal() {
   if (typeof window === 'undefined') return;
   isHorizontal.value = window.innerWidth >= 768 || window.innerWidth > window.innerHeight;
+  windowWidth.value = window.innerWidth;
 }
-
-// Escala adaptativa de página: no mobile portrait ocupa 100% da largura (Samsung Notes), em telas horizontais fica colada no topo
-const pageScale = ref(0.7);
 
 function calculateFitScale(): number {
   if (typeof window === 'undefined') return 1;
@@ -396,6 +430,24 @@ function calculateFitScale(): number {
   const fit = Math.min(scaleW, scaleH);
   return Math.max(0.25, Math.min(Number(fit.toFixed(2)), 1.2));
 }
+
+// Escala adaptativa de página: no mobile portrait ocupa 100% da largura (Samsung Notes), em telas horizontais fica colada no topo
+const pageScale = ref(typeof window !== 'undefined' ? calculateFitScale() : 0.7);
+
+const isZoomedIn = computed(() => {
+  return pageScale.value > calculateFitScale() * 1.05;
+});
+
+const slideWidth = computed(() => {
+  if (isHorizontal.value) return undefined;
+  const sheetW = Math.round(794 * pageScale.value);
+  return `${Math.max(windowWidth.value, sheetW + 32)}px`;
+});
+
+const isTallerThanViewport = computed(() => {
+  if (typeof window === 'undefined') return false;
+  return Math.round(1123 * pageScale.value) > window.innerHeight - 100;
+});
 
 // Geometria para tela horizontal: Folha única no centro com páginas adjacentes nos cantos
 const horizontalPaddingX = computed(() => {
@@ -564,14 +616,17 @@ function handleWheel(e: WheelEvent) {
   }
 }
 
-// Gesto Multi-Touch: Pinch-to-Zoom e Pan de dois dedos em telas móveis e tablets
+// Gesto Multi-Touch & Toque Único: Modo Caneta (1 dedo navega), Pan & Focal Pinch-to-Zoom (2 dedos)
+const isTouchInteracting = ref(false);
+let isSingleTouchPanning = false;
+let lastSingleTouchX = 0;
+let lastSingleTouchY = 0;
+
+let isTouchPinching = false;
 let initialPinchDistance = 0;
 let initialPinchScale = 1;
-let initialPinchMidX = 0;
-let initialPinchMidY = 0;
-let initialScrollLeft = 0;
-let initialScrollTop = 0;
-let isTouchPinching = false;
+let lastTouchMidX = 0;
+let lastTouchMidY = 0;
 
 function getDistance(t1: Touch, t2: Touch): number {
   return Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
@@ -585,25 +640,63 @@ function getMidpoint(t1: Touch, t2: Touch): { x: number; y: number } {
 }
 
 function handleTouchStart(e: TouchEvent) {
-  if (e.touches.length === 2) {
+  if (e.touches.length === 1 && isPenOnlyMode.value) {
+    // Modo Caneta ativado: toque de 1 dedo navega livremente pela página
+    isSingleTouchPanning = true;
+    isTouchInteracting.value = true;
+    const t = e.touches[0]!;
+    lastSingleTouchX = t.clientX;
+    lastSingleTouchY = t.clientY;
+  } else if (e.touches.length === 2) {
+    // 2 dedos: Pan e Pinch-to-Zoom focal em ambos os modos
+    isSingleTouchPanning = false;
+    isTouchPinching = true;
+    isTouchInteracting.value = true;
+
     const t1 = e.touches[0]!;
     const t2 = e.touches[1]!;
     initialPinchDistance = getDistance(t1, t2);
     initialPinchScale = pageScale.value;
     const mid = getMidpoint(t1, t2);
-    initialPinchMidX = mid.x;
-    initialPinchMidY = mid.y;
-    if (viewportRef.value) {
-      initialScrollLeft = viewportRef.value.scrollLeft;
-      initialScrollTop = viewportRef.value.scrollTop;
-    }
-    isTouchPinching = true;
-  } else if (e.touches.length !== 2) {
+    lastTouchMidX = mid.x;
+    lastTouchMidY = mid.y;
+  } else {
+    isSingleTouchPanning = false;
     isTouchPinching = false;
+    if (e.touches.length === 0) {
+      isTouchInteracting.value = false;
+    }
   }
 }
 
 function handleTouchMove(e: TouchEvent) {
+  // 1 Dedo no Modo Caneta
+  if (isSingleTouchPanning && e.touches.length === 1 && isPenOnlyMode.value) {
+    if (e.cancelable) e.preventDefault();
+    const t = e.touches[0]!;
+    const dx = t.clientX - lastSingleTouchX;
+    const dy = t.clientY - lastSingleTouchY;
+    lastSingleTouchX = t.clientX;
+    lastSingleTouchY = t.clientY;
+
+    if (viewportRef.value) {
+      viewportRef.value.scrollLeft -= dx;
+      viewportRef.value.scrollTop -= dy;
+
+      const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768;
+      if (
+        !isDesktop &&
+        isReadyForAutoPaging.value &&
+        viewportRef.value.scrollWidth > viewportRef.value.clientWidth + 50 &&
+        viewportRef.value.scrollLeft + viewportRef.value.clientWidth >= viewportRef.value.scrollWidth - 30
+      ) {
+        handleAutoAddPage();
+      }
+    }
+    return;
+  }
+
+  // 2 Dedos: Pan e Zoom Focal
   if (isTouchPinching && e.touches.length === 2) {
     if (e.cancelable) {
       e.preventDefault();
@@ -611,22 +704,45 @@ function handleTouchMove(e: TouchEvent) {
     const t1 = e.touches[0]!;
     const t2 = e.touches[1]!;
     const currentDistance = getDistance(t1, t2);
+    const currentMid = getMidpoint(t1, t2);
+
+    const panDeltaX = currentMid.x - lastTouchMidX;
+    const panDeltaY = currentMid.y - lastTouchMidY;
+    lastTouchMidX = currentMid.x;
+    lastTouchMidY = currentMid.y;
+
+    let newScale = pageScale.value;
     if (initialPinchDistance > 10) {
       const scaleFactor = currentDistance / initialPinchDistance;
       const rawScale = initialPinchScale * scaleFactor;
-      pageScale.value = Math.max(0.25, Math.min(2.5, Number(rawScale.toFixed(2))));
+      newScale = Math.max(0.25, Math.min(2.5, Number(rawScale.toFixed(2))));
     }
 
-    // Pan suave acompanhando o ponto médio dos dois dedos
-    const mid = getMidpoint(t1, t2);
-    const deltaX = mid.x - initialPinchMidX;
-    const deltaY = mid.y - initialPinchMidY;
     if (viewportRef.value) {
-      viewportRef.value.scrollLeft = initialScrollLeft - deltaX;
-      viewportRef.value.scrollTop = initialScrollTop - deltaY;
+      if (newScale !== pageScale.value) {
+        // Zoom Focal centralizado no ponto médio dos dedos
+        const rect = viewportRef.value.getBoundingClientRect();
+        const focalX = currentMid.x - rect.left;
+        const focalY = currentMid.y - rect.top;
+        const oldScale = pageScale.value;
+        pageScale.value = newScale;
+        const ratio = newScale / oldScale;
+
+        viewportRef.value.scrollLeft = Math.round((viewportRef.value.scrollLeft + focalX) * ratio - focalX - panDeltaX);
+        viewportRef.value.scrollTop = Math.round((viewportRef.value.scrollTop + focalY) * ratio - focalY - panDeltaY);
+      } else {
+        // Pan puro de 2 dedos
+        viewportRef.value.scrollLeft -= panDeltaX;
+        viewportRef.value.scrollTop -= panDeltaY;
+      }
 
       const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768;
-      if (!isDesktop && isReadyForAutoPaging.value && viewportRef.value.scrollWidth > viewportRef.value.clientWidth + 50 && viewportRef.value.scrollLeft + viewportRef.value.clientWidth >= viewportRef.value.scrollWidth - 30) {
+      if (
+        !isDesktop &&
+        isReadyForAutoPaging.value &&
+        viewportRef.value.scrollWidth > viewportRef.value.clientWidth + 50 &&
+        viewportRef.value.scrollLeft + viewportRef.value.clientWidth >= viewportRef.value.scrollWidth - 30
+      ) {
         handleAutoAddPage();
       }
     }
@@ -634,8 +750,23 @@ function handleTouchMove(e: TouchEvent) {
 }
 
 function handleTouchEnd(e: TouchEvent) {
-  if (e.touches.length < 2) {
+  if (e.touches.length === 0) {
+    isSingleTouchPanning = false;
     isTouchPinching = false;
+    setTimeout(() => {
+      isTouchInteracting.value = false;
+    }, 50);
+
+    if (!isZoomedIn.value && isHorizontal.value) {
+      scrollToPage(activePageIndex.value, true);
+    }
+  } else if (e.touches.length === 1) {
+    isTouchPinching = false;
+    if (isPenOnlyMode.value) {
+      isSingleTouchPanning = true;
+      lastSingleTouchX = e.touches[0]!.clientX;
+      lastSingleTouchY = e.touches[0]!.clientY;
+    }
   }
 }
 
@@ -794,7 +925,10 @@ function handleKeyDown(e: KeyboardEvent) {
   }
 
   // Seleção de ferramentas
-  if (key === 'v') {
+  if (key === 'm') {
+    togglePenOnlyMode();
+    return;
+  } else if (key === 'v') {
     activeTool.value = 'select';
   } else if (key === 'p') {
     activeTool.value = 'pen';

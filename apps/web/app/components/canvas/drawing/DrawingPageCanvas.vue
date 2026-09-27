@@ -110,6 +110,7 @@ const props = withDefaults(
     palmRejection?: boolean;
     isActive?: boolean;
     isDarkMode?: boolean;
+    penMode?: boolean;
   }>(),
   {
     scale: 1,
@@ -122,6 +123,7 @@ const props = withDefaults(
     palmRejection: true,
     isActive: false,
     isDarkMode: false,
+    penMode: false,
   }
 );
 
@@ -554,6 +556,13 @@ function handlePointerDown(e: PointerEvent) {
   if (!isDrawingTool.value) return;
 
   const pType = e.pointerType || (e as any).detail?.pointerType || 'mouse';
+
+  // Se o Modo Caneta estiver ativado, toque de dedo (touch) NÃO desenha nem apaga!
+  // Permite que o evento de toque navegue livremente pela página no viewport.
+  if (props.penMode && pType === 'touch') {
+    return;
+  }
+
   if (pType === 'touch') {
     activeTouchPointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
@@ -614,6 +623,10 @@ function handlePointerMove(e: PointerEvent) {
 
   const pType = e.pointerType || (e as any).detail?.pointerType || 'mouse';
 
+  if (props.penMode && pType === 'touch') {
+    return;
+  }
+
   // Atualiza coordenadas no rastreador de toques
   if (pType === 'touch') {
     if (activeTouchPointers.has(e.pointerId)) {
@@ -660,6 +673,11 @@ function handlePointerMove(e: PointerEvent) {
 
 function handlePointerUp(e?: PointerEvent) {
   const pType = e?.pointerType || (e as any)?.detail?.pointerType;
+
+  if (props.penMode && pType === 'touch') {
+    return;
+  }
+
   if (e && pType === 'touch') {
     activeTouchPointers.delete(e.pointerId);
 

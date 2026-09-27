@@ -39,4 +39,26 @@ describe('DrawingToolbar Component', () => {
     await eraserButton.trigger('click');
     expect(wrapper.emitted('update:tool')?.[0]).toEqual(['eraser']);
   });
+
+  it('renderiza o botão de Modo Caneta e emite update:penMode ao clicar', async () => {
+    const wrapper = mount(DrawingToolbar, {
+      props: {
+        tool: 'pen',
+        color: '#18181B',
+        size: 3,
+        penMode: false,
+      },
+    });
+
+    const penModeBtn = wrapper.find('button[aria-label="Modo Caneta"]');
+    expect(penModeBtn.exists()).toBe(true);
+    expect(penModeBtn.attributes('title')).toContain('Modo Caneta Desativado');
+
+    await penModeBtn.trigger('click');
+    expect(wrapper.emitted('update:penMode')?.[0]).toEqual([true]);
+
+    // Quando ativo
+    await wrapper.setProps({ penMode: true });
+    expect(penModeBtn.attributes('title')).toContain('Modo Caneta Ativado');
+  });
 });

@@ -35,6 +35,16 @@ const selectedEdgeId = ref<string | null>(null);
 const strokeColor = ref('#E57B55');
 const strokeSize = ref(3);
 const palmRejectionEnabled = ref(true);
+const isPenOnlyMode = ref(false);
+
+if (typeof window !== 'undefined') {
+  try {
+    const saved = localStorage.getItem('aresta_drawing_pen_mode');
+    if (saved !== null) {
+      isPenOnlyMode.value = saved === 'true';
+    }
+  } catch {}
+}
 
 const isSaving = ref(false);
 const isSynthesizing = ref(false);
@@ -504,6 +514,19 @@ export function useDrawing() {
     return created;
   };
 
+  const setPenOnlyMode = (enabled: boolean) => {
+    isPenOnlyMode.value = enabled;
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('aresta_drawing_pen_mode', String(enabled));
+      } catch {}
+    }
+  };
+
+  const togglePenOnlyMode = () => {
+    setPenOnlyMode(!isPenOnlyMode.value);
+  };
+
   return {
     drawingsList,
     currentDrawing,
@@ -516,6 +539,9 @@ export function useDrawing() {
     strokeColor,
     strokeSize,
     palmRejectionEnabled,
+    isPenOnlyMode,
+    setPenOnlyMode,
+    togglePenOnlyMode,
     isSaving,
     isSynthesizing,
     isLoading,

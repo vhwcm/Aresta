@@ -1,6 +1,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [27/09/2026 18:58] [Concluído] Implementar Modo Caneta, navegação de página com 1 dedo no mobile e pan/zoom focal com 2 dedos no editor de desenho
 - [27/09/2026 18:28] [Concluído] Diagnosticar e corrigir desalinhamento do Modo Foco no leitor EPUB ao passar por linhas vazias e espaçamentos de parágrafo
 - [27/09/2026 18:21] [Concluído] Permitir selecionar e mover bloco de texto/nota com clique único no canvas e exigir duplo clique para edição de texto
 - [27/09/2026 18:14] [Concluído] Implementar unificação arquitetural de tags e pastas com projeção multi-referência, drag-and-drop contextual e hierarquia no grafo

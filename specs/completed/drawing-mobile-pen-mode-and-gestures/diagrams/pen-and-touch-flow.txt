@@ -1,0 +1,56 @@
+========================================================================================
+ARESTA DRAWING - FLUXO DE ENTRADA: MODO CANETA VS MODO TOQUE LIVRE (MOBILE & TABLET)
+========================================================================================
+
+                             [ Toque / Interação na Folha de Desenho ]
+                                                 │
+                                                 ▼
+                                     ┌───────────────────────┐
+                                     │  Qual o tipo de input? │
+                                     └───────────┬───────────┘
+                                                 │
+                        ┌────────────────────────┴────────────────────────┐
+                        ▼                                                 ▼
+             [ pointerType: "pen" ]                             [ pointerType: "touch" ]
+                        │                                                 │
+                        ▼                                                 ▼
+             ┌─────────────────────┐                          ┌────────────────────────┐
+             │ Desenha ou Apaga na │                          │ Modo Caneta (penMode)? │
+             │  Folha com Stylus   │                          └───────────┬────────────┘
+             │  (perfect-freehand) │                                      │
+             └─────────────────────┘                     ┌────────────────┴────────────────┐
+                                                         ▼                                 ▼
+                                                [ penMode: ATIVADO ]             [ penMode: DESATIVADO ]
+                                                         │                                 │
+                                                         ▼                                 ▼
+                                              ┌───────────────────────┐         ┌───────────────────────┐
+                                              │ Quantos dedos tocam?  │         │ Quantos dedos tocam?  │
+                                              └──────────┬────────────┘         └──────────┬────────────┘
+                                                         │                                 │
+                                      ┌──────────────────┴───────────┐         ┌───────────┴───────────┐
+                                      ▼                              ▼         ▼                       ▼
+                                  [ 1 Dedo ]                    [ 2 Dedos ] [ 1 Dedo ]             [ 2 Dedos ]
+                                      │                              │         │                       │
+                                      ▼                              │         ▼                       │
+                           ┌─────────────────────┐                   │  ┌───────────────┐              │
+                           │ NAVEGAÇÃO PELA TELA │                   │  │ DESENHA LIVRE │              │
+                           │ ─────────────────── │                   │  │ NA FOLHA COM  │              │
+                           │ Pan X/Y contínuo    │                   │  │    O DEDO     │              │
+                           │ scrollLeft -= dx    │                   │  └───────────────┘              │
+                           │ scrollTop  -= dy    │                   │                                 │
+                           │ (Snap desativado)   │                   │                                 │
+                           └─────────────────────┘                   │                                 │
+                                                                     └────────────────┬────────────────┘
+                                                                                      │
+                                                                                      ▼
+                                                                       ┌───────────────────────────────┐
+                                                                       │ PAN & PINCH-ZOOM MULTI-TOUCH  │
+                                                                       │ ───────────────────────────── │
+                                                                       │ 1. Aborta traço acidental     │
+                                                                       │ 2. snap-none / scroll-auto    │
+                                                                       │ 3. Calcula Ponto Médio (Mid)  │
+                                                                       │ 4. Zoom focal em (midX, midY) │
+                                                                       │ 5. Pan diferencial fluido     │
+                                                                       │ 6. Expansão de largura do     │
+                                                                       │    slide (sem travar centro)  │
+                                                                       └───────────────────────────────┘
