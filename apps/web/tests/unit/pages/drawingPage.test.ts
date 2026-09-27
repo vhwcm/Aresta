@@ -251,10 +251,9 @@ describe('Drawing Page Mobile Zoom & Pinch Controls ([id].vue)', () => {
     // Não deve criar página durante o carregamento
     expect(mockAddPage).not.toHaveBeenCalled();
 
-    // Container pai deve ter justify-start no mobile e md:justify-center
+    // Container pai deve ter justify-start para rolagem natural a partir da página 1
     const track = wrapper.find('.page-slide').element.parentElement as HTMLElement;
     expect(track.className).toContain('justify-start');
-    expect(track.className).toContain('md:justify-center');
 
     // Trailing slide deve exibir "Nova página" em repouso
     const trailingSlide = wrapper.find('.w-screen.md\\:hidden');
@@ -355,4 +354,81 @@ describe('Drawing Page Mobile Zoom & Pinch Controls ([id].vue)', () => {
     Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: originalInnerWidth });
     Object.defineProperty(window, 'innerHeight', { writable: true, configurable: true, value: originalInnerHeight });
   });
+
+  it('calcula padding lateral e gap dinâmico para garantir folha única no centro e espreita no canto em telas horizontais', async () => {
+    const originalInnerWidth = window.innerWidth;
+    const originalInnerHeight = window.innerHeight;
+
+    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1920 });
+    Object.defineProperty(window, 'innerHeight', { writable: true, configurable: true, value: 1080 });
+
+    // Configura 2 páginas no desenho mock
+    mockDrawing.value.pages = [
+      { id: 'page-1', pageNumber: 1, width: 794, height: 1123, backgroundType: 'blank', strokes: [], nodes: [], edges: [] },
+      { id: 'page-2', pageNumber: 2, width: 794, height: 1123, backgroundType: 'blank', strokes: [], nodes: [], edges: [] },
+    ];
+
+    const wrapper = mount(DrawingPage, {
+      global: { stubs },
+    });
+
+    await wrapper.vm.$nextTick();
+
+    const track = wrapper.find('.page-slide').element.parentElement as HTMLElement;
+    expect(track.style.paddingLeft).toBeTruthy();
+    expect(track.style.paddingRight).toBeTruthy();
+    expect(track.style.columnGap).toBeTruthy();
+
+    const paddingLeftNum = parseInt(track.style.paddingLeft, 10);
+    const gapNum = parseInt(track.style.columnGap, 10);
+
+    // O gap deve ser exatamente o paddingLeft menos a margem de peeking (~76px)
+    expect(paddingLeftNum).toBeGreaterThan(300);
+    expect(paddingLeftNum - gapNum).toBeCloseTo(76, -1);
+
+    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: originalInnerWidth });
+    Object.defineProperty(window, 'innerHeight', { writable: true, configurable: true, value: originalInnerHeight });
+  });
+
+  it('exibe overlay de foco por clique apenas nas folhas inativas em telas horizontais e transfere o foco ao clicar', async () => {
+    const originalInnerWidth = window.innerWidth;
+    const originalInnerHeight = window.innerHeight;
+
+    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1920 });
+    Object.defineProperty(window, 'innerHeight', { writable: true, configurable: true, value: 1080 });
+
+    mockDrawing.value.pages = [
+      { id: 'page-1', pageNumber: 1, width: 794, height: 1123, backgroundType: 'blank', strokes: [], nodes: [], edges: [] },
+      { id: 'page-2', pageNumber: 2, width: 794, height: 1123, backgroundType: 'blank', strokes: [], nodes: [], edges: [] },
+    ];
+
+    const wrapper = mount(DrawingPage, {
+      global: { stubs },
+    });
+
+    await wrapper.vm.$nextTick();
+
+    const slides = wrapper.findAll('.page-slide');
+    expect(slides.length).toBe(2);
+
+    // Página 0 é ativa inicialmente; não deve ter overlay clicável
+    const page0Overlay = slides[0]!.find('.page-focus-overlay');
+    expect(page0Overlay.exists()).toBe(false);
+
+    // Página 1 é inativa no canto; deve ter overlay clicável
+    const page1Overlay = slides[1]!.find('.page-focus-overlay');
+    expect(page1Overlay.exists()).toBe(true);
+
+    // Clica na página inativa para transferir o foco
+    await page1Overlay.trigger('click');
+    await wrapper.vm.$nextTick();
+
+    // Após o clique, a página 1 torna-se ativa e a página 0 recebe o overlay
+    expect(slides[1]!.find('.page-focus-overlay').exists()).toBe(false);
+    expect(slides[0]!.find('.page-focus-overlay').exists()).toBe(true);
+
+    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: originalInnerWidth });
+    Object.defineProperty(window, 'innerHeight', { writable: true, configurable: true, value: originalInnerHeight });
+  });
 });
+

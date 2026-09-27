@@ -1,7 +1,10 @@
 ## 🔄 Em Andamento
-- [27/09/2026 17:46] [Fazendo] Especificar unificação arquitetural de tags e pastas em specs/active/unified-tags-and-folders
+- [27/09/2026 18:00] [Fazendo] Diagnosticar e corrigir desalinhamento do Modo Foco no leitor EPUB ao passar por linhas vazias e espaçamentos de parágrafo
+- [27/09/2026 17:53] [Fazendo] Implementar unificação arquitetural de tags e pastas conforme spec em specs/active/unified-tags-and-folders
 
 ## ✅ Concluído
+- [27/09/2026 18:11] [Concluído] Centralizar folha única no centro em telas horizontais com páginas adjacentes nos cantos e troca de foco ao clicar
+- [27/09/2026 17:52] [Concluído] Especificar unificação arquitetural de tags e pastas em specs/active/unified-tags-and-folders
 - [27/09/2026 17:47] [Concluído] Investigar e corrigir abertura de desenho no mobile exibindo tela de criar nova página em vez da página existente
 - [27/09/2026 17:46] [Concluído] Integrar cabeçalho mobile unificado com botão hambúrguer e título de página nas telas mobile
 - [27/09/2026 17:28] [Concluído] Diagnosticar e corrigir falha ao clicar em "Novo Quadro"

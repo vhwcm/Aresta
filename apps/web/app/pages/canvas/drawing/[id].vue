@@ -87,7 +87,8 @@
       <!-- Centering Track: Colada no topo em telas horizontais (md / landscape) e alinhada ao início no mobile (justify-start) -->
       <div
         v-else-if="currentDrawing"
-        class="min-w-full min-h-full w-max my-auto md:my-0 md:mx-auto landscape:my-0 landscape:mx-auto pt-20 pb-16 md:pt-0 md:pb-12 landscape:pt-0 landscape:pb-12 px-0 md:pl-28 md:pr-16 landscape:pl-28 landscape:pr-16 flex flex-row items-center md:items-start landscape:items-start justify-start md:justify-center landscape:justify-center gap-4 md:gap-8"
+        class="min-w-full min-h-full w-max my-auto md:my-0 md:mx-auto landscape:my-0 landscape:mx-auto pt-20 pb-16 md:pt-0 md:pb-12 landscape:pt-0 landscape:pb-12 px-0 flex flex-row items-center md:items-start landscape:items-start justify-start gap-4 md:gap-0"
+        :style="trackStyle"
       >
         <!-- Pages Container (Horizontal lado a lado com Snap no Mobile) -->
         <div
@@ -95,12 +96,29 @@
           :key="page.id"
           :data-page-index="idx"
           class="page-slide w-screen md:w-auto shrink-0 snap-center flex flex-col items-center justify-center md:justify-start landscape:justify-start group"
+          :class="[
+            isHorizontal && activePageIndex !== idx
+              ? 'opacity-85 hover:opacity-100 transition-opacity'
+              : ''
+          ]"
         >
           <!-- Sheet Wrapper com largura exata da folha -->
           <div
             class="relative flex flex-col items-center"
             :style="{ width: `${Math.round(794 * pageScale)}px` }"
           >
+            <!-- Overlay protetor para páginas inativas no modo horizontal (foco por clique) -->
+            <div
+              v-if="isHorizontal && activePageIndex !== idx"
+              class="page-focus-overlay absolute inset-0 z-30 cursor-pointer rounded-b-xl hover:bg-primary/5 transition-colors flex items-center justify-center"
+              :title="`Página ${idx + 1} - Clique para focar`"
+              @click.stop="focusPage(idx)"
+            >
+              <div class="px-2.5 py-1 rounded-full bg-bgPanel/90 backdrop-blur-sm border border-divider text-xs font-semibold text-textPrimary shadow-md pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5">
+                <span>Pág. {{ idx + 1 }}</span>
+              </div>
+            </div>
+
             <!-- Controles de Página Flutuantes no topo da folha -->
             <div class="absolute top-2 right-2 flex items-center gap-1.5 z-20">
               <span class="text-[10px] font-mono font-medium px-2 py-0.5 rounded-md bg-bgPanel/85 backdrop-blur-sm border border-divider/60 text-textSecondary shadow-xs">
@@ -130,7 +148,7 @@
               :palm-rejection="true"
               :is-active="activePageIndex === idx"
               :is-dark-mode="themeMode === 'dark'"
-              @select-page="activePageIndex = idx"
+              @select-page="focusPage(idx)"
               @stroke-added="(stroke) => handleStrokeAdded(idx, stroke)"
               @erase="(pt, radius) => handleErase(idx, pt, radius)"
               @add-node="(node) => addNodeToPage(idx, node)"
@@ -346,13 +364,25 @@ function setPageCanvasRef(idx: number, el: any) {
   }
 }
 
+// Detecção de orientação e tela horizontal
+const isHorizontal = ref(
+  typeof window !== 'undefined'
+    ? window.innerWidth >= 768 || window.innerWidth > window.innerHeight
+    : false
+);
+
+function updateIsHorizontal() {
+  if (typeof window === 'undefined') return;
+  isHorizontal.value = window.innerWidth >= 768 || window.innerWidth > window.innerHeight;
+}
+
 // Escala adaptativa de página: no mobile portrait ocupa 100% da largura (Samsung Notes), em telas horizontais fica colada no topo
 const pageScale = ref(0.7);
 
 function calculateFitScale(): number {
   if (typeof window === 'undefined') return 1;
-  const isHorizontal = window.innerWidth >= 768 || window.innerWidth > window.innerHeight;
-  if (!isHorizontal) {
+  const isHorizontalScreen = window.innerWidth >= 768 || window.innerWidth > window.innerHeight;
+  if (!isHorizontalScreen) {
     // No mobile portrait, a folha ocupa toda a largura horizontal da tela no meio (estilo Samsung Notes)
     const scaleW = window.innerWidth / 794;
     return Math.max(0.2, Number(scaleW.toFixed(4)));
@@ -366,6 +396,54 @@ function calculateFitScale(): number {
   const fit = Math.min(scaleW, scaleH);
   return Math.max(0.25, Math.min(Number(fit.toFixed(2)), 1.2));
 }
+
+// Geometria para tela horizontal: Folha única no centro com páginas adjacentes nos cantos
+const horizontalPaddingX = computed(() => {
+  if (!isHorizontal.value || typeof window === 'undefined') return 0;
+  const vw = window.innerWidth;
+  const sheetW = Math.round(794 * pageScale.value);
+  return Math.max(24, Math.round((vw - sheetW) / 2));
+});
+
+const horizontalGap = computed(() => {
+  if (!isHorizontal.value) return 16;
+  const cornerPeek = 76; // Margem visível da folha vizinha no canto
+  return Math.max(24, Math.round(horizontalPaddingX.value - cornerPeek));
+});
+
+const trackStyle = computed(() => {
+  if (!isHorizontal.value) {
+    return {};
+  }
+  return {
+    paddingLeft: `${horizontalPaddingX.value}px`,
+    paddingRight: `${horizontalPaddingX.value}px`,
+    columnGap: `${horizontalGap.value}px`,
+  };
+});
+
+function scrollToPage(idx: number, smooth: boolean = true) {
+  if (!viewportRef.value) return;
+  const pageEl = viewportRef.value.querySelector(`[data-page-index="${idx}"]`) as HTMLElement;
+  if (pageEl) {
+    if (typeof pageEl.scrollIntoView === 'function') {
+      pageEl.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', inline: 'center', block: 'nearest' });
+    } else {
+      const targetLeft = pageEl.offsetLeft - (viewportRef.value.clientWidth - pageEl.clientWidth) / 2;
+      viewportRef.value.scrollTo({
+        left: targetLeft,
+        behavior: smooth ? 'smooth' : 'auto',
+      });
+    }
+  }
+}
+
+function focusPage(idx: number) {
+  if (!currentDrawing.value || idx < 0 || idx >= currentDrawing.value.pages.length) return;
+  activePageIndex.value = idx;
+  scrollToPage(idx, true);
+}
+
 
 const isAutoCreatingPage = ref(false);
 const isReadyForAutoPaging = ref(false);
@@ -594,24 +672,18 @@ function handleAddPage() {
   addPage('blank');
   nextTick(() => {
     const newIdx = (currentDrawing.value?.pages.length || 1) - 1;
-    activePageIndex.value = newIdx;
-    if (viewportRef.value) {
-      const pageEl = viewportRef.value.querySelector(`[data-page-index="${newIdx}"]`) as HTMLElement;
-      if (pageEl && typeof pageEl.scrollIntoView === 'function') {
-        pageEl.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-      } else {
-        viewportRef.value.scrollTo({
-          left: viewportRef.value.scrollWidth,
-          behavior: 'smooth',
-        });
-      }
-    }
+    focusPage(newIdx);
   });
 }
 
 function handleRemovePage(idx: number) {
   if (confirm(`Deseja excluir a Página ${idx + 1}?`)) {
     removePage(idx);
+    nextTick(() => {
+      const total = currentDrawing.value?.pages.length || 1;
+      const targetIdx = Math.min(activePageIndex.value, total - 1);
+      focusPage(Math.max(0, targetIdx));
+    });
   }
 }
 
@@ -747,6 +819,31 @@ function handleKeyDown(e: KeyboardEvent) {
       selectedEdgeId.value = null;
     }
   }
+
+  // Navegação entre páginas via teclado (Setas Esquerda e Direita no modo horizontal)
+  if (isHorizontal.value) {
+    if (key === 'arrowleft') {
+      if (activePageIndex.value > 0) {
+        e.preventDefault();
+        focusPage(activePageIndex.value - 1);
+        return;
+      }
+    } else if (key === 'arrowright') {
+      if (currentDrawing.value && activePageIndex.value < currentDrawing.value.pages.length - 1) {
+        e.preventDefault();
+        focusPage(activePageIndex.value + 1);
+        return;
+      }
+    }
+  }
+}
+
+function handleResize() {
+  updateIsHorizontal();
+  handleZoomFit();
+  nextTick(() => {
+    scrollToPage(activePageIndex.value, false);
+  });
 }
 
 function handleBeforeUnload() {
@@ -755,8 +852,9 @@ function handleBeforeUnload() {
 
 onMounted(async () => {
   isReadyForAutoPaging.value = false;
+  updateIsHorizontal();
   handleZoomFit();
-  window.addEventListener('resize', handleZoomFit);
+  window.addEventListener('resize', handleResize);
   window.addEventListener('keydown', handleKeyDown);
   window.addEventListener('beforeunload', handleBeforeUnload);
   if (viewportRef.value) {
@@ -806,7 +904,7 @@ onBeforeUnmount(async () => {
     trailingObserver.disconnect();
     trailingObserver = null;
   }
-  window.removeEventListener('resize', handleZoomFit);
+  window.removeEventListener('resize', handleResize);
   window.removeEventListener('keydown', handleKeyDown);
   window.removeEventListener('beforeunload', handleBeforeUnload);
   if (viewportRef.value) {
