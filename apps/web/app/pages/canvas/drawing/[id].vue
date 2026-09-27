@@ -84,17 +84,17 @@
         <p class="text-xs">Carregando páginas de desenho...</p>
       </div>
 
-      <!-- Centering Track -->
+      <!-- Centering Track: Colada no topo em telas horizontais (md / landscape) -->
       <div
         v-else-if="currentDrawing"
-        class="min-w-full min-h-full w-max m-auto pt-20 pb-16 md:py-8 px-0 md:pl-28 md:pr-16 flex flex-row items-center justify-center gap-4 md:gap-8"
+        class="min-w-full min-h-full w-max my-auto md:my-0 md:mx-auto landscape:my-0 landscape:mx-auto pt-20 pb-16 md:pt-0 md:pb-12 landscape:pt-0 landscape:pb-12 px-0 md:pl-28 md:pr-16 landscape:pl-28 landscape:pr-16 flex flex-row items-center md:items-start landscape:items-start justify-center gap-4 md:gap-8"
       >
         <!-- Pages Container (Horizontal lado a lado com Snap no Mobile) -->
         <div
           v-for="(page, idx) in currentDrawing.pages"
           :key="page.id"
           :data-page-index="idx"
-          class="page-slide w-screen md:w-auto shrink-0 snap-center flex flex-col items-center justify-center group"
+          class="page-slide w-screen md:w-auto shrink-0 snap-center flex flex-col items-center justify-center md:justify-start landscape:justify-start group"
         >
           <!-- Sheet Wrapper com largura exata da folha -->
           <div
@@ -186,11 +186,12 @@
       </div>
     </main>
 
-    <!-- Floating Docked Toolbar: Top on mobile, Left on desktop -->
+    <!-- Floating Docked Toolbar: Top on mobile portrait, Left on desktop and landscape -->
     <div
       class="fixed z-30 pointer-events-none transition-all duration-200
              top-16 inset-x-0 flex justify-center px-2 py-1.5
-             md:top-1/2 md:-translate-y-1/2 md:left-6 md:right-auto md:bottom-auto md:inset-x-auto md:p-0 md:flex md:flex-col"
+             md:top-1/2 md:-translate-y-1/2 md:left-6 md:right-auto md:bottom-auto md:inset-x-auto md:p-0 md:flex md:flex-col
+             landscape:top-1/2 landscape:-translate-y-1/2 landscape:left-6 landscape:right-auto landscape:bottom-auto landscape:inset-x-auto landscape:p-0 landscape:flex landscape:flex-col"
     >
       <div class="pointer-events-auto max-w-[96vw] overflow-x-auto md:overflow-visible">
         <DrawingToolbar
@@ -341,21 +342,21 @@ function setPageCanvasRef(idx: number, el: any) {
   }
 }
 
-// Escala adaptativa de página: no mobile ocupa 100% da largura (Samsung Notes), no desktop cabe na tela
+// Escala adaptativa de página: no mobile portrait ocupa 100% da largura (Samsung Notes), em telas horizontais fica colada no topo
 const pageScale = ref(0.7);
 
 function calculateFitScale(): number {
   if (typeof window === 'undefined') return 1;
-  const isDesktop = window.innerWidth >= 768;
-  if (!isDesktop) {
-    // No mobile, a folha ocupa toda a largura horizontal da tela no meio (estilo Samsung Notes)
+  const isHorizontal = window.innerWidth >= 768 || window.innerWidth > window.innerHeight;
+  if (!isHorizontal) {
+    // No mobile portrait, a folha ocupa toda a largura horizontal da tela no meio (estilo Samsung Notes)
     const scaleW = window.innerWidth / 794;
     return Math.max(0.2, Number(scaleW.toFixed(4)));
   }
-  // No desktop desconta barra lateral esquerda (~100px) + botão de adicionar página à direita (~140px)
-  const availableWidth = window.innerWidth - 240;
-  // Desconta header (56px) + respiro vertical superior e inferior (80px)
-  const availableHeight = window.innerHeight - 136;
+  // Em telas horizontais desconta barra lateral esquerda (~100px) + botão de adicionar página à direita (~140px)
+  const availableWidth = window.innerWidth - (window.innerWidth >= 768 ? 240 : 160);
+  // Folha colada na parte superior: desconta header (56px) + respiro inferior (48px)
+  const availableHeight = window.innerHeight - 104;
   const scaleW = availableWidth / 794;
   const scaleH = availableHeight / 1123;
   const fit = Math.min(scaleW, scaleH);

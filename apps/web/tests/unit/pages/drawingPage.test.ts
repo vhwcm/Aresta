@@ -253,4 +253,52 @@ describe('Drawing Page Mobile Zoom & Pinch Controls ([id].vue)', () => {
 
     Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: originalInnerWidth });
   });
+
+  it('configura alinhamento no topo (colada na parte superior) para a trilha e slides em telas horizontais', () => {
+    const wrapper = mount(DrawingPage, {
+      global: { stubs },
+    });
+
+    const track = wrapper.find('.page-slide').element.parentElement as HTMLElement;
+    expect(track.className).toContain('md:pt-0');
+    expect(track.className).toContain('landscape:pt-0');
+    expect(track.className).toContain('md:items-start');
+    expect(track.className).toContain('landscape:items-start');
+    expect(track.className).toContain('md:my-0');
+    expect(track.className).toContain('landscape:my-0');
+
+    const slide = wrapper.find('.page-slide');
+    expect(slide.classes()).toContain('md:justify-start');
+    expect(slide.classes()).toContain('landscape:justify-start');
+
+    const toolbarContainer = wrapper.find('.fixed.z-30.pointer-events-none');
+    expect(toolbarContainer.classes()).toContain('landscape:top-1/2');
+    expect(toolbarContainer.classes()).toContain('landscape:left-6');
+  });
+
+  it('calcula a escala em telas horizontais com folha colada no topo e respiro inferior', async () => {
+    const originalInnerWidth = window.innerWidth;
+    const originalInnerHeight = window.innerHeight;
+
+    // Simula tela desktop 1920x1080 (horizontal)
+    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1920 });
+    Object.defineProperty(window, 'innerHeight', { writable: true, configurable: true, value: 1080 });
+
+    const wrapper = mount(DrawingPage, {
+      global: { stubs },
+    });
+
+    const zoomFitBtn = wrapper.find('button[aria-label="Ajustar à tela"]');
+    await zoomFitBtn.trigger('click');
+
+    // availableHeight = 1080 - 104 = 976
+    // scaleH = 976 / 1123 = 0.8691 -> 87%
+    // availableWidth = 1920 - 240 = 1680
+    // scaleW = 1680 / 794 = 2.115
+    // fit = Math.min(2.115, 0.8691) = 0.87 -> 87%
+    expect(zoomFitBtn.text()).toBe('87%');
+
+    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: originalInnerWidth });
+    Object.defineProperty(window, 'innerHeight', { writable: true, configurable: true, value: originalInnerHeight });
+  });
 });
