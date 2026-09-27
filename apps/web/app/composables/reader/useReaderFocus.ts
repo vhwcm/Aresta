@@ -33,32 +33,45 @@ function areRectsOnSameLine(
   const midA = (rectA.top + rectA.bottom) / 2
   const midB = (rectB.top + rectB.bottom) / 2
 
-  // Se a diferença entre os topos for menor que a tolerância
-  if (Math.abs(rectA.top - rectB.top) <= tolerance) {
+  const minHeight = Math.min(heightA, heightB)
+  const overlapTop = Math.max(rectA.top, rectB.top)
+  const overlapBottom = Math.min(rectA.bottom, rectB.bottom)
+  const overlap = overlapBottom - overlapTop
+
+  // Sem sobreposição vertical alguma, não podem pertencer à mesma linha visual
+  if (overlap <= 0) {
+    return false
+  }
+
+  // Se a diferença entre os topos for menor que a tolerância e houver sobreposição mínima
+  if (Math.abs(rectA.top - rectB.top) <= tolerance && overlap >= minHeight * 0.35) {
     return true
   }
 
   // Se os pontos médios estiverem alinhados com base na menor altura
-  const minHeight = Math.min(heightA, heightB)
   if (minHeight > 10 && Math.abs(midA - midB) <= minHeight * 0.45) {
     return true
   }
 
-  // Se houver sobreposição vertical de pelo menos 55%
-  const overlapTop = Math.max(rectA.top, rectB.top)
-  const overlapBottom = Math.min(rectA.bottom, rectB.bottom)
-  const overlap = overlapBottom - overlapTop
-  if (overlap > 0 && overlap >= minHeight * 0.55) {
+  // Se houver sobreposição vertical de pelo menos 50%
+  if (overlap >= minHeight * 0.5) {
     return true
   }
 
   return false
 }
 
+interface CachedContainerLines {
+  lines: FocusLineRect[]
+  width: number
+  height: number
+  contentSnippet: string
+}
+
 /**
  * Cache de linhas extraídas por container para evitar reflows síncronos repetidos durante o scroll.
  */
-const containerLinesCache = new WeakMap<HTMLElement, { lines: FocusLineRect[]; width: number; height: number }>()
+const containerLinesCache = new WeakMap<HTMLElement, CachedContainerLines>()
 
 /**
  * Limpa o cache de linhas de um container específico ou permite invalidação.
@@ -90,7 +103,7 @@ export function extractLinesFromRects(
   // Ordenação com relação de ordem estrita e transitiva (O(N log N) estável)
   const sorted = [...validRects].sort((a, b) => {
     const diffTop = a.top - b.top
-    if (Math.abs(diffTop) <= tolerance) {
+    if (Math.abs(diffTop) <= 2) {
       return a.left - b.left
     }
     return diffTop
@@ -159,10 +172,13 @@ export function extractLinesFromContainer(
   const containerRect = container.getBoundingClientRect()
   if (containerRect.width === 0 || containerRect.height === 0) return []
 
+  const contentSnippet = (container.textContent || '').slice(0, 100)
+
   // Consulta cache prévio para evitar layout thrashing em repetições de frame
   const cached = containerLinesCache.get(container)
   if (
     cached &&
+    cached.contentSnippet === contentSnippet &&
     Math.abs(cached.width - containerRect.width) < 2 &&
     Math.abs(cached.height - containerRect.height) < 2
   ) {
@@ -275,6 +291,7 @@ export function extractLinesFromContainer(
     lines,
     width: containerRect.width,
     height: containerRect.height,
+    contentSnippet,
   })
 
   return lines
@@ -306,19 +323,28 @@ export function calculateFocusWindow(
 
   const clampedCount = Math.max(1, lineCount)
   const clampedStart = Math.max(0, Math.min(startIndex, totalLines - 1))
-  const remaining = totalLines - clampedStart
 
-  let endIndex: number
-  let isLastBlock: boolean
+  let endIndex = clampedStart
 
-  if (remaining <= clampedCount) {
-    // Edge case: menos ou exatamente X linhas restantes -> exibe todas as restantes
-    endIndex = totalLines - 1
-    isLastBlock = true
-  } else {
-    endIndex = clampedStart + clampedCount - 1
-    isLastBlock = false
+  // Agrupa até clampedCount linhas consecutivas, mas interrompe antes de linhas vazias
+  // ou espaçamentos acentuados entre parágrafos (gap significativo) para evitar janelas
+  // gigantescas com vazios no meio e prevenir descompasso de leitura
+  for (let i = clampedStart + 1; i < totalLines && (i - clampedStart) < clampedCount; i++) {
+    const prev = lines[i - 1]
+    const curr = lines[i]
+    if (prev && curr) {
+      const avgHeight = (prev.height + curr.height) / 2
+      const gap = curr.top - prev.bottom
+      // Se houver uma linha vazia ou respiro entre blocos maior que o espaçamento normal
+      const maxNormalGap = Math.max(26, avgHeight * 1.35)
+      if (gap > maxNormalGap) {
+        break
+      }
+    }
+    endIndex = i
   }
+
+  const isLastBlock = endIndex >= totalLines - 1
 
   const activeSlice = lines.slice(clampedStart, endIndex + 1)
   const rawTop = Math.min(...activeSlice.map((l) => l.top))
@@ -358,6 +384,7 @@ export function useReaderFocus(options: UseReaderFocusOptions = {}) {
       lines.value = []
       return
     }
+    invalidateContainerLinesCache(el)
     containerHeight.value = el.clientHeight || el.getBoundingClientRect().height || 800
     lines.value = extractLinesFromContainer(el)
   }

@@ -4,6 +4,8 @@ import {
   extractLinesFromRects,
   calculateFocusWindow,
   useReaderFocus,
+  invalidateContainerLinesCache,
+  extractLinesFromContainer,
   type FocusLineRect,
 } from '../../../app/composables/reader/useReaderFocus'
 import { useReaderStore } from '../../../app/stores/readerStore'
@@ -76,6 +78,16 @@ describe('useReaderFocus & Focus Mode Engine', () => {
       expect(lines[1]!.height).toBe(180)
       expect(lines[2]!.height).toBe(20)
     })
+
+    it('não agrupa retângulos verticais adjacentes quando a sobreposição vertical é insuficiente (< 35%)', () => {
+      const rects = [
+        { top: 10, bottom: 25, left: 10, right: 100, width: 90, height: 15 },
+        { top: 22, bottom: 37, left: 110, right: 200, width: 90, height: 15 },
+      ]
+      // Sobreposição = 25 - 22 = 3px. Altura min = 15px. 3 / 15 = 20% < 35%
+      const lines = extractLinesFromRects(rects, 12)
+      expect(lines.length).toBe(2)
+    })
   })
 
   describe('calculateFocusWindow', () => {
@@ -137,6 +149,35 @@ describe('useReaderFocus & Focus Mode Engine', () => {
       expect(bounds.top).toBe(124)
       expect(bounds.bottom).toBe(216)
       expect(bounds.isLastBlock).toBe(true)
+    })
+
+    it('interrompe o bloco antes de espaçamento de parágrafo ou linha vazia (gap vertical > normal)', () => {
+      const linesWithGap: FocusLineRect[] = [
+        // Parágrafo 1 (2 linhas)
+        { top: 10, bottom: 30, left: 0, right: 300, height: 20, width: 300 },
+        { top: 40, bottom: 60, left: 0, right: 300, height: 20, width: 300 },
+        // Linha vazia / Espaço de parágrafo de 40px (gap = 100 - 60 = 40px)
+        // Parágrafo 2
+        { top: 100, bottom: 120, left: 0, right: 300, height: 20, width: 300 },
+        { top: 130, bottom: 150, left: 0, right: 300, height: 20, width: 300 },
+      ]
+
+      // Solicitado 3 linhas por bloco, começando no índice 0
+      const bounds = calculateFocusWindow(linesWithGap, 0, 3, 600)
+      // Deve parar na linha 1 (2 linhas no bloco) para não engolir o espaço vazio nem cortar o parágrafo seguinte
+      expect(bounds.startLine).toBe(0)
+      expect(bounds.endLine).toBe(1)
+      expect(bounds.top).toBe(4) // 10 - 6px padding
+      expect(bounds.bottom).toBe(66) // 60 + 6px padding
+      expect(bounds.isLastBlock).toBe(false)
+
+      // No próximo avanço (índice 2), deve focar perfeitamente no Parágrafo 2
+      const nextBounds = calculateFocusWindow(linesWithGap, bounds.endLine + 1, 3, 600)
+      expect(nextBounds.startLine).toBe(2)
+      expect(nextBounds.endLine).toBe(3)
+      expect(nextBounds.top).toBe(94) // 100 - 6px padding
+      expect(nextBounds.bottom).toBe(156) // 150 + 6px padding
+      expect(nextBounds.isLastBlock).toBe(true)
     })
   })
 
@@ -201,6 +242,100 @@ describe('useReaderFocus & Focus Mode Engine', () => {
       expect(res2.transitionedPage).toBe(true)
       expect(onNextPageMock).toHaveBeenCalledTimes(1)
       expect(store.focusBlockIndex).toBe(0)
+    })
+  })
+
+  describe('invalidateContainerLinesCache & container cache', () => {
+    it('invalida cache ao chamar invalidateContainerLinesCache', () => {
+      const container = document.createElement('div')
+      const span1 = document.createElement('span')
+      span1.textContent = 'Linha 1'
+      span1.setAttribute('role', 'presentation')
+      container.appendChild(span1)
+
+      span1.getBoundingClientRect = () => ({
+        top: 20,
+        bottom: 40,
+        left: 10,
+        right: 200,
+        width: 190,
+        height: 20,
+      } as DOMRect)
+      container.getBoundingClientRect = () => ({
+        top: 0,
+        bottom: 500,
+        left: 0,
+        right: 500,
+        width: 500,
+        height: 500,
+      } as DOMRect)
+
+      const lines1 = extractLinesFromContainer(container)
+      expect(lines1.length).toBe(1)
+      expect(lines1[0]?.top).toBe(20)
+
+      // Atualiza coordenadas do mock
+      span1.getBoundingClientRect = () => ({
+        top: 50,
+        bottom: 80,
+        left: 10,
+        right: 200,
+        width: 190,
+        height: 30,
+      } as DOMRect)
+
+      // Com cache mantido, ainda retornaria o valor em cache (top 20)
+      const cached = extractLinesFromContainer(container)
+      expect(cached[0]?.top).toBe(20)
+
+      // Ao invalidar explicitamente o container
+      invalidateContainerLinesCache(container)
+      const fresh = extractLinesFromContainer(container)
+      expect(fresh[0]?.top).toBe(50)
+    })
+
+    it('invalida cache automaticamente ao detectar alteração de texto no container', () => {
+      const container = document.createElement('div')
+      const span = document.createElement('span')
+      span.textContent = 'Texto da Página 1'
+      span.setAttribute('role', 'presentation')
+      container.appendChild(span)
+
+      span.getBoundingClientRect = () => ({
+        top: 10,
+        bottom: 30,
+        left: 10,
+        right: 200,
+        width: 190,
+        height: 20,
+      } as DOMRect)
+      container.getBoundingClientRect = () => ({
+        top: 0,
+        bottom: 500,
+        left: 0,
+        right: 500,
+        width: 500,
+        height: 500,
+      } as DOMRect)
+
+      const lines1 = extractLinesFromContainer(container)
+      expect(lines1.length).toBe(1)
+      expect(lines1[0]?.top).toBe(10)
+
+      // Modifica o texto do span (simulando renderPageToElement na mesma camada de texto persistente)
+      span.textContent = 'Texto completamente novo da Página 2'
+      span.getBoundingClientRect = () => ({
+        top: 60,
+        bottom: 85,
+        left: 10,
+        right: 200,
+        width: 190,
+        height: 25,
+      } as DOMRect)
+
+      const lines2 = extractLinesFromContainer(container)
+      expect(lines2.length).toBe(1)
+      expect(lines2[0]?.top).toBe(60)
     })
   })
 })

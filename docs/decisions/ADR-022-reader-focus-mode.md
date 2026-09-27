@@ -22,8 +22,10 @@ Os requisitos centrais incluem:
 ### 1. Algoritmo Universal de Agrupamento de Linhas (`useReaderFocus.ts`)
 Para operar de forma homogênea tanto no PDF (camada `.textLayer` do PDF.js com `<span>` posicionados) quanto no EPUB (marcação HTML contínua renderizada no Foliate.js):
 - Inspeciona os nós de texto do contêiner e utiliza `document.createRange()` / `getClientRects()`.
-- O método `extractLinesFromRects()` ordena os retângulos verticalmente e agrupa caracteres/palavras cuja coordenada `top` esteja dentro de uma tolerância de $6\text{px}$.
-- O método `calculateFocusWindow(lines, startIndex, lineCount, containerHeight)` calcula os limites `top`, `bottom` e `height` da janela nítida e sinaliza `isLastBlock: true` quando as linhas restantes são $\le X$.
+- O método `extractLinesFromRects()` utiliza ordenação topológica com *strict weak ordering* e agrupa caracteres/palavras apenas quando há sobreposição vertical real positiva ($\ge 35\%$ da menor altura), evitando fusões errôneas de linhas inclinadas ou deslocadas.
+- O método `calculateFocusWindow(lines, startIndex, lineCount, containerHeight)` inspeciona o espaçamento entre linhas adjacentes (`gap = curr.top - prev.bottom`). Caso haja uma linha vazia, quebra de cena (`<br>`, margem de parágrafo) onde `gap > maxNormalGap` ($\max(26\text{px}, \text{avgHeight} \times 1.35)$), o bloco é encerrado imediatamente antes da lacuna. Isso impede que a fenda focal engula espaços vazios ou corte linhas ao meio, retomando o próximo parágrafo no avanço seguinte.
+- Invalidação dinâmica do cache (`containerLinesCache`): o cache baseado em `WeakMap<HTMLElement>` valida um snippet do conteúdo de texto (`contentSnippet`) e expõe `invalidateContainerLinesCache()`, garantindo que viradas de folha no `PageCurlCanvas` ou carregamento de seções no `ReaderScrollEngine` nunca reutilizem coordenadas defasadas de páginas anteriores.
+- Sinaliza `isLastBlock: true` quando as linhas restantes na página/seção são $\le X$.
 
 ```
 ┌────────────────────────────────────────────────────────┐

@@ -435,7 +435,7 @@ import { rasterizeElementToCanvas, drawPlainTextToCanvas, applyThemeToCanvas } f
 import type { PageTurnDirection, DragPoint } from '~/interfaces/reader/types'
 import { useAnnotations } from '~/composables/useAnnotations'
 import { applyPageHighlights } from '~/utils/readerHighlight'
-import { useReaderFocus } from '~/composables/reader/useReaderFocus'
+import { useReaderFocus, invalidateContainerLinesCache } from '~/composables/reader/useReaderFocus'
 import ReaderFocusOverlay from '~/components/reader/ReaderFocusOverlay.vue'
 
 const emit = defineEmits<{
@@ -1142,6 +1142,7 @@ async function renderPageToElement(
 
   if (textLayerEl && doc.renderTextLayer) {
     await doc.renderTextLayer(pageNumber, textLayerEl, width, height)
+    invalidateContainerLinesCache(textLayerEl)
     applyPageHighlights(textLayerEl, pageNumber, annotations.value, store.bookId)
   }
 }
@@ -1197,9 +1198,6 @@ async function renderCurrentSpread(pageOverride?: number): Promise<void> {
     )
     if (updatedPage && updatedPage !== store.currentPage && !pageOverride) {
       store.currentPage = updatedPage
-    }
-    if (store.document.totalPages && store.document.totalPages !== store.totalPages) {
-      store.totalPages = store.document.totalPages
     }
   }
 
