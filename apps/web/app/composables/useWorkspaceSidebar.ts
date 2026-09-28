@@ -273,6 +273,13 @@ export function useWorkspaceSidebar() {
     return res
   }
 
+  const handleCreateNewBook = async () => {
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      isSidebarCollapsed.value = true
+    }
+    await router?.push('/upload')
+  }
+
   const handleSelectItem = async (item: SidebarTreeItem) => {
     activeItemId.value = item.id
     if (item.kind === 'canvas') {
@@ -708,6 +715,7 @@ export function useWorkspaceSidebar() {
     handleCreateNewNote,
     handleCreateNewDrawing,
     handleCreateNewCanvas,
+    handleCreateNewBook,
     handleSelectItem,
     handleCreateFolder,
     handleRenameFolder,

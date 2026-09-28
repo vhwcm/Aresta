@@ -1,6 +1,12 @@
 ## 🔄 Em Andamento
+- [28/09/2026 07:58] [Fazendo] Investigar e corrigir falha onde upload de livro com tag pré-selecionada não conecta/salva no grafo de conhecimento
 
 ## ✅ Concluído
+- [28/09/2026 08:12] [Concluído] Adicionar opção unificada "Livro / PDF" no menu de adicionar (+) da barra lateral (FolderTagSidebar) com navegação para /upload
+- [28/09/2026 08:12] [Concluído] Remover funcionalidade deprecada de transcrição com IA ao desenhar no quadro (CanvasInkingOverlay e caneta no CanvasBoard)
+- [28/09/2026 08:08] [Concluído] Ajustar velocidade de transição e desaceleração do nó ao conectá-lo a outro no grafo de conhecimento tornando o movimento mais lento e suave (2400ms)
+- [28/09/2026 08:01] [Concluído] Implementar sistema de escala de layout da interface (125% padrão, 100%, 110%, 150%) com persistência e seletor nas preferências
+- [28/09/2026 07:59] [Concluído] Exibir arquivos sem pasta diretamente na raiz da árvore de arquivos da barra lateral (eliminação da pasta "Sem pasta")
 - [27/09/2026 18:58] [Concluído] Implementar Modo Caneta, navegação de página com 1 dedo no mobile e pan/zoom focal com 2 dedos no editor de desenho
 - [27/09/2026 18:28] [Concluído] Diagnosticar e corrigir desalinhamento do Modo Foco no leitor EPUB ao passar por linhas vazias e espaçamentos de parágrafo
 - [27/09/2026 18:21] [Concluído] Permitir selecionar e mover bloco de texto/nota com clique único no canvas e exigir duplo clique para edição de texto

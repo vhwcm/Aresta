@@ -259,4 +259,12 @@ describe('useWorkspaceSidebar composable (Unificação de Tags e Pastas)', () =>
       })
     )
   })
+
+  it('handleCreateNewBook redireciona para /upload', async () => {
+    mockPush.mockClear()
+    const { handleCreateNewBook } = useWorkspaceSidebar()
+    await handleCreateNewBook()
+
+    expect(mockPush).toHaveBeenCalledWith('/upload')
+  })
 })

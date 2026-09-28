@@ -186,18 +186,6 @@
 
         <div class="w-8 h-px bg-divider/60 my-0.5"></div>
 
-        <!-- Botão Sem Pasta no modo colapsado -->
-        <button
-          @click="$emit('select-folder', '__uncategorized__')"
-          class="p-2 rounded-xl transition-all cursor-pointer border"
-          :class="!isJournalActive && selectedFolder === '__uncategorized__' ? 'bg-accent/15 text-accent border-accent/30 shadow-xs' : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.05] dark:hover:bg-white/[0.05]'"
-          title="Sem pasta"
-        >
-          <InboxIcon class="w-4 h-4" />
-        </button>
-
-        <div class="w-8 h-px bg-divider/60 my-1"></div>
-
         <!-- Pastas no modo colapsado -->
         <div
           v-for="folder in allFolders"
@@ -302,6 +290,18 @@
                 <div class="flex flex-col">
                   <span class="font-medium">Novo Desenho</span>
                   <span class="text-[10px] text-textSecondary">Estilo Samsung Notes</span>
+                </div>
+              </button>
+
+              <button
+                @click="handleAddAction('book')"
+                data-testid="sidebar-add-book-btn"
+                class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-textPrimary hover:bg-blue-500/10 hover:text-blue-500 transition-colors cursor-pointer text-left"
+              >
+                <BookOpenIcon class="w-4 h-4 text-blue-500 shrink-0" />
+                <div class="flex flex-col">
+                  <span class="font-medium">Livro / PDF</span>
+                  <span class="text-[10px] text-textSecondary">Importar EPUB ou PDF</span>
                 </div>
               </button>
 
@@ -605,107 +605,62 @@
               </div>
             </div>
 
-            <!-- Seção de Arquivos Sem Pasta (Na Raiz) -->
-            <div v-if="uncategorizedItems.length > 0" class="space-y-0.5 pt-1">
-              <div
-                class="group relative flex items-center justify-between px-2 py-1.5 rounded-xl text-xs md:text-sm transition-all cursor-pointer border"
-                :class="selectedFolder === '__uncategorized__'
-                  ? 'bg-accent/15 text-accent border-accent/30 font-medium'
-                  : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04] font-medium'"
-              >
-                <div class="flex items-center gap-1.5 truncate min-w-0 pr-2" @click="selectFolder('__uncategorized__')">
-                  <button
-                    class="p-0.5 rounded hover:bg-black/[0.06] dark:hover:bg-white/[0.08] text-textSecondary hover:text-textPrimary cursor-pointer transition-transform"
-                    @click.stop="toggleFolderExpand('__uncategorized__')"
-                    title="Expandir ou recolher arquivos sem pasta"
-                  >
-                    <ChevronRightIcon
-                      class="w-3.5 h-3.5 transition-transform duration-200"
-                      :class="{ 'rotate-90 text-accent': expandedFolders.has('__uncategorized__') }"
-                    />
-                  </button>
-
-                  <InboxIcon
-                    class="w-3.5 h-3.5 flex-shrink-0 transition-colors"
-                    :class="selectedFolder === '__uncategorized__' ? 'text-accent' : 'text-blue-500 dark:text-blue-400 group-hover:text-blue-600 dark:group-hover:text-blue-300'"
-                  />
-                  <span class="truncate">Sem pasta</span>
-                </div>
-
-                <span
-                  class="text-[11px] px-1.5 py-0.2 rounded-full font-mono transition-colors"
-                  :class="selectedFolder === '__uncategorized__' ? 'bg-accent/20 text-accent' : 'text-slate-600 dark:text-textSecondary/60 bg-slate-100 dark:bg-white/[0.04] group-hover:text-textPrimary'"
+            <!-- Arquivos na Raiz (Sem Pasta) -->
+            <div
+              v-for="item in uncategorizedItems"
+              :key="item.id"
+              draggable="true"
+              @dragstart="onDragStartItem($event, item, '')"
+              class="group/file relative flex items-center justify-between px-2 py-1.5 rounded-xl text-xs cursor-pointer transition-all border select-none"
+              :class="selectedItemId === item.id
+                ? 'bg-accent/15 text-accent font-medium border-accent/30 shadow-xs'
+                : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'"
+              @click="clickItem(item)"
+            >
+              <div class="flex items-center gap-2 truncate min-w-0 pr-2">
+                <div
+                  class="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 transition-colors"
+                  :class="[
+                    item.kind === 'canvas' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' :
+                    item.kind === 'book' ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' :
+                    item.kind === 'drawing' ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400' :
+                    item.kind === 'link' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' :
+                    'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'
+                  ]"
                 >
-                  {{ uncategorizedItems.length }}
-                </span>
+                  <LayoutGridIcon v-if="item.kind === 'canvas'" class="w-3.5 h-3.5" />
+                  <BookOpenIcon v-else-if="item.kind === 'book'" class="w-3.5 h-3.5" />
+                  <PenToolIcon v-else-if="item.kind === 'drawing'" class="w-3.5 h-3.5" />
+                  <GlobeIcon v-else-if="item.kind === 'link'" class="w-3.5 h-3.5" />
+                  <FileTextIcon v-else class="w-3.5 h-3.5" />
+                </div>
+                <span class="truncate font-interface text-xs">{{ item.title || (item.kind === 'canvas' ? 'Quadro sem título' : item.kind === 'book' ? 'Livro sem título' : 'Nota sem título') }}</span>
               </div>
 
-              <!-- Itens/Arquivos na Raiz (Sem Pasta) -->
-              <div
-                v-if="expandedFolders.has('__uncategorized__')"
-                class="pl-3.5 pr-1 py-1 space-y-1 border-l border-divider ml-4 my-0.5"
-              >
-                <div
-                  v-for="item in uncategorizedItems"
-                  :key="item.id"
-                  draggable="true"
-                  @dragstart="onDragStartItem($event, item, '__uncategorized__')"
-                  class="group/file relative flex items-center justify-between px-2 py-1.5 rounded-lg text-xs cursor-pointer transition-all border select-none"
-                  :class="selectedItemId === item.id
-                    ? 'bg-accent/15 text-accent font-medium border-accent/30 shadow-xs'
-                    : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'"
-                  @click="clickItem(item)"
+              <div class="flex items-center gap-1.5 shrink-0">
+                <div class="opacity-0 group-hover/file:opacity-100 flex items-center gap-0.5 bg-bgSurface/95 backdrop-blur-xs border border-divider/60 rounded-md p-0.5 shadow-xs transition-opacity">
+                  <button
+                    @click.stop="handleDeleteItemCompletely(item)"
+                    class="p-1 hover:text-red-400 hover:bg-red-400/10 rounded transition-colors text-textSecondary cursor-pointer"
+                    title="Excluir arquivo definitivamente"
+                  >
+                    <Trash2Icon class="w-3 h-3" />
+                  </button>
+                </div>
+
+                <!-- Micro Badge Elegante -->
+                <span
+                  class="text-[9px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded font-semibold transition-all"
+                  :class="[
+                    item.kind === 'canvas' ? 'bg-amber-50 dark:bg-accent/10 text-amber-700 dark:text-accent/90 border border-amber-200 dark:border-accent/20' :
+                    item.kind === 'book' ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400/90 border border-blue-200 dark:border-blue-500/20' :
+                    item.kind === 'drawing' ? 'bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-400/90 border border-purple-200 dark:border-purple-500/20' :
+                    item.kind === 'link' ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400/90 border border-emerald-200 dark:border-emerald-500/20' :
+                    'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400/90 border border-indigo-200 dark:border-indigo-500/20'
+                  ]"
                 >
-                  <div class="flex items-center gap-2 truncate min-w-0 pr-2">
-                    <div
-                      class="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 transition-colors"
-                      :class="[
-                        item.kind === 'canvas' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' :
-                        item.kind === 'book' ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' :
-                        item.kind === 'drawing' ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400' :
-                        item.kind === 'link' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' :
-                        'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'
-                      ]"
-                    >
-                      <LayoutGridIcon v-if="item.kind === 'canvas'" class="w-3.5 h-3.5" />
-                      <BookOpenIcon v-else-if="item.kind === 'book'" class="w-3.5 h-3.5" />
-                      <PenToolIcon v-else-if="item.kind === 'drawing'" class="w-3.5 h-3.5" />
-                      <GlobeIcon v-else-if="item.kind === 'link'" class="w-3.5 h-3.5" />
-                      <FileTextIcon v-else class="w-3.5 h-3.5" />
-                    </div>
-                    <span class="truncate font-interface text-xs">{{ item.title || (item.kind === 'canvas' ? 'Quadro sem título' : item.kind === 'book' ? 'Livro sem título' : 'Nota sem título') }}</span>
-                  </div>
-
-                  <div class="flex items-center gap-1.5 shrink-0">
-                    <div class="opacity-0 group-hover/file:opacity-100 flex items-center gap-0.5 bg-bgSurface/95 backdrop-blur-xs border border-divider/60 rounded-md p-0.5 shadow-xs transition-opacity">
-                      <button
-                        @click.stop="handleDeleteItemCompletely(item)"
-                        class="p-1 hover:text-red-400 hover:bg-red-400/10 rounded transition-colors text-textSecondary cursor-pointer"
-                        title="Excluir arquivo definitivamente"
-                      >
-                        <Trash2Icon class="w-3 h-3" />
-                      </button>
-                    </div>
-
-                    <!-- Micro Badge Elegante -->
-                    <span
-                      class="text-[9px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded font-semibold transition-all"
-                      :class="[
-                        item.kind === 'canvas' ? 'bg-amber-50 dark:bg-accent/10 text-amber-700 dark:text-accent/90 border border-amber-200 dark:border-accent/20' :
-                        item.kind === 'book' ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400/90 border border-blue-200 dark:border-blue-500/20' :
-                        item.kind === 'drawing' ? 'bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-400/90 border border-purple-200 dark:border-purple-500/20' :
-                        item.kind === 'link' ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400/90 border border-emerald-200 dark:border-emerald-500/20' :
-                        'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400/90 border border-indigo-200 dark:border-indigo-500/20'
-                      ]"
-                    >
-                      {{ item.kind === 'canvas' ? 'quadro' : item.kind === 'book' ? 'livro' : item.kind === 'drawing' ? 'desenho' : item.kind === 'link' ? 'link' : 'nota' }}
-                    </span>
-                  </div>
-                </div>
-
-                <div v-if="uncategorizedItems.length === 0" class="px-2 py-1 text-[10px] text-textSecondary italic">
-                  Nenhum arquivo sem pasta
-                </div>
+                  {{ item.kind === 'canvas' ? 'quadro' : item.kind === 'book' ? 'livro' : item.kind === 'drawing' ? 'desenho' : item.kind === 'link' ? 'link' : 'nota' }}
+                </span>
               </div>
             </div>
           </div>
@@ -801,10 +756,10 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import {
   FolderIcon,
   LayersIcon,
-  InboxIcon,
   PlusIcon,
   Edit3Icon,
   Trash2Icon,
@@ -844,6 +799,7 @@ import ReadingStreak from '~/components/ReadingStreak.vue'
 import { useWorkspaceSidebar } from '~/composables/useWorkspaceSidebar'
 
 const route = useRoute()
+const router = useRouter()
 const { themeMode, toggleThemeMode } = useSettings()
 
 const { userBooks, fetchUserBooks } = useUserBooks()
@@ -1031,6 +987,7 @@ const emit = defineEmits<{
   (_e: 'open-journal'): void
   (_e: 'create-note', _folder?: string): void
   (_e: 'create-drawing'): void
+  (_e: 'create-book'): void
   (_e: 'create-link'): void
   (_e: 'create-canvas'): void
   (_e: 'create-folder', _name: string): void
@@ -1045,7 +1002,7 @@ const emit = defineEmits<{
 }>()
 
 const isCollapsed = ref(props.collapsed ?? false)
-const expandedFolders = ref<Set<string>>(new Set(['__uncategorized__']))
+const expandedFolders = ref<Set<string>>(new Set())
 
 // Drag & Drop State
 const draggedItem = ref<SidebarTreeItem | null>(null)
@@ -1182,12 +1139,17 @@ onUnmounted(() => {
   }
 })
 
-const handleAddAction = (action: 'note' | 'drawing' | 'link' | 'canvas' | 'folder') => {
+const handleAddAction = (action: 'note' | 'drawing' | 'book' | 'link' | 'canvas' | 'folder') => {
   isAddMenuOpen.value = false
   if (action === 'note') {
     emit('create-note', props.selectedFolder && props.selectedFolder !== '__uncategorized__' ? props.selectedFolder : undefined)
   } else if (action === 'drawing') {
     emit('create-drawing')
+  } else if (action === 'book') {
+    emit('create-book')
+    if (router) {
+      void router.push('/upload')
+    }
   } else if (action === 'link') {
     emit('create-link')
   } else if (action === 'canvas') {
@@ -1348,9 +1310,6 @@ watch(
           expandedFolders.value.add(folder)
         }
       }
-      if (uncategorizedItems.value.length > 0) {
-        expandedFolders.value.add('__uncategorized__')
-      }
     }
   },
   { immediate: true }
@@ -1411,7 +1370,7 @@ const closeIfMobile = () => {
 
 const selectFolder = (folder: string | null) => {
   closeIfMobile()
-  if (folder && folder !== '__uncategorized__') {
+  if (folder) {
     expandedFolders.value.add(folder)
   }
   emit('select-folder', folder)
@@ -1469,7 +1428,7 @@ const confirmRenameFolder = () => {
 }
 
 const handleDeleteFolder = (folder: string) => {
-  if (confirm(`Tem certeza de que deseja excluir a pasta "${folder}"? Os itens serão movidos para "Sem pasta".`)) {
+  if (confirm(`Tem certeza de que deseja excluir a pasta "${folder}"? Os itens ficarão na raiz.`)) {
     emit('delete-folder', folder)
   }
 }

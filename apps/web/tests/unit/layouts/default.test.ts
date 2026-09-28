@@ -25,6 +25,7 @@ const mockSidebarCollapsed = ref(false)
 const mockActiveTag = ref<string | null>(null)
 
 const mockHandleCreateNewCanvas = vi.fn()
+const mockHandleCreateNewBook = vi.fn()
 
 vi.mock('../../../app/composables/useWorkspaceSidebar', () => ({
   useWorkspaceSidebar: () => ({
@@ -41,6 +42,7 @@ vi.mock('../../../app/composables/useWorkspaceSidebar', () => ({
     handleCreateNewNote: vi.fn(),
     handleCreateNewDrawing: vi.fn(),
     handleCreateNewCanvas: mockHandleCreateNewCanvas,
+    handleCreateNewBook: mockHandleCreateNewBook,
     handleSelectItem: vi.fn(),
     handleCreateFolder: vi.fn(),
     handleRenameFolder: vi.fn(),
@@ -255,5 +257,25 @@ describe('Default Layout (Global FolderTagSidebar & Mobile Hamburger)', () => {
 
     const mobileHeader = wrapper.find('[data-testid="mobile-top-header"]')
     expect(mobileHeader.exists()).toBe(false)
+  })
+
+  it('chama handleCreateNewBook quando FolderTagSidebar emite create-book', async () => {
+    const wrapper = mount(DefaultLayout, {
+      global: {
+        stubs: {
+          FolderTagSidebar: {
+            name: 'FolderTagSidebar',
+            template: '<div class="sidebar-stub"><button class="trigger-create-book" @click="$emit(\'create-book\')">Criar Livro</button></div>'
+          },
+          MenuIcon: true
+        }
+      }
+    })
+
+    const triggerBtn = wrapper.find('.trigger-create-book')
+    expect(triggerBtn.exists()).toBe(true)
+
+    await triggerBtn.trigger('click')
+    expect(mockHandleCreateNewBook).toHaveBeenCalled()
   })
 })

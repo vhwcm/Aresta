@@ -23,6 +23,7 @@
       @select-item="onSelectItem"
       @create-note="handleCreateNewNote"
       @create-drawing="handleCreateNewDrawing"
+      @create-book="handleCreateNewBook"
       @create-link="handleCreateNewLink"
       @create-canvas="handleCreateNewCanvas"
       @create-folder="handleCreateFolder"
@@ -151,6 +152,7 @@ const {
   handleCreateNewNote,
   handleCreateNewDrawing,
   handleCreateNewCanvas,
+  handleCreateNewBook,
   handleSelectItem,
   handleCreateFolder,
   handleRenameFolder,
