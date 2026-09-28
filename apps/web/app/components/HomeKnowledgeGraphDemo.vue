@@ -291,9 +291,12 @@ const visibleNodes = computed(() => {
   return sampleLandingNodes
 })
 
+const deletedEdgeIds = ref<Set<string>>(new Set())
+
 const visibleEdges = computed(() => {
   const nodeIds = new Set(visibleNodes.value.map((n) => String(n.id)))
   return sampleLandingEdges.filter((e) => {
+    if (deletedEdgeIds.value.has(String(e.id))) return false
     const sId = typeof e.source === 'object' ? String((e.source as any).id) : String(e.source)
     const tId = typeof e.target === 'object' ? String((e.target as any).id) : String(e.target)
     return nodeIds.has(sId) && nodeIds.has(tId)
@@ -311,6 +314,8 @@ const handleConnectNodes = (_payload: any) => {
 }
 
 const handleDeleteEdge = (edge: any) => {
-  visibleEdges.value = visibleEdges.value.filter((e) => e.id !== edge.id)
+  if (edge?.id) {
+    deletedEdgeIds.value.add(String(edge.id))
+  }
 }
 </script>

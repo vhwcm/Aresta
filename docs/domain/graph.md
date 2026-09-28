@@ -61,6 +61,7 @@ model BookTheme {
 3. **Interações do Usuário**:
    - **Clique no Nó do Livro**: Abre o painel lateral com resumo do livro, todas as suas anotações e formulário para cadastrar **Anotações Soltas** (sem CFI).
    - **Clique no Nó de Tema**: Abre o **Canvas Overlay** contendo um carrossel horizontal de livros no topo e a lista de anotações relacionadas abaixo.
+   - **Clique na Aresta / Vínculo**: Revela um botão flutuante centralizado no ponto médio da aresta com destaque em vermelho para exclusão. Ao clicar, executa a desvinculação persistente real (`unlinkEdge`), removendo a associação nos repositórios (livro-tema, anotação-tema, nota-tema ou arestas customizadas).
    - **Vínculo Restrito de Anotações**: Anotações só podem ser vinculadas a temas que façam parte do conjunto de temas associados ao respectivo livro.
 
 ---
