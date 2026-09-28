@@ -142,6 +142,27 @@
       </button>
     </div>
 
+    <!-- Botão Flutuante de Excluir Aresta Selecionada -->
+    <div
+      v-if="selectedEdge && edgeBtnPos"
+      class="absolute z-30 -translate-x-1/2 -translate-y-1/2 flex items-center gap-1.5 px-3 py-1.5 rounded-full shadow-2xl border backdrop-blur-md cursor-pointer transition-all duration-150 animate-in fade-in zoom-in-95 hover:scale-105 active:scale-95 group"
+      :style="{
+        left: `${edgeBtnPos.x}px`,
+        top: `${edgeBtnPos.y}px`,
+      }"
+      :class="isSepiaMode
+        ? 'bg-[#FAF5E8]/95 border-red-300 text-red-600 hover:bg-red-50 shadow-red-900/10'
+        : (isLightMode
+          ? 'bg-white/95 border-red-200 text-red-600 hover:bg-red-50 shadow-red-500/15'
+          : 'bg-[#18181B]/95 border-red-500/40 text-red-400 hover:bg-red-950/40 shadow-black/40')"
+      @click.stop="handleDeleteSelectedEdge"
+      title="Excluir vínculo entre os nós"
+      data-testid="delete-edge-btn"
+    >
+      <Trash2Icon class="w-3.5 h-3.5 text-red-500 group-hover:rotate-12 transition-transform shrink-0" />
+      <span class="text-xs font-semibold select-none">Excluir vínculo</span>
+    </div>
+
   </div>
 </template>
 
@@ -149,7 +170,7 @@
 import { ref, computed, onMounted, watch, onBeforeUnmount, nextTick } from 'vue'
 import * as d3 from 'd3'
 import type { GraphNode, GraphEdge, GraphNodeType } from '~/interfaces/graph'
-import { PlusIcon, SearchIcon, LinkIcon, TagIcon, BookOpenIcon, FileTextIcon, LayoutGridIcon, FolderIcon, RefreshCw as RefreshCwIcon } from 'lucide-vue-next'
+import { PlusIcon, SearchIcon, LinkIcon, TagIcon, BookOpenIcon, FileTextIcon, LayoutGridIcon, FolderIcon, RefreshCw as RefreshCwIcon, Trash2 as Trash2Icon } from 'lucide-vue-next'
 import { useSettings } from '~/composables/useSettings'
 import { useDriveSync } from '~/composables/useDriveSync'
 import { getCoverUrl, resolveBookCover } from '~/utils/cover'
@@ -201,6 +222,8 @@ const emit = defineEmits<{
       targetType?: string
     }
   ): void
+  (e: 'deleteEdge', edge: GraphEdge): void
+  (e: 'delete-edge', edge: GraphEdge): void
 }>()
 
 const { themeMode } = useSettings()
@@ -224,6 +247,70 @@ const gRef = ref<SVGGElement | null>(null)
 
 // Arestas locais criadas interativamente na tela (renderizadas no mesmo milissegundo)
 const localCustomEdges = ref<GraphEdge[]>([])
+const selectedEdge = ref<any | null>(null)
+const edgeBtnPos = ref<{ x: number; y: number } | null>(null)
+let updateEdgeStylesFn: (() => void) | null = null
+
+const updateSelectedEdgePos = () => {
+  if (!selectedEdge.value || !svgRef.value) {
+    edgeBtnPos.value = null
+    return
+  }
+  const s = selectedEdge.value.source
+  const t = selectedEdge.value.target
+  const sx = s?.currentX ?? s?.baseX ?? s?.x
+  const sy = s?.currentY ?? s?.baseY ?? s?.y
+  const tx = t?.currentX ?? t?.baseX ?? t?.x
+  const ty = t?.currentY ?? t?.baseY ?? t?.y
+  if (!Number.isFinite(sx) || !Number.isFinite(sy) || !Number.isFinite(tx) || !Number.isFinite(ty)) {
+    edgeBtnPos.value = null
+    return
+  }
+  const midX = (sx + tx) / 2
+  const midY = (sy + ty) / 2
+  try {
+    const transform = d3.zoomTransform(svgRef.value)
+    edgeBtnPos.value = {
+      x: transform.applyX(midX),
+      y: transform.applyY(midY),
+    }
+  } catch {
+    edgeBtnPos.value = null
+  }
+}
+
+const selectEdge = (edge: any) => {
+  if (edge.isRootEdge || edge.type === 'annotation-book') return
+  selectedEdge.value = edge
+  updateSelectedEdgePos()
+  if (updateEdgeStylesFn) updateEdgeStylesFn()
+}
+
+const deselectEdge = () => {
+  if (selectedEdge.value) {
+    selectedEdge.value = null
+    edgeBtnPos.value = null
+    if (updateEdgeStylesFn) updateEdgeStylesFn()
+  }
+}
+
+const handleDeleteSelectedEdge = () => {
+  if (!selectedEdge.value) return
+  const edgeToDelete = selectedEdge.value
+  const edgePayload: GraphEdge = {
+    id: edgeToDelete.id,
+    source: typeof edgeToDelete.source === 'object' ? edgeToDelete.source.id : edgeToDelete.source,
+    target: typeof edgeToDelete.target === 'object' ? edgeToDelete.target.id : edgeToDelete.target,
+    type: edgeToDelete.type,
+  }
+
+  localCustomEdges.value = localCustomEdges.value.filter((e) => e.id !== edgeToDelete.id)
+
+  deselectEdge()
+
+  emit('deleteEdge', edgePayload)
+  emit('delete-edge', edgePayload)
+}
 
 watch(
   () => props.edges,
@@ -337,7 +424,7 @@ let currentSimulationNodes: any[] = []
 const persistentNodePositions = new Map<string, { dx: number; dy: number }>()
 let transitionStartTime = 0
 let isTransitioning = false
-const TRANSITION_DURATION = 500
+const TRANSITION_DURATION = 2400 // transição suave e lenta (2.4s) com interpolação easeInOutCubic
 
 const fitToScreen = () => {
   if (!svgRef.value || !containerRef.value || currentSimulationNodes.length === 0) return
@@ -597,9 +684,9 @@ const initGraph = (animateTransition = true) => {
     .zoom<SVGSVGElement, unknown>()
     .scaleExtent([0.1, 5])
     .filter((event) => {
-      // Bloquear pan do canvas se o ponteiro estiver sobre um nó
+      // Bloquear pan do canvas se o ponteiro estiver sobre um nó ou aresta interativa
       const target = event.target as HTMLElement | SVGElement | null
-      if (target && typeof target.closest === 'function' && target.closest('.node')) {
+      if (target && typeof target.closest === 'function' && (target.closest('.node') || target.closest('.graph-edge-hit'))) {
         return false
       }
 
@@ -626,10 +713,19 @@ const initGraph = (animateTransition = true) => {
       const t = event.transform
       if (t && Number.isFinite(t.x) && Number.isFinite(t.y) && Number.isFinite(t.k) && t.k > 0) {
         g.attr('transform', t)
+        if (selectedEdge.value) {
+          updateSelectedEdgePos()
+        }
       }
     })
 
   svg.call(zoomBehavior as any).on('dblclick.zoom', null)
+  svg.on('click', (event) => {
+    const target = event.target as HTMLElement | SVGElement | null
+    if (target && (target.tagName === 'svg' || target.classList.contains('bg-grid-size') || target.closest('.bg-grid-size'))) {
+      deselectEdge()
+    }
+  })
 
   // 1. Nó Central de Origem (Meu Conhecimento)
   const rootNode: GraphNode = {
@@ -1059,60 +1155,106 @@ const initGraph = (animateTransition = true) => {
 
   // Renderizar Links (Arestas)
   const linkGroup = g.select('.links-group')
+
+  // 1. Linhas Visíveis
   const links = linkGroup
-    .selectAll<SVGLineElement, any>('line')
+    .selectAll<SVGLineElement, any>('line.graph-edge-line')
     .data(simulationLinks, (d: any) => d.id)
     .join('line')
+    .attr('class', 'graph-edge-line')
     .attr('data-edge-id', (d: any) => d.id)
     .attr('data-edge-type', (d: any) => d.type)
     .attr('x1', (d: any) => d.source.currentX ?? d.source.x ?? centerX)
     .attr('y1', (d: any) => d.source.currentY ?? d.source.y ?? centerY)
     .attr('x2', (d: any) => d.target.currentX ?? d.target.x ?? centerX)
     .attr('y2', (d: any) => d.target.currentY ?? d.target.y ?? centerY)
-    .attr('stroke', (d: any) => {
-      if (d.isRootEdge) {
-        return isSepiaMode.value
-          ? 'rgba(217, 119, 6, 0.40)'
-          : isLightMode.value
-          ? 'rgba(229, 123, 85, 0.40)'
-          : 'rgba(229, 123, 85, 0.30)'
-      }
-      switch (d.type) {
-        case 'book-theme':
-          return isLightMode.value ? 'rgba(59, 130, 246, 0.40)' : 'rgba(59, 130, 246, 0.35)'
-        case 'annotation-book':
-        case 'annotation-theme':
-          return isLightMode.value ? 'rgba(245, 158, 11, 0.45)' : 'rgba(245, 158, 11, 0.35)'
-        case 'note-folder':
-        case 'canvas-folder':
-          return isLightMode.value ? 'rgba(217, 119, 6, 0.48)' : 'rgba(245, 158, 11, 0.42)'
-        case 'note-book':
-        case 'note-note':
-          return isLightMode.value ? 'rgba(99, 102, 241, 0.45)' : 'rgba(99, 102, 241, 0.35)'
-        case 'canvas-note':
-        case 'note-canvas':
-          return isLightMode.value ? 'rgba(16, 185, 129, 0.45)' : 'rgba(16, 185, 129, 0.35)'
-        case 'note-theme':
-          return isLightMode.value ? 'rgba(167, 139, 250, 0.45)' : 'rgba(167, 139, 250, 0.35)'
-        case 'note-link':
-        case 'canvas-link':
-        case 'link-folder':
-          return isLightMode.value ? 'rgba(6, 182, 212, 0.50)' : 'rgba(6, 182, 212, 0.40)'
-        default:
+    .style('pointer-events', 'none')
+
+  // 2. Hit-lines interativas transparentes (18px) para toque e clique ergonômicos
+  const hitLinks = linkGroup
+    .selectAll<SVGLineElement, any>('line.graph-edge-hit')
+    .data(simulationLinks, (d: any) => d.id)
+    .join('line')
+    .attr('class', (d: any) => {
+      const isDeletable = !d.isRootEdge && d.type !== 'annotation-book'
+      return `graph-edge-hit ${isDeletable ? 'cursor-pointer' : ''}`
+    })
+    .attr('data-edge-hit-id', (d: any) => d.id)
+    .attr('x1', (d: any) => d.source.currentX ?? d.source.x ?? centerX)
+    .attr('y1', (d: any) => d.source.currentY ?? d.source.y ?? centerY)
+    .attr('x2', (d: any) => d.target.currentX ?? d.target.x ?? centerX)
+    .attr('y2', (d: any) => d.target.currentY ?? d.target.y ?? centerY)
+    .attr('stroke', 'transparent')
+    .attr('stroke-width', 18)
+    .style('pointer-events', (d: any) => (!d.isRootEdge && d.type !== 'annotation-book' ? 'stroke' : 'none'))
+    .on('click', (event, d: any) => {
+      const isDeletable = !d.isRootEdge && d.type !== 'annotation-book'
+      if (!isDeletable) return
+      event.stopPropagation()
+      event.preventDefault()
+      selectEdge(d)
+    })
+
+  updateEdgeStylesFn = () => {
+    links
+      .attr('stroke', (d: any) => {
+        if (selectedEdge.value && selectedEdge.value.id === d.id) {
+          return '#EF4444' // Destaque vermelho ao selecionar para exclusão
+        }
+        if (d.isRootEdge) {
           return isSepiaMode.value
-            ? 'rgba(120, 108, 94, 0.20)'
+            ? 'rgba(217, 119, 6, 0.40)'
             : isLightMode.value
-            ? 'rgba(0, 0, 0, 0.12)'
-            : 'rgba(255, 255, 255, 0.12)'
-      }
-    })
-    .attr('stroke-width', (d: any) => (d.isRootEdge ? 1.4 : 1.2))
-    .attr('stroke-dasharray', (d: any) => {
-      if (d.type === 'book-theme' || d.type === 'annotation-theme' || d.type === 'note-theme' || d.type === 'note-folder' || d.type === 'canvas-folder' || d.type === 'link-folder') return '3,3'
-      if (d.isRootEdge) return '4,4'
-      return 'none'
-    })
-    .attr('stroke-opacity', 1)
+            ? 'rgba(229, 123, 85, 0.40)'
+            : 'rgba(229, 123, 85, 0.30)'
+        }
+        switch (d.type) {
+          case 'book-theme':
+            return isLightMode.value ? 'rgba(59, 130, 246, 0.40)' : 'rgba(59, 130, 246, 0.35)'
+          case 'annotation-book':
+          case 'annotation-theme':
+            return isLightMode.value ? 'rgba(245, 158, 11, 0.45)' : 'rgba(245, 158, 11, 0.35)'
+          case 'note-folder':
+          case 'canvas-folder':
+            return isLightMode.value ? 'rgba(217, 119, 6, 0.48)' : 'rgba(245, 158, 11, 0.42)'
+          case 'note-book':
+          case 'note-note':
+            return isLightMode.value ? 'rgba(99, 102, 241, 0.45)' : 'rgba(99, 102, 241, 0.35)'
+          case 'canvas-note':
+          case 'note-canvas':
+            return isLightMode.value ? 'rgba(16, 185, 129, 0.45)' : 'rgba(16, 185, 129, 0.35)'
+          case 'note-theme':
+            return isLightMode.value ? 'rgba(167, 139, 250, 0.45)' : 'rgba(167, 139, 250, 0.35)'
+          case 'note-link':
+          case 'canvas-link':
+          case 'link-folder':
+            return isLightMode.value ? 'rgba(6, 182, 212, 0.50)' : 'rgba(6, 182, 212, 0.40)'
+          default:
+            return isSepiaMode.value
+              ? 'rgba(120, 108, 94, 0.20)'
+              : isLightMode.value
+              ? 'rgba(0, 0, 0, 0.12)'
+              : 'rgba(255, 255, 255, 0.12)'
+        }
+      })
+      .attr('stroke-width', (d: any) => {
+        if (selectedEdge.value && selectedEdge.value.id === d.id) {
+          return 3
+        }
+        return d.isRootEdge ? 1.4 : 1.2
+      })
+      .attr('stroke-dasharray', (d: any) => {
+        if (selectedEdge.value && selectedEdge.value.id === d.id) {
+          return 'none'
+        }
+        if (d.type === 'book-theme' || d.type === 'annotation-theme' || d.type === 'note-theme' || d.type === 'note-folder' || d.type === 'canvas-folder' || d.type === 'link-folder') return '3,3'
+        if (d.isRootEdge) return '4,4'
+        return 'none'
+      })
+      .attr('stroke-opacity', 1)
+  }
+
+  updateEdgeStylesFn()
 
   // Renderizar Nós
   const nodeGroup = g.select('.nodes-group')
@@ -1725,6 +1867,7 @@ const initGraph = (animateTransition = true) => {
   // Se o pointerup já emitiu (didEmitOnPointerUp), não emitir novamente.
   nodesSelection.on('click', (event, d) => {
     event.stopPropagation()
+    deselectEdge()
     if (didJustDrag || didEmitOnPointerUp) return
     emitSelectForNode(d)
   })
@@ -1738,18 +1881,22 @@ const initGraph = (animateTransition = true) => {
       }
 
       links
-        .attr('stroke', (l: any) =>
-          String(l.source.id) === String(d.id) || String(l.target.id) === String(d.id)
+        .attr('stroke', (l: any) => {
+          if (selectedEdge.value && selectedEdge.value.id === l.id) {
+            return '#EF4444'
+          }
+          return String(l.source.id) === String(d.id) || String(l.target.id) === String(d.id)
             ? d.color || '#E57B55'
             : isSepiaMode.value
             ? 'rgba(120, 108, 94, 0.08)'
             : isLightMode.value
             ? 'rgba(0, 0, 0, 0.04)'
             : 'rgba(255, 255, 255, 0.05)'
-        )
-        .attr('stroke-width', (l: any) =>
-          String(l.source.id) === String(d.id) || String(l.target.id) === String(d.id) ? 2 : 1
-        )
+        })
+        .attr('stroke-width', (l: any) => {
+          if (selectedEdge.value && selectedEdge.value.id === l.id) return 3
+          return String(l.source.id) === String(d.id) || String(l.target.id) === String(d.id) ? 2 : 1
+        })
         .attr('stroke-opacity', (l: any) =>
           String(l.source.id) === String(d.id) || String(l.target.id) === String(d.id) ? 0.9 : 0.25
         )
@@ -1759,39 +1906,9 @@ const initGraph = (animateTransition = true) => {
     })
     .on('mouseleave', () => {
       hoveredNode.value = null
-      links
-        .attr('stroke', (d: any) => {
-          if (d.isRootEdge) {
-            return isSepiaMode.value
-              ? 'rgba(217, 119, 6, 0.40)'
-              : 'rgba(229, 123, 85, 0.30)'
-          }
-          switch (d.type) {
-            case 'book-theme':
-              return isLightMode.value ? 'rgba(59, 130, 246, 0.40)' : 'rgba(59, 130, 246, 0.35)'
-            case 'annotation-book':
-            case 'annotation-theme':
-              return isLightMode.value ? 'rgba(245, 158, 11, 0.45)' : 'rgba(245, 158, 11, 0.35)'
-            case 'note-book':
-            case 'note-note':
-              return isLightMode.value ? 'rgba(99, 102, 241, 0.45)' : 'rgba(99, 102, 241, 0.35)'
-            case 'canvas-note':
-            case 'note-canvas':
-              return isLightMode.value ? 'rgba(16, 185, 129, 0.45)' : 'rgba(16, 185, 129, 0.35)'
-            case 'note-link':
-            case 'canvas-link':
-            case 'link-folder':
-              return isLightMode.value ? 'rgba(6, 182, 212, 0.50)' : 'rgba(6, 182, 212, 0.40)'
-            default:
-              return isSepiaMode.value
-                ? 'rgba(120, 108, 94, 0.20)'
-                : isLightMode.value
-                ? 'rgba(0, 0, 0, 0.12)'
-                : 'rgba(255, 255, 255, 0.12)'
-          }
-        })
-        .attr('stroke-width', (d: any) => (d.isRootEdge ? 1.4 : 1.2))
-        .attr('stroke-opacity', 1)
+      if (updateEdgeStylesFn) {
+        updateEdgeStylesFn()
+      }
     })
 
   // Atualização de posições de nós e arestas sincronizadas
@@ -1813,6 +1930,28 @@ const initGraph = (animateTransition = true) => {
         const val = d.target.currentY ?? d.target.baseY ?? d.target.y
         return Number.isFinite(val) ? val : 0
       })
+
+    hitLinks
+      .attr('x1', (d: any) => {
+        const val = d.source.currentX ?? d.source.baseX ?? d.source.x
+        return Number.isFinite(val) ? val : 0
+      })
+      .attr('y1', (d: any) => {
+        const val = d.source.currentY ?? d.source.baseY ?? d.source.y
+        return Number.isFinite(val) ? val : 0
+      })
+      .attr('x2', (d: any) => {
+        const val = d.target.currentX ?? d.target.baseX ?? d.target.x
+        return Number.isFinite(val) ? val : 0
+      })
+      .attr('y2', (d: any) => {
+        const val = d.target.currentY ?? d.target.baseY ?? d.target.y
+        return Number.isFinite(val) ? val : 0
+      })
+
+    if (selectedEdge.value) {
+      updateSelectedEdgePos()
+    }
 
     nodesSelection.attr('transform', (d: any) => {
       const cx = Number.isFinite(d.currentX) ? d.currentX : (Number.isFinite(d.baseX) ? d.baseX : (Number.isFinite(d.x) ? d.x : (width / 2)))

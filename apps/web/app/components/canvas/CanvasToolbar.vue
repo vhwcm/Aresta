@@ -67,21 +67,6 @@
         <span class="font-serif font-bold text-xs sm:text-sm">T</span>
       </button>
 
-      <!-- 5. Pen / IA Handwriting Inking Mode -->
-      <button
-        class="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-xl transition-all cursor-pointer flex-shrink-0"
-        :class="activeTool === 'pen' ? 'bg-primary text-white shadow-md ring-2 ring-primary/30' : 'text-textSecondary hover:text-textPrimary hover:bg-bgElevated'"
-        title="Caneta & Transcrição IA (P)"
-        @click="$emit('update:activeTool', 'pen')"
-      >
-        <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="m12 19 7-7 3 3-7 7-3-3z" />
-          <path d="m18 13-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" />
-          <path d="m2 2 7.586 7.586" />
-          <circle cx="11" cy="11" r="2" />
-        </svg>
-      </button>
-
       <div class="w-px h-4 sm:h-5 bg-divider mx-0.5 flex-shrink-0"></div>
 
       <!-- ÍCONE DA NAVBAR (Aresta Logo) - Posição de Meio nos Itens do Canvas -->
@@ -231,7 +216,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'update:activeTool', tool: 'select' | 'note' | 'shape' | 'loose_text' | 'pen'): void;
+  (e: 'update:activeTool', tool: 'select' | 'note' | 'shape' | 'loose_text'): void;
   (e: 'update:selectedShapeType', shape: CanvasShapeType): void;
   (e: 'open-insert-drawer'): void;
   (e: 'create-text-at-center'): void;

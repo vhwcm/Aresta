@@ -443,5 +443,68 @@ describe('GraphCanvas Component', () => {
     // O tema 'Programação' e o livro 'Clean Code' NÃO estão conectados a 'Leitura' e não devem aparecer
     expect(wrapper.html()).not.toContain('Clean Code')
   })
+
+  it('exibe botão flutuante de excluir aresta ao clicar em cima de uma aresta e emite evento ao excluir', async () => {
+    const wrapper = mount(GraphCanvas, {
+      props: {
+        isCompact: false,
+        nodes: [
+          { id: 'theme-1', rawId: 1, type: 'theme', name: 'Filosofia' },
+          { id: 'book-1', rawId: 1, type: 'book', name: 'Livro Teste' },
+        ],
+        edges: [
+          { id: 'edge-tb-1', source: 'theme-1', target: 'book-1', type: 'book-theme' },
+        ],
+      },
+    })
+
+    // Botão inicialmente não deve estar visível
+    expect(wrapper.find('[data-testid="delete-edge-btn"]').exists()).toBe(false)
+
+    // Clicar na hit-line da aresta
+    const hitLine = wrapper.find('.graph-edge-hit[data-edge-hit-id="edge-tb-1"]')
+    expect(hitLine.exists()).toBe(true)
+    await hitLine.trigger('click')
+
+    // O botão flutuante deve surgir
+    const deleteBtn = wrapper.find('[data-testid="delete-edge-btn"]')
+    expect(deleteBtn.exists()).toBe(true)
+    expect(deleteBtn.text()).toContain('Excluir vínculo')
+
+    // Clicar no botão para desvincular
+    await deleteBtn.trigger('click')
+
+    // Deve emitir deleteEdge e delete-edge com payload da aresta
+    expect(wrapper.emitted('delete-edge')).toBeTruthy()
+    expect(wrapper.emitted('deleteEdge')).toBeTruthy()
+    const emittedPayload = wrapper.emitted('delete-edge')?.[0]?.[0] as any
+    expect(emittedPayload.id).toBe('edge-tb-1')
+
+    // Após exclusão, o botão fecha
+    expect(wrapper.find('[data-testid="delete-edge-btn"]').exists()).toBe(false)
+  })
+
+  it('oculta o botão flutuante ao clicar no fundo do SVG', async () => {
+    const wrapper = mount(GraphCanvas, {
+      props: {
+        isCompact: false,
+        nodes: [
+          { id: 'theme-1', rawId: 1, type: 'theme', name: 'Filosofia' },
+          { id: 'book-1', rawId: 1, type: 'book', name: 'Livro Teste' },
+        ],
+        edges: [
+          { id: 'edge-tb-1', source: 'theme-1', target: 'book-1', type: 'book-theme' },
+        ],
+      },
+    })
+
+    const hitLine = wrapper.find('.graph-edge-hit[data-edge-hit-id="edge-tb-1"]')
+    await hitLine.trigger('click')
+    expect(wrapper.find('[data-testid="delete-edge-btn"]').exists()).toBe(true)
+
+    // Clicar no SVG fundo
+    await wrapper.find('svg').trigger('click')
+    expect(wrapper.find('[data-testid="delete-edge-btn"]').exists()).toBe(false)
+  })
 })
 

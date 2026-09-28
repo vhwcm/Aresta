@@ -24,7 +24,7 @@ const viewport = ref<CanvasViewport>({ x: 0, y: 0, zoom: 1.0 });
 
 const selectedNodeIds = ref<string[]>([]);
 const selectedEdgeId = ref<string | null>(null);
-const activeTool = ref<'select' | 'note' | 'shape' | 'loose_text' | 'pen'>('select');
+const activeTool = ref<'select' | 'note' | 'shape' | 'loose_text'>('select');
 const selectedShapeType = ref<CanvasShapeType>('rectangle');
 
 const connectingState = ref<{

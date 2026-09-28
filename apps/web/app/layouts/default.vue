@@ -17,6 +17,7 @@
       v-model:view-layout="sidebarViewLayout"
       item-label="itens"
       v-model:collapsed="isSidebarCollapsed"
+      @go-home="onGoHome"
       @open-journal="onOpenJournal"
       @select-folder="onSelectFolder"
       @select-tag="onSelectTag"
@@ -161,7 +162,8 @@ const {
   handleAddReferenceToFolder,
   handleRemoveReferenceFromFolder,
   handleDeleteItemCompletely,
-  handleOpenJournal
+  handleOpenJournal,
+  handleGoHome
 } = useWorkspaceSidebar()
 
 const sidebarViewLayout = computed<'graph' | 'grid' | 'journal'>({
@@ -256,6 +258,13 @@ try {
   }
 } catch {
   // fallback
+}
+
+const onGoHome = async () => {
+  if (typeof window !== 'undefined' && window.innerWidth < 768) {
+    isSidebarCollapsed.value = true
+  }
+  await handleGoHome()
 }
 
 const onOpenJournal = () => {

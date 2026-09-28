@@ -26,16 +26,19 @@ declare global {
   const applyPageHighlights: typeof import('../../app/utils/readerHighlight').applyPageHighlights
   const applyTheme: typeof import('../../app/composables/useSettings').applyTheme
   const applyThemeToCanvas: typeof import('../../app/utils/pageRasterizer').applyThemeToCanvas
+  const applyUiScale: typeof import('../../app/composables/useSettings').applyUiScale
   const buildLocalGraph: typeof import('../../app/utils/buildLocalGraph').buildLocalGraph
   const calculateBezierPath: typeof import('../../app/utils/canvasGeometry').calculateBezierPath
   const calculateMidPoint: typeof import('../../app/utils/canvasGeometry').calculateMidPoint
   const callOnce: typeof import('../../node_modules/nuxt/dist/app/composables/once').callOnce
   const cancelIdleCallback: typeof import('../../node_modules/nuxt/dist/app/compat/idle-callback').cancelIdleCallback
   const clamp: typeof import('../../app/utils/pageCurlMath').clamp
+  const cleanUrlTitle: typeof import('../../app/utils/urlOpener').cleanUrlTitle
   const clearError: typeof import('../../node_modules/nuxt/dist/app/composables/error').clearError
   const clearNuxtData: typeof import('../../node_modules/nuxt/dist/app/composables/asyncData').clearNuxtData
   const clearNuxtState: typeof import('../../node_modules/nuxt/dist/app/composables/state').clearNuxtState
   const clearPageHighlights: typeof import('../../app/utils/readerHighlight').clearPageHighlights
+  const clearSession: typeof import('../../app/composables/useAuth').clearSession
   const computeCurlGeometry: typeof import('../../app/utils/pageCurlMath').computeCurlGeometry
   const computed: typeof import('vue').computed
   const createError: typeof import('../../node_modules/nuxt/dist/app/composables/error').createError
@@ -64,7 +67,11 @@ declare global {
   const effect: typeof import('vue').effect
   const effectScope: typeof import('vue').effectScope
   const escapeHtml: typeof import('../../app/utils/markdownFormat').escapeHtml
+  const extractCanvasIdsFromMarkdown: typeof import('../../app/composables/useNotes').extractCanvasIdsFromMarkdown
+  const extractDomain: typeof import('../../app/utils/urlOpener').extractDomain
+  const extractTitleFromMarkdown: typeof import('../../app/utils/noteTitle').extractTitleFromMarkdown
   const formatErrorMessage: typeof import('../../app/utils/logger').formatErrorMessage
+  const formatJournalDateLong: typeof import('../../app/composables/useJournal').formatJournalDateLong
   const generateDidacticCoverDataUri: typeof import('../../app/utils/cover').generateDidacticCoverDataUri
   const generateDidacticCoverSvg: typeof import('../../app/utils/cover').generateDidacticCoverSvg
   const getAnchorPoint: typeof import('../../app/utils/canvasGeometry').getAnchorPoint
@@ -75,19 +82,25 @@ declare global {
   const getBookFormat: typeof import('../../app/utils/cover').getBookFormat
   const getCachedBook: typeof import('../../app/utils/bookCache').getCachedBook
   const getClosestAnchorSide: typeof import('../../app/utils/canvasGeometry').getClosestAnchorSide
+  const getCookieOptions: typeof import('../../app/composables/useAuth').getCookieOptions
   const getCoverUrl: typeof import('../../app/utils/cover').getCoverUrl
   const getCurrentInstance: typeof import('vue').getCurrentInstance
   const getCurrentScope: typeof import('vue').getCurrentScope
   const getDiamondPoints: typeof import('../../app/utils/canvasShapes').getDiamondPoints
   const getEffectiveNavIndex: typeof import('../../app/composables/useBottomNavbar').getEffectiveNavIndex
+  const getFaviconUrl: typeof import('../../app/utils/urlOpener').getFaviconUrl
   const getHexagonPoints: typeof import('../../app/utils/canvasShapes').getHexagonPoints
   const getNavIndexFromPath: typeof import('../../app/composables/useBottomNavbar').getNavIndexFromPath
+  const getOAuthRedirectUri: typeof import('../../app/utils/apiBase').getOAuthRedirectUri
   const getParallelogramPoints: typeof import('../../app/utils/canvasShapes').getParallelogramPoints
+  const getPdfDocumentParams: typeof import('../../app/utils/pdfjsSetup').getPdfDocumentParams
   const getResolvedApiBase: typeof import('../../app/utils/apiBase').getResolvedApiBase
   const getRouteRules: typeof import('../../node_modules/nuxt/dist/app/composables/manifest').getRouteRules
   const getShapeIcon: typeof import('../../app/utils/canvasShapes').getShapeIcon
   const getStarPoints: typeof import('../../app/utils/canvasShapes').getStarPoints
   const getStorageBaseUrl: typeof import('../../app/utils/apiBase').getStorageBaseUrl
+  const getStoredAuthToken: typeof import('../../app/composables/useAuth').getStoredAuthToken
+  const getTodayString: typeof import('../../app/composables/useJournal').getTodayString
   const getTrapezoidPoints: typeof import('../../app/utils/canvasShapes').getTrapezoidPoints
   const getTrianglePoints: typeof import('../../app/utils/canvasShapes').getTrianglePoints
   const getVectorForSide: typeof import('../../app/utils/canvasGeometry').getVectorForSide
@@ -95,6 +108,7 @@ declare global {
   const h: typeof import('vue').h
   const hasInjectionContext: typeof import('vue').hasInjectionContext
   const hexToRgba: typeof import('../../app/utils/readerHighlight').hexToRgba
+  const initAuthState: typeof import('../../app/composables/useAuth').initAuthState
   const inject: typeof import('vue').inject
   const injectHead: typeof import('../../node_modules/nuxt/dist/app/composables/head').injectHead
   const interpolateCurlState: typeof import('../../app/utils/pageCurlMath').interpolateCurlState
@@ -106,6 +120,7 @@ declare global {
   const isReadonly: typeof import('vue').isReadonly
   const isRef: typeof import('vue').isRef
   const isShallow: typeof import('vue').isShallow
+  const isTauriEnvironment: typeof import('../../app/utils/apiBase').isTauriEnvironment
   const isVue2: typeof import('../../node_modules/nuxt/dist/app/compat/vue-demi').isVue2
   const isVue3: typeof import('../../node_modules/nuxt/dist/app/compat/vue-demi').isVue3
   const lerp: typeof import('../../app/utils/pageCurlMath').lerp
@@ -135,6 +150,7 @@ declare global {
   const onUnmounted: typeof import('vue').onUnmounted
   const onUpdated: typeof import('vue').onUpdated
   const onWatcherCleanup: typeof import('vue').onWatcherCleanup
+  const openExternalUrl: typeof import('../../app/utils/urlOpener').openExternalUrl
   const prefetchComponents: typeof import('../../node_modules/nuxt/dist/app/composables/preload').prefetchComponents
   const preloadComponents: typeof import('../../node_modules/nuxt/dist/app/composables/preload').preloadComponents
   const preloadPayload: typeof import('../../node_modules/nuxt/dist/app/composables/payload').preloadPayload
@@ -161,16 +177,23 @@ declare global {
   const resetFlashcardsMemory: typeof import('../../app/composables/useFlashcards').resetFlashcardsMemory
   const resetGraphMemory: typeof import('../../app/composables/useGraph').resetGraphMemory
   const resetGraphMeta: typeof import('../../app/utils/graphMeta').resetGraphMeta
+  const resetJournalMemory: typeof import('../../app/composables/useJournal').resetJournalMemory
+  const resetLinksMemory: typeof import('../../app/composables/useLinks').resetLinksMemory
   const resetNotesMemory: typeof import('../../app/composables/useNotes').resetNotesMemory
   const resetSettingsForTesting: typeof import('../../app/composables/useSettings').resetSettingsForTesting
   const resetUserBooksMemory: typeof import('../../app/composables/useUserBooks').resetUserBooksMemory
   const resolveBookCover: typeof import('../../app/utils/cover').resolveBookCover
   const resolveComponent: typeof import('vue').resolveComponent
+  const resolveNoteTitle: typeof import('../../app/utils/noteTitle').resolveNoteTitle
+  const sanitizeUrl: typeof import('../../app/utils/urlOpener').sanitizeUrl
   const saveCachedBook: typeof import('../../app/utils/bookCache').saveCachedBook
   const saveGraphMeta: typeof import('../../app/utils/graphMeta').saveGraphMeta
+  const setGlobalThemeFromReader: typeof import('../../app/composables/useSettings').setGlobalThemeFromReader
   const setInterval: typeof import('../../node_modules/nuxt/dist/app/compat/interval').setInterval
   const setPageLayout: typeof import('../../node_modules/nuxt/dist/app/composables/router').setPageLayout
   const setResponseStatus: typeof import('../../node_modules/nuxt/dist/app/composables/ssr').setResponseStatus
+  const setSession: typeof import('../../app/composables/useAuth').setSession
+  const setupPdfJs: typeof import('../../app/utils/pdfjsSetup').setupPdfJs
   const shallowReactive: typeof import('vue').shallowReactive
   const shallowReadonly: typeof import('vue').shallowReadonly
   const shallowRef: typeof import('vue').shallowRef
@@ -194,7 +217,6 @@ declare global {
   const useAuth: typeof import('../../app/composables/useAuth').useAuth
   const useBottomNavbar: typeof import('../../app/composables/useBottomNavbar').useBottomNavbar
   const useCanvas: typeof import('../../app/composables/useCanvas').useCanvas
-  const useCanvasInking: typeof import('../../app/composables/useCanvasInking').useCanvasInking
   const useCatalog: typeof import('../../app/composables/useCatalog').useCatalog
   const useCommandPalette: typeof import('../../app/composables/useCommandPalette').useCommandPalette
   const useConverter: typeof import('../../app/composables/useConverter').useConverter
@@ -214,10 +236,12 @@ declare global {
   const useHeadSafe: typeof import('../../node_modules/nuxt/dist/app/composables/head').useHeadSafe
   const useHydration: typeof import('../../node_modules/nuxt/dist/app/composables/hydrate').useHydration
   const useId: typeof import('vue').useId
+  const useJournal: typeof import('../../app/composables/useJournal').useJournal
   const useLayout: typeof import('../../node_modules/nuxt/dist/app/composables/layout').useLayout
   const useLazyAsyncData: typeof import('../../node_modules/nuxt/dist/app/composables/asyncData').useLazyAsyncData
   const useLazyFetch: typeof import('../../node_modules/nuxt/dist/app/composables/fetch').useLazyFetch
   const useLink: typeof import('vue-router').useLink
+  const useLinks: typeof import('../../app/composables/useLinks').useLinks
   const useLoadingIndicator: typeof import('../../node_modules/nuxt/dist/app/composables/loading-indicator').useLoadingIndicator
   const useLocalBookUpload: typeof import('../../app/composables/useLocalBookUpload').useLocalBookUpload
   const useModel: typeof import('vue').useModel
@@ -299,6 +323,7 @@ declare global {
   const useTransitionState: typeof import('vue').useTransitionState
   const useUserBooks: typeof import('../../app/composables/useUserBooks').useUserBooks
   const useUserMetrics: typeof import('../../app/composables/useUserMetrics').useUserMetrics
+  const useWorkspaceSidebar: typeof import('../../app/composables/useWorkspaceSidebar').useWorkspaceSidebar
   const validateBookFile: typeof import('../../app/utils/fileValidator').validateBookFile
   const watch: typeof import('vue').watch
   const watchEffect: typeof import('vue').watchEffect
@@ -325,9 +350,6 @@ declare global {
   // @ts-ignore
   export type { AuthUser, LoginResponse } from '../../app/composables/useAuth'
   import('../../app/composables/useAuth')
-  // @ts-ignore
-  export type { BoundingBox, StrokePoint, InkingStroke } from '../../app/composables/useCanvasInking'
-  import('../../app/composables/useCanvasInking')
   // @ts-ignore
   export type { CatalogBook } from '../../app/composables/useCatalog'
   import('../../app/composables/useCatalog')
@@ -362,7 +384,7 @@ declare global {
   export type { StreakDay, TodayActivity } from '../../app/composables/useReadingStreak'
   import('../../app/composables/useReadingStreak')
   // @ts-ignore
-  export type { ThemeMode, EpubFontFamilyId, DictionaryLanguage, SettingsState, UserSettingsResponse } from '../../app/composables/useSettings'
+  export type { ThemeMode, EpubFontFamilyId, DictionaryLanguage, UiScale, SettingsState, UserSettingsResponse } from '../../app/composables/useSettings'
   import('../../app/composables/useSettings')
   // @ts-ignore
   export type { UserMetricsData } from '../../app/composables/useUserMetrics'
@@ -395,7 +417,7 @@ declare global {
   export type { ProfilerCategory, ProfileStep, ProfileReport } from '../../app/utils/readerProfiler'
   import('../../app/utils/readerProfiler')
   // @ts-ignore
-  export type { ReaderColorTheme, ReaderWidthMode } from '../../app/stores/readerStore'
+  export type { ReaderColorTheme, ReaderWidthMode, ReadingMode } from '../../app/stores/readerStore'
   import('../../app/stores/readerStore')
 }
 // for vue template auto import
@@ -427,16 +449,19 @@ declare module 'vue' {
     readonly applyPageHighlights: UnwrapRef<typeof import('../../app/utils/readerHighlight')['applyPageHighlights']>
     readonly applyTheme: UnwrapRef<typeof import('../../app/composables/useSettings')['applyTheme']>
     readonly applyThemeToCanvas: UnwrapRef<typeof import('../../app/utils/pageRasterizer')['applyThemeToCanvas']>
+    readonly applyUiScale: UnwrapRef<typeof import('../../app/composables/useSettings')['applyUiScale']>
     readonly buildLocalGraph: UnwrapRef<typeof import('../../app/utils/buildLocalGraph')['buildLocalGraph']>
     readonly calculateBezierPath: UnwrapRef<typeof import('../../app/utils/canvasGeometry')['calculateBezierPath']>
     readonly calculateMidPoint: UnwrapRef<typeof import('../../app/utils/canvasGeometry')['calculateMidPoint']>
     readonly callOnce: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/once')['callOnce']>
     readonly cancelIdleCallback: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/compat/idle-callback')['cancelIdleCallback']>
     readonly clamp: UnwrapRef<typeof import('../../app/utils/pageCurlMath')['clamp']>
+    readonly cleanUrlTitle: UnwrapRef<typeof import('../../app/utils/urlOpener')['cleanUrlTitle']>
     readonly clearError: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/error')['clearError']>
     readonly clearNuxtData: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/asyncData')['clearNuxtData']>
     readonly clearNuxtState: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/state')['clearNuxtState']>
     readonly clearPageHighlights: UnwrapRef<typeof import('../../app/utils/readerHighlight')['clearPageHighlights']>
+    readonly clearSession: UnwrapRef<typeof import('../../app/composables/useAuth')['clearSession']>
     readonly computeCurlGeometry: UnwrapRef<typeof import('../../app/utils/pageCurlMath')['computeCurlGeometry']>
     readonly computed: UnwrapRef<typeof import('vue')['computed']>
     readonly createError: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/error')['createError']>
@@ -465,7 +490,11 @@ declare module 'vue' {
     readonly effect: UnwrapRef<typeof import('vue')['effect']>
     readonly effectScope: UnwrapRef<typeof import('vue')['effectScope']>
     readonly escapeHtml: UnwrapRef<typeof import('../../app/utils/markdownFormat')['escapeHtml']>
+    readonly extractCanvasIdsFromMarkdown: UnwrapRef<typeof import('../../app/composables/useNotes')['extractCanvasIdsFromMarkdown']>
+    readonly extractDomain: UnwrapRef<typeof import('../../app/utils/urlOpener')['extractDomain']>
+    readonly extractTitleFromMarkdown: UnwrapRef<typeof import('../../app/utils/noteTitle')['extractTitleFromMarkdown']>
     readonly formatErrorMessage: UnwrapRef<typeof import('../../app/utils/logger')['formatErrorMessage']>
+    readonly formatJournalDateLong: UnwrapRef<typeof import('../../app/composables/useJournal')['formatJournalDateLong']>
     readonly generateDidacticCoverDataUri: UnwrapRef<typeof import('../../app/utils/cover')['generateDidacticCoverDataUri']>
     readonly generateDidacticCoverSvg: UnwrapRef<typeof import('../../app/utils/cover')['generateDidacticCoverSvg']>
     readonly getAnchorPoint: UnwrapRef<typeof import('../../app/utils/canvasGeometry')['getAnchorPoint']>
@@ -476,19 +505,25 @@ declare module 'vue' {
     readonly getBookFormat: UnwrapRef<typeof import('../../app/utils/cover')['getBookFormat']>
     readonly getCachedBook: UnwrapRef<typeof import('../../app/utils/bookCache')['getCachedBook']>
     readonly getClosestAnchorSide: UnwrapRef<typeof import('../../app/utils/canvasGeometry')['getClosestAnchorSide']>
+    readonly getCookieOptions: UnwrapRef<typeof import('../../app/composables/useAuth')['getCookieOptions']>
     readonly getCoverUrl: UnwrapRef<typeof import('../../app/utils/cover')['getCoverUrl']>
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
     readonly getCurrentScope: UnwrapRef<typeof import('vue')['getCurrentScope']>
     readonly getDiamondPoints: UnwrapRef<typeof import('../../app/utils/canvasShapes')['getDiamondPoints']>
     readonly getEffectiveNavIndex: UnwrapRef<typeof import('../../app/composables/useBottomNavbar')['getEffectiveNavIndex']>
+    readonly getFaviconUrl: UnwrapRef<typeof import('../../app/utils/urlOpener')['getFaviconUrl']>
     readonly getHexagonPoints: UnwrapRef<typeof import('../../app/utils/canvasShapes')['getHexagonPoints']>
     readonly getNavIndexFromPath: UnwrapRef<typeof import('../../app/composables/useBottomNavbar')['getNavIndexFromPath']>
+    readonly getOAuthRedirectUri: UnwrapRef<typeof import('../../app/utils/apiBase')['getOAuthRedirectUri']>
     readonly getParallelogramPoints: UnwrapRef<typeof import('../../app/utils/canvasShapes')['getParallelogramPoints']>
+    readonly getPdfDocumentParams: UnwrapRef<typeof import('../../app/utils/pdfjsSetup')['getPdfDocumentParams']>
     readonly getResolvedApiBase: UnwrapRef<typeof import('../../app/utils/apiBase')['getResolvedApiBase']>
     readonly getRouteRules: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/manifest')['getRouteRules']>
     readonly getShapeIcon: UnwrapRef<typeof import('../../app/utils/canvasShapes')['getShapeIcon']>
     readonly getStarPoints: UnwrapRef<typeof import('../../app/utils/canvasShapes')['getStarPoints']>
     readonly getStorageBaseUrl: UnwrapRef<typeof import('../../app/utils/apiBase')['getStorageBaseUrl']>
+    readonly getStoredAuthToken: UnwrapRef<typeof import('../../app/composables/useAuth')['getStoredAuthToken']>
+    readonly getTodayString: UnwrapRef<typeof import('../../app/composables/useJournal')['getTodayString']>
     readonly getTrapezoidPoints: UnwrapRef<typeof import('../../app/utils/canvasShapes')['getTrapezoidPoints']>
     readonly getTrianglePoints: UnwrapRef<typeof import('../../app/utils/canvasShapes')['getTrianglePoints']>
     readonly getVectorForSide: UnwrapRef<typeof import('../../app/utils/canvasGeometry')['getVectorForSide']>
@@ -496,6 +531,7 @@ declare module 'vue' {
     readonly h: UnwrapRef<typeof import('vue')['h']>
     readonly hasInjectionContext: UnwrapRef<typeof import('vue')['hasInjectionContext']>
     readonly hexToRgba: UnwrapRef<typeof import('../../app/utils/readerHighlight')['hexToRgba']>
+    readonly initAuthState: UnwrapRef<typeof import('../../app/composables/useAuth')['initAuthState']>
     readonly inject: UnwrapRef<typeof import('vue')['inject']>
     readonly injectHead: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/head')['injectHead']>
     readonly interpolateCurlState: UnwrapRef<typeof import('../../app/utils/pageCurlMath')['interpolateCurlState']>
@@ -507,6 +543,7 @@ declare module 'vue' {
     readonly isReadonly: UnwrapRef<typeof import('vue')['isReadonly']>
     readonly isRef: UnwrapRef<typeof import('vue')['isRef']>
     readonly isShallow: UnwrapRef<typeof import('vue')['isShallow']>
+    readonly isTauriEnvironment: UnwrapRef<typeof import('../../app/utils/apiBase')['isTauriEnvironment']>
     readonly isVue2: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/compat/vue-demi')['isVue2']>
     readonly isVue3: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/compat/vue-demi')['isVue3']>
     readonly lerp: UnwrapRef<typeof import('../../app/utils/pageCurlMath')['lerp']>
@@ -536,6 +573,7 @@ declare module 'vue' {
     readonly onUnmounted: UnwrapRef<typeof import('vue')['onUnmounted']>
     readonly onUpdated: UnwrapRef<typeof import('vue')['onUpdated']>
     readonly onWatcherCleanup: UnwrapRef<typeof import('vue')['onWatcherCleanup']>
+    readonly openExternalUrl: UnwrapRef<typeof import('../../app/utils/urlOpener')['openExternalUrl']>
     readonly prefetchComponents: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/preload')['prefetchComponents']>
     readonly preloadComponents: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/preload')['preloadComponents']>
     readonly preloadPayload: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/payload')['preloadPayload']>
@@ -562,16 +600,23 @@ declare module 'vue' {
     readonly resetFlashcardsMemory: UnwrapRef<typeof import('../../app/composables/useFlashcards')['resetFlashcardsMemory']>
     readonly resetGraphMemory: UnwrapRef<typeof import('../../app/composables/useGraph')['resetGraphMemory']>
     readonly resetGraphMeta: UnwrapRef<typeof import('../../app/utils/graphMeta')['resetGraphMeta']>
+    readonly resetJournalMemory: UnwrapRef<typeof import('../../app/composables/useJournal')['resetJournalMemory']>
+    readonly resetLinksMemory: UnwrapRef<typeof import('../../app/composables/useLinks')['resetLinksMemory']>
     readonly resetNotesMemory: UnwrapRef<typeof import('../../app/composables/useNotes')['resetNotesMemory']>
     readonly resetSettingsForTesting: UnwrapRef<typeof import('../../app/composables/useSettings')['resetSettingsForTesting']>
     readonly resetUserBooksMemory: UnwrapRef<typeof import('../../app/composables/useUserBooks')['resetUserBooksMemory']>
     readonly resolveBookCover: UnwrapRef<typeof import('../../app/utils/cover')['resolveBookCover']>
     readonly resolveComponent: UnwrapRef<typeof import('vue')['resolveComponent']>
+    readonly resolveNoteTitle: UnwrapRef<typeof import('../../app/utils/noteTitle')['resolveNoteTitle']>
+    readonly sanitizeUrl: UnwrapRef<typeof import('../../app/utils/urlOpener')['sanitizeUrl']>
     readonly saveCachedBook: UnwrapRef<typeof import('../../app/utils/bookCache')['saveCachedBook']>
     readonly saveGraphMeta: UnwrapRef<typeof import('../../app/utils/graphMeta')['saveGraphMeta']>
+    readonly setGlobalThemeFromReader: UnwrapRef<typeof import('../../app/composables/useSettings')['setGlobalThemeFromReader']>
     readonly setInterval: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/compat/interval')['setInterval']>
     readonly setPageLayout: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/router')['setPageLayout']>
     readonly setResponseStatus: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/ssr')['setResponseStatus']>
+    readonly setSession: UnwrapRef<typeof import('../../app/composables/useAuth')['setSession']>
+    readonly setupPdfJs: UnwrapRef<typeof import('../../app/utils/pdfjsSetup')['setupPdfJs']>
     readonly shallowReactive: UnwrapRef<typeof import('vue')['shallowReactive']>
     readonly shallowReadonly: UnwrapRef<typeof import('vue')['shallowReadonly']>
     readonly shallowRef: UnwrapRef<typeof import('vue')['shallowRef']>
@@ -595,7 +640,6 @@ declare module 'vue' {
     readonly useAuth: UnwrapRef<typeof import('../../app/composables/useAuth')['useAuth']>
     readonly useBottomNavbar: UnwrapRef<typeof import('../../app/composables/useBottomNavbar')['useBottomNavbar']>
     readonly useCanvas: UnwrapRef<typeof import('../../app/composables/useCanvas')['useCanvas']>
-    readonly useCanvasInking: UnwrapRef<typeof import('../../app/composables/useCanvasInking')['useCanvasInking']>
     readonly useCatalog: UnwrapRef<typeof import('../../app/composables/useCatalog')['useCatalog']>
     readonly useCommandPalette: UnwrapRef<typeof import('../../app/composables/useCommandPalette')['useCommandPalette']>
     readonly useConverter: UnwrapRef<typeof import('../../app/composables/useConverter')['useConverter']>
@@ -615,10 +659,12 @@ declare module 'vue' {
     readonly useHeadSafe: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/head')['useHeadSafe']>
     readonly useHydration: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/hydrate')['useHydration']>
     readonly useId: UnwrapRef<typeof import('vue')['useId']>
+    readonly useJournal: UnwrapRef<typeof import('../../app/composables/useJournal')['useJournal']>
     readonly useLayout: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/layout')['useLayout']>
     readonly useLazyAsyncData: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/asyncData')['useLazyAsyncData']>
     readonly useLazyFetch: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/fetch')['useLazyFetch']>
     readonly useLink: UnwrapRef<typeof import('vue-router')['useLink']>
+    readonly useLinks: UnwrapRef<typeof import('../../app/composables/useLinks')['useLinks']>
     readonly useLoadingIndicator: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/loading-indicator')['useLoadingIndicator']>
     readonly useLocalBookUpload: UnwrapRef<typeof import('../../app/composables/useLocalBookUpload')['useLocalBookUpload']>
     readonly useModel: UnwrapRef<typeof import('vue')['useModel']>
@@ -700,6 +746,7 @@ declare module 'vue' {
     readonly useTransitionState: UnwrapRef<typeof import('vue')['useTransitionState']>
     readonly useUserBooks: UnwrapRef<typeof import('../../app/composables/useUserBooks')['useUserBooks']>
     readonly useUserMetrics: UnwrapRef<typeof import('../../app/composables/useUserMetrics')['useUserMetrics']>
+    readonly useWorkspaceSidebar: UnwrapRef<typeof import('../../app/composables/useWorkspaceSidebar')['useWorkspaceSidebar']>
     readonly validateBookFile: UnwrapRef<typeof import('../../app/utils/fileValidator')['validateBookFile']>
     readonly watch: UnwrapRef<typeof import('vue')['watch']>
     readonly watchEffect: UnwrapRef<typeof import('vue')['watchEffect']>

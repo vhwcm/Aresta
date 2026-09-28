@@ -63,9 +63,9 @@
       />
     </div>
 
-    <!-- Empty State Guide Overlay (Only when no nodes exist and not drawing) -->
+    <!-- Empty State Guide Overlay (Only when no nodes exist) -->
     <div
-      v-if="nodes.length === 0 && activeTool !== 'pen'"
+      v-if="nodes.length === 0"
       class="absolute inset-0 flex items-center justify-center pointer-events-none z-10 animate-in fade-in duration-300 pb-20 sm:pb-0 px-4"
     >
       <div class="p-5 sm:p-6 rounded-2xl bg-bgPanel/85 border border-divider/80 backdrop-blur-md shadow-2xl text-center max-w-sm pointer-events-auto select-none">
@@ -99,13 +99,6 @@
         </div>
       </div>
     </div>
-
-    <!-- Inking Overlay for Handwriting & AI OCR -->
-    <CanvasInkingOverlay
-      :active-tool="activeTool"
-      :viewport="viewport"
-      @transcribed="onInkingTranscribed"
-    />
 
     <!-- Floating Canvas Toolbar -->
     <CanvasToolbar
@@ -378,8 +371,6 @@ const createLooseTextAtCenter = () => {
 
 // Background Pointer Down
 const onBackgroundPointerDown = (e: PointerEvent) => {
-  if (activeTool.value === 'pen') return;
-
   // Guard: ignore clicks originating from toolbar or insert drawer
   if ((e.target as HTMLElement)?.closest?.('.canvas-toolbar-container')) return;
 
@@ -718,7 +709,6 @@ const onSelectNode = (id: string, isShift: boolean, e?: PointerEvent) => {
 };
 
 const onNodeDragStart = (id: string, e: PointerEvent) => {
-  if (activeTool.value === 'pen') return;
   const node = nodes.value.find((n) => n.id === id);
   if (!node) return;
 
@@ -795,22 +785,6 @@ const onUpdateNodeColor = (id: string, color: string) => {
 
 const onUpdateNodeShape = (id: string, shape: CanvasShapeType) => {
   updateNode(id, { shape }, true);
-};
-
-// Inking OCR Result Handler
-const onInkingTranscribed = (res: { text: string; x: number; y: number; width: number; height: number }) => {
-  const newNode: CanvasNode = {
-    id: `node-${Date.now()}`,
-    type: 'text',
-    x: Math.round(res.x),
-    y: Math.round(res.y),
-    width: Math.round(res.width),
-    height: Math.round(res.height),
-    text: res.text,
-    color: '#E57B55',
-  };
-  addNode(newNode);
-  activeTool.value = 'select';
 };
 
 // Insert Book Handler
@@ -940,8 +914,6 @@ const onKeyDown = (e: KeyboardEvent) => {
     activeTool.value = 'loose_text';
   } else if (e.key.toLowerCase() === 's') {
     activeTool.value = 'shape';
-  } else if (e.key.toLowerCase() === 'p') {
-    activeTool.value = 'pen';
   }
 };
 

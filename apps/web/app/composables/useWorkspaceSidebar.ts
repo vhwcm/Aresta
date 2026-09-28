@@ -700,6 +700,20 @@ export function useWorkspaceSidebar() {
     }
   }
 
+  const handleGoHome = async () => {
+    viewLayout.value = 'graph'
+    activeFolder.value = null
+    activeTag.value = null
+    activeItemId.value = null
+    graphSearchQuery.value = ''
+
+    const path = route?.path || ''
+    const hasQuery = Object.keys(route?.query || {}).length > 0
+    if (path !== '/' || hasQuery) {
+      await router?.push('/')
+    }
+  }
+
   return {
     isSidebarCollapsed,
     viewLayout,
@@ -724,6 +738,8 @@ export function useWorkspaceSidebar() {
     handleMoveItemToFolder,
     handleRemoveReferenceFromFolder,
     handleDeleteItemCompletely,
-    handleOpenJournal
+    handleOpenJournal,
+    handleGoHome
   }
 }
+

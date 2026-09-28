@@ -30,6 +30,7 @@ describe('Conta Page (/conta)', () => {
     PaletteIcon: true,
     CloudIcon: true,
     SparklesIcon: true,
+    ZoomInIcon: true,
   }
 
   beforeEach(() => {
@@ -69,6 +70,8 @@ describe('Conta Page (/conta)', () => {
     expect(wrapper.find('[data-testid="metric-retention-rate"]').text()).toContain('91%')
     expect(wrapper.find('[data-testid="account-preferences-section"]').exists()).toBe(true)
     expect(wrapper.text()).toContain('Virada de Página 3D & Efeitos de Livro Físico')
+    expect(wrapper.find('[data-testid="ui-scale-settings-section"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Escala da Interface')
     expect(wrapper.text()).toContain('Fazer Upgrade Pro')
     expect(wrapper.text()).not.toContain('Eleve sua jornada intelectual ao próximo nível')
     expect(wrapper.text()).toContain('Zona de Perigo & Segurança')

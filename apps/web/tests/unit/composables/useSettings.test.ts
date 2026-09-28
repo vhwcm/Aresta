@@ -79,5 +79,34 @@ describe('useSettings composable', () => {
     expect(document.documentElement.getAttribute('data-theme')).toBe('light');
     expect(document.documentElement.classList.contains('light-theme')).toBe(true);
   });
+
+  it('aplica escala de layout 125% por padrão e reflete no DOM', () => {
+    const { uiScale } = useSettings();
+    expect(uiScale.value).toBe('125%');
+    expect(document.documentElement.getAttribute('data-ui-scale')).toBe('125%');
+    expect(document.documentElement.style.fontSize).toBe('125%');
+  });
+
+  it('permite alterar a escala da interface dinamicamente (100%, 110%, 125%, 150%)', () => {
+    const { uiScale, setUiScale } = useSettings();
+
+    setUiScale('100%');
+    expect(uiScale.value).toBe('100%');
+    expect(document.documentElement.getAttribute('data-ui-scale')).toBe('100%');
+    expect(document.documentElement.style.fontSize).toBe('100%');
+    expect(localStorage.getItem('aresta_ui_scale')).toBe('100%');
+
+    setUiScale('150%');
+    expect(uiScale.value).toBe('150%');
+    expect(document.documentElement.getAttribute('data-ui-scale')).toBe('150%');
+    expect(document.documentElement.style.fontSize).toBe('150%');
+    expect(localStorage.getItem('aresta_ui_scale')).toBe('150%');
+
+    setUiScale('125%');
+    expect(uiScale.value).toBe('125%');
+    expect(document.documentElement.getAttribute('data-ui-scale')).toBe('125%');
+    expect(document.documentElement.style.fontSize).toBe('125%');
+    expect(localStorage.getItem('aresta_ui_scale')).toBe('125%');
+  });
 });
 

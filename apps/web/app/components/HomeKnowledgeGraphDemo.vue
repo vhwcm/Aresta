@@ -50,6 +50,8 @@
           @openCreateNode="showAuthModal = true"
           @openConnectModal="showAuthModal = true"
           @connectNodes="handleConnectNodes"
+          @delete-edge="handleDeleteEdge"
+          @deleteEdge="handleDeleteEdge"
         />
 
         <!-- Dica de Interação Flutuante no Topo Esquerdo -->
@@ -306,5 +308,9 @@ const handleConnectNodes = (_payload: any) => {
   // A conexão magnética é renderizada pelo GraphCanvas em localCustomEdges.
   // Notificamos suavemente o usuário para salvar na conta
   showAuthModal.value = true
+}
+
+const handleDeleteEdge = (edge: any) => {
+  visibleEdges.value = visibleEdges.value.filter((e) => e.id !== edge.id)
 }
 </script>

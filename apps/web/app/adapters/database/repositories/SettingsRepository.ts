@@ -28,6 +28,7 @@ export class SettingsRepository {
       readerTwoPageMode: true,
       readerWidthMode: 'centered',
       readerTheme: 'sepia',
+      uiScale: '125%',
       ...existing,
       ...settings,
       updated_at: now,

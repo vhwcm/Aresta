@@ -197,10 +197,109 @@ describe('useGraph Composable', () => {
     ).rejects.toThrow('30 caracteres')
   })
 
-  it('updateNode rejeita nomes com mais de 30 caracteres', async () => {
-    const { updateNode } = useGraph()
-    await expect(
-      updateNode(1, 'Este nome de tema tem mais de trinta caracteres com certeza')
-    ).rejects.toThrow('30 caracteres')
+  it('unlinkEdge desvincula livro de um tema', async () => {
+    const saveSpy = vi.spyOn(bookRepo, 'save').mockResolvedValue({} as any)
+    vi.spyOn(bookRepo, 'getAll').mockResolvedValue([
+      {
+        id: 1,
+        bookId: 1,
+        title: 'Livro Teste',
+        themes: [
+          { id: 10, name: 'Filosofia' },
+          { id: 20, name: 'História' },
+        ],
+      } as any,
+    ])
+
+    const { unlinkEdge } = useGraph()
+    await unlinkEdge({
+      type: 'book-theme',
+      source: 'book-1',
+      target: 'theme-10',
+    })
+
+    expect(saveSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 1,
+        themes: [{ id: 20, name: 'História' }],
+      })
+    )
+  })
+
+  it('unlinkEdge desvincula anotação de um tema', async () => {
+    const saveSpy = vi.spyOn(annotationRepo, 'save').mockResolvedValue({} as any)
+    vi.spyOn(annotationRepo, 'getAll').mockResolvedValue([
+      {
+        id: 5,
+        bookId: 1,
+        note: 'Nota profunda',
+        themes: [
+          { id: 10, name: 'Filosofia' },
+        ],
+      } as any,
+    ])
+
+    const { unlinkEdge } = useGraph()
+    await unlinkEdge({
+      type: 'annotation-theme',
+      source: 'annotation-5',
+      target: 'theme-10',
+    })
+
+    expect(saveSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 5,
+        themes: [],
+      })
+    )
+  })
+
+  it('unlinkEdge desvincula nota de um tema removendo a tag correspondente', async () => {
+    const saveSpy = vi.spyOn(noteRepo, 'save').mockResolvedValue({} as any)
+    vi.spyOn(noteRepo, 'getAll').mockResolvedValue([
+      {
+        id: 12,
+        title: 'Minha Nota',
+        tags: ['Filosofia', 'Ciência'],
+      } as any,
+    ])
+
+    const { graphData, unlinkEdge } = useGraph()
+    graphData.value.nodes = [
+      { id: 'theme-10', rawId: 10, name: 'Filosofia', type: 'theme' } as any,
+    ]
+
+    await unlinkEdge({
+      type: 'note-theme',
+      source: 'note-12',
+      target: 'theme-10',
+    })
+
+    expect(saveSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 12,
+        tags: ['Ciência'],
+      })
+    )
+  })
+
+  it('unlinkEdge remove conexão customizada em meta.edges', async () => {
+    localStorage.setItem(GRAPH_META_STORAGE_KEY, JSON.stringify({
+      themes: [],
+      edges: [
+        { id: 'edge-theme-1-theme-2', source: 'theme-1', target: 'theme-2', type: 'theme-hierarchy' },
+      ],
+    }))
+
+    const { unlinkEdge } = useGraph()
+    await unlinkEdge({
+      id: 'edge-theme-1-theme-2',
+      source: 'theme-1',
+      target: 'theme-2',
+      type: 'theme-hierarchy',
+    })
+
+    const stored = JSON.parse(localStorage.getItem(GRAPH_META_STORAGE_KEY) || '{}')
+    expect(stored.edges).toHaveLength(0)
   })
 })

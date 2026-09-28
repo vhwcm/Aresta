@@ -15,6 +15,7 @@ function trySyncReaderStore() {
 export type ThemeMode = 'dark' | 'light' | 'sepia'
 export type EpubFontFamilyId = 'newsreader' | 'literata' | 'lora' | 'merriweather' | 'inter'
 export type DictionaryLanguage = 'pt-BR' | 'pt' | 'en' | 'es'
+export type UiScale = '100%' | '110%' | '125%' | '150%'
 
 export interface SettingsState {
   pageAnimationEnabled: boolean
@@ -25,6 +26,7 @@ export interface SettingsState {
   epubFontSize: number
   epubFontFamily: EpubFontFamilyId
   themeMode: ThemeMode
+  uiScale: UiScale
   desktopHomeGraphOpen: boolean
   desktopReaderGraphOpen: boolean
   readerTwoPageMode: boolean
@@ -43,6 +45,7 @@ export interface UserSettingsResponse {
   epubFontSize?: number
   epubFontFamily?: EpubFontFamilyId
   themeMode?: ThemeMode
+  uiScale?: UiScale
   desktopHomeGraphOpen?: boolean
   desktopReaderGraphOpen?: boolean
   readerTwoPageMode?: boolean
@@ -75,6 +78,7 @@ const settings = reactive<SettingsState>({
   epubFontSize: 15,
   epubFontFamily: 'newsreader',
   themeMode: 'light',
+  uiScale: '125%',
   desktopHomeGraphOpen: true,
   desktopReaderGraphOpen: false,
   readerTwoPageMode: true,
@@ -94,6 +98,7 @@ export function resetSettingsForTesting() {
   settings.epubFontSize = 15
   settings.epubFontFamily = 'newsreader'
   settings.themeMode = 'light'
+  settings.uiScale = '125%'
   settings.desktopHomeGraphOpen = true
   settings.desktopReaderGraphOpen = false
   settings.readerTwoPageMode = true
@@ -125,12 +130,20 @@ export function setGlobalThemeFromReader(theme: ReaderColorTheme) {
     epubFontSize: settings.epubFontSize,
     epubFontFamily: settings.epubFontFamily,
     themeMode: settings.themeMode,
+    uiScale: settings.uiScale,
     readerTheme: settings.readerTheme,
     desktopHomeGraphOpen: settings.desktopHomeGraphOpen,
     desktopReaderGraphOpen: settings.desktopReaderGraphOpen,
     readerTwoPageMode: settings.readerTwoPageMode,
     readerWidthMode: settings.readerWidthMode,
   }).catch(() => {})
+}
+
+export function applyUiScale(scale: UiScale) {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return
+  const root = document.documentElement
+  root.setAttribute('data-ui-scale', scale)
+  root.style.fontSize = scale
 }
 
 export function applyTheme(mode: ThemeMode) {
@@ -178,6 +191,9 @@ function initSettings() {
         settings.readerTheme = parsed.readerTheme
         settings.themeMode = readerThemeToThemeMode(parsed.readerTheme)
       }
+      if (parsed.uiScale === '100%' || parsed.uiScale === '110%' || parsed.uiScale === '125%' || parsed.uiScale === '150%') {
+        settings.uiScale = parsed.uiScale
+      }
       if (typeof parsed.desktopHomeGraphOpen === 'boolean') settings.desktopHomeGraphOpen = parsed.desktopHomeGraphOpen
       if (typeof parsed.desktopReaderGraphOpen === 'boolean') settings.desktopReaderGraphOpen = parsed.desktopReaderGraphOpen
       if (typeof parsed.readerTwoPageMode === 'boolean') settings.readerTwoPageMode = parsed.readerTwoPageMode
@@ -202,12 +218,16 @@ function initSettings() {
           settings.readerTheme = dbSettings.readerTheme as ReaderColorTheme
           settings.themeMode = readerThemeToThemeMode(settings.readerTheme)
         }
+        if (dbSettings.uiScale && (['100%', '110%', '125%', '150%'] as string[]).includes(dbSettings.uiScale)) {
+          settings.uiScale = dbSettings.uiScale as UiScale
+        }
         if (typeof dbSettings.desktopHomeGraphOpen === 'boolean') settings.desktopHomeGraphOpen = dbSettings.desktopHomeGraphOpen
         if (typeof dbSettings.desktopReaderGraphOpen === 'boolean') settings.desktopReaderGraphOpen = dbSettings.desktopReaderGraphOpen
         if (typeof dbSettings.readerTwoPageMode === 'boolean') settings.readerTwoPageMode = dbSettings.readerTwoPageMode
         if (dbSettings.readerWidthMode) settings.readerWidthMode = dbSettings.readerWidthMode as ReaderWidthMode
         if (dbSettings.readerReadingMode) settings.readerReadingMode = dbSettings.readerReadingMode as ReadingMode
         applyTheme(settings.themeMode)
+        applyUiScale(settings.uiScale)
         trySyncReaderStore()
       }
     }).catch(() => {})
@@ -217,6 +237,7 @@ function initSettings() {
 
   settings.readerTheme = themeModeToReaderTheme(settings.themeMode)
   applyTheme(settings.themeMode)
+  applyUiScale(settings.uiScale)
 }
 
 export function useSettings() {
@@ -228,6 +249,7 @@ export function useSettings() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
       localStorage.setItem('aresta_reader_font', settings.epubFontFamily)
       localStorage.setItem('aresta_reader_page_crease', String(settings.pageCreaseEnabled))
+      localStorage.setItem('aresta_ui_scale', settings.uiScale)
       localStorage.setItem('aresta_home_graph_collapsed', String(!settings.desktopHomeGraphOpen))
       trySyncReaderStore()
     } catch {
@@ -246,6 +268,7 @@ export function useSettings() {
         epubFontSize: settings.epubFontSize,
         epubFontFamily: settings.epubFontFamily,
         themeMode: settings.themeMode,
+        uiScale: settings.uiScale,
         readerTheme: settings.readerTheme,
         desktopHomeGraphOpen: settings.desktopHomeGraphOpen,
         desktopReaderGraphOpen: settings.desktopReaderGraphOpen,
@@ -270,12 +293,16 @@ export function useSettings() {
         if (dbSettings.epubFontFamily) settings.epubFontFamily = dbSettings.epubFontFamily as EpubFontFamilyId
         if (dbSettings.themeMode) settings.themeMode = dbSettings.themeMode as ThemeMode
         if (dbSettings.readerTheme) settings.readerTheme = dbSettings.readerTheme as ReaderColorTheme
+        if (dbSettings.uiScale && (['100%', '110%', '125%', '150%'] as string[]).includes(dbSettings.uiScale)) {
+          settings.uiScale = dbSettings.uiScale as UiScale
+        }
         if (typeof dbSettings.desktopHomeGraphOpen === 'boolean') settings.desktopHomeGraphOpen = dbSettings.desktopHomeGraphOpen
         if (typeof dbSettings.desktopReaderGraphOpen === 'boolean') settings.desktopReaderGraphOpen = dbSettings.desktopReaderGraphOpen
         if (typeof dbSettings.readerTwoPageMode === 'boolean') settings.readerTwoPageMode = dbSettings.readerTwoPageMode
         if (dbSettings.readerWidthMode) settings.readerWidthMode = dbSettings.readerWidthMode as ReaderWidthMode
         saveLocally()
         applyTheme(settings.themeMode)
+        applyUiScale(settings.uiScale)
         trySyncReaderStore()
       }
     } catch {
@@ -382,6 +409,22 @@ export function useSettings() {
     }
   }
 
+  const setUiScale = (scale: UiScale) => {
+    if (scale === '100%' || scale === '110%' || scale === '125%' || scale === '150%') {
+      settings.uiScale = scale
+      applyUiScale(scale)
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('aresta_ui_scale', scale)
+        } catch {
+          /* ignorar */
+        }
+      }
+      saveLocally()
+      void persistToLocalDb()
+    }
+  }
+
   const toggleThemeMode = () => {
     if (settings.themeMode === 'dark') {
       setThemeMode('light')
@@ -434,6 +477,11 @@ export function useSettings() {
     set: (val: ThemeMode) => setThemeMode(val),
   })
 
+  const uiScale = computed({
+    get: () => settings.uiScale,
+    set: (val: UiScale) => setUiScale(val),
+  })
+
   const readerTheme = computed({
     get: () => settings.readerTheme,
     set: (val: ReaderColorTheme) => setReaderTheme(val),
@@ -460,6 +508,7 @@ export function useSettings() {
     epubFontSize,
     epubFontFamily,
     themeMode,
+    uiScale,
     readerTheme,
     readerReadingMode,
     desktopHomeGraphOpen,
@@ -471,6 +520,7 @@ export function useSettings() {
     setEpubFontSize,
     setEpubFontFamily,
     setThemeMode,
+    setUiScale,
     setReaderTheme,
     setReaderReadingMode,
     toggleThemeMode,

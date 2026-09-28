@@ -20,6 +20,8 @@
         @open-create-node="isCreateModalOpen = true"
         @open-connect-modal="isConnectModalOpen = true"
         @connect-nodes="handleConnectNodesPayload"
+        @delete-edge="handleDeleteEdge"
+        @deleteEdge="handleDeleteEdge"
       />
     </div>
 
@@ -200,8 +202,16 @@ const emit = defineEmits<{
   (e: 'selectNode', node: GraphNode): void
 }>()
 
-const { graphData, loading, fetchGraph, createNode, createConnection, linkBookToNode } = useGraph()
+const { graphData, loading, fetchGraph, createNode, createConnection, linkBookToNode, unlinkEdge } = useGraph()
 const { userBooks, fetchUserBooks } = useUserBooks()
+
+const handleDeleteEdge = async (edge: any) => {
+  try {
+    await unlinkEdge(edge)
+  } catch (err) {
+    console.warn('[SidebarGraph] Falha ao desvincular aresta:', err)
+  }
+}
 
 const selectedNode = ref<GraphNode | null>(null)
 const selectedBookNode = ref<GraphNode | null>(null)

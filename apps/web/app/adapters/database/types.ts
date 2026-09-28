@@ -118,6 +118,7 @@ export interface LocalUserSettings extends BaseLocalEntity {
   readerTwoPageMode?: boolean;
   readerWidthMode?: string;
   readerReadingMode?: string;
+  uiScale?: string;
   values?: Record<string, unknown>;
 }
 

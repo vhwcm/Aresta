@@ -211,6 +211,62 @@
                   </div>
                 </div>
 
+                <!-- Item: Escala da Interface / Zoom -->
+                <div class="p-4 flex items-center justify-between gap-4">
+                  <div class="flex items-center gap-3 min-w-0">
+                    <div class="p-2 rounded-lg bg-accent/10 text-accent">
+                      <ZoomInIcon class="w-4 h-4" />
+                    </div>
+                    <div class="min-w-0">
+                      <div class="font-interface text-sm text-textPrimary font-medium">
+                        Escala da Interface
+                      </div>
+                      <div class="font-interface text-xs text-textSecondary">
+                        {{ uiScale === '125%' ? '125% (Padrão Confortável)' : (uiScale === '150%' ? '150% (Grande / Acessibilidade)' : (uiScale === '110%' ? '110% (Médio)' : '100% (Compacto)')) }}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center p-0.5 rounded-xl bg-white/5 border border-divider shrink-0 gap-0.5">
+                    <button
+                      type="button"
+                      @click="setUiScale('100%')"
+                      class="px-2 py-1 rounded-lg font-interface text-xs transition-all"
+                      :class="uiScale === '100%' ? 'bg-accent text-white shadow-sm font-semibold' : 'text-textSecondary hover:text-textPrimary'"
+                      title="100% (Compacto)"
+                    >
+                      100%
+                    </button>
+                    <button
+                      type="button"
+                      @click="setUiScale('110%')"
+                      class="px-2 py-1 rounded-lg font-interface text-xs transition-all"
+                      :class="uiScale === '110%' ? 'bg-accent text-white shadow-sm font-semibold' : 'text-textSecondary hover:text-textPrimary'"
+                      title="110% (Médio)"
+                    >
+                      110%
+                    </button>
+                    <button
+                      type="button"
+                      @click="setUiScale('125%')"
+                      class="px-2 py-1 rounded-lg font-interface text-xs transition-all"
+                      :class="uiScale === '125%' ? 'bg-accent text-white shadow-sm font-semibold' : 'text-textSecondary hover:text-textPrimary'"
+                      title="125% (Confortável)"
+                    >
+                      125%
+                    </button>
+                    <button
+                      type="button"
+                      @click="setUiScale('150%')"
+                      class="px-2 py-1 rounded-lg font-interface text-xs transition-all"
+                      :class="uiScale === '150%' ? 'bg-accent text-white shadow-sm font-semibold' : 'text-textSecondary hover:text-textPrimary'"
+                      title="150% (Expandido)"
+                    >
+                      150%
+                    </button>
+                  </div>
+                </div>
+
                 <!-- Item: Virada 3D & Efeitos de Livro Físico -->
                 <div class="p-4 flex items-center justify-between gap-4">
                   <div class="flex items-center gap-3 min-w-0">
@@ -308,6 +364,7 @@ import {
   SunIcon,
   MoonIcon,
   PaletteIcon,
+  ZoomInIcon,
   Trash2Icon,
 } from 'lucide-vue-next'
 import { useSettingsModal } from '~/composables/useSettingsModal'
@@ -321,7 +378,9 @@ const {
   pageAnimationEnabled,
   pageCreaseEnabled,
   themeMode,
+  uiScale,
   setThemeMode,
+  setUiScale,
   loadFromServer,
 } = useSettings()
 const auth = useAuth()

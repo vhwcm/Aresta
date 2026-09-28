@@ -42,7 +42,6 @@ export const CanvasActionModals: typeof import("../app/components/canvas/CanvasA
 export const CanvasBoard: typeof import("../app/components/canvas/CanvasBoard.vue")['default']
 export const CanvasEdgeLayer: typeof import("../app/components/canvas/CanvasEdgeLayer.vue")['default']
 export const CanvasEmbedPreview: typeof import("../app/components/canvas/CanvasEmbedPreview.vue")['default']
-export const CanvasInkingOverlay: typeof import("../app/components/canvas/CanvasInkingOverlay.vue")['default']
 export const CanvasInsertDrawer: typeof import("../app/components/canvas/CanvasInsertDrawer.vue")['default']
 export const CanvasNode: typeof import("../app/components/canvas/CanvasNode.vue")['default']
 export const CanvasNodeBook: typeof import("../app/components/canvas/CanvasNodeBook.vue")['default']
@@ -53,6 +52,7 @@ export const CanvasSelectionToolbar: typeof import("../app/components/canvas/Can
 export const CanvasToolbar: typeof import("../app/components/canvas/CanvasToolbar.vue")['default']
 export const CanvasCycleWarningPlaceholder: typeof import("../app/components/canvas/CycleWarningPlaceholder.vue")['default']
 export const CanvasKnowledgeGraphView: typeof import("../app/components/canvas/KnowledgeGraphView.vue")['default']
+export const CanvasUnifiedCanvasHub: typeof import("../app/components/canvas/UnifiedCanvasHub.vue")['default']
 export const CanvasDrawingAiSynthesisModal: typeof import("../app/components/canvas/drawing/DrawingAiSynthesisModal.vue")['default']
 export const CanvasDrawingPageCanvas: typeof import("../app/components/canvas/drawing/DrawingPageCanvas.vue")['default']
 export const CanvasDrawingToolbar: typeof import("../app/components/canvas/drawing/DrawingToolbar.vue")['default']
@@ -60,6 +60,7 @@ export const GraphAppKnowledgeGraph: typeof import("../app/components/graph/AppK
 export const GraphBookAnnotationsDrawer: typeof import("../app/components/graph/BookAnnotationsDrawer.vue")['default']
 export const GraphNoteDetailDrawer: typeof import("../app/components/graph/NoteDetailDrawer.vue")['default']
 export const GraphThemeCanvasOverlay: typeof import("../app/components/graph/ThemeCanvasOverlay.vue")['default']
+export const NotesJournalView: typeof import("../app/components/notes/JournalView.vue")['default']
 export const NotesNoteCompositeRenderer: typeof import("../app/components/notes/NoteCompositeRenderer.vue")['default']
 export const NotesNoteEditorPane: typeof import("../app/components/notes/NoteEditorPane.vue")['default']
 export const ReaderAiOverlayCard: typeof import("../app/components/reader/ReaderAiOverlayCard.vue")['default']
@@ -68,6 +69,8 @@ export const ReaderBookNotesPanel: typeof import("../app/components/reader/Reade
 export const ReaderBottomBar: typeof import("../app/components/reader/ReaderBottomBar.vue")['default']
 export const ReaderCreateBookletModal: typeof import("../app/components/reader/ReaderCreateBookletModal.vue")['default']
 export const ReaderDictionaryCard: typeof import("../app/components/reader/ReaderDictionaryCard.vue")['default']
+export const ReaderFocusHUD: typeof import("../app/components/reader/ReaderFocusHUD.vue")['default']
+export const ReaderFocusOverlay: typeof import("../app/components/reader/ReaderFocusOverlay.vue")['default']
 export const ReaderGraphPanel: typeof import("../app/components/reader/ReaderGraphPanel.vue")['default']
 export const ReaderSavedPagesModal: typeof import("../app/components/reader/ReaderSavedPagesModal.vue")['default']
 export const ReaderSelectionTooltip: typeof import("../app/components/reader/ReaderSelectionTooltip.vue")['default']
@@ -76,6 +79,7 @@ export const ReaderTypographyPopover: typeof import("../app/components/reader/Re
 export const ReaderUploader: typeof import("../app/components/reader/Uploader.vue")['default']
 export const ReaderViewer: typeof import("../app/components/reader/Viewer.vue")['default']
 export const ReaderEnginePageCurlCanvas: typeof import("../app/components/reader/engine/PageCurlCanvas.vue")['default']
+export const ReaderEngineReaderScrollEngine: typeof import("../app/components/reader/engine/ReaderScrollEngine.vue")['default']
 export const ReaderUploadDropZone: typeof import("../app/components/reader/upload/DropZone.vue")['default']
 export const SettingsDriveSettingsPanel: typeof import("../app/components/settings/DriveSettingsPanel.vue")['default']
 export const NuxtWelcome: typeof import("../node_modules/nuxt/dist/app/components/welcome.vue")['default']
@@ -130,7 +134,6 @@ export const LazyCanvasActionModals: LazyComponent<typeof import("../app/compone
 export const LazyCanvasBoard: LazyComponent<typeof import("../app/components/canvas/CanvasBoard.vue")['default']>
 export const LazyCanvasEdgeLayer: LazyComponent<typeof import("../app/components/canvas/CanvasEdgeLayer.vue")['default']>
 export const LazyCanvasEmbedPreview: LazyComponent<typeof import("../app/components/canvas/CanvasEmbedPreview.vue")['default']>
-export const LazyCanvasInkingOverlay: LazyComponent<typeof import("../app/components/canvas/CanvasInkingOverlay.vue")['default']>
 export const LazyCanvasInsertDrawer: LazyComponent<typeof import("../app/components/canvas/CanvasInsertDrawer.vue")['default']>
 export const LazyCanvasNode: LazyComponent<typeof import("../app/components/canvas/CanvasNode.vue")['default']>
 export const LazyCanvasNodeBook: LazyComponent<typeof import("../app/components/canvas/CanvasNodeBook.vue")['default']>
@@ -141,6 +144,7 @@ export const LazyCanvasSelectionToolbar: LazyComponent<typeof import("../app/com
 export const LazyCanvasToolbar: LazyComponent<typeof import("../app/components/canvas/CanvasToolbar.vue")['default']>
 export const LazyCanvasCycleWarningPlaceholder: LazyComponent<typeof import("../app/components/canvas/CycleWarningPlaceholder.vue")['default']>
 export const LazyCanvasKnowledgeGraphView: LazyComponent<typeof import("../app/components/canvas/KnowledgeGraphView.vue")['default']>
+export const LazyCanvasUnifiedCanvasHub: LazyComponent<typeof import("../app/components/canvas/UnifiedCanvasHub.vue")['default']>
 export const LazyCanvasDrawingAiSynthesisModal: LazyComponent<typeof import("../app/components/canvas/drawing/DrawingAiSynthesisModal.vue")['default']>
 export const LazyCanvasDrawingPageCanvas: LazyComponent<typeof import("../app/components/canvas/drawing/DrawingPageCanvas.vue")['default']>
 export const LazyCanvasDrawingToolbar: LazyComponent<typeof import("../app/components/canvas/drawing/DrawingToolbar.vue")['default']>
@@ -148,6 +152,7 @@ export const LazyGraphAppKnowledgeGraph: LazyComponent<typeof import("../app/com
 export const LazyGraphBookAnnotationsDrawer: LazyComponent<typeof import("../app/components/graph/BookAnnotationsDrawer.vue")['default']>
 export const LazyGraphNoteDetailDrawer: LazyComponent<typeof import("../app/components/graph/NoteDetailDrawer.vue")['default']>
 export const LazyGraphThemeCanvasOverlay: LazyComponent<typeof import("../app/components/graph/ThemeCanvasOverlay.vue")['default']>
+export const LazyNotesJournalView: LazyComponent<typeof import("../app/components/notes/JournalView.vue")['default']>
 export const LazyNotesNoteCompositeRenderer: LazyComponent<typeof import("../app/components/notes/NoteCompositeRenderer.vue")['default']>
 export const LazyNotesNoteEditorPane: LazyComponent<typeof import("../app/components/notes/NoteEditorPane.vue")['default']>
 export const LazyReaderAiOverlayCard: LazyComponent<typeof import("../app/components/reader/ReaderAiOverlayCard.vue")['default']>
@@ -156,6 +161,8 @@ export const LazyReaderBookNotesPanel: LazyComponent<typeof import("../app/compo
 export const LazyReaderBottomBar: LazyComponent<typeof import("../app/components/reader/ReaderBottomBar.vue")['default']>
 export const LazyReaderCreateBookletModal: LazyComponent<typeof import("../app/components/reader/ReaderCreateBookletModal.vue")['default']>
 export const LazyReaderDictionaryCard: LazyComponent<typeof import("../app/components/reader/ReaderDictionaryCard.vue")['default']>
+export const LazyReaderFocusHUD: LazyComponent<typeof import("../app/components/reader/ReaderFocusHUD.vue")['default']>
+export const LazyReaderFocusOverlay: LazyComponent<typeof import("../app/components/reader/ReaderFocusOverlay.vue")['default']>
 export const LazyReaderGraphPanel: LazyComponent<typeof import("../app/components/reader/ReaderGraphPanel.vue")['default']>
 export const LazyReaderSavedPagesModal: LazyComponent<typeof import("../app/components/reader/ReaderSavedPagesModal.vue")['default']>
 export const LazyReaderSelectionTooltip: LazyComponent<typeof import("../app/components/reader/ReaderSelectionTooltip.vue")['default']>
@@ -164,6 +171,7 @@ export const LazyReaderTypographyPopover: LazyComponent<typeof import("../app/co
 export const LazyReaderUploader: LazyComponent<typeof import("../app/components/reader/Uploader.vue")['default']>
 export const LazyReaderViewer: LazyComponent<typeof import("../app/components/reader/Viewer.vue")['default']>
 export const LazyReaderEnginePageCurlCanvas: LazyComponent<typeof import("../app/components/reader/engine/PageCurlCanvas.vue")['default']>
+export const LazyReaderEngineReaderScrollEngine: LazyComponent<typeof import("../app/components/reader/engine/ReaderScrollEngine.vue")['default']>
 export const LazyReaderUploadDropZone: LazyComponent<typeof import("../app/components/reader/upload/DropZone.vue")['default']>
 export const LazySettingsDriveSettingsPanel: LazyComponent<typeof import("../app/components/settings/DriveSettingsPanel.vue")['default']>
 export const LazyNuxtWelcome: LazyComponent<typeof import("../node_modules/nuxt/dist/app/components/welcome.vue")['default']>

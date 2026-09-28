@@ -880,6 +880,7 @@ const syncFromRoute = async () => {
       activeNote.value = note
       viewLayout.value = 'note-editor'
     } else {
+      activeNote.value = null
       if (route?.query?.view === 'grid' || (!route?.query?.view && hasExplicitTab)) {
         viewLayout.value = 'grid'
       } else if (route?.query?.view === 'split' || route?.query?.view === 'note-editor') {
@@ -889,11 +890,14 @@ const syncFromRoute = async () => {
       }
     }
   } else {
+    activeNote.value = null
     if (route?.query?.view === 'grid' || (!route?.query?.view && hasExplicitTab)) {
       viewLayout.value = 'grid'
     } else if (route?.query?.view === 'split' || route?.query?.view === 'note-editor') {
       viewLayout.value = 'note-editor'
     } else if (route?.query?.view === 'graph') {
+      viewLayout.value = 'graph'
+    } else if (!route?.query?.view && !hasExplicitTab && viewLayout.value === 'note-editor') {
       viewLayout.value = 'graph'
     }
   }
@@ -945,6 +949,7 @@ onBeforeUnmount(() => {
 
 watch(viewLayout, (val) => {
   if (val === 'graph') {
+    activeNote.value = null
     fetchUnifiedGraph()
   }
 })

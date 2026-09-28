@@ -60,7 +60,6 @@ describe('CanvasBoard Interaction (Desktop 2-finger Pan vs Click+Wheel Zoom)', (
         stubs: {
           CanvasEdgeLayer: true,
           CanvasNode: true,
-          CanvasInkingOverlay: true,
           CanvasToolbar: true,
           CanvasInsertDrawer: true,
         },
@@ -91,7 +90,6 @@ describe('CanvasBoard Interaction (Desktop 2-finger Pan vs Click+Wheel Zoom)', (
         stubs: {
           CanvasEdgeLayer: true,
           CanvasNode: true,
-          CanvasInkingOverlay: true,
           CanvasToolbar: true,
           CanvasInsertDrawer: true,
         },
@@ -121,7 +119,6 @@ describe('CanvasBoard Interaction (Desktop 2-finger Pan vs Click+Wheel Zoom)', (
         stubs: {
           CanvasEdgeLayer: true,
           CanvasNode: true,
-          CanvasInkingOverlay: true,
           CanvasToolbar: true,
           CanvasInsertDrawer: true,
         },
@@ -168,7 +165,6 @@ describe('CanvasBoard Multi-selection Move and Drag Interactions', () => {
             props: ['node', 'isSelected', 'isMultiSelect'],
             template: '<div class="stub-node" :data-id="node.id" @pointerdown.stop="$emit(\'select\', node.id, false, $event); $emit(\'drag-start\', node.id, $event)"></div>',
           },
-          CanvasInkingOverlay: true,
           CanvasToolbar: true,
           CanvasInsertDrawer: true,
           CanvasSelectionToolbar: true,
@@ -223,7 +219,6 @@ describe('CanvasBoard Multi-selection Move and Drag Interactions', () => {
             props: ['node', 'isSelected', 'isMultiSelect'],
             template: '<div class="stub-node" :data-id="node.id" @pointerdown.stop="$emit(\'select\', node.id, false, $event); $emit(\'drag-start\', node.id, $event)"></div>',
           },
-          CanvasInkingOverlay: true,
           CanvasToolbar: true,
           CanvasInsertDrawer: true,
           CanvasSelectionToolbar: true,
@@ -263,7 +258,6 @@ describe('CanvasBoard Multi-selection Move and Drag Interactions', () => {
         stubs: {
           CanvasEdgeLayer: true,
           CanvasNode: true,
-          CanvasInkingOverlay: true,
           CanvasToolbar: true,
           CanvasInsertDrawer: true,
           CanvasSelectionToolbar: true,
