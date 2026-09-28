@@ -28,35 +28,162 @@
     <!-- VISUALIZAÇÃO 2: LISTA DE LIVROS DO MAPA MENTAL CLICADO -->
     <div v-else class="w-full h-full flex flex-col bg-bgPanel/95 backdrop-blur-xl z-20 relative animate-fadeIn">
 
-      <!-- Cabeçalho com Seta de Voltar para o Grafo -->
+      <!-- Cabeçalho com Seta de Voltar para o Grafo e Ações de Tag -->
       <div class="p-5 border-b border-divider flex flex-col gap-4 bg-bgApp/40">
-        <button
-          @click="goBackToGraph"
-          class="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-accent hover:text-accent/80 transition-colors w-fit group cursor-pointer"
-          title="Voltar para o Grafo"
-        >
-          <ArrowLeftIcon class="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-          <span>Voltar para o Grafo</span>
-        </button>
+        <div class="flex items-center justify-between gap-3">
+          <button
+            @click="goBackToGraph"
+            class="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-accent hover:text-accent/80 transition-colors w-fit group cursor-pointer"
+            title="Voltar para o Grafo"
+          >
+            <ArrowLeftIcon class="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+            <span>Voltar para o Grafo</span>
+          </button>
 
-        <div class="flex items-center gap-3">
-          <div
-            class="w-4 h-4 rounded-full shadow-md shrink-0"
-            :style="{ backgroundColor: selectedNode.color || '#E57B55' }"
-          ></div>
-          <div>
-            <h2 class="text-base sm:text-lg font-bold font-interface text-textPrimary leading-tight truncate max-w-[280px]">
-              {{ selectedNode.name }}
-            </h2>
-            <p class="text-xs text-textSecondary font-technical mt-0.5">
-              {{ displayedBooks.length }} {{ displayedBooks.length === 1 ? 'livro conectado' : 'livros conectados' }}
-            </p>
+          <!-- Ações Rápidas da Tag (Editar / Excluir) -->
+          <div v-if="canManageTag && !isEditingTag && !isDeletingTag" class="flex items-center gap-1.5 shrink-0">
+            <button
+              @click="startEditTag"
+              data-testid="edit-tag-btn"
+              class="px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-textSecondary hover:text-textPrimary border border-divider text-xs font-interface font-medium transition-all flex items-center gap-1.5 cursor-pointer"
+              title="Editar tag"
+            >
+              <Edit2Icon class="w-3.5 h-3.5" />
+              <span>Editar</span>
+            </button>
+            <button
+              @click="startDeleteTag"
+              data-testid="delete-tag-btn"
+              class="px-2.5 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-interface font-medium transition-all flex items-center gap-1.5 cursor-pointer"
+              title="Excluir tag"
+            >
+              <Trash2Icon class="w-3.5 h-3.5" />
+              <span>Excluir</span>
+            </button>
           </div>
         </div>
 
-        <p v-if="selectedNode.description" class="text-xs sm:text-sm text-textSecondary font-light leading-relaxed line-clamp-2">
-          {{ selectedNode.description }}
-        </p>
+        <!-- MODO EDIÇÃO DA TAG -->
+        <div v-if="isEditingTag" class="p-3.5 rounded-2xl bg-white/[0.03] border border-accent/40 flex flex-col gap-3">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-technical uppercase font-bold tracking-wider text-accent">
+              Editar Tag
+            </span>
+            <div class="flex items-center gap-1.5">
+              <button
+                v-for="color in presetColors"
+                :key="color"
+                type="button"
+                @click="editTagColor = color"
+                class="w-4 h-4 rounded-full border transition-all"
+                :class="editTagColor === color ? 'scale-125 border-white ring-2 ring-white/20' : 'border-transparent opacity-70 hover:opacity-100'"
+                :style="{ backgroundColor: color }"
+              ></button>
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <input
+              v-model="editTagName"
+              ref="editTagNameInputRef"
+              type="text"
+              placeholder="Nome da tag..."
+              maxlength="30"
+              class="bg-bgApp border border-divider rounded-xl px-3 py-2 text-xs text-textPrimary placeholder:text-textSecondary/50 focus:outline-none focus:border-accent"
+              @keyup.enter="handleSaveEditTag"
+              @keyup.esc="cancelEditTag"
+            />
+            <input
+              v-model="editTagDescription"
+              type="text"
+              placeholder="Descrição (opcional)..."
+              class="bg-bgApp border border-divider rounded-xl px-3 py-2 text-xs text-textPrimary placeholder:text-textSecondary/50 focus:outline-none focus:border-accent"
+              @keyup.enter="handleSaveEditTag"
+              @keyup.esc="cancelEditTag"
+            />
+          </div>
+
+          <span v-if="editTagError" class="text-[11px] text-rose-400 font-interface">
+            {{ editTagError }}
+          </span>
+
+          <div class="flex items-center justify-end gap-2 pt-1">
+            <button
+              @click="cancelEditTag"
+              class="px-3 py-1.5 rounded-xl border border-divider text-xs text-textSecondary hover:text-white hover:bg-white/5 transition-all"
+            >
+              Cancelar
+            </button>
+            <button
+              @click="handleSaveEditTag"
+              :disabled="!editTagName.trim() || isSavingTag"
+              data-testid="save-edit-tag-btn"
+              class="px-3.5 py-1.5 rounded-xl bg-accent hover:bg-accent/90 text-white font-semibold text-xs transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+            >
+              <CheckIcon class="w-3.5 h-3.5" />
+              <span>{{ isSavingTag ? 'Salvando...' : 'Salvar' }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- MODO CONFIRMAÇÃO DE EXCLUSÃO DA TAG -->
+        <div v-else-if="isDeletingTag" class="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex flex-col gap-2.5 text-xs">
+          <div class="flex items-center gap-2 text-rose-300 font-medium">
+            <AlertTriangleIcon class="w-4 h-4 shrink-0 text-rose-400" />
+            <span>Excluir tag «{{ selectedNode.name }}»?</span>
+          </div>
+          <p class="text-textSecondary text-[11px] leading-relaxed">
+            <template v-if="displayedBooks.length > 0">
+              Esta tag está vinculada a <strong class="text-rose-300">{{ displayedBooks.length }}</strong> {{ displayedBooks.length === 1 ? 'livro' : 'livros' }}.
+              Ela será desvinculada dos livros, notas e do grafo.
+            </template>
+            <template v-else>
+              A tag será removida permanentemente do acervo e do grafo de conhecimento.
+            </template>
+          </p>
+          <span v-if="deleteTagError" class="text-[11px] text-rose-400 font-interface">
+            {{ deleteTagError }}
+          </span>
+          <div class="flex items-center justify-end gap-2 pt-1">
+            <button
+              @click="cancelDeleteTag"
+              class="px-3 py-1.5 rounded-xl border border-divider text-xs text-textSecondary hover:text-white hover:bg-white/5 transition-all"
+            >
+              Cancelar
+            </button>
+            <button
+              @click="handleConfirmDeleteTag"
+              :disabled="isDeletingTagLoading"
+              data-testid="confirm-delete-tag-btn"
+              class="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs transition-all flex items-center gap-1.5 cursor-pointer"
+            >
+              <Trash2Icon class="w-3.5 h-3.5" />
+              <span>{{ isDeletingTagLoading ? 'Excluindo...' : 'Confirmar Exclusão' }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- MODO VISUALIZAÇÃO PADRÃO DO CABEÇALHO -->
+        <div v-else class="flex flex-col gap-2">
+          <div class="flex items-center gap-3">
+            <div
+              class="w-4 h-4 rounded-full shadow-md shrink-0"
+              :style="{ backgroundColor: selectedNode.color || '#E57B55' }"
+            ></div>
+            <div class="min-w-0 flex-1">
+              <h2 class="text-base sm:text-lg font-bold font-interface text-textPrimary leading-tight truncate max-w-[280px]">
+                {{ selectedNode.name }}
+              </h2>
+              <p class="text-xs text-textSecondary font-technical mt-0.5">
+                {{ displayedBooks.length }} {{ displayedBooks.length === 1 ? 'livro conectado' : 'livros conectados' }}
+              </p>
+            </div>
+          </div>
+
+          <p v-if="selectedNode.description" class="text-xs sm:text-sm text-textSecondary font-light leading-relaxed line-clamp-2">
+            {{ selectedNode.description }}
+          </p>
+        </div>
       </div>
 
       <!-- Corpo da Lista de Livros -->
@@ -168,8 +295,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
-import { ArrowLeftIcon, BookIcon, BookOpenIcon, Globe as GlobeIcon } from 'lucide-vue-next'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import {
+  ArrowLeftIcon,
+  BookIcon,
+  BookOpenIcon,
+  Globe as GlobeIcon,
+  Edit2Icon,
+  Trash2Icon,
+  CheckIcon,
+  XIcon,
+  AlertTriangleIcon
+} from 'lucide-vue-next'
 import type { GraphNode, UserBookItem } from '~/interfaces/graph'
 import { useGraph } from '~/composables/useGraph'
 import { useUserBooks } from '~/composables/useUserBooks'
@@ -197,12 +334,14 @@ const emit = defineEmits<{
   (e: 'selectNode', node: GraphNode): void
 }>()
 
+const presetColors = ['#E57B55', '#3B82F6', '#10B981', '#8B5CF6', '#F59E0B', '#EC4899']
+
 const { activeTag, graphSearchQuery } = useWorkspaceSidebar()
 const effectiveSearchQuery = computed(() => {
   return props.searchQuery || activeTag.value || graphSearchQuery.value || ''
 })
 
-const { graphData, loading, fetchGraph, createNode, createConnection, linkBookToNode, unlinkEdge } = useGraph()
+const { graphData, loading, fetchGraph, createNode, updateNode, deleteNode, createConnection, linkBookToNode, unlinkEdge } = useGraph()
 const { userBooks, fetchUserBooks } = useUserBooks()
 
 const handleDeleteEdge = async (edge: any) => {
@@ -220,6 +359,109 @@ const isBookDrawerOpen = ref(false)
 const isNoteDrawerOpen = ref(false)
 const isCreateModalOpen = ref(false)
 const isConnectModalOpen = ref(false)
+
+const canManageTag = computed(() => {
+  if (!selectedNode.value) return false
+  if (selectedNode.value.isRoot || selectedNode.value.id === -999) return false
+  const isBook = selectedNode.value.type === 'book' || String(selectedNode.value.id).startsWith('book-')
+  return !isBook
+})
+
+const isEditingTag = ref(false)
+const editTagName = ref('')
+const editTagColor = ref('#E57B55')
+const editTagDescription = ref('')
+const isSavingTag = ref(false)
+const editTagError = ref<string | null>(null)
+const editTagNameInputRef = ref<HTMLInputElement | null>(null)
+
+const isDeletingTag = ref(false)
+const isDeletingTagLoading = ref(false)
+const deleteTagError = ref<string | null>(null)
+
+const startEditTag = () => {
+  if (!selectedNode.value) return
+  isDeletingTag.value = false
+  isEditingTag.value = true
+  editTagName.value = selectedNode.value.name || ''
+  editTagColor.value = selectedNode.value.color || '#E57B55'
+  editTagDescription.value = selectedNode.value.description || ''
+  editTagError.value = null
+  nextTick(() => {
+    editTagNameInputRef.value?.focus()
+  })
+}
+
+const cancelEditTag = () => {
+  isEditingTag.value = false
+  editTagName.value = ''
+  editTagDescription.value = ''
+  editTagError.value = null
+}
+
+const handleSaveEditTag = async () => {
+  if (!selectedNode.value) return
+  const name = editTagName.value.trim()
+  if (!name) {
+    editTagError.value = 'O nome da tag não pode ser vazio'
+    return
+  }
+  if (name.length > 30) {
+    editTagError.value = 'O nome da tag deve ter no máximo 30 caracteres'
+    return
+  }
+  isSavingTag.value = true
+  editTagError.value = null
+  try {
+    const rawId = selectedNode.value.rawId || Number(String(selectedNode.value.id).replace(/^theme-/, ''))
+    const targetId = !isNaN(rawId) ? rawId : selectedNode.value.id
+    await updateNode(targetId, name, editTagColor.value, editTagDescription.value)
+    selectedNode.value = {
+      ...selectedNode.value,
+      name,
+      color: editTagColor.value,
+      description: editTagDescription.value,
+    }
+    isEditingTag.value = false
+  } catch (err: any) {
+    console.error('Erro ao atualizar tag:', err)
+    editTagError.value = err?.data?.error || err?.message || 'Falha ao atualizar tag'
+  } finally {
+    isSavingTag.value = false
+  }
+}
+
+const startDeleteTag = () => {
+  isEditingTag.value = false
+  isDeletingTag.value = true
+  deleteTagError.value = null
+}
+
+const cancelDeleteTag = () => {
+  isDeletingTag.value = false
+  deleteTagError.value = null
+}
+
+const handleConfirmDeleteTag = async () => {
+  if (!selectedNode.value) return
+  isDeletingTagLoading.value = true
+  deleteTagError.value = null
+  try {
+    const rawId = selectedNode.value.rawId || Number(String(selectedNode.value.id).replace(/^theme-/, ''))
+    const targetId = !isNaN(rawId) ? rawId : selectedNode.value.id
+    await deleteNode(targetId)
+    if (activeTag && activeTag.value && activeTag.value.toLowerCase() === (selectedNode.value.name || '').toLowerCase()) {
+      activeTag.value = null
+    }
+    isDeletingTag.value = false
+    selectedNode.value = null
+  } catch (err: any) {
+    console.error('Erro ao excluir tag:', err)
+    deleteTagError.value = err?.data?.error || err?.message || 'Falha ao excluir tag'
+  } finally {
+    isDeletingTagLoading.value = false
+  }
+}
 
 const handleSelectNode = (node: GraphNode) => {
   emit('selectNode', node)
@@ -306,6 +548,10 @@ const handleSelectBook = (book: any) => {
 }
 
 const goBackToGraph = () => {
+  isEditingTag.value = false
+  isDeletingTag.value = false
+  editTagError.value = null
+  deleteTagError.value = null
   selectedNode.value = null
 }
 

@@ -48,12 +48,17 @@ const mockUserBooks = ref([
   },
 ])
 
+const mockUpdateNode = vi.fn()
+const mockDeleteNode = vi.fn()
+
 vi.mock('~/composables/useGraph', () => ({
   useGraph: () => ({
     graphData: mockGraphData,
     loading: ref(false),
     fetchGraph: vi.fn(),
     createNode: vi.fn(),
+    updateNode: mockUpdateNode,
+    deleteNode: mockDeleteNode,
     createConnection: vi.fn(),
     fetchBookAnnotations: vi.fn().mockResolvedValue([]),
     createLooseAnnotation: vi.fn(),
@@ -331,5 +336,49 @@ describe('SidebarGraph Component', () => {
     expect(wrapper.text()).toContain('Finanças')
     expect(wrapper.text()).toContain('Psicologia Financeira')
     expect(wrapper.text()).not.toContain('Nenhum livro neste tema')
+  })
+
+  it('permite editar e excluir a tag selecionada em SidebarGraph', async () => {
+    const wrapper = mount(SidebarGraph, {
+      global: {
+        stubs: {
+          GraphCanvas: {
+            template: '<div data-testid="graph-canvas"><button data-testid="click-theme-for-edit" @click="$emit(\'selectNode\', themeNode)">Tema</button></div>',
+            data() {
+              return {
+                themeNode: {
+                  id: 'theme-55',
+                  rawId: 55,
+                  type: 'theme',
+                  name: 'História',
+                },
+              }
+            },
+          },
+          BookAnnotationsDrawer: true,
+          CreateNodeModal: true,
+          ConnectNodesModal: true,
+          NuxtLink: true,
+        },
+      },
+    })
+
+    await wrapper.find('[data-testid="click-theme-for-edit"]').trigger('click')
+
+    expect(wrapper.find('[data-testid="sidebar-edit-tag-btn"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="sidebar-delete-tag-btn"]').exists()).toBe(true)
+
+    // Editar
+    await wrapper.find('[data-testid="sidebar-edit-tag-btn"]').trigger('click')
+    const input = wrapper.find('input[placeholder="Nome da tag..."]')
+    await input.setValue('História Geral')
+    await wrapper.find('[data-testid="save-sidebar-edit-tag-btn"]').trigger('click')
+    expect(mockUpdateNode).toHaveBeenCalledWith(55, 'História Geral', '#E57B55', '')
+
+    // Excluir
+    await wrapper.find('[data-testid="sidebar-delete-tag-btn"]').trigger('click')
+    expect(wrapper.text()).toContain('Excluir tag «História Geral»?')
+    await wrapper.find('[data-testid="confirm-sidebar-delete-tag-btn"]').trigger('click')
+    expect(mockDeleteNode).toHaveBeenCalledWith(55)
   })
 })
