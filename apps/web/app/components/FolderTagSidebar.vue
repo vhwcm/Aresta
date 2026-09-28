@@ -20,51 +20,55 @@
       :class="isCollapsed ? 'justify-center px-2' : 'justify-between px-2.5 md:px-3 gap-2'"
     >
       <div v-if="!isCollapsed" class="flex items-center gap-1.5 flex-1 min-w-0">
-        <button
-          type="button"
-          @click="navigateHome"
-          class="flex items-center group cursor-pointer shrink-0 border-none bg-transparent p-0"
-          title="Ir para Início"
-        >
-          <ArestaLogoGraph :size="32" use-image :to="null" class="!p-0 group-hover:scale-105 transition-transform" />
-        </button>
-
         <!-- Botão de Alternância de Tema -->
         <button
           @click="toggleThemeMode"
-          class="p-1.5 rounded-xl transition-all cursor-pointer shrink-0 flex items-center justify-center border border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.05] dark:hover:bg-white/[0.08]"
+          class="p-2 rounded-xl transition-all cursor-pointer shrink-0 flex items-center justify-center border border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.05] dark:hover:bg-white/[0.08]"
           :title="themeMode === 'dark' ? 'Tema: Escuro (clique para Claro)' : (themeMode === 'light' ? 'Tema: Claro (clique para Livro)' : 'Tema: Livro (clique para Escuro)')"
           aria-label="Alternar tema da interface"
         >
-          <SunIcon v-if="themeMode === 'light'" class="w-4 h-4 text-amber-500 hover:rotate-45 transition-transform" />
-          <PaletteIcon v-else-if="themeMode === 'sepia'" class="w-4 h-4 text-amber-600 dark:text-amber-300 hover:scale-110 transition-transform" />
-          <MoonIcon v-else class="w-4 h-4 text-accent hover:-rotate-12 transition-transform" />
+          <SunIcon v-if="themeMode === 'light'" class="w-5 h-5 text-amber-500 hover:rotate-45 transition-transform" />
+          <PaletteIcon v-else-if="themeMode === 'sepia'" class="w-5 h-5 text-amber-600 dark:text-amber-300 hover:scale-110 transition-transform" />
+          <MoonIcon v-else class="w-5 h-5 text-accent hover:-rotate-12 transition-transform" />
         </button>
 
         <!-- Lupa de Pesquisa dos Títulos dos Nós do Grafo -->
         <button
           @click="toggleGraphSearch"
-          class="p-1.5 rounded-xl transition-all cursor-pointer shrink-0 flex items-center justify-center border"
+          class="p-2 rounded-xl transition-all cursor-pointer shrink-0 flex items-center justify-center border"
           :class="isGraphSearchOpen || graphSearchQuery
             ? 'bg-accent/15 text-accent border-accent/40 shadow-xs'
             : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.05] dark:hover:bg-white/[0.08]'"
           title="Pesquisar nós do grafo"
           aria-label="Pesquisar nós do grafo"
         >
-          <SearchIcon class="w-3.5 h-3.5" />
+          <SearchIcon class="w-5 h-5" />
         </button>
 
+        <!-- Botão Minha Conta (Ao lado esquerdo da Ofensiva) -->
+        <NuxtLink
+          to="/conta"
+          class="ml-auto p-2 rounded-xl transition-all cursor-pointer shrink-0 flex items-center justify-center border"
+          :class="isAccountActive
+            ? 'bg-accent/15 text-accent border-accent/40 shadow-xs'
+            : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.05] dark:hover:bg-white/[0.08]'"
+          title="Minha Conta"
+          aria-label="Minha Conta"
+        >
+          <UserIcon class="w-5 h-5" />
+        </NuxtLink>
+
         <!-- Indicador de Ofensiva (colado ao lado direito) -->
-        <ReadingStreak compact align="sidebar" class="ml-auto" />
+        <ReadingStreak compact align="sidebar" />
       </div>
 
       <!-- Botão Minimizar/Expandir Sidebar -->
       <button
         @click="toggleCollapse"
-        class="p-1.5 rounded-lg text-textSecondary hover:text-textPrimary hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-colors cursor-pointer shrink-0"
+        class="p-2 rounded-xl text-textSecondary hover:text-textPrimary hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-colors cursor-pointer shrink-0"
         :title="isCollapsed ? 'Expandir painel' : 'Recolher painel'"
       >
-        <SidebarIcon class="w-4 h-4" />
+        <SidebarIcon class="w-5 h-5" />
       </button>
     </div>
 
@@ -108,12 +112,12 @@
         <button
           type="button"
           @click="navigateHome"
-          class="p-2 rounded-xl transition-all cursor-pointer border"
+          class="p-2 rounded-xl transition-all cursor-pointer border flex items-center justify-center"
           :class="isHomeActive && !isJournalActive && selectedFolder === null && selectedTag === null && viewLayout === 'graph' ? 'bg-accent/15 text-accent border-accent/30 shadow-xs' : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.05] dark:hover:bg-white/[0.05]'"
           title="Início"
           aria-label="Início"
         >
-          <HomeIcon class="w-4 h-4" />
+          <ArestaLogoGraph :size="26" use-image :to="null" class="!p-0 group-hover:scale-110 transition-transform" />
         </button>
 
         <!-- 2. Livros / Biblioteca -->
@@ -209,8 +213,8 @@
       <!-- MODO EXPANDIDO: Navegação Global + Leitura Ativa + Árvore Hierárquica -->
       <div v-else class="space-y-3">
         <!-- SEÇÃO: NAVEGAÇÃO PRINCIPAL ARESTA (Em retângulos sem margem lateral + ícones maiores) -->
-        <div class="-mx-2.5 -mt-2.5 grid grid-cols-5 divide-x divide-divider/60 border-b border-divider/60 bg-bgRoot/40 shadow-xs">
-          <!-- 1. Início -->
+        <div class="-mx-2.5 -mt-2.5 grid grid-cols-4 divide-x divide-divider/60 border-b border-divider/60 bg-bgRoot/40 shadow-xs">
+          <!-- 1. Início (Grafo de Conhecimento / Logo Aresta) -->
           <button
             type="button"
             @click="navigateHome"
@@ -221,7 +225,7 @@
             title="Início"
             aria-label="Início"
           >
-            <HomeIcon class="w-5 h-5 transition-transform group-hover:scale-110" />
+            <ArestaLogoGraph :size="28" use-image :to="null" class="!p-0 group-hover:scale-110 transition-transform" />
           </button>
 
           <!-- 2. Livros (Estante) -->
@@ -250,20 +254,7 @@
             <BrainIcon class="w-5 h-5 transition-transform group-hover:scale-110" />
           </NuxtLink>
 
-          <!-- 4. Minha Conta -->
-          <NuxtLink
-            to="/conta"
-            class="flex items-center justify-center h-11 transition-all cursor-pointer group relative"
-            :class="isAccountActive
-              ? 'bg-accent/15 text-accent font-semibold border-b-2 border-b-accent'
-              : 'text-textSecondary hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'"
-            title="Minha Conta"
-            aria-label="Minha Conta"
-          >
-            <UserIcon class="w-5 h-5 transition-transform group-hover:scale-110" />
-          </NuxtLink>
-
-          <!-- 5. Botão de Adicionar Geral (Ao lado da Conta) -->
+          <!-- 4. Botão de Adicionar Geral -->
           <div class="relative h-11" ref="addDropdownRef">
             <button
               @click="isAddMenuOpen = !isAddMenuOpen"
@@ -793,7 +784,6 @@ import {
   FolderPlus as FolderPlusIcon,
   Play as PlayIcon,
   BookOpenCheck as BookOpenCheckIcon,
-  Home as HomeIcon,
   BookOpen as BookOpenIcon,
   Book as BookIcon,
   FileCode2 as FileCode2Icon,

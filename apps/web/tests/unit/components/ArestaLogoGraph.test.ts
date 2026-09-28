@@ -41,7 +41,7 @@ describe('ArestaLogoGraph Component', () => {
 
     const img = wrapper.find('[data-testid="aresta-logo-img"]');
     expect(img.exists()).toBe(true);
-    expect(img.attributes('src')).toBe('/logo_aresta_sem_fundo.png');
+    expect(img.attributes('src')).toBe('/logos/logo_aresta.svg');
     expect(wrapper.find('svg').exists()).toBe(false);
   });
 });

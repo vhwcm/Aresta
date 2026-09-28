@@ -6,7 +6,7 @@
       data-testid="reading-streak-trigger-btn"
       :class="compact
         ? [
-            'flex items-center gap-1.5 px-2 py-1 rounded-xl transition-all cursor-pointer shrink-0 border text-xs font-semibold',
+            'flex items-center gap-1.5 px-2 py-1.5 rounded-xl transition-all cursor-pointer shrink-0 border text-sm font-semibold',
             isOpen
               ? 'bg-accent/15 text-accent border-accent/40 shadow-xs'
               : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.05] dark:hover:bg-white/[0.08]'
@@ -21,12 +21,12 @@
       <!-- Ícone Chama com preenchimento/brilho -->
       <div
         class="relative flex items-center justify-center"
-        :class="compact ? 'w-3.5 h-3.5' : 'w-4 h-4 sm:w-4.5 sm:h-4.5'"
+        :class="compact ? 'w-5 h-5' : 'w-4 h-4 sm:w-4.5 sm:h-4.5'"
       >
         <FlameIcon
           class="transition-transform duration-300 group-hover:scale-110"
           :class="[
-            compact ? 'w-3.5 h-3.5' : 'w-4 h-4 sm:w-4.5 sm:h-4.5',
+            compact ? 'w-5 h-5' : 'w-4 h-4 sm:w-4.5 sm:h-4.5',
             currentStreak > 0 ? 'text-amber-500 fill-amber-500/20' : 'text-textSecondary'
           ]"
         />
@@ -42,7 +42,7 @@
           <FlameIcon
             class="text-accent fill-accent"
             :class="[
-              compact ? 'w-3.5 h-3.5' : 'w-4 h-4 sm:w-4.5 sm:h-4.5',
+              compact ? 'w-5 h-5' : 'w-4 h-4 sm:w-4.5 sm:h-4.5',
               { 'animate-pulse': isGoalReachedToday }
             ]"
           />
@@ -52,7 +52,7 @@
       <!-- Contador da Ofensiva -->
       <span
         :class="[
-          compact ? 'font-mono text-xs font-semibold' : 'font-technical text-xs sm:text-sm font-semibold tracking-wider',
+          compact ? 'font-mono text-sm font-bold' : 'font-technical text-xs sm:text-sm font-semibold tracking-wider',
           currentStreak > 0 ? 'text-textPrimary' : 'text-textSecondary'
         ]"
       >

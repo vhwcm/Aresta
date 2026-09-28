@@ -200,7 +200,7 @@ withDefaults(
     title: 'Aresta - Ir para o Início',
     to: '/',
     useImage: false,
-    logoSrc: '/logo_aresta_sem_fundo.png',
+    logoSrc: '/logos/logo_aresta.svg',
   }
 )
 </script>

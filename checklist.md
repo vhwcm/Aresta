@@ -1,6 +1,9 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [28/09/2026 09:16] [Concluído] Integrar SVG oficial em public/logos, atualizar ArestaLogoGraph com vetor e ampliar tamanho do ícone de início no sidebar (28px/26px)
+- [28/09/2026 09:03] [Concluído] Substituir ícone de casinha pelo do Aresta na navegação, remover logo do topo e ampliar tamanho dos ícones da barra superior (tema, busca, conta e ofensiva) mantendo altura da barra intacta
+- [28/09/2026 08:58] [Concluído] Posicionar o ícone de conta ao lado esquerdo da ofensiva no cabeçalho superior do FolderTagSidebar e ajustar grid de navegação para 4 colunas
 - [28/09/2026 08:55] [Concluído] Adicionar opções de editar e excluir tag ao abrir a página de detalhes do nó tag no grafo de conhecimento
 - [28/09/2026 08:47] [Concluído] Remover texto do botão flutuante de excluir aresta no grafo mantendo apenas o ícone circular
 - [28/09/2026 08:41] [Concluído] Implementar seleção de aresta ao clicar com botão flutuante para excluir e desvincular do tema no grafo de conhecimento

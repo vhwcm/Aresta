@@ -279,5 +279,67 @@ describe('FolderTagSidebar Component (Itens sem pasta na raiz)', () => {
 
     expect(wrapper.emitted('go-home')).toBeTruthy()
   })
+
+  it('exibe o ícone de Minha Conta na barra superior (top header) e grid de navegação com 4 colunas', () => {
+    const wrapper = mount(FolderTagSidebar, {
+      props: {
+        items,
+        folders,
+        collapsed: false
+      },
+      global: {
+        stubs: {
+          NuxtLink: {
+            props: ['to'],
+            template: '<a :href="to"><slot /></a>'
+          },
+          ArestaLogoGraph: true,
+          ReadingStreak: true,
+          ManageThemesModal: true
+        }
+      }
+    })
+
+    // Botão de conta no top header
+    const accountBtn = wrapper.find('a[title="Minha Conta"]')
+    expect(accountBtn.exists()).toBe(true)
+    expect(accountBtn.attributes('href')).toBe('/conta')
+
+    // Grid de navegação principal deve ter grid-cols-4
+    const navGrid = wrapper.find('.grid.grid-cols-4')
+    expect(navGrid.exists()).toBe(true)
+  })
+
+  it('renderiza o ícone do Aresta no botão de Início e não possui logo duplicada no top header', () => {
+    const wrapper = mount(FolderTagSidebar, {
+      props: {
+        items,
+        folders,
+        collapsed: false
+      },
+      global: {
+        stubs: {
+          NuxtLink: {
+            props: ['to'],
+            template: '<a :href="to"><slot /></a>'
+          },
+          ArestaLogoGraph: {
+            template: '<div data-testid="aresta-logo-graph-stub" />'
+          },
+          ReadingStreak: true,
+          ManageThemesModal: true
+        }
+      }
+    })
+
+    // O botão de Início deve conter o stub de ArestaLogoGraph
+    const homeBtn = wrapper.find('button[aria-label="Início"]')
+    expect(homeBtn.exists()).toBe(true)
+    expect(homeBtn.find('[data-testid="aresta-logo-graph-stub"]').exists()).toBe(true)
+
+    // O header do sidebar não deve conter logo separada além da navegação
+    const header = wrapper.find('.h-14')
+    expect(header.find('[data-testid="aresta-logo-graph-stub"]').exists()).toBe(false)
+  })
 })
 
