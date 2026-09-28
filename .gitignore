@@ -17,5 +17,5 @@ infra/terraform.tfvars
 **/src-tauri/target/
 **/src-tauri/gen/
 *.png
-assets/
+/assets/
 

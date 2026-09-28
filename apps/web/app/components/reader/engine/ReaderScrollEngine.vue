@@ -868,7 +868,7 @@ defineExpose({
   -webkit-user-select: text;
   pointer-events: auto;
   touch-action: auto !important;
-  -webkit-touch-callout: default !important;
+  -webkit-touch-callout: none !important;
 }
 
 .scroll-page-placeholder {
@@ -896,7 +896,7 @@ defineExpose({
   user-select: text;
   -webkit-user-select: text;
   touch-action: auto !important;
-  -webkit-touch-callout: default !important;
+  -webkit-touch-callout: none !important;
 }
 
 /* Tema preto: borda branca sutil como "corte" delimitador */
@@ -913,7 +913,7 @@ defineExpose({
   user-select: text !important;
   -webkit-user-select: text !important;
   touch-action: auto !important;
-  -webkit-touch-callout: default !important;
+  -webkit-touch-callout: none !important;
 }
 
 /* ================= TEMAS E CONTRASTE DE CORES NO SCROLL ================= */

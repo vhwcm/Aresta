@@ -175,4 +175,109 @@ describe('FolderTagSidebar Component (Itens sem pasta na raiz)', () => {
     // Menu dropdown deve fechar
     expect(wrapper.find('[data-testid="sidebar-add-book-btn"]').exists()).toBe(false)
   })
+
+  it('exibe opção "Nova Tag" no botão de mais (+), fecha o menu dropdown, emite create-tag e abre modal de tags', async () => {
+    const wrapper = mount(FolderTagSidebar, {
+      props: {
+        items,
+        folders,
+        collapsed: false
+      },
+      global: {
+        stubs: {
+          NuxtLink: {
+            template: '<a><slot /></a>'
+          },
+          ArestaLogoGraph: true,
+          ReadingStreak: true,
+          ManageThemesModal: {
+            props: ['isOpen'],
+            template: '<div v-if="isOpen" data-testid="manage-themes-modal-stub" />'
+          }
+        }
+      }
+    })
+
+    const addBtn = wrapper.find('button[aria-label="Criar novo item"]')
+    expect(addBtn.exists()).toBe(true)
+
+    // Antes de abrir o menu dropdown
+    expect(wrapper.find('[data-testid="sidebar-add-tag-btn"]').exists()).toBe(false)
+
+    // Abre o menu dropdown
+    await addBtn.trigger('click')
+
+    // Botão "Nova Tag" deve estar visível
+    const addTagBtn = wrapper.find('[data-testid="sidebar-add-tag-btn"]')
+    expect(addTagBtn.exists()).toBe(true)
+    expect(addTagBtn.text()).toContain('Nova Tag')
+    expect(addTagBtn.text()).toContain('Criar no grafo e estante')
+
+    // Clica em "Nova Tag"
+    await addTagBtn.trigger('click')
+
+    // Deve emitir create-tag
+    expect(wrapper.emitted('create-tag')).toBeTruthy()
+
+    // O modal ManageThemesModal deve ser aberto
+    expect(wrapper.find('[data-testid="manage-themes-modal-stub"]').exists()).toBe(true)
+
+    // Menu dropdown deve ser fechado
+    expect(wrapper.find('[data-testid="sidebar-add-tag-btn"]').exists()).toBe(false)
+  })
+
+  it('ao clicar no ícone de Início (modo expandido), emite go-home e navega para /', async () => {
+    mockPush.mockClear()
+    const wrapper = mount(FolderTagSidebar, {
+      props: {
+        items,
+        folders,
+        collapsed: false,
+        viewLayout: 'grid'
+      },
+      global: {
+        stubs: {
+          NuxtLink: { template: '<a><slot /></a>' },
+          ArestaLogoGraph: true,
+          ReadingStreak: true,
+          ManageThemesModal: true
+        }
+      }
+    })
+
+    const homeBtn = wrapper.find('button[aria-label="Início"]')
+    expect(homeBtn.exists()).toBe(true)
+
+    await homeBtn.trigger('click')
+
+    expect(wrapper.emitted('go-home')).toBeTruthy()
+  })
+
+  it('ao clicar no ícone de Início (modo colapsado), emite go-home e fecha no mobile', async () => {
+    mockPush.mockClear()
+    const wrapper = mount(FolderTagSidebar, {
+      props: {
+        items,
+        folders,
+        collapsed: true,
+        viewLayout: 'grid'
+      },
+      global: {
+        stubs: {
+          NuxtLink: { template: '<a><slot /></a>' },
+          ArestaLogoGraph: true,
+          ReadingStreak: true,
+          ManageThemesModal: true
+        }
+      }
+    })
+
+    const homeBtn = wrapper.find('button[aria-label="Início"]')
+    expect(homeBtn.exists()).toBe(true)
+
+    await homeBtn.trigger('click')
+
+    expect(wrapper.emitted('go-home')).toBeTruthy()
+  })
 })
+

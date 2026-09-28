@@ -52,6 +52,7 @@
         </div>
         <div class="flex items-center gap-2">
           <input
+            ref="newTagInputRef"
             v-model="newThemeName"
             type="text"
             placeholder="Nome da nova tag..."
@@ -325,6 +326,19 @@ const newThemeName = ref('')
 const newThemeColor = ref('#E57B55')
 const isCreating = ref(false)
 const createError = ref<string | null>(null)
+const newTagInputRef = ref<HTMLInputElement | null>(null)
+
+watch(
+  () => props.isOpen,
+  (open) => {
+    if (open) {
+      nextTick(() => {
+        newTagInputRef.value?.focus()
+      })
+    }
+  },
+  { immediate: true }
+)
 
 const editingThemeId = ref<number | string | null>(null)
 const editThemeName = ref('')

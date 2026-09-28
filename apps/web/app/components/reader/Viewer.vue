@@ -314,6 +314,46 @@ const selectionTooltipText = ref('')
 const selectionTooltipPage = ref(1)
 const isSelectionTooltipAbove = ref(true)
 
+let isInternalSelectionClear = false
+
+function clearActiveSelectionHighlight() {
+  if (typeof CSS !== 'undefined' && 'highlights' in CSS) {
+    try {
+      (CSS as any).highlights.delete('active-reader-selection')
+    } catch {}
+  }
+}
+
+function clearNativeSelection() {
+  if (typeof window === 'undefined') return
+  isInternalSelectionClear = true
+  try {
+    window.getSelection()?.removeAllRanges()
+  } catch {}
+  setTimeout(() => {
+    isInternalSelectionClear = false
+  }, 120)
+}
+
+function onWindowPointerDownForSelection(e: PointerEvent | MouseEvent | TouchEvent) {
+  if (!isSelectionTooltipVisible.value) return
+  const target = e.target as HTMLElement | null
+  if (
+    target?.closest('.reader-selection-tooltip')
+    || target?.closest('.reader-dictionary-card')
+    || target?.closest('.reader-ai-overlay')
+  ) {
+    return
+  }
+  isSelectionTooltipVisible.value = false
+}
+
+watch(isSelectionTooltipVisible, (val) => {
+  if (!val) {
+    clearActiveSelectionHighlight()
+  }
+})
+
 // Estado do Card de Dicionário Offline
 const isDictionaryCardVisible = ref(false)
 const dictionaryCardX = ref(0)
@@ -536,6 +576,22 @@ function handleTextSelectionCheck() {
 
   selectionTooltipX.value = clampedX
   isSelectionTooltipVisible.value = true
+
+  // Aplica o realce visual persistente (CSS Custom Highlight API) para manter o texto destacado
+  if (
+    typeof window !== 'undefined'
+    && 'Highlight' in window
+    && typeof (window as any).Highlight === 'function'
+    && typeof (CSS as any)?.highlights?.set === 'function'
+  ) {
+    try {
+      const customHighlight = new (window as any).Highlight(range)
+      ;(CSS as any).highlights.set('active-reader-selection', customHighlight)
+    } catch {}
+  }
+
+  // Descarta a seleção nativa do DOM: força o fechamento imediato do balão nativo do navegador no mobile
+  clearNativeSelection()
 }
 
 function handleAnnotateFromTooltip(payload: { text: string; pageNumber?: number }) {
@@ -630,9 +686,13 @@ async function handleSaveAiExplanationAsAnnotation(payload: { text: string; expl
 let selectionChangeTimeout: any = null
 function onDocumentSelectionChange() {
   if (typeof window === 'undefined') return
+  if (isInternalSelectionClear) return
+
   const selection = window.getSelection()
   if (!selection || selection.isCollapsed || !selection.toString().trim()) {
-    isSelectionTooltipVisible.value = false
+    if (!isSelectionTooltipVisible.value) {
+      isSelectionTooltipVisible.value = false
+    }
     return
   }
 
@@ -909,6 +969,7 @@ onMounted(() => {
   window.addEventListener('mouseup', handleTextSelectionCheck)
   window.addEventListener('touchend', handleTouchEnd, { passive: true })
   window.addEventListener('pointerup', handleTextSelectionCheck, { passive: true })
+  window.addEventListener('pointerdown', onWindowPointerDownForSelection, { capture: true })
   document.addEventListener('selectionchange', onDocumentSelectionChange)
   document.addEventListener('fullscreenchange', onFullscreenChange)
   if (canvasAreaRef.value && typeof ResizeObserver !== 'undefined') {
@@ -978,8 +1039,10 @@ onUnmounted(() => {
   window.removeEventListener('mouseup', handleTextSelectionCheck)
   window.removeEventListener('touchend', handleTouchEnd)
   window.removeEventListener('pointerup', handleTextSelectionCheck)
+  window.removeEventListener('pointerdown', onWindowPointerDownForSelection, { capture: true } as any)
   document.removeEventListener('selectionchange', onDocumentSelectionChange)
   document.removeEventListener('fullscreenchange', onFullscreenChange)
+  clearActiveSelectionHighlight()
   if (handleAddFlashcardEvent) window.removeEventListener('aresta:add-flashcard', handleAddFlashcardEvent)
   if (handleExplainSubtopicEvent) window.removeEventListener('aresta:explain-subtopic', handleExplainSubtopicEvent)
   if (handleCreateSubtopicBookletEvent) window.removeEventListener('aresta:create-subtopic-booklet', handleCreateSubtopicBookletEvent)

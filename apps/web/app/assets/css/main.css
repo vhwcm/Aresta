@@ -7,6 +7,25 @@
 @tailwind utilities;
 
 /* ==========================================================================
+   Supressão Global de Menus Nativos e Callouts Mobile
+   ========================================================================== */
+
+*, *::before, *::after {
+  -webkit-touch-callout: none;
+}
+
+input, textarea, [contenteditable="true"] {
+  -webkit-touch-callout: default;
+}
+
+/* CSS Custom Highlight API: Realce âmbar persistente para seleção no leitor */
+::highlight(active-reader-selection) {
+  background-color: rgba(229, 123, 85, 0.45);
+  color: inherit;
+}
+
+
+/* ==========================================================================
    Design Tokens dos Temas (Escuro, Claro, Sépia / Estilo Livro)
    ========================================================================== */
 
@@ -63,6 +82,26 @@
   --color-text-secondary: #786C5E;
   --color-accent: #C96538;
   color-scheme: light;
+}
+
+html {
+  font-size: 125%; /* Padrão de escala ampliada em 125% para máxima ergonomia de clique/toque */
+}
+
+html[data-ui-scale="100%"] {
+  font-size: 100%;
+}
+
+html[data-ui-scale="110%"] {
+  font-size: 110%;
+}
+
+html[data-ui-scale="125%"] {
+  font-size: 125%;
+}
+
+html[data-ui-scale="150%"] {
+  font-size: 150%;
 }
 
 html,

@@ -20,9 +20,14 @@
       :class="isCollapsed ? 'justify-center px-2' : 'justify-between px-2.5 md:px-3 gap-2'"
     >
       <div v-if="!isCollapsed" class="flex items-center gap-1.5 flex-1 min-w-0">
-        <NuxtLink to="/" class="flex items-center group cursor-pointer shrink-0" title="Ir para Início">
+        <button
+          type="button"
+          @click="navigateHome"
+          class="flex items-center group cursor-pointer shrink-0 border-none bg-transparent p-0"
+          title="Ir para Início"
+        >
           <ArestaLogoGraph :size="32" use-image :to="null" class="!p-0 group-hover:scale-105 transition-transform" />
-        </NuxtLink>
+        </button>
 
         <!-- Botão de Alternância de Tema -->
         <button
@@ -100,14 +105,16 @@
       <!-- MODO COLAPSADO: Ícones Rápidos de Navegação & Acesso -->
       <div v-if="isCollapsed" class="flex flex-col items-center gap-1.5 pt-1">
         <!-- 1. Logo / Início -->
-        <NuxtLink
-          to="/"
+        <button
+          type="button"
+          @click="navigateHome"
           class="p-2 rounded-xl transition-all cursor-pointer border"
-          :class="isHomeActive ? 'bg-accent/15 text-accent border-accent/30 shadow-xs' : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.05] dark:hover:bg-white/[0.05]'"
+          :class="isHomeActive && !isJournalActive && selectedFolder === null && selectedTag === null && viewLayout === 'graph' ? 'bg-accent/15 text-accent border-accent/30 shadow-xs' : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.05] dark:hover:bg-white/[0.05]'"
           title="Início"
+          aria-label="Início"
         >
           <HomeIcon class="w-4 h-4" />
-        </NuxtLink>
+        </button>
 
         <!-- 2. Livros / Biblioteca -->
         <NuxtLink
@@ -204,17 +211,18 @@
         <!-- SEÇÃO: NAVEGAÇÃO PRINCIPAL ARESTA (Em retângulos sem margem lateral + ícones maiores) -->
         <div class="-mx-2.5 -mt-2.5 grid grid-cols-5 divide-x divide-divider/60 border-b border-divider/60 bg-bgRoot/40 shadow-xs">
           <!-- 1. Início -->
-          <NuxtLink
-            to="/"
+          <button
+            type="button"
+            @click="navigateHome"
             class="flex items-center justify-center h-11 transition-all cursor-pointer group relative"
-            :class="isHomeActive && !isJournalActive && selectedFolder === null && selectedTag === null
+            :class="isHomeActive && !isJournalActive && selectedFolder === null && selectedTag === null && viewLayout === 'graph'
               ? 'bg-accent/15 text-accent font-semibold border-b-2 border-b-accent'
               : 'text-textSecondary hover:text-textPrimary hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'"
             title="Início"
             aria-label="Início"
           >
             <HomeIcon class="w-5 h-5 transition-transform group-hover:scale-110" />
-          </NuxtLink>
+          </button>
 
           <!-- 2. Livros (Estante) -->
           <NuxtLink
@@ -337,6 +345,18 @@
                 <div class="flex flex-col">
                   <span class="font-medium">Nova Pasta</span>
                   <span class="text-[10px] text-textSecondary">Organizar na árvore</span>
+                </div>
+              </button>
+
+              <button
+                @click="handleAddAction('tag')"
+                data-testid="sidebar-add-tag-btn"
+                class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-textPrimary hover:bg-blue-500/10 hover:text-blue-500 transition-colors cursor-pointer text-left"
+              >
+                <TagIcon class="w-4 h-4 text-blue-500 shrink-0" />
+                <div class="flex flex-col">
+                  <span class="font-medium">Nova Tag</span>
+                  <span class="text-[10px] text-textSecondary">Criar no grafo e estante</span>
                 </div>
               </button>
             </div>
@@ -981,6 +1001,7 @@ const props = withDefaults(
 )
 
 const emit = defineEmits<{
+  (_e: 'go-home'): void
   (_e: 'select-folder', _folder: string | null): void
   (_e: 'select-tag', _tag: string | null): void
   (_e: 'select-item', _item: SidebarTreeItem): void
@@ -991,6 +1012,7 @@ const emit = defineEmits<{
   (_e: 'create-link'): void
   (_e: 'create-canvas'): void
   (_e: 'create-folder', _name: string): void
+  (_e: 'create-tag'): void
   (_e: 'rename-folder', _payload: { oldName: string; newName: string }): void
   (_e: 'delete-folder', _name: string): void
   (_e: 'move-item', _payload: { itemId: string; fromFolder: string; toFolder: string }): void
@@ -1139,7 +1161,7 @@ onUnmounted(() => {
   }
 })
 
-const handleAddAction = (action: 'note' | 'drawing' | 'book' | 'link' | 'canvas' | 'folder') => {
+const handleAddAction = (action: 'note' | 'drawing' | 'book' | 'link' | 'canvas' | 'folder' | 'tag') => {
   isAddMenuOpen.value = false
   if (action === 'note') {
     emit('create-note', props.selectedFolder && props.selectedFolder !== '__uncategorized__' ? props.selectedFolder : undefined)
@@ -1159,6 +1181,9 @@ const handleAddAction = (action: 'note' | 'drawing' | 'book' | 'link' | 'canvas'
     nextTick(() => {
       newFolderInputRef.value?.focus()
     })
+  } else if (action === 'tag') {
+    isManageTagsModalOpen.value = true
+    emit('create-tag')
   }
 }
 
@@ -1365,6 +1390,16 @@ const closeIfMobile = () => {
   if (typeof window !== 'undefined' && window.innerWidth < 768) {
     isCollapsed.value = true
     emit('update:collapsed', true)
+  }
+}
+
+const navigateHome = async () => {
+  closeIfMobile()
+  emit('go-home')
+  if (route.path !== '/' || Object.keys(route.query || {}).length > 0) {
+    if (router) {
+      await router.push('/')
+    }
   }
 }
 

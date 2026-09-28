@@ -2032,7 +2032,7 @@ defineExpose({
   user-select: text;
   -webkit-user-select: text;
   touch-action: none !important;
-  -webkit-touch-callout: default !important;
+  -webkit-touch-callout: none !important;
 }
 
 /* ================= FAIXA DE VINCO CENTRAL DA LOMBADA (BOOK SPINE CREASE) ================= */
@@ -2394,7 +2394,7 @@ defineExpose({
   pointer-events: auto !important;
   cursor: text !important;
   touch-action: none !important;
-  -webkit-touch-callout: default !important;
+  -webkit-touch-callout: none !important;
 }
 
 .page-text-layer :deep(.epub-text-layer-viewport ::selection),

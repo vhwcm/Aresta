@@ -10,6 +10,8 @@
       @mouseup.stop
       @touchstart.stop
       @touchend.stop
+      @pointerdown.stop
+      @pointerup.stop
       role="toolbar"
       aria-label="Ações de seleção de texto"
     >
