@@ -285,4 +285,51 @@ describe('SidebarGraph Component', () => {
     // Deve abrir direto no quadro
     expect(navigateToMock).toHaveBeenCalledWith('/canvas/c123')
   })
+
+  it('exibe livros conectados quando o nó de tema NÃO possui a propriedade .books (resolvendo por userBooks e arestas)', async () => {
+    mockUserBooks.value = [
+      {
+        userBookId: 77,
+        bookId: 77,
+        title: 'Psicologia Financeira',
+        author: 'Morgan Housel',
+        status: 'LENDO',
+        currentPage: 15,
+        themes: [{ id: 88, name: 'Finanças' }],
+      } as any,
+    ]
+
+    const wrapper = mount(SidebarGraph, {
+      global: {
+        stubs: {
+          GraphCanvas: {
+            template: '<div data-testid="graph-canvas"><button data-testid="click-theme-no-books" @click="$emit(\'selectNode\', themeNode)">Tema Sem Books</button></div>',
+            data() {
+              return {
+                themeNode: {
+                  id: 'theme-88',
+                  rawId: 88,
+                  type: 'theme',
+                  name: 'Finanças',
+                  // propositalmente SEM a propriedade .books, assim como gerado por buildLocalGraph
+                },
+              }
+            },
+          },
+          BookAnnotationsDrawer: true,
+          CreateNodeModal: true,
+          ConnectNodesModal: true,
+          NuxtLink: true,
+        },
+      },
+    })
+
+    // Clica no tema que não possui .books
+    await wrapper.find('[data-testid="click-theme-no-books"]').trigger('click')
+
+    // Deve exibir o tema e o livro conectado
+    expect(wrapper.text()).toContain('Finanças')
+    expect(wrapper.text()).toContain('Psicologia Financeira')
+    expect(wrapper.text()).not.toContain('Nenhum livro neste tema')
+  })
 })

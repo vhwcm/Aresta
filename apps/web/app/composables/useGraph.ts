@@ -182,6 +182,31 @@ export const useGraph = () => {
       }
     }
 
+    const existingNode = (graphData.value?.nodes || []).find(
+      (n: any) => n.type === 'theme' && n.name && n.name.trim().toLowerCase() === name.toLowerCase()
+    )
+    if (existingNode) {
+      const existingId = Number(existingNode.rawId || String(existingNode.id).replace(/^theme-/, ''))
+      if (Number.isFinite(existingId) && !meta.themes.some((t) => t.id === existingId)) {
+        meta.themes.push({
+          id: existingId,
+          name: existingNode.name,
+          color: existingNode.color || color,
+          description: existingNode.description || description,
+        })
+        saveGraphMeta(meta)
+      }
+      await fetchGraph()
+      return {
+        id: toNodeId('theme', existingId),
+        rawId: existingId,
+        name: existingNode.name,
+        color: existingNode.color || color,
+        description: existingNode.description || description,
+        type: 'theme' as const,
+      }
+    }
+
     const newTheme = {
       id: Date.now(),
       name,
@@ -379,7 +404,136 @@ export const useGraph = () => {
       return key !== `${source}---${target}` && reverse !== `${source}---${target}`
     })
     saveGraphMeta(meta)
+    if (graphData.value && graphData.value.edges) {
+      graphData.value.edges = graphData.value.edges.filter((edge) => {
+        const key = `${edge.source}---${edge.target}`
+        const reverse = `${edge.target}---${edge.source}`
+        return key !== `${source}---${target}` && reverse !== `${source}---${target}`
+      })
+    }
     await fetchGraph()
+  }
+
+  const unlinkEdge = async (edgeInput: { id?: string; source: any; target: any; type?: string }) => {
+    const rawSource = typeof edgeInput.source === 'object' ? edgeInput.source?.id : edgeInput.source
+    const rawTarget = typeof edgeInput.target === 'object' ? edgeInput.target?.id : edgeInput.target
+    const sourceStr = String(rawSource || '')
+    const targetStr = String(rawTarget || '')
+    const type = edgeInput.type || ''
+
+    const extractId = (val: string) => numericId(val)
+
+    if (graphData.value && graphData.value.edges) {
+      graphData.value.edges = graphData.value.edges.filter((e) => {
+        const s = String(typeof e.source === 'object' ? (e.source as any)?.id : e.source)
+        const t = String(typeof e.target === 'object' ? (e.target as any)?.id : e.target)
+        const match = (s === sourceStr && t === targetStr) || (s === targetStr && t === sourceStr)
+        return !match && e.id !== edgeInput.id
+      })
+    }
+
+    // 1. Livro <-> Tema
+    if (type === 'book-theme' || (sourceStr.startsWith('book-') && targetStr.startsWith('theme-')) || (sourceStr.startsWith('theme-') && targetStr.startsWith('book-'))) {
+      const bookStr = sourceStr.startsWith('book-') ? sourceStr : targetStr
+      const themeStr = sourceStr.startsWith('theme-') ? sourceStr : targetStr
+      const bookId = extractId(bookStr)
+      const themeId = extractId(themeStr)
+      const themeNode = graphData.value.nodes.find((n) => n.id === themeStr || Number(n.rawId) === themeId)
+      const themeName = themeNode?.name || ''
+      const books = await bookRepo.getAll()
+      const book = books.find((item) => Number(item.bookId) === bookId || Number(item.id) === bookId)
+      if (book) {
+        await bookRepo.save({
+          ...book,
+          themes: (book.themes || []).filter((theme) => {
+            const matchesId = Number(theme.id) === themeId
+            const matchesName = Boolean(themeName && theme.name && theme.name.toLowerCase() === themeName.toLowerCase())
+            return !matchesId && !matchesName
+          }),
+        })
+      }
+      await fetchGraph()
+      return
+    }
+
+    // 2. Anotação <-> Tema
+    if (type === 'annotation-theme' || (sourceStr.startsWith('annotation-') && targetStr.startsWith('theme-')) || (sourceStr.startsWith('theme-') && targetStr.startsWith('annotation-'))) {
+      const annoStr = sourceStr.startsWith('annotation-') ? sourceStr : targetStr
+      const themeStr = sourceStr.startsWith('theme-') ? sourceStr : targetStr
+      const annotationId = extractId(annoStr)
+      const themeId = extractId(themeStr)
+      const themeNode = graphData.value.nodes.find((n) => n.id === themeStr || Number(n.rawId) === themeId)
+      const themeName = themeNode?.name || ''
+      const annotations = await annotationRepo.getAll()
+      const annotation = annotations.find((item) => Number(item.id) === annotationId)
+      if (annotation) {
+        await annotationRepo.save({
+          ...annotation,
+          themes: (annotation.themes || []).filter((theme) => {
+            const matchesId = Number(theme.id) === themeId
+            const matchesName = Boolean(themeName && theme.name && theme.name.toLowerCase() === themeName.toLowerCase())
+            return !matchesId && !matchesName
+          }),
+        })
+      }
+      await fetchGraph()
+      return
+    }
+
+    // 3. Nota <-> Tema
+    if (type === 'note-theme' || (sourceStr.startsWith('note-') && targetStr.startsWith('theme-')) || (sourceStr.startsWith('theme-') && targetStr.startsWith('note-'))) {
+      const noteStr = sourceStr.startsWith('note-') ? sourceStr : targetStr
+      const themeStr = sourceStr.startsWith('theme-') ? sourceStr : targetStr
+      const noteId = extractId(noteStr)
+      const themeId = extractId(themeStr)
+      const themeNode = graphData.value.nodes.find((n) => n.id === themeStr || Number(n.rawId) === themeId)
+      const themeName = themeNode?.name || ''
+      const notes = await noteRepo.getAll().catch(() => [])
+      const note = notes.find((n) => Number(n.id) === noteId || String(n.id) === String(noteId))
+      if (note && themeName) {
+        await noteRepo.save({
+          ...note,
+          tags: (note.tags || []).filter((tag) => tag.toLowerCase() !== themeName.toLowerCase()),
+        })
+      }
+      await fetchGraph()
+      return
+    }
+
+    // 4. Nota <-> Livro
+    if (type === 'note-book' || (sourceStr.startsWith('note-') && targetStr.startsWith('book-'))) {
+      const noteId = extractId(sourceStr)
+      const bookId = extractId(targetStr)
+      const notes = await noteRepo.getAll().catch(() => [])
+      const note = notes.find((n) => Number(n.id) === noteId || String(n.id) === String(noteId))
+      if (note && note.links) {
+        await noteRepo.save({
+          ...note,
+          links: (note.links || []).filter((l) => !(l.targetType === 'BOOK' && Number(l.targetId) === bookId)),
+        })
+      }
+      await fetchGraph()
+      return
+    }
+
+    // 5. Nota <-> Canvas
+    if (type === 'note-canvas' || (sourceStr.startsWith('note-') && targetStr.startsWith('canvas-'))) {
+      const noteId = extractId(sourceStr)
+      const canvasId = String(targetStr).replace(/^canvas-/, '')
+      const notes = await noteRepo.getAll().catch(() => [])
+      const note = notes.find((n) => Number(n.id) === noteId || String(n.id) === String(noteId))
+      if (note && note.links) {
+        await noteRepo.save({
+          ...note,
+          links: (note.links || []).filter((l) => !(l.targetType === 'CANVAS' && String(l.targetId) === canvasId)),
+        })
+      }
+      await fetchGraph()
+      return
+    }
+
+    // 6. Conexões customizadas / hierarquia de temas
+    await deleteConnection(sourceStr, targetStr)
   }
 
   const linkBookToNode = async (nodeId: number | string, bookId: number | string) => {
@@ -435,6 +589,7 @@ export const useGraph = () => {
     deleteNode,
     createConnection,
     deleteConnection,
+    unlinkEdge,
     linkBookToNode,
     unlinkBookFromNode,
     resetGraph: resetGraphMemory,

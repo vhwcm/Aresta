@@ -322,7 +322,62 @@ const displayedBooks = computed<UserBookItem[]>(() => {
     }]
   }
   // Caso contrário, livros vinculados a este tema específico
-  return (selectedNode.value.books || []) as any
+  const themeRawId = selectedNode.value.rawId || Number(String(selectedNode.value.id).replace(/^theme-/, ''))
+  const themeName = (selectedNode.value.name || selectedNode.value.title || '').trim().toLowerCase()
+  const themeNodeId = String(selectedNode.value.id)
+
+  // 1. Livros vinculados nos metadados de userBooks (por id do tema ou nome da tag)
+  const matchedBooks: UserBookItem[] = userBooks.value.filter((b) => {
+    return (b.themes || []).some((t: any) => {
+      const tNumId = Number(typeof t === 'object' ? (t.rawId ?? t.id) : t)
+      if (themeRawId && !isNaN(tNumId) && tNumId === themeRawId) return true
+      const tName = (typeof t === 'object' ? t.name : String(t) || '').trim().toLowerCase()
+      if (themeName && tName && tName === themeName) return true
+      return false
+    })
+  })
+
+  // 2. Livros conectados via arestas do grafo
+  const connectedBookIds = new Set<number>()
+  for (const edge of graphData.value.edges || []) {
+    const s = String(typeof edge.source === 'object' ? (edge.source as any).id : edge.source)
+    const t = String(typeof edge.target === 'object' ? (edge.target as any).id : edge.target)
+    if (s === themeNodeId && t.startsWith('book-')) {
+      const bId = Number(t.replace('book-', ''))
+      if (!isNaN(bId)) connectedBookIds.add(bId)
+    } else if (t === themeNodeId && s.startsWith('book-')) {
+      const bId = Number(s.replace('book-', ''))
+      if (!isNaN(bId)) connectedBookIds.add(bId)
+    }
+  }
+
+  for (const bId of connectedBookIds) {
+    if (!matchedBooks.some((b) => b.bookId === bId || (b as any).id === bId)) {
+      const found = userBooks.value.find((b) => b.bookId === bId || (b as any).id === bId)
+      if (found) {
+        matchedBooks.push(found)
+      } else {
+        const bookNode = (graphData.value.nodes || []).find((n) => n.id === `book-${bId}` || n.rawId === bId)
+        if (bookNode) {
+          matchedBooks.push({
+            userBookId: bId,
+            bookId: bId,
+            title: bookNode.name || bookNode.title || 'Livro',
+            author: bookNode.author,
+            summary: bookNode.summary,
+            coverPath: bookNode.coverPath,
+            status: 'LENDO',
+            currentPage: 1,
+          })
+        }
+      }
+    }
+  }
+
+  if (matchedBooks.length > 0) return matchedBooks
+
+  // 3. Fallback para nós que já possuam books no payload
+  return ((selectedNode.value as any).books || []) as any
 })
 
 const handleCreateNode = async (payload: { name: string, color: string, description: string }) => {

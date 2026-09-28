@@ -1,7 +1,11 @@
 ## 🔄 Em Andamento
-- [28/09/2026 07:58] [Fazendo] Investigar e corrigir falha onde upload de livro com tag pré-selecionada não conecta/salva no grafo de conhecimento
+- [28/09/2026 08:28] [Fazendo] Restaurar visualização do Grafo de Conhecimento e reset de filtros ao clicar no ícone de Início da barra lateral no desktop
+- [28/09/2026 08:23] [Fazendo] Implementar seleção de aresta ao clicar com botão flutuante para excluir e desvincular do tema no grafo de conhecimento
+- [28/09/2026 08:22] [Fazendo] Adicionar opção de criar tag no menu do botão de adicionar (+) da barra lateral
+- [28/09/2026 08:17] [Fazendo] Desativar menu de contexto nativo do botão direito e eliminar sobreposição do balão mobile de seleção sobre o tooltip de anotações
 
 ## ✅ Concluído
+- [28/09/2026 08:35] [Concluído] Corrigir persistência e vinculação do livro com tag no grafo de conhecimento após upload e resolução de livros conectados em displayedBooks
 - [28/09/2026 08:12] [Concluído] Adicionar opção unificada "Livro / PDF" no menu de adicionar (+) da barra lateral (FolderTagSidebar) com navegação para /upload
 - [28/09/2026 08:12] [Concluído] Remover funcionalidade deprecada de transcrição com IA ao desenhar no quadro (CanvasInkingOverlay e caneta no CanvasBoard)
 - [28/09/2026 08:08] [Concluído] Ajustar velocidade de transição e desaceleração do nó ao conectá-lo a outro no grafo de conhecimento tornando o movimento mais lento e suave (2400ms)

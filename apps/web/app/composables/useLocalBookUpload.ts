@@ -100,11 +100,16 @@ export const useLocalBookUpload = () => {
 
       // 6. Salva no banco de dados local (Tauri SQLite / Dexie / InMemory)
       const rawThemes = options.themes || []
-      const normalizedThemes = rawThemes.map((t) => ({
-        id: Number(t.id),
-        name: t.name,
-        color: t.color || null,
-      }))
+      const normalizedThemes = rawThemes.map((t) => {
+        const raw = String(t.id || '').replace(/^theme-/, '')
+        const num = Number(raw)
+        const safeId = Number.isFinite(num) && num !== 0 ? num : (t.name ? hashString(t.name) : Date.now())
+        return {
+          id: safeId,
+          name: t.name,
+          color: t.color || null,
+        }
+      })
 
       let localBook = await bookRepo.save({
         id: bookId,
@@ -157,3 +162,13 @@ export const useLocalBookUpload = () => {
     uploadBookLocally,
   }
 }
+
+const hashString = (value: string) => {
+  let hash = 0
+  for (let i = 0; i < value.length; i += 1) {
+    hash = ((hash << 5) - hash) + value.charCodeAt(i)
+    hash |= 0
+  }
+  return Math.abs(hash) || 1
+}
+

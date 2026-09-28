@@ -271,5 +271,90 @@ describe('Upload Page', () => {
     expect(savedBook).toBeDefined()
     expect(savedBook?.themes?.some((t) => t.name === 'Estoicismo Moderno')).toBe(true)
   })
+
+  it('atualiza o grafo de conhecimento (nós e aresta book-theme) imediatamente após o upload do livro com tema', async () => {
+    const { useGraph } = await import('../../../app/composables/useGraph')
+    const { graphData, createNode } = useGraph()
+
+    // Cria um tema no grafo
+    const createdTheme = await createNode('Arquitetura de Software', '#8B5CF6')
+
+    const fakeFile = new File([new Uint8Array([1, 2, 3])], 'clean-architecture.epub', { type: 'application/epub+zip' })
+
+    const wrapper = mount(UploadPage, {
+      global: {
+        stubs: {
+          NuxtLink: true,
+          ReaderUploadDropZone: {
+            name: 'ReaderUploadDropZone',
+            template: '<div id="drop-zone-area"></div>'
+          }
+        }
+      }
+    })
+
+    const themeChip = wrapper.find(`[data-testid="theme-chip-${createdTheme.rawId}"]`)
+    expect(themeChip.exists()).toBe(true)
+    await themeChip.trigger('click')
+    await flushPromises()
+
+    // Dispara validação do arquivo
+    const dropzone = wrapper.findComponent('#drop-zone-area')
+    ;(dropzone as any).vm.$emit('file-validated', { file: fakeFile, type: 'epub' })
+    await new Promise((r) => setTimeout(r, 200))
+    await flushPromises()
+
+    const store = useReaderStore()
+    expect(store.bookId).toBeGreaterThan(0)
+
+    // O grafo de conhecimento DEVE conter o nó do livro e do tema
+    const bookNode = graphData.value.nodes.find((n) => n.id === `book-${store.bookId}` || n.rawId === store.bookId)
+    expect(bookNode).toBeDefined()
+    expect(bookNode?.type).toBe('book')
+
+    const themeNode = graphData.value.nodes.find((n) => n.name === 'Arquitetura de Software')
+    expect(themeNode).toBeDefined()
+
+    // O grafo de conhecimento DEVE conter a aresta conectando o livro ao tema
+    const bookThemeEdge = graphData.value.edges.find((e) => {
+      const s = String(typeof e.source === 'object' ? (e.source as any).id : e.source)
+      const t = String(typeof e.target === 'object' ? (e.target as any).id : e.target)
+      return (
+        (s === `book-${store.bookId}` && t === String(themeNode?.id)) ||
+        (t === `book-${store.bookId}` && s === String(themeNode?.id))
+      )
+    })
+    expect(bookThemeEdge).toBeDefined()
+    expect(bookThemeEdge?.type).toBe('book-theme')
+  })
+
+  it('exibe temas presentes em outros livros de userBooks na lista de tags disponíveis', async () => {
+    const { bookRepo } = await import('../../../app/adapters/database/repositories/BookRepository')
+    await bookRepo.save({
+      id: 999,
+      bookId: 999,
+      title: 'Livro Existente',
+      status: 'LENDO',
+      themes: [{ id: 404, name: 'Neurociência', color: '#10B981' }],
+    })
+
+    const { useUserBooks } = await import('../../../app/composables/useUserBooks')
+    const { fetchUserBooks } = useUserBooks()
+    await fetchUserBooks()
+
+    const wrapper = mount(UploadPage, {
+      global: {
+        stubs: {
+          NuxtLink: true,
+          ReaderUploadDropZone: true,
+        }
+      }
+    })
+    await flushPromises()
+
+    const neuroChip = wrapper.find('[data-testid="theme-chip-404"]')
+    expect(neuroChip.exists()).toBe(true)
+    expect(neuroChip.text()).toContain('Neurociência')
+  })
 })
 

@@ -268,7 +268,7 @@ const store = useReaderStore()
 const router = useRouter()
 const { uploadBookLocally } = useLocalBookUpload()
 const { graphData, fetchGraph, createNode } = useGraph()
-const { fetchUserBooks } = useUserBooks()
+const { userBooks, fetchUserBooks } = useUserBooks()
 
 const customTitle = ref<string>('')
 const lastExtractedCover = ref<string | null>(null)
@@ -288,15 +288,24 @@ const createThemeError = ref<string | null>(null)
 
 function getThemeNumericId(themeOrId: any): number {
   if (typeof themeOrId === 'object' && themeOrId !== null) {
-    if (themeOrId.rawId !== undefined && !isNaN(Number(themeOrId.rawId))) {
+    if (themeOrId.rawId !== undefined && !isNaN(Number(themeOrId.rawId)) && Number(themeOrId.rawId) !== 0) {
       return Number(themeOrId.rawId)
     }
-    return getThemeNumericId(themeOrId.id)
+    return getThemeNumericId(themeOrId.id ?? themeOrId.name)
   }
-  if (typeof themeOrId === 'number' && !isNaN(themeOrId)) return themeOrId
+  if (typeof themeOrId === 'number' && !isNaN(themeOrId) && themeOrId !== 0) return themeOrId
   const raw = String(themeOrId || '').replace(/^theme-/, '')
   const parsed = Number(raw)
-  return isNaN(parsed) ? 0 : parsed
+  if (!isNaN(parsed) && parsed !== 0) return parsed
+  if (typeof themeOrId === 'string' && themeOrId.trim()) {
+    let hash = 0
+    for (let i = 0; i < themeOrId.length; i += 1) {
+      hash = ((hash << 5) - hash) + themeOrId.charCodeAt(i)
+      hash |= 0
+    }
+    return Math.abs(hash) || 1
+  }
+  return 0
 }
 
 function isThemeSelected(themeOrId: any): boolean {
@@ -320,8 +329,40 @@ const availableThemes = computed(() => {
     return true
   })
   const list: any[] = [...nodes]
+
+  // Inclui temas existentes na estante do usuário
+  for (const book of userBooks.value) {
+    for (const bt of book.themes || []) {
+      const numId = getThemeNumericId(bt)
+      const name = (bt.name || '').trim().toLowerCase()
+      const exists = list.some((item) => {
+        const itemNumId = getThemeNumericId(item)
+        if (numId && itemNumId && numId === itemNumId) return true
+        const itemName = (item.name || '').trim().toLowerCase()
+        return Boolean(name && itemName && name === itemName)
+      })
+      if (!exists) {
+        list.push({
+          id: `theme-${numId || Date.now()}`,
+          rawId: numId || Date.now(),
+          name: bt.name,
+          color: bt.color || '#E57B55',
+          type: 'theme',
+        })
+      }
+    }
+  }
+
+  // Inclui temas criados inline nesta sessão
   for (const ct of createdThemes.value) {
-    if (!list.some((n: any) => getThemeNumericId(n) === getThemeNumericId(ct))) {
+    const ctNumId = getThemeNumericId(ct)
+    const ctName = (ct.name || '').trim().toLowerCase()
+    if (!list.some((n: any) => {
+      const nNumId = getThemeNumericId(n)
+      if (ctNumId && nNumId && ctNumId === nNumId) return true
+      const nName = (n.name || '').trim().toLowerCase()
+      return Boolean(ctName && nName && ctName === nName)
+    })) {
       list.push(ct)
     }
   }
@@ -463,6 +504,11 @@ async function onFileValidated({ file, type }: { file: File; type: SupportedFile
       await fetchUserBooks()
     } catch {}
 
+    // Atualiza o Grafo de Conhecimento para refletir o novo livro e suas conexões de tags imediatamente
+    try {
+      await fetchGraph()
+    } catch {}
+
     store.setDocument(result.doc, result.title, result.bookId)
     await router.push({ path: '/reader', query: { bookId: String(result.bookId) } })
   } catch (error) {
@@ -477,13 +523,12 @@ async function onFileValidated({ file, type }: { file: File; type: SupportedFile
   }
 }
 
-const auth = useAuth()
-
 onMounted(async () => {
-  if (auth.isLoggedIn.value) {
-    try {
-      await fetchGraph()
-    } catch {}
-  }
+  try {
+    await Promise.all([
+      fetchUserBooks().catch(() => {}),
+      fetchGraph().catch(() => {}),
+    ])
+  } catch {}
 })
 </script>
