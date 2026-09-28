@@ -466,10 +466,12 @@ describe('GraphCanvas Component', () => {
     expect(hitLine.exists()).toBe(true)
     await hitLine.trigger('click')
 
-    // O botão flutuante deve surgir
+    // O botão flutuante deve surgir (ícone circular sem texto)
     const deleteBtn = wrapper.find('[data-testid="delete-edge-btn"]')
     expect(deleteBtn.exists()).toBe(true)
-    expect(deleteBtn.text()).toContain('Excluir vínculo')
+    expect(deleteBtn.attributes('title')).toBe('Excluir aresta')
+    expect(deleteBtn.find('svg').exists()).toBe(true)
+    expect(deleteBtn.text()).toBe('')
 
     // Clicar no botão para desvincular
     await deleteBtn.trigger('click')

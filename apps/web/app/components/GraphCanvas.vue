@@ -142,26 +142,27 @@
       </button>
     </div>
 
-    <!-- Botão Flutuante de Excluir Aresta Selecionada -->
-    <div
+    <!-- Botão Flutuante de Excluir Aresta Selecionada (Apenas Ícone Circular) -->
+    <button
       v-if="selectedEdge && edgeBtnPos"
-      class="absolute z-30 -translate-x-1/2 -translate-y-1/2 flex items-center gap-1.5 px-3 py-1.5 rounded-full shadow-2xl border backdrop-blur-md cursor-pointer transition-all duration-150 animate-in fade-in zoom-in-95 hover:scale-105 active:scale-95 group"
+      type="button"
+      class="absolute z-30 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center w-7 h-7 rounded-full shadow-2xl border backdrop-blur-md cursor-pointer transition-all duration-150 animate-in fade-in zoom-in-95 hover:scale-110 active:scale-90 group focus:outline-none"
       :style="{
         left: `${edgeBtnPos.x}px`,
         top: `${edgeBtnPos.y}px`,
       }"
       :class="isSepiaMode
-        ? 'bg-[#FAF5E8]/95 border-red-300 text-red-600 hover:bg-red-50 shadow-red-900/10'
+        ? 'bg-[#FAF5E8]/95 border-red-300 text-red-600 hover:bg-red-100 shadow-red-900/15'
         : (isLightMode
-          ? 'bg-white/95 border-red-200 text-red-600 hover:bg-red-50 shadow-red-500/15'
-          : 'bg-[#18181B]/95 border-red-500/40 text-red-400 hover:bg-red-950/40 shadow-black/40')"
+          ? 'bg-white/95 border-red-200 text-red-600 hover:bg-red-50 shadow-red-500/20'
+          : 'bg-[#18181B]/95 border-red-500/50 text-red-400 hover:bg-red-950/60 shadow-black/50')"
       @click.stop="handleDeleteSelectedEdge"
-      title="Excluir vínculo entre os nós"
+      title="Excluir aresta"
+      aria-label="Excluir aresta"
       data-testid="delete-edge-btn"
     >
       <Trash2Icon class="w-3.5 h-3.5 text-red-500 group-hover:rotate-12 transition-transform shrink-0" />
-      <span class="text-xs font-semibold select-none">Excluir vínculo</span>
-    </div>
+    </button>
 
   </div>
 </template>

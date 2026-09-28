@@ -1,6 +1,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [28/09/2026 08:47] [Concluído] Remover texto do botão flutuante de excluir aresta no grafo mantendo apenas o ícone circular
 - [28/09/2026 08:41] [Concluído] Implementar seleção de aresta ao clicar com botão flutuante para excluir e desvincular do tema no grafo de conhecimento
 - [28/09/2026 08:36] [Concluído] Restaurar visualização do Grafo de Conhecimento e reset de filtros ao clicar no ícone de Início da barra lateral no desktop
 - [28/09/2026 08:35] [Concluído] Adicionar opção de criar tag no menu do botão de adicionar (+) da barra lateral
