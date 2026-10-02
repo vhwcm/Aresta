@@ -890,15 +890,17 @@ const syncFromRoute = async () => {
       }
     }
   } else {
-    activeNote.value = null
-    if (route?.query?.view === 'grid' || (!route?.query?.view && hasExplicitTab)) {
-      viewLayout.value = 'grid'
-    } else if (route?.query?.view === 'split' || route?.query?.view === 'note-editor') {
-      viewLayout.value = 'note-editor'
-    } else if (route?.query?.view === 'graph') {
-      viewLayout.value = 'graph'
-    } else if (!route?.query?.view && !hasExplicitTab && viewLayout.value === 'note-editor') {
-      viewLayout.value = 'graph'
+    if (!activeItemId.value || !String(activeItemId.value).startsWith('note-')) {
+      activeNote.value = null
+      if (route?.query?.view === 'grid' || (!route?.query?.view && hasExplicitTab)) {
+        viewLayout.value = 'grid'
+      } else if (route?.query?.view === 'split' || route?.query?.view === 'note-editor') {
+        viewLayout.value = 'note-editor'
+      } else if (route?.query?.view === 'graph') {
+        viewLayout.value = 'graph'
+      } else if (!route?.query?.view && !hasExplicitTab && viewLayout.value === 'note-editor') {
+        viewLayout.value = 'graph'
+      }
     }
   }
 }
@@ -951,6 +953,31 @@ watch(viewLayout, (val) => {
   if (val === 'graph') {
     activeNote.value = null
     fetchUnifiedGraph()
+  }
+})
+
+watch(activeItemId, async (newId) => {
+  if (newId && String(newId).startsWith('note-')) {
+    const rawId = String(newId).replace(/^note-/, '')
+    if (!activeNote.value || (String(activeNote.value.id) !== rawId && String(activeNote.value.id) !== newId)) {
+      const target = notesList.value.find((n) => {
+        const nId = String(n.id)
+        return nId === rawId || nId === newId || nId.replace(/^note-/, '') === rawId
+      })
+      if (target) {
+        selectNote(target)
+        viewLayout.value = 'note-editor'
+      } else {
+        const loaded = await loadNote(rawId)
+        if (loaded) {
+          selectNote(loaded)
+          viewLayout.value = 'note-editor'
+        }
+      }
+      if (router && route?.query?.note !== rawId) {
+        void router.push({ path: '/', query: { ...(route?.query || {}), note: rawId } })
+      }
+    }
   }
 })
 
@@ -1421,7 +1448,11 @@ const selectNote = (note: NoteItem) => {
 
 const openNoteEditor = (note: NoteItem) => {
   selectNote(note)
+  activeItemId.value = `note-${note.id}`
   viewLayout.value = 'note-editor'
+  if (router && route?.query?.note !== String(note.id)) {
+    void router.push({ path: '/', query: { ...(route?.query || {}), note: note.id } })
+  }
 }
 
 const handleCreateNewNote = async (targetFolder?: string | Event) => {
@@ -1438,8 +1469,12 @@ const handleCreateNewNote = async (targetFolder?: string | Event) => {
   })
 
   if (created) {
+    activeItemId.value = `note-${created.id}`
     activeNote.value = { ...created, tags: Array.isArray(created.tags) ? [...created.tags] : [] }
     viewLayout.value = 'note-editor'
+    if (router) {
+      await router.push({ path: '/', query: { ...(route?.query || {}), note: created.id } })
+    }
   }
 }
 
@@ -1461,14 +1496,30 @@ const flushSaveNote = async () => {
 
 const handleCloseNoteEditor = async () => {
   await flushSaveNote()
+  activeItemId.value = null
+  activeNote.value = null
   viewLayout.value = 'graph'
+  if (router && (route?.query?.note || route?.query?.id)) {
+    const newQuery = { ...(route?.query || {}) }
+    delete newQuery.note
+    delete newQuery.id
+    await router.replace({ query: newQuery })
+  }
 }
 
 const switchToGraphView = async () => {
   if (viewLayout.value === 'note-editor' && activeNote.value) {
     await flushSaveNote()
   }
+  activeItemId.value = null
+  activeNote.value = null
   viewLayout.value = 'graph'
+  if (router && (route?.query?.note || route?.query?.id)) {
+    const newQuery = { ...(route?.query || {}) }
+    delete newQuery.note
+    delete newQuery.id
+    await router.replace({ query: newQuery })
+  }
   await fetchUnifiedGraph()
 }
 

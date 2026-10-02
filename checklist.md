@@ -1,9 +1,9 @@
 ## 🔄 Em Andamento
 - [02/10/2026 09:53] [Fazendo] Corrigir paste de conteúdo da Wikipedia no editor de notas: preservar links com href, corrigir caracteres fonéticos e limpar referências
 - [02/10/2026 09:53] [Fazendo] Ajustar aba inicial do tema para Anotações (destaques e reflexões de leitura do livro) em vez de notas do canvas
-- [02/10/2026 09:37] [Fazendo] Abrir imediatamente a tela do editor de notas ao criar nova nota na barra lateral ou no espaço unificado
 
 ## ✅ Concluído
+- [02/10/2026 09:55] [Concluído] Abrir imediatamente a tela do editor de notas ao criar nova nota na barra lateral ou no espaço unificado
 - [02/10/2026 09:55] [Concluído] Diagnosticar e corrigir tela em branco na segunda página do modo 2 páginas ao folhear e retornar
 - [02/10/2026 09:41] [Concluído] Mover seletor de tema da barra lateral para a página de conta e transformar busca em barra completa abaixo do cabeçalho superior e acima da navegação
 - [02/10/2026 09:53] [Concluído] Posicionar ícone de conta no extremo esquerdo do cabeçalho da barra lateral ao lado esquerdo do ícone de feedback

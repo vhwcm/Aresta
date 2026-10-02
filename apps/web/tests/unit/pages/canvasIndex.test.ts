@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount } from '@vue/test-utils'
-import { ref } from 'vue'
+import { mount, flushPromises } from '@vue/test-utils'
+import { ref, nextTick } from 'vue'
 import CanvasIndexPage from '../../../app/components/canvas/UnifiedCanvasHub.vue'
+import { useWorkspaceSidebar } from '~/composables/useWorkspaceSidebar'
 
 vi.mock('vue-router', () => ({
   useRoute: () => ({
@@ -135,5 +136,38 @@ describe('Canvas Index Page Header (Mobile single line & expandable search)', ()
     expect(wrapper.find('[data-testid="note-editor-pane"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="note-editor-pane"]').text()).toContain('Nota Arquitetural')
     expect(wrapper.text()).not.toContain('Nenhuma nota selecionada')
+  })
+
+  it('abre o NoteEditorPane imediatamente na tela ao alterar activeItemId para uma nota criada', async () => {
+    const mockCreatedNote = {
+      id: 'note-nova-123',
+      title: 'Nota Recém Criada',
+      content: '',
+      tags: [],
+      folder: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }
+
+    mockNotesList.value = [mockCreatedNote]
+
+    const wrapper = mount(CanvasIndexPage, {
+      global: {
+        stubs: {
+          ...defaultStubs,
+          NoteEditorPane: {
+            props: ['note'],
+            template: '<div data-testid="note-editor-pane">Editor: {{ note?.title }}</div>'
+          }
+        }
+      }
+    })
+
+    const { activeItemId } = useWorkspaceSidebar()
+    activeItemId.value = 'note-note-nova-123'
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="note-editor-pane"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="note-editor-pane"]').text()).toContain('Nota Recém Criada')
   })
 })

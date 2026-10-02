@@ -18,7 +18,7 @@ import type { SidebarTreeItem } from '~/interfaces/sidebar'
 
 // Estado Singleton Compartilhado
 const isSidebarCollapsed = ref(false)
-const viewLayout = ref<'graph' | 'grid' | 'journal'>('graph')
+const viewLayout = ref<'graph' | 'grid' | 'journal' | 'note-editor'>('graph')
 const activeFolder = ref<string | null>(null)
 const activeTag = ref<string | null>(null)
 const activeItemId = ref<string | null>(null)
@@ -227,11 +227,17 @@ export function useWorkspaceSidebar() {
       tags: targetTag ? [targetTag] : []
     })
     if (res?.id) {
-      if (route.path !== '/') {
-        await router?.push(`/?note=${res.id}`)
+      activeItemId.value = `note-${res.id}`
+      viewLayout.value = 'note-editor'
+      if (typeof window !== 'undefined' && window.innerWidth < 768) {
+        isSidebarCollapsed.value = true
+      }
+      if (router) {
+        await router.push({ path: '/', query: { note: res.id } })
       }
     }
     await fetchAllWorkspaceData()
+    return res
   }
 
   const handleCreateNewDrawing = async () => {
@@ -299,8 +305,13 @@ export function useWorkspaceSidebar() {
       await router?.push(`/reader?bookId=${rawId}`)
     } else {
       const rawId = item.id.replace(/^note-/, '')
-      if (route.path !== '/') {
-        await router?.push(`/?note=${rawId}`)
+      activeItemId.value = item.id
+      viewLayout.value = 'note-editor'
+      if (typeof window !== 'undefined' && window.innerWidth < 768) {
+        isSidebarCollapsed.value = true
+      }
+      if (router) {
+        await router.push({ path: '/', query: { note: rawId } })
       }
     }
   }

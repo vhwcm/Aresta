@@ -136,6 +136,11 @@ describe('useWorkspaceSidebar composable (Unificação de Tags e Pastas)', () =>
     mockDrawingsList.value = []
     mockLinksList.value = []
     mockUserBooks.value = []
+    const sidebar = useWorkspaceSidebar()
+    sidebar.activeFolder.value = null
+    sidebar.activeTag.value = null
+    sidebar.activeItemId.value = null
+    sidebar.viewLayout.value = 'graph'
   })
 
   it('handleCreateNewCanvas cria novo quadro e redireciona para a rota do canvas', async () => {
@@ -173,6 +178,42 @@ describe('useWorkspaceSidebar composable (Unificação de Tags e Pastas)', () =>
       folder: 'Projetos',
     })
     expect(mockPush).toHaveBeenCalledWith('/canvas/canvas_999')
+  })
+
+  it('handleCreateNewNote cria nova nota, ativa o item, define layout note-editor e navega com a query note mesmo estando na raiz', async () => {
+    mockCreateNote.mockResolvedValueOnce({
+      id: 'note_123',
+      title: 'Nota sem título',
+    })
+
+    const { handleCreateNewNote, activeItemId, viewLayout } = useWorkspaceSidebar()
+    const result = await handleCreateNewNote()
+
+    expect(mockCreateNote).toHaveBeenCalledWith({
+      title: 'Nota sem título',
+      content: '',
+      folder: undefined,
+      tags: [],
+    })
+    expect(activeItemId.value).toBe('note-note_123')
+    expect(viewLayout.value).toBe('note-editor')
+    expect(mockPush).toHaveBeenCalledWith({ path: '/', query: { note: 'note_123' } })
+    expect(result?.id).toBe('note_123')
+  })
+
+  it('handleSelectItem com kind note define activeItemId, viewLayout como note-editor e navega para query note mesmo estando na raiz', async () => {
+    const { handleSelectItem, activeItemId, viewLayout } = useWorkspaceSidebar()
+    await handleSelectItem({
+      id: 'note-xyz789',
+      title: 'Minha Nota',
+      kind: 'note',
+      folder: null,
+      tags: []
+    })
+
+    expect(activeItemId.value).toBe('note-xyz789')
+    expect(viewLayout.value).toBe('note-editor')
+    expect(mockPush).toHaveBeenCalledWith({ path: '/', query: { note: 'xyz789' } })
   })
 
   it('unifiedFolders agrega tags de notas, temas de livros e quadros unificados', () => {
