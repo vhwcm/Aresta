@@ -16,11 +16,15 @@
         <!-- Cabeçalho do Livro -->
         <header class="p-6 border-b border-divider flex items-start justify-between shrink-0 bg-white/[0.02]">
           <div class="flex gap-4 items-center">
-            <!-- Miniatura da Capa -->
-            <div class="w-14 h-20 rounded-xl overflow-hidden bg-white/5 border border-divider shadow-md shrink-0 relative">
+            <div
+              class="w-14 h-20 rounded-xl overflow-hidden bg-white/5 border border-divider shadow-md shrink-0 relative transition-transform"
+              :class="{ 'cursor-pointer hover:scale-105 hover:border-accent/50': hasCover }"
+              @click="hasCover && openCoverModal()"
+              :title="hasCover ? 'Clique para ver a capa ampliada' : undefined"
+            >
               <img
-                v-if="book.coverPath"
-                :src="getCoverUrl(book)"
+                v-if="hasCover"
+                :src="bookCoverUrl"
                 :alt="book.title || book.name"
                 class="w-full h-full object-cover"
                 @error="onCoverError"
@@ -41,15 +45,28 @@
               <p class="text-xs font-interface text-textSecondary mt-0.5">
                 {{ book.author || 'Autor desconhecido' }}
               </p>
-              <NuxtLink
-                v-if="currentBookId"
-                :to="`/reader?bookId=${currentBookId}`"
-                class="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-accent text-white text-xs font-semibold hover:bg-accent/90 transition-all shadow-md w-fit active:scale-95"
-                title="Abrir livro no leitor"
-              >
-                <BookOpenIcon class="w-3.5 h-3.5" />
-                <span>Continuar Leitura</span>
-              </NuxtLink>
+              <div class="mt-2 flex items-center gap-2 flex-wrap">
+                <NuxtLink
+                  v-if="currentBookId"
+                  :to="`/reader?bookId=${currentBookId}`"
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-accent text-white text-xs font-semibold hover:bg-accent/90 transition-all shadow-md w-fit active:scale-95"
+                  title="Abrir livro no leitor"
+                >
+                  <BookOpenIcon class="w-3.5 h-3.5" />
+                  <span>Continuar Leitura</span>
+                </NuxtLink>
+
+                <button
+                  v-if="hasCover"
+                  type="button"
+                  @click="openCoverModal"
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-textPrimary text-xs font-semibold border border-divider transition-all shadow-sm w-fit active:scale-95 cursor-pointer"
+                  title="Mostrar capa do livro"
+                >
+                  <ImageIcon class="w-3.5 h-3.5 text-accent" />
+                  <span>Mostrar Capa</span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -61,6 +78,43 @@
             <XIcon class="w-4 h-4" />
           </button>
         </header>
+
+        <!-- Modal Imersivo de Capa em Tela Cheia (Fundo Preto) -->
+        <Transition
+          enter-active-class="transition duration-200 ease-out"
+          enter-from-class="opacity-0"
+          enter-to-class="opacity-100"
+          leave-active-class="transition duration-150 ease-in"
+          leave-from-class="opacity-100"
+          leave-to-class="opacity-0"
+        >
+          <div
+            v-if="isCoverModalOpen && hasCover"
+            class="fixed inset-0 z-[100] bg-black flex items-center justify-center p-2 sm:p-4 select-none cursor-pointer overflow-hidden"
+            @click="closeCoverModal"
+            data-testid="cover-modal-backdrop"
+          >
+            <!-- Botão Fechar discreto no canto superior -->
+            <button
+              type="button"
+              class="absolute top-4 right-4 z-10 p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-all backdrop-blur-xs cursor-pointer shadow-lg active:scale-95"
+              @click.stop="closeCoverModal"
+              title="Fechar capa (Esc)"
+              data-testid="cover-modal-close"
+            >
+              <XIcon class="w-5 h-5" />
+            </button>
+
+            <!-- Capa centralizada ocupando o máximo da tela -->
+            <img
+              :src="bookCoverUrl"
+              :alt="book.title || book.name"
+              class="max-w-full max-h-[96vh] sm:max-h-[95vh] w-auto h-auto object-contain rounded-md shadow-2xl transition-all cursor-default"
+              @click.stop
+              data-testid="cover-modal-img"
+            />
+          </div>
+        </Transition>
 
     <!-- Resumo do Livro se disponível -->
     <div v-if="book.summary" class="px-6 py-3 bg-white/[0.01] border-b border-divider text-xs text-textSecondary font-interface leading-relaxed">
@@ -211,7 +265,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import {
   XIcon,
   BookOpenIcon,
@@ -221,12 +275,13 @@ import {
   SendIcon,
   QuoteIcon,
   SparklesIcon,
+  ImageIcon,
 } from 'lucide-vue-next'
 import type { GraphNode, AnnotationThemeItem, BookThemeItem } from '~/interfaces/graph'
 import { useGraph } from '~/composables/useGraph'
 import { annotationRepo } from '~/adapters/database/repositories/AnnotationRepository'
 import { bookRepo } from '~/adapters/database/repositories/BookRepository'
-import { getCoverUrl as resolveCoverUrl } from '~/utils/cover'
+import { getCoverUrl as resolveCoverUrl, resolveBookCover } from '~/utils/cover'
 import { useAuth } from '~/composables/useAuth'
 
 const props = defineProps<{
@@ -248,6 +303,35 @@ const newLooseNote = ref('')
 const selectedThemeIds = ref<number[]>([])
 const creatingNote = ref(false)
 const availableThemes = ref<BookThemeItem[]>([])
+const isCoverModalOpen = ref(false)
+const coverError = ref(false)
+
+const openCoverModal = () => {
+  if (!hasCover.value) return
+  isCoverModalOpen.value = true
+  if (typeof window !== 'undefined') {
+    window.addEventListener('keydown', handleKeydown)
+  }
+}
+
+const closeCoverModal = () => {
+  isCoverModalOpen.value = false
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('keydown', handleKeydown)
+  }
+}
+
+const handleKeydown = (e: KeyboardEvent) => {
+  if (e.key === 'Escape' && isCoverModalOpen.value) {
+    closeCoverModal()
+  }
+}
+
+onBeforeUnmount(() => {
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('keydown', handleKeydown)
+  }
+})
 
 const resolveBookId = (b: any): number | null => {
   if (!b) return null
@@ -265,12 +349,32 @@ const resolveBookId = (b: any): number | null => {
 
 const currentBookId = computed(() => resolveBookId(props.book))
 
+const bookCoverUrl = computed(() => {
+  if (!props.book) return ''
+  const id = resolveBookId(props.book)
+  if (props.book.coverPath) {
+    return resolveCoverUrl(props.book.coverPath, id || undefined)
+  }
+  return resolveBookCover({
+    coverPath: props.book.coverPath,
+    bookId: id || undefined,
+    filePath: (props.book as any).filePath,
+    title: props.book.fullTitle || props.book.name,
+    themes: (props.book as any).themes,
+  })
+})
+
+const hasCover = computed(() => {
+  return Boolean(bookCoverUrl.value) && !coverError.value
+})
+
 const getCoverUrl = (b: any) => {
   const id = resolveBookId(b)
   return resolveCoverUrl(b?.coverPath, id || undefined)
 }
 
 const onCoverError = (event: Event) => {
+  coverError.value = true
   const target = event.target as HTMLImageElement
   target.style.display = 'none'
 }
@@ -411,7 +515,11 @@ watch(
     if (props.isOpen && props.book) {
       newLooseNote.value = ''
       selectedThemeIds.value = []
+      coverError.value = false
+      closeCoverModal()
       loadBookData()
+    } else {
+      closeCoverModal()
     }
   },
   { immediate: true }

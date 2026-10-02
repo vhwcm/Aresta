@@ -1,6 +1,8 @@
 ## 🔄 Em Andamento
+- [02/10/2026 09:28] [Fazendo] Posicionar ícone de enviar feedbacks entre a lupa e a conta no cabeçalho da barra lateral com abertura do FeedbackCanvas
 
 ## ✅ Concluído
+- [02/10/2026 09:28] [Concluído] Adicionar opção "Mostrar Capa" ao lado de Continuar Leitura na gaveta de anotações do livro com visualizador imersivo em tela cheia centralizado e fundo preto
 - [02/10/2026 09:09] [Concluído] Adaptar posicionamento da barra de leitura à orientação da tela (inferior na vertical e lateral na horizontal) inclusive em tablets
 - [28/09/2026 09:16] [Concluído] Integrar SVG oficial em public/logos, atualizar ArestaLogoGraph com vetor e ampliar tamanho do ícone de início no sidebar (28px/26px)
 - [28/09/2026 09:03] [Concluído] Substituir ícone de casinha pelo do Aresta na navegação, remover logo do topo e ampliar tamanho dos ícones da barra superior (tema, busca, conta e ofensiva) mantendo altura da barra intacta

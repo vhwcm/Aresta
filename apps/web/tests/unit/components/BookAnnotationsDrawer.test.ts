@@ -228,4 +228,93 @@ describe('BookAnnotationsDrawer Component', () => {
       expect(wrapper.text()).toContain('Anotações deste livro (1)')
     })
   })
+
+  it('exibe botão "Mostrar Capa" quando o livro possui capa e abre visualizador imersivo em tela cheia ao clicar', async () => {
+    mockFetchBookAnnotations.mockResolvedValue([])
+
+    const wrapper = mount(BookAnnotationsDrawer, {
+      props: {
+        isOpen: true,
+        book: {
+          id: 'book-10',
+          rawId: 10,
+          name: 'Quarta Asa',
+          fullTitle: 'Quarta Asa',
+          coverPath: 'storage/covers/quarta-asa.jpg',
+        },
+      },
+      global: {
+        stubs: {
+          Teleport: true,
+          NuxtLink: true,
+          Transition: {
+            template: '<div><slot /></div>',
+          },
+        },
+      },
+    })
+
+    // Botão Mostrar Capa deve estar presente ao lado de Continuar Leitura
+    const showCoverBtn = wrapper.findAll('button').find((b) => b.text().includes('Mostrar Capa'))
+    expect(showCoverBtn).toBeDefined()
+
+    // Inicialmente o modal não está aberto
+    expect(wrapper.find('[data-testid="cover-modal-backdrop"]').exists()).toBe(false)
+
+    // Clica para abrir o modal
+    await showCoverBtn?.trigger('click')
+
+    // Modal deve estar aberto com fundo preto e imagem centralizada
+    const backdrop = wrapper.find('[data-testid="cover-modal-backdrop"]')
+    expect(backdrop.exists()).toBe(true)
+    expect(backdrop.classes()).toContain('bg-black')
+
+    const coverImg = wrapper.find('[data-testid="cover-modal-img"]')
+    expect(coverImg.exists()).toBe(true)
+    expect(coverImg.attributes('src')).toContain('/api/books/10/cover')
+
+    // Clicar no fundo preto fecha o modal
+    await backdrop.trigger('click')
+    expect(wrapper.find('[data-testid="cover-modal-backdrop"]').exists()).toBe(false)
+
+    // Reabre e fecha pelo botão fechar
+    await showCoverBtn?.trigger('click')
+    expect(wrapper.find('[data-testid="cover-modal-backdrop"]').exists()).toBe(true)
+    const closeBtn = wrapper.find('[data-testid="cover-modal-close"]')
+    await closeBtn.trigger('click')
+    expect(wrapper.find('[data-testid="cover-modal-backdrop"]').exists()).toBe(false)
+
+    // Reabre e fecha via tecla Escape
+    await showCoverBtn?.trigger('click')
+    expect(wrapper.find('[data-testid="cover-modal-backdrop"]').exists()).toBe(true)
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+    await wrapper.vm.$nextTick()
+    expect(wrapper.find('[data-testid="cover-modal-backdrop"]').exists()).toBe(false)
+  })
+
+  it('não exibe botão "Mostrar Capa" se o livro não possuir capa', async () => {
+    mockFetchBookAnnotations.mockResolvedValue([])
+
+    const wrapper = mount(BookAnnotationsDrawer, {
+      props: {
+        isOpen: true,
+        book: {
+          id: 'book-11',
+          rawId: 11,
+          name: 'Livro Sem Capa',
+          coverPath: undefined,
+        },
+      },
+      global: {
+        stubs: {
+          Teleport: true,
+          NuxtLink: true,
+        },
+      },
+    })
+
+    const showCoverBtn = wrapper.findAll('button').find((b) => b.text().includes('Mostrar Capa'))
+    expect(showCoverBtn).toBeUndefined()
+  })
 })
+
