@@ -180,6 +180,67 @@
       </div>
     </transition>
 
+    <!-- Caixa de Texto para Anotação Solta / Nova Reflexão (No Topo, acima da lista de anotações) -->
+    <div
+      class="px-4 py-3 border-b shrink-0 flex flex-col gap-2 transition-colors duration-200"
+      :class="{
+        'bg-[#FAF5E8] border-[#dfd5c0]': activeTheme === 'sepia',
+        'bg-gray-50 border-gray-200': activeTheme === 'white',
+        'bg-[#121214] border-white/10': activeTheme === 'black',
+      }"
+    >
+      <div class="flex items-center justify-between">
+        <span class="text-[11px] font-technical uppercase font-bold text-accent flex items-center gap-1.5">
+          <SparklesIcon class="w-3.5 h-3.5" />
+          <span>Escrever reflexão rápida (Pág. {{ store.currentPage }})</span>
+        </span>
+        <span class="text-[10px] text-textSecondary font-technical hidden sm:inline">
+          Ctrl+Enter para salvar
+        </span>
+      </div>
+
+      <textarea
+        v-model="quickNoteText"
+        rows="2"
+        placeholder="Escreva sua reflexão ou síntese rápida..."
+        class="w-full rounded-xl p-2.5 text-xs border focus:outline-none resize-none transition-colors"
+        :class="{
+          'bg-[#f0e7d3] border-[#dfd5c0] text-[#2a2521] placeholder-[#786C5E] focus:border-accent': activeTheme === 'sepia',
+          'bg-white border-gray-200 text-gray-900 placeholder-gray-400 focus:border-accent': activeTheme === 'white',
+          'bg-white/5 border-white/10 text-white placeholder-textSecondary focus:border-accent': activeTheme === 'black',
+        }"
+        @keydown.enter.ctrl.prevent="handleSaveQuickNote"
+        id="textarea-quick-note"
+      ></textarea>
+
+      <div class="flex items-center justify-between">
+        <span
+          v-if="!quickNoteText"
+          class="text-[10px]"
+          :class="activeTheme === 'sepia' ? 'text-[#786C5E]' : 'text-textSecondary'"
+        >
+          A reflexão ficará salva e listada abaixo.
+        </span>
+        <button
+          v-else
+          @click="quickNoteText = ''"
+          class="text-[11px] text-textSecondary hover:text-textPrimary"
+        >
+          Limpar
+        </button>
+
+        <button
+          @click="handleSaveQuickNote"
+          :disabled="!quickNoteText.trim() || isSavingQuickNote"
+          class="px-3.5 py-1.5 rounded-xl bg-accent text-white text-xs font-semibold hover:bg-accent/90 disabled:opacity-40 transition-all shadow-xs flex items-center gap-1.5 ml-auto active:scale-95"
+          id="btn-save-quick-note"
+        >
+          <SendIcon class="w-3 h-3" />
+          <span>{{ isSavingQuickNote ? 'Salvando...' : 'Salvar' }}</span>
+        </button>
+      </div>
+    </div>
+
     <!-- Conteúdo Principal: Lista de Anotações -->
     <div class="flex-1 overflow-y-auto p-4 space-y-3.5 custom-scrollbar">
       <!-- Loading Skeleton -->
@@ -456,85 +517,6 @@
         </article>
       </div>
     </div>
-
-    <!-- Caixa Expansível de Criação Rápida de Nota no Rodapé -->
-    <footer
-      class="p-3.5 border-t shrink-0 flex flex-col gap-2.5 transition-colors duration-200"
-      :class="{
-        'bg-[#FAF5E8]/95 border-[#dfd5c0]': activeTheme === 'sepia',
-        'bg-white/95 border-gray-200': activeTheme === 'white',
-        'bg-[#161619]/95 border-white/10': activeTheme === 'black',
-      }"
-    >
-      <div v-if="!isQuickNoteOpen" class="flex items-center justify-between">
-        <button
-          @click="isQuickNoteOpen = true"
-          class="w-full py-2 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all"
-          :class="{
-            'bg-[#f0e7d3] border-[#dfd5c0] text-[#5c4d3c] hover:text-[#2a2521] hover:bg-[#EBE2CE]': activeTheme === 'sepia',
-            'bg-gray-100 border-gray-200 text-gray-700 hover:text-black hover:bg-gray-200': activeTheme === 'white',
-            'bg-white/5 border-white/10 text-textSecondary hover:text-textPrimary hover:bg-white/10': activeTheme === 'black',
-          }"
-        >
-          <PlusCircleIcon class="w-4 h-4 text-accent" />
-          <span>Escrever reflexão rápida (Pág. {{ store.currentPage }})</span>
-        </button>
-      </div>
-
-      <div v-else class="space-y-2 animate-fadeIn">
-        <div class="flex items-center justify-between">
-          <span class="text-[11px] font-technical uppercase font-bold text-accent flex items-center gap-1">
-            <SparklesIcon class="w-3 h-3" />
-            <span>Nota na Página {{ store.currentPage }}</span>
-          </span>
-          <button
-            @click="isQuickNoteOpen = false; quickNoteText = ''"
-            class="text-textSecondary hover:text-textPrimary p-0.5 rounded-lg"
-            title="Cancelar"
-          >
-            <XIcon class="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        <textarea
-          v-model="quickNoteText"
-          rows="2"
-          placeholder="Escreva sua reflexão ou síntese rápida..."
-          class="w-full rounded-xl p-2.5 text-xs border focus:outline-none resize-none transition-colors"
-          :class="{
-            'bg-[#f0e7d3] border-[#dfd5c0] text-[#2a2521] placeholder-[#786C5E] focus:border-accent': activeTheme === 'sepia',
-            'bg-white border-gray-200 text-gray-900 placeholder-gray-400 focus:border-accent': activeTheme === 'white',
-            'bg-white/5 border-white/10 text-white placeholder-textSecondary focus:border-accent': activeTheme === 'black',
-          }"
-          @keydown.enter.ctrl.prevent="handleSaveQuickNote"
-        ></textarea>
-
-        <div class="flex items-center justify-between">
-          <span class="text-[10px] text-textSecondary font-technical hidden sm:inline">
-            Pressione Ctrl+Enter para salvar
-          </span>
-          <div class="flex items-center gap-2 ml-auto">
-            <button
-              @click="isQuickNoteOpen = false; quickNoteText = ''"
-              class="px-2.5 py-1 text-xs rounded-lg transition-colors"
-              :class="activeTheme === 'sepia'
-                ? 'text-[#786C5E] hover:text-[#2a2521]'
-                : (activeTheme === 'white' ? 'text-gray-600 hover:text-gray-900' : 'text-textSecondary hover:text-textPrimary')"
-            >
-              Cancelar
-            </button>
-            <button
-              @click="handleSaveQuickNote"
-              :disabled="!quickNoteText.trim() || isSavingQuickNote"
-              class="px-3.5 py-1.5 rounded-xl bg-accent text-white text-xs font-semibold hover:bg-accent/90 disabled:opacity-40 transition-all shadow-xs flex items-center gap-1.5 active:scale-95"
-            >
-              <SendIcon class="w-3 h-3" />
-              <span>{{ isSavingQuickNote ? 'Salvando...' : 'Salvar' }}</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </footer>
   </div>
 </template>
 

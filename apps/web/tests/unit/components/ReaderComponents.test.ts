@@ -47,16 +47,17 @@ describe('Reader Components', () => {
   })
 
   describe('ReaderBottomBar', () => {
-    it('renderiza botões e reage ao clique de marcar página', async () => {
+    it('renderiza botões e reage ao clique de marcar página dentro de configurações', async () => {
       const store = useReaderStore()
       store.currentPage = 4
       const wrapper = mount(ReaderBottomBar, {
         props: { isGraphActive: false },
       })
 
-      const bookmarksMenuBtn = wrapper.find('#btn-bookmarks-menu')
-      expect(bookmarksMenuBtn.exists()).toBe(true)
-      await bookmarksMenuBtn.trigger('click')
+      // O marcador agora fica dentro do botão de configurações
+      const settingsBtn = wrapper.find('#btn-appearance-toggle')
+      expect(settingsBtn.exists()).toBe(true)
+      await settingsBtn.trigger('click')
 
       const bookmarkBtn = wrapper.find('button[aria-label="Marcar ou desmarcar página atual"]')
       expect(bookmarkBtn.exists()).toBe(true)
@@ -66,7 +67,7 @@ describe('Reader Components', () => {
       expect(store.savedPages).toContain(4)
     })
 
-    it('emite eventos corretos ao clicar nos botões de sair, anotação, páginas salvas e grafo', async () => {
+    it('emite eventos corretos ao clicar nos botões de sair, anotação e páginas salvas', async () => {
       const store = useReaderStore()
       store.setDocument({
         type: 'pdf',
@@ -83,37 +84,32 @@ describe('Reader Components', () => {
         props: { isGraphActive: true },
       })
 
-      // Verifica exibição do progresso por página (Pág. 5-6/20) e presença de porcentagem
-      expect(wrapper.text()).toContain('Pág. 5-6/20')
-      expect(wrapper.text()).toContain('%')
-
       // Botão Sair
       const closeBtn = wrapper.find('#btn-close-book')
       expect(closeBtn.exists()).toBe(true)
       await closeBtn.trigger('click')
       expect(wrapper.emitted('close')).toBeTruthy()
 
-      // Botão Anotar
-      const annotateBtn = wrapper.find('button[aria-label="Criar anotação"]')
-      await annotateBtn.trigger('click')
-      expect(wrapper.emitted('openAnnotation')).toBeTruthy()
-
-      // Botão Opções de Marcadores (Abre popover para marcar ou ver páginas salvas)
-      const bookmarksMenuBtn = wrapper.find('#btn-bookmarks-menu')
-      expect(bookmarksMenuBtn.exists()).toBe(true)
-      await bookmarksMenuBtn.trigger('click')
-
-      // Botão Páginas Salvas dentro do popover
-      const savedPagesBtn = wrapper.find('button[aria-label="Abrir lista de páginas salvas"]')
-      expect(savedPagesBtn.exists()).toBe(true)
-      await savedPagesBtn.trigger('click')
-      expect(wrapper.emitted('openSavedPages')).toBeTruthy()
-
-      // Botão Notas do Livro
+      // Botão Anotar / Notas do Livro
       const notesBtn = wrapper.find('button[aria-label="Abrir ou fechar notas do livro"]')
       expect(notesBtn.exists()).toBe(true)
       await notesBtn.trigger('click')
       expect(wrapper.emitted('toggleNotes')).toBeTruthy()
+
+      // Abre popover de configurações (onde páginas e marcadores agora residem)
+      const settingsBtn = wrapper.find('#btn-appearance-toggle')
+      expect(settingsBtn.exists()).toBe(true)
+      await settingsBtn.trigger('click')
+
+      // Verifica exibição do progresso por página (Pág. 5-6/20) e presença de porcentagem dentro de configurações
+      expect(wrapper.text()).toContain('Pág. 5-6/20')
+      expect(wrapper.text()).toContain('%')
+
+      // Botão Páginas Salvas dentro do popover de configurações
+      const savedPagesBtn = wrapper.find('button[aria-label="Abrir lista de páginas salvas"]')
+      expect(savedPagesBtn.exists()).toBe(true)
+      await savedPagesBtn.trigger('click')
+      expect(wrapper.emitted('openSavedPages')).toBeTruthy()
     })
 
     it('alterna modo de 1 página e 2 páginas no popover de configurações', async () => {

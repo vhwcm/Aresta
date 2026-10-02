@@ -34,11 +34,11 @@
       </div>
 
       <!-- 2. Bloco Central de Conteúdo: Título em cima, Controles e Anotações em baixo -->
-      <div class="flex-1 min-w-0 flex flex-col justify-center h-full gap-1 sm:gap-1.5 py-0.5">
-        <!-- Metade de Cima: Título do Livro -->
+      <div class="flex-1 min-w-0 flex flex-col justify-center h-full gap-1 sm:gap-2 py-0.5">
+        <!-- Metade de Cima: Título do Livro (Aumentado e editorial) -->
         <div class="flex items-center min-w-0 reader-viewer__book-title-bar">
           <h2
-            class="font-editorial reader-viewer__book-title-text text-sm sm:text-base md:text-lg leading-tight truncate tracking-wide font-normal"
+            class="font-editorial reader-viewer__book-title-text text-xl sm:text-2xl md:text-3xl leading-tight truncate tracking-normal font-medium"
             :class="themeTextClass"
             :title="store.title"
           >
@@ -46,46 +46,42 @@
           </h2>
         </div>
 
-        <!-- Metade de Baixo: Anotações + Configurações + Marcador + Páginas e Porcentagem -->
-        <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
-          <!-- Fazer Anotação Solta -->
+        <!-- Metade de Baixo: Apenas Anotações e Configurações (com ícones grandes) -->
+        <div class="flex items-center gap-3 sm:gap-4 flex-wrap">
+          <!-- Botão Oculto para fallback de evento openAnnotation se invocado programaticamente -->
           <button
-            v-if="!store.isFocusMode"
             @click="$emit('openAnnotation')"
-            class="p-1 sm:p-1.5 text-textSecondary hover:text-accent transition-colors active:scale-90"
-            title="Fazer anotação solta nesta página"
+            class="hidden"
             aria-label="Criar anotação"
             id="btn-create-annotation"
-          >
-            <HighlighterIcon class="w-4 h-4" />
-          </button>
+          ></button>
 
-          <!-- Ver Anotações do Livro -->
+          <!-- Botão de Anotações do Livro (Ícone Grande - Abre as anotações do livro) -->
           <button
             @click="handleToggleNotes"
-            class="p-1 sm:p-1.5 transition-colors active:scale-90"
-            :class="isNotesActiveComputed ? 'text-accent font-bold' : 'text-textSecondary hover:text-accent'"
-            :title="isNotesActiveComputed ? 'Ocultar anotações do livro' : 'Ver anotações deste livro'"
+            class="p-2 sm:p-2.5 rounded-xl transition-colors active:scale-90 flex items-center justify-center"
+            :class="isNotesActiveComputed ? 'text-accent font-bold bg-accent/15' : 'text-textSecondary hover:text-accent hover:bg-white/5'"
+            :title="isNotesActiveComputed ? 'Ocultar anotações do livro' : 'Abrir anotações e reflexões deste livro'"
             aria-label="Abrir ou fechar notas do livro"
             id="btn-view-notes"
           >
-            <FileTextIcon class="w-4 h-4" />
+            <FileTextIcon class="w-6 h-6" />
           </button>
 
           <!-- Divisor sutil vertical -->
-          <div class="w-px h-3.5 opacity-20 bg-current"></div>
+          <div class="w-px h-5 opacity-20 bg-current"></div>
 
-          <!-- Botão de Configurações (Aparência, Modo, Fonte, Foco, Marcadores) -->
+          <!-- Botão de Configurações (Ícone Grande - Abre Popover com Páginas, Marcador, Modo, Tema, etc.) -->
           <div class="relative" ref="appearanceWrapperRef">
             <button
               @click="isAppearancePopoverOpen = !isAppearancePopoverOpen"
-              class="p-1 sm:p-1.5 transition-colors active:scale-90 relative"
-              :class="isAppearancePopoverOpen ? 'text-accent' : 'text-textSecondary hover:text-textPrimary'"
-              title="Configurações de leitura e marcadores"
+              class="p-2 sm:p-2.5 rounded-xl transition-colors active:scale-90 relative flex items-center justify-center"
+              :class="isAppearancePopoverOpen ? 'text-accent bg-accent/15' : 'text-textSecondary hover:text-textPrimary hover:bg-white/5'"
+              title="Configurações de leitura, páginas e marcadores"
               aria-label="Configurações de leitura"
               id="btn-appearance-toggle"
             >
-              <SettingsIcon class="w-4 h-4" />
+              <SettingsIcon class="w-6 h-6" />
             </button>
 
             <!-- Popover Flutuante de Configurações (Abre acima da barra centralizado) -->
@@ -96,37 +92,60 @@
               role="dialog"
               aria-label="Controle de aparência e fundo de leitura"
             >
-                <!-- Seção 1: Marcadores de Página -->
-                <div class="flex flex-col gap-2">
-                  <span
-                    class="text-[11px] font-technical uppercase tracking-wider font-semibold"
-                    :class="themeSubtextClass"
-                  >
-                    Marcadores de Página
+              <!-- Seção 1: Quantidade de Páginas e Percentual Lido (Dentro de Configurações) -->
+              <div
+                class="flex items-center justify-between p-3 rounded-xl border select-none transition-colors"
+                :class="themeBorderClass"
+              >
+                <div class="flex flex-col">
+                  <span class="text-[10px] font-technical uppercase tracking-wider font-semibold" :class="themeSubtextClass">
+                    Páginas do Livro
                   </span>
-                  <div class="grid grid-cols-2 gap-2">
-                    <button
-                      @click="store.toggleBookmark()"
-                      class="flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl text-xs font-semibold transition-all active:scale-95"
-                      :class="store.isCurrentPageBookmarked
-                        ? 'bg-amber-500/20 text-amber-500 border border-amber-500/40'
-                        : 'bg-white/5 hover:bg-white/10 text-textSecondary hover:text-textPrimary border border-divider'"
-                      aria-label="Marcar ou desmarcar página atual"
-                    >
-                      <BookmarkIcon class="w-3.5 h-3.5" :class="{ 'fill-current': store.isCurrentPageBookmarked }" />
-                      <span>{{ store.isCurrentPageBookmarked ? 'Marcada' : 'Marcar pág.' }}</span>
-                    </button>
-
-                    <button
-                      @click="$emit('openSavedPages'); isAppearancePopoverOpen = false"
-                      class="flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl text-xs font-semibold bg-white/5 hover:bg-white/10 text-textSecondary hover:text-textPrimary border border-divider transition-all active:scale-95"
-                      aria-label="Abrir lista de páginas salvas"
-                    >
-                      <BookmarkCheckIcon class="w-3.5 h-3.5 text-accent" />
-                      <span>Ver páginas ({{ store.savedPages.length }})</span>
-                    </button>
-                  </div>
+                  <span class="text-sm font-technical font-bold text-accent">
+                    Pág. {{ pageDisplay }}
+                  </span>
                 </div>
+                <span
+                  v-if="store.totalPages > 0"
+                  class="px-2.5 py-1 rounded-full text-xs font-technical font-semibold bg-accent/15 text-accent"
+                >
+                  {{ progressPercentageComputed }}%
+                </span>
+              </div>
+
+              <!-- Seção 2: Marcadores de Página (Bookmarks - Dentro de Configurações) -->
+              <div class="flex flex-col gap-2 pt-2 border-t" :class="themeBorderClass">
+                <span
+                  class="text-[11px] font-technical uppercase tracking-wider font-semibold"
+                  :class="themeSubtextClass"
+                >
+                  Marcadores de Página
+                </span>
+                <div class="grid grid-cols-2 gap-2">
+                  <button
+                    @click="store.toggleBookmark()"
+                    class="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl text-xs font-semibold transition-all active:scale-95"
+                    :class="store.isCurrentPageBookmarked
+                      ? 'bg-amber-500/20 text-amber-500 border border-amber-500/40'
+                      : 'bg-white/5 hover:bg-white/10 text-textSecondary hover:text-textPrimary border border-divider'"
+                    aria-label="Marcar ou desmarcar página atual"
+                    id="btn-bookmarks-menu"
+                  >
+                    <BookmarkIcon class="w-4 h-4" :class="{ 'fill-current': store.isCurrentPageBookmarked }" />
+                    <span>{{ store.isCurrentPageBookmarked ? 'Marcada' : 'Marcar pág.' }}</span>
+                  </button>
+
+                  <button
+                    @click="$emit('openSavedPages'); isAppearancePopoverOpen = false"
+                    class="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl text-xs font-semibold bg-white/5 hover:bg-white/10 text-textSecondary hover:text-textPrimary border border-divider transition-all active:scale-95"
+                    aria-label="Abrir lista de páginas salvas"
+                    id="btn-open-saved-pages"
+                  >
+                    <BookmarkCheckIcon class="w-4 h-4 text-accent" />
+                    <span>Ver páginas ({{ store.savedPages.length }})</span>
+                  </button>
+                </div>
+              </div>
 
                 <!-- Seção 2: Fundo da Leitura -->
                 <div class="flex flex-col gap-2 pt-2 border-t" :class="themeBorderClass">
@@ -362,38 +381,9 @@
                 </div>
               </div>
             </div>
-
-            <!-- Botão de Marcador e Opções -->
-          <button
-            @click="isAppearancePopoverOpen = !isAppearancePopoverOpen"
-            class="p-1 sm:p-1.5 transition-colors active:scale-90"
-            :class="store.isCurrentPageBookmarked ? 'text-amber-500' : 'text-textSecondary hover:text-textPrimary'"
-            :title="store.isCurrentPageBookmarked ? 'Página marcada' : 'Opções de marcador'"
-            aria-label="Opções de marcadores"
-            id="btn-bookmarks-menu"
-          >
-            <BookmarkIcon class="w-4 h-4" :class="{ 'fill-current': store.isCurrentPageBookmarked }" />
-          </button>
-
-          <!-- Divisor sutil vertical -->
-          <div class="w-px h-3.5 opacity-20 bg-current"></div>
-
-          <!-- Total de páginas com percentagem lida (sem caixinha, flat) -->
-          <div class="flex items-center gap-1.5 text-xs font-technical tracking-tight select-none whitespace-nowrap">
-            <span class="font-bold text-accent">
-              Pág. {{ pageDisplay }}
-            </span>
-            <span
-              v-if="store.totalPages > 0"
-              class="opacity-70 text-[11px]"
-              :class="themeSubtextClass"
-            >
-              ({{ progressPercentageComputed }}%)
-            </span>
           </div>
         </div>
       </div>
-    </div>
   </footer>
 </template>
 

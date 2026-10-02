@@ -248,7 +248,7 @@ describe('ReaderBookNotesPanel Component', () => {
     expect(mockDeleteAnnotation).toHaveBeenCalledWith(1)
   })
 
-  it('permite criar nota rápida no rodapé do painel', async () => {
+  it('permite criar nota rápida no topo do painel acima da lista de anotações', async () => {
     const store = useReaderStore()
     store.currentPage = 7
     store.bookId = 10
@@ -258,10 +258,6 @@ describe('ReaderBookNotesPanel Component', () => {
         bookId: 10,
       },
     })
-
-    const openQuickBtn = wrapper.findAll('button').find((b) => b.text().includes('Escrever reflexão rápida'))
-    expect(openQuickBtn).toBeDefined()
-    await openQuickBtn!.trigger('click')
 
     const textarea = wrapper.find('textarea[placeholder="Escreva sua reflexão ou síntese rápida..."]')
     expect(textarea.exists()).toBe(true)

@@ -266,10 +266,10 @@ ARQUITETURA DA INTERFACE DO LEITOR (FLUXO VERTICAL SEM SOBREPOSIÇÃO)
 │                BARRA INFERIOR UNIFICADA (20DVH CENTRALIZADA)                 │
 │                                                                              │
 │       ┌──────────────┬────────────────────────────────────────────────┐      │
-│       │              │  Título do Livro (Newsreader)                  │      │
+│       │              │  Título Grande do Livro (Newsreader text-2xl)  │      │
 │       │  Capa do     ├────────────────────────────────────────────────┤      │
-│       │  Livro (100% │  ✏️ Nota  📄 Ver Notas  ⚙️ Configs  🔖  Pág. X │      │
-│       │  da barra)   │  (Anotações na base | Flat sem caixinhas)      │      │
+│       │  Livro (100% │  📄 Anotações (w-6 h-6)   ⚙️ Configurações (w-6)│      │
+│       │  da barra)   │  (Páginas e Marcadores DENTRO de configurações)│      │
 │       └──────────────┴────────────────────────────────────────────────┘      │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
@@ -281,9 +281,9 @@ ARQUITETURA DA INTERFACE DO LEITOR (FLUXO VERTICAL SEM SOBREPOSIÇÃO)
 2. **Fluxo Vertical sem Sobreposição**: O container `.reader-viewer__reader-pane` mantém `flex-direction: column` permanente e a barra inferior atua como elemento `shrink-0` no fluxo (sem `fixed bottom-0` flutuante). O canvas do livro recebe todo o espaço intermediário sem sofrer corte ou sobreposição.
 3. **Centralização Horizontal**: Todo o conjunto da barra inferior (capa 100% da altura + bloco textual e controles) fica agrupado e centralizado horizontalmente no centro da tela (`max-w-2xl sm:max-w-3xl mx-auto`).
 4. **Capa Integral**: A capa do livro ocupa 100% da altura da barra inferior (`h-full`, aspect ratio 2:3).
-5. **Anotações na Linha Inferior**: Os botões de anotação solta (`HighlighterIcon`) e ver notas do livro (`FileTextIcon`) ficam alinhados na metade de baixo junto com Configuração, Marcador e Progresso.
-6. **Design Flat sem Caixinhas**: Todos os botões são planos, transparentes com hover delicado, preservando a identidade editorial do design system.
-7. **Progresso de Leitura**: Exibição contínua de páginas e percentual lido formatado (`Pág. X/Y (Z%)`).
+5. **Título e Ícones Ampliados**: O título do livro possui destaque editorial aumentado (`font-editorial text-xl sm:text-2xl md:text-3xl`), e os botões da barra inferior utilizam ícones generosos (`w-6 h-6`, padding `p-2 sm:p-2.5`).
+6. **Páginas e Marcadores DENTRO de Configurações**: O indicador de páginas lidas com percentual (`Pág. X (Y%)`) e o sistema de marcadores de página residem com destaque dentro do popover do botão de configurações (`SettingsIcon`), mantendo a barra inferior limpa e focada.
+7. **Painel de Anotações com Criação no Topo**: Ao clicar no botão de anotação, o painel do livro se abre exibindo no topo uma caixa de texto pronta para registrar anotações e reflexões soltas na página ativa; logo abaixo da caixa de texto, lista-se o feed completo com todas as anotações do livro.
 
 
 
