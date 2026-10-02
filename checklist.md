@@ -1,8 +1,14 @@
 ## 🔄 Em Andamento
-- [02/10/2026 09:41] [Fazendo] Mover seletor de tema da barra lateral para a página de conta e transformar busca em barra completa abaixo do cabeçalho superior e acima da navegação
+- [02/10/2026 09:53] [Fazendo] Corrigir paste de conteúdo da Wikipedia no editor de notas: preservar links com href, corrigir caracteres fonéticos e limpar referências
+- [02/10/2026 09:53] [Fazendo] Ajustar aba inicial do tema para Anotações (destaques e reflexões de leitura do livro) em vez de notas do canvas
 - [02/10/2026 09:37] [Fazendo] Abrir imediatamente a tela do editor de notas ao criar nova nota na barra lateral ou no espaço unificado
 
 ## ✅ Concluído
+- [02/10/2026 09:55] [Concluído] Diagnosticar e corrigir tela em branco na segunda página do modo 2 páginas ao folhear e retornar
+- [02/10/2026 09:41] [Concluído] Mover seletor de tema da barra lateral para a página de conta e transformar busca em barra completa abaixo do cabeçalho superior e acima da navegação
+- [02/10/2026 09:53] [Concluído] Posicionar ícone de conta no extremo esquerdo do cabeçalho da barra lateral ao lado esquerdo do ícone de feedback
+- [02/10/2026 09:52] [Concluído] Truncar título do livro em 50 caracteres e exibir capa do livro na barra inferior e no footer de título do leitor
+- [02/10/2026 09:49] [Concluído] Implementar abas superiores no detalhe do tema (Notas inicialmente ativa, Tudo com notas/canvas/links/livros e Flashcards filtrados com modo estudo 3D)
 - [02/10/2026 09:38] [Concluído] Unificar pastas e tags na barra de ferramentas do editor de notas exibindo exclusivamente tags com seleção rápida e sincronização automática
 - [02/10/2026 09:36] [Concluído] Posicionar ícone de enviar feedbacks entre a lupa e a conta no cabeçalho da barra lateral com abertura do FeedbackCanvas e composable useFeedbackModal
 - [02/10/2026 09:34] [Concluído] Remover seção de criação de anotação solta da gaveta lateral de anotações do livro (BookAnnotationsDrawer)

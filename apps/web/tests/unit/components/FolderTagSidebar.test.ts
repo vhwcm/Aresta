@@ -341,5 +341,78 @@ describe('FolderTagSidebar Component (Itens sem pasta na raiz)', () => {
     const header = wrapper.find('.h-14')
     expect(header.find('[data-testid="aresta-logo-graph-stub"]').exists()).toBe(false)
   })
+
+  it('não exibe seletor de tema nem botão de busca no top header, e exibe feedback e conta', async () => {
+    const wrapper = mount(FolderTagSidebar, {
+      props: {
+        items,
+        folders,
+        collapsed: false
+      },
+      global: {
+        stubs: {
+          NuxtLink: {
+            props: ['to'],
+            template: '<a :href="to"><slot /></a>'
+          },
+          ArestaLogoGraph: true,
+          ReadingStreak: true,
+          ManageThemesModal: true
+        }
+      }
+    })
+
+    const header = wrapper.find('.h-14')
+    // Não deve conter botão de alternância de tema no sidebar
+    expect(header.find('button[aria-label="Alternar tema da interface"]').exists()).toBe(false)
+    // Não deve conter botão de busca dentro do header
+    expect(header.find('button[aria-label="Pesquisar nós do grafo"]').exists()).toBe(false)
+
+    // Deve conter o botão de feedback e o link da conta
+    const feedbackBtn = header.find('[data-testid="sidebar-feedback-btn"]')
+    const accountLink = header.find('a[title="Minha Conta"]')
+    expect(feedbackBtn.exists()).toBe(true)
+    expect(accountLink.exists()).toBe(true)
+
+    // Ao clicar no botão de feedback, dispara a abertura
+    await feedbackBtn.trigger('click')
+    expect(feedbackBtn.classes()).toBeDefined()
+  })
+
+  it('renderiza barra completa de pesquisa abaixo do top header e acima da navegação', async () => {
+    const wrapper = mount(FolderTagSidebar, {
+      props: {
+        items,
+        folders,
+        collapsed: false,
+        viewLayout: 'grid'
+      },
+      global: {
+        stubs: {
+          NuxtLink: {
+            props: ['to'],
+            template: '<a :href="to"><slot /></a>'
+          },
+          ArestaLogoGraph: true,
+          ReadingStreak: true,
+          ManageThemesModal: true
+        }
+      }
+    })
+
+    // Barra completa de pesquisa existe
+    const searchContainer = wrapper.find('[data-testid="sidebar-search-container"]')
+    expect(searchContainer.exists()).toBe(true)
+
+    const searchInput = wrapper.find('[data-testid="sidebar-search-input"]')
+    expect(searchInput.exists()).toBe(true)
+    expect(searchInput.attributes('placeholder')).toContain('Pesquisar')
+
+    // Ao digitar na barra de pesquisa, emite update:view-layout para 'graph'
+    await searchInput.setValue('algoritmo')
+    await searchInput.trigger('input')
+    expect(wrapper.emitted('update:view-layout')).toBeTruthy()
+    expect(wrapper.emitted('update:view-layout')?.[0]).toEqual(['graph'])
+  })
 })
 

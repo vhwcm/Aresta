@@ -123,6 +123,61 @@
     <!-- Preferências da Aplicação -->
     <section class="flex flex-col gap-6" data-testid="account-preferences-section">
       <div class="flex flex-col rounded-3xl bg-bgPanel border border-divider divide-y divide-divider overflow-hidden shadow-sm">
+        <!-- Tema da Interface -->
+        <div class="p-5 flex items-center justify-between gap-4" data-testid="theme-settings-section">
+          <div class="flex items-center gap-4 min-w-0">
+            <div class="p-2.5 rounded-xl bg-accent/10 border border-accent/20 text-accent shrink-0">
+              <SunIcon v-if="themeMode === 'light'" class="w-5 h-5 text-amber-500" />
+              <PaletteIcon v-else-if="themeMode === 'sepia'" class="w-5 h-5 text-amber-600 dark:text-amber-300" />
+              <MoonIcon v-else class="w-5 h-5 text-accent" />
+            </div>
+            <div class="flex flex-col gap-0.5">
+              <span class="font-interface text-sm font-medium text-textPrimary">
+                Tema da Interface
+              </span>
+              <span class="font-interface text-xs text-textSecondary">
+                {{ themeMode === 'light' ? 'Claro (Visual limpo e diurno)' : (themeMode === 'sepia' ? 'Sépia (Conforto visual estilo papel)' : 'Escuro (OLED preto profundo)') }}
+              </span>
+            </div>
+          </div>
+
+          <div class="flex items-center p-0.5 rounded-xl bg-black/5 dark:bg-white/5 border border-divider shrink-0 gap-0.5">
+            <button
+              type="button"
+              @click="setThemeMode('light')"
+              class="px-2.5 py-1.5 rounded-lg font-interface text-xs transition-all flex items-center gap-1.5 cursor-pointer"
+              :class="themeMode === 'light' ? 'bg-accent text-white shadow-sm font-semibold' : 'text-textSecondary hover:text-textPrimary'"
+              title="Tema Claro"
+              data-testid="theme-light-btn"
+            >
+              <SunIcon class="w-3.5 h-3.5" />
+              <span>Claro</span>
+            </button>
+            <button
+              type="button"
+              @click="setThemeMode('sepia')"
+              class="px-2.5 py-1.5 rounded-lg font-interface text-xs transition-all flex items-center gap-1.5 cursor-pointer"
+              :class="themeMode === 'sepia' ? 'bg-accent text-white shadow-sm font-semibold' : 'text-textSecondary hover:text-textPrimary'"
+              title="Tema Sépia (Livro)"
+              data-testid="theme-sepia-btn"
+            >
+              <PaletteIcon class="w-3.5 h-3.5" />
+              <span>Sépia</span>
+            </button>
+            <button
+              type="button"
+              @click="setThemeMode('dark')"
+              class="px-2.5 py-1.5 rounded-lg font-interface text-xs transition-all flex items-center gap-1.5 cursor-pointer"
+              :class="themeMode === 'dark' ? 'bg-accent text-white shadow-sm font-semibold' : 'text-textSecondary hover:text-textPrimary'"
+              title="Tema Escuro"
+              data-testid="theme-dark-btn"
+            >
+              <MoonIcon class="w-3.5 h-3.5" />
+              <span>Escuro</span>
+            </button>
+          </div>
+        </div>
+
         <!-- Virada de Página 3D & Efeitos de Livro Físico -->
         <div class="p-5 flex items-center justify-between gap-4">
           <div class="flex items-center gap-4 min-w-0">
@@ -591,6 +646,9 @@ import {
   LanguagesIcon,
   SparklesIcon,
   ZoomInIcon,
+  SunIcon,
+  MoonIcon,
+  PaletteIcon,
 } from 'lucide-vue-next'
 import { useAuth } from '~/composables/useAuth'
 import { useSettings } from '~/composables/useSettings'
@@ -620,6 +678,8 @@ const {
 } = useOAuth()
 
 const {
+  themeMode,
+  setThemeMode,
   pageAnimationEnabled,
   pageCreaseEnabled,
   nativeLanguage,

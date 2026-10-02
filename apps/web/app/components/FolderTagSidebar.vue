@@ -20,35 +20,10 @@
       :class="isCollapsed ? 'justify-center px-2' : 'justify-between px-2.5 md:px-3 gap-2'"
     >
       <div v-if="!isCollapsed" class="flex items-center gap-1.5 flex-1 min-w-0">
-        <!-- Botão de Alternância de Tema -->
-        <button
-          @click="toggleThemeMode"
-          class="p-2 rounded-xl transition-all cursor-pointer shrink-0 flex items-center justify-center border border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.05] dark:hover:bg-white/[0.08]"
-          :title="themeMode === 'dark' ? 'Tema: Escuro (clique para Claro)' : (themeMode === 'light' ? 'Tema: Claro (clique para Livro)' : 'Tema: Livro (clique para Escuro)')"
-          aria-label="Alternar tema da interface"
-        >
-          <SunIcon v-if="themeMode === 'light'" class="w-5 h-5 text-amber-500 hover:rotate-45 transition-transform" />
-          <PaletteIcon v-else-if="themeMode === 'sepia'" class="w-5 h-5 text-amber-600 dark:text-amber-300 hover:scale-110 transition-transform" />
-          <MoonIcon v-else class="w-5 h-5 text-accent hover:-rotate-12 transition-transform" />
-        </button>
-
-        <!-- Lupa de Pesquisa dos Títulos dos Nós do Grafo -->
-        <button
-          @click="toggleGraphSearch"
-          class="p-2 rounded-xl transition-all cursor-pointer shrink-0 flex items-center justify-center border"
-          :class="isGraphSearchOpen || graphSearchQuery
-            ? 'bg-accent/15 text-accent border-accent/40 shadow-xs'
-            : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.05] dark:hover:bg-white/[0.08]'"
-          title="Pesquisar nós do grafo"
-          aria-label="Pesquisar nós do grafo"
-        >
-          <SearchIcon class="w-5 h-5" />
-        </button>
-
-        <!-- Botão Minha Conta (Ao lado esquerdo da Ofensiva) -->
+        <!-- Botão Minha Conta (mais ao lado esquerdo possível) -->
         <NuxtLink
           to="/conta"
-          class="ml-auto p-2 rounded-xl transition-all cursor-pointer shrink-0 flex items-center justify-center border"
+          class="p-2 rounded-xl transition-all cursor-pointer shrink-0 flex items-center justify-center border"
           :class="isAccountActive
             ? 'bg-accent/15 text-accent border-accent/40 shadow-xs'
             : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.05] dark:hover:bg-white/[0.08]'"
@@ -58,8 +33,22 @@
           <UserIcon class="w-5 h-5" />
         </NuxtLink>
 
+        <!-- Botão Enviar Feedback (ao lado direito da conta) -->
+        <button
+          @click="openFeedback"
+          class="p-2 rounded-xl transition-all cursor-pointer shrink-0 flex items-center justify-center border"
+          :class="isFeedbackOpen
+            ? 'bg-accent/15 text-accent border-accent/40 shadow-xs'
+            : 'border-transparent text-textSecondary hover:text-textPrimary hover:bg-black/[0.05] dark:hover:bg-white/[0.08]'"
+          title="Enviar feedback"
+          aria-label="Enviar feedback"
+          data-testid="sidebar-feedback-btn"
+        >
+          <MessageSquareHeartIcon class="w-5 h-5" />
+        </button>
+
         <!-- Indicador de Ofensiva (colado ao lado direito) -->
-        <ReadingStreak compact align="sidebar" />
+        <ReadingStreak compact align="sidebar" class="ml-auto" />
       </div>
 
       <!-- Botão Minimizar/Expandir Sidebar -->
@@ -72,36 +61,36 @@
       </button>
     </div>
 
-    <!-- Barra de Pesquisa de Nós do Grafo (Ativada pela Lupa) -->
+    <!-- Barra Completa de Pesquisa (em baixo da barra mais superior e acima da listagem de navegação/itens) -->
     <div
-      v-if="isGraphSearchOpen && !isCollapsed"
-      class="px-2.5 py-2 border-b border-divider/60 bg-bgRoot/70 backdrop-blur-md flex items-center gap-2 animate-in fade-in slide-in-from-top-1 duration-150"
+      v-if="!isCollapsed"
+      class="px-2.5 py-2 border-b border-divider/60 bg-bgPanel flex-shrink-0"
+      data-testid="sidebar-search-container"
     >
-      <SearchIcon class="w-3.5 h-3.5 text-accent shrink-0" />
-      <input
-        ref="graphSearchInputRef"
-        v-model="graphSearchQuery"
-        type="text"
-        placeholder="Pesquisar nós do grafo..."
-        class="w-full bg-transparent text-xs text-textPrimary placeholder:text-textSecondary/50 focus:outline-none font-interface"
-        @input="onGraphSearchInput"
-        @keyup.esc="closeGraphSearch"
-      />
-      <button
-        v-if="graphSearchQuery"
-        @click="clearGraphSearch"
-        class="p-0.5 rounded text-textSecondary hover:text-textPrimary cursor-pointer text-xs"
-        title="Limpar pesquisa"
+      <div
+        class="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-black/[0.03] dark:bg-white/[0.05] border border-divider/70 focus-within:border-accent/60 focus-within:bg-bgRoot focus-within:ring-2 focus-within:ring-accent/15 transition-all shadow-2xs"
       >
-        ✕
-      </button>
-      <button
-        @click="closeGraphSearch"
-        class="p-0.5 rounded text-textSecondary hover:text-textPrimary cursor-pointer text-xs ml-0.5"
-        title="Fechar busca"
-      >
-        ✕
-      </button>
+        <SearchIcon class="w-4 h-4 text-textSecondary/70 shrink-0" />
+        <input
+          ref="graphSearchInputRef"
+          v-model="graphSearchQuery"
+          type="text"
+          placeholder="Pesquisar nós do grafo..."
+          class="w-full bg-transparent text-xs text-textPrimary placeholder:text-textSecondary/50 focus:outline-none font-interface"
+          @input="onGraphSearchInput"
+          @keyup.esc="clearGraphSearch"
+          data-testid="sidebar-search-input"
+        />
+        <button
+          v-if="graphSearchQuery"
+          @click="clearGraphSearch"
+          class="p-0.5 rounded text-textSecondary hover:text-textPrimary hover:bg-black/10 dark:hover:bg-white/10 cursor-pointer text-xs shrink-0 transition-colors"
+          title="Limpar pesquisa"
+          aria-label="Limpar pesquisa"
+        >
+          ✕
+        </button>
+      </div>
     </div>
 
     <!-- Conteúdo Scrollável -->
@@ -793,15 +782,13 @@ import {
   Network as NetworkIcon,
   Search as SearchIcon,
   Tag as TagIcon,
-  Sun as SunIcon,
-  Moon as MoonIcon,
-  Palette as PaletteIcon,
   Link as LinkIcon,
-  MinusCircle as MinusCircleIcon
+  MinusCircle as MinusCircleIcon,
+  MessageSquareHeart as MessageSquareHeartIcon
 } from 'lucide-vue-next'
 import { useUserBooks } from '~/composables/useUserBooks'
 import { useGraph } from '~/composables/useGraph'
-import { useSettings } from '~/composables/useSettings'
+import { useFeedbackModal } from '~/composables/useFeedbackModal'
 import { resolveBookCover } from '~/utils/cover'
 import { loadGraphMeta } from '~/utils/graphMeta'
 import ManageThemesModal from '~/components/ManageThemesModal.vue'
@@ -810,7 +797,11 @@ import { useWorkspaceSidebar } from '~/composables/useWorkspaceSidebar'
 
 const route = useRoute()
 const router = useRouter()
-const { themeMode, toggleThemeMode } = useSettings()
+const feedbackModal = useFeedbackModal()
+const openFeedback = () => {
+  feedbackModal.open()
+}
+const isFeedbackOpen = computed(() => feedbackModal.isOpen.value)
 
 const { userBooks, fetchUserBooks } = useUserBooks()
 const { graphData, fetchGraph } = useGraph()
@@ -853,7 +844,7 @@ const allModalThemes = computed(() => {
           seen.add(name.toLowerCase())
           list.push({
             id: t.id || `theme-${Date.now()}`,
-            rawId: t.rawId || t.id,
+            rawId: (t as any).rawId || t.id,
             name,
             color: t.color || '#E57B55',
             type: 'theme'
@@ -873,7 +864,7 @@ const allModalThemes = computed(() => {
           seen.add(name.toLowerCase())
           list.push({
             id: t.id || `theme-${Date.now()}`,
-            rawId: t.rawId || t.id,
+            rawId: (t as any).rawId || t.id,
             name,
             color: t.color || '#E57B55',
             type: 'theme'
@@ -930,20 +921,7 @@ const handleThemeDeleted = async () => {
 }
 
 const { graphSearchQuery, activeTag } = useWorkspaceSidebar()
-const isGraphSearchOpen = ref(false)
 const graphSearchInputRef = ref<HTMLInputElement | null>(null)
-
-const toggleGraphSearch = () => {
-  isGraphSearchOpen.value = !isGraphSearchOpen.value
-  if (isGraphSearchOpen.value) {
-    if (props.viewLayout !== 'graph') {
-      emit('update:view-layout', 'graph')
-    }
-    nextTick(() => {
-      graphSearchInputRef.value?.focus()
-    })
-  }
-}
 
 const onGraphSearchInput = () => {
   if (props.viewLayout !== 'graph') {
@@ -956,10 +934,6 @@ const clearGraphSearch = () => {
   nextTick(() => {
     graphSearchInputRef.value?.focus()
   })
-}
-
-const closeGraphSearch = () => {
-  isGraphSearchOpen.value = false
 }
 
 export type { SidebarTreeItem } from '~/interfaces/sidebar'

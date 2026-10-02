@@ -69,6 +69,8 @@ describe('Conta Page (/conta)', () => {
     expect(wrapper.find('[data-testid="metric-knowledge-nodes"]').text()).toContain('Em 4 mapas conceituais')
     expect(wrapper.find('[data-testid="metric-retention-rate"]').text()).toContain('91%')
     expect(wrapper.find('[data-testid="account-preferences-section"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="theme-settings-section"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Tema da Interface')
     expect(wrapper.text()).toContain('Virada de Página 3D & Efeitos de Livro Físico')
     expect(wrapper.find('[data-testid="ui-scale-settings-section"]').exists()).toBe(true)
     expect(wrapper.text()).toContain('Escala da Interface')
@@ -77,6 +79,36 @@ describe('Conta Page (/conta)', () => {
     expect(wrapper.text()).toContain('Zona de Perigo & Segurança')
     expect(wrapper.text()).toContain('Fazer Logout')
     expect(wrapper.text()).toContain('Deletar Minha Conta')
+  })
+
+  it('permite selecionar o tema da interface (Claro, Sépia, Escuro)', async () => {
+    const wrapper = mount(ContaPage, {
+      global: {
+        stubs: defaultStubs,
+      },
+    })
+    const { themeMode } = useSettings()
+
+    expect(wrapper.find('[data-testid="theme-settings-section"]').exists()).toBe(true)
+    const lightBtn = wrapper.find('[data-testid="theme-light-btn"]')
+    const sepiaBtn = wrapper.find('[data-testid="theme-sepia-btn"]')
+    const darkBtn = wrapper.find('[data-testid="theme-dark-btn"]')
+
+    expect(lightBtn.exists()).toBe(true)
+    expect(sepiaBtn.exists()).toBe(true)
+    expect(darkBtn.exists()).toBe(true)
+
+    // Seleciona tema Escuro
+    await darkBtn.trigger('click')
+    expect(themeMode.value).toBe('dark')
+
+    // Seleciona tema Sépia
+    await sepiaBtn.trigger('click')
+    expect(themeMode.value).toBe('sepia')
+
+    // Seleciona tema Claro
+    await lightBtn.trigger('click')
+    expect(themeMode.value).toBe('light')
   })
 
   it('permite configurar idiomas de definições e tradução', async () => {
