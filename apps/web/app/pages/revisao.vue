@@ -27,7 +27,7 @@
     <!-- SEÇÃO 1: FLASHCARDS (Repetição Espaçada 3D) -->
     <section v-if="activeTab === 'flashcards'" class="flex flex-col flex-1 gap-6 sm:gap-8 justify-center max-w-xl md:max-w-2xl mx-auto w-full my-auto">
       <!-- Barra de Progresso da Ofensiva Diária com Flashcards -->
-      <div data-testid="flashcard-streak-bar" class="flex items-center justify-between gap-4 px-4 py-3 rounded-2xl bg-white/5 border border-divider/60 backdrop-blur-sm w-full">
+      <div data-testid="flashcard-streak-bar" class="flex items-center justify-between gap-4 px-4 py-3 rounded-2xl bg-white/5 border border-divider/60 w-full">
         <div class="flex items-center gap-2">
           <span class="font-interface text-xs font-semibold text-textPrimary">Ofensiva diária</span>
           <span class="font-technical text-[11px] text-textSecondary">

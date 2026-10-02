@@ -1,7 +1,8 @@
 ## 🔄 Em Andamento
-- [02/10/2026 09:28] [Fazendo] Posicionar ícone de enviar feedbacks entre a lupa e a conta no cabeçalho da barra lateral com abertura do FeedbackCanvas
+- [02/10/2026 09:32] [Fazendo] Remover seção de criação de anotação solta da gaveta lateral de anotações do livro (BookAnnotationsDrawer)
 
 ## ✅ Concluído
+- [02/10/2026 09:31] [Concluído] Remover efeito de blur e desfoques no popup e modais de ofensiva, ancorar abertura à esquerda da sidebar sem corte de tela e definir diretriz de design minimalista sem blur no DESIGN_SYSTEM.md
 - [02/10/2026 09:28] [Concluído] Adicionar opção "Mostrar Capa" ao lado de Continuar Leitura na gaveta de anotações do livro com visualizador imersivo em tela cheia centralizado e fundo preto
 - [02/10/2026 09:09] [Concluído] Adaptar posicionamento da barra de leitura à orientação da tela (inferior na vertical e lateral na horizontal) inclusive em tablets
 - [28/09/2026 09:16] [Concluído] Integrar SVG oficial em public/logos, atualizar ArestaLogoGraph com vetor e ampliar tamanho do ícone de início no sidebar (28px/26px)

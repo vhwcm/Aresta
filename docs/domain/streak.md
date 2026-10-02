@@ -68,5 +68,14 @@ model DailyActivity {
   - `apps/web/app/composables/useReadingStreak.ts` (estado compartilhado reativo, cálculo de rollover de datas, meta de 10 min de leitura ou 5 flashcards, concessão de streak freeze a cada 7 dias).
   - `apps/web/app/composables/reader/useReadingTimer.ts` (timer ativo de leitura em segundo plano com flush por lote a cada 10s, descarte de inatividade, pausamento em abas ocultas e sincronização em `beforeunload`/`onUnmounted`).
   - `apps/web/app/components/reader/Viewer.vue` (ativação automática de contagem de leitura ao abrir qualquer obra).
-  - `apps/web/app/components/ReadingStreak.vue`, `apps/web/app/components/StreakCelebrationModal.vue` (indicadores visuais de chama, progresso de leitura, histórico semanal e celebração).
+  - `apps/web/app/components/ReadingStreak.vue`, `apps/web/app/components/StreakCelebrationModal.vue`, `apps/web/app/components/StreakShareModal.vue` (indicadores visuais de chama, progresso de leitura, histórico semanal, celebração e compartilhamento).
+
+---
+
+## 5. Diretrizes de Interface da Ofensiva (Minimalismo & Zero Blur)
+
+Seguindo o design system do Aresta (`docs/DESIGN_SYSTEM.md`):
+- **Superfície 100% Sólida e Opaca:** O popover e os modais de ofensiva utilizam exclusivamente fundos sólidos (`bg-bgPanel` ou `bg-black/70` para backdrop) sem desfoque (`backdrop-blur`). Isso garante que os nós do grafo de conhecimento ou listas subjacentes não vazem manchas luminosas nem borrem a visualização.
+- **Enquadramento Ergonômico:** Na sidebar (`align="sidebar"`), o popover ancora com `md:left-0 md:right-auto`, projetando-se sempre para dentro da área visível da viewport no desktop (prevenindo corte no lado esquerdo). Possui teto de altura relativo (`max-h-[calc(100vh-5rem)]`) e rolagem interna (`overflow-y-auto`) para não ser cortado verticalmente em telas de menor altura.
+
 

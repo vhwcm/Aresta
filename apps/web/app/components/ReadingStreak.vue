@@ -63,13 +63,13 @@
     <!-- Popover Flutuante com Estatísticas e Calendário Semanal -->
     <div
       v-if="isOpen"
-      class="mt-2 p-4 sm:p-5 rounded-2xl bg-bgPanel/95 backdrop-blur-xl border border-divider shadow-2xl z-50 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200"
+      class="mt-2 p-4 sm:p-5 rounded-2xl bg-bgPanel border border-divider shadow-2xl z-50 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200 max-h-[calc(100vh-5rem)] overflow-y-auto"
       :class="[
         align === 'sidebar'
-          ? 'fixed md:absolute left-2 md:left-auto md:right-0 top-14 md:top-full w-[calc(100vw-16px)] md:w-84 max-w-sm'
+          ? 'fixed md:absolute left-2 md:left-0 md:right-auto top-14 md:top-full w-[calc(100vw-16px)] md:w-[360px] max-w-[calc(100vw-24px)]'
           : align === 'left'
-            ? 'absolute left-0 top-full w-84 sm:w-92 max-w-[calc(100vw-24px)]'
-            : 'absolute right-0 top-full w-84 sm:w-92 max-w-[calc(100vw-24px)]'
+            ? 'absolute left-0 top-full w-[360px] max-w-[calc(100vw-24px)]'
+            : 'absolute right-0 top-full w-[360px] max-w-[calc(100vw-24px)]'
       ]"
     >
       <!-- Header do Popover -->
