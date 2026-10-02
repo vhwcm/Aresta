@@ -511,5 +511,168 @@ describe('TextSelectionVsPageTurn - Precisão de Seleção de Texto vs Virada de
     expect(store.currentPage).toBe(4)
     wrapper.unmount()
   })
+
+  it('não ativa virada de página quando o usuário puxa as alças de marcação de texto no Android/mobile', async () => {
+    const store = setupReader(50, 5)
+    const wrapper = mount(PageCurlCanvas, { attachTo: document.body })
+
+    const stage = wrapper.find('.page-curl-wrapper').element as HTMLElement
+    Object.defineProperty(stage, 'clientWidth', { value: 390, configurable: true })
+    Object.defineProperty(stage, 'clientHeight', { value: 844, configurable: true })
+    vi.spyOn(stage, 'getBoundingClientRect').mockReturnValue({
+      left: 0,
+      top: 0,
+      right: 390,
+      bottom: 844,
+      width: 390,
+      height: 844,
+      x: 0,
+      y: 0,
+      toJSON: () => {},
+    })
+
+    const textLayer = stage.querySelector('.page-text-layer') as HTMLElement
+    expect(textLayer).toBeTruthy()
+
+    // Simula seleção ativa no documento com alças prontas para serem puxadas
+    const mockSelection = {
+      isCollapsed: false,
+      rangeCount: 1,
+      toString: () => 'Uma palavra selecionada',
+      getRangeAt: () => ({
+        getBoundingClientRect: () => ({ top: 300, bottom: 330, left: 100, right: 280, width: 180, height: 30 }),
+      }),
+    }
+    vi.spyOn(window, 'getSelection').mockReturnValue(mockSelection as any)
+
+    // Usuário toca na alça de seleção do Android para puxar a marcação
+    textLayer.dispatchEvent(
+      new PointerEvent('pointerdown', {
+        bubbles: true,
+        cancelable: true,
+        pointerId: 15,
+        pointerType: 'touch',
+        button: 0,
+        clientX: 280,
+        clientY: 330,
+      }),
+    )
+
+    // Usuário arrasta o dedo 60px para a direita para estender a seleção
+    textLayer.dispatchEvent(
+      new PointerEvent('pointermove', {
+        bubbles: true,
+        cancelable: true,
+        pointerId: 15,
+        pointerType: 'touch',
+        clientX: 340,
+        clientY: 332,
+      }),
+    )
+
+    // O motor 3D NUNCA deve iniciar física de arraste de folha
+    expect(startDragMock).not.toHaveBeenCalled()
+
+    // Usuário solta o dedo
+    textLayer.dispatchEvent(
+      new PointerEvent('pointerup', {
+        bubbles: true,
+        cancelable: true,
+        pointerId: 15,
+        pointerType: 'touch',
+        button: 0,
+        clientX: 340,
+        clientY: 332,
+      }),
+    )
+
+    await nextTick()
+    await new Promise((resolve) => setTimeout(resolve, 20))
+
+    // A página deve permanecer intacta na página 5
+    expect(store.currentPage).toBe(5)
+    wrapper.unmount()
+  })
+
+  it('não ativa virada de página quando o usuário puxa a alça esquerda para selecionar texto para trás no Android/mobile', async () => {
+    const store = setupReader(50, 5)
+    const wrapper = mount(PageCurlCanvas, { attachTo: document.body })
+
+    const stage = wrapper.find('.page-curl-wrapper').element as HTMLElement
+    Object.defineProperty(stage, 'clientWidth', { value: 390, configurable: true })
+    Object.defineProperty(stage, 'clientHeight', { value: 844, configurable: true })
+    vi.spyOn(stage, 'getBoundingClientRect').mockReturnValue({
+      left: 0,
+      top: 0,
+      right: 390,
+      bottom: 844,
+      width: 390,
+      height: 844,
+      x: 0,
+      y: 0,
+      toJSON: () => {},
+    })
+
+    const textLayer = stage.querySelector('.page-text-layer') as HTMLElement
+    expect(textLayer).toBeTruthy()
+
+    // Simula seleção ativa no documento com alça esquerda pronta para ser puxada
+    const mockSelection = {
+      isCollapsed: false,
+      rangeCount: 1,
+      toString: () => 'Palavra marcada',
+      getRangeAt: () => ({
+        getBoundingClientRect: () => ({ top: 300, bottom: 330, left: 150, right: 280, width: 130, height: 30 }),
+      }),
+    }
+    vi.spyOn(window, 'getSelection').mockReturnValue(mockSelection as any)
+
+    // Toque na alça esquerda (x = 150)
+    textLayer.dispatchEvent(
+      new PointerEvent('pointerdown', {
+        bubbles: true,
+        cancelable: true,
+        pointerId: 16,
+        pointerType: 'touch',
+        button: 0,
+        clientX: 150,
+        clientY: 330,
+      }),
+    )
+
+    // Arraste para a esquerda (x = 80, dx = -70px puxando para trás para selecionar mais palavras)
+    textLayer.dispatchEvent(
+      new PointerEvent('pointermove', {
+        bubbles: true,
+        cancelable: true,
+        pointerId: 16,
+        pointerType: 'touch',
+        clientX: 80,
+        clientY: 330,
+      }),
+    )
+
+    // Não deve iniciar arraste de página 3D
+    expect(startDragMock).not.toHaveBeenCalled()
+
+    textLayer.dispatchEvent(
+      new PointerEvent('pointerup', {
+        bubbles: true,
+        cancelable: true,
+        pointerId: 16,
+        pointerType: 'touch',
+        button: 0,
+        clientX: 80,
+        clientY: 330,
+      }),
+    )
+
+    await nextTick()
+    await new Promise((resolve) => setTimeout(resolve, 20))
+
+    // Deve permanecer na página 5 sem virada acidental
+    expect(store.currentPage).toBe(5)
+    wrapper.unmount()
+  })
 })
 

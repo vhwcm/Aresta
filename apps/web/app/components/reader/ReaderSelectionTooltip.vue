@@ -201,9 +201,7 @@ function handleBooklet() {
   align-items: center;
   gap: 2px;
   padding: 4px 6px;
-  background: rgba(18, 19, 21, 0.96);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: #121315;
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 9999px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(229, 123, 85, 0.2);
@@ -213,7 +211,8 @@ function handleBooklet() {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
+  padding: 8px 14px;
+  min-height: 38px;
   border-radius: 9999px;
   background: transparent;
   border: none;
@@ -222,6 +221,7 @@ function handleBooklet() {
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
+  touch-action: manipulation;
   transition: all 0.18s ease;
 }
 
@@ -270,9 +270,7 @@ function handleBooklet() {
   left: 50%;
   transform: translateX(-50%);
   width: 170px;
-  background: rgba(18, 19, 21, 0.98);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background: #141518;
   border: 1px solid rgba(249, 115, 22, 0.35);
   border-radius: 0.75rem;
   padding: 4px;
