@@ -181,9 +181,9 @@ export function useBookPageTurn(
       let maxPageHeight: number
 
       if (isMobile) {
-        // No mobile: sem bordas ou margens externas, 100% de largura e altura uniforme
+        // No mobile: largura quase total com respiro vertical suave para afastar da barra superior e inferior
         maxPageWidth = hostWidth
-        maxPageHeight = hostHeight
+        maxPageHeight = Math.max(260, hostHeight - 14)
       } else if (isWide) {
         // Modo Expandido no Desktop/Tablet: 1 folha ocupando quase 100% da largura útil
         maxPageWidth = Math.max(300, Math.round(hostWidth - 32))

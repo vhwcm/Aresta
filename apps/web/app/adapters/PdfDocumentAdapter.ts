@@ -63,6 +63,7 @@ export class PdfDocumentAdapter implements IBookDocument {
       this._metadata = {
         title: info['Title'] || defaultTitle,
         author: info['Author'] ?? undefined,
+        coverUrl: _coverUrl,
       }
     }, 'parse', { pages: this._totalPages })
 

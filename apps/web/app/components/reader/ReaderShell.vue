@@ -337,7 +337,12 @@ const loadBookFromQuery = async () => {
     }, 'parse', { type, sizeMB: (arrayBuffer!.byteLength / (1024 * 1024)).toFixed(2) })
 
     readerProfiler.measureSync('5. Atualizar ReaderStore', () => {
-      store.setDocument(doc, doc.metadata?.title || title, validBookId)
+      store.setDocument(doc, doc.metadata?.title || title, validBookId, coverUrl)
+      if (doc.metadata?.coverUrl) {
+        store.setCoverUrl(doc.metadata.coverUrl)
+      } else if (coverUrl) {
+        store.setCoverUrl(coverUrl)
+      }
 
       const targetPage = pageParam
         ? parseInt(pageParam, 10)

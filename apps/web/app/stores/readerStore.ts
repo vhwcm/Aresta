@@ -31,6 +31,7 @@ interface ReaderState {
   fontFamily: string
   readerTheme: ReaderColorTheme
   readingMode: ReadingMode
+  customCoverUrl: string | null
 }
 
 
@@ -123,6 +124,7 @@ export const useReaderStore = defineStore('reader', {
       fontFamily: defaultFontFamily,
       readerTheme: defaultReaderTheme,
       readingMode: defaultReadingMode,
+      customCoverUrl: null,
     }
   },
 
@@ -134,7 +136,7 @@ export const useReaderStore = defineStore('reader', {
       state.document !== null && state.currentPage >= state.document.totalPages,
     documentType: (state) => state.document?.type ?? null,
     title: (state) => state.document?.metadata.title ?? state.fileName ?? '',
-    coverUrl: (state) => state.document?.metadata.coverUrl ?? '',
+    coverUrl: (state): string => state.document?.metadata.coverUrl || state.customCoverUrl || '',
     canGoNext: (state): boolean =>
       state.document !== null && state.currentPage < state.document.totalPages,
     canGoPrev: (state): boolean => state.currentPage > 1,
@@ -280,13 +282,24 @@ export const useReaderStore = defineStore('reader', {
       this.loadBookmarks()
     },
 
-    setDocument(doc: IBookDocument, fileName: string, bookId: number | null = null) {
+    setCoverUrl(url: string | null) {
+      this.customCoverUrl = url
+      if (this.document?.metadata && url) {
+        this.document.metadata.coverUrl = url
+      }
+    },
+
+    setDocument(doc: IBookDocument, fileName: string, bookId: number | null = null, coverUrl: string | null = null) {
       if (this.document) {
         try { this.document.destroy() } catch { /* ignorar */ }
       }
       this.document = markRaw(doc)
       this.fileName = fileName
       this.bookId = bookId
+      this.customCoverUrl = coverUrl || doc.metadata?.coverUrl || this.customCoverUrl || null
+      if (this.customCoverUrl && doc.metadata && !doc.metadata.coverUrl) {
+        doc.metadata.coverUrl = this.customCoverUrl
+      }
       this.currentPage = 1
       this.isLoading = false
       this.error = null

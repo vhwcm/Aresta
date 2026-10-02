@@ -129,6 +129,7 @@
         <ReaderBottomBar
           v-if="!store.isZenMode"
           :is-notes-active="isDesktop ? store.isNotesOpen : store.isMobileNotesOpen"
+          :cover-url="bookCoverUrl"
           @close="handleClose"
           @open-saved-pages="isSavedPagesOpen = true"
           @open-annotation="handleOpenAnnotation"

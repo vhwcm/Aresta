@@ -636,14 +636,12 @@ async function findEpubCoverDataUri(
   return null
 }
 
-function getEpubPagePadding(width: number, height: number): { paddingX: number; paddingY: number } {
-  // Bordas e margens otimizadas no modo página para o texto preencher a folha:
-  // - Desktop / telas grandes: margens compactas (24px horizontal, 20px vertical)
-  // - Tablets e telas médias: 20px horizontal, 18px vertical
-  // - Mobile / telas pequenas: 14px horizontal, 16px vertical
-  const paddingX = width > 700 ? 24 : (width > 500 ? 20 : (width > 360 ? 14 : 10))
-  const paddingY = height > 700 ? 20 : (height > 500 ? 18 : (height > 600 ? 16 : 12))
-  return { paddingX, paddingY }
+function getEpubPagePadding(width: number, height: number): { paddingX: number; paddingY: number; paddingBottom: number } {
+  // Bordas e margens otimizadas no modo página para o texto preencher a folha com elegância:
+  const paddingX = width > 700 ? 24 : (width > 500 ? 20 : (width > 360 ? 16 : 12))
+  const paddingY = height > 700 ? 22 : (height > 500 ? 18 : 14)
+  const paddingBottom = paddingY + 16 // Espaço protegido no rodapé para o número da página não cortar a última linha
+  return { paddingX, paddingY, paddingBottom }
 }
 
 function calculateSectionPages(
@@ -666,7 +664,7 @@ function calculateSectionPages(
   try {
     const safeW = Math.max(320, pageWidth)
     const safeH = Math.max(400, pageHeight)
-    const { paddingX, paddingY } = getEpubPagePadding(safeW, safeH)
+    const { paddingX, paddingY, paddingBottom } = getEpubPagePadding(safeW, safeH)
     const colWidth = safeW - (2 * paddingX)
     const colGap = paddingX * 2
 
@@ -678,7 +676,7 @@ function calculateSectionPages(
     container.style.top = '-99999px'
     container.style.width = `${safeW}px`
     container.style.height = `${safeH}px`
-    container.style.padding = `${paddingY}px ${paddingX}px`
+    container.style.padding = `${paddingY}px ${paddingX}px ${paddingBottom}px ${paddingX}px`
     container.style.boxSizing = 'border-box'
     container.style.columnWidth = `${colWidth}px`
     container.style.columnGap = `${colGap}px`
@@ -923,15 +921,30 @@ export class EpubDocumentAdapter implements IBookDocument {
 
     const firstIsCover = isCoverSection(this._sections[0] || null, firstDoc)
 
-    // Se a primeira seção não for a capa, tenta extrair e injetar a capa no início
-    if (!firstIsCover) {
-      const coverDataUri = await findEpubCoverDataUri(epub, this._unzipped, coverUrl)
-      if (coverDataUri) {
-        const syntheticCover = createSyntheticCoverSection(coverDataUri, this._metadata.title)
-        this._sections.unshift(syntheticCover)
-        firstDoc = await syntheticCover.createDocument()
-        this._metadata.coverUrl = coverDataUri
+    // Sempre extrai a imagem da capa do EPUB para os metadados (usado na barra inferior, visualizador, etc.)
+    let coverDataUri = await findEpubCoverDataUri(epub, this._unzipped, coverUrl)
+    if (!coverDataUri && firstDoc) {
+      try {
+        const docEl = (typeof (firstDoc as any).querySelector === 'function' ? firstDoc : (firstDoc as any).body) as any
+        const img = docEl && typeof docEl.querySelector === 'function' ? docEl.querySelector('img, image') : null
+        const src = img?.getAttribute('src') || img?.getAttribute('xlink:href') || img?.getAttribute('href')
+        if (src && this._unzipped) {
+          coverDataUri = getAssetDataUri(this._unzipped, src, '')
+        }
+      } catch (err) {
+        logWarn('[EpubAdapter] Erro ao extrair img de capa da seção 0:', err)
       }
+    }
+
+    if (coverDataUri) {
+      this._metadata.coverUrl = coverDataUri
+    }
+
+    // Se a primeira seção NÃO for a capa e tivermos capa, injeta capa sintética no início
+    if (!firstIsCover && coverDataUri) {
+      const syntheticCover = createSyntheticCoverSection(coverDataUri, this._metadata.title)
+      this._sections.unshift(syntheticCover)
+      firstDoc = await syntheticCover.createDocument()
     }
 
     if (firstDoc && this._sections.length > 0) {
@@ -1043,7 +1056,7 @@ export class EpubDocumentAdapter implements IBookDocument {
       this._pageWidth = width
       this._pageHeight = height
 
-      const { paddingX, paddingY } = getEpubPagePadding(width, height)
+      const { paddingX, paddingY, paddingBottom } = getEpubPagePadding(width, height)
       const colWidth = width - (2 * paddingX)
       const colGap = paddingX * 2
       const colOffset = mapping.pageIndexInSection * width
@@ -1074,7 +1087,7 @@ export class EpubDocumentAdapter implements IBookDocument {
         contentWrapper.style.justifyContent = 'center'
         contentWrapper.style.marginLeft = '0'
       } else {
-        contentWrapper.style.padding = `${paddingY}px ${paddingX}px`
+        contentWrapper.style.padding = `${paddingY}px ${paddingX}px ${paddingBottom}px ${paddingX}px`
         contentWrapper.style.columnWidth = `${colWidth}px`
         contentWrapper.style.columnGap = `${colGap}px`
         contentWrapper.style.columnFill = 'auto'

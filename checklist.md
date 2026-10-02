@@ -2,6 +2,8 @@
 - [02/10/2026 15:16] [Fazendo] Fixar barra de ferramentas do desenho sempre no topo (mobile e desktop), simplificar cabeçalho superior para ícones exclusivos e implementar seletor com 2 slots de cores e paleta em blocos
 
 ## ✅ Concluído
+- [02/10/2026 19:46] [Concluído] Eliminar corte da capa do livro na barra inferior com proporção natural e ajustar margem do rodapé da página de leitura
+- [02/10/2026 19:37] [Concluído] Restaurar carregamento da capa no EPUB e leitor, estender capa para 100% da altura da barra e reorganizar layout harmonioso dos ícones
 - [02/10/2026 19:28] [Concluído] Ampliar título e ícones na barra inferior, mover páginas e marcadores para dentro de configurações, e integrar formulário de anotação solta no topo da lista de anotações do livro
 - [02/10/2026 19:17] [Concluído] Corrigir layout da leitura: barra superior com voltar e zen mode acima do livro, eliminar sobreposição do canvas, anotações na linha inferior e centralizar horizontalmente
 - [02/10/2026 15:28] [Concluído] Implementar ferramentas de caneta e borracha nos quadros com renderização vetorial e persistência de traços

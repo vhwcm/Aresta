@@ -15,28 +15,29 @@
     ></button>
 
     <!-- Container Centralizado Horizontalmente com Capa e Informações -->
-    <div class="h-full w-full max-w-xl sm:max-w-2xl md:max-w-3xl flex items-center justify-center gap-3.5 sm:gap-6 px-3 sm:px-6 py-1.5 sm:py-2">
-      <!-- 1. Capa do Livro (Ocupa 100% da altura da barra) -->
-      <div class="h-full shrink-0 flex items-center justify-center aspect-[2/3] overflow-hidden rounded shadow-sm">
+    <div class="h-full w-full max-w-xl sm:max-w-2xl md:max-w-3xl flex items-stretch justify-start sm:justify-center overflow-hidden">
+      <!-- 1. Capa do Livro (Ocupa 100% da altura da barra, preservando proporção natural da capa sem cortes) -->
+      <div class="h-full shrink-0 flex items-center justify-center overflow-hidden bg-black/5 dark:bg-white/5 border-r border-divider/20 select-none p-1">
         <img
           v-if="bookCoverUrl"
           :src="bookCoverUrl"
           :alt="store.title"
-          class="w-full h-full object-cover"
+          class="h-full w-auto max-w-[130px] object-contain block drop-shadow-sm rounded-sm"
           :title="store.title"
         />
         <div
           v-else
-          class="w-full h-full flex items-center justify-center bg-accent/10 text-accent font-editorial"
+          class="h-full aspect-[2/3] flex flex-col items-center justify-center p-2 text-center bg-accent/10 text-accent font-editorial"
         >
-          <BookOpenIcon class="w-5 h-5 opacity-70" />
+          <BookOpenIcon class="w-6 h-6 opacity-80 mb-1" />
+          <span class="text-[10px] leading-tight line-clamp-2 opacity-70">{{ store.title || 'Livro' }}</span>
         </div>
       </div>
 
-      <!-- 2. Bloco Central de Conteúdo: Título em cima, Controles e Anotações em baixo -->
-      <div class="flex-1 min-w-0 flex flex-col justify-center h-full gap-1 sm:gap-2 py-0.5">
+      <!-- 2. Bloco Central de Conteúdo: Título em cima, Controles organizados em baixo -->
+      <div class="flex-1 min-w-0 flex flex-col justify-between h-full px-4 sm:px-6 py-3 sm:py-3.5">
         <!-- Metade de Cima: Título do Livro (Aumentado e editorial) -->
-        <div class="flex items-center min-w-0 reader-viewer__book-title-bar">
+        <div class="flex items-center min-w-0 reader-viewer__book-title-bar pt-0.5">
           <h2
             class="font-editorial reader-viewer__book-title-text text-xl sm:text-2xl md:text-3xl leading-tight truncate tracking-normal font-medium"
             :class="themeTextClass"
@@ -46,8 +47,8 @@
           </h2>
         </div>
 
-        <!-- Metade de Baixo: Apenas Anotações e Configurações (com ícones grandes) -->
-        <div class="flex items-center gap-3 sm:gap-4 flex-wrap">
+        <!-- Metade de Baixo: Apenas Anotações e Configurações (organizados e com ícones grandes) -->
+        <div class="flex items-center gap-3 sm:gap-4 pb-0.5">
           <!-- Botão Oculto para fallback de evento openAnnotation se invocado programaticamente -->
           <button
             @click="$emit('openAnnotation')"
@@ -59,29 +60,26 @@
           <!-- Botão de Anotações do Livro (Ícone Grande - Abre as anotações do livro) -->
           <button
             @click="handleToggleNotes"
-            class="p-2 sm:p-2.5 rounded-xl transition-colors active:scale-90 flex items-center justify-center"
-            :class="isNotesActiveComputed ? 'text-accent font-bold bg-accent/15' : 'text-textSecondary hover:text-accent hover:bg-white/5'"
+            class="p-2 sm:p-2.5 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
+            :class="isNotesActiveComputed ? 'text-accent font-bold bg-accent/15 ring-1 ring-accent/30' : 'text-textSecondary hover:text-accent hover:bg-black/5 dark:hover:bg-white/5'"
             :title="isNotesActiveComputed ? 'Ocultar anotações do livro' : 'Abrir anotações e reflexões deste livro'"
             aria-label="Abrir ou fechar notas do livro"
             id="btn-view-notes"
           >
-            <FileTextIcon class="w-6 h-6" />
+            <FileTextIcon class="w-6 h-6 stroke-[1.75]" />
           </button>
-
-          <!-- Divisor sutil vertical -->
-          <div class="w-px h-5 opacity-20 bg-current"></div>
 
           <!-- Botão de Configurações (Ícone Grande - Abre Popover com Páginas, Marcador, Modo, Tema, etc.) -->
           <div class="relative" ref="appearanceWrapperRef">
             <button
               @click="isAppearancePopoverOpen = !isAppearancePopoverOpen"
-              class="p-2 sm:p-2.5 rounded-xl transition-colors active:scale-90 relative flex items-center justify-center"
-              :class="isAppearancePopoverOpen ? 'text-accent bg-accent/15' : 'text-textSecondary hover:text-textPrimary hover:bg-white/5'"
+              class="p-2 sm:p-2.5 rounded-xl transition-all duration-200 active:scale-90 relative flex items-center justify-center cursor-pointer"
+              :class="isAppearancePopoverOpen ? 'text-accent bg-accent/15 ring-1 ring-accent/30' : 'text-textSecondary hover:text-textPrimary hover:bg-black/5 dark:hover:bg-white/5'"
               title="Configurações de leitura, páginas e marcadores"
               aria-label="Configurações de leitura"
               id="btn-appearance-toggle"
             >
-              <SettingsIcon class="w-6 h-6" />
+              <SettingsIcon class="w-6 h-6 stroke-[1.75]" />
             </button>
 
             <!-- Popover Flutuante de Configurações (Abre acima da barra centralizado) -->
@@ -410,6 +408,7 @@ import { useReaderStore } from '~/stores/readerStore'
 
 const props = defineProps<{
   isNotesActive?: boolean
+  coverUrl?: string
 }>()
 
 const emit = defineEmits<{
@@ -420,7 +419,7 @@ const emit = defineEmits<{
 }>()
 
 const store = useReaderStore()
-const bookCoverUrl = computed(() => store.coverUrl || '')
+const bookCoverUrl = computed(() => props.coverUrl || store.coverUrl || '')
 const isAppearancePopoverOpen = ref(false)
 const appearanceWrapperRef = ref<HTMLElement | null>(null)
 
