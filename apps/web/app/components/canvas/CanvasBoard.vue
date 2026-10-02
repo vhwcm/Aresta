@@ -151,7 +151,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import type {
   CanvasNode,
   CanvasEdge,
@@ -328,9 +328,61 @@ const createInitialNote = () => {
   autofocusNodeId.value = newNode.id;
 };
 
-// Double Click / Tap to Create Note
+// Double Click / Tap to Create Note or Edit Existing Node
 const onDoubleClick = (e: MouseEvent) => {
+  const target = e.target as HTMLElement | null;
+
+  // 1. Ignorar cliques duplos que partem de toolbar, controles ou handles
+  if (target?.closest?.('.canvas-toolbar-container, .connection-anchor, .resize-handle')) {
+    return;
+  }
+
   const coords = screenToCanvas(e.clientX, e.clientY);
+
+  // 2. Verificar se o duplo clique ocorreu sobre um nó existente (via DOM ou coordenadas do canvas)
+  const nodeElement = target?.closest?.('.canvas-node') as HTMLElement | null;
+  const nodeIdFromDOM = nodeElement?.getAttribute('data-node-id');
+
+  let targetNode: CanvasNode | undefined;
+
+  if (nodeIdFromDOM) {
+    targetNode = nodes.value.find((n) => n.id === nodeIdFromDOM);
+  }
+
+  if (!targetNode && nodeElement) {
+    targetNode = [...nodes.value].reverse().find((n) =>
+      coords.x >= n.x &&
+      coords.x <= n.x + n.width &&
+      coords.y >= n.y &&
+      coords.y <= n.y + n.height
+    ) || nodes.value.find((n) => selectedNodeIds.value.includes(n.id));
+  }
+
+  // Fallback: Teste de colisão de coordenadas em nós existentes (do topo para baixo)
+  if (!targetNode) {
+    targetNode = [...nodes.value].reverse().find((n) =>
+      coords.x >= n.x &&
+      coords.x <= n.x + n.width &&
+      coords.y >= n.y &&
+      coords.y <= n.y + n.height
+    );
+  }
+
+  // 3. Se clicou em um nó existente, JAMAIS cria uma nova nota! Seleciona e ativa o modo de edição
+  if (targetNode) {
+    selectedNodeIds.value = [targetNode.id];
+    selectedEdgeId.value = null;
+
+    if (targetNode.type === 'text' || targetNode.type === 'loose_text') {
+      autofocusNodeId.value = null;
+      nextTick(() => {
+        autofocusNodeId.value = targetNode!.id;
+      });
+    }
+    return;
+  }
+
+  // 4. Criação de nova nota apenas em espaço vazio do quadro
   const newNode: CanvasNode = {
     id: `node-${Date.now()}`,
     type: 'text',
@@ -478,6 +530,9 @@ const onPointerMove = (e: PointerEvent) => {
       e.clientY - multiDragState.value.startY
     );
     if (rawDist > 3) {
+      if (!multiDragState.value.hasMoved) {
+        boardContainerRef.value?.setPointerCapture?.(e.pointerId);
+      }
       multiDragState.value.hasMoved = true;
     }
     const dx = (e.clientX - multiDragState.value.startX) / viewport.value.zoom;
@@ -498,6 +553,9 @@ const onPointerMove = (e: PointerEvent) => {
       e.clientY - draggingNodeState.value.startY
     );
     if (rawDist > 3) {
+      if (!draggingNodeState.value.hasMoved) {
+        boardContainerRef.value?.setPointerCapture?.(e.pointerId);
+      }
       draggingNodeState.value.hasMoved = true;
     }
     const dx = (e.clientX - draggingNodeState.value.startX) / viewport.value.zoom;
@@ -580,6 +638,14 @@ const onPointerUp = (e: PointerEvent) => {
 
   if (resizingNodeState.value) {
     resizingNodeState.value = null;
+  }
+
+  try {
+    if (boardContainerRef.value?.hasPointerCapture?.(e.pointerId)) {
+      boardContainerRef.value.releasePointerCapture(e.pointerId);
+    }
+  } catch {
+    // Ignore se o browser já liberou
   }
 
   // Finalize Edge Connection
@@ -728,7 +794,6 @@ const onNodeDragStart = (id: string, e: PointerEvent) => {
       initialPositions,
       hasMoved: false,
     };
-    boardContainerRef.value?.setPointerCapture?.(e.pointerId);
     return;
   }
 
@@ -741,7 +806,6 @@ const onNodeDragStart = (id: string, e: PointerEvent) => {
     initialNodeY: node.y,
     hasMoved: false,
   };
-  boardContainerRef.value?.setPointerCapture?.(e.pointerId);
 };
 
 const onNodeResizeStart = (id: string, handle: string, e: PointerEvent) => {

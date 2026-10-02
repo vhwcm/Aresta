@@ -7,6 +7,7 @@
       width: `${node.width}px`,
       height: `${node.height}px`,
     }"
+    :data-node-id="node.id"
     @pointerdown.stop="onPointerDown"
     @dblclick.stop="onDoubleClick"
   >

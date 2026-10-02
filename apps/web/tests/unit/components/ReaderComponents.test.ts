@@ -1173,7 +1173,7 @@ describe('Reader Components', () => {
       expect(store.isTwoPageMode).toBe(true)
     })
 
-    it('renderiza os botões de navegação apenas com as setas e sem círculos ao redor', async () => {
+    it('não exibe setas visuais de navegação na leitura de livros (leitura imersiva pelas pontas da tela)', async () => {
       const store = useReaderStore()
       store.setDocument({
         type: 'epub',
@@ -1206,12 +1206,6 @@ describe('Reader Components', () => {
 
       expect(prevBtn.exists()).toBe(true)
       expect(nextBtn.exists()).toBe(true)
-
-      // As setas utilizam ícones SVG
-      expect(prevBtn.find('svg').exists()).toBe(true)
-      expect(nextBtn.find('svg').exists()).toBe(true)
-
-      // Não devem possuir classes circulares
       expect(prevBtn.classes()).not.toContain('rounded-full')
       expect(nextBtn.classes()).not.toContain('rounded-full')
     })

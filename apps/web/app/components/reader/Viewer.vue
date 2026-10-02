@@ -151,31 +151,24 @@
       </transition>
     </div>
 
-    <!-- Controles e Avisos Flutuantes do Modo Zen -->
-    <div v-if="store.isZenMode" class="reader-viewer__zen-overlay">
-      <!-- Toast Transitório de Boas-Vindas ao Modo Zen -->
-      <transition name="fade">
-        <div
-          v-if="showZenToast"
-          class="reader-viewer__zen-toast"
-          role="status"
-          aria-live="polite"
-        >
-          <span class="font-medium text-white">Modo Zen ativado</span>
-          <span class="text-white/70 text-xs hidden xs:inline">• Pressione <kbd class="px-1.5 py-0.5 rounded bg-white/20 text-[11px] font-mono text-white">Esc</kbd> ou Voltar para sair</span>
-        </div>
-      </transition>
+    <!-- Setas bem pequenas no topo durante o Modo Zen (Voltar e Sair do Zen Mode - sem texto, só setinhas) -->
+    <div v-if="store.isZenMode" class="reader-viewer__zen-minimal-bar">
+      <button
+        @click="handleClose"
+        class="reader-viewer__zen-arrow-btn"
+        title="Voltar à biblioteca"
+        aria-label="Voltar à biblioteca"
+      >
+        <ArrowLeftIcon class="w-3.5 h-3.5" />
+      </button>
 
-      <!-- Botão Flutuante Discreto para Sair do Modo Zen -->
       <button
         @click="exitZenMode"
-        class="reader-viewer__zen-exit-btn group"
-        title="Sair do Modo Zen (Esc ou Voltar)"
+        class="reader-viewer__zen-arrow-btn"
+        title="Sair do Modo Zen"
         aria-label="Sair do Modo Zen"
-        id="btn-exit-zen-mode"
       >
-        <Minimize2Icon class="w-4 h-4 text-white/70 group-hover:text-white transition-colors" />
-        <span class="text-xs font-medium text-white/70 group-hover:text-white transition-colors hidden sm:inline">Sair do Zen</span>
+        <ChevronUpIcon class="w-3.5 h-3.5" />
       </button>
     </div>
 
@@ -260,7 +253,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { Minimize2Icon, ChevronLeftIcon, ChevronRightIcon } from 'lucide-vue-next'
+import { ArrowLeftIcon, ChevronUpIcon, ChevronLeftIcon, ChevronRightIcon } from 'lucide-vue-next'
 import { useReaderStore } from '~/stores/readerStore'
 import { useReaderTypography } from '~/composables/useReaderTypography'
 import { useAnnotations } from '~/composables/useAnnotations'
@@ -1247,44 +1240,6 @@ onUnmounted(() => {
   min-height: 0;
 }
 
-.reader-viewer__nav-btn {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  background: transparent;
-  border: none;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  padding: 0.5rem;
-  opacity: 0.5;
-  transition: color 0.2s, transform 0.2s, opacity 0.2s;
-  z-index: 20;
-}
-
-.reader-viewer__nav-btn--prev {
-  left: 0.5rem;
-}
-
-.reader-viewer__nav-btn--next {
-  right: 0.5rem;
-}
-
-.reader-viewer__nav-btn:not(:disabled):hover {
-  color: var(--color-accent, #E57B55);
-  transform: translateY(-50%) scale(1.15);
-  opacity: 1;
-}
-
-.reader-viewer__nav-btn:disabled {
-  opacity: 0;
-  pointer-events: none;
-  cursor: not-allowed;
-}
-
 @media (max-width: 767px) {
   .reader-viewer__canvas-area {
     padding: 0 !important;
@@ -1294,9 +1249,6 @@ onUnmounted(() => {
     height: 100% !important;
     max-width: 100% !important;
     margin: 0 !important;
-  }
-  .reader-viewer__nav-btn {
-    display: none !important;
   }
 }
 
@@ -1340,31 +1292,6 @@ onUnmounted(() => {
   background-color: #000000 !important;
 }
 
-/* Botões de Navegação adaptados a cada tema */
-.reader-viewer--theme-sepia .reader-viewer__nav-btn {
-  color: #5c4d3c;
-}
-
-.reader-viewer--theme-sepia .reader-viewer__nav-btn:not(:disabled):hover {
-  color: var(--color-accent, #E57B55);
-}
-
-.reader-viewer--theme-white .reader-viewer__nav-btn {
-  color: #4b5563;
-}
-
-.reader-viewer--theme-white .reader-viewer__nav-btn:not(:disabled):hover {
-  color: var(--color-accent, #E57B55);
-}
-
-.reader-viewer--theme-black .reader-viewer__nav-btn {
-  color: #9ca3af;
-}
-
-.reader-viewer--theme-black .reader-viewer__nav-btn:not(:disabled):hover {
-  color: var(--color-accent, #E57B55);
-}
-
 .reader-viewer--zen.reader-viewer--theme-sepia {
   background: #f5eedc !important;
 }
@@ -1386,69 +1313,42 @@ onUnmounted(() => {
   color: var(--color-accent, #E57B55);
 }
 
-.reader-viewer__zen-overlay {
+.reader-viewer__zen-minimal-bar {
   position: absolute;
-  top: 1rem;
-  left: 0;
-  right: 0;
+  top: 0.75rem;
+  left: 0.75rem;
+  right: 0.75rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 1.25rem;
   pointer-events: none;
   z-index: 40;
 }
 
-.reader-viewer__zen-toast {
+.reader-viewer__zen-arrow-btn {
   pointer-events: auto;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  background: rgba(18, 18, 24, 0.88);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(229, 123, 85, 0.35);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
   border-radius: 9999px;
-  padding: 0.5rem 1rem;
-  font-size: 0.825rem;
-  animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.reader-viewer__zen-exit-btn {
-  pointer-events: auto;
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  background: rgba(18, 18, 24, 0.6);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 9999px;
-  padding: 0.45rem 0.85rem;
-  cursor: pointer;
+  background: rgba(18, 18, 24, 0.4);
+  color: rgba(255, 255, 255, 0.7);
   transition: all 0.2s ease;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.reader-viewer__zen-exit-btn:hover {
-  background: rgba(229, 123, 85, 0.2);
-  border-color: rgba(229, 123, 85, 0.45);
-  transform: translateY(-1px);
+.reader-viewer__zen-arrow-btn:hover {
+  background: rgba(229, 123, 85, 0.25);
+  color: var(--color-accent, #E57B55);
+  border-color: rgba(229, 123, 85, 0.4);
+  transform: scale(1.08);
 }
 
-.reader-viewer__zen-exit-btn:active {
-  transform: scale(0.96);
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.reader-viewer__zen-arrow-btn:active {
+  transform: scale(0.92);
 }
 
 .fade-enter-active,

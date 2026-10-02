@@ -123,7 +123,6 @@ watch(
 );
 
 const startEditing = () => {
-  if (isEditing.value) return;
   isEditing.value = true;
   nextTick(() => {
     editorRef.value?.focus?.();

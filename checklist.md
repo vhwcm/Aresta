@@ -1,6 +1,10 @@
 ## 🔄 Em Andamento
+- [02/10/2026 14:57] [Fazendo] Permitir seleção contínua de texto e puxar alças de marcação de livros no Android e mobile
+- [02/10/2026 14:44] [Fazendo] Unificar barra de leitura em barra única inferior com capa, título, configurações, anotações e zen mode
 
 ## ✅ Concluído
+- [02/10/2026 15:13] [Concluído] Diagnosticar e corrigir duplo clique em nó/nota no canvas criando nova nota em vez de entrar em modo de edição
+- [02/10/2026 15:11] [Concluído] Remover setas de navegação da leitura de livros e implementar virada de página ao clicar nas pontas da tela
 - [02/10/2026 14:40] [Concluído] Implementar botão universal de voltar (AppBackButton) em todas as páginas da aplicação com retorno ao histórico de navegação e fallback
 - [02/10/2026 09:59] [Concluído] Ajustar aba inicial do tema para Anotações (destaques e reflexões de leitura do leitor com navegação direta) em vez de notas soltas do canvas
 - [02/10/2026 09:58] [Concluído] Corrigir paste de conteúdo da Wikipedia no editor de notas: preservar links com href, corrigir caracteres fonéticos e limpar referências

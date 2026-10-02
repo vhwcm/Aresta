@@ -279,3 +279,95 @@ describe('CanvasBoard Multi-selection Move and Drag Interactions', () => {
   });
 });
 
+describe('CanvasBoard Double Click Interactions', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockNodes.value = [];
+    mockSelectedNodeIds.value = [];
+  });
+
+  it('duplo clique no fundo vazio cria uma nova nota', async () => {
+    const wrapper = mount(CanvasBoard, {
+      global: {
+        stubs: {
+          CanvasEdgeLayer: true,
+          CanvasNode: true,
+          CanvasToolbar: true,
+          CanvasInsertDrawer: true,
+          CanvasSelectionToolbar: true,
+        },
+      },
+    });
+
+    const board = wrapper.find('.canvas-board-wrapper');
+    await board.trigger('dblclick', {
+      clientX: 500,
+      clientY: 400,
+    });
+
+    expect(mockAddNode).toHaveBeenCalledTimes(1);
+    expect(mockAddNode).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'text',
+      })
+    );
+  });
+
+  it('duplo clique com coordenadas sobre uma nota existente NÃO cria nova nota e seleciona o nó', async () => {
+    mockNodes.value = [
+      { id: 'node-existing', type: 'text', x: 100, y: 100, width: 260, height: 160, text: 'Nota existente' },
+    ];
+
+    const wrapper = mount(CanvasBoard, {
+      global: {
+        stubs: {
+          CanvasEdgeLayer: true,
+          CanvasNode: true,
+          CanvasToolbar: true,
+          CanvasInsertDrawer: true,
+          CanvasSelectionToolbar: true,
+        },
+      },
+    });
+
+    const board = wrapper.find('.canvas-board-wrapper');
+    // Coordenadas dentro de [100..360, 100..260]
+    await board.trigger('dblclick', {
+      clientX: 200,
+      clientY: 180,
+    });
+
+    expect(mockAddNode).not.toHaveBeenCalled();
+    expect(mockSelectedNodeIds.value).toEqual(['node-existing']);
+  });
+
+  it('duplo clique em elemento filho de .canvas-node via DOM target não cria nova nota e seleciona o nó', async () => {
+    mockNodes.value = [
+      { id: 'node-target', type: 'text', x: 0, y: 0, width: 260, height: 160, text: 'Nota' },
+    ];
+
+    const wrapper = mount(CanvasBoard, {
+      global: {
+        stubs: {
+          CanvasEdgeLayer: true,
+          CanvasNode: {
+            props: ['node'],
+            template: '<div class="canvas-node" :data-node-id="node.id"><div class="inner-note">Texto</div></div>',
+          },
+          CanvasToolbar: true,
+          CanvasInsertDrawer: true,
+          CanvasSelectionToolbar: true,
+        },
+      },
+    });
+
+    const innerNote = wrapper.find('.inner-note');
+    expect(innerNote.exists()).toBe(true);
+
+    await innerNote.trigger('dblclick');
+
+    expect(mockAddNode).not.toHaveBeenCalled();
+    expect(mockSelectedNodeIds.value).toEqual(['node-target']);
+  });
+});
+

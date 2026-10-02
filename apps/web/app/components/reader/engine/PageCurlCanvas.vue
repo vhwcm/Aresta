@@ -2,14 +2,22 @@
   <div
     ref="stageRef"
     class="page-curl-wrapper"
-    :class="['theme-' + activeTheme, { 'page-curl-wrapper--dragging': isDragging }]"
+    :class="[
+      'theme-' + activeTheme,
+      {
+        'page-curl-wrapper--dragging': isDragging,
+        'page-curl-wrapper--hover-prev': edgeHoverState === 'prev' && !store.isFirstPage,
+        'page-curl-wrapper--hover-next': edgeHoverState === 'next' && !store.isLastPage,
+      },
+    ]"
     :style="{ backgroundColor: themeBgColor }"
     role="region"
-    aria-label="Página do livro. Arraste as bordas para folhear ou selecione o texto com o mouse."
+    aria-label="Página do livro. Clique nas pontas da tela ou arraste as bordas para folhear."
     @pointerdown="onPointerDown"
     @pointermove="onPointerMove"
     @pointerup="onPointerUp"
     @pointercancel="onPointerCancel"
+    @pointerleave="edgeHoverState = null"
   >
     <div
       class="book-3d-stage"
@@ -448,6 +456,7 @@ const { annotations } = useAnnotations()
 const { pageCreaseEnabled, pageAnimationEnabled } = useSettings()
 const stageRef = ref<HTMLElement | null>(null)
 const webglCanvasRef = ref<HTMLCanvasElement | null>(null)
+const edgeHoverState = ref<'prev' | 'next' | null>(null)
 
 const MAX_STACK_PX = 24
 const MAX_BOTTOM_STACK_PX = 8
@@ -1423,7 +1432,7 @@ function hasTextAtCaret(clientX?: number, clientY?: number): boolean {
 /**
  * Detecta se o elemento ou posição do ponteiro intercepta conteúdo textual interativo
  * (spans do PDF, nós de texto do EPUB, parágrafos, etc.).
- * Evita que o gesto de folheamento intercepte seleção de texto ou duplo clique em palavras no canto da folha.
+ * Evita que o gesto de folheamento intercepte seleção de texto ou duplo clique em palavras no miolo da folha.
  */
 function isInteractiveTextTarget(target: EventTarget | null, clientX?: number, clientY?: number): boolean {
   if (!target) return false
@@ -1431,23 +1440,58 @@ function isInteractiveTextTarget(target: EventTarget | null, clientX?: number, c
   if (!el || el.closest('.book-page-stack, .book-page-stack-bottom, .book-page-stack-top, .book-page-stack-bottom-unified, .book-bottom-hitbox')) return false
 
   // 1. Elementos textuais explícitos (PDF textLayer spans, marcações de anotação, tags do EPUB)
-  if (el.closest('.textLayer, .textLayer span, .reader-highlight, .text-highlight')) return true
+  if (el.closest('.textLayer span, .reader-highlight, .text-highlight')) return true
   if (
     el.closest(
-      '.epub-text-layer-content, .epub-text-layer-content *, .epub-text-layer-viewport, .epub-text-layer-viewport *',
+      '.epub-text-layer-content p, .epub-text-layer-content span, .epub-text-layer-content h1, .epub-text-layer-content h2, .epub-text-layer-content h3, .epub-text-layer-content h4, .epub-text-layer-content h5, .epub-text-layer-content h6, .epub-text-layer-content a, .epub-text-layer-content li, .epub-text-layer-content em, .epub-text-layer-content strong',
     )
   ) {
     return true
   }
 
-  // 2. Elemento com conteúdo de texto direto dentro de qualquer camada de texto da página
-  const textLayer = el.closest('.page-text-layer, .scroll-page-text-layer, .scroll-section-content, .scroll-section-slot')
-  if (textLayer) {
-    return true
+  // 2. Verificação por caret Range na coordenada exata
+  return hasTextAtCaret(clientX, clientY)
+}
+
+/**
+ * Detecta se o ponto clicado corresponde à extremidade ("ponta da tela"),
+ * acionando a virada de página imediata (anterior na esquerda, próxima na direita).
+ */
+function getScreenEdgeDirection(
+  pt: DragPoint,
+  bounds: DOMRect,
+  layout: PageLayoutInfo,
+): PageTurnDirection | null {
+  const width = bounds.width
+  if (width <= 0) return null
+
+  // 1. Ponta Esquerda da Tela (Página Anterior):
+  // - Borda esquerda da tela (até 18% da largura ou 120px)
+  // - Ou espaço livre à esquerda do livro (gutter) + margem externa da folha esquerda (até 48px da borda da folha)
+  const leftEdgeThreshold = Math.max(100, width * 0.18)
+  const isLeftScreenGutter = pt.x < leftEdgeThreshold
+  const isLeftPageMargin = layout.isTwoPage
+    ? (layout.leftPage ? pt.x <= (layout.leftPage.left + 48) : (layout.rightPage ? pt.x < layout.rightPage.left : false))
+    : (layout.singlePage ? pt.x <= (layout.singlePage.left + 48) : false)
+
+  if (isLeftScreenGutter || isLeftPageMargin) {
+    return 'previous'
   }
 
-  // 3. Verificação por caret Range na coordenada exata
-  return hasTextAtCaret(clientX, clientY)
+  // 2. Ponta Direita da Tela (Próxima Página):
+  // - Borda direita da tela (últimos 18% da largura ou 120px da borda)
+  // - Ou espaço livre à direita do livro (gutter) + margem externa da folha direita (até 48px da borda da folha)
+  const rightEdgeThreshold = Math.min(width - 100, width * 0.82)
+  const isRightScreenGutter = pt.x > rightEdgeThreshold
+  const isRightPageMargin = layout.isTwoPage
+    ? (layout.rightPage ? pt.x >= (layout.rightPage.left + layout.rightPage.width - 48) : (layout.leftPage ? pt.x > (layout.leftPage.left + layout.leftPage.width) : false))
+    : (layout.singlePage ? pt.x >= (layout.singlePage.left + layout.singlePage.width - 48) : false)
+
+  if (isRightScreenGutter || isRightPageMargin) {
+    return 'next'
+  }
+
+  return null
 }
 
 function isMobileViewport(): boolean {
@@ -1458,7 +1502,7 @@ function isMobileViewport(): boolean {
 }
 
 async function onPointerDown(event: PointerEvent) {
-  if (store.isFocusMode || !pageAnimationEnabled.value || event.button !== 0 || !stageRef.value || physics.isAnimating.value) return
+  if (store.isFocusMode || event.button !== 0 || !stageRef.value || physics.isAnimating.value) return
 
   const direction = getTurnZone(event)
   if (!direction) return
@@ -1493,7 +1537,14 @@ async function onPointerDown(event: PointerEvent) {
 }
 
 function onPointerMove(event: PointerEvent) {
-  if (event.pointerId !== activePointerId) return
+  // Atualiza cursor de hover nas pontas da tela (desktop)
+  if (event.pointerType !== 'touch' && !physics.isDragging.value && !physics.isAnimating.value && stageRef.value) {
+    const bounds = stageRef.value.getBoundingClientRect()
+    const edgeDir = getScreenEdgeDirection(pointFrom(event), bounds, pageLayout.value)
+    edgeHoverState.value = edgeDir === 'previous' ? 'prev' : (edgeDir === 'next' ? 'next' : null)
+  }
+
+  if (activePointerId === null || event.pointerId !== activePointerId) return
 
   // P1: Se há um arraste pendente, verifica se o limiar de deslocamento foi atingido
   if (pendingDrag) {
@@ -1517,9 +1568,18 @@ function onPointerMove(event: PointerEvent) {
 
     const isMobile = isMobileViewport() || event.pointerType === 'touch'
 
-    // Se o arraste começou em cima de texto real no desktop/tablet grande com mouse, prioriza a seleção nativa
-    if (pendingDrag.isTextTarget && !isMobile) {
-      return
+    // Se o arraste começou em cima de texto real, prioriza a seleção nativa e o manuseio das alças
+    if (pendingDrag.isTextTarget) {
+      if (hasSelection) {
+        pendingDrag = null
+        return
+      }
+      if (isMobile && absDx < DRAG_ACTIVATION_THRESHOLD_PX * 2.5) {
+        return
+      }
+      if (!isMobile) {
+        return
+      }
     }
 
     // Direção da virada baseada no sentido físico do arraste horizontal:
@@ -1659,20 +1719,36 @@ function onPointerUp(event: PointerEvent) {
     // Clique simples (tap) sem arrasto (dx < 14 && dy < 14)
     if (dx < 14 && dy < 14) {
       const bounds = stageRef.value?.getBoundingClientRect()
-      const clickDirection = getTurnZone(event) || direction
+      if (!bounds) return
+
+      const screenEdgeDir = getScreenEdgeDirection(pt, bounds, pageLayout.value)
+      const clickDirection = screenEdgeDir || getTurnZone(event) || direction
 
       if (isMobile) {
-        // No mobile: toque na metade direita avança página, na metade esquerda volta página
+        // No mobile: se o toque foi sobre texto interativo fora das pontas da tela,
+        // não vira a página para permitir que o usuário interaja com o texto (seleção, foco, alças)
+        if (isTextTarget && !screenEdgeDir) {
+          return
+        }
+        // Toque na metade direita avança página, na metade esquerda volta página
         if (clickDirection) {
           void requestTurn(clickDirection)
         }
       } else {
-        // No desktop: se foi sobre texto interativo, não vira para permitir seleção/cursor
+        // No desktop:
+        // 1. Clique na ponta da tela vira a página imediatamente!
+        if (screenEdgeDir) {
+          void requestTurn(screenEdgeDir)
+          return
+        }
+
+        // 2. Se clicou sobre texto interativo fora das pontas da tela, não vira para permitir seleção/cursor
         if (isTextTarget) {
           return
         }
-        // No desktop fora do texto, vira se clicou nas margens laterais
-        if (bounds && isPageMarginClick(pt, clickDirection, bounds, pageLayout.value)) {
+
+        // 3. Fora do texto, vira se clicou nas margens laterais do livro
+        if (isPageMarginClick(pt, clickDirection, bounds, pageLayout.value)) {
           void requestTurn(clickDirection)
         }
       }
@@ -1834,6 +1910,11 @@ defineExpose({
   cursor: grabbing !important;
   user-select: none !important;
   -webkit-user-select: none !important;
+}
+
+.page-curl-wrapper--hover-prev,
+.page-curl-wrapper--hover-next {
+  cursor: pointer;
 }
 
 .book-3d-stage {
@@ -2035,8 +2116,8 @@ defineExpose({
   pointer-events: auto;
   user-select: text;
   -webkit-user-select: text;
-  touch-action: none !important;
-  -webkit-touch-callout: none !important;
+  touch-action: auto !important;
+  -webkit-touch-callout: default !important;
 }
 
 /* ================= FAIXA DE VINCO CENTRAL DA LOMBADA (BOOK SPINE CREASE) ================= */
@@ -2397,8 +2478,8 @@ defineExpose({
   -webkit-user-select: text !important;
   pointer-events: auto !important;
   cursor: text !important;
-  touch-action: none !important;
-  -webkit-touch-callout: none !important;
+  touch-action: auto !important;
+  -webkit-touch-callout: default !important;
 }
 
 .page-text-layer :deep(.epub-text-layer-viewport ::selection),
