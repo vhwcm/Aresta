@@ -1,7 +1,7 @@
 ## 🔄 Em Andamento
-- [02/10/2026 10:12] [Fazendo] Implementar botão universal de voltar (AppBackButton) em todas as páginas da aplicação com retorno ao histórico de navegação e fallback
 
 ## ✅ Concluído
+- [02/10/2026 14:40] [Concluído] Implementar botão universal de voltar (AppBackButton) em todas as páginas da aplicação com retorno ao histórico de navegação e fallback
 - [02/10/2026 09:59] [Concluído] Ajustar aba inicial do tema para Anotações (destaques e reflexões de leitura do leitor com navegação direta) em vez de notas soltas do canvas
 - [02/10/2026 09:58] [Concluído] Corrigir paste de conteúdo da Wikipedia no editor de notas: preservar links com href, corrigir caracteres fonéticos e limpar referências
 - [02/10/2026 09:55] [Concluído] Abrir imediatamente a tela do editor de notas ao criar nova nota na barra lateral ou no espaço unificado

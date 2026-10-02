@@ -1,3 +1,8 @@
+---
+trigger: model_decision
+description: Quando for escrever uma documentação
+---
+
 # Regra: Documentação Visual em Diagramas ASCII
 
 ## Princípio Fundamental

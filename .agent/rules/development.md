@@ -1,3 +1,7 @@
+---
+trigger: always_on
+---
+
 # Regra: Fluxo de Desenvolvimento e Classificação de Tarefas
 
 ## Classificação do Escopo de Tarefas
@@ -38,4 +42,6 @@ O agente deve avaliar o impacto da tarefa solicitada pelo usuário e aplicar o p
   7. **Atualização de Conhecimento**: Mover a spec para `specs/completed/` e executar a Skill `update-docs`.
   8. Mover a tarefa para "Done" no `checklist.md`.
   9. **Commits Atômicos**: Realizar commits divididos por etapa.
+
+### Sempre que for mexer em algo visual, seguir a estética definida Design.md
 

@@ -1,3 +1,7 @@
+---
+trigger: model_decision
+---
+
 # Regra: Padrões e Diretrizes Arquiteturais
 
 ## Padrões Arquiteturais no Monorepositório Aresta

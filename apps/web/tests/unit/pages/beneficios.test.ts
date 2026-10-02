@@ -43,7 +43,7 @@ describe('Beneficios Page', () => {
 
     const backLink = wrapper.find('[data-testid="beneficios-back-link"]')
     expect(backLink.exists()).toBe(true)
-    expect(backLink.attributes('href')).toBe('/')
+    expect(backLink.text()).toContain('Voltar')
   })
 
   it('abre o canvas de feedback ao clicar no botão Enviar Sugestão', async () => {

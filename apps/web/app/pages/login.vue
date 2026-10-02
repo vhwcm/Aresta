@@ -9,6 +9,7 @@
           <div>
             <AppBackButton
               test-id="back-to-home-link"
+              text="Voltar ao Início"
               fallback="/"
               class="py-1"
             />
@@ -47,6 +48,7 @@
       <div class="lg:col-span-5 w-full bg-bgPanel/90 dark:bg-bgApp/60 border border-divider backdrop-blur-xl rounded-3xl p-6 sm:p-8 shadow-2xl flex flex-col gap-6 shrink-0">
         <AppBackButton
           test-id="mobile-back-to-home-link"
+          text="Voltar ao Início"
           fallback="/"
           class="lg:hidden py-1"
         />

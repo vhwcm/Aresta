@@ -43,7 +43,16 @@ const emit = defineEmits<{
   (e: 'click'): void
 }>()
 
-const router = useRouter()
+const getRouter = () => {
+  try {
+    if (typeof useRouter === 'function') {
+      return useRouter()
+    }
+  } catch {
+    // fallback if router not injected in unit test environment
+  }
+  return null
+}
 
 const buttonClasses = computed(() => {
   if (props.variant === 'button' || props.variant === 'icon') {
@@ -78,12 +87,15 @@ const handleClick = () => {
     props.customClick()
     return
   }
-  if (typeof window !== 'undefined' && window.history.state?.back) {
+  const router = getRouter()
+  if (router?.back && typeof window !== 'undefined' && window.history.state?.back) {
     router.back()
-  } else if (typeof window !== 'undefined' && window.history.length > 1) {
+  } else if (router?.back && typeof window !== 'undefined' && window.history.length > 1) {
     router.back()
-  } else {
+  } else if (router?.push) {
     void router.push(props.fallback || '/')
+  } else if (typeof window !== 'undefined') {
+    window.location.href = props.fallback || '/'
   }
 }
 </script>

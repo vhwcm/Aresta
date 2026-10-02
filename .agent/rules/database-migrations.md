@@ -1,3 +1,7 @@
+---
+trigger: model_decision
+---
+
 # Regra: Migrations e Gerenciamento do Banco de Dados (Prisma ORM)
 
 ## 1. Regra Inegociável de Schema e Migrations

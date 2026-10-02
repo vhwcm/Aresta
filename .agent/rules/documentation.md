@@ -1,3 +1,8 @@
+---
+trigger: model_decision
+description: Quando uma desição de design, arquitetura ou regra de negócio for adicionada
+---
+
 # Regra: Gestão da Documentação e Sincronização
 
 ## Princípio Fundamental
