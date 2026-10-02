@@ -15,6 +15,7 @@ type LazyComponent<T> = DefineComponent<HydrationStrategies, {}, {}, {}, {}, {},
 
 
 export const AiMarkdown: typeof import("../app/components/AiMarkdown.vue")['default']
+export const AppBackButton: typeof import("../app/components/AppBackButton.vue")['default']
 export const AppSelect: typeof import("../app/components/AppSelect.vue")['default']
 export const ArestaLogoGraph: typeof import("../app/components/ArestaLogoGraph.vue")['default']
 export const BottomNavbar: typeof import("../app/components/BottomNavbar.vue")['default']
@@ -107,6 +108,7 @@ export const Html: typeof import("../node_modules/nuxt/dist/head/runtime/compone
 export const Body: typeof import("../node_modules/nuxt/dist/head/runtime/components")['Body']
 export const NuxtIsland: typeof import("../node_modules/nuxt/dist/app/components/nuxt-island")['default']
 export const LazyAiMarkdown: LazyComponent<typeof import("../app/components/AiMarkdown.vue")['default']>
+export const LazyAppBackButton: LazyComponent<typeof import("../app/components/AppBackButton.vue")['default']>
 export const LazyAppSelect: LazyComponent<typeof import("../app/components/AppSelect.vue")['default']>
 export const LazyArestaLogoGraph: LazyComponent<typeof import("../app/components/ArestaLogoGraph.vue")['default']>
 export const LazyBottomNavbar: LazyComponent<typeof import("../app/components/BottomNavbar.vue")['default']>

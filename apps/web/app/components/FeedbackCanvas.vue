@@ -1,7 +1,7 @@
 <template>
   <Teleport to="body">
     <div
-      v-if="isOpen"
+      v-if="effectiveIsOpen"
       class="fixed inset-0 z-50 overflow-hidden"
       data-testid="feedback-canvas-container"
       role="dialog"
@@ -209,11 +209,14 @@ import {
   AlertCircleIcon
 } from 'lucide-vue-next'
 import { useAuth } from '~/composables/useAuth'
+import { useFeedbackModal } from '~/composables/useFeedbackModal'
 import { getApiRoot } from '~/utils/apiBase'
 
-const props = defineProps<{
-  isOpen: boolean
-}>()
+const props = withDefaults(defineProps<{
+  isOpen?: boolean
+}>(), {
+  isOpen: undefined
+})
 
 const emit = defineEmits<{
   (e: 'update:isOpen', value: boolean): void
@@ -222,6 +225,11 @@ const emit = defineEmits<{
 }>()
 
 const auth = useAuth()
+const feedbackModal = useFeedbackModal()
+
+const effectiveIsOpen = computed(() => {
+  return props.isOpen !== undefined ? props.isOpen : feedbackModal.isOpen.value
+})
 
 const category = ref<'FEEDBACK' | 'IMPROVEMENT' | 'BUG'>('IMPROVEMENT')
 const message = ref('')
@@ -234,6 +242,7 @@ const canSubmit = computed(() => {
 })
 
 const close = () => {
+  feedbackModal.close()
   emit('update:isOpen', false)
   emit('close')
 }

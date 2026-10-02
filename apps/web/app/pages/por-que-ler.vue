@@ -1,5 +1,10 @@
 <template>
-  <div class="flex flex-col gap-16 pb-32 animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-4xl mx-auto w-full">
+  <div class="flex flex-col gap-10 md:gap-16 pb-32 animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-4xl mx-auto w-full">
+    <!-- Barra Superior / Navegação de Retorno -->
+    <div class="flex items-center justify-between">
+      <AppBackButton fallback="/" />
+    </div>
+
     <!-- Header do Ensaio -->
     <header class="flex flex-col gap-6">
       <div class="flex items-center justify-between flex-wrap gap-4">
@@ -252,6 +257,7 @@
 </template>
 
 <script setup lang="ts">
+import AppBackButton from '~/components/AppBackButton.vue'
 import {
   ClockIcon,
   BrainIcon,

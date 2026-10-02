@@ -3,13 +3,7 @@
     <!-- Cabeçalho do Ensaio / Explicação -->
     <header class="flex flex-col gap-6">
       <div class="flex items-center justify-between flex-wrap gap-4">
-        <NuxtLink
-          to="/"
-          class="font-technical text-xs text-textSecondary hover:text-textPrimary flex items-center gap-1.5 transition-colors"
-        >
-          <ArrowLeftIcon class="w-3.5 h-3.5" />
-          Voltar para o Início
-        </NuxtLink>
+        <AppBackButton fallback="/" />
 
         <div class="flex items-center gap-2 font-technical text-[10px] uppercase font-semibold tracking-widest text-accent">
           <BrainIcon class="w-3.5 h-3.5" />
@@ -170,6 +164,7 @@
 </template>
 
 <script setup lang="ts">
+import AppBackButton from '~/components/AppBackButton.vue'
 import {
   ArrowLeftIcon,
   BrainIcon,

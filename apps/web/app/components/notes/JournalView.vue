@@ -3,9 +3,10 @@
     <!-- Top Header do Diário -->
     <header class="border-b border-divider bg-bgPanel/95 backdrop-blur-md px-3 sm:px-6 py-3 flex-shrink-0 z-10">
       <div class="max-w-4xl w-full mx-auto flex items-center justify-between gap-3 flex-wrap">
-        <!-- Título e Data Ativa -->
-        <div class="hidden md:flex items-center gap-3 min-w-0">
-          <div class="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/25 flex items-center justify-center text-amber-500 shrink-0">
+        <!-- Título e Data Ativa & Voltar -->
+        <div class="flex items-center gap-3 min-w-0">
+          <AppBackButton />
+          <div class="hidden md:flex w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/25 items-center justify-center text-amber-500 shrink-0">
             <BookOpenCheckIcon class="w-5 h-5" />
           </div>
           <div class="min-w-0">
@@ -314,6 +315,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import AppBackButton from '~/components/AppBackButton.vue'
 import {
   BookOpenCheck as BookOpenCheckIcon,
   Calendar as CalendarIcon,

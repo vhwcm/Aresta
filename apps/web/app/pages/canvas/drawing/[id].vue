@@ -3,16 +3,12 @@
     <!-- Top Header -->
     <header class="h-14 shrink-0 px-3 sm:px-6 border-b border-divider bg-bgPanel/90 backdrop-blur-md flex items-center justify-between z-30">
       <div class="flex items-center gap-2 sm:gap-3 min-w-0">
-        <!-- Back Link -->
-        <NuxtLink
-          to="/canvas?tab=drawings"
-          class="p-2 rounded-xl bg-bgElevated hover:bg-bgSurface text-textSecondary hover:text-textPrimary border border-divider transition-all shrink-0"
-          title="Voltar aos Desenhos"
-        >
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="m15 18-6-6 6-6" />
-          </svg>
-        </NuxtLink>
+        <!-- Back Button -->
+        <AppBackButton
+          variant="button"
+          fallback="/canvas?tab=drawings"
+          title="Voltar para a página anterior"
+        />
 
         <!-- Editable Title -->
         <div class="flex items-center gap-2 min-w-0">
@@ -316,6 +312,7 @@ import type { DrawingStroke, DrawingPoint, DrawingSynthesisResult } from '~/inte
 import DrawingPageCanvas from '~/components/canvas/drawing/DrawingPageCanvas.vue';
 import DrawingToolbar from '~/components/canvas/drawing/DrawingToolbar.vue';
 import DrawingAiSynthesisModal from '~/components/canvas/drawing/DrawingAiSynthesisModal.vue';
+import AppBackButton from '~/components/AppBackButton.vue';
 
 definePageMeta({
   layout: false,

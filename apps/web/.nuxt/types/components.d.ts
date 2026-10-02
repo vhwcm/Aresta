@@ -15,6 +15,7 @@ type LazyComponent<T> = DefineComponent<HydrationStrategies, {}, {}, {}, {}, {},
 
 interface _GlobalComponents {
   AiMarkdown: typeof import("../../app/components/AiMarkdown.vue")['default']
+  AppBackButton: typeof import("../../app/components/AppBackButton.vue")['default']
   AppSelect: typeof import("../../app/components/AppSelect.vue")['default']
   ArestaLogoGraph: typeof import("../../app/components/ArestaLogoGraph.vue")['default']
   BottomNavbar: typeof import("../../app/components/BottomNavbar.vue")['default']
@@ -107,6 +108,7 @@ interface _GlobalComponents {
   Body: typeof import("../../node_modules/nuxt/dist/head/runtime/components")['Body']
   NuxtIsland: typeof import("../../node_modules/nuxt/dist/app/components/nuxt-island")['default']
   LazyAiMarkdown: LazyComponent<typeof import("../../app/components/AiMarkdown.vue")['default']>
+  LazyAppBackButton: LazyComponent<typeof import("../../app/components/AppBackButton.vue")['default']>
   LazyAppSelect: LazyComponent<typeof import("../../app/components/AppSelect.vue")['default']>
   LazyArestaLogoGraph: LazyComponent<typeof import("../../app/components/ArestaLogoGraph.vue")['default']>
   LazyBottomNavbar: LazyComponent<typeof import("../../app/components/BottomNavbar.vue")['default']>

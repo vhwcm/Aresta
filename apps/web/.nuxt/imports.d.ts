@@ -45,6 +45,7 @@ export { MAX_COMPOSITE_DEPTH, useCycleDetector, RenderContextItem } from '../app
 export { useDidacticBooklet, DidacticChapterItem, DidacticBookletItem } from '../app/composables/useDidacticBooklet';
 export { useDrawing, DrawingSummaryItem } from '../app/composables/useDrawing';
 export { useDriveSync } from '../app/composables/useDriveSync';
+export { useFeedbackModal } from '../app/composables/useFeedbackModal';
 export { resetFlashcardsMemory, useFlashcards, FlashcardItem, DailyDeckResponse } from '../app/composables/useFlashcards';
 export { useGoogleDriveSync, GoogleDriveSyncResult } from '../app/composables/useGoogleDriveSync';
 export { resetGraphMemory, useGraph } from '../app/composables/useGraph';

@@ -488,6 +488,12 @@
           <ArrowLeftIcon class="w-4 h-4" />
           <span>Voltar</span>
         </button>
+        <AppBackButton
+          v-else
+          fallback="/conta"
+          test-id="onboarding-prev-btn"
+          class="px-5 py-2.5 rounded-xl border border-white/10 hover:border-white/20 bg-white/5 hover:bg-white/10 text-white/80 hover:text-white font-interface text-xs sm:text-sm font-medium transition-all inline-flex items-center gap-2 cursor-pointer"
+        />
       </div>
 
       <!-- Botão Próximo / Concluir -->
@@ -525,6 +531,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import AppBackButton from '~/components/AppBackButton.vue'
 import { getApiRoot } from '~/utils/apiBase'
 import {
   UserIcon,

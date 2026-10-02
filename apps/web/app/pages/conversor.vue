@@ -1,5 +1,10 @@
 <template>
-  <div class="flex flex-col gap-12 pb-16">
+  <div class="flex flex-col gap-8 md:gap-12 pb-16">
+    <!-- Barra Superior / Navegação de Retorno -->
+    <div class="flex items-center justify-between">
+      <AppBackButton />
+    </div>
+
     <!-- Cabeçalho Editorial -->
     <header class="flex flex-col items-center text-center gap-3 max-w-2xl mx-auto">
       <h1 class="font-editorial text-4xl md:text-5xl font-light text-textPrimary leading-tight">
@@ -242,6 +247,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import AppBackButton from '~/components/AppBackButton.vue'
 import {
   UploadCloudIcon,
   FileTextIcon,

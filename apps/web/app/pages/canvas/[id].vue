@@ -3,16 +3,12 @@
     <!-- Top Nav / Canvas Header -->
     <header class="h-14 shrink-0 px-2.5 sm:px-4 border-b border-divider bg-bgPanel/90 backdrop-blur-md flex items-center justify-between z-30">
       <div class="flex items-center gap-1.5 sm:gap-3 min-w-0">
-        <!-- Back Link -->
-        <NuxtLink
-          to="/"
-          class="p-1.5 sm:p-2 rounded-xl bg-bgElevated hover:bg-bgSurface text-textSecondary hover:text-textPrimary border border-divider transition-all flex-shrink-0"
-          title="Voltar ao Início"
-        >
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="m15 18-6-6 6-6" />
-          </svg>
-        </NuxtLink>
+        <!-- Back Button -->
+        <AppBackButton
+          variant="button"
+          fallback="/"
+          title="Voltar para a página anterior"
+        />
 
         <!-- Editable Canvas Title -->
         <div class="flex items-center gap-1.5 min-w-0">
@@ -75,6 +71,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { SunIcon, MoonIcon, PaletteIcon } from 'lucide-vue-next';
 import { useCanvas } from '~/composables/useCanvas';
 import { useSettings } from '~/composables/useSettings';
+import AppBackButton from '~/components/AppBackButton.vue';
 import CanvasBoard from '~/components/canvas/CanvasBoard.vue';
 
 definePageMeta({

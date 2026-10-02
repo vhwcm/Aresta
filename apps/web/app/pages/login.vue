@@ -7,15 +7,11 @@
         <div class="hidden lg:flex lg:col-span-7 flex-col gap-6 text-left">
           <!-- Ação Voltar ao Início na mesma altura da aba Acessar Conta -->
           <div>
-            <NuxtLink
-              to="/"
-              data-testid="back-to-home-link"
-              class="inline-flex items-center gap-2 text-textSecondary hover:text-textPrimary transition-colors font-interface text-xs sm:text-sm group py-1"
-              title="Voltar para a página inicial"
-            >
-              <ArrowLeftIcon class="w-4 h-4 transition-transform group-hover:-translate-x-1 text-accent" />
-              <span>Voltar ao Início</span>
-            </NuxtLink>
+            <AppBackButton
+              test-id="back-to-home-link"
+              fallback="/"
+              class="py-1"
+            />
           </div>
 
           <h1 class="font-editorial text-3xl sm:text-4xl lg:text-5xl font-light text-textPrimary leading-[1.15]">
@@ -49,15 +45,11 @@
 
       <!-- Coluna da Direita: Card de Autenticação Exclusivo com Google -->
       <div class="lg:col-span-5 w-full bg-bgPanel/90 dark:bg-bgApp/60 border border-divider backdrop-blur-xl rounded-3xl p-6 sm:p-8 shadow-2xl flex flex-col gap-6 shrink-0">
-        <NuxtLink
-          to="/"
-          data-testid="mobile-back-to-home-link"
-          class="lg:hidden inline-flex items-center gap-2 text-textSecondary hover:text-textPrimary transition-colors font-interface text-xs group py-1"
-          title="Voltar para a página inicial"
-        >
-          <ArrowLeftIcon class="w-4 h-4 transition-transform group-hover:-translate-x-1 text-accent" />
-          <span>Voltar ao Início</span>
-        </NuxtLink>
+        <AppBackButton
+          test-id="mobile-back-to-home-link"
+          fallback="/"
+          class="lg:hidden py-1"
+        />
 
         <!-- Cabeçalho do Card de Acesso -->
         <div class="flex flex-col gap-1.5">
@@ -112,6 +104,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import AppBackButton from '~/components/AppBackButton.vue'
 import {
   UserIcon,
   LockIcon,

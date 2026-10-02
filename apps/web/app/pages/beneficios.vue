@@ -2,14 +2,7 @@
   <div class="flex flex-col gap-16 pb-32 animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-5xl mx-auto w-full px-4 sm:px-6">
     <!-- Barra Superior / Navegação de Retorno -->
     <div class="flex items-center justify-between pt-4">
-      <NuxtLink
-        to="/"
-        data-testid="beneficios-back-link"
-        class="inline-flex items-center gap-2 text-xs font-interface text-textSecondary hover:text-accent transition-colors group"
-      >
-        <ArrowLeftIcon class="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-        <span>Voltar ao Início</span>
-      </NuxtLink>
+      <AppBackButton test-id="beneficios-back-link" fallback="/" />
 
       <div class="flex items-center gap-2">
         <button
@@ -435,6 +428,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import AppBackButton from '~/components/AppBackButton.vue'
 import {
   ArrowLeftIcon,
   MessageSquareIcon,

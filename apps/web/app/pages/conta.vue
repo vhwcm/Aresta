@@ -1,5 +1,10 @@
 <template>
-  <div class="flex flex-col gap-12 pb-16">
+  <div class="flex flex-col gap-8 md:gap-12 pb-16">
+    <!-- Barra Superior / Navegação de Retorno -->
+    <div class="flex items-center justify-between">
+      <AppBackButton />
+    </div>
+
     <!-- Cabeçalho Editorial da Conta -->
     <header class="hidden md:flex items-center justify-between gap-6">
       <h1 class="font-editorial text-4xl md:text-5xl font-light text-textPrimary leading-tight">
@@ -655,6 +660,7 @@ import { useSettings } from '~/composables/useSettings'
 import { useOAuth } from '~/composables/useOAuth'
 import { useUserMetrics } from '~/composables/useUserMetrics'
 import ConfirmModal from '~/components/ConfirmModal.vue'
+import AppBackButton from '~/components/AppBackButton.vue'
 
 const auth = useAuth()
 const settings = useSettings()

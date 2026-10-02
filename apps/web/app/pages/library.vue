@@ -3,9 +3,11 @@
     <!-- Header: Title and Actions -->
     <header class="flex flex-col gap-3.5 sm:gap-4">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 sm:gap-4">
-        <!-- Lado Esquerdo: Título Estante (+ badge sutil de filtro ativo se houver) -->
-        <div class="hidden md:flex items-center gap-2.5 sm:gap-3 flex-wrap min-w-0">
-          <div class="flex items-center gap-2 shrink-0">
+        <!-- Lado Esquerdo: Voltar + Título Estante (+ badge sutil de filtro ativo se houver) -->
+        <div class="flex items-center gap-2.5 sm:gap-3 flex-wrap min-w-0">
+          <AppBackButton />
+
+          <div class="hidden md:flex items-center gap-2 shrink-0">
             <BookIcon class="w-4 h-4 text-accent" />
             <h1 class="font-technical text-xs uppercase font-bold tracking-widest text-textSecondary">
               Estante
@@ -469,6 +471,7 @@ import { getCoverUrl, getBookFormat, resolveBookCover } from '~/utils/cover'
 import { getApiBase } from '~/utils/apiBase'
 
 import ConfirmModal from '~/components/ConfirmModal.vue'
+import AppBackButton from '~/components/AppBackButton.vue'
 import { useWorkspaceSidebar } from '~/composables/useWorkspaceSidebar'
 
 const auth = useAuth()

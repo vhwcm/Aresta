@@ -780,10 +780,12 @@ function getTargetPage(direction: PageTurnDirection): number {
       ? Math.min(store.currentPage + 1, store.totalPages)
       : Math.max(1, store.currentPage - 1)
   }
-  const curLeft = store.currentPage % 2 !== 0 ? store.currentPage : store.currentPage - 1
-  return direction === 'next'
-    ? Math.min(curLeft + 2, store.totalPages)
-    : Math.max(1, curLeft - 2)
+  const curLeft = store.currentPage % 2 !== 0 ? store.currentPage : Math.max(1, store.currentPage - 1)
+  if (direction === 'next') {
+    return curLeft + 2 <= store.totalPages ? curLeft + 2 : store.currentPage
+  } else {
+    return curLeft - 2 >= 1 ? curLeft - 2 : store.currentPage
+  }
 }
 
 // Física de Gestos
@@ -806,15 +808,16 @@ const physics = usePagePhysics({
       store.goToPage(targetPage)
     }
 
-    // 1. Renderiza a página 2D definitiva por baixo PRIMEIRO
-    await renderCurrentSpread()
-    await nextTick()
-
-    // 2. Só agora oculta a folha 3D, garantindo continuidade perfeita sem flash de cor
+    // Restaura o layout definitivo e desmonta snapshot 3D ANTES do render final
+    // para garantir que os elementos e canvases correspondentes (ex: página direita em retornos)
+    // existam no DOM e sejam devidamente renderizados sem tela em branco.
     is3DActive.value = false
     animationLayout.value = null
     emit('transition-state', false)
     lastTurnTriggerTime = performance.now()
+
+    await nextTick()
+    await renderCurrentSpread()
 
     // P3: Processa virada pendente da fila (cliques rápidos em sequência)
     if (pendingTurnDirection !== null) {
@@ -824,12 +827,13 @@ const physics = usePagePhysics({
     }
   },
   onCancel: async () => {
-    await renderCurrentSpread()
-    await nextTick()
     is3DActive.value = false
     animationLayout.value = null
     emit('transition-state', false)
     lastTurnTriggerTime = performance.now()
+
+    await nextTick()
+    await renderCurrentSpread()
 
     // P3: Processa virada pendente da fila mesmo após cancelamento
     if (pendingTurnDirection !== null) {

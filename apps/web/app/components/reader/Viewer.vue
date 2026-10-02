@@ -86,9 +86,15 @@
             :title="store.title"
             aria-label="Título do livro"
           >
-            <div class="flex items-center justify-center gap-2 max-w-[95%]">
+            <div class="flex items-center justify-center gap-2.5 max-w-[95%]">
+              <img
+                v-if="bookCoverUrl"
+                :src="bookCoverUrl"
+                :alt="store.title"
+                class="w-6 h-8 sm:w-7 sm:h-9 rounded-sm object-cover shadow-sm shrink-0 ring-1 ring-black/10"
+              />
               <h2 class="reader-viewer__book-title-text font-editorial font-normal">
-                {{ store.title }}
+                {{ truncatedTitle }}
               </h2>
             </div>
           </footer>
@@ -275,7 +281,12 @@ import { getApiBase } from '~/utils/apiBase'
 import { getStoredAuthToken } from '~/composables/useAuth'
 
 const store = useReaderStore()
-const router = useRouter()
+let router: any = null
+try {
+  router = useRouter()
+} catch {
+  // Headless test environment
+}
 const { fetchAnnotations, annotations, createAnnotation } = useAnnotations()
 const { startTimer: startReadingTimer, stopTimer: stopReadingTimer } = useReadingTimer()
 
@@ -285,6 +296,14 @@ const themeBgColor = computed(() => {
   if (activeTheme.value === 'black') return '#000000'
   return '#f5eedc'
 })
+
+const truncatedTitle = computed(() => {
+  const title = store.title
+  if (title.length <= 50) return title
+  return title.slice(0, 50) + '…'
+})
+
+const bookCoverUrl = computed(() => store.coverUrl || '')
 
 const isSavedPagesOpen = ref(false)
 const isAnnotationModalOpen = ref(false)
@@ -396,10 +415,14 @@ const isTransitioning = ref(false)
 
 function handleClose() {
   store.reset()
-  if (router?.push) {
-    router.push('/')
+  if (typeof window !== 'undefined' && window.history.state?.back) {
+    router.back()
+  } else if (typeof window !== 'undefined' && window.history.length > 1) {
+    router.back()
+  } else if (router?.push) {
+    router.push('/library')
   } else if (typeof window !== 'undefined') {
-    window.location.href = '/'
+    window.location.href = '/library'
   }
 }
 

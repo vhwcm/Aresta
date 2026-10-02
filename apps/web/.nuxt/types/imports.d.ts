@@ -228,6 +228,7 @@ declare global {
   const useDrawing: typeof import('../../app/composables/useDrawing').useDrawing
   const useDriveSync: typeof import('../../app/composables/useDriveSync').useDriveSync
   const useError: typeof import('../../node_modules/nuxt/dist/app/composables/error').useError
+  const useFeedbackModal: typeof import('../../app/composables/useFeedbackModal').useFeedbackModal
   const useFetch: typeof import('../../node_modules/nuxt/dist/app/composables/fetch').useFetch
   const useFlashcards: typeof import('../../app/composables/useFlashcards').useFlashcards
   const useGoogleDriveSync: typeof import('../../app/composables/useGoogleDriveSync').useGoogleDriveSync
@@ -651,6 +652,7 @@ declare module 'vue' {
     readonly useDrawing: UnwrapRef<typeof import('../../app/composables/useDrawing')['useDrawing']>
     readonly useDriveSync: UnwrapRef<typeof import('../../app/composables/useDriveSync')['useDriveSync']>
     readonly useError: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/error')['useError']>
+    readonly useFeedbackModal: UnwrapRef<typeof import('../../app/composables/useFeedbackModal')['useFeedbackModal']>
     readonly useFetch: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/fetch')['useFetch']>
     readonly useFlashcards: UnwrapRef<typeof import('../../app/composables/useFlashcards')['useFlashcards']>
     readonly useGoogleDriveSync: UnwrapRef<typeof import('../../app/composables/useGoogleDriveSync')['useGoogleDriveSync']>

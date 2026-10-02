@@ -1,5 +1,10 @@
 <template>
-  <div class="flex flex-col gap-10 pb-24 animate-in fade-in slide-in-from-bottom-4 duration-700">
+  <div class="flex flex-col gap-8 md:gap-10 pb-24 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <!-- Barra Superior / Navegação de Retorno -->
+    <div class="flex items-center justify-between">
+      <AppBackButton fallback="/library" />
+    </div>
+
     <!-- Cabeçalho da Página -->
     <header class="flex flex-col md:flex-row md:items-end justify-between gap-6">
       <div class="flex flex-col gap-2">
@@ -197,6 +202,7 @@
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
+import AppBackButton from '~/components/AppBackButton.vue'
 import {
   ShieldAlertIcon,
   BookOpenIcon,

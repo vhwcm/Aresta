@@ -134,6 +134,7 @@ export const useReaderStore = defineStore('reader', {
       state.document !== null && state.currentPage >= state.document.totalPages,
     documentType: (state) => state.document?.type ?? null,
     title: (state) => state.document?.metadata.title ?? state.fileName ?? '',
+    coverUrl: (state) => state.document?.metadata.coverUrl ?? '',
     canGoNext: (state): boolean =>
       state.document !== null && state.currentPage < state.document.totalPages,
     canGoPrev: (state): boolean => state.currentPage > 1,

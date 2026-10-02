@@ -44,7 +44,15 @@
         class="md:hidden shrink-0 h-14 bg-bgPanel/95 backdrop-blur-md border-b border-divider px-3 flex items-center justify-between z-30"
         data-testid="mobile-top-header"
       >
-        <div class="flex items-center gap-2.5 min-w-0">
+        <div class="flex items-center gap-2 min-w-0">
+          <!-- Botão Voltar Mobile (em rotas secundárias) -->
+          <AppBackButton
+            v-if="route.path !== '/'"
+            variant="button"
+            fallback="/"
+            test-id="mobile-header-back-btn"
+          />
+
           <!-- Botão Hambúrguer Mobile -->
           <button
             class="p-2 rounded-xl bg-bgSurface/80 hover:bg-bgSurface text-textPrimary border border-divider shadow-xs transition-all active:scale-95 cursor-pointer flex items-center justify-center shrink-0"
@@ -131,6 +139,7 @@ import {
   Palette as PaletteIcon
 } from 'lucide-vue-next'
 import FolderTagSidebar from '~/components/FolderTagSidebar.vue'
+import AppBackButton from '~/components/AppBackButton.vue'
 import { useAuth } from '~/composables/useAuth'
 import { useWorkspaceSidebar } from '~/composables/useWorkspaceSidebar'
 import { useSettings } from '~/composables/useSettings'

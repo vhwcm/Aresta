@@ -1,24 +1,27 @@
 <template>
   <div class="flex flex-col flex-1 min-h-[calc(100vh-7.5rem)] md:min-h-[calc(100vh-8.5rem)] gap-8 pb-16">
-    <!-- Abas Internas da Revisão -->
-    <header class="flex items-center justify-between gap-4">
-      <div class="flex items-center bg-black/5 dark:bg-white/5 p-1 rounded-2xl border border-divider">
-        <button
-          @click="activeTab = 'flashcards'"
-          class="px-5 py-2 rounded-xl font-interface text-xs font-medium transition-all flex items-center gap-2"
-          :class="activeTab === 'flashcards' ? 'bg-accent text-white shadow-md' : 'text-textSecondary hover:text-textPrimary'"
-        >
-          <LayersIcon class="w-4 h-4" />
-          Flashcards ({{ displayCards.length }})
-        </button>
-        <button
-          @click="activeTab = 'summaries'"
-          class="px-5 py-2 rounded-xl font-interface text-xs font-medium transition-all flex items-center gap-2"
-          :class="activeTab === 'summaries' ? 'bg-accent text-white shadow-md' : 'text-textSecondary hover:text-textPrimary'"
-        >
-          <FileTextIcon class="w-4 h-4" />
-          Resumos & Anotações ({{ summaries.length }})
-        </button>
+    <!-- Abas Internas da Revisão & Voltar -->
+    <header class="flex items-center justify-between gap-4 flex-wrap">
+      <div class="flex items-center gap-3">
+        <AppBackButton />
+        <div class="flex items-center bg-black/5 dark:bg-white/5 p-1 rounded-2xl border border-divider">
+          <button
+            @click="activeTab = 'flashcards'"
+            class="px-5 py-2 rounded-xl font-interface text-xs font-medium transition-all flex items-center gap-2"
+            :class="activeTab === 'flashcards' ? 'bg-accent text-white shadow-md' : 'text-textSecondary hover:text-textPrimary'"
+          >
+            <LayersIcon class="w-4 h-4" />
+            Flashcards ({{ displayCards.length }})
+          </button>
+          <button
+            @click="activeTab = 'summaries'"
+            class="px-5 py-2 rounded-xl font-interface text-xs font-medium transition-all flex items-center gap-2"
+            :class="activeTab === 'summaries' ? 'bg-accent text-white shadow-md' : 'text-textSecondary hover:text-textPrimary'"
+          >
+            <FileTextIcon class="w-4 h-4" />
+            Resumos & Anotações ({{ summaries.length }})
+          </button>
+        </div>
       </div>
     </header>
 
@@ -646,6 +649,7 @@ import { useAnnotations } from '~/composables/useAnnotations'
 import { useUserBooks } from '~/composables/useUserBooks'
 import ReaderAnnotationModal from '~/components/reader/ReaderAnnotationModal.vue'
 import AppSelect from '~/components/AppSelect.vue'
+import AppBackButton from '~/components/AppBackButton.vue'
 
 interface AnnotationSummary {
   id: string

@@ -3,13 +3,7 @@
     <!-- Cabeçalho da Página -->
     <header class="flex flex-col gap-3">
       <div class="flex items-center justify-between flex-wrap gap-2">
-        <NuxtLink
-          to="/library"
-          class="font-technical text-xs text-textSecondary hover:text-textPrimary flex items-center gap-1.5 transition-colors group"
-        >
-          <ArrowLeftIcon class="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
-          <span>Voltar para a Estante</span>
-        </NuxtLink>
+        <AppBackButton fallback="/library" text="Voltar para a Estante" />
       </div>
 
       <div class="hidden md:flex flex-col gap-1">
@@ -246,6 +240,7 @@ definePageMeta({
 })
 
 import { ref, computed, onMounted } from 'vue'
+import AppBackButton from '~/components/AppBackButton.vue'
 import {
   ArrowLeftIcon,
   AlertTriangleIcon,

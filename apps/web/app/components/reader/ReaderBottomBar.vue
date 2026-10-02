@@ -28,6 +28,15 @@
         <span class="hidden xs:inline landscape:hidden">Sair</span>
       </button>
 
+      <!-- Capa do Livro (miniatura) -->
+      <img
+        v-if="bookCoverUrl"
+        :src="bookCoverUrl"
+        :alt="store.title"
+        class="w-7 h-10 sm:w-8 sm:h-11 landscape:w-9 landscape:h-12 rounded-md object-cover shadow-md shrink-0 ring-1 ring-black/15"
+        :title="store.title"
+      />
+
       <!-- Indicador de Progresso por Página -->
       <div
         class="flex flex-row landscape:flex-col items-center justify-center gap-1.5 landscape:gap-0.5 px-2.5 py-1.5 sm:px-3 sm:py-2 landscape:w-11 landscape:py-2 landscape:px-0.5 rounded-xl border text-xs font-semibold text-center select-none"
@@ -618,6 +627,7 @@ function handleToggleNotes() {
 }
 
 const store = useReaderStore()
+const bookCoverUrl = computed(() => store.coverUrl || '')
 const isAppearancePopoverOpen = ref(false)
 const appearanceWrapperRef = ref<HTMLElement | null>(null)
 const isBookmarkPopoverOpen = ref(false)

@@ -1,5 +1,10 @@
 <template>
-  <div class="flex flex-col gap-10 pb-32">
+  <div class="flex flex-col gap-8 md:gap-10 pb-32">
+    <!-- Barra Superior / Navegação de Retorno -->
+    <div class="flex items-center justify-between">
+      <AppBackButton />
+    </div>
+
     <!-- Header da Página -->
     <header class="flex flex-col md:flex-row md:items-center justify-between gap-6">
       <div>
@@ -237,6 +242,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import AppBackButton from '~/components/AppBackButton.vue'
 import { UsersIcon, UserPlusIcon, SearchIcon, Edit3Icon, Trash2Icon, UserXIcon, XIcon } from 'lucide-vue-next'
 import { useAuth } from '~/composables/useAuth'
 import { getApiBase } from '~/utils/apiBase'
