@@ -54,6 +54,8 @@ export interface CanvasViewport {
   zoom: number;
 }
 
+export type CanvasTool = 'select' | 'note' | 'shape' | 'loose_text' | 'pen' | 'eraser';
+
 export interface StrokePoint {
   x: number;
   y: number;
@@ -61,9 +63,12 @@ export interface StrokePoint {
 }
 
 export interface InkingStroke {
+  id?: string;
   points: StrokePoint[];
   color: string;
   width: number;
+  tool?: 'pen' | 'highlighter';
+  opacity?: number;
 }
 
 export interface CanvasDocument {

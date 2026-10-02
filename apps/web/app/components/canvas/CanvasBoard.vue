@@ -42,6 +42,12 @@
         @select-edge="onSelectEdge"
       />
 
+      <!-- SVG Freehand Stroke Layer (Caneta) -->
+      <CanvasStrokeLayer
+        :strokes="strokes"
+        :active-stroke="activeStroke"
+      />
+
       <!-- DOM Nodes / Cards Layer -->
       <CanvasNode
         v-for="node in nodes"
@@ -63,12 +69,12 @@
       />
     </div>
 
-    <!-- Empty State Guide Overlay (Only when no nodes exist) -->
+    <!-- Empty State Guide Overlay (Only when no nodes exist and not drawing) -->
     <div
-      v-if="nodes.length === 0"
+      v-if="nodes.length === 0 && strokes.length === 0 && activeTool !== 'pen'"
       class="absolute inset-0 flex items-center justify-center pointer-events-none z-10 animate-in fade-in duration-300 pb-20 sm:pb-0 px-4"
     >
-      <div class="p-5 sm:p-6 rounded-2xl bg-bgPanel/85 border border-divider/80 backdrop-blur-md shadow-2xl text-center max-w-sm pointer-events-auto select-none">
+      <div class="p-5 sm:p-6 rounded-2xl bg-bgPanel border border-divider/80 shadow-2xl text-center max-w-sm pointer-events-auto select-none">
         <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto mb-2.5 sm:mb-3 text-lg sm:text-xl font-bold">
           ✨
         </div>
@@ -100,16 +106,31 @@
       </div>
     </div>
 
+    <!-- Freehand Drawing & Erasing Interaction Layer (Only active when tool is pen or eraser) -->
+    <div
+      v-if="activeTool === 'pen' || activeTool === 'eraser'"
+      class="canvas-drawing-overlay absolute inset-0 z-30 touch-none"
+      :class="activeTool === 'pen' ? 'cursor-crosshair' : 'cursor-pointer'"
+      @pointerdown="onDrawingPointerDown"
+      @pointermove="onDrawingPointerMove"
+      @pointerup="onDrawingPointerUp"
+      @pointercancel="onDrawingPointerUp"
+    />
+
     <!-- Floating Canvas Toolbar -->
     <CanvasToolbar
       :active-tool="activeTool"
       :selected-shape-type="selectedShapeType"
+      :pen-color="activePenColor"
+      :pen-width="activePenWidth"
       :can-undo="canUndo"
       :can-redo="canRedo"
       :zoom="viewport.zoom"
       :is-saving="isSaving"
       @update:active-tool="activeTool = $event"
       @update:selected-shape-type="selectedShapeType = $event"
+      @update:pen-color="activePenColor = $event"
+      @update:pen-width="activePenWidth = $event"
       @open-insert-drawer="openDrawer('books')"
       @create-text-at-center="createLooseTextAtCenter"
       @undo="undo"
@@ -152,11 +173,13 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
+import CanvasStrokeLayer from '~/components/canvas/CanvasStrokeLayer.vue';
 import type {
   CanvasNode,
   CanvasEdge,
   CanvasSide,
   CanvasShapeType,
+  InkingStroke,
 } from '~/interfaces/canvas';
 import { useCanvas } from '~/composables/useCanvas';
 import { useNotes } from '~/composables/useNotes';
@@ -182,10 +205,13 @@ const openDrawer = (tab: 'books' | 'notes' | 'quotes', openNewNote = false) => {
 const {
   nodes,
   edges,
+  strokes,
   viewport,
   selectedNodeIds,
   selectedEdgeId,
   activeTool,
+  activePenColor,
+  activePenWidth,
   selectedShapeType,
   connectingState,
   isSaving,
@@ -197,6 +223,9 @@ const {
   removeNode,
   removeSelected,
   addEdge,
+  addStroke,
+  eraseStrokesAt,
+  clearAllStrokes,
   undo,
   redo,
   panBy,
@@ -205,6 +234,11 @@ const {
   loadCanvas,
   exportAsJsonCanvas,
 } = useCanvas();
+
+// Freehand Drawing & Erasing State
+const activeStroke = ref<InkingStroke | null>(null);
+const isDrawingStroke = ref(false);
+const isErasingStroke = ref(false);
 
 // Dragging / Pan / Resize States
 const isPanning = ref(false);
@@ -419,6 +453,101 @@ const createLooseTextAtCenter = () => {
   const centerCoords = screenToCanvas(centerScreen.value.x, centerScreen.value.y);
   createLooseTextNode(centerCoords.x, centerCoords.y);
   activeTool.value = 'select';
+};
+
+// Drawing & Erasing Handlers
+const onDrawingPointerDown = (e: PointerEvent) => {
+  // Guard: ignore clicks originating from toolbar or insert drawer
+  if ((e.target as HTMLElement)?.closest?.('.canvas-toolbar-container')) return;
+
+  const isMiddleClick = e.button === 1;
+  const isSpace = isSpacePressed.value && e.button === 0;
+
+  if (isMiddleClick || isSpace) {
+    isPanning.value = true;
+    panStart.value = { x: e.clientX, y: e.clientY };
+    return;
+  }
+
+  // Detect stylus eraser (barrel button or eraser tip)
+  const isStylusEraser = (e.buttons & 2) !== 0 || (e.buttons & 32) !== 0;
+  const toolToUse = isStylusEraser ? 'eraser' : activeTool.value;
+
+  try {
+    (e.currentTarget as HTMLElement)?.setPointerCapture?.(e.pointerId);
+  } catch {}
+
+  const coords = screenToCanvas(e.clientX, e.clientY);
+
+  if (toolToUse === 'eraser') {
+    isErasingStroke.value = true;
+    eraseStrokesAt(coords, 20 / viewport.value.zoom);
+    return;
+  }
+
+  if (toolToUse === 'pen') {
+    isDrawingStroke.value = true;
+    activeStroke.value = {
+      id: `stroke-${Date.now()}`,
+      points: [{ x: coords.x, y: coords.y, pressure: e.pressure || 0.5 }],
+      color: activePenColor.value,
+      width: activePenWidth.value,
+    };
+  }
+};
+
+const onDrawingPointerMove = (e: PointerEvent) => {
+  if (isPanning.value) {
+    const dx = e.clientX - panStart.value.x;
+    const dy = e.clientY - panStart.value.y;
+    panBy(dx, dy);
+    panStart.value = { x: e.clientX, y: e.clientY };
+    return;
+  }
+
+  const isStylusEraser = (e.buttons & 2) !== 0 || (e.buttons & 32) !== 0;
+  const toolToUse = isStylusEraser ? 'eraser' : activeTool.value;
+  const coords = screenToCanvas(e.clientX, e.clientY);
+
+  if (isErasingStroke.value || (toolToUse === 'eraser' && (e.buttons & 1) !== 0)) {
+    eraseStrokesAt(coords, 20 / viewport.value.zoom);
+    return;
+  }
+
+  if (isDrawingStroke.value && activeStroke.value) {
+    activeStroke.value.points.push({
+      x: coords.x,
+      y: coords.y,
+      pressure: e.pressure || 0.5,
+    });
+  }
+};
+
+const onDrawingPointerUp = (e: PointerEvent) => {
+  try {
+    (e.currentTarget as HTMLElement)?.releasePointerCapture?.(e.pointerId);
+  } catch {}
+
+  if (isPanning.value) {
+    isPanning.value = false;
+  }
+
+  if (isErasingStroke.value) {
+    isErasingStroke.value = false;
+    return;
+  }
+
+  if (isDrawingStroke.value && activeStroke.value) {
+    isDrawingStroke.value = false;
+    if (activeStroke.value.points.length > 0) {
+      addStroke({
+        points: [...activeStroke.value.points],
+        color: activeStroke.value.color,
+        width: activeStroke.value.width,
+      });
+    }
+    activeStroke.value = null;
+  }
 };
 
 // Background Pointer Down
@@ -705,6 +834,10 @@ let isTouchPinch = false;
 
 const onTouchStart = (e: TouchEvent) => {
   if (e.touches.length === 2) {
+    if (isDrawingStroke.value || activeStroke.value) {
+      isDrawingStroke.value = false;
+      activeStroke.value = null;
+    }
     const t1 = e.touches[0]!;
     const t2 = e.touches[1]!;
     touchPinchDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
@@ -972,6 +1105,10 @@ const onKeyDown = (e: KeyboardEvent) => {
     activeTool.value = 'select';
   } else if (e.key.toLowerCase() === 'v') {
     activeTool.value = 'select';
+  } else if (e.key.toLowerCase() === 'p') {
+    activeTool.value = 'pen';
+  } else if (e.key.toLowerCase() === 'e') {
+    activeTool.value = 'eraser';
   } else if (e.key.toLowerCase() === 'n') {
     activeTool.value = 'note';
   } else if (e.key.toLowerCase() === 't') {

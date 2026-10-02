@@ -1,7 +1,7 @@
 <template>
   <div class="canvas-toolbar-container fixed bottom-3 sm:bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 z-40 select-none max-w-[calc(100vw-1rem)]" @pointerdown.stop>
     <!-- Main Floating Tool Group -->
-    <div class="flex items-center gap-0.5 sm:gap-1 p-1 sm:p-1.5 rounded-2xl bg-bgPanel/95 border border-divider shadow-2xl backdrop-blur-xl">
+    <div class="flex items-center gap-0.5 sm:gap-1 p-1 sm:p-1.5 rounded-2xl bg-bgPanel border border-divider shadow-2xl">
       <!-- 1. Select / Move Pointer -->
       <button
         class="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-xl transition-all cursor-pointer flex-shrink-0"
@@ -14,7 +14,63 @@
         </svg>
       </button>
 
-      <!-- 2. Note Block (Rectangle Markdown Card) -->
+      <!-- 2. Caneta (Pen) com Popover de Opções -->
+      <div class="relative flex-shrink-0" ref="penMenuRef">
+        <button
+          class="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-xl transition-all cursor-pointer"
+          :class="activeTool === 'pen' ? 'bg-primary text-white shadow-md' : 'text-textSecondary hover:text-textPrimary hover:bg-bgElevated'"
+          title="Caneta (P) — Clique para desenhar ou abrir opções"
+          @click="onPenClick"
+        >
+          <PenToolIcon class="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+        </button>
+
+        <!-- Popover de Opções da Caneta (Cores e Espessura) -->
+        <div
+          v-if="showPenMenu"
+          class="absolute bottom-11 sm:bottom-12 left-1/2 -translate-x-1/2 flex flex-col gap-2 p-2 rounded-xl bg-bgPanel border border-divider shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-100 min-w-[140px]"
+        >
+          <!-- Seletor de Cores -->
+          <div class="flex items-center justify-center gap-1.5">
+            <button
+              v-for="c in penColors"
+              :key="c"
+              class="w-5 h-5 rounded-full border border-black/10 dark:border-white/10 transition-transform cursor-pointer"
+              :class="(penColor || '#E57B55') === c ? 'scale-125 ring-2 ring-primary ring-offset-2 ring-offset-bgPanel' : 'hover:scale-110'"
+              :style="{ backgroundColor: c }"
+              :title="`Cor: ${c}`"
+              @click="$emit('update:penColor', c); showPenMenu = false"
+            />
+          </div>
+
+          <div class="h-px bg-divider w-full"></div>
+
+          <!-- Seletor de Espessuras -->
+          <div class="flex items-center justify-center gap-2">
+            <button
+              v-for="w in penWidths"
+              :key="w.size"
+              class="px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer"
+              :class="(penWidth || 3) === w.size ? 'bg-primary text-white' : 'text-textSecondary hover:bg-bgElevated'"
+              @click="$emit('update:penWidth', w.size); showPenMenu = false"
+            >
+              {{ w.label }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Borracha (Eraser) -->
+      <button
+        class="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-xl transition-all cursor-pointer flex-shrink-0"
+        :class="activeTool === 'eraser' ? 'bg-primary text-white shadow-md' : 'text-textSecondary hover:text-textPrimary hover:bg-bgElevated'"
+        title="Borracha (E) — Apague traços do desenho"
+        @click="$emit('update:activeTool', 'eraser')"
+      >
+        <EraserIcon class="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+      </button>
+
+      <!-- 4. Note Block (Rectangle Markdown Card) -->
       <button
         class="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-xl transition-all cursor-pointer flex-shrink-0"
         :class="activeTool === 'note' ? 'bg-primary text-white shadow-md' : 'text-textSecondary hover:text-textPrimary hover:bg-bgElevated'"
@@ -42,7 +98,7 @@
         <!-- Shapes Selection Popover -->
         <div
           v-if="showShapesMenu"
-          class="absolute bottom-11 sm:bottom-12 left-1/2 -translate-x-1/2 flex items-center gap-1 p-1 sm:p-1.5 rounded-xl bg-bgPanel/95 border border-divider shadow-2xl backdrop-blur-xl z-50 animate-in fade-in zoom-in-95 duration-100"
+          class="absolute bottom-11 sm:bottom-12 left-1/2 -translate-x-1/2 flex items-center gap-1 p-1 sm:p-1.5 rounded-xl bg-bgPanel border border-divider shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-100"
         >
           <button
             v-for="s in shapesList"
@@ -135,7 +191,7 @@
         <!-- Popover com Zoom e Exportar -->
         <div
           v-if="showMoreMenu"
-          class="absolute bottom-11 sm:bottom-12 right-0 p-2 sm:p-2.5 rounded-2xl bg-bgPanel/95 border border-divider shadow-2xl backdrop-blur-xl z-50 flex flex-col gap-2 min-w-[180px] sm:min-w-[200px] animate-in fade-in zoom-in-95 duration-150"
+          class="absolute bottom-11 sm:bottom-12 right-0 p-2 sm:p-2.5 rounded-2xl bg-bgPanel border border-divider shadow-2xl z-50 flex flex-col gap-2 min-w-[180px] sm:min-w-[200px] animate-in fade-in zoom-in-95 duration-150"
           @click.stop
         >
           <!-- Controles de Zoom -->
@@ -188,7 +244,7 @@
     </div>
 
     <!-- Autosave Badge -->
-    <div class="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-bgPanel/95 border border-divider shadow-xl text-xs text-textSecondary backdrop-blur-xl">
+    <div class="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-bgPanel border border-divider shadow-xl text-xs text-textSecondary">
       <span
         class="w-2 h-2 rounded-full"
         :class="isSaving ? 'bg-amber-400 animate-ping' : 'bg-emerald-400'"
@@ -200,15 +256,17 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
-import { MoreHorizontalIcon } from 'lucide-vue-next';
+import { MoreHorizontalIcon, PenTool as PenToolIcon, Eraser as EraserIcon } from 'lucide-vue-next';
 import ArestaLogoGraph from '~/components/ArestaLogoGraph.vue';
 import { useBottomNavbar } from '~/composables/useBottomNavbar';
-import type { CanvasShapeType } from '~/interfaces/canvas';
+import type { CanvasShapeType, CanvasTool } from '~/interfaces/canvas';
 import { CANVAS_SHAPES, getShapeIcon } from '~/utils/canvasShapes';
 
 const props = defineProps<{
   activeTool: string;
   selectedShapeType: CanvasShapeType;
+  penColor?: string;
+  penWidth?: number;
   canUndo: boolean;
   canRedo: boolean;
   zoom: number;
@@ -216,8 +274,10 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'update:activeTool', tool: 'select' | 'note' | 'shape' | 'loose_text'): void;
+  (e: 'update:activeTool', tool: CanvasTool): void;
   (e: 'update:selectedShapeType', shape: CanvasShapeType): void;
+  (e: 'update:penColor', color: string): void;
+  (e: 'update:penWidth', width: number): void;
   (e: 'open-insert-drawer'): void;
   (e: 'create-text-at-center'): void;
   (e: 'undo'): void;
@@ -233,6 +293,23 @@ const { toggleCollapse: toggleNavbar } = useBottomNavbar();
 const showMoreMenu = ref(false);
 const moreMenuRef = ref<HTMLElement | null>(null);
 const shapesMenuRef = ref<HTMLElement | null>(null);
+
+const showPenMenu = ref(false);
+const penMenuRef = ref<HTMLElement | null>(null);
+const penColors = ['#18181B', '#E57B55', '#3B82F6', '#10B981', '#EF4444'];
+const penWidths = [
+  { label: 'Fina', size: 2 },
+  { label: 'Média', size: 4 },
+  { label: 'Grossa', size: 6 },
+];
+
+const onPenClick = () => {
+  if (props.activeTool === 'pen') {
+    showPenMenu.value = !showPenMenu.value;
+  } else {
+    emit('update:activeTool', 'pen');
+  }
+};
 
 const onTextClick = () => {
   if (props.activeTool === 'loose_text') {
@@ -261,6 +338,9 @@ const handleClickOutside = (e: MouseEvent) => {
   }
   if (shapesMenuRef.value && !shapesMenuRef.value.contains(e.target as Node)) {
     showShapesMenu.value = false;
+  }
+  if (penMenuRef.value && !penMenuRef.value.contains(e.target as Node)) {
+    showPenMenu.value = false;
   }
 };
 

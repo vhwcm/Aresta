@@ -9,6 +9,7 @@ import type {
   CanvasSide,
   CanvasShapeType,
   InkingStroke,
+  CanvasTool,
 } from '~/interfaces/canvas';
 import { useAuth } from '~/composables/useAuth';
 import { canvasRepo } from '~/adapters/database/repositories/CanvasRepository';
@@ -24,8 +25,10 @@ const viewport = ref<CanvasViewport>({ x: 0, y: 0, zoom: 1.0 });
 
 const selectedNodeIds = ref<string[]>([]);
 const selectedEdgeId = ref<string | null>(null);
-const activeTool = ref<'select' | 'note' | 'shape' | 'loose_text'>('select');
+const activeTool = ref<CanvasTool>('select');
 const selectedShapeType = ref<CanvasShapeType>('rectangle');
+const activePenColor = ref<string>('#E57B55');
+const activePenWidth = ref<number>(3);
 
 const connectingState = ref<{
   fromNodeId: string;
@@ -160,6 +163,47 @@ export function useCanvas() {
     pushHistory();
     edges.value = edges.value.filter((e) => e.id !== id);
     if (selectedEdgeId.value === id) selectedEdgeId.value = null;
+    triggerAutosave();
+  };
+
+  // Operações de Traços (Caneta & Borracha)
+  const addStroke = (stroke: InkingStroke, saveHistory = true): InkingStroke => {
+    if (saveHistory) pushHistory();
+    const finalStroke: InkingStroke = {
+      ...stroke,
+      id: stroke.id || `stroke-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    };
+    strokes.value.push(finalStroke);
+    triggerAutosave();
+    return finalStroke;
+  };
+
+  const eraseStrokesAt = (coords: { x: number; y: number }, radius = 18): boolean => {
+    const initialLen = strokes.value.length;
+    if (initialLen === 0) return false;
+
+    const r2 = radius * radius;
+    const remaining = strokes.value.filter((stroke) => {
+      return !stroke.points.some((pt) => {
+        const dx = pt.x - coords.x;
+        const dy = pt.y - coords.y;
+        return dx * dx + dy * dy <= r2;
+      });
+    });
+
+    if (remaining.length !== initialLen) {
+      pushHistory();
+      strokes.value = remaining;
+      triggerAutosave();
+      return true;
+    }
+    return false;
+  };
+
+  const clearAllStrokes = () => {
+    if (strokes.value.length === 0) return;
+    pushHistory();
+    strokes.value = [];
     triggerAutosave();
   };
 
@@ -513,6 +557,8 @@ export function useCanvas() {
     selectedNodeIds,
     selectedEdgeId,
     activeTool,
+    activePenColor,
+    activePenWidth,
     selectedShapeType,
     connectingState,
     isLoading,
@@ -529,6 +575,9 @@ export function useCanvas() {
     removeSelected,
     addEdge,
     removeEdge,
+    addStroke,
+    eraseStrokesAt,
+    clearAllStrokes,
     setViewport,
     panBy,
     zoomAt,

@@ -8,18 +8,25 @@ const mockZoomAt = vi.fn();
 const mockAddNode = vi.fn();
 const mockUpdateNode = vi.fn();
 const mockPushHistory = vi.fn();
+const mockAddStroke = vi.fn();
+const mockEraseStrokesAt = vi.fn();
 
 const mockNodes = ref<any[]>([]);
 const mockSelectedNodeIds = ref<string[]>([]);
+const mockStrokes = ref<any[]>([]);
+const mockActiveTool = ref<string>('select');
 
 vi.mock('../../../app/composables/useCanvas', () => ({
   useCanvas: () => ({
     nodes: mockNodes,
     edges: ref([]),
+    strokes: mockStrokes,
     viewport: ref({ x: 0, y: 0, zoom: 1 }),
     selectedNodeIds: mockSelectedNodeIds,
     selectedEdgeId: ref(null),
-    activeTool: ref('select'),
+    activeTool: mockActiveTool,
+    activePenColor: ref('#E57B55'),
+    activePenWidth: ref(3),
     selectedShapeType: ref('rectangle'),
     connectingState: ref(null),
     isSaving: ref(false),
@@ -31,6 +38,9 @@ vi.mock('../../../app/composables/useCanvas', () => ({
     removeNode: vi.fn(),
     removeSelected: vi.fn(),
     addEdge: vi.fn(),
+    addStroke: mockAddStroke,
+    eraseStrokesAt: mockEraseStrokesAt,
+    clearAllStrokes: vi.fn(),
     undo: vi.fn(),
     redo: vi.fn(),
     panBy: mockPanBy,
@@ -52,6 +62,8 @@ describe('CanvasBoard Interaction (Desktop 2-finger Pan vs Click+Wheel Zoom)', (
     vi.clearAllMocks();
     mockNodes.value = [];
     mockSelectedNodeIds.value = [];
+    mockStrokes.value = [];
+    mockActiveTool.value = 'select';
   });
 
   it('dois dedos apenas (wheel sem clique e sem ctrl) move a tela via panBy', async () => {
@@ -59,9 +71,11 @@ describe('CanvasBoard Interaction (Desktop 2-finger Pan vs Click+Wheel Zoom)', (
       global: {
         stubs: {
           CanvasEdgeLayer: true,
+          CanvasStrokeLayer: true,
           CanvasNode: true,
           CanvasToolbar: true,
           CanvasInsertDrawer: true,
+          CanvasSelectionToolbar: true,
         },
       },
     });
@@ -89,9 +103,11 @@ describe('CanvasBoard Interaction (Desktop 2-finger Pan vs Click+Wheel Zoom)', (
       global: {
         stubs: {
           CanvasEdgeLayer: true,
+          CanvasStrokeLayer: true,
           CanvasNode: true,
           CanvasToolbar: true,
           CanvasInsertDrawer: true,
+          CanvasSelectionToolbar: true,
         },
       },
     });
@@ -118,9 +134,11 @@ describe('CanvasBoard Interaction (Desktop 2-finger Pan vs Click+Wheel Zoom)', (
       global: {
         stubs: {
           CanvasEdgeLayer: true,
+          CanvasStrokeLayer: true,
           CanvasNode: true,
           CanvasToolbar: true,
           CanvasInsertDrawer: true,
+          CanvasSelectionToolbar: true,
         },
       },
     });
@@ -161,6 +179,7 @@ describe('CanvasBoard Multi-selection Move and Drag Interactions', () => {
       global: {
         stubs: {
           CanvasEdgeLayer: true,
+          CanvasStrokeLayer: true,
           CanvasNode: {
             props: ['node', 'isSelected', 'isMultiSelect'],
             template: '<div class="stub-node" :data-id="node.id" @pointerdown.stop="$emit(\'select\', node.id, false, $event); $emit(\'drag-start\', node.id, $event)"></div>',
@@ -215,6 +234,7 @@ describe('CanvasBoard Multi-selection Move and Drag Interactions', () => {
       global: {
         stubs: {
           CanvasEdgeLayer: true,
+          CanvasStrokeLayer: true,
           CanvasNode: {
             props: ['node', 'isSelected', 'isMultiSelect'],
             template: '<div class="stub-node" :data-id="node.id" @pointerdown.stop="$emit(\'select\', node.id, false, $event); $emit(\'drag-start\', node.id, $event)"></div>',
@@ -257,6 +277,7 @@ describe('CanvasBoard Multi-selection Move and Drag Interactions', () => {
       global: {
         stubs: {
           CanvasEdgeLayer: true,
+          CanvasStrokeLayer: true,
           CanvasNode: true,
           CanvasToolbar: true,
           CanvasInsertDrawer: true,
@@ -291,6 +312,7 @@ describe('CanvasBoard Double Click Interactions', () => {
       global: {
         stubs: {
           CanvasEdgeLayer: true,
+          CanvasStrokeLayer: true,
           CanvasNode: true,
           CanvasToolbar: true,
           CanvasInsertDrawer: true,
@@ -322,6 +344,7 @@ describe('CanvasBoard Double Click Interactions', () => {
       global: {
         stubs: {
           CanvasEdgeLayer: true,
+          CanvasStrokeLayer: true,
           CanvasNode: true,
           CanvasToolbar: true,
           CanvasInsertDrawer: true,
@@ -350,6 +373,7 @@ describe('CanvasBoard Double Click Interactions', () => {
       global: {
         stubs: {
           CanvasEdgeLayer: true,
+          CanvasStrokeLayer: true,
           CanvasNode: {
             props: ['node'],
             template: '<div class="canvas-node" :data-node-id="node.id"><div class="inner-note">Texto</div></div>',
@@ -368,6 +392,156 @@ describe('CanvasBoard Double Click Interactions', () => {
 
     expect(mockAddNode).not.toHaveBeenCalled();
     expect(mockSelectedNodeIds.value).toEqual(['node-target']);
+  });
+});
+
+describe('CanvasBoard Drawing and Eraser Interactions', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockNodes.value = [];
+    mockSelectedNodeIds.value = [];
+    mockStrokes.value = [];
+    mockActiveTool.value = 'select';
+  });
+
+  it('exibe camada de overlay de desenho quando a ferramenta é pen ou eraser', async () => {
+    const wrapper = mount(CanvasBoard, {
+      global: {
+        stubs: {
+          CanvasEdgeLayer: true,
+          CanvasStrokeLayer: true,
+          CanvasNode: true,
+          CanvasToolbar: true,
+          CanvasInsertDrawer: true,
+          CanvasSelectionToolbar: true,
+        },
+      },
+    });
+
+    // Ferramenta select: overlay não existe
+    expect(wrapper.find('.canvas-drawing-overlay').exists()).toBe(false);
+
+    // Altera para pen
+    mockActiveTool.value = 'pen';
+    await wrapper.vm.$nextTick();
+
+    const overlay = wrapper.find('.canvas-drawing-overlay');
+    expect(overlay.exists()).toBe(true);
+    expect(overlay.classes()).toContain('cursor-crosshair');
+  });
+
+  it('captura traço de caneta e chama addStroke ao soltar o ponteiro', async () => {
+    mockActiveTool.value = 'pen';
+
+    const wrapper = mount(CanvasBoard, {
+      global: {
+        stubs: {
+          CanvasEdgeLayer: true,
+          CanvasStrokeLayer: true,
+          CanvasNode: true,
+          CanvasToolbar: true,
+          CanvasInsertDrawer: true,
+          CanvasSelectionToolbar: true,
+        },
+      },
+    });
+
+    const overlay = wrapper.find('.canvas-drawing-overlay');
+    expect(overlay.exists()).toBe(true);
+
+    // Inicia traço
+    await overlay.trigger('pointerdown', {
+      clientX: 100,
+      clientY: 100,
+      buttons: 1,
+      pointerId: 1,
+    });
+
+    // Move ponteiro
+    await overlay.trigger('pointermove', {
+      clientX: 120,
+      clientY: 130,
+      buttons: 1,
+      pointerId: 1,
+    });
+
+    // Finaliza traço
+    await overlay.trigger('pointerup', {
+      clientX: 120,
+      clientY: 130,
+      pointerId: 1,
+    });
+
+    expect(mockAddStroke).toHaveBeenCalledTimes(1);
+    expect(mockAddStroke).toHaveBeenCalledWith(
+      expect.objectContaining({
+        color: '#E57B55',
+        width: 3,
+        points: expect.arrayContaining([
+          expect.objectContaining({ x: expect.any(Number), y: expect.any(Number) }),
+        ]),
+      })
+    );
+  });
+
+  it('chama eraseStrokesAt ao desenhar/mover com a borracha ativa', async () => {
+    mockActiveTool.value = 'eraser';
+
+    const wrapper = mount(CanvasBoard, {
+      global: {
+        stubs: {
+          CanvasEdgeLayer: true,
+          CanvasStrokeLayer: true,
+          CanvasNode: true,
+          CanvasToolbar: true,
+          CanvasInsertDrawer: true,
+          CanvasSelectionToolbar: true,
+        },
+      },
+    });
+
+    const overlay = wrapper.find('.canvas-drawing-overlay');
+    expect(overlay.exists()).toBe(true);
+    expect(overlay.classes()).toContain('cursor-pointer');
+
+    // Pointer down com borracha
+    await overlay.trigger('pointerdown', {
+      clientX: 150,
+      clientY: 150,
+      buttons: 1,
+      pointerId: 2,
+    });
+
+    expect(mockEraseStrokesAt).toHaveBeenCalledTimes(1);
+  });
+
+  it('permite alternar ferramentas via atalhos de teclado P (caneta) e E (borracha)', async () => {
+    const wrapper = mount(CanvasBoard, {
+      global: {
+        stubs: {
+          CanvasEdgeLayer: true,
+          CanvasStrokeLayer: true,
+          CanvasNode: true,
+          CanvasToolbar: true,
+          CanvasInsertDrawer: true,
+          CanvasSelectionToolbar: true,
+        },
+      },
+    });
+
+    const board = wrapper.find('.canvas-board-wrapper');
+
+    // Pressiona 'p'
+    await board.trigger('keydown', { key: 'p' });
+    expect(mockActiveTool.value).toBe('pen');
+
+    // Pressiona 'e'
+    await board.trigger('keydown', { key: 'e' });
+    expect(mockActiveTool.value).toBe('eraser');
+
+    // Pressiona 'v'
+    await board.trigger('keydown', { key: 'v' });
+    expect(mockActiveTool.value).toBe('select');
   });
 });
 

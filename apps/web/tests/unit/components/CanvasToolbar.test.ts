@@ -118,4 +118,52 @@ describe('CanvasToolbar component', () => {
     await starBtn.trigger('click');
     expect(wrapper.emitted('update:selectedShapeType')?.[0]).toEqual(['star']);
   });
+
+  it('ativa ferramenta caneta e borracha ao clicar nos botões correspondentes', async () => {
+    const wrapper = mount(CanvasToolbar, {
+      props: defaultProps,
+      global: {
+        stubs: {
+          ArestaLogoGraph: { template: '<div class="aresta-logo-mock" />' },
+        },
+      },
+    });
+
+    // Botão de Caneta
+    const penBtn = wrapper.find('button[title*="Caneta (P)"]');
+    expect(penBtn.exists()).toBe(true);
+    await penBtn.trigger('click');
+    expect(wrapper.emitted('update:activeTool')?.[0]).toEqual(['pen']);
+
+    // Botão de Borracha
+    const eraserBtn = wrapper.find('button[title*="Borracha (E)"]');
+    expect(eraserBtn.exists()).toBe(true);
+    await eraserBtn.trigger('click');
+    expect(wrapper.emitted('update:activeTool')?.[1]).toEqual(['eraser']);
+  });
+
+  it('abre popover de opções de caneta e emite alteração de cor e espessura', async () => {
+    const wrapper = mount(CanvasToolbar, {
+      props: {
+        ...defaultProps,
+        activeTool: 'pen',
+        penColor: '#E57B55',
+        penWidth: 3,
+      },
+      global: {
+        stubs: {
+          ArestaLogoGraph: { template: '<div class="aresta-logo-mock" />' },
+        },
+      },
+    });
+
+    const penBtn = wrapper.find('button[title*="Caneta (P)"]');
+    await penBtn.trigger('click');
+
+    // Verifica se os botões de cores aparecem
+    const blueColorBtn = wrapper.find('button[title="Cor: #3B82F6"]');
+    expect(blueColorBtn.exists()).toBe(true);
+    await blueColorBtn.trigger('click');
+    expect(wrapper.emitted('update:penColor')?.[0]).toEqual(['#3B82F6']);
+  });
 });

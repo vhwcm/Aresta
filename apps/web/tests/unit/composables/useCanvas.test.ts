@@ -192,4 +192,43 @@ describe('useCanvas composable', () => {
     const list = await canvas.fetchCanvases();
     expect(list.some((c) => c.title === 'Quadro Local Offline')).toBe(true);
   });
+
+  it('adiciona traço via addStroke e apaga traços por proximidade via eraseStrokesAt', () => {
+    const canvas = useCanvas();
+    const stroke1 = canvas.addStroke({
+      points: [
+        { x: 100, y: 100 },
+        { x: 110, y: 110 },
+      ],
+      color: '#E57B55',
+      width: 3,
+    });
+    expect(canvas.strokes.value).toHaveLength(1);
+    expect(stroke1.id).toBeDefined();
+
+    const stroke2 = canvas.addStroke({
+      points: [
+        { x: 500, y: 500 },
+        { x: 510, y: 510 },
+      ],
+      color: '#3B82F6',
+      width: 4,
+    });
+    expect(canvas.strokes.value).toHaveLength(2);
+
+    // Apaga próximo ao stroke1 (x: 105, y: 105)
+    const erased = canvas.eraseStrokesAt({ x: 105, y: 105 }, 15);
+    expect(erased).toBe(true);
+    expect(canvas.strokes.value).toHaveLength(1);
+    expect(canvas.strokes.value[0]?.id).toBe(stroke2.id);
+
+    // Tentativa de apagar em área vazia retorna false
+    const erasedEmpty = canvas.eraseStrokesAt({ x: 0, y: 0 }, 10);
+    expect(erasedEmpty).toBe(false);
+    expect(canvas.strokes.value).toHaveLength(1);
+
+    // Limpar tudo
+    canvas.clearAllStrokes();
+    expect(canvas.strokes.value).toHaveLength(0);
+  });
 });
