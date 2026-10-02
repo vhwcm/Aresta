@@ -18,7 +18,64 @@ import {
 import { commonmark } from '@milkdown/kit/preset/commonmark'
 import { gfm } from '@milkdown/kit/preset/gfm'
 import { listener, listenerCtx } from '@milkdown/plugin-listener'
+import { clipboard } from '@milkdown/plugin-clipboard'
 import { toggleMark, setBlockType } from '@milkdown/prose/commands'
+import { Plugin, PluginKey } from '@milkdown/prose/state'
+import { $prose } from '@milkdown/utils'
+
+/**
+ * Plugin que pré-processa HTML colado de páginas web (Wikipedia, etc.)
+ * para preservar links, limpar referências e corrigir caracteres especiais.
+ */
+const webPasteCleanup = $prose(() => {
+  return new Plugin({
+    key: new PluginKey('ARESTA_WEB_PASTE_CLEANUP'),
+    props: {
+      transformPastedHTML(html: string): string {
+        // Detectar se é conteúdo da Wikipedia (ou qualquer conteúdo web com links)
+        const isWikipedia = html.includes('wikipedia.org') || html.includes('wiki/')
+
+        // 1. Converter links relativos da Wikipedia para absolutos
+        if (isWikipedia) {
+          // Links relativos /wiki/... → https://en.wikipedia.org/wiki/...
+          // Detectar o idioma da Wikipedia a partir do HTML
+          const langMatch = html.match(/https?:\/\/([a-z]{2,3})\.wikipedia\.org/)
+          const wikiLang = langMatch ? langMatch[1] : 'en'
+          const wikiBase = `https://${wikiLang}.wikipedia.org`
+
+          // Converter href="/wiki/..." para href absoluto
+          html = html.replace(/href="\/wiki\/([^"#]*?)"/g, `href="${wikiBase}/wiki/$1"`)
+          // Converter href="/w/..." para href absoluto
+          html = html.replace(/href="\/w\/([^"]*?)"/g, `href="${wikiBase}/w/$1"`)
+        }
+
+        // 2. Remover referências de citação [1], [2], ..., [edit], [citation needed]
+        // Remove <sup> tags com classes de referência da Wikipedia
+        html = html.replace(/<sup[^>]*class="[^"]*reference[^"]*"[^>]*>[\s\S]*?<\/sup>/gi, '')
+        // Remove <sup> tags com links de referência [edit]
+        html = html.replace(/<sup[^>]*class="[^"]*noprint[^"]*"[^>]*>[\s\S]*?<\/sup>/gi, '')
+        // Remove span.mw-editsection (botões [edit])
+        html = html.replace(/<span[^>]*class="[^"]*mw-editsection[^"]*"[^>]*>[\s\S]*?<\/span>/gi, '')
+
+        // 3. Remover elementos ocultos e de navegação da Wikipedia
+        html = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+        html = html.replace(/<span[^>]*class="[^"]*mw-headline[^"]*"[^>]*>([\s\S]*?)<\/span>/gi, '$1')
+
+        // 4. Limpar spans com estilos inline desnecessários mas preservar o conteúdo
+        html = html.replace(/<span[^>]*style="[^"]*display\s*:\s*none[^"]*"[^>]*>[\s\S]*?<\/span>/gi, '')
+
+        // 5. Preservar conteúdo fonético/IPA: remover wrappers desnecessários
+        // mas manter o texto e links intactos
+        html = html.replace(/<span[^>]*class="[^"]*IPA[^"]*"[^>]*>([\s\S]*?)<\/span>/gi, '$1')
+
+        // 6. Limpar tags <img> da Wikipedia (ícones, badges, etc.)
+        html = html.replace(/<img[^>]*>/gi, '')
+
+        return html
+      }
+    }
+  })
+})
 
 const props = withDefaults(
   defineProps<{
@@ -89,6 +146,8 @@ const createEditor = async () => {
       .use(commonmark)
       .use(gfm)
       .use(listener)
+      .use(clipboard)
+      .use(webPasteCleanup)
       .create()
 
     milkdownEditor = editor

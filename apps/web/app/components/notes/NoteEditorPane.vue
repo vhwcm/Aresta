@@ -281,6 +281,7 @@
         <div
           v-else
           class="flex-1 overflow-y-auto p-3 sm:p-6 custom-scrollbar flex flex-col"
+          @click="handleEditorClick"
         >
           <!-- Título Inline estilo Obsidian dentro da página -->
           <div class="mb-4 pb-2 border-b border-divider/40 shrink-0">
