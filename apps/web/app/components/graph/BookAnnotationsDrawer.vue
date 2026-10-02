@@ -122,55 +122,9 @@
       <p class="line-clamp-3 hover:line-clamp-none transition-all cursor-pointer" title="Clique para expandir">{{ book.summary }}</p>
     </div>
 
-    <!-- Corpo com Anotações e Criação de Anotação Solta -->
+    <!-- Corpo com Lista de Anotações -->
     <div class="flex-1 overflow-y-auto p-6 flex flex-col gap-6 custom-scrollbar">
-      <!-- 1. Card para Criação de Anotação Solta -->
-      <section class="p-4 rounded-2xl bg-white/[0.02] border border-divider flex flex-col gap-3">
-        <div class="flex items-center justify-between">
-          <h3 class="font-interface text-xs uppercase tracking-wider font-semibold text-textPrimary flex items-center gap-1.5">
-            <PlusCircleIcon class="w-4 h-4 text-accent" />
-            <span>Criar Anotação Solta</span>
-          </h3>
-          <span class="text-[10px] text-textSecondary font-technical">Sem CFI (Nota Geral)</span>
-        </div>
-
-        <textarea
-          v-model="newLooseNote"
-          placeholder="Escreva sua reflexão, síntese ou insight sobre este livro..."
-          rows="3"
-          class="w-full bg-bgApp/70 border border-divider rounded-xl p-3 text-xs text-textPrimary placeholder:text-textSecondary/50 focus:outline-none focus:border-accent transition-all resize-none"
-        ></textarea>
-
-        <!-- Seleção de Tags do Livro -->
-        <div v-if="availableThemes.length > 0" class="flex flex-col gap-1.5">
-          <label class="text-[10px] font-technical uppercase tracking-wider text-textSecondary">
-            Vincular a tags deste livro:
-          </label>
-          <div class="flex flex-wrap gap-1.5">
-            <button
-              v-for="t in availableThemes"
-              :key="t.id"
-              type="button"
-              @click="toggleThemeSelection(t.id)"
-              class="px-2.5 py-1 rounded-lg text-[11px] font-technical transition-all border flex items-center gap-1"
-              :class="selectedThemeIds.includes(t.id) ? 'bg-accent/20 border-accent text-accent font-bold' : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary'"
-            >
-              <span>#{{ t.name }}</span>
-            </button>
-          </div>
-        </div>
-
-        <button
-          @click="handleCreateLooseNote"
-          :disabled="!newLooseNote.trim() || creatingNote"
-          class="py-2 px-4 rounded-xl bg-accent text-white font-interface text-xs font-semibold hover:bg-accent/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-1.5"
-        >
-          <SendIcon class="w-3.5 h-3.5" />
-          <span>{{ creatingNote ? 'Salvando...' : 'Salvar Anotação Solta' }}</span>
-        </button>
-      </section>
-
-      <!-- 2. Lista de Anotações do Livro -->
+      <!-- Lista de Anotações do Livro -->
       <section class="flex flex-col gap-3">
         <h3 class="font-interface text-xs uppercase tracking-wider font-semibold text-textSecondary flex items-center justify-between">
           <span class="flex items-center gap-1.5">
@@ -271,8 +225,6 @@ import {
   BookOpenIcon,
   BookIcon,
   BookmarkIcon,
-  PlusCircleIcon,
-  SendIcon,
   QuoteIcon,
   SparklesIcon,
   ImageIcon,
@@ -280,9 +232,7 @@ import {
 import type { GraphNode, AnnotationThemeItem, BookThemeItem } from '~/interfaces/graph'
 import { useGraph } from '~/composables/useGraph'
 import { annotationRepo } from '~/adapters/database/repositories/AnnotationRepository'
-import { bookRepo } from '~/adapters/database/repositories/BookRepository'
 import { getCoverUrl as resolveCoverUrl, resolveBookCover } from '~/utils/cover'
-import { useAuth } from '~/composables/useAuth'
 
 const props = defineProps<{
   isOpen: boolean
@@ -294,15 +244,10 @@ defineEmits<{
   (e: 'close'): void
 }>()
 
-const auth = useAuth()
-const { fetchBookAnnotations, createLooseAnnotation } = useGraph()
+const { fetchBookAnnotations } = useGraph()
 
 const annotations = ref<any[]>([])
 const loading = ref(false)
-const newLooseNote = ref('')
-const selectedThemeIds = ref<number[]>([])
-const creatingNote = ref(false)
-const availableThemes = ref<BookThemeItem[]>([])
 const isCoverModalOpen = ref(false)
 const coverError = ref(false)
 
@@ -456,26 +401,6 @@ const loadBookData = async () => {
         annotations.value = localNotes
       }
     }
-
-    // 3. Buscar os temas que pertencem a este livro
-    try {
-      const localBook = await bookRepo.getById(bookId)
-      if (localBook && localBook.themes && localBook.themes.length > 0) {
-        availableThemes.value = localBook.themes
-        selectedThemeIds.value = availableThemes.value.map((t: any) => Number(t.id))
-      } else {
-        const headers: Record<string, string> = {}
-        const token = auth.token.value || (typeof useCookie === 'function' ? useCookie<string | null>('aresta_token').value : null)
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`
-        }
-        const res = await $fetch<any>(`${getApiBase()}/books/${bookId}`, { headers })
-        availableThemes.value = res.themes || []
-        selectedThemeIds.value = availableThemes.value.map((t: any) => Number(t.id))
-      }
-    } catch {
-      availableThemes.value = []
-    }
   } catch (e) {
     console.error('Erro ao carregar anotações do livro:', e)
   } finally {
@@ -483,38 +408,10 @@ const loadBookData = async () => {
   }
 }
 
-function toggleThemeSelection(themeId: number) {
-  if (selectedThemeIds.value.includes(themeId)) {
-    selectedThemeIds.value = selectedThemeIds.value.filter((id) => id !== themeId)
-  } else {
-    selectedThemeIds.value.push(themeId)
-  }
-}
-
-async function handleCreateLooseNote() {
-  const bookId = resolveBookId(props.book)
-  if (!bookId || !newLooseNote.value.trim()) return
-
-  creatingNote.value = true
-  try {
-    const created = await createLooseAnnotation(bookId, newLooseNote.value.trim(), selectedThemeIds.value)
-    const noteObj = (created as any)?.annotation || created
-    annotations.value.unshift(noteObj)
-    newLooseNote.value = ''
-    selectedThemeIds.value = []
-  } catch (e) {
-    console.error('Erro ao criar anotação solta:', e)
-  } finally {
-    creatingNote.value = false
-  }
-}
-
 watch(
   () => [props.isOpen, props.book],
   () => {
     if (props.isOpen && props.book) {
-      newLooseNote.value = ''
-      selectedThemeIds.value = []
       coverError.value = false
       closeCoverModal()
       loadBookData()

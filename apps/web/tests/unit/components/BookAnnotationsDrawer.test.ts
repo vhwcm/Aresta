@@ -149,14 +149,8 @@ describe('BookAnnotationsDrawer Component', () => {
     })
   })
 
-  it('permite criar uma nova anotação solta vinculada ao livro', async () => {
+  it('não exibe formulário de criar anotação solta na gaveta externa do livro', async () => {
     mockFetchBookAnnotations.mockResolvedValue([])
-    mockCreateLooseAnnotation.mockResolvedValue({
-      id: 301,
-      bookId: 5,
-      note: 'Nova anotação solta criada agora',
-      cfi: null,
-    })
 
     const wrapper = mount(BookAnnotationsDrawer, {
       props: {
@@ -175,19 +169,9 @@ describe('BookAnnotationsDrawer Component', () => {
       },
     })
 
-    const textarea = wrapper.find('textarea')
-    expect(textarea.exists()).toBe(true)
-    await textarea.setValue('Nova anotação solta criada agora')
-
-    const saveBtn = wrapper.findAll('button').find((b) => b.text().includes('Salvar Anotação Solta'))
-    expect(saveBtn).toBeDefined()
-    await saveBtn?.trigger('click')
-
-    expect(mockCreateLooseAnnotation).toHaveBeenCalledWith(5, 'Nova anotação solta criada agora', expect.any(Array))
-    await vi.waitFor(() => {
-      expect(wrapper.text()).toContain('Nova anotação solta criada agora')
-      expect(wrapper.text()).toContain('Anotações deste livro (1)')
-    })
+    expect(wrapper.find('textarea').exists()).toBe(false)
+    expect(wrapper.text()).not.toContain('Criar Anotação Solta')
+    expect(wrapper.text()).not.toContain('Salvar Anotação Solta')
   })
 
   it('renderiza o texto da citação quando a anotação vem com snake_case (selected_text) e sem nota escrita (destaque puro)', async () => {

@@ -1,7 +1,7 @@
 ## 🔄 Em Andamento
-- [02/10/2026 09:32] [Fazendo] Remover seção de criação de anotação solta da gaveta lateral de anotações do livro (BookAnnotationsDrawer)
 
 ## ✅ Concluído
+- [02/10/2026 09:34] [Concluído] Remover seção de criação de anotação solta da gaveta lateral de anotações do livro (BookAnnotationsDrawer)
 - [02/10/2026 09:31] [Concluído] Remover efeito de blur e desfoques no popup e modais de ofensiva, ancorar abertura à esquerda da sidebar sem corte de tela e definir diretriz de design minimalista sem blur no DESIGN_SYSTEM.md
 - [02/10/2026 09:28] [Concluído] Adicionar opção "Mostrar Capa" ao lado de Continuar Leitura na gaveta de anotações do livro com visualizador imersivo em tela cheia centralizado e fundo preto
 - [02/10/2026 09:09] [Concluído] Adaptar posicionamento da barra de leitura à orientação da tela (inferior na vertical e lateral na horizontal) inclusive em tablets
