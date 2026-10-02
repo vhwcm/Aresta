@@ -1,20 +1,20 @@
 <template>
   <footer
-    class="reader-bottom-bar border-t md:border px-3 py-2 sm:px-4 sm:py-2.5 md:p-2 flex flex-row md:flex-col items-center justify-between md:justify-center z-20 shrink-0 gap-2 md:gap-2 md:my-auto md:self-center md:ml-3.5 md:mr-1 md:rounded-2xl md:shadow-xl md:backdrop-blur-md order-last md:order-first w-full md:w-auto md:h-auto select-none transition-all duration-200"
+    class="reader-bottom-bar border-t landscape:border px-3 py-2 sm:px-4 sm:py-2.5 landscape:p-2 flex flex-row landscape:flex-col items-center justify-between landscape:justify-center z-20 shrink-0 gap-2 landscape:gap-2 landscape:my-auto landscape:self-center landscape:ml-3.5 landscape:mr-1 landscape:rounded-2xl landscape:shadow-xl landscape:backdrop-blur-md order-last landscape:order-first w-full landscape:w-auto landscape:h-auto select-none transition-all duration-200"
     :class="{
-      'bg-[#f5eedc] md:bg-[#f5eedc]/95 border-[#dfd5c0] text-[#2a2521] shadow-[#2a2521]/5': store.readerTheme === 'sepia',
-      'bg-white md:bg-white/95 border-gray-200 text-gray-900 shadow-gray-900/5': store.readerTheme === 'white',
-      'bg-[#08080a] md:bg-[#08080a]/95 border-white/10 text-textPrimary shadow-black/60': store.readerTheme === 'black' || !store.readerTheme,
+      'bg-[#f5eedc] landscape:bg-[#f5eedc]/95 border-[#dfd5c0] text-[#2a2521] shadow-[#2a2521]/5': store.readerTheme === 'sepia',
+      'bg-white landscape:bg-white/95 border-gray-200 text-gray-900 shadow-gray-900/5': store.readerTheme === 'white',
+      'bg-[#08080a] landscape:bg-[#08080a]/95 border-white/10 text-textPrimary shadow-black/60': store.readerTheme === 'black' || !store.readerTheme,
     }"
     role="toolbar"
     aria-label="Barra de ferramentas do leitor"
   >
-    <!-- Grupo 1: Sair da Leitura & Progresso (Mobile: Esquerda | Tablet/Desktop: Topo) -->
-    <div class="flex flex-row md:flex-col items-center gap-1.5 sm:gap-2 md:gap-2.5 shrink-0 md:w-full">
+    <!-- Grupo 1: Sair da Leitura & Progresso (Vertical: Inferior/Esquerda | Horizontal: Topo) -->
+    <div class="flex flex-row landscape:flex-col items-center gap-1.5 sm:gap-2 landscape:gap-2.5 shrink-0 landscape:w-full">
       <!-- Botão Sair -->
       <button
         @click="$emit('close')"
-        class="flex items-center justify-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 md:w-11 md:h-11 md:p-0 rounded-xl border text-xs font-semibold transition-all active:scale-95 group"
+        class="flex items-center justify-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 landscape:w-11 landscape:h-11 landscape:p-0 rounded-xl border text-xs font-semibold transition-all active:scale-95 group"
         :class="store.readerTheme === 'sepia'
           ? 'bg-[#f5eedc] border-[#dfd5c0] text-[#5c4d3c] hover:text-[#2a2521] hover:bg-[#EBE2CE]'
           : (store.readerTheme === 'white'
@@ -25,12 +25,12 @@
         title="Sair da leitura"
       >
         <ArrowLeftIcon class="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-        <span class="hidden xs:inline md:hidden">Sair</span>
+        <span class="hidden xs:inline landscape:hidden">Sair</span>
       </button>
 
       <!-- Indicador de Progresso por Página -->
       <div
-        class="flex flex-row md:flex-col items-center justify-center gap-1.5 md:gap-0.5 px-2.5 py-1.5 sm:px-3 sm:py-2 md:w-11 md:py-2 md:px-0.5 rounded-xl border text-xs font-semibold text-center select-none"
+        class="flex flex-row landscape:flex-col items-center justify-center gap-1.5 landscape:gap-0.5 px-2.5 py-1.5 sm:px-3 sm:py-2 landscape:w-11 landscape:py-2 landscape:px-0.5 rounded-xl border text-xs font-semibold text-center select-none"
         :class="store.readerTheme === 'sepia'
           ? 'bg-[#f5eedc] border-[#dfd5c0] text-[#5c4d3c]'
           : (store.readerTheme === 'white'
@@ -39,18 +39,18 @@
         :title="`Progresso da leitura: ${pageDisplay}`"
         aria-label="Progresso da leitura por página"
       >
-        <!-- Mobile / Tablet (linha única) -->
-        <span class="md:hidden text-accent font-bold font-technical text-xs leading-tight">
+        <!-- Vertical / Portrait (linha única) -->
+        <span class="landscape:hidden text-accent font-bold font-technical text-xs leading-tight">
           {{ pageDisplay }}
         </span>
 
-        <!-- Desktop (vertical compacto) -->
-        <span class="hidden md:inline text-accent font-bold font-technical text-xs md:text-[11px] leading-tight">
+        <!-- Horizontal / Landscape (vertical compacto) -->
+        <span class="hidden landscape:inline text-accent font-bold font-technical text-xs landscape:text-[11px] leading-tight">
           {{ pageDisplayShort }}
         </span>
         <span
           v-if="store.totalPages > 0"
-          class="hidden md:inline text-[9px] font-technical font-mono leading-tight"
+          class="hidden landscape:inline text-[9px] font-technical font-mono leading-tight"
           :class="store.readerTheme === 'sepia' ? 'text-[#786C5E]' : (store.readerTheme === 'white' ? 'text-gray-500' : 'text-textSecondary/60')"
         >
           /{{ store.totalPages }}
@@ -58,19 +58,19 @@
       </div>
     </div>
 
-    <!-- Divisor sutil em telas tablet/desktop -->
+    <!-- Divisor sutil na barra vertical (Landscape) -->
     <div
-      class="hidden md:block w-7 h-px shrink-0"
+      class="hidden landscape:block w-7 h-px shrink-0"
       :class="store.readerTheme === 'sepia' ? 'bg-[#dfd5c0]' : (store.readerTheme === 'white' ? 'bg-gray-200' : 'bg-divider/60')"
     ></div>
 
-    <!-- Grupo 2: Ação de Anotação & Configurações de Leitura (Mobile: Centro | Tablet/Desktop: Centro) -->
-    <div class="flex flex-row md:flex-col items-center gap-1.5 sm:gap-2 md:gap-2.5">
+    <!-- Grupo 2: Ação de Anotação & Configurações de Leitura (Vertical: Centro | Horizontal: Centro) -->
+    <div class="flex flex-row landscape:flex-col items-center gap-1.5 sm:gap-2 landscape:gap-2.5">
       <!-- Botão Anotar (Desativado no Modo Foco) -->
       <button
         v-if="!store.isFocusMode"
         @click="$emit('openAnnotation')"
-        class="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-xl bg-accent text-white hover:bg-accent/90 transition-all shadow-md active:scale-95 group"
+        class="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 landscape:w-11 landscape:h-11 rounded-xl bg-accent text-white hover:bg-accent/90 transition-all shadow-md active:scale-95 group"
         title="Criar anotação nesta página"
         aria-label="Criar anotação"
       >
@@ -81,7 +81,7 @@
       <div class="relative" ref="appearanceWrapperRef">
         <button
           @click="isAppearancePopoverOpen = !isAppearancePopoverOpen"
-          class="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-xl border transition-all active:scale-95 group relative"
+          class="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 landscape:w-11 landscape:h-11 rounded-xl border transition-all active:scale-95 group relative"
           :class="isAppearancePopoverOpen
             ? 'bg-accent/20 border-accent text-accent shadow-sm'
             : (store.readerTheme === 'sepia'
@@ -107,10 +107,10 @@
           </div>
         </button>
 
-        <!-- Popover Flutuante de Configurações de Leitura (Mobile: Centralizado acima da barra | Desktop: Abre para a direita) -->
+        <!-- Popover Flutuante de Configurações de Leitura (Vertical: Centralizado acima da barra | Horizontal: Abre para a direita) -->
         <div
           v-if="isAppearancePopoverOpen"
-          class="fixed bottom-16 left-1/2 -translate-x-1/2 w-[92vw] max-w-[320px] md:absolute md:left-full md:top-1/2 md:translate-x-0 md:-translate-y-1/2 md:bottom-auto md:w-72 border rounded-2xl p-4 shadow-2xl z-50 flex flex-col gap-3.5 animate-fadeIn max-h-[85vh] overflow-y-auto"
+          class="fixed bottom-16 left-1/2 -translate-x-1/2 w-[92vw] max-w-[320px] landscape:absolute landscape:left-full landscape:top-1/2 landscape:translate-x-0 landscape:-translate-y-1/2 landscape:bottom-auto landscape:w-72 border rounded-2xl p-4 shadow-2xl z-50 flex flex-col gap-3.5 animate-fadeIn max-h-[85vh] overflow-y-auto"
           :class="{
             'bg-[#f5eedc] border-[#dfd5c0] text-[#2a2521]': store.readerTheme === 'sepia',
             'bg-white border-gray-200 text-gray-900': store.readerTheme === 'white',
@@ -449,19 +449,19 @@
       </div>
     </div>
 
-    <!-- Divisor sutil em telas tablet/desktop -->
+    <!-- Divisor sutil na barra vertical (Landscape) -->
     <div
-      class="hidden md:block w-7 h-px shrink-0"
+      class="hidden landscape:block w-7 h-px shrink-0"
       :class="store.readerTheme === 'sepia' ? 'bg-[#dfd5c0]' : (store.readerTheme === 'white' ? 'bg-gray-200' : 'bg-divider/60')"
     ></div>
 
-    <!-- Grupo 3: Marcação de Página, Páginas Salvas, Grafo & Zen (Mobile: Direita | Tablet/Desktop: Base) -->
-    <div class="flex flex-row md:flex-col items-center gap-1.5 sm:gap-2 md:gap-2.5 shrink-0">
+    <!-- Grupo 3: Marcação de Página, Páginas Salvas, Grafo & Zen (Vertical: Direita | Horizontal: Base) -->
+    <div class="flex flex-row landscape:flex-col items-center gap-1.5 sm:gap-2 landscape:gap-2.5 shrink-0">
       <!-- Botão Unificado de Marcadores (Marcar página ou Ver páginas marcadas) -->
       <div class="relative" ref="bookmarkWrapperRef">
         <button
           @click="isBookmarkPopoverOpen = !isBookmarkPopoverOpen"
-          class="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-xl border transition-all text-xs font-semibold active:scale-95 group relative"
+          class="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 landscape:w-11 landscape:h-11 rounded-xl border transition-all text-xs font-semibold active:scale-95 group relative"
           :class="isBookmarkPopoverOpen
             ? 'bg-accent/20 border-accent text-accent shadow-sm'
             : (store.isCurrentPageBookmarked
@@ -491,7 +491,7 @@
         <!-- Popover de Opções de Marcador -->
         <div
           v-if="isBookmarkPopoverOpen"
-          class="fixed bottom-16 right-4 w-60 md:absolute md:left-full md:bottom-0 md:right-auto md:translate-x-2 border rounded-2xl p-2 shadow-2xl z-50 flex flex-col gap-1 animate-fadeIn"
+          class="fixed bottom-16 right-4 w-60 landscape:absolute landscape:left-full landscape:bottom-0 landscape:right-auto landscape:translate-x-2 border rounded-2xl p-2 shadow-2xl z-50 flex flex-col gap-1 animate-fadeIn"
           :class="{
             'bg-[#f5eedc] border-[#dfd5c0] text-[#2a2521]': store.readerTheme === 'sepia',
             'bg-white border-gray-200 text-gray-900': store.readerTheme === 'white',
@@ -542,7 +542,7 @@
       <!-- Botão Notas do Livro -->
       <button
         @click="handleToggleNotes"
-        class="flex items-center justify-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 md:w-11 md:h-11 md:p-0 rounded-xl border transition-all text-xs font-semibold active:scale-95"
+        class="flex items-center justify-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 landscape:w-11 landscape:h-11 landscape:p-0 rounded-xl border transition-all text-xs font-semibold active:scale-95"
         :class="isNotesActiveComputed
           ? 'bg-accent text-white border-accent shadow-sm'
           : (store.readerTheme === 'sepia'
@@ -555,13 +555,13 @@
         id="btn-book-notes"
       >
         <FileTextIcon class="w-4 h-4" :class="isNotesActiveComputed ? 'text-white' : 'text-accent'" />
-        <span class="hidden sm:inline md:hidden">Notas</span>
+        <span class="hidden sm:inline landscape:hidden">Notas</span>
       </button>
 
       <!-- Botão Modo Zen (Foco) -->
       <button
         @click="store.toggleZenMode()"
-        class="flex items-center justify-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 md:w-11 md:h-11 md:p-0 rounded-xl border text-xs font-semibold transition-all active:scale-95 group"
+        class="flex items-center justify-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 landscape:w-11 landscape:h-11 landscape:p-0 rounded-xl border text-xs font-semibold transition-all active:scale-95 group"
         :class="store.readerTheme === 'sepia'
           ? 'bg-[#f5eedc] border-[#dfd5c0] text-[#5c4d3c] hover:text-[#2a2521] hover:bg-[#EBE2CE]'
           : (store.readerTheme === 'white'
@@ -572,7 +572,7 @@
         id="btn-zen-mode"
       >
         <Maximize2Icon class="w-4 h-4 text-accent group-hover:scale-110 transition-transform" />
-        <span class="hidden sm:inline md:hidden">Zen</span>
+        <span class="hidden sm:inline landscape:hidden">Zen</span>
       </button>
     </div>
   </footer>
@@ -692,7 +692,7 @@ onUnmounted(() => {
   min-height: 52px;
 }
 
-@media (min-width: 768px) {
+@media (orientation: landscape) {
   .reader-bottom-bar {
     min-height: auto;
   }

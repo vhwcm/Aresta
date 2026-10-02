@@ -92,11 +92,11 @@
               </h2>
             </div>
           </footer>
-          <!-- Painel de Notas do Livro no Mobile (Cobre toda a área útil do livro, sem cobrir a navbar) -->
+          <!-- Painel de Notas do Livro no Mobile / Modo Vertical (Cobre toda a área útil do livro, sem cobrir a navbar) -->
           <transition name="mobile-notes">
             <div
               v-if="store.isMobileNotesOpen && !store.isZenMode"
-              class="lg:hidden absolute inset-0 z-30 flex flex-col overflow-hidden"
+              class="lg:landscape:hidden absolute inset-0 z-30 flex flex-col overflow-hidden"
               :class="{
                 'bg-[#FAF5E8] text-[#2a2521]': activeTheme === 'sepia',
                 'bg-[#ffffff] text-[#1a1a1a]': activeTheme === 'white',
@@ -120,11 +120,11 @@
         </div>
       </section>
 
-      <!-- Painel de Notas do Livro no Desktop (Fica AO LADO do livro, não sobreposto) -->
+      <!-- Painel de Notas do Livro no Desktop / Modo Horizontal (Fica AO LADO do livro, não sobreposto) -->
       <transition name="panel-slide">
         <aside
           v-if="store.isNotesOpen && !store.isZenMode"
-          class="hidden lg:flex relative z-20 w-[420px] xl:w-[460px] 2xl:w-[500px] shrink-0 h-full shadow-2xl flex-col border-l transition-all duration-300"
+          class="hidden lg:landscape:flex relative z-20 w-[420px] xl:w-[460px] 2xl:w-[500px] shrink-0 h-full shadow-2xl flex-col border-l transition-all duration-300"
           :class="{
             'bg-[#FAF5E8] text-[#2a2521] border-[#dfd5c0]': activeTheme === 'sepia',
             'bg-white text-gray-900 border-gray-200': activeTheme === 'white',
@@ -420,7 +420,7 @@ function handleToggleNotes() {
   if (now - lastToggleNotesTime < 200) return
   lastToggleNotesTime = now
 
-  if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+  if (!isDesktop.value) {
     store.toggleMobileNotes()
   } else {
     store.toggleNotes()
@@ -769,7 +769,8 @@ function handleHighlightSelected(annotationId: number) {
 function updateDeviceType() {
   if (typeof window !== 'undefined') {
     const wasDesktop = isDesktop.value
-    isDesktop.value = window.innerWidth >= 1024
+    const isLandscape = window.innerWidth > window.innerHeight
+    isDesktop.value = window.innerWidth >= 1024 && isLandscape
     if (wasDesktop !== isDesktop.value) {
       if (isDesktop.value && store.isMobileNotesOpen) {
         store.setNotesOpen(true)
@@ -1086,7 +1087,7 @@ onUnmounted(() => {
   transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1), flex 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@media (min-width: 768px) {
+@media (orientation: landscape) {
   .reader-viewer__reader-pane {
     flex-direction: row;
   }

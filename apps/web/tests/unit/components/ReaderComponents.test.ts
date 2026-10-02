@@ -253,6 +253,25 @@ describe('Reader Components', () => {
       expect(store.readerWidthMode).toBe('centered')
     })
 
+    it('adota classes responsivas por orientação da tela (inferior em vertical, lateral em horizontal)', () => {
+      const wrapper = mount(ReaderBottomBar, {
+        props: { isNotesActive: false },
+      })
+
+      const footer = wrapper.find('footer')
+      expect(footer.exists()).toBe(true)
+
+      // Na vertical (padrão base): flex-row, order-last (em baixo), w-full
+      expect(footer.classes()).toContain('flex-row')
+      expect(footer.classes()).toContain('order-last')
+      expect(footer.classes()).toContain('w-full')
+
+      // Na horizontal (landscape:): flex-col, order-first (do lado), w-auto
+      expect(footer.classes()).toContain('landscape:flex-col')
+      expect(footer.classes()).toContain('landscape:order-first')
+      expect(footer.classes()).toContain('landscape:w-auto')
+    })
+
     it('identifica corretamente a prioridade de tipografia: livro específico > configuração global > padrão 15px', () => {
       const store = useReaderStore()
       localStorage.clear()
