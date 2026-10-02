@@ -39,7 +39,7 @@ Além disso, no Leitor de Livros (`/reader`), existia uma interface de grafo abe
    - Tooltip flutuante com preview rico de trechos citados, notas e pastas.
 
 3. **Interações Especializadas**:
-   - Livro: abre gaveta lateral `BookAnnotationsDrawer` com as anotações do livro e botão direto "Continuar Leitura" para abrir no Leitor.
+   - Livro: abre gaveta lateral `BookAnnotationsDrawer` com as anotações do livro, botão direto "Continuar Leitura" e botão "Mostrar Capa" com visualizador imersivo em tela cheia centralizado em fundo preto.
    - Anotação: abre modal com o trecho citado e atalho "Abrir no Livro" na posição exata (CFI).
    - Nota: abre o editor de notas (`/canvas?note=:id`).
    - Quadro: navega para `/canvas/:id`.
