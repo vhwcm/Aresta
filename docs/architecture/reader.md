@@ -244,5 +244,34 @@ O leitor oferece alternância de largura para documentos EPUB via `store.readerW
   - **Paginado**: Expande as páginas para ocupar 100% da área útil disponível (`hostWidth - 32px`), maximizando o espaço de leitura em notebooks e monitores compactos.
   - **Modo Scroll Contínuo**: Expande o bloco de leitura para `max-width: 1180px` (96%).
 
+---
+
+## 7. Barra Unificada Inferior de Leitura (`ReaderBottomBar.vue`)
+
+A barra de controle do leitor é unificada e posicionada permanentemente na base da interface (mobile, tablet e desktop), eliminando a fragmentação entre sidebar lateral em landscape e footer em portrait:
+
+```text
+================================================================================
+ARQUITETURA DA BARRA UNIFICADA INFERIOR (20DVH)
+================================================================================
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  ← Voltar                                                          ▲ Zen     │
+├──────────────┬───────────────────────────────────────────┬───────────────────┤
+│              │  Título do Livro (Newsreader)             │  ✏️ Anotação Solta │
+│  Capa do     ├───────────────────────────────────────────┤                   │
+│  Livro (100% │  ⚙️ Configurações   🔖 Marcador   Pág. X/Y │  📄 Ver Anotações │
+│  da barra)   │  (Fundo, modo, fonte, foco, marcadores)   │                   │
+└──────────────┴───────────────────────────────────────────┴───────────────────┘
+================================================================================
+```
+
+### Características e Diretrizes:
+1. **Verticalidade Fixa**: Ocupa estritamente 20% da altura da viewport (`height: 20dvh`), reservando 80% do espaço útil da tela para a leitura do livro.
+2. **Capa Integral**: A capa do livro ocupa 100% da altura disponível da barra (`h-full`, aspect ratio 2:3).
+3. **Design Flat sem Caixinhas**: Os controles utilizam ícones diretos e minimalistas, sem caixas com bordas pesadas ou fundos contrastantes.
+4. **Zen Mode Minimalista**: Alternância com setas discretas (sem texto explicativo). Quando em Zen Mode, a barra recolhe suavemente e o livro ocupa 100% da tela.
+5. **Anotações Ergonomicamente Ancoradas**: Coluna lateral esquerda com criação de anotação solta no topo e visualizador de anotações na base.
+6. **Progresso de Leitura**: Exibição da quantidade total de páginas com percentual lido formatado (`Pág. X/Y (Z%)`).
+
 
 

@@ -13,17 +13,7 @@
         :class="store.isNotesOpen && !store.isZenMode ? 'reader-viewer__reader-pane--with-notes' : 'reader-viewer__reader-pane--full'"
         :style="{ backgroundColor: themeBgColor }"
       >
-        <!-- Barra de Ferramentas de Leitura (Esquerda no Desktop/Tablet, Inferior no Mobile) (Oculta no Modo Zen) -->
-        <ReaderBottomBar
-          v-if="!store.isZenMode"
-          :is-notes-active="isDesktop ? store.isNotesOpen : store.isMobileNotesOpen"
-          @close="handleClose"
-          @open-saved-pages="isSavedPagesOpen = true"
-          @open-annotation="handleOpenAnnotation"
-          @toggle-notes="handleToggleNotes"
-        />
-
-        <!-- Coluna de Leitura e Título do Livro -->
+        <!-- Coluna de Leitura -->
         <div class="reader-viewer__content-column" :style="{ backgroundColor: themeBgColor }">
           <!-- Área do Livro / Stage -->
           <main
@@ -74,30 +64,6 @@
             </div>
           </main>
 
-          <!-- Título do Livro em Fonte Editorial -->
-          <footer
-            v-if="store.title && !store.isZenMode"
-            class="reader-viewer__book-title-bar"
-            :class="{
-              'reader-viewer__book-title-bar--sepia': activeTheme === 'sepia',
-              'reader-viewer__book-title-bar--white': activeTheme === 'white',
-              'reader-viewer__book-title-bar--black': activeTheme === 'black'
-            }"
-            :title="store.title"
-            aria-label="Título do livro"
-          >
-            <div class="flex items-center justify-center gap-2.5 max-w-[95%]">
-              <img
-                v-if="bookCoverUrl"
-                :src="bookCoverUrl"
-                :alt="store.title"
-                class="w-6 h-8 sm:w-7 sm:h-9 rounded-sm object-cover shadow-sm shrink-0 ring-1 ring-black/10"
-              />
-              <h2 class="reader-viewer__book-title-text font-editorial font-normal">
-                {{ truncatedTitle }}
-              </h2>
-            </div>
-          </footer>
           <!-- Painel de Notas do Livro no Mobile / Modo Vertical (Cobre toda a área útil do livro, sem cobrir a navbar) -->
           <transition name="mobile-notes">
             <div
@@ -124,6 +90,16 @@
             </div>
           </transition>
         </div>
+
+        <!-- Barra de Ferramentas Unificada de Leitura (Sempre em baixo, 20% da altura da tela, oculta no Zen Mode) -->
+        <ReaderBottomBar
+          v-if="!store.isZenMode"
+          :is-notes-active="isDesktop ? store.isNotesOpen : store.isMobileNotesOpen"
+          @close="handleClose"
+          @open-saved-pages="isSavedPagesOpen = true"
+          @open-annotation="handleOpenAnnotation"
+          @toggle-notes="handleToggleNotes"
+        />
       </section>
 
       <!-- Painel de Notas do Livro no Desktop / Modo Horizontal (Fica AO LADO do livro, não sobreposto) -->

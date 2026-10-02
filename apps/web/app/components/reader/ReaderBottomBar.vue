@@ -1,588 +1,424 @@
 <template>
   <footer
-    class="reader-bottom-bar border-t landscape:border px-3 py-2 sm:px-4 sm:py-2.5 landscape:p-2 flex flex-row landscape:flex-col items-center justify-between landscape:justify-center z-20 shrink-0 gap-2 landscape:gap-2 landscape:my-auto landscape:self-center landscape:ml-3.5 landscape:mr-1 landscape:rounded-2xl landscape:shadow-xl landscape:backdrop-blur-md order-last landscape:order-first w-full landscape:w-auto landscape:h-auto select-none transition-all duration-200"
-    :class="{
-      'bg-[#f5eedc] landscape:bg-[#f5eedc]/95 border-[#dfd5c0] text-[#2a2521] shadow-[#2a2521]/5': store.readerTheme === 'sepia',
-      'bg-white landscape:bg-white/95 border-gray-200 text-gray-900 shadow-gray-900/5': store.readerTheme === 'white',
-      'bg-[#08080a] landscape:bg-[#08080a]/95 border-white/10 text-textPrimary shadow-black/60': store.readerTheme === 'black' || !store.readerTheme,
-    }"
+    class="reader-unified-bottom-bar reader-bottom-bar flex-row order-last fixed bottom-0 left-0 right-0 z-30 w-full select-none transition-transform duration-300 flex flex-col justify-between overflow-visible"
+    :class="[
+      themeContainerClass,
+      { 'translate-y-full pointer-events-none': store.isZenMode }
+    ]"
     role="toolbar"
     aria-label="Barra de ferramentas do leitor"
+    id="reader-unified-bar"
   >
-    <!-- Grupo 1: Sair da Leitura & Progresso (Vertical: Inferior/Esquerda | Horizontal: Topo) -->
-    <div class="flex flex-row landscape:flex-col items-center gap-1.5 sm:gap-2 landscape:gap-2.5 shrink-0 landscape:w-full">
-      <!-- Botão Sair -->
+    <!-- Linha Superior Fina: Seta de Voltar & Seta de Zen Mode (sem texto) -->
+    <div
+      class="w-full px-3 py-1 flex items-center justify-between border-b shrink-0 text-xs"
+      :class="themeBorderClass"
+    >
+      <!-- Seta Voltar (Sair da Leitura) -->
       <button
         @click="$emit('close')"
-        class="flex items-center justify-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 landscape:w-11 landscape:h-11 landscape:p-0 rounded-xl border text-xs font-semibold transition-all active:scale-95 group"
-        :class="store.readerTheme === 'sepia'
-          ? 'bg-[#f5eedc] border-[#dfd5c0] text-[#5c4d3c] hover:text-[#2a2521] hover:bg-[#EBE2CE]'
-          : (store.readerTheme === 'white'
-            ? 'bg-gray-100 border-gray-200 text-gray-700 hover:text-black hover:bg-gray-200'
-            : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary hover:bg-white/10')"
-        aria-label="Sair da leitura"
+        class="flex items-center justify-center p-1 text-textSecondary hover:text-textPrimary transition-colors active:scale-90"
+        title="Voltar à biblioteca"
+        aria-label="Voltar à biblioteca"
         id="btn-close-book"
-        title="Sair da leitura"
       >
-        <ArrowLeftIcon class="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-        <span class="hidden xs:inline landscape:hidden">Sair</span>
+        <ArrowLeftIcon class="w-3.5 h-3.5" />
       </button>
 
-      <!-- Capa do Livro (miniatura) -->
-      <img
-        v-if="bookCoverUrl"
-        :src="bookCoverUrl"
-        :alt="store.title"
-        class="w-7 h-10 sm:w-8 sm:h-11 landscape:w-9 landscape:h-12 rounded-md object-cover shadow-md shrink-0 ring-1 ring-black/15"
-        :title="store.title"
-      />
-
-      <!-- Indicador de Progresso por Página -->
-      <div
-        class="flex flex-row landscape:flex-col items-center justify-center gap-1.5 landscape:gap-0.5 px-2.5 py-1.5 sm:px-3 sm:py-2 landscape:w-11 landscape:py-2 landscape:px-0.5 rounded-xl border text-xs font-semibold text-center select-none"
-        :class="store.readerTheme === 'sepia'
-          ? 'bg-[#f5eedc] border-[#dfd5c0] text-[#5c4d3c]'
-          : (store.readerTheme === 'white'
-            ? 'bg-gray-100 border-gray-200 text-gray-700'
-            : 'bg-white/5 border-divider text-textSecondary')"
-        :title="`Progresso da leitura: ${pageDisplay}`"
-        aria-label="Progresso da leitura por página"
-      >
-        <!-- Vertical / Portrait (linha única) -->
-        <span class="landscape:hidden text-accent font-bold font-technical text-xs leading-tight">
-          {{ pageDisplay }}
-        </span>
-
-        <!-- Horizontal / Landscape (vertical compacto) -->
-        <span class="hidden landscape:inline text-accent font-bold font-technical text-xs landscape:text-[11px] leading-tight">
-          {{ pageDisplayShort }}
-        </span>
-        <span
-          v-if="store.totalPages > 0"
-          class="hidden landscape:inline text-[9px] font-technical font-mono leading-tight"
-          :class="store.readerTheme === 'sepia' ? 'text-[#786C5E]' : (store.readerTheme === 'white' ? 'text-gray-500' : 'text-textSecondary/60')"
+      <!-- Seta Zen Mode (Entrar / Sair com setinhas discretas, sem texto) -->
+      <div class="flex items-center gap-1">
+        <button
+          @click="store.toggleZenMode()"
+          class="flex items-center justify-center p-1 text-textSecondary hover:text-accent transition-colors active:scale-90"
+          :title="store.isZenMode ? 'Sair do Modo Zen' : 'Entrar no Modo Zen'"
+          :aria-label="store.isZenMode ? 'Sair do Modo Zen' : 'Entrar no Modo Zen'"
+          id="btn-zen-mode"
         >
-          /{{ store.totalPages }}
-        </span>
+          <ChevronDownIcon v-if="!store.isZenMode" class="w-3.5 h-3.5" />
+          <ChevronUpIcon v-else class="w-3.5 h-3.5" />
+        </button>
       </div>
     </div>
 
-    <!-- Divisor sutil na barra vertical (Landscape) -->
-    <div
-      class="hidden landscape:block w-7 h-px shrink-0"
-      :class="store.readerTheme === 'sepia' ? 'bg-[#dfd5c0]' : (store.readerTheme === 'white' ? 'bg-gray-200' : 'bg-divider/60')"
-    ></div>
-
-    <!-- Grupo 2: Ação de Anotação & Configurações de Leitura (Vertical: Centro | Horizontal: Centro) -->
-    <div class="flex flex-row landscape:flex-col items-center gap-1.5 sm:gap-2 landscape:gap-2.5">
-      <!-- Botão Anotar (Desativado no Modo Foco) -->
-      <button
-        v-if="!store.isFocusMode"
-        @click="$emit('openAnnotation')"
-        class="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 landscape:w-11 landscape:h-11 rounded-xl bg-accent text-white hover:bg-accent/90 transition-all shadow-md active:scale-95 group"
-        title="Criar anotação nesta página"
-        aria-label="Criar anotação"
-      >
-        <HighlighterIcon class="w-4 h-4 group-hover:scale-110 transition-transform" />
-      </button>
-
-      <!-- Botão Configurações de Leitura (Fundo, Modo, Tipografia, Folhas, Largura e Foco) -->
-      <div class="relative" ref="appearanceWrapperRef">
-        <button
-          @click="isAppearancePopoverOpen = !isAppearancePopoverOpen"
-          class="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 landscape:w-11 landscape:h-11 rounded-xl border transition-all active:scale-95 group relative"
-          :class="isAppearancePopoverOpen
-            ? 'bg-accent/20 border-accent text-accent shadow-sm'
-            : (store.readerTheme === 'sepia'
-              ? 'bg-[#f5eedc] border-[#dfd5c0] text-[#5c4d3c] hover:text-[#2a2521] hover:bg-[#EBE2CE]'
-              : (store.readerTheme === 'white'
-                ? 'bg-gray-100 border-gray-200 text-gray-700 hover:text-black hover:bg-gray-200'
-                : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary hover:bg-white/10'))"
-          title="Configurações de leitura (Fundo, modo, fonte, folhas e foco)"
-          aria-label="Configurações de leitura"
-          id="btn-appearance-toggle"
+    <!-- Corpo Principal da Barra: Capa (100% da altura) + Anotações + Centro (Título / Configs + Páginas) -->
+    <div class="flex-1 w-full flex items-stretch min-h-0 overflow-hidden px-2 sm:px-4 py-1.5 gap-2.5 sm:gap-4">
+      <!-- 1. Capa do Livro (Ocupa 100% da altura da barra) -->
+      <div class="h-full shrink-0 flex items-center justify-center aspect-[2/3] overflow-hidden rounded-md shadow-sm">
+        <img
+          v-if="bookCoverUrl"
+          :src="bookCoverUrl"
+          :alt="store.title"
+          class="w-full h-full object-cover"
+          :title="store.title"
+        />
+        <div
+          v-else
+          class="w-full h-full flex items-center justify-center bg-accent/10 text-accent font-editorial"
         >
-          <!-- Ícone de configuração com indicador de cor do tema -->
-          <div class="relative flex items-center justify-center">
-            <SettingsIcon class="w-4 h-4 group-hover:rotate-45 transition-transform duration-300" />
-            <span
-              class="absolute -bottom-1 -right-1 w-2 h-2 rounded-full border border-black/40 shadow-xs"
-              :class="{
-                'bg-[#f5eedc]': store.readerTheme === 'sepia',
-                'bg-[#ffffff]': store.readerTheme === 'white',
-                'bg-[#000000]': store.readerTheme === 'black'
-              }"
-            />
-          </div>
+          <BookOpenIcon class="w-5 h-5 opacity-70" />
+        </div>
+      </div>
+
+      <!-- 2. Coluna de Anotações ao lado da capa (Anotação solta em cima, Ver anotações em baixo) -->
+      <div class="flex flex-col justify-around items-center shrink-0 pr-1">
+        <!-- Fazer Anotação Solta -->
+        <button
+          v-if="!store.isFocusMode"
+          @click="$emit('openAnnotation')"
+          class="p-1.5 text-textSecondary hover:text-accent transition-colors active:scale-90"
+          title="Fazer anotação solta nesta página"
+          aria-label="Criar anotação"
+          id="btn-create-annotation"
+        >
+          <HighlighterIcon class="w-4 h-4" />
         </button>
 
-        <!-- Popover Flutuante de Configurações de Leitura (Vertical: Centralizado acima da barra | Horizontal: Abre para a direita) -->
-        <div
-          v-if="isAppearancePopoverOpen"
-          class="fixed bottom-16 left-1/2 -translate-x-1/2 w-[92vw] max-w-[320px] landscape:absolute landscape:left-full landscape:top-1/2 landscape:translate-x-0 landscape:-translate-y-1/2 landscape:bottom-auto landscape:w-72 border rounded-2xl p-4 shadow-2xl z-50 flex flex-col gap-3.5 animate-fadeIn max-h-[85vh] overflow-y-auto"
-          :class="{
-            'bg-[#f5eedc] border-[#dfd5c0] text-[#2a2521]': store.readerTheme === 'sepia',
-            'bg-white border-gray-200 text-gray-900': store.readerTheme === 'white',
-            'bg-[#0d0d10] border-white/10 text-[#f2f2f2]': store.readerTheme === 'black' || !store.readerTheme,
-          }"
-          role="dialog"
-          aria-label="Controle de aparência e fundo de leitura"
+        <!-- Ver Anotações do Livro -->
+        <button
+          @click="handleToggleNotes"
+          class="p-1.5 transition-colors active:scale-90"
+          :class="isNotesActiveComputed ? 'text-accent font-bold' : 'text-textSecondary hover:text-accent'"
+          :title="isNotesActiveComputed ? 'Ocultar anotações do livro' : 'Ver anotações deste livro'"
+          aria-label="Abrir ou fechar notas do livro"
+          id="btn-view-notes"
         >
-          <!-- Seção 1: Fundo / Tema de Leitura -->
-          <div class="flex flex-col gap-2">
-            <span
-              class="text-[11px] font-technical uppercase tracking-wider font-semibold"
-              :class="store.readerTheme === 'sepia' ? 'text-[#786C5E]' : (store.readerTheme === 'white' ? 'text-gray-500' : 'text-textSecondary')"
-            >
-              Fundo da Leitura
-            </span>
-            <div class="grid grid-cols-3 gap-1.5">
-              <!-- Amarelado (Livro) -->
+          <FileTextIcon class="w-4 h-4" />
+        </button>
+      </div>
+
+      <!-- 3. Área Central: Metade de Cima = Título do Livro | Metade de Baixo = Configuração + Páginas -->
+      <div class="flex-1 flex flex-col justify-between min-w-0 py-0.5">
+        <!-- Metade de Cima: Título do Livro -->
+        <div class="flex items-center min-w-0 reader-viewer__book-title-bar">
+          <h2
+            class="font-editorial reader-viewer__book-title-text text-sm sm:text-base md:text-lg leading-tight truncate tracking-wide"
+            :class="themeTextClass"
+            :title="store.title"
+          >
+            {{ store.title || 'Livro' }}
+          </h2>
+        </div>
+
+        <!-- Metade de Baixo: Botão de Configuração + Marcador + Quantidade de páginas com porcentagem -->
+        <div class="flex items-center justify-between gap-2 pt-1 flex-wrap">
+          <!-- Ações: Configurações & Marcador (sem caixinhas, apenas ícones) -->
+          <div class="flex items-center gap-2">
+            <!-- Botão de Configuração (Aparência, Modo, Fonte, Foco, Marcadores) -->
+            <div class="relative" ref="appearanceWrapperRef">
               <button
-                @click="store.setReaderTheme('sepia')"
-                class="flex flex-col items-center justify-center p-2 rounded-xl border transition-all text-center group"
-                :class="store.readerTheme === 'sepia'
-                  ? 'bg-amber-400/25 border-amber-600 text-amber-950 shadow-sm font-bold'
-                  : (store.readerTheme === 'white'
-                    ? 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200 hover:text-gray-900'
-                    : 'bg-white/5 border-white/10 hover:bg-white/10 text-textSecondary hover:text-textPrimary')"
-                title="Fundo amarelado suave estilo livro físico"
+                @click="isAppearancePopoverOpen = !isAppearancePopoverOpen"
+                class="p-1.5 transition-colors active:scale-90 relative"
+                :class="isAppearancePopoverOpen ? 'text-accent' : 'text-textSecondary hover:text-textPrimary'"
+                title="Configurações de leitura e marcadores"
+                aria-label="Configurações de leitura"
+                id="btn-appearance-toggle"
               >
-                <div class="w-5 h-5 rounded-full border border-amber-600/30 bg-[#f5eedc] shadow-inner mb-1 flex items-center justify-center">
-                  <CheckIcon v-if="store.readerTheme === 'sepia'" class="w-3 h-3 text-amber-950 stroke-[3]" />
+                <SettingsIcon class="w-4 h-4" />
+              </button>
+
+              <!-- Popover Flutuante de Configurações (Abre acima da barra) -->
+              <div
+                v-if="isAppearancePopoverOpen"
+                class="fixed bottom-[21dvh] left-4 sm:left-24 w-[92vw] max-w-[340px] rounded-2xl p-4 shadow-2xl z-50 flex flex-col gap-3.5 max-h-[75vh] overflow-y-auto border animate-fadeIn"
+                :class="themePopoverClass"
+                role="dialog"
+                aria-label="Controle de aparência e fundo de leitura"
+              >
+                <!-- Seção 1: Marcadores de Página -->
+                <div class="flex flex-col gap-2">
+                  <span
+                    class="text-[11px] font-technical uppercase tracking-wider font-semibold"
+                    :class="themeSubtextClass"
+                  >
+                    Marcadores de Página
+                  </span>
+                  <div class="grid grid-cols-2 gap-2">
+                    <button
+                      @click="store.toggleBookmark()"
+                      class="flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl text-xs font-semibold transition-all active:scale-95"
+                      :class="store.isCurrentPageBookmarked
+                        ? 'bg-amber-500/20 text-amber-500 border border-amber-500/40'
+                        : 'bg-white/5 hover:bg-white/10 text-textSecondary hover:text-textPrimary border border-divider'"
+                      aria-label="Marcar ou desmarcar página atual"
+                    >
+                      <BookmarkIcon class="w-3.5 h-3.5" :class="{ 'fill-current': store.isCurrentPageBookmarked }" />
+                      <span>{{ store.isCurrentPageBookmarked ? 'Marcada' : 'Marcar pág.' }}</span>
+                    </button>
+
+                    <button
+                      @click="$emit('openSavedPages'); isAppearancePopoverOpen = false"
+                      class="flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl text-xs font-semibold bg-white/5 hover:bg-white/10 text-textSecondary hover:text-textPrimary border border-divider transition-all active:scale-95"
+                      aria-label="Abrir lista de páginas salvas"
+                    >
+                      <BookmarkCheckIcon class="w-3.5 h-3.5 text-accent" />
+                      <span>Ver páginas ({{ store.savedPages.length }})</span>
+                    </button>
+                  </div>
                 </div>
-                <span class="text-[11px] font-semibold">Amarelado</span>
-                <span class="text-[9px] opacity-70">Livro</span>
-              </button>
 
-              <!-- Branco -->
-              <button
-                @click="store.setReaderTheme('white')"
-                class="flex flex-col items-center justify-center p-2 rounded-xl border transition-all text-center group"
-                :class="store.readerTheme === 'white'
-                  ? 'bg-accent/15 border-accent text-accent shadow-sm font-bold'
-                  : (store.readerTheme === 'sepia'
-                    ? 'bg-[#f0e7d3] border-[#dfd5c0] text-[#5c4d3c] hover:bg-[#ebe0c8] hover:text-[#2a2521]'
-                    : 'bg-white/5 border-white/10 hover:bg-white/10 text-textSecondary hover:text-textPrimary')"
-                title="Fundo branco claro"
-              >
-                <div class="w-5 h-5 rounded-full border border-slate-300 bg-[#ffffff] shadow-inner mb-1 flex items-center justify-center">
-                  <CheckIcon v-if="store.readerTheme === 'white'" class="w-3 h-3 text-slate-800 stroke-[3]" />
+                <!-- Seção 2: Fundo da Leitura -->
+                <div class="flex flex-col gap-2 pt-2 border-t" :class="themeBorderClass">
+                  <span
+                    class="text-[11px] font-technical uppercase tracking-wider font-semibold"
+                    :class="themeSubtextClass"
+                  >
+                    Fundo da Leitura
+                  </span>
+                  <div class="grid grid-cols-3 gap-1.5">
+                    <!-- Amarelado -->
+                    <button
+                      @click="store.setReaderTheme('sepia')"
+                      class="flex flex-col items-center justify-center p-2 rounded-xl border transition-all text-center"
+                      :class="store.readerTheme === 'sepia'
+                        ? 'bg-amber-400/20 border-amber-600 text-amber-950 font-bold'
+                        : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary'"
+                      title="Fundo amarelado suave estilo livro físico"
+                    >
+                      <div class="w-4 h-4 rounded-full border border-amber-600/30 bg-[#f5eedc] mb-1 flex items-center justify-center">
+                        <CheckIcon v-if="store.readerTheme === 'sepia'" class="w-2.5 h-2.5 text-amber-950 stroke-[3]" />
+                      </div>
+                      <span class="text-[11px]">Livro</span>
+                    </button>
+
+                    <!-- Branco -->
+                    <button
+                      @click="store.setReaderTheme('white')"
+                      class="flex flex-col items-center justify-center p-2 rounded-xl border transition-all text-center"
+                      :class="store.readerTheme === 'white'
+                        ? 'bg-accent/15 border-accent text-accent font-bold'
+                        : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary'"
+                      title="Fundo branco claro"
+                    >
+                      <div class="w-4 h-4 rounded-full border border-slate-300 bg-[#ffffff] mb-1 flex items-center justify-center">
+                        <CheckIcon v-if="store.readerTheme === 'white'" class="w-2.5 h-2.5 text-slate-800 stroke-[3]" />
+                      </div>
+                      <span class="text-[11px]">Branco</span>
+                    </button>
+
+                    <!-- Preto -->
+                    <button
+                      @click="store.setReaderTheme('black')"
+                      class="flex flex-col items-center justify-center p-2 rounded-xl border transition-all text-center"
+                      :class="store.readerTheme === 'black'
+                        ? 'bg-white/20 border-accent text-white font-bold'
+                        : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary'"
+                      title="Fundo preto noturno"
+                    >
+                      <div class="w-4 h-4 rounded-full border border-white/30 bg-[#000000] mb-1 flex items-center justify-center">
+                        <CheckIcon v-if="store.readerTheme === 'black'" class="w-2.5 h-2.5 text-white stroke-[3]" />
+                      </div>
+                      <span class="text-[11px]">Preto</span>
+                    </button>
+                  </div>
                 </div>
-                <span class="text-[11px] font-semibold">Branco</span>
-                <span class="text-[9px] opacity-70">Clássico</span>
-              </button>
 
-              <!-- Preto -->
-              <button
-                @click="store.setReaderTheme('black')"
-                class="flex flex-col items-center justify-center p-2 rounded-xl border transition-all text-center group"
-                :class="store.readerTheme === 'black'
-                  ? 'bg-white/20 border-accent text-white shadow-sm font-bold'
-                  : (store.readerTheme === 'sepia'
-                    ? 'bg-[#f0e7d3] border-[#dfd5c0] text-[#5c4d3c] hover:bg-[#ebe0c8] hover:text-[#2a2521]'
-                    : (store.readerTheme === 'white'
-                      ? 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200 hover:text-gray-900'
-                      : 'bg-white/5 border-white/10 hover:bg-white/10 text-textSecondary hover:text-textPrimary'))"
-                title="Fundo preto noturno"
-              >
-                <div class="w-5 h-5 rounded-full border border-white/30 bg-[#000000] shadow-inner mb-1 flex items-center justify-center">
-                  <CheckIcon v-if="store.readerTheme === 'black'" class="w-3 h-3 text-white stroke-[3]" />
+                <!-- Seção 3: Modo de Leitura (Páginas vs Scroll) -->
+                <div class="flex flex-col gap-2 pt-2 border-t" :class="themeBorderClass">
+                  <span
+                    class="text-[11px] font-technical uppercase tracking-wider font-semibold"
+                    :class="themeSubtextClass"
+                  >
+                    Modo de Leitura
+                  </span>
+                  <div class="grid grid-cols-2 gap-1.5">
+                    <button
+                      @click="store.setReadingMode('paginated')"
+                      class="flex items-center justify-center gap-1.5 p-2 rounded-xl border text-xs font-semibold transition-all"
+                      :class="store.readingMode !== 'scroll'
+                        ? 'bg-accent/20 border-accent text-accent font-bold'
+                        : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary'"
+                      id="btn-mode-paginated"
+                    >
+                      <BookOpenIcon class="w-3.5 h-3.5" />
+                      <span>Páginas</span>
+                    </button>
+
+                    <button
+                      @click="store.setReadingMode('scroll')"
+                      class="flex items-center justify-center gap-1.5 p-2 rounded-xl border text-xs font-semibold transition-all"
+                      :class="store.readingMode === 'scroll'
+                        ? 'bg-accent/20 border-accent text-accent font-bold'
+                        : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary'"
+                      id="btn-mode-scroll"
+                    >
+                      <ScrollTextIcon class="w-3.5 h-3.5" />
+                      <span>Scroll</span>
+                    </button>
+                  </div>
                 </div>
-                <span class="text-[11px] font-semibold">Preto</span>
-                <span class="text-[9px] opacity-70">Noturno</span>
-              </button>
-            </div>
-          </div>
 
-          <!-- Seção 2: Modo de Leitura (Páginas vs Scroll Contínuo) -->
-          <div
-            class="flex flex-col gap-2 pt-2 border-t"
-            :class="store.readerTheme === 'sepia' ? 'border-[#dfd5c0]' : (store.readerTheme === 'white' ? 'border-gray-200' : 'border-white/10')"
-          >
-            <span
-              class="text-[11px] font-technical uppercase tracking-wider font-semibold"
-              :class="store.readerTheme === 'sepia' ? 'text-[#786C5E]' : (store.readerTheme === 'white' ? 'text-gray-500' : 'text-textSecondary')"
-            >
-              Modo de Leitura
-            </span>
-            <div class="grid grid-cols-2 gap-1.5">
-              <!-- Virada de Páginas -->
-              <button
-                @click="store.setReadingMode('paginated')"
-                class="flex items-center justify-center gap-1.5 p-2 rounded-xl border text-xs font-semibold transition-all"
-                :class="store.readingMode !== 'scroll'
-                  ? 'bg-accent/20 border-accent text-accent font-bold shadow-sm'
-                  : (store.readerTheme === 'sepia'
-                    ? 'bg-[#f0e7d3] border-[#dfd5c0] text-[#5c4d3c] hover:bg-[#ebe0c8] hover:text-[#2a2521]'
-                    : (store.readerTheme === 'white'
-                      ? 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200 hover:text-gray-900'
-                      : 'bg-white/5 border-white/10 text-textSecondary hover:text-textPrimary hover:bg-white/10'))"
-                title="Modo clássico de virada de folhas"
-                id="btn-mode-paginated"
-              >
-                <BookOpenIcon class="w-3.5 h-3.5" />
-                <span>Páginas</span>
-              </button>
-
-              <!-- Scroll Contínuo -->
-              <button
-                @click="store.setReadingMode('scroll')"
-                class="flex items-center justify-center gap-1.5 p-2 rounded-xl border text-xs font-semibold transition-all"
-                :class="store.readingMode === 'scroll'
-                  ? 'bg-accent/20 border-accent text-accent font-bold shadow-sm'
-                  : (store.readerTheme === 'sepia'
-                    ? 'bg-[#f0e7d3] border-[#dfd5c0] text-[#5c4d3c] hover:bg-[#ebe0c8] hover:text-[#2a2521]'
-                    : (store.readerTheme === 'white'
-                      ? 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200 hover:text-gray-900'
-                      : 'bg-white/5 border-white/10 text-textSecondary hover:text-textPrimary hover:bg-white/10'))"
-                title="Modo contínuo com rolagem vertical"
-                id="btn-mode-scroll"
-              >
-                <ScrollTextIcon class="w-3.5 h-3.5" />
-                <span>Scroll</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Seção 3: Distribuição e Largura de Leitura (Largura exclusiva para EPUB) -->
-          <div
-            v-if="store.readingMode !== 'scroll' || store.documentType === 'epub'"
-            class="flex flex-col gap-2 pt-2 border-t"
-            :class="store.readerTheme === 'sepia' ? 'border-[#dfd5c0]' : (store.readerTheme === 'white' ? 'border-gray-200' : 'border-white/10')"
-          >
-            <span
-              class="text-[11px] font-technical uppercase tracking-wider font-semibold"
-              :class="store.readerTheme === 'sepia' ? 'text-[#786C5E]' : (store.readerTheme === 'white' ? 'text-gray-500' : 'text-textSecondary')"
-            >
-              {{ store.documentType === 'epub' ? 'Distribuição e Largura' : 'Distribuição de Folhas' }}
-            </span>
-            <div v-if="store.readingMode !== 'scroll'" class="grid grid-cols-2 gap-1.5">
-              <!-- 1 Folha vs 2 Folhas -->
-              <button
-                @click="store.setTwoPageMode(false)"
-                class="flex items-center justify-center gap-1.5 p-2 rounded-xl border text-xs font-semibold transition-all"
-                :class="!store.isTwoPageMode
-                  ? 'bg-accent/20 border-accent text-accent font-bold shadow-sm'
-                  : (store.readerTheme === 'sepia'
-                    ? 'bg-[#f0e7d3] border-[#dfd5c0] text-[#5c4d3c] hover:bg-[#ebe0c8] hover:text-[#2a2521]'
-                    : (store.readerTheme === 'white'
-                      ? 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200 hover:text-gray-900'
-                      : 'bg-white/5 border-white/10 text-textSecondary hover:text-textPrimary hover:bg-white/10'))"
-                title="Exibir 1 folha (página única)"
-                id="btn-set-one-page"
-              >
-                <FileTextIcon class="w-3.5 h-3.5" />
-                <span>1 Folha</span>
-              </button>
-
-              <button
-                @click="store.setTwoPageMode(true)"
-                class="flex items-center justify-center gap-1.5 p-2 rounded-xl border text-xs font-semibold transition-all"
-                :class="store.isTwoPageMode
-                  ? 'bg-accent/20 border-accent text-accent font-bold shadow-sm'
-                  : (store.readerTheme === 'sepia'
-                    ? 'bg-[#f0e7d3] border-[#dfd5c0] text-[#5c4d3c] hover:bg-[#ebe0c8] hover:text-[#2a2521]'
-                    : (store.readerTheme === 'white'
-                      ? 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200 hover:text-gray-900'
-                      : 'bg-white/5 border-white/10 text-textSecondary hover:text-textPrimary hover:bg-white/10'))"
-                title="Exibir 2 folhas lado a lado"
-                id="btn-set-two-page"
-              >
-                <BookOpenIcon class="w-3.5 h-3.5" />
-                <span>2 Folhas</span>
-              </button>
-            </div>
-
-            <!-- Centralizado vs 100% Largo (Exclusivo para EPUB) -->
-            <div v-if="store.documentType === 'epub'" class="grid grid-cols-2 gap-1.5">
-              <button
-                @click="store.setReaderWidthMode('centered')"
-                class="flex items-center justify-center gap-1.5 p-2 rounded-xl border text-xs font-semibold transition-all"
-                :class="store.readerWidthMode === 'centered'
-                  ? 'bg-accent/20 border-accent text-accent font-bold shadow-sm'
-                  : (store.readerTheme === 'sepia'
-                    ? 'bg-[#f0e7d3] border-[#dfd5c0] text-[#5c4d3c] hover:bg-[#ebe0c8] hover:text-[#2a2521]'
-                    : (store.readerTheme === 'white'
-                      ? 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200 hover:text-gray-900'
-                      : 'bg-white/5 border-white/10 text-textSecondary hover:text-textPrimary hover:bg-white/10'))"
-                title="Página centralizada no meio com margens clássicas"
-                id="btn-width-centered"
-              >
-                <Minimize2Icon class="w-3.5 h-3.5" />
-                <span>Centralizado</span>
-              </button>
-
-              <button
-                @click="store.setReaderWidthMode('wide')"
-                class="flex items-center justify-center gap-1.5 p-2 rounded-xl border text-xs font-semibold transition-all"
-                :class="store.readerWidthMode === 'wide'
-                  ? 'bg-accent/20 border-accent text-accent font-bold shadow-sm'
-                  : (store.readerTheme === 'sepia'
-                    ? 'bg-[#f0e7d3] border-[#dfd5c0] text-[#5c4d3c] hover:bg-[#ebe0c8] hover:text-[#2a2521]'
-                    : (store.readerTheme === 'white'
-                      ? 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200 hover:text-gray-900'
-                      : 'bg-white/5 border-white/10 text-textSecondary hover:text-textPrimary hover:bg-white/10'))"
-                title="Páginas ocupam quase 100% do espaço de leitura"
-                id="btn-width-wide"
-              >
-                <Maximize2Icon class="w-3.5 h-3.5" />
-                <span>100% Largo</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Seção 4: Tamanho da Fonte -->
-          <div
-            class="flex flex-col gap-2 pt-2 border-t"
-            :class="store.readerTheme === 'sepia' ? 'border-[#dfd5c0]' : (store.readerTheme === 'white' ? 'border-gray-200' : 'border-white/10')"
-          >
-            <div class="flex items-center justify-between">
-              <span
-                class="text-[11px] font-technical uppercase tracking-wider font-semibold"
-                :class="store.readerTheme === 'sepia' ? 'text-[#786C5E]' : (store.readerTheme === 'white' ? 'text-gray-500' : 'text-textSecondary')"
-              >
-                Tamanho da Fonte
-              </span>
-              <span
-                class="text-[11px] font-technical font-semibold font-mono"
-                :class="store.readerTheme === 'sepia' ? 'text-[#5c4d3c]' : (store.readerTheme === 'white' ? 'text-gray-700' : 'text-textSecondary')"
-              >
-                {{ store.fontSize || 15 }}px
-              </span>
-            </div>
-            <div class="grid grid-cols-2 gap-1.5">
-              <!-- Botão Diminuir -->
-              <button
-                @click="store.decreaseFontSize(2)"
-                :disabled="(store.fontSize || 15) <= 12"
-                class="flex items-center justify-center gap-1 py-1.5 rounded-xl border text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                :class="store.readerTheme === 'sepia'
-                  ? 'bg-[#f0e7d3] border-[#dfd5c0] text-[#5c4d3c] hover:bg-[#ebe0c8]'
-                  : (store.readerTheme === 'white'
-                    ? 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200'
-                    : 'bg-white/5 border-white/10 text-textSecondary hover:text-white hover:bg-white/10')"
-                title="Diminuir tamanho da fonte"
-                aria-label="Diminuir tamanho da fonte"
-                id="btn-decrease-font-size"
-              >
-                <MinusIcon class="w-3.5 h-3.5" />
-                <span class="text-[11px]">A-</span>
-              </button>
-
-              <!-- Botão Aumentar -->
-              <button
-                @click="store.increaseFontSize(2)"
-                :disabled="(store.fontSize || 15) >= 36"
-                class="flex items-center justify-center gap-1 py-1.5 rounded-xl border text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                :class="store.readerTheme === 'sepia'
-                  ? 'bg-[#f0e7d3] border-[#dfd5c0] text-[#5c4d3c] hover:bg-[#ebe0c8]'
-                  : (store.readerTheme === 'white'
-                    ? 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200'
-                    : 'bg-white/5 border-white/10 text-textSecondary hover:text-white hover:bg-white/10')"
-                title="Aumentar tamanho da fonte"
-                aria-label="Aumentar tamanho da fonte"
-                id="btn-increase-font-size"
-              >
-                <PlusIcon class="w-3.5 h-3.5" />
-                <span class="text-[11px]">A+</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Seção 5: Leitura Focalizada (Modo Foco) -->
-          <div
-            class="flex flex-col gap-2 pt-2 border-t"
-            :class="store.readerTheme === 'sepia' ? 'border-[#dfd5c0]' : (store.readerTheme === 'white' ? 'border-gray-200' : 'border-white/10')"
-          >
-            <div class="flex items-center justify-between">
-              <span
-                class="text-[11px] font-technical uppercase tracking-wider font-semibold"
-                :class="store.readerTheme === 'sepia' ? 'text-[#786C5E]' : (store.readerTheme === 'white' ? 'text-gray-500' : 'text-textSecondary')"
-              >
-                Modo Foco (X Linhas)
-              </span>
-              <button
-                @click="store.toggleFocusMode()"
-                role="switch"
-                :aria-checked="store.isFocusMode"
-                aria-label="Alternar Modo Foco"
-                class="flex items-center gap-1.5 px-2 py-1 rounded-full border transition-all cursor-pointer select-none active:scale-95 group focus:outline-none focus:ring-2 focus:ring-accent/40"
-                :class="store.isFocusMode
-                  ? 'bg-accent/15 border-accent/40 text-accent font-semibold shadow-xs'
-                  : (store.readerTheme === 'sepia'
-                    ? 'bg-[#f0e7d3] border-[#dfd5c0] text-[#786C5E] hover:border-[#c8bfae] hover:text-[#5c4d3c]'
-                    : (store.readerTheme === 'white'
-                      ? 'bg-gray-100 border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-800'
-                      : 'bg-white/5 border-white/10 text-textSecondary hover:border-white/20 hover:text-textPrimary'))"
-                id="btn-toggle-focus-inside-popover"
-              >
-                <span class="text-[10px] font-semibold leading-none">
-                  {{ store.isFocusMode ? 'Ativo' : 'Inativo' }}
-                </span>
-                <!-- Switch Pill Indicator -->
+                <!-- Seção 4: Distribuição de Folhas & Largura -->
                 <div
-                  class="w-7 h-4 rounded-full p-0.5 flex items-center transition-colors duration-200 ease-in-out"
-                  :class="store.isFocusMode
-                    ? 'bg-accent justify-end'
-                    : (store.readerTheme === 'sepia' ? 'bg-[#dfd5c0] justify-start' : (store.readerTheme === 'white' ? 'bg-gray-300 justify-start' : 'bg-white/20 justify-start'))"
+                  v-if="store.readingMode !== 'scroll' || store.documentType === 'epub'"
+                  class="flex flex-col gap-2 pt-2 border-t"
+                  :class="themeBorderClass"
                 >
-                  <div
-                    class="w-3 h-3 rounded-full bg-white shadow-xs transition-transform duration-200 ease-in-out"
-                  />
+                  <span
+                    class="text-[11px] font-technical uppercase tracking-wider font-semibold"
+                    :class="themeSubtextClass"
+                  >
+                    Distribuição de Folhas
+                  </span>
+                  <div v-if="store.readingMode !== 'scroll'" class="grid grid-cols-2 gap-1.5">
+                    <button
+                      @click="store.setTwoPageMode(false)"
+                      class="flex items-center justify-center gap-1.5 p-2 rounded-xl border text-xs font-semibold transition-all"
+                      :class="!store.isTwoPageMode
+                        ? 'bg-accent/20 border-accent text-accent font-bold'
+                        : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary'"
+                      id="btn-set-one-page"
+                    >
+                      <FileTextIcon class="w-3.5 h-3.5" />
+                      <span>1 Folha</span>
+                    </button>
+
+                    <button
+                      @click="store.setTwoPageMode(true)"
+                      class="flex items-center justify-center gap-1.5 p-2 rounded-xl border text-xs font-semibold transition-all"
+                      :class="store.isTwoPageMode
+                        ? 'bg-accent/20 border-accent text-accent font-bold'
+                        : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary'"
+                      id="btn-set-two-page"
+                    >
+                      <BookOpenIcon class="w-3.5 h-3.5" />
+                      <span>2 Folhas</span>
+                    </button>
+                  </div>
+
+                  <!-- Centralizado vs 100% Largo (EPUB) -->
+                  <div v-if="store.documentType === 'epub'" class="grid grid-cols-2 gap-1.5 mt-1">
+                    <button
+                      @click="store.setReaderWidthMode('centered')"
+                      class="flex items-center justify-center gap-1.5 p-2 rounded-xl border text-xs font-semibold transition-all"
+                      :class="store.readerWidthMode === 'centered'
+                        ? 'bg-accent/20 border-accent text-accent font-bold'
+                        : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary'"
+                      id="btn-width-centered"
+                    >
+                      <Minimize2Icon class="w-3.5 h-3.5" />
+                      <span>Centralizado</span>
+                    </button>
+
+                    <button
+                      @click="store.setReaderWidthMode('wide')"
+                      class="flex items-center justify-center gap-1.5 p-2 rounded-xl border text-xs font-semibold transition-all"
+                      :class="store.readerWidthMode === 'wide'
+                        ? 'bg-accent/20 border-accent text-accent font-bold'
+                        : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary'"
+                      id="btn-width-wide"
+                    >
+                      <Maximize2Icon class="w-3.5 h-3.5" />
+                      <span>Largo</span>
+                    </button>
+                  </div>
                 </div>
-              </button>
+
+                <!-- Seção 5: Tamanho da Fonte -->
+                <div class="flex flex-col gap-2 pt-2 border-t" :class="themeBorderClass">
+                  <div class="flex items-center justify-between">
+                    <span
+                      class="text-[11px] font-technical uppercase tracking-wider font-semibold"
+                      :class="themeSubtextClass"
+                    >
+                      Tamanho da Fonte
+                    </span>
+                    <span class="text-[11px] font-technical font-mono font-semibold" :class="themeTextClass">
+                      {{ store.fontSize || 15 }}px
+                    </span>
+                  </div>
+                  <div class="grid grid-cols-2 gap-1.5">
+                    <button
+                      @click="store.decreaseFontSize(2)"
+                      :disabled="(store.fontSize || 15) <= 12"
+                      class="flex items-center justify-center gap-1 py-1.5 rounded-xl border text-xs font-semibold transition-all disabled:opacity-40"
+                      :class="'bg-white/5 border-divider text-textSecondary hover:text-textPrimary'"
+                      id="btn-decrease-font-size"
+                    >
+                      <MinusIcon class="w-3.5 h-3.5" />
+                      <span>A-</span>
+                    </button>
+
+                    <button
+                      @click="store.increaseFontSize(2)"
+                      :disabled="(store.fontSize || 15) >= 36"
+                      class="flex items-center justify-center gap-1 py-1.5 rounded-xl border text-xs font-semibold transition-all disabled:opacity-40"
+                      :class="'bg-white/5 border-divider text-textSecondary hover:text-textPrimary'"
+                      id="btn-increase-font-size"
+                    >
+                      <PlusIcon class="w-3.5 h-3.5" />
+                      <span>A+</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Seção 6: Modo Foco (X Linhas) -->
+                <div class="flex flex-col gap-2 pt-2 border-t" :class="themeBorderClass">
+                  <div class="flex items-center justify-between">
+                    <span
+                      class="text-[11px] font-technical uppercase tracking-wider font-semibold"
+                      :class="themeSubtextClass"
+                    >
+                      Modo Foco
+                    </span>
+                    <button
+                      @click="store.toggleFocusMode()"
+                      class="flex items-center gap-1.5 px-2 py-1 rounded-full border transition-all cursor-pointer select-none active:scale-95"
+                      :class="store.isFocusMode
+                        ? 'bg-accent/20 border-accent text-accent font-semibold'
+                        : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary'"
+                      id="btn-toggle-focus-inside-popover"
+                    >
+                      <span class="text-[10px] font-semibold">
+                        {{ store.isFocusMode ? 'Ativo' : 'Inativo' }}
+                      </span>
+                    </button>
+                  </div>
+
+                  <div class="grid grid-cols-5 gap-1">
+                    <button
+                      v-for="count in [1, 2, 3, 4, 5]"
+                      :key="'focus-lines-' + count"
+                      @click="store.setFocusLineCount(count); if (!store.isFocusMode) store.toggleFocusMode()"
+                      class="flex items-center justify-center py-1 rounded-lg border text-xs font-technical font-semibold transition-all cursor-pointer active:scale-95"
+                      :class="store.focusLineCount === count && store.isFocusMode
+                        ? 'bg-accent/20 border-accent text-accent font-bold'
+                        : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary'"
+                    >
+                      {{ count }}L
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <!-- Seleção rápida de X linhas -->
-            <div class="grid grid-cols-5 gap-1">
-              <button
-                v-for="count in [1, 2, 3, 4, 5]"
-                :key="'focus-lines-' + count"
-                @click="store.setFocusLineCount(count); if (!store.isFocusMode) store.toggleFocusMode()"
-                class="flex items-center justify-center py-1 rounded-lg border text-xs font-technical font-semibold transition-all cursor-pointer active:scale-95"
-                :class="store.focusLineCount === count && store.isFocusMode
-                  ? 'bg-accent/20 border-accent text-accent font-bold shadow-xs'
-                  : (store.readerTheme === 'sepia'
-                    ? 'bg-[#f0e7d3] border-[#dfd5c0] text-[#5c4d3c] hover:bg-[#ebe0c8]'
-                    : (store.readerTheme === 'white'
-                      ? 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200'
-                      : 'bg-white/5 border-white/10 text-textSecondary hover:text-white'))"
-                :title="`${count} ${count === 1 ? 'linha' : 'linhas'} por bloco`"
-              >
-                {{ count }}L
-              </button>
-            </div>
+            <!-- Botão de Marcador e Opções -->
+            <button
+              @click="isAppearancePopoverOpen = !isAppearancePopoverOpen"
+              class="p-1.5 transition-colors active:scale-90"
+              :class="store.isCurrentPageBookmarked ? 'text-amber-500' : 'text-textSecondary hover:text-textPrimary'"
+              :title="store.isCurrentPageBookmarked ? 'Página marcada' : 'Opções de marcador'"
+              aria-label="Opções de marcadores"
+              id="btn-bookmarks-menu"
+            >
+              <BookmarkIcon class="w-4 h-4" :class="{ 'fill-current': store.isCurrentPageBookmarked }" />
+            </button>
+          </div>
+
+          <!-- Total de páginas com percentagem lida (sem caixinha, flat) -->
+          <div class="flex items-center gap-1.5 text-xs font-technical tracking-tight select-none">
+            <span class="font-bold text-accent">
+              Pág. {{ pageDisplay }}
+            </span>
+            <span
+              v-if="store.totalPages > 0"
+              class="opacity-70 text-[11px]"
+              :class="themeSubtextClass"
+            >
+              ({{ progressPercentageComputed }}%)
+            </span>
           </div>
         </div>
       </div>
-    </div>
-
-    <!-- Divisor sutil na barra vertical (Landscape) -->
-    <div
-      class="hidden landscape:block w-7 h-px shrink-0"
-      :class="store.readerTheme === 'sepia' ? 'bg-[#dfd5c0]' : (store.readerTheme === 'white' ? 'bg-gray-200' : 'bg-divider/60')"
-    ></div>
-
-    <!-- Grupo 3: Marcação de Página, Páginas Salvas, Grafo & Zen (Vertical: Direita | Horizontal: Base) -->
-    <div class="flex flex-row landscape:flex-col items-center gap-1.5 sm:gap-2 landscape:gap-2.5 shrink-0">
-      <!-- Botão Unificado de Marcadores (Marcar página ou Ver páginas marcadas) -->
-      <div class="relative" ref="bookmarkWrapperRef">
-        <button
-          @click="isBookmarkPopoverOpen = !isBookmarkPopoverOpen"
-          class="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 landscape:w-11 landscape:h-11 rounded-xl border transition-all text-xs font-semibold active:scale-95 group relative"
-          :class="isBookmarkPopoverOpen
-            ? 'bg-accent/20 border-accent text-accent shadow-sm'
-            : (store.isCurrentPageBookmarked
-              ? 'bg-amber-500/20 border-amber-500/50 text-amber-300 shadow-sm'
-              : (store.readerTheme === 'sepia'
-                ? 'bg-[#f5eedc] border-[#dfd5c0] text-[#5c4d3c] hover:text-[#2a2521] hover:bg-[#EBE2CE]'
-                : (store.readerTheme === 'white'
-                  ? 'bg-gray-100 border-gray-200 text-gray-700 hover:text-black hover:bg-gray-200'
-                  : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary hover:bg-white/10')))"
-          title="Opções de marcadores (marcar página atual ou ver páginas marcadas)"
-          aria-label="Opções de marcadores de página"
-          id="btn-bookmarks-menu"
-        >
-          <BookmarkIcon
-            class="w-4 h-4 transition-transform group-hover:scale-110"
-            :class="{ 'fill-current text-amber-500': store.isCurrentPageBookmarked }"
-          />
-          <!-- Badge com quantidade de páginas salvas -->
-          <span
-            v-if="store.savedPages.length > 0"
-            class="absolute -top-1 -right-1 px-1.5 py-0.2 min-w-[16px] text-center text-[9px] rounded-full bg-accent text-white font-bold font-technical shadow-sm"
-          >
-            {{ store.savedPages.length }}
-          </span>
-        </button>
-
-        <!-- Popover de Opções de Marcador -->
-        <div
-          v-if="isBookmarkPopoverOpen"
-          class="fixed bottom-16 right-4 w-60 landscape:absolute landscape:left-full landscape:bottom-0 landscape:right-auto landscape:translate-x-2 border rounded-2xl p-2 shadow-2xl z-50 flex flex-col gap-1 animate-fadeIn"
-          :class="{
-            'bg-[#f5eedc] border-[#dfd5c0] text-[#2a2521]': store.readerTheme === 'sepia',
-            'bg-white border-gray-200 text-gray-900': store.readerTheme === 'white',
-            'bg-[#0d0d10] border-white/10 text-[#f2f2f2]': store.readerTheme === 'black' || !store.readerTheme,
-          }"
-          role="menu"
-          aria-label="Opções de marcador"
-        >
-          <!-- Opção 1: Marcar / Desmarcar Página Atual -->
-          <button
-            @click="store.toggleBookmark(); isBookmarkPopoverOpen = false"
-            class="flex items-center gap-2.5 w-full px-3 py-2 rounded-xl text-xs font-semibold transition-all text-left group"
-            :class="store.isCurrentPageBookmarked
-              ? (store.readerTheme === 'sepia' ? 'bg-amber-100 text-amber-900' : 'bg-amber-500/15 text-amber-400')
-              : (store.readerTheme === 'sepia' ? 'hover:bg-[#ebe0c8]' : 'hover:bg-white/10')"
-            aria-label="Marcar ou desmarcar página atual"
-          >
-            <BookmarkIcon
-              class="w-4 h-4 shrink-0 transition-transform group-hover:scale-110"
-              :class="{ 'fill-current text-amber-500': store.isCurrentPageBookmarked }"
-            />
-            <span class="flex-1">
-              {{ store.isCurrentPageBookmarked ? 'Desmarcar esta página' : 'Marcar esta página' }}
-            </span>
-          </button>
-
-          <!-- Opção 2: Ver Páginas Salvas -->
-          <button
-            @click="$emit('openSavedPages'); isBookmarkPopoverOpen = false"
-            class="flex items-center justify-between w-full px-3 py-2 rounded-xl text-xs font-semibold transition-all text-left group"
-            :class="store.readerTheme === 'sepia' ? 'hover:bg-[#ebe0c8]' : 'hover:bg-white/10'"
-            aria-label="Abrir lista de páginas salvas"
-          >
-            <div class="flex items-center gap-2.5">
-              <BookmarkCheckIcon class="w-4 h-4 shrink-0 text-accent group-hover:scale-110 transition-transform" />
-              <span>Ver páginas marcadas</span>
-            </div>
-            <span
-              v-if="store.savedPages.length > 0"
-              class="px-2 py-0.5 text-[10px] rounded-full bg-accent/20 text-accent font-technical font-bold"
-            >
-              {{ store.savedPages.length }}
-            </span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Botão Notas do Livro -->
-      <button
-        @click="handleToggleNotes"
-        class="flex items-center justify-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 landscape:w-11 landscape:h-11 landscape:p-0 rounded-xl border transition-all text-xs font-semibold active:scale-95"
-        :class="isNotesActiveComputed
-          ? 'bg-accent text-white border-accent shadow-sm'
-          : (store.readerTheme === 'sepia'
-            ? 'bg-[#f5eedc] border-[#dfd5c0] text-[#5c4d3c] hover:text-[#2a2521] hover:bg-[#EBE2CE]'
-            : (store.readerTheme === 'white'
-              ? 'bg-gray-100 border-gray-200 text-gray-700 hover:text-black hover:bg-gray-200'
-              : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary hover:bg-white/10'))"
-        :title="isNotesActiveComputed ? 'Recolher notas do livro' : 'Ver notas deste livro'"
-        aria-label="Abrir ou fechar notas do livro"
-        id="btn-book-notes"
-      >
-        <FileTextIcon class="w-4 h-4" :class="isNotesActiveComputed ? 'text-white' : 'text-accent'" />
-        <span class="hidden sm:inline landscape:hidden">Notas</span>
-      </button>
-
-      <!-- Botão Modo Zen (Foco) -->
-      <button
-        @click="store.toggleZenMode()"
-        class="flex items-center justify-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 landscape:w-11 landscape:h-11 landscape:p-0 rounded-xl border text-xs font-semibold transition-all active:scale-95 group"
-        :class="store.readerTheme === 'sepia'
-          ? 'bg-[#f5eedc] border-[#dfd5c0] text-[#5c4d3c] hover:text-[#2a2521] hover:bg-[#EBE2CE]'
-          : (store.readerTheme === 'white'
-            ? 'bg-gray-100 border-gray-200 text-gray-700 hover:text-black hover:bg-gray-200'
-            : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary hover:bg-white/10')"
-        title="Entrar no Modo Zen / Foco (Pressione Esc, Z ou Voltar para sair)"
-        aria-label="Entrar no Modo Zen"
-        id="btn-zen-mode"
-      >
-        <Maximize2Icon class="w-4 h-4 text-accent group-hover:scale-110 transition-transform" />
-        <span class="hidden sm:inline landscape:hidden">Zen</span>
-      </button>
     </div>
   </footer>
 </template>
@@ -595,8 +431,9 @@ import {
   BookmarkCheckIcon,
   BookOpenIcon,
   CheckIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
   FileTextIcon,
-  FocusIcon,
   HighlighterIcon,
   Maximize2Icon,
   Minimize2Icon,
@@ -618,6 +455,11 @@ const emit = defineEmits<{
   (_e: 'toggleNotes'): void
 }>()
 
+const store = useReaderStore()
+const bookCoverUrl = computed(() => store.coverUrl || '')
+const isAppearancePopoverOpen = ref(false)
+const appearanceWrapperRef = ref<HTMLElement | null>(null)
+
 const isNotesActiveComputed = computed(() => {
   return Boolean(props.isNotesActive)
 })
@@ -626,31 +468,60 @@ function handleToggleNotes() {
   emit('toggleNotes')
 }
 
-const store = useReaderStore()
-const bookCoverUrl = computed(() => store.coverUrl || '')
-const isAppearancePopoverOpen = ref(false)
-const appearanceWrapperRef = ref<HTMLElement | null>(null)
-const isBookmarkPopoverOpen = ref(false)
-const bookmarkWrapperRef = ref<HTMLElement | null>(null)
-
+// Progresso e Exibição de Páginas
 const pageDisplay = computed(() => {
   if (store.isTwoPageMode && store.totalPages > 1) {
     const leftNum = store.currentPage % 2 !== 0 ? store.currentPage : Math.max(1, store.currentPage - 1)
     const rightNum = Math.min(leftNum + 1, store.totalPages)
     return leftNum === rightNum
-      ? `Pág. ${leftNum}/${store.totalPages}`
-      : `Pág. ${leftNum}-${rightNum}/${store.totalPages}`
+      ? `${leftNum}/${store.totalPages}`
+      : `${leftNum}-${rightNum}/${store.totalPages}`
   }
-  return store.totalPages > 0 ? `Pág. ${store.currentPage}/${store.totalPages}` : `Pág. ${store.currentPage}`
+  return store.totalPages > 0 ? `${store.currentPage}/${store.totalPages}` : `${store.currentPage}`
 })
 
-const pageDisplayShort = computed(() => {
-  if (store.isTwoPageMode && store.totalPages > 1) {
-    const leftNum = store.currentPage % 2 !== 0 ? store.currentPage : Math.max(1, store.currentPage - 1)
-    const rightNum = Math.min(leftNum + 1, store.totalPages)
-    return leftNum === rightNum ? `${leftNum}` : `${leftNum}-${rightNum}`
+const progressPercentageComputed = computed(() => {
+  if (!store.document || store.totalPages <= 0) return 0
+  return Math.round((store.currentPage / store.totalPages) * 100)
+})
+
+// Classes de Tema (sem blur)
+const themeContainerClass = computed(() => {
+  if (store.readerTheme === 'sepia') {
+    return 'bg-[#f5eedc] border-t border-[#dfd5c0] text-[#2a2521]'
   }
-  return `${store.currentPage}`
+  if (store.readerTheme === 'white') {
+    return 'bg-white border-t border-gray-200 text-gray-900'
+  }
+  return 'bg-[#08080a] border-t border-white/10 text-[#f2f2f2]'
+})
+
+const themeBorderClass = computed(() => {
+  if (store.readerTheme === 'sepia') return 'border-[#dfd5c0]'
+  if (store.readerTheme === 'white') return 'border-gray-200'
+  return 'border-white/10'
+})
+
+const themeTextClass = computed(() => {
+  if (store.readerTheme === 'sepia') return 'text-[#2a2521]'
+  if (store.readerTheme === 'white') return 'text-gray-900'
+  return 'text-white'
+})
+
+const themeSubtextClass = computed(() => {
+  if (store.readerTheme === 'sepia') return 'text-[#786C5E]'
+  if (store.readerTheme === 'white') return 'text-gray-500'
+  return 'text-textSecondary'
+})
+
+const themePopoverClass = computed(() => {
+  if (store.readerTheme === 'sepia') {
+    return 'bg-[#FAF5E8] border-[#dfd5c0] text-[#2a2521]'
+  }
+  if (store.readerTheme === 'white') {
+    return 'bg-white border-gray-200 text-gray-900'
+  }
+  return 'bg-[#0d0d10] border-white/10 text-[#f2f2f2]'
 })
 
 function handleClickOutside(event: MouseEvent) {
@@ -661,23 +532,12 @@ function handleClickOutside(event: MouseEvent) {
   ) {
     isAppearancePopoverOpen.value = false
   }
-
-  if (
-    isBookmarkPopoverOpen.value &&
-    bookmarkWrapperRef.value &&
-    !bookmarkWrapperRef.value.contains(event.target as Node)
-  ) {
-    isBookmarkPopoverOpen.value = false
-  }
 }
 
 function handleKeydown(event: KeyboardEvent) {
   if (event.key === 'Escape') {
     if (isAppearancePopoverOpen.value) {
       isAppearancePopoverOpen.value = false
-    }
-    if (isBookmarkPopoverOpen.value) {
-      isBookmarkPopoverOpen.value = false
     }
   }
 }
@@ -698,13 +558,9 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.reader-bottom-bar {
-  min-height: 52px;
-}
-
-@media (orientation: landscape) {
-  .reader-bottom-bar {
-    min-height: auto;
-  }
+.reader-unified-bottom-bar {
+  height: 20dvh;
+  min-height: 105px;
+  max-height: 20dvh;
 }
 </style>

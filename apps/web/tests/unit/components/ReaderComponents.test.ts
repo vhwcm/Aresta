@@ -83,9 +83,9 @@ describe('Reader Components', () => {
         props: { isGraphActive: true },
       })
 
-      // Verifica exibição do progresso por página (Pág. 5-6/20) e ausência de porcentagem
+      // Verifica exibição do progresso por página (Pág. 5-6/20) e presença de porcentagem
       expect(wrapper.text()).toContain('Pág. 5-6/20')
-      expect(wrapper.text()).not.toContain('%')
+      expect(wrapper.text()).toContain('%')
 
       // Botão Sair
       const closeBtn = wrapper.find('#btn-close-book')
@@ -253,23 +253,17 @@ describe('Reader Components', () => {
       expect(store.readerWidthMode).toBe('centered')
     })
 
-    it('adota classes responsivas por orientação da tela (inferior em vertical, lateral em horizontal)', () => {
+    it('adota barra unificada sempre inferior ocupando 20% da altura', () => {
       const wrapper = mount(ReaderBottomBar, {
         props: { isNotesActive: false },
       })
 
       const footer = wrapper.find('footer')
       expect(footer.exists()).toBe(true)
-
-      // Na vertical (padrão base): flex-row, order-last (em baixo), w-full
-      expect(footer.classes()).toContain('flex-row')
-      expect(footer.classes()).toContain('order-last')
+      expect(footer.classes()).toContain('reader-unified-bottom-bar')
+      expect(footer.classes()).toContain('fixed')
+      expect(footer.classes()).toContain('bottom-0')
       expect(footer.classes()).toContain('w-full')
-
-      // Na horizontal (landscape:): flex-col, order-first (do lado), w-auto
-      expect(footer.classes()).toContain('landscape:flex-col')
-      expect(footer.classes()).toContain('landscape:order-first')
-      expect(footer.classes()).toContain('landscape:w-auto')
     })
 
     it('identifica corretamente a prioridade de tipografia: livro específico > configuração global > padrão 15px', () => {
@@ -779,7 +773,7 @@ describe('Reader Components', () => {
             ReaderEnginePageCurlCanvas: true,
             ReaderBookNotesPanel: true,
             ReaderGraphPanel: true,
-            ReaderBottomBar: true,
+            ReaderBottomBar: false,
             ReaderSavedPagesModal: true,
             ReaderAnnotationModal: true,
             ReaderAnnotationDrawer: true,
@@ -818,7 +812,7 @@ describe('Reader Components', () => {
             ReaderEnginePageCurlCanvas: true,
             ReaderBookNotesPanel: true,
             ReaderGraphPanel: true,
-            ReaderBottomBar: true,
+            ReaderBottomBar: false,
             ReaderSavedPagesModal: true,
             ReaderAnnotationModal: true,
             ReaderAnnotationDrawer: true,
