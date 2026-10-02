@@ -66,7 +66,7 @@
             aria-label="Abrir ou fechar notas do livro"
             id="btn-view-notes"
           >
-            <FileTextIcon class="w-6 h-6 stroke-[1.75]" />
+            <HighlighterIcon class="w-6 h-6 stroke-[1.75]" />
           </button>
 
           <!-- Botão de Configurações (Ícone Grande - Abre Popover com Páginas, Marcador, Modo, Tema, etc.) -->

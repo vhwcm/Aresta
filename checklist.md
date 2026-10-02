@@ -2,6 +2,7 @@
 - [02/10/2026 15:16] [Fazendo] Fixar barra de ferramentas do desenho sempre no topo (mobile e desktop), simplificar cabeçalho superior para ícones exclusivos e implementar seletor com 2 slots de cores e paleta em blocos
 
 ## ✅ Concluído
+- [02/10/2026 19:53] [Concluído] Restaurar ícone canônico de anotação (HighlighterIcon) no botão de anotações da barra inferior
 - [02/10/2026 19:48] [Concluído] Arredondar levemente as pontas da capa do livro e remover fundo e sombras ao lado da capa na barra inferior
 - [02/10/2026 19:46] [Concluído] Eliminar corte da capa do livro na barra inferior com proporção natural e ajustar margem do rodapé da página de leitura
 - [02/10/2026 19:37] [Concluído] Restaurar carregamento da capa no EPUB e leitor, estender capa para 100% da altura da barra e reorganizar layout harmonioso dos ícones
