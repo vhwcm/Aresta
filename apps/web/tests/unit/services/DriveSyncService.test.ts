@@ -1,7 +1,7 @@
 import { describe, expect, it, beforeEach } from 'vitest'
 import { InMemoryAdapter } from '~/adapters/database/InMemoryAdapter'
 import { dbManager } from '~/adapters/database/DatabaseManager'
-import { DriveSyncService } from '~/services/DriveSyncService'
+import { DriveSyncService, mergeStreaks } from '~/services/DriveSyncService'
 import type { IDataSyncProvider, DataSubFolder } from '~/adapters/storage/cloud/IDataSyncProvider'
 
 function createMockProvider(overrides: Partial<IDataSyncProvider> = {}): IDataSyncProvider {
@@ -670,5 +670,277 @@ describe('DriveSyncService (Local-First Sync Engine)', () => {
 
     const uploadedItem = uploadedPayload?.payload?.find((j: any) => j.id === '2026-09-20')
     expect(uploadedItem?.deleted_at).toBe('2026-09-20T15:00:00.000Z')
+  })
+
+  it('15. mergeStreaks unifica ofensiva no mesmo dia combinando tempo de leitura e flashcards sem perda', () => {
+    const local = {
+      id: 'user_streak',
+      currentStreak: 4,
+      longestStreak: 10,
+      streakFreezeCount: 1,
+      targetStreakDays: 7,
+      isGoalReachedToday: false,
+      todayActivity: {
+        date: '2026-10-02',
+        readingSeconds: 300,
+        readingMinutes: 5,
+        requiredReadingSeconds: 600,
+        flashcardsReviewed: 2,
+        requiredFlashcards: 5,
+        isReadingCompleted: false,
+        isFlashcardsCompleted: false,
+        isCompleted: false,
+        isFrozen: false,
+      },
+      weeklyActivity: [
+        { date: '2026-10-02', dayLabel: 'S', readingSeconds: 300, readingMinutes: 5, flashcardsReviewed: 2, completed: false, frozen: false }
+      ],
+      updated_at: '2026-10-02T10:00:00.000Z',
+      deleted_at: null,
+      sync_status: 'synced' as const,
+    }
+
+    const remote = {
+      id: 'user_streak',
+      currentStreak: 4,
+      longestStreak: 10,
+      streakFreezeCount: 1,
+      targetStreakDays: 7,
+      isGoalReachedToday: false,
+      todayActivity: {
+        date: '2026-10-02',
+        readingSeconds: 600, // No outro dispositivo completou a leitura
+        readingMinutes: 10,
+        requiredReadingSeconds: 600,
+        flashcardsReviewed: 1,
+        requiredFlashcards: 5,
+        isReadingCompleted: true,
+        isFlashcardsCompleted: false,
+        isCompleted: true,
+        isFrozen: false,
+      },
+      weeklyActivity: [
+        { date: '2026-10-02', dayLabel: 'S', readingSeconds: 600, readingMinutes: 10, flashcardsReviewed: 1, completed: true, frozen: false }
+      ],
+      updated_at: '2026-10-02T11:00:00.000Z',
+      deleted_at: null,
+      sync_status: 'synced' as const,
+    }
+
+    const merged = mergeStreaks(local, remote)
+    expect(merged).not.toBeNull()
+    expect(merged?.currentStreak).toBe(4)
+    expect(merged?.longestStreak).toBe(10)
+    expect(merged?.todayActivity.readingSeconds).toBe(600)
+    expect(merged?.todayActivity.readingMinutes).toBe(10)
+    expect(merged?.todayActivity.flashcardsReviewed).toBe(2)
+    expect(merged?.todayActivity.isReadingCompleted).toBe(true)
+    expect(merged?.todayActivity.isCompleted).toBe(true)
+    expect(merged?.isGoalReachedToday).toBe(true)
+  })
+
+  it('16. mergeStreaks preserva ofensiva sem regredir quando um dispositivo cumpriu a meta e outro ainda não', () => {
+    const localStale = {
+      id: 'user_streak',
+      currentStreak: 5,
+      longestStreak: 5,
+      streakFreezeCount: 0,
+      targetStreakDays: 7,
+      isGoalReachedToday: false,
+      todayActivity: {
+        date: '2026-10-02',
+        readingSeconds: 0,
+        readingMinutes: 0,
+        requiredReadingSeconds: 600,
+        flashcardsReviewed: 0,
+        requiredFlashcards: 5,
+        isReadingCompleted: false,
+        isFlashcardsCompleted: false,
+        isCompleted: false,
+        isFrozen: false,
+      },
+      weeklyActivity: [],
+      updated_at: '2026-10-02T12:00:00.000Z',
+      deleted_at: null,
+      sync_status: 'pending' as const,
+    }
+
+    const remoteActive = {
+      id: 'user_streak',
+      currentStreak: 6,
+      longestStreak: 6,
+      streakFreezeCount: 0,
+      targetStreakDays: 7,
+      isGoalReachedToday: true,
+      todayActivity: {
+        date: '2026-10-02',
+        readingSeconds: 650,
+        readingMinutes: 10,
+        requiredReadingSeconds: 600,
+        flashcardsReviewed: 5,
+        requiredFlashcards: 5,
+        isReadingCompleted: true,
+        isFlashcardsCompleted: true,
+        isCompleted: true,
+        isFrozen: false,
+      },
+      weeklyActivity: [
+        { date: '2026-10-02', dayLabel: 'S', readingSeconds: 650, readingMinutes: 10, flashcardsReviewed: 5, completed: true, frozen: false }
+      ],
+      updated_at: '2026-10-02T10:00:00.000Z',
+      deleted_at: null,
+      sync_status: 'synced' as const,
+    }
+
+    const merged = mergeStreaks(localStale, remoteActive)
+    expect(merged?.currentStreak).toBe(6)
+    expect(merged?.longestStreak).toBe(6)
+    expect(merged?.isGoalReachedToday).toBe(true)
+    expect(merged?.todayActivity.readingSeconds).toBe(650)
+  })
+
+  it('17. syncProfile sincroniza profile.json mesclando streak da nuvem com local e atualizando o banco', async () => {
+    await db.saveStreak({
+      id: 'user_streak',
+      currentStreak: 3,
+      longestStreak: 5,
+      streakFreezeCount: 0,
+      targetStreakDays: 7,
+      isGoalReachedToday: false,
+      todayActivity: {
+        date: '2026-10-02',
+        readingSeconds: 100,
+        readingMinutes: 1,
+        requiredReadingSeconds: 600,
+        flashcardsReviewed: 0,
+        requiredFlashcards: 5,
+        isReadingCompleted: false,
+        isFlashcardsCompleted: false,
+        isCompleted: false,
+        isFrozen: false,
+      },
+      weeklyActivity: [],
+      updated_at: '2026-10-02T08:00:00.000Z',
+      deleted_at: null,
+      sync_status: 'pending',
+    })
+
+    let uploadedPayload: any = null
+    const provider = createMockProvider({
+      downloadDataFile: async <T>() => ({
+        schema_version: 1,
+        entity_type: 'profile',
+        updated_at: '2026-10-02T11:00:00.000Z',
+        updated_by: 'phone_device',
+        content_hash: 'different_hash',
+        payload: {
+          settings: null,
+          streak: {
+            id: 'user_streak',
+            currentStreak: 4,
+            longestStreak: 6,
+            streakFreezeCount: 1,
+            targetStreakDays: 14,
+            isGoalReachedToday: true,
+            todayActivity: {
+              date: '2026-10-02',
+              readingSeconds: 600,
+              readingMinutes: 10,
+              requiredReadingSeconds: 600,
+              flashcardsReviewed: 3,
+              requiredFlashcards: 5,
+              isReadingCompleted: true,
+              isFlashcardsCompleted: false,
+              isCompleted: true,
+              isFrozen: false,
+            },
+            weeklyActivity: [],
+            updated_at: '2026-10-02T11:00:00.000Z',
+            deleted_at: null,
+            sync_status: 'synced',
+          }
+        },
+      } as unknown as T),
+      uploadDataFile: async (_fileName, data) => {
+        uploadedPayload = data
+        return { fileName: 'profile.json', itemCount: 1, syncedAt: new Date().toISOString() }
+      },
+    })
+
+    const service = new DriveSyncService(provider)
+    const result = await service.syncProfile()
+
+    expect(result.fileName).toBe('profile.json')
+    expect(result.downloaded).toBe(1)
+
+    const savedInDb = await db.getStreak()
+    expect(savedInDb?.currentStreak).toBe(4)
+    expect(savedInDb?.longestStreak).toBe(6)
+    expect(savedInDb?.isGoalReachedToday).toBe(true)
+    expect(savedInDb?.todayActivity.readingSeconds).toBe(600)
+    expect(uploadedPayload?.payload?.streak?.currentStreak).toBe(4)
+  })
+
+  it('18. syncProfile pula upload redundante se a nuvem já tiver o hash correspondente', async () => {
+    await db.saveStreak({
+      id: 'user_streak',
+      currentStreak: 5,
+      longestStreak: 5,
+      streakFreezeCount: 0,
+      targetStreakDays: 7,
+      isGoalReachedToday: true,
+      todayActivity: {
+        date: '2026-10-02',
+        readingSeconds: 600,
+        readingMinutes: 10,
+        requiredReadingSeconds: 600,
+        flashcardsReviewed: 5,
+        requiredFlashcards: 5,
+        isReadingCompleted: true,
+        isFlashcardsCompleted: true,
+        isCompleted: true,
+        isFrozen: false,
+      },
+      weeklyActivity: [],
+      updated_at: '2026-10-02T10:00:00.000Z',
+      deleted_at: null,
+      sync_status: 'synced',
+    })
+
+    const streakInDb = await db.getStreak()
+    const settingsInDb = await db.getSettings()
+    const profileData = { settings: settingsInDb, streak: streakInDb }
+
+    let str = JSON.stringify(profileData)
+    let hash = 0
+    for (let i = 0; i < str.length; i++) {
+      hash = ((hash << 5) - hash) + str.charCodeAt(i)
+      hash |= 0
+    }
+    const matchingHash = hash.toString(36)
+
+    let uploadCalled = false
+    const provider = createMockProvider({
+      downloadDataFile: async <T>() => ({
+        schema_version: 1,
+        entity_type: 'profile',
+        updated_at: '2026-10-02T10:00:00.000Z',
+        updated_by: 'same_device',
+        content_hash: matchingHash,
+        payload: profileData,
+      } as unknown as T),
+      uploadDataFile: async () => {
+        uploadCalled = true
+        return { fileName: 'profile.json', itemCount: 1, syncedAt: new Date().toISOString() }
+      },
+    })
+
+    localStorage.setItem('aresta_drive_etag_cache', JSON.stringify({ 'profile.json': matchingHash }))
+
+    const service = new DriveSyncService(provider)
+    const result = await service.syncProfile()
+
+    expect(result.skipped).toBe(true)
+    expect(uploadCalled).toBe(false)
   })
 })

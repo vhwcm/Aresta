@@ -107,4 +107,83 @@ describe('useReadingStreak composable', () => {
     expect(currentStreak.value).toBe(7)
     expect(streakFreezeCount.value).toBe(1)
   })
+
+  it('fetchStreak carrega streak existente sem corromper updated_at com data atual', async () => {
+    const { streakRepo } = await import('../../../app/adapters/database/repositories/StreakRepository')
+    const historicalTimestamp = '2026-09-01T12:00:00.000Z'
+    const today = new Date().toISOString().split('T')[0]
+
+    await streakRepo.save({
+      id: 'user_streak',
+      currentStreak: 15,
+      longestStreak: 20,
+      streakFreezeCount: 1,
+      targetStreakDays: 14,
+      isGoalReachedToday: false,
+      todayActivity: {
+        date: today,
+        readingSeconds: 200,
+        readingMinutes: 3,
+        requiredReadingSeconds: 600,
+        flashcardsReviewed: 1,
+        requiredFlashcards: 5,
+        isReadingCompleted: false,
+        isFlashcardsCompleted: false,
+        isCompleted: false,
+        isFrozen: false
+      },
+      weeklyActivity: [],
+      updated_at: historicalTimestamp
+    })
+
+    const { fetchStreak, currentStreak } = useReadingStreak()
+    await fetchStreak()
+
+    expect(currentStreak.value).toBe(15)
+
+    const fromDb = await streakRepo.get()
+    expect(fromDb?.updated_at).toBe(historicalTimestamp)
+  })
+
+  it('atualiza o estado reativo ao receber evento aresta:data-synced e despacha aresta:streak-updated nas mutações', async () => {
+    const { streakRepo } = await import('../../../app/adapters/database/repositories/StreakRepository')
+    const { currentStreak, recordReadingTime } = useReadingStreak()
+    const today = new Date().toISOString().split('T')[0]
+
+    // Simula sincronização em nuvem salvando no repositório
+    await streakRepo.save({
+      id: 'user_streak',
+      currentStreak: 42,
+      longestStreak: 50,
+      todayActivity: {
+        date: today,
+        readingSeconds: 600,
+        readingMinutes: 10,
+        requiredReadingSeconds: 600,
+        flashcardsReviewed: 5,
+        requiredFlashcards: 5,
+        isReadingCompleted: true,
+        isFlashcardsCompleted: true,
+        isCompleted: true,
+        isFrozen: false
+      },
+      updated_at: new Date().toISOString()
+    })
+
+    // Dispara o evento de sincronização que o useDriveSync emite
+    window.dispatchEvent(new CustomEvent('aresta:data-synced'))
+
+    // Aguarda microtask
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    expect(currentStreak.value).toBe(42)
+
+    // Ao registrar leitura, deve emitir aresta:streak-updated
+    let streakUpdateEventFired = false
+    const handleUpdate = () => { streakUpdateEventFired = true }
+    window.addEventListener('aresta:streak-updated', handleUpdate)
+
+    await recordReadingTime(10)
+    expect(streakUpdateEventFired).toBe(true)
+    window.removeEventListener('aresta:streak-updated', handleUpdate)
+  })
 })

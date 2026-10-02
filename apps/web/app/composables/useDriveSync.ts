@@ -49,7 +49,8 @@ export function useDriveSync() {
         { useNotes },
         { useDrawing },
         { useLinks },
-        { useJournal }
+        { useJournal },
+        { useReadingStreak }
       ] = await Promise.all([
         import('./useUserBooks'),
         import('./useGraph'),
@@ -57,7 +58,8 @@ export function useDriveSync() {
         import('./useNotes'),
         import('./useDrawing'),
         import('./useLinks'),
-        import('./useJournal')
+        import('./useJournal'),
+        import('./useReadingStreak')
       ])
 
       await Promise.all([
@@ -67,7 +69,8 @@ export function useDriveSync() {
         useNotes().fetchNotes().catch(() => {}),
         useDrawing().fetchDrawings().catch(() => {}),
         useLinks().fetchLinks().catch(() => {}),
-        useJournal().loadTimeline().catch(() => {})
+        useJournal().loadTimeline().catch(() => {}),
+        useReadingStreak().fetchStreak().catch(() => {})
       ])
 
       if (typeof window !== 'undefined') {
@@ -175,6 +178,17 @@ export function useDriveSync() {
     }
   }
 
+  let streakDebounceTimer: ReturnType<typeof setTimeout> | null = null
+
+  const handleStreakUpdated = () => {
+    if (streakDebounceTimer) clearTimeout(streakDebounceTimer)
+    streakDebounceTimer = setTimeout(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible' && !isSyncing.value) {
+        void sync()
+      }
+    }, 2500)
+  }
+
   const initListeners = () => {
     if (typeof window === 'undefined' || listenersAttached) return
     listenersAttached = true
@@ -182,6 +196,7 @@ export function useDriveSync() {
     window.addEventListener('visibilitychange', handleVisibilityOrFocus)
     window.addEventListener('focus', handleVisibilityOrFocus)
     window.addEventListener('storage', handleStorageChange)
+    window.addEventListener('aresta:streak-updated', handleStreakUpdated)
 
     if (typeof BroadcastChannel !== 'undefined' && !syncBroadcastChannel) {
       try {
@@ -211,6 +226,11 @@ export function useDriveSync() {
     window.removeEventListener('visibilitychange', handleVisibilityOrFocus)
     window.removeEventListener('focus', handleVisibilityOrFocus)
     window.removeEventListener('storage', handleStorageChange)
+    window.removeEventListener('aresta:streak-updated', handleStreakUpdated)
+    if (streakDebounceTimer) {
+      clearTimeout(streakDebounceTimer)
+      streakDebounceTimer = null
+    }
     if (interval) clearInterval(interval)
     interval = null
     if (syncBroadcastChannel) {

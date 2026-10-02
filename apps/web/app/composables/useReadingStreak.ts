@@ -130,7 +130,7 @@ const weeklyActivity = ref<StreakDay[]>(generateWeeklyActivity(getTodayIsoString
 const isLoading = ref(false)
 const hasFetched = ref(false)
 
-function syncDateRollover() {
+function syncDateRollover(): boolean {
   const todayIso = getTodayIsoString()
   if (todayActivity.value.date !== todayIso) {
     const prevDate = todayActivity.value.date
@@ -179,8 +179,12 @@ function syncDateRollover() {
       completed: false,
       frozen: false
     })
+    return true
   }
+  return false
 }
+
+let syncListenerAttached = false
 
 export const useReadingStreak = () => {
   const auth = useAuth()
@@ -196,7 +200,19 @@ export const useReadingStreak = () => {
     })
   }
 
-  const applyStreakPayload = (data: any) => {
+  const notifyStreakUpdated = () => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('aresta:streak-updated', {
+        detail: {
+          currentStreak: currentStreak.value,
+          isGoalReachedToday: isGoalReachedToday.value,
+          timestamp: new Date().toISOString()
+        }
+      }))
+    }
+  }
+
+  const applyStreakPayload = (data: any, persist: boolean = false) => {
     if (!data) return
     currentStreak.value = data.currentStreak ?? 0
     longestStreak.value = data.longestStreak ?? 0
@@ -206,6 +222,7 @@ export const useReadingStreak = () => {
 
     const todayIso = getTodayIsoString()
     const rawToday = data.todayActivity || data.today
+    let didRollover = false
 
     if (rawToday) {
       const dataDate = rawToday.date || todayIso
@@ -230,10 +247,10 @@ export const useReadingStreak = () => {
         todayActivity.value.date = dataDate
         todayActivity.value.readingSeconds = rawToday.readingSeconds ?? 0
         todayActivity.value.isCompleted = rawToday.isCompleted ?? isGoalReachedToday.value
-        syncDateRollover()
+        didRollover = syncDateRollover()
       }
     } else {
-      syncDateRollover()
+      didRollover = syncDateRollover()
     }
 
     const rawWeekly = Array.isArray(data.weeklyActivity) ? data.weeklyActivity : []
@@ -245,15 +262,18 @@ export const useReadingStreak = () => {
       frozen: todayActivity.value.isFrozen
     })
 
-    streakRepo.save({
-      currentStreak: currentStreak.value,
-      longestStreak: longestStreak.value,
-      streakFreezeCount: streakFreezeCount.value,
-      targetStreakDays: targetStreakDays.value,
-      isGoalReachedToday: isGoalReachedToday.value,
-      todayActivity: todayActivity.value,
-      weeklyActivity: weeklyActivity.value
-    }).catch((e) => console.warn('[useReadingStreak] Falha ao persistir streak local:', e))
+    if (persist || didRollover) {
+      streakRepo.save({
+        currentStreak: currentStreak.value,
+        longestStreak: longestStreak.value,
+        streakFreezeCount: streakFreezeCount.value,
+        targetStreakDays: targetStreakDays.value,
+        isGoalReachedToday: isGoalReachedToday.value,
+        todayActivity: todayActivity.value,
+        weeklyActivity: weeklyActivity.value,
+        updated_at: didRollover ? undefined : data.updated_at
+      }).catch((e) => console.warn('[useReadingStreak] Falha ao persistir streak local:', e))
+    }
   }
 
   const fetchStreak = async () => {
@@ -261,9 +281,20 @@ export const useReadingStreak = () => {
     try {
       const localStreak = await streakRepo.get()
       if (localStreak) {
-        applyStreakPayload(localStreak)
+        applyStreakPayload(localStreak, false)
       } else {
-        syncDateRollover()
+        const didRollover = syncDateRollover()
+        if (didRollover) {
+          await streakRepo.save({
+            currentStreak: currentStreak.value,
+            longestStreak: longestStreak.value,
+            streakFreezeCount: streakFreezeCount.value,
+            targetStreakDays: targetStreakDays.value,
+            isGoalReachedToday: isGoalReachedToday.value,
+            todayActivity: todayActivity.value,
+            weeklyActivity: weeklyActivity.value
+          }).catch(() => {})
+        }
       }
       hasFetched.value = true
     } catch (e) {
@@ -307,6 +338,7 @@ export const useReadingStreak = () => {
       todayActivity: todayActivity.value,
       weeklyActivity: weeklyActivity.value
     }).catch((e) => console.warn('[useReadingStreak] Falha ao persistir streak local:', e))
+    notifyStreakUpdated()
   }
 
   const recordFlashcardReview = async (count: number = 1) => {
@@ -342,6 +374,7 @@ export const useReadingStreak = () => {
       todayActivity: todayActivity.value,
       weeklyActivity: weeklyActivity.value
     }).catch((e) => console.warn('[useReadingStreak] Falha ao persistir streak local:', e))
+    notifyStreakUpdated()
   }
 
   const updateTargetStreakDays = async (newTargetDays: number) => {
@@ -356,10 +389,19 @@ export const useReadingStreak = () => {
       todayActivity: todayActivity.value,
       weeklyActivity: weeklyActivity.value
     }).catch((e) => console.warn('[useReadingStreak] Falha ao persistir streak local:', e))
+    notifyStreakUpdated()
   }
 
-  if (typeof window !== 'undefined' && !hasFetched.value) {
-    fetchStreak()
+  if (typeof window !== 'undefined') {
+    if (!hasFetched.value) {
+      fetchStreak()
+    }
+    if (!syncListenerAttached) {
+      syncListenerAttached = true
+      window.addEventListener('aresta:data-synced', () => {
+        void fetchStreak()
+      })
+    }
   }
 
   const dailyGoalMinutes = computed(() => 10)

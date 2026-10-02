@@ -1,8 +1,10 @@
 ## 🔄 Em Andamento
-- [02/10/2026 14:57] [Fazendo] Permitir seleção contínua de texto e puxar alças de marcação de livros no Android e mobile
+- [02/10/2026 15:16] [Fazendo] Fixar barra de ferramentas do desenho sempre no topo (mobile e desktop), simplificar cabeçalho superior para ícones exclusivos e implementar seletor com 2 slots de cores e paleta em blocos
 - [02/10/2026 14:44] [Fazendo] Unificar barra de leitura em barra única inferior com capa, título, configurações, anotações e zen mode
 
 ## ✅ Concluído
+- [02/10/2026 15:16] [Concluído] Corrigir sincronização da ofensiva (reading streak) na nuvem com reconciliação CRDT, revalidação reativa e proteção de timestamp local
+- [02/10/2026 15:15] [Concluído] Permitir seleção contínua de texto e puxar alças de marcação de livros no Android e mobile
 - [02/10/2026 15:13] [Concluído] Diagnosticar e corrigir duplo clique em nó/nota no canvas criando nova nota em vez de entrar em modo de edição
 - [02/10/2026 15:11] [Concluído] Remover setas de navegação da leitura de livros e implementar virada de página ao clicar nas pontas da tela
 - [02/10/2026 14:40] [Concluído] Implementar botão universal de voltar (AppBackButton) em todas as páginas da aplicação com retorno ao histórico de navegação e fallback

@@ -56,8 +56,14 @@ vi.mock('~/composables/useLinks', () => ({
   useLinks: () => ({ fetchLinks: mockFetchLinks }),
 }))
 
+const mockFetchStreak = vi.fn().mockResolvedValue(undefined)
+
 vi.mock('~/composables/useJournal', () => ({
   useJournal: () => ({ loadTimeline: mockLoadTimeline }),
+}))
+
+vi.mock('~/composables/useReadingStreak', () => ({
+  useReadingStreak: () => ({ fetchStreak: mockFetchStreak }),
 }))
 
 const mockFullSync = vi.fn().mockResolvedValue({
@@ -109,6 +115,7 @@ describe('useDriveSync Composable', () => {
     expect(mockFetchDrawings).toHaveBeenCalled()
     expect(mockFetchLinks).toHaveBeenCalled()
     expect(mockLoadTimeline).toHaveBeenCalled()
+    expect(mockFetchStreak).toHaveBeenCalled()
     expect(dispatchSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'aresta:data-synced' }))
   })
 
@@ -120,9 +127,10 @@ describe('useDriveSync Composable', () => {
     expect(isSyncing.value).toBe(false)
     expect(mockFullSync).toHaveBeenCalled()
     expect(mockFetchGraph).toHaveBeenCalled()
+    expect(mockFetchStreak).toHaveBeenCalled()
   })
 
-  it('initListeners deve registrar listeners de online, visibilitychange, focus e storage', () => {
+  it('initListeners deve registrar listeners de online, visibilitychange, focus, storage e streak-updated', () => {
     const addEventSpy = vi.spyOn(window, 'addEventListener')
     const { initListeners } = useDriveSync()
 
@@ -132,5 +140,6 @@ describe('useDriveSync Composable', () => {
     expect(addEventSpy).toHaveBeenCalledWith('visibilitychange', expect.any(Function))
     expect(addEventSpy).toHaveBeenCalledWith('focus', expect.any(Function))
     expect(addEventSpy).toHaveBeenCalledWith('storage', expect.any(Function))
+    expect(addEventSpy).toHaveBeenCalledWith('aresta:streak-updated', expect.any(Function))
   })
 })

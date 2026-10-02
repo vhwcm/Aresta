@@ -91,6 +91,129 @@ export async function withRetry<T>(
   throw new Error('withRetry: número máximo de tentativas excedido')
 }
 
+export function mergeStreaks(local: LocalStreak | null, remote: LocalStreak | null): LocalStreak | null {
+  if (!local && !remote) return null
+  if (!local) return { ...remote!, sync_status: 'synced' }
+  if (!remote) return local
+
+  const localTs = local.updated_at || ''
+  const remoteTs = remote.updated_at || ''
+  const newerUpdated = localTs > remoteTs ? localTs : remoteTs
+
+  // 1. Longest streak é estritamente monotônico crescente
+  const longestStreak = Math.max(
+    local.longestStreak || 0,
+    remote.longestStreak || 0,
+    local.currentStreak || 0,
+    remote.currentStreak || 0
+  )
+
+  // 2. Meta em dias: usa a alteração mais recente
+  const targetStreakDays = (remoteTs > localTs ? remote.targetStreakDays : local.targetStreakDays) || local.targetStreakDays || 7
+
+  // 3. Comparação de datas e progresso diário
+  const localDate = local.todayActivity?.date || ''
+  const remoteDate = remote.todayActivity?.date || ''
+
+  let todayActivity: LocalStreak['todayActivity']
+  let currentStreak = 0
+  let isGoalReachedToday = false
+
+  if (localDate && remoteDate && localDate === remoteDate) {
+    // Mesma data de hoje em ambos os dispositivos: unifica leitura e flashcards
+    const readingSeconds = Math.max(local.todayActivity?.readingSeconds || 0, remote.todayActivity?.readingSeconds || 0)
+    const flashcardsReviewed = Math.max(local.todayActivity?.flashcardsReviewed || 0, remote.todayActivity?.flashcardsReviewed || 0)
+    const requiredReadingSeconds = local.todayActivity?.requiredReadingSeconds || remote.todayActivity?.requiredReadingSeconds || 600
+    const requiredFlashcards = local.todayActivity?.requiredFlashcards || remote.todayActivity?.requiredFlashcards || 5
+    const isReadingCompleted = readingSeconds >= requiredReadingSeconds || !!local.todayActivity?.isReadingCompleted || !!remote.todayActivity?.isReadingCompleted
+    const isFlashcardsCompleted = flashcardsReviewed >= requiredFlashcards || !!local.todayActivity?.isFlashcardsCompleted || !!remote.todayActivity?.isFlashcardsCompleted
+    const isCompleted = isReadingCompleted || isFlashcardsCompleted || !!local.todayActivity?.isCompleted || !!remote.todayActivity?.isCompleted
+    isGoalReachedToday = isCompleted || !!local.isGoalReachedToday || !!remote.isGoalReachedToday
+
+    todayActivity = {
+      date: localDate,
+      readingSeconds,
+      readingMinutes: Math.floor(readingSeconds / 60),
+      requiredReadingSeconds,
+      flashcardsReviewed,
+      requiredFlashcards,
+      isReadingCompleted,
+      isFlashcardsCompleted,
+      isCompleted,
+      isFrozen: !!local.todayActivity?.isFrozen || !!remote.todayActivity?.isFrozen,
+    }
+
+    currentStreak = Math.max(local.currentStreak || 0, remote.currentStreak || 0)
+    if (isGoalReachedToday && currentStreak === 0) {
+      currentStreak = 1
+    }
+  } else if (remoteDate > localDate) {
+    // Remoto possui uma data mais recente (ex: celular abriu hoje, computador ainda em ontem)
+    todayActivity = { ...remote.todayActivity }
+    isGoalReachedToday = remote.isGoalReachedToday || !!remote.todayActivity?.isCompleted
+    currentStreak = remote.currentStreak ?? 0
+  } else if (localDate > remoteDate) {
+    // Local possui uma data mais recente (computador já avançou para hoje)
+    todayActivity = { ...local.todayActivity }
+    isGoalReachedToday = local.isGoalReachedToday || !!local.todayActivity?.isCompleted
+    const baseStreak = Math.max(local.currentStreak || 0, remote.currentStreak || 0)
+    currentStreak = isGoalReachedToday ? Math.max(baseStreak, (remote.currentStreak || 0) + 1) : baseStreak
+  } else {
+    // Datas ausentes ou idênticas vazias
+    const winner = remoteTs > localTs ? remote : local
+    todayActivity = { ...winner.todayActivity }
+    isGoalReachedToday = winner.isGoalReachedToday
+    currentStreak = winner.currentStreak
+  }
+
+  // 4. Congelamento de ofensiva: preserva o maior disponível
+  const streakFreezeCount = Math.max(local.streakFreezeCount || 0, remote.streakFreezeCount || 0)
+
+  // 5. Unificação da atividade semanal
+  const weeklyMap = new Map<string, LocalStreak['weeklyActivity'][0]>()
+  for (const day of (local.weeklyActivity || [])) {
+    if (day?.date) weeklyMap.set(day.date, { ...day })
+  }
+  for (const day of (remote.weeklyActivity || [])) {
+    if (!day?.date) continue
+    const existing = weeklyMap.get(day.date)
+    if (!existing) {
+      weeklyMap.set(day.date, { ...day })
+    } else {
+      const mergedReading = Math.max(existing.readingSeconds || 0, day.readingSeconds || 0)
+      const mergedFlashcards = Math.max(existing.flashcardsReviewed || 0, day.flashcardsReviewed || 0)
+      const mergedCompleted = existing.completed || day.completed || mergedReading >= 600 || mergedFlashcards >= 5
+      weeklyMap.set(day.date, {
+        date: day.date,
+        dayLabel: day.dayLabel || existing.dayLabel,
+        readingSeconds: mergedReading,
+        readingMinutes: Math.floor(mergedReading / 60),
+        flashcardsReviewed: mergedFlashcards,
+        completed: mergedCompleted,
+        frozen: existing.frozen || day.frozen || false,
+      })
+    }
+  }
+
+  const weeklyActivity = Array.from(weeklyMap.values())
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .slice(-7)
+
+  return {
+    id: 'user_streak',
+    currentStreak,
+    longestStreak: Math.max(longestStreak, currentStreak),
+    streakFreezeCount,
+    targetStreakDays,
+    isGoalReachedToday,
+    todayActivity,
+    weeklyActivity,
+    updated_at: newerUpdated || new Date().toISOString(),
+    deleted_at: null,
+    sync_status: 'synced',
+  }
+}
+
 export class DriveSyncService {
   private inFlight: Promise<SyncSummary> | null = null
   private readonly deviceId = getDeviceId()
@@ -334,9 +457,14 @@ export class DriveSyncService {
         }
       }
       if (remote.payload.streak) {
-        if (!local.streak || remote.payload.streak.updated_at > local.streak.updated_at) {
-          await db.saveStreak({ ...remote.payload.streak, sync_status: 'synced' } as LocalStreak)
-          downloaded++
+        const mergedStreak = mergeStreaks(local.streak, remote.payload.streak)
+        if (mergedStreak) {
+          const localStr = JSON.stringify(local.streak)
+          const mergedStr = JSON.stringify(mergedStreak)
+          if (!local.streak || localStr !== mergedStr) {
+            await db.saveStreak(mergedStreak)
+            downloaded++
+          }
         }
       }
     }
@@ -344,6 +472,10 @@ export class DriveSyncService {
     const merged = { settings: await db.getSettings(), streak: await db.getStreak() }
     const profileHash = computeHash(merged)
     const cachedHash = getETagCache()['profile.json']
+
+    if (cachedHash === profileHash && remote?.content_hash === profileHash) {
+      return { fileName: 'profile.json', uploaded: 0, downloaded, conflicts, skipped: true }
+    }
 
     if (cachedHash !== profileHash) {
       const env = this.envelope('profile', merged)

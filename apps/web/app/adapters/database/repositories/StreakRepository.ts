@@ -33,9 +33,9 @@ export class StreakRepository {
         isFrozen: false
       },
       weeklyActivity: streak.weeklyActivity || existing?.weeklyActivity || [],
-      updated_at: now,
+      updated_at: streak.updated_at || now,
       deleted_at: null,
-      sync_status: 'pending'
+      sync_status: streak.sync_status || 'pending'
     };
     await this.db.saveStreak(entity);
     await dbManager.recordMutation('streak', entity.id, 'UPDATE', entity);
