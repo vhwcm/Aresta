@@ -156,12 +156,20 @@ export function useNotes() {
 
     const resolvedTitle = resolveNoteTitle(input.title, content);
 
+    const initialTags = input.tags ? [...input.tags] : [];
+    if (input.folder && typeof input.folder === 'string' && input.folder.trim()) {
+      const fTag = input.folder.trim();
+      if (!initialTags.includes(fTag)) {
+        initialTags.push(fTag);
+      }
+    }
+
     const saved = await noteRepo.save({
       id: localId,
       title: resolvedTitle,
       content,
-      folder: input.folder || null,
-      tags: input.tags || [],
+      folder: input.folder || initialTags[0] || null,
+      tags: initialTags,
       links: initialLinks,
       created_at: now,
       updated_at: now,

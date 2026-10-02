@@ -524,4 +524,106 @@ describe('NoteEditorPane Component', () => {
     lastUpdate = (updateEvents as any)[(updateEvents as any).length - 1][0] as NoteItem;
     expect(lastUpdate.content).toContain('[📚 Livreto de Algoritmos](booklet:99)');
   });
+
+  it('unifica pastas e tags: não renderiza seletor de pasta na toolbar e exibe exclusivamente tags', async () => {
+    const wrapper = mount(NoteEditorPane, {
+      props: {
+        note: sampleNote,
+        folders: ['Geral', 'Filosofia'],
+        canvases: [],
+      },
+      global: {
+        stubs: {
+          MilkdownEditor: true,
+        },
+      },
+    });
+
+    // Garante que o seletor antigo de pasta NÃO existe mais na toolbar
+    expect(wrapper.find('[data-testid="select-folder"]').exists()).toBe(false);
+    expect(wrapper.text()).not.toContain('Sem pasta');
+
+    // Botão de tags unificado deve existir e conter as 2 tags originais + a tag migrada do folder Geral
+    const tagsBtn = wrapper.find('[data-testid="btn-toggle-tags"]');
+    expect(tagsBtn.exists()).toBe(true);
+    expect(tagsBtn.text()).toContain('#teste');
+    expect(tagsBtn.text()).toContain('+2');
+  });
+
+  it('migra automaticamente folder legado para tags ao inicializar a nota', async () => {
+    const noteComFolderLegado: NoteItem = {
+      id: 'note-legacy-1',
+      userId: 1,
+      title: 'Nota Legada',
+      content: 'Conteúdo',
+      folder: 'Filosofia Antiga',
+      tags: [],
+      updatedAt: '2026-09-04T10:00:00Z',
+    };
+
+    const wrapper = mount(NoteEditorPane, {
+      props: {
+        note: noteComFolderLegado,
+        folders: ['Filosofia Antiga', 'Ciência'],
+        canvases: [],
+      },
+      global: {
+        stubs: {
+          MilkdownEditor: true,
+        },
+      },
+    });
+
+    const tagsBtn = wrapper.find('[data-testid="btn-toggle-tags"]');
+    expect(tagsBtn.exists()).toBe(true);
+    expect(tagsBtn.text()).toContain('#Filosofia Antiga');
+
+    // Ao abrir o popover, a tag deve estar presente
+    await tagsBtn.trigger('click');
+    expect(wrapper.text()).toContain('#Filosofia Antiga');
+  });
+
+  it('exibe tags existentes sugeridas no popover e permite adicionar com 1 clique', async () => {
+    const noteSemTags: NoteItem = {
+      id: 'note-clean-1',
+      userId: 1,
+      title: 'Nota Limpa',
+      content: 'Conteúdo',
+      folder: null,
+      tags: [],
+      updatedAt: '2026-09-04T10:00:00Z',
+    };
+
+    const wrapper = mount(NoteEditorPane, {
+      props: {
+        note: noteSemTags,
+        folders: ['Arquitetura', 'Design'],
+        canvases: [],
+      },
+      global: {
+        stubs: {
+          MilkdownEditor: true,
+        },
+      },
+    });
+
+    const tagsBtn = wrapper.find('[data-testid="btn-toggle-tags"]');
+    expect(tagsBtn.text()).toBe('Tags');
+    await tagsBtn.trigger('click');
+
+    // Deve exibir seção de tags existentes com as sugestões
+    expect(wrapper.text()).toContain('Tags existentes');
+    expect(wrapper.text()).toContain('#Arquitetura');
+    expect(wrapper.text()).toContain('#Design');
+
+    // Clica para adicionar a tag sugerida "Arquitetura"
+    const suggestBtn = wrapper.findAll('button').find((b) => b.text().includes('#Arquitetura'));
+    expect(suggestBtn?.exists()).toBe(true);
+    await suggestBtn!.trigger('click');
+
+    expect(wrapper.emitted('update:note')).toBeTruthy();
+    const lastUpdate = wrapper.emitted('update:note')!.pop()![0] as NoteItem;
+    expect(lastUpdate.tags).toContain('Arquitetura');
+    expect(lastUpdate.folder).toBe('Arquitetura');
+  });
 });

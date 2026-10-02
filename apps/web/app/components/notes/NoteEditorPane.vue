@@ -66,41 +66,25 @@
             <!-- Separador Vertical -->
             <div class="h-4 w-px bg-divider/80 mx-0.5 shrink-0"></div>
 
-            <!-- Seletor de Pasta da Nota -->
-            <div class="flex items-center gap-1 shrink-0">
-              <FolderIcon class="w-3.5 h-3.5 text-accent shrink-0 hidden sm:inline" />
-              <select
-                v-model="localNote.folder"
-                class="bg-bgElevated border border-divider/80 rounded-lg px-2 py-1 text-xs text-textPrimary focus:outline-none focus:border-accent cursor-pointer h-8 min-h-[32px] max-w-[120px] sm:max-w-[160px] truncate"
-                title="Pasta da nota"
-                @change="onInput"
-                data-testid="select-folder"
-              >
-                <option :value="null">Sem pasta</option>
-                <option v-for="f in folders" :key="f" :value="f">📁 {{ f }}</option>
-              </select>
-            </div>
-
-            <!-- Separador Vertical -->
-            <div class="h-4 w-px bg-divider/80 mx-0.5 shrink-0"></div>
-
-            <!-- Botão e Popover de Tags -->
+            <!-- Botão e Popover de Tags (Taxonomia unificada: pastas e tags são a mesma entidade) -->
             <div class="relative inline-block shrink-0">
               <button
                 type="button"
-                class="px-2.5 h-8 rounded-lg bg-bgElevated hover:bg-bgSurface text-xs text-textSecondary hover:text-textPrimary border border-divider/80 flex items-center gap-1.5 cursor-pointer shrink-0 transition-colors"
+                class="px-2.5 h-8 rounded-lg bg-bgElevated hover:bg-bgSurface text-xs text-textSecondary hover:text-textPrimary border border-divider/80 flex items-center gap-1.5 cursor-pointer shrink-0 transition-colors max-w-[160px] sm:max-w-[200px]"
                 :class="{ 'border-accent/60 text-accent font-semibold': isTagsPopoverOpen || (localNote.tags && localNote.tags.length > 0) }"
                 title="Gerenciar tags da nota"
                 @click="isTagsPopoverOpen = !isTagsPopoverOpen"
                 data-testid="btn-toggle-tags"
               >
                 <TagIcon class="w-3.5 h-3.5 text-accent shrink-0" />
-                <span>Tags</span>
+                <span class="truncate">
+                  {{ tagsButtonLabel }}
+                </span>
                 <span
-                  v-if="localNote.tags && localNote.tags.length > 0"
-                  class="px-1.5 py-0.2 rounded-full bg-accent/20 text-accent text-[10px] font-bold"
+                  v-if="localNote.tags && localNote.tags.length > 1"
+                  class="px-1.5 py-0.2 rounded-full bg-accent/20 text-accent text-[10px] font-bold shrink-0"
                 >
-                  {{ localNote.tags.length }}
+                  +{{ localNote.tags.length - 1 }}
                 </span>
               </button>
 
@@ -146,6 +130,26 @@
                   </span>
                 </div>
 
+                <!-- Tags Existentes Sugeridas para Seleção Rápida -->
+                <div v-if="suggestedTags.length > 0" class="flex flex-col gap-1.5 pt-1.5 border-t border-divider/60">
+                  <span class="text-[10px] text-textSecondary uppercase tracking-wider font-semibold">
+                    Tags existentes
+                  </span>
+                  <div class="flex flex-wrap gap-1 max-h-24 overflow-y-auto custom-scrollbar">
+                    <button
+                      v-for="st in suggestedTags"
+                      :key="st"
+                      type="button"
+                      class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-bgElevated hover:bg-accent/20 text-textSecondary hover:text-accent text-[11px] border border-divider hover:border-accent/30 transition-colors cursor-pointer"
+                      :title="`Adicionar tag #${st}`"
+                      @click="addTag(st)"
+                    >
+                      <span class="text-accent font-bold">+</span>
+                      <span>#{{ st }}</span>
+                    </button>
+                  </div>
+                </div>
+
                 <!-- Adicionar Nova Tag -->
                 <div class="flex items-center gap-1.5 pt-1 border-t border-divider/60">
                   <input
@@ -153,14 +157,14 @@
                     type="text"
                     placeholder="Nova tag (Enter ou vírgula)..."
                     class="flex-1 px-2.5 py-1 text-xs bg-bgSurface border border-divider rounded-lg text-textPrimary placeholder:text-textSecondary/50 focus:outline-none focus:border-accent"
-                    @keydown.enter.prevent="addTag"
+                    @keydown.enter.prevent="addTag()"
                     @keydown="handleTagKeyDown"
                     data-testid="input-new-tag"
                   />
                   <button
                     type="button"
                     class="px-2.5 py-1 text-xs rounded-lg bg-accent/20 hover:bg-accent text-accent hover:text-white font-medium transition-colors cursor-pointer"
-                    @click="addTag"
+                    @click="addTag()"
                   >
                     + Add
                   </button>
@@ -569,8 +573,11 @@
                       {{ n.title || 'Nota Sem Título' }}
                     </span>
                   </div>
-                  <div class="text-[11px] text-textSecondary/70 mt-0.5 truncate">
-                    {{ n.folder ? `📁 ${n.folder}` : 'Sem pasta' }}
+                  <div class="text-[11px] text-textSecondary/70 mt-0.5 truncate flex items-center gap-1">
+                    <TagIcon class="w-2.5 h-2.5 text-accent shrink-0" />
+                    <span class="truncate">
+                      {{ (n.tags && n.tags.length > 0) ? n.tags.map(t => '#' + t).join(' ') : (n.folder ? '#' + n.folder : 'Sem tags') }}
+                    </span>
                   </div>
                 </div>
 
@@ -829,10 +836,36 @@ const normalizeInitialTitle = (t?: string) => {
   return clean
 }
 
+const initNoteTags = (note: NoteItem): string[] => {
+  const tags = Array.isArray(note.tags) ? [...note.tags] : []
+  if (note.folder && typeof note.folder === 'string' && note.folder.trim()) {
+    const fTag = note.folder.trim()
+    if (!tags.includes(fTag)) {
+      tags.push(fTag)
+    }
+  }
+  return tags
+}
+
+const initialTags = initNoteTags(props.note)
 const localNote = ref<NoteItem>({
   ...props.note,
   title: normalizeInitialTitle(props.note.title),
-  tags: Array.isArray(props.note.tags) ? [...props.note.tags] : []
+  tags: initialTags,
+  folder: props.note.folder || initialTags[0] || null
+})
+
+const tagsButtonLabel = computed(() => {
+  if (!localNote.value.tags || localNote.value.tags.length === 0) {
+    return 'Tags'
+  }
+  return `#${localNote.value.tags[0]}`
+})
+
+const suggestedTags = computed(() => {
+  const currentTags = new Set((localNote.value.tags || []).map((t) => t.trim().toLowerCase()))
+  const list = props.folders || []
+  return list.filter((f) => f && f.trim() && !currentTags.has(f.trim().toLowerCase()))
 })
 
 const milkdownRef = ref<any>(null)
@@ -898,10 +931,12 @@ function handleAnnotationCreated(created: AnnotationItem) {
 watch(
   () => props.note,
   (newVal) => {
+    const mergedTags = initNoteTags(newVal)
     localNote.value = {
       ...newVal,
       title: normalizeInitialTitle(newVal.title),
-      tags: Array.isArray(newVal.tags) ? [...newVal.tags] : []
+      tags: mergedTags,
+      folder: newVal.folder || mergedTags[0] || null
     }
   },
   { deep: true }
@@ -925,14 +960,18 @@ const onInput = () => {
   emit('save', localNote.value)
 }
 
-const addTag = () => {
-  const clean = newTagInput.value.trim().replace(/^#/, '')
+const addTag = (tagToAdd?: string) => {
+  const raw = tagToAdd !== undefined ? tagToAdd : newTagInput.value
+  const clean = (raw || '').trim().replace(/^#/, '')
   if (!localNote.value.tags) localNote.value.tags = []
   if (clean && !localNote.value.tags.includes(clean)) {
     localNote.value.tags.push(clean)
+    localNote.value.folder = localNote.value.tags[0] || null
     onInput()
   }
-  newTagInput.value = ''
+  if (tagToAdd === undefined) {
+    newTagInput.value = ''
+  }
 }
 
 const handleTagKeyDown = (e: KeyboardEvent) => {
@@ -945,6 +984,7 @@ const handleTagKeyDown = (e: KeyboardEvent) => {
 const removeTag = (idx: number) => {
   if (!localNote.value.tags) return
   localNote.value.tags.splice(idx, 1)
+  localNote.value.folder = localNote.value.tags[0] || null
   onInput()
 }
 

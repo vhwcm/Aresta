@@ -1,6 +1,10 @@
 ## 🔄 Em Andamento
+- [02/10/2026 09:41] [Fazendo] Mover seletor de tema da barra lateral para a página de conta e transformar busca em barra completa abaixo do cabeçalho superior e acima da navegação
+- [02/10/2026 09:37] [Fazendo] Abrir imediatamente a tela do editor de notas ao criar nova nota na barra lateral ou no espaço unificado
 
 ## ✅ Concluído
+- [02/10/2026 09:38] [Concluído] Unificar pastas e tags na barra de ferramentas do editor de notas exibindo exclusivamente tags com seleção rápida e sincronização automática
+- [02/10/2026 09:36] [Concluído] Posicionar ícone de enviar feedbacks entre a lupa e a conta no cabeçalho da barra lateral com abertura do FeedbackCanvas e composable useFeedbackModal
 - [02/10/2026 09:34] [Concluído] Remover seção de criação de anotação solta da gaveta lateral de anotações do livro (BookAnnotationsDrawer)
 - [02/10/2026 09:31] [Concluído] Remover efeito de blur e desfoques no popup e modais de ofensiva, ancorar abertura à esquerda da sidebar sem corte de tela e definir diretriz de design minimalista sem blur no DESIGN_SYSTEM.md
 - [02/10/2026 09:28] [Concluído] Adicionar opção "Mostrar Capa" ao lado de Continuar Leitura na gaveta de anotações do livro com visualizador imersivo em tela cheia centralizado e fundo preto

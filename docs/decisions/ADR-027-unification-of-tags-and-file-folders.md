@@ -25,6 +25,10 @@ Unificar integralmente as entidades de **Pastas** e **Tags** sob o modelo concei
    - A antiga seção segregada de "Filtro por Tags" foi removida.
 7. **Migração Transparente**:
    - Uma rotina idempotente (`runFolderToTagsMigration`) mescla automaticamente qualquer valor existente em `folder` no array `tags` de cada entidade.
+8. **Barra de Ferramentas do Editor de Notas Unificada**:
+   - Remoção definitiva do seletor isolado de pasta (`📁 Sem pasta / 📁 <pasta>`) da toolbar do NoteEditorPane.
+   - Exibição exclusiva do controle de Tags (`🏷️ #tag` ou `🏷️ Tags (+N)`), com popover contendo tags ativas, chips de tags existentes do workspace para adição rápida em 1 clique e input para novas tags.
+   - Migração automática de qualquer valor legado em `note.folder` para `note.tags` na inicialização do editor e sincronização bidirecional transparente.
 
 ---
 
