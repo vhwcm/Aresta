@@ -2,6 +2,7 @@
 - [02/10/2026 15:16] [Fazendo] Fixar barra de ferramentas do desenho sempre no topo (mobile e desktop), simplificar cabeçalho superior para ícones exclusivos e implementar seletor com 2 slots de cores e paleta em blocos
 
 ## ✅ Concluído
+- [02/10/2026 19:17] [Concluído] Corrigir layout da leitura: barra superior com voltar e zen mode acima do livro, eliminar sobreposição do canvas, anotações na linha inferior e centralizar horizontalmente
 - [02/10/2026 15:28] [Concluído] Implementar ferramentas de caneta e borracha nos quadros com renderização vetorial e persistência de traços
 - [02/10/2026 15:26] [Concluído] Unificar barra de leitura em barra única inferior com capa 100% de altura, título editorial, configurações, marcadores, porcentagem lida e setas discretas para zen mode
 - [02/10/2026 15:16] [Concluído] Corrigir sincronização da ofensiva (reading streak) na nuvem com reconciliação CRDT, revalidação reativa e proteção de timestamp local

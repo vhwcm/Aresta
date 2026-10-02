@@ -253,7 +253,7 @@ describe('Reader Components', () => {
       expect(store.readerWidthMode).toBe('centered')
     })
 
-    it('adota barra unificada sempre inferior ocupando 20% da altura', () => {
+    it('adota barra unificada sempre inferior ocupando 20% da altura sem sobrepor o livro', () => {
       const wrapper = mount(ReaderBottomBar, {
         props: { isNotesActive: false },
       })
@@ -261,8 +261,7 @@ describe('Reader Components', () => {
       const footer = wrapper.find('footer')
       expect(footer.exists()).toBe(true)
       expect(footer.classes()).toContain('reader-unified-bottom-bar')
-      expect(footer.classes()).toContain('fixed')
-      expect(footer.classes()).toContain('bottom-0')
+      expect(footer.classes()).toContain('shrink-0')
       expect(footer.classes()).toContain('w-full')
     })
 
@@ -354,13 +353,30 @@ describe('Reader Components', () => {
       expect(localStorage.getItem('aresta_reader_theme')).toBe('sepia')
     })
 
-    it('alterna Modo Zen ao clicar no botão Zen', async () => {
+    it('alterna Modo Zen e voltar na barra superior acima do livro', async () => {
       const store = useReaderStore()
       expect(store.isZenMode).toBe(false)
 
-      const wrapper = mount(ReaderBottomBar, {
-        props: { isGraphActive: false },
+      const wrapper = mount(ReaderViewer, {
+        global: {
+          stubs: {
+            ReaderEnginePageCurlCanvas: true,
+            ReaderBookNotesPanel: true,
+            ReaderGraphPanel: true,
+            ReaderBottomBar: true,
+            ReaderSavedPagesModal: true,
+            ReaderAnnotationModal: true,
+            ReaderAnnotationDrawer: true,
+            ReaderTypographyPopover: true,
+            ReaderSelectionTooltip: true,
+            ReaderDictionaryCard: true,
+          },
+        },
       })
+
+      // Barra superior deve existir acima do livro
+      const topBar = wrapper.find('.reader-viewer__top-bar')
+      expect(topBar.exists()).toBe(true)
 
       const zenBtn = wrapper.find('#btn-zen-mode')
       expect(zenBtn.exists()).toBe(true)

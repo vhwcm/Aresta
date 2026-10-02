@@ -246,32 +246,44 @@ O leitor oferece alternância de largura para documentos EPUB via `store.readerW
 
 ---
 
-## 7. Barra Unificada Inferior de Leitura (`ReaderBottomBar.vue`)
+## 7. Barra Unificada Inferior e Topo do Leitor (`Viewer.vue` & `ReaderBottomBar.vue`)
 
-A barra de controle do leitor é unificada e posicionada permanentemente na base da interface (mobile, tablet e desktop), eliminando a fragmentação entre sidebar lateral em landscape e footer em portrait:
+A barra de controle do leitor é unificada e posicionada permanentemente na base da interface (mobile, tablet e desktop) dentro do fluxo flexbox vertical sem sobreposição, com cabeçalho minimalista no topo:
 
 ```text
 ================================================================================
-ARQUITETURA DA BARRA UNIFICADA INFERIOR (20DVH)
+ARQUITETURA DA INTERFACE DO LEITOR (FLUXO VERTICAL SEM SOBREPOSIÇÃO)
 ================================================================================
 ┌──────────────────────────────────────────────────────────────────────────────┐
-│  ← Voltar                                                          ▲ Zen     │
-├──────────────┬───────────────────────────────────────────┬───────────────────┤
-│              │  Título do Livro (Newsreader)             │  ✏️ Anotação Solta │
-│  Capa do     ├───────────────────────────────────────────┤                   │
-│  Livro (100% │  ⚙️ Configurações   🔖 Marcador   Pág. X/Y │  📄 Ver Anotações │
-│  da barra)   │  (Fundo, modo, fonte, foco, marcadores)   │                   │
-└──────────────┴───────────────────────────────────────────┴───────────────────┘
+│  ← Voltar (Topo da Tela)                                           ▲/▼ Zen   │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│                               ÁREA DO LIVRO                                  │
+│                       (PageCurl / Scroll Engine)                             │
+│                  - Altura dinâmica desobstruída (~80%)                       │
+│                                                                              │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                BARRA INFERIOR UNIFICADA (20DVH CENTRALIZADA)                 │
+│                                                                              │
+│       ┌──────────────┬────────────────────────────────────────────────┐      │
+│       │              │  Título do Livro (Newsreader)                  │      │
+│       │  Capa do     ├────────────────────────────────────────────────┤      │
+│       │  Livro (100% │  ✏️ Nota  📄 Ver Notas  ⚙️ Configs  🔖  Pág. X │      │
+│       │  da barra)   │  (Anotações na base | Flat sem caixinhas)      │      │
+│       └──────────────┴────────────────────────────────────────────────┘      │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
 ================================================================================
 ```
 
 ### Características e Diretrizes:
-1. **Verticalidade Fixa**: Ocupa estritamente 20% da altura da viewport (`height: 20dvh`), reservando 80% do espaço útil da tela para a leitura do livro.
-2. **Capa Integral**: A capa do livro ocupa 100% da altura disponível da barra (`h-full`, aspect ratio 2:3).
-3. **Design Flat sem Caixinhas**: Os controles utilizam ícones diretos e minimalistas, sem caixas com bordas pesadas ou fundos contrastantes.
-4. **Zen Mode Minimalista**: Alternância com setas discretas (sem texto explicativo). Quando em Zen Mode, a barra recolhe suavemente e o livro ocupa 100% da tela.
-5. **Anotações Ergonomicamente Ancoradas**: Coluna lateral esquerda com criação de anotação solta no topo e visualizador de anotações na base.
-6. **Progresso de Leitura**: Exibição da quantidade total de páginas com percentual lido formatado (`Pág. X/Y (Z%)`).
+1. **Controles Superiores no Topo da Tela**: A barra superior com voltar (`ArrowLeftIcon`) e alternância de Zen Mode (`ChevronDownIcon`/`ChevronUpIcon`) fica no topo do leitor, acima do livro, exclusivamente com setas (sem texto escrito).
+2. **Fluxo Vertical sem Sobreposição**: O container `.reader-viewer__reader-pane` mantém `flex-direction: column` permanente e a barra inferior atua como elemento `shrink-0` no fluxo (sem `fixed bottom-0` flutuante). O canvas do livro recebe todo o espaço intermediário sem sofrer corte ou sobreposição.
+3. **Centralização Horizontal**: Todo o conjunto da barra inferior (capa 100% da altura + bloco textual e controles) fica agrupado e centralizado horizontalmente no centro da tela (`max-w-2xl sm:max-w-3xl mx-auto`).
+4. **Capa Integral**: A capa do livro ocupa 100% da altura da barra inferior (`h-full`, aspect ratio 2:3).
+5. **Anotações na Linha Inferior**: Os botões de anotação solta (`HighlighterIcon`) e ver notas do livro (`FileTextIcon`) ficam alinhados na metade de baixo junto com Configuração, Marcador e Progresso.
+6. **Design Flat sem Caixinhas**: Todos os botões são planos, transparentes com hover delicado, preservando a identidade editorial do design system.
+7. **Progresso de Leitura**: Exibição contínua de páginas e percentual lido formatado (`Pág. X/Y (Z%)`).
 
 
 

@@ -13,6 +13,40 @@
         :class="store.isNotesOpen && !store.isZenMode ? 'reader-viewer__reader-pane--with-notes' : 'reader-viewer__reader-pane--full'"
         :style="{ backgroundColor: themeBgColor }"
       >
+        <!-- Barra de Ferramentas Superior Discreta (Voltar e Zen Mode - sem texto, só setinhas) -->
+        <header
+          class="reader-viewer__top-bar"
+          :class="{
+            'reader-viewer__top-bar--zen': store.isZenMode,
+            'reader-viewer__top-bar--sepia': activeTheme === 'sepia',
+            'reader-viewer__top-bar--white': activeTheme === 'white',
+            'reader-viewer__top-bar--black': activeTheme === 'black'
+          }"
+        >
+          <!-- Seta Voltar (Sair da Leitura) -->
+          <button
+            @click="handleClose"
+            class="reader-viewer__top-btn"
+            title="Voltar à biblioteca"
+            aria-label="Voltar à biblioteca"
+            id="btn-close-book"
+          >
+            <ArrowLeftIcon class="w-4 h-4" />
+          </button>
+
+          <!-- Seta Zen Mode (Entrar / Sair do Zen Mode - sem texto, só setinhas) -->
+          <button
+            @click="handleToggleZenMode"
+            class="reader-viewer__top-btn"
+            :title="store.isZenMode ? 'Sair do Modo Zen' : 'Entrar no Modo Zen'"
+            :aria-label="store.isZenMode ? 'Sair do Modo Zen' : 'Entrar no Modo Zen'"
+            id="btn-zen-mode"
+          >
+            <ChevronDownIcon v-if="!store.isZenMode" class="w-4 h-4" />
+            <ChevronUpIcon v-else class="w-4 h-4" />
+          </button>
+        </header>
+
         <!-- Coluna de Leitura -->
         <div class="reader-viewer__content-column" :style="{ backgroundColor: themeBgColor }">
           <!-- Área do Livro / Stage -->
@@ -127,27 +161,6 @@
       </transition>
     </div>
 
-    <!-- Setas bem pequenas no topo durante o Modo Zen (Voltar e Sair do Zen Mode - sem texto, só setinhas) -->
-    <div v-if="store.isZenMode" class="reader-viewer__zen-minimal-bar">
-      <button
-        @click="handleClose"
-        class="reader-viewer__zen-arrow-btn"
-        title="Voltar à biblioteca"
-        aria-label="Voltar à biblioteca"
-      >
-        <ArrowLeftIcon class="w-3.5 h-3.5" />
-      </button>
-
-      <button
-        @click="exitZenMode"
-        class="reader-viewer__zen-arrow-btn"
-        title="Sair do Modo Zen"
-        aria-label="Sair do Modo Zen"
-      >
-        <ChevronUpIcon class="w-3.5 h-3.5" />
-      </button>
-    </div>
-
     <!-- Modal de Páginas Salvas (Bookmarks) -->
     <ReaderSavedPagesModal
       :is-open="isSavedPagesOpen"
@@ -229,7 +242,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { ArrowLeftIcon, ChevronUpIcon, ChevronLeftIcon, ChevronRightIcon } from 'lucide-vue-next'
+import { ArrowLeftIcon, ChevronUpIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from 'lucide-vue-next'
 import { useReaderStore } from '~/stores/readerStore'
 import { useReaderTypography } from '~/composables/useReaderTypography'
 import { useAnnotations } from '~/composables/useAnnotations'
@@ -384,9 +397,9 @@ const isTransitioning = ref(false)
 
 function handleClose() {
   store.reset()
-  if (typeof window !== 'undefined' && window.history.state?.back) {
+  if (router?.back && typeof window !== 'undefined' && window.history.state?.back) {
     router.back()
-  } else if (typeof window !== 'undefined' && window.history.length > 1) {
+  } else if (router?.back && typeof window !== 'undefined' && window.history.length > 1) {
     router.back()
   } else if (router?.push) {
     router.push('/library')
@@ -403,6 +416,14 @@ function exitZenMode() {
   }
   if (typeof window !== 'undefined' && window.history.state?.arestaZenMode) {
     window.history.back()
+  }
+}
+
+function handleToggleZenMode() {
+  if (store.isZenMode) {
+    exitZenMode()
+  } else {
+    store.toggleZenMode()
   }
 }
 
@@ -1072,17 +1093,66 @@ onUnmounted(() => {
 
 .reader-viewer__reader-pane {
   display: flex;
-  flex-direction: column;
+  flex-direction: column !important;
   height: 100%;
   min-width: 0;
   position: relative;
   transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1), flex 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@media (orientation: landscape) {
-  .reader-viewer__reader-pane {
-    flex-direction: row;
-  }
+.reader-viewer__top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 2.25rem;
+  padding: 0 0.85rem;
+  flex-shrink: 0;
+  z-index: 30;
+  background-color: transparent;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
+}
+
+.reader-viewer__top-bar--zen {
+  background: transparent !important;
+}
+
+.reader-viewer__top-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  color: inherit;
+  opacity: 0.65;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+}
+
+.reader-viewer__top-btn:hover {
+  opacity: 1;
+  color: var(--color-accent, #E57B55);
+  background: rgba(229, 123, 85, 0.12);
+  transform: scale(1.06);
+}
+
+.reader-viewer__top-btn:active {
+  transform: scale(0.92);
+}
+
+.reader-viewer--theme-sepia .reader-viewer__top-bar {
+  color: #3e3328;
+}
+
+.reader-viewer--theme-white .reader-viewer__top-bar {
+  color: #1a1a1a;
+}
+
+.reader-viewer--theme-black .reader-viewer__top-bar {
+  color: #e4e4e7;
 }
 
 .reader-viewer__reader-pane--half {
@@ -1289,43 +1359,6 @@ onUnmounted(() => {
   color: var(--color-accent, #E57B55);
 }
 
-.reader-viewer__zen-minimal-bar {
-  position: absolute;
-  top: 0.75rem;
-  left: 0.75rem;
-  right: 0.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  pointer-events: none;
-  z-index: 40;
-}
-
-.reader-viewer__zen-arrow-btn {
-  pointer-events: auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 9999px;
-  background: rgba(18, 18, 24, 0.4);
-  color: rgba(255, 255, 255, 0.7);
-  transition: all 0.2s ease;
-  cursor: pointer;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.reader-viewer__zen-arrow-btn:hover {
-  background: rgba(229, 123, 85, 0.25);
-  color: var(--color-accent, #E57B55);
-  border-color: rgba(229, 123, 85, 0.4);
-  transform: scale(1.08);
-}
-
-.reader-viewer__zen-arrow-btn:active {
-  transform: scale(0.92);
-}
 
 .fade-enter-active,
 .fade-leave-active {
