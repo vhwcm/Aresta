@@ -16,18 +16,18 @@
 
     <!-- Container Centralizado Horizontalmente com Capa e Informações -->
     <div class="h-full w-full max-w-xl sm:max-w-2xl md:max-w-3xl flex items-stretch justify-start sm:justify-center overflow-hidden">
-      <!-- 1. Capa do Livro (Ocupa 100% da altura da barra, preservando proporção natural da capa sem cortes) -->
-      <div class="h-full shrink-0 flex items-center justify-center overflow-hidden bg-black/5 dark:bg-white/5 border-r border-divider/20 select-none p-1">
+      <!-- 1. Capa do Livro (Ocupa 100% da altura da barra, pontas levemente arredondadas e sem sombras laterais) -->
+      <div class="h-full shrink-0 flex items-center justify-center select-none py-1 sm:py-1.5 pl-1 sm:pl-2">
         <img
           v-if="bookCoverUrl"
           :src="bookCoverUrl"
           :alt="store.title"
-          class="h-full w-auto max-w-[130px] object-contain block drop-shadow-sm rounded-sm"
+          class="h-full w-auto max-w-[130px] object-contain block rounded-[6px]"
           :title="store.title"
         />
         <div
           v-else
-          class="h-full aspect-[2/3] flex flex-col items-center justify-center p-2 text-center bg-accent/10 text-accent font-editorial"
+          class="h-full aspect-[2/3] flex flex-col items-center justify-center p-2 text-center bg-accent/10 text-accent font-editorial rounded-[6px]"
         >
           <BookOpenIcon class="w-6 h-6 opacity-80 mb-1" />
           <span class="text-[10px] leading-tight line-clamp-2 opacity-70">{{ store.title || 'Livro' }}</span>
