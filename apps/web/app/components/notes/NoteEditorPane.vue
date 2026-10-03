@@ -1290,16 +1290,10 @@ const handleEditorClick = (event: MouseEvent) => {
     return
   }
 
-  // 5. Links Web Externos (abre popover com opções de Abrir e Criar Nó)
+  // 5. Links Web Externos — abre direto no navegador
   if (href.startsWith('http://') || href.startsWith('https://') || href.startsWith('www.') || href.startsWith('//')) {
     event.preventDefault()
-    const rect = anchor.getBoundingClientRect()
-    activeLinkPopover.value = {
-      x: rect.left,
-      y: rect.top,
-      url: href,
-      title: anchor.textContent?.trim() || cleanUrlTitle(href)
-    }
+    openExternalUrl(href.startsWith('www.') ? `https://${href}` : href)
     return
   }
 }
