@@ -1,0 +1,34 @@
+SALTO PARA POSIÇÃO (R6/R8)
+==========================
+
+ Slider(pointerup) │ TOC click │ "Ir para" │ Chip Voltar │ Anotação
+        └──────────┴─────┬─────┴───────────┴────────────┘
+                         ▼
+          useReadingNavigation.goToPosition(pos)
+                         │ push(posAtual) → histórico (chip)
+                         ▼
+               ┌───────────────────┐
+               │ pos.kind ?        │
+               └───┬───────────┬───┘
+            epub   │           │  pdf
+                   ▼           ▼
+ ┌─────────────────────────┐  ┌─────────────────────────────┐
+ │ seção carregada? senão  │  │ slot(page) top = Σ alturas  │
+ │ lazyZip → createDocument│  │ (geometria exata/estimada)  │
+ │ sectionChunker → bloco  │  │ scrollTop = top             │
+ │ do charOffset           │  │ prévia 0.2 (≤150ms)         │
+ │ monta bloco ±1          │  │ → render nítido (≤400ms)    │
+ │ Range(offset).rect      │  │ textLayer após scroll parar │
+ │ scrollTop exato         │  └──────────────┬──────────────┘
+ └────────────┬────────────┘                 │
+              └───────────────┬──────────────┘
+                              ▼
+           isScrollingProgrammatically = true (baseline mudo)
+                              │
+                              ▼
+     ResizeObserver: blocos/slots acima mudam de altura
+     → anchorCompensation: scrollTop += Δ (mesmo frame)
+                              │
+                              ▼
+     store.position = pos → persistProgress (debounce 1s)
+     bookRepo { readingPosition: 'epub:s:o'|'page:N', currentPage }

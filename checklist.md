@@ -1,6 +1,19 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [03/10/2026 17:33] [Concluído] Planejar (grill-me) scroll eficiente, salto para página e navegação por capítulos (PDF/EPUB) com carregamento progressivo em blocos — spec em specs/active/reader-locations-navigation
+- [03/10/2026 17:18] [Concluído] Garantir retorno direto ao Grafo de Conhecimento ao clicar em voltar na nota e eliminar estado vazio intermediário
+- [03/10/2026 17:10] [Concluído] Posicionar título editável no topo entre os botões de voltar e excluir com foco automático ao criar nota
+- [03/10/2026 15:50] [Concluído] Transformar o botão de voltar no cabeçalho da nota em botão exclusivamente de ícone (icon-only)
+- [03/10/2026 15:47] [Concluído] Transformar o botão de excluir no topo da nota em botão exclusivamente de ícone (icon-only)
+- [03/10/2026 15:46] [Concluído] Separar cabeçalho da nota em linha superior dedicada com Voltar e Excluir acima da barra de formatação
+- [03/10/2026 15:45] [Concluído] Consolidar Voltar e Excluir exclusivamente na barra superior (em cima) eliminando linha duplicada de botões abaixo da barra
+- [03/10/2026 15:43] [Concluído] Transformar botões de Tags e Vincular em botões exclusivamente de ícone (icon-only) na barra de ferramentas de notas
+- [03/10/2026 15:41] [Concluído] Posicionar botões de voltar e excluir diretamente no topo da nota em si com ações simétricas e layout Obsidian
+- [03/10/2026 15:40] [Concluído] Melhorar formatação e responsividade dos flashcards no mobile com contenção de overflow, padding adaptativo e scroll interno suave
+- [03/10/2026 15:40] [Concluído] Implementar sistema unificado de diálogo e pop-up próprio do Aresta (ArestaDialog/useArestaDialog) com logo oficial e substituir todos os alerts e confirms nativos do navegador
+
+- [03/10/2026 15:37] [Concluído] Implementar botão universal de voltar (AppBackButton) na tela e editor de notas com retorno ao espaço unificado e preservação de alterações
 - [03/10/2026 15:35] [Concluído] Configurar abertura de PDFs no modo scroll por padrão preservando preferências salvas por livro e modo paginado para EPUBs
 - [03/10/2026 15:26] [Concluído] Prevenir seleção acidental de texto e exibição indevida do menu de seleção ao clicar duas vezes na ponta da tela ou margens para folhear
 - [03/10/2026 15:16] [Concluído] Liberar porta 3001 ocupada por processo zumbi e eliminar importação duplicada de GraphThemeRecord no Nuxt

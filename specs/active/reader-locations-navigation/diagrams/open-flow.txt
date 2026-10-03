@@ -1,0 +1,43 @@
+ABERTURA PROGRESSIVA (R3/R5) — caminho crítico vs. background
+=================================================================
+
+ ArrayBuffer (IndexedDB bookCache)
+        │
+        ▼
+ ┌──────────────────────────┐        ┌───────────────────────────────┐
+ │ EPUB: lazyZip.open()     │        │ PDF: pdfjs.getDocument()      │
+ │  diretório central only  │        │  (worker, parse preguiçoso)   │
+ └────────────┬─────────────┘        └───────────────┬───────────────┘
+              │                                      │
+              ▼                                      ▼
+ ┌──────────────────────────┐        ┌───────────────────────────────┐
+ │ locationIndexCache(hash) │        │ pdfPageGeometry cache(hash)   │
+ │  hit → índice EXATO      │        │  hit → slots exatos           │
+ │  miss→ ESTIMADO(bytes)   │        │  miss→ ratio da pág. alvo     │
+ └────────────┬─────────────┘        └───────────────┬───────────────┘
+              │   readingPosition salvo (bookRepo)   │
+              ▼                                      ▼
+ ╔══════════════════════════╗        ╔═══════════════════════════════╗
+ ║ CRÍTICO: seção alvo + 1  ║        ║ CRÍTICO: pág. alvo + seguinte ║
+ ║ → 1ª TELA (≤300ms hit)   ║        ║ → 1ª TELA (≤250ms hit)        ║
+ ╚════════════┬═════════════╝        ╚═══════════════┬═══════════════╝
+              │                                      │
+              └──────────────┬───────────────────────┘
+                             ▼
+        ┌──────────────────────────────────────────────┐
+        │ ChunkScheduler (requestIdleCallback/deadline)│
+        │  blocos de 10, do alvo para fora:            │
+        │  [alvo±10] → [±20] → ... → fim               │
+        │  EPUB: contar chars (TreeWalker)             │
+        │  PDF : getViewport() por página              │
+        │  cede se timeRemaining() < 4ms               │
+        └──────────────────────┬───────────────────────┘
+                               │ onIndexRefined (throttle 250ms)
+                               ▼
+        ┌──────────────────────────────────────────────┐
+        │ Store/UI: total "de Y", marcas do slider,     │
+        │ alturas de placeholders (+anchorCompensation) │
+        └──────────────────────┬───────────────────────┘
+                               │ ao concluir
+                               ▼
+                   grava cache IndexedDB (exato)
