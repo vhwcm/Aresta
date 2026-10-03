@@ -1,6 +1,14 @@
 ## 🔄 Em Andamento
-
+ 
 ## ✅ Concluído
+- [03/10/2026 12:16] [Concluído] Adicionar linha divisória superior para separar o livro da parte de baixo em telas mobile e desktop
+- [03/10/2026 12:14] [Concluído] Aplicar margem de 2px na capa do livro em relação ao fundo da tela no mobile
+- [03/10/2026 12:13] [Concluído] Posicionar o popover de configurações ancorado logo acima do botão de configurações no mobile
+- [03/10/2026 12:12] [Concluído] Preservar proporção original da capa do livro no mobile com altura total e largura automática
+- [03/10/2026 12:11] [Concluído] Estender a capa do livro no leitor mobile para tocar no chão da tela e ir até o topo da barra inferior
+- [03/10/2026 12:07] [Concluído] Reduzir a espessura do traço (stroke-width) dos ícones do leitor para traço fino e elegante
+- [03/10/2026 12:06] [Concluído] Ampliar tamanho dos ícones na barra do leitor mobile/vertical reduzindo o espaço vazio entre eles
+- [03/10/2026 12:05] [Concluído] Justificar e distribuir harmonicamente o bloco de 6 ícones no leitor mobile/vertical ocupando toda a largura disponível ao lado da capa
 - [03/10/2026 12:00] [Concluído] Reestruturar sincronização de temas e conexões do grafo com CRDT LWW, IDs determinísticos, tombstones e semântica unificada
 - [03/10/2026 11:57] [Concluído] Restaurar layout horizontal no mobile com capa do livro no lado esquerdo e bloco de 6 ícones ao lado direito
 - [03/10/2026 11:53] [Concluído] Reduzir margens/padding entre botões (p-1.5, gap-1) e ampliar ícones (w-10 / w-7.5) para ficarem grandes e próximos entre si no leitor

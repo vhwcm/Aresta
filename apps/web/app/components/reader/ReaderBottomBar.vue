@@ -25,6 +25,9 @@
       </div>
     </div>
 
+    <!-- Linha Divisória Separando o Livro da Parte de Baixo no Desktop -->
+    <div class="w-[96px] sm:w-[104px] md:w-[110px] border-t select-none ml-2 sm:ml-3 shrink-0" :class="themeBorderClass"></div>
+
     <!-- Bloco de 6 Ícones Grandes e Próximos LOGO EMBAIXO da Capa (2 Colunas x 3 Linhas) -->
     <div class="grid grid-rows-3 grid-cols-2 gap-1 sm:gap-1.5 shrink-0 select-none pl-2 sm:pl-3">
       <!-- 1. Linha 1 / Col 1 (1º Ícone): Anotações do Livro -->
@@ -36,7 +39,7 @@
         aria-label="Abrir ou fechar notas do livro"
         id="btn-view-notes"
       >
-        <HighlighterIcon class="w-9 h-9 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.9]" />
+        <HighlighterIcon class="w-9 h-9 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.35]" />
       </button>
 
       <!-- 2. Linha 1 / Col 2: Configurações de Leitura (Popover de Aparência) -->
@@ -49,7 +52,7 @@
           aria-label="Configurações de leitura"
           id="btn-appearance-toggle"
         >
-          <SettingsIcon class="w-9 h-9 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.9]" />
+          <SettingsIcon class="w-9 h-9 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.35]" />
         </button>
 
         <!-- Popover Flutuante de Configurações (Abre ao lado da barra lateral no Desktop, centralizado verticalmente) -->
@@ -326,7 +329,7 @@
         aria-label="Diminuir tamanho da fonte"
         id="btn-font-decrease"
       >
-        <AArrowDownIcon class="w-9 h-9 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.9]" />
+        <AArrowDownIcon class="w-9 h-9 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.35]" />
       </button>
 
       <!-- 4. Linha 2 / Col 2: Aumentar Tamanho da Fonte (Zoom In) -->
@@ -339,7 +342,7 @@
         aria-label="Aumentar tamanho da fonte"
         id="btn-font-increase"
       >
-        <AArrowUpIcon class="w-9 h-9 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.9]" />
+        <AArrowUpIcon class="w-9 h-9 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.35]" />
       </button>
 
       <!-- 5. Linha 3 / Col 1 (Mais de baixo): Voltar à Biblioteca -->
@@ -351,7 +354,7 @@
         aria-label="Voltar à biblioteca"
         id="btn-close-book"
       >
-        <ArrowLeftIcon class="w-9 h-9 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.9]" />
+        <ArrowLeftIcon class="w-9 h-9 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.35]" />
       </button>
 
       <!-- 6. Linha 3 / Col 2 (Mais de baixo): Alternar Modo Zen -->
@@ -363,8 +366,8 @@
         :aria-label="isZenMode ? 'Sair do Modo Zen' : 'Entrar no Modo Zen'"
         id="btn-bottom-zen-mode"
       >
-        <Minimize2Icon v-if="isZenMode" class="w-9 h-9 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.9]" />
-        <Maximize2Icon v-else class="w-9 h-9 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.9]" />
+        <Minimize2Icon v-if="isZenMode" class="w-9 h-9 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.35]" />
+        <Maximize2Icon v-else class="w-9 h-9 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.35]" />
       </button>
     </div>
   </aside>
@@ -372,117 +375,118 @@
   <!-- 2. Layout Inferior no Mobile / Telas Verticais -->
   <footer
     v-else
-    class="reader-unified-bottom-bar reader-bottom-bar shrink-0 w-full select-none transition-all duration-300 flex items-center overflow-visible bg-transparent border-0 pointer-events-none"
+    class="reader-unified-bottom-bar reader-bottom-bar shrink-0 w-full select-none transition-all duration-300 flex items-center overflow-visible bg-transparent border-t pointer-events-none"
+    :class="themeBorderClass"
     role="toolbar"
     aria-label="Barra de ferramentas do leitor"
     id="reader-unified-bar"
   >
     <!-- Container Alinhado Colado na Esquerda com Capa no Lado Esquerdo e Botões ao Lado Direito -->
     <div
-      class="h-full w-full pointer-events-auto flex flex-row items-center gap-2 sm:gap-3 overflow-visible select-none py-1 sm:py-1.5"
+      class="h-full w-full pointer-events-auto flex flex-row items-stretch gap-2 sm:gap-3 overflow-visible select-none py-0"
       :style="bottomBarContainerStyle"
     >
-      <!-- 1. Capa do Livro Solta no Lado Esquerdo (100% da altura da barra) -->
+      <!-- 1. Capa do Livro com Margem de 2px do Fundo da Tela (Altura Total da Barra) -->
       <div
-        class="h-full shrink-0 flex items-center justify-start select-none"
+        class="h-full shrink-0 flex items-end justify-start select-none self-stretch pb-[2px]"
       >
         <img
           v-if="bookCoverUrl"
           :src="bookCoverUrl"
           :alt="store.title"
-          class="h-full w-auto max-w-[85px] sm:max-w-[95px] object-contain block rounded-[6px] shadow-sm"
+          class="h-full w-auto object-contain object-bottom block rounded-[6px] shadow-md"
           :title="store.title"
         />
         <div
           v-else
-          class="h-full aspect-[2/3] flex flex-col items-center justify-center p-2 text-center bg-accent/10 text-accent font-editorial rounded-[6px] shadow-sm"
+          class="h-full aspect-[2/3] flex flex-col items-center justify-center p-2 text-center bg-accent/10 text-accent font-editorial rounded-[6px] shadow-md"
         >
           <BookOpenIcon class="w-6 h-6 opacity-80" />
         </div>
       </div>
 
-      <!-- 2. Bloco Harmonioso de 6 Ícones Soltos (Ao Lado Direito da Capa) -->
-      <div class="grid grid-rows-2 grid-cols-3 gap-1 shrink-0 select-none">
+      <!-- 2. Bloco Harmonioso de 6 Ícones Justificados (Ao Lado Direito da Capa) -->
+      <div class="grid grid-rows-2 grid-cols-3 flex-1 min-w-0 w-full h-full gap-0.5 sm:gap-1 select-none items-center justify-items-stretch py-1.5 sm:py-2">
         <!-- 1. Linha Superior / Col 1: Voltar à Biblioteca -->
         <button
           @click="$emit('close')"
-          class="p-1.5 sm:p-2 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
+          class="w-full h-full min-h-[46px] max-h-[54px] p-1 sm:p-1.5 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
           :class="themeButtonClass"
           title="Voltar à biblioteca"
           aria-label="Voltar à biblioteca"
           id="btn-close-book"
         >
-          <ArrowLeftIcon class="w-7 h-7 sm:w-7.5 sm:h-7.5 stroke-[1.85]" />
+          <ArrowLeftIcon class="w-9 h-9 sm:w-10 sm:h-10 md:w-10.5 md:h-10.5 stroke-[1.35]" />
         </button>
 
         <!-- 2. Linha Superior / Col 2: Diminuir Tamanho da Fonte (Zoom Out) -->
         <button
           @click="store.decreaseFontSize(2)"
           :disabled="(store.fontSize || 15) <= 12"
-          class="p-1.5 sm:p-2 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer disabled:opacity-30 disabled:pointer-events-none"
+          class="w-full h-full min-h-[46px] max-h-[54px] p-1 sm:p-1.5 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer disabled:opacity-30 disabled:pointer-events-none"
           :class="themeButtonClass"
           :title="'Diminuir tamanho da fonte (' + (store.fontSize || 15) + 'px)'"
           aria-label="Diminuir tamanho da fonte"
           id="btn-font-decrease"
         >
-          <AArrowDownIcon class="w-7 h-7 sm:w-7.5 sm:h-7.5 stroke-[1.85]" />
+          <AArrowDownIcon class="w-9 h-9 sm:w-10 sm:h-10 md:w-10.5 md:h-10.5 stroke-[1.35]" />
         </button>
 
         <!-- 3. Linha Superior / Col 3: Aumentar Tamanho da Fonte (Zoom In) -->
         <button
           @click="store.increaseFontSize(2)"
           :disabled="(store.fontSize || 15) >= 36"
-          class="p-1.5 sm:p-2 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer disabled:opacity-30 disabled:pointer-events-none"
+          class="w-full h-full min-h-[46px] max-h-[54px] p-1 sm:p-1.5 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer disabled:opacity-30 disabled:pointer-events-none"
           :class="themeButtonClass"
           :title="'Aumentar tamanho da fonte (' + (store.fontSize || 15) + 'px)'"
           aria-label="Aumentar tamanho da fonte"
           id="btn-font-increase"
         >
-          <AArrowUpIcon class="w-7 h-7 sm:w-7.5 sm:h-7.5 stroke-[1.85]" />
+          <AArrowUpIcon class="w-9 h-9 sm:w-10 sm:h-10 md:w-10.5 md:h-10.5 stroke-[1.35]" />
         </button>
 
         <!-- 4. Linha Inferior / Col 1: Alternar Modo Zen -->
         <button
           @click="$emit('toggleZenMode')"
-          class="p-1.5 sm:p-2 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
+          class="w-full h-full min-h-[46px] max-h-[54px] p-1 sm:p-1.5 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
           :class="isZenMode ? 'text-accent font-bold bg-accent/15 ring-1 ring-accent/30' : themeButtonClass"
           :title="isZenMode ? 'Sair do Modo Zen' : 'Entrar no Modo Zen'"
           :aria-label="isZenMode ? 'Sair do Modo Zen' : 'Entrar no Modo Zen'"
           id="btn-bottom-zen-mode"
         >
-          <Minimize2Icon v-if="isZenMode" class="w-7 h-7 sm:w-7.5 sm:h-7.5 stroke-[1.85]" />
-          <Maximize2Icon v-else class="w-7 h-7 sm:w-7.5 sm:h-7.5 stroke-[1.85]" />
+          <Minimize2Icon v-if="isZenMode" class="w-9 h-9 sm:w-10 sm:h-10 md:w-10.5 md:h-10.5 stroke-[1.35]" />
+          <Maximize2Icon v-else class="w-9 h-9 sm:w-10 sm:h-10 md:w-10.5 md:h-10.5 stroke-[1.35]" />
         </button>
 
         <!-- 5. Linha Inferior / Col 2: Anotações do Livro -->
         <button
           @click="handleToggleNotes"
-          class="p-1.5 sm:p-2 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
+          class="w-full h-full min-h-[46px] max-h-[54px] p-1 sm:p-1.5 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
           :class="isNotesActiveComputed ? 'text-accent font-bold bg-accent/15 ring-1 ring-accent/30' : themeButtonClass"
           :title="isNotesActiveComputed ? 'Ocultar anotações do livro' : 'Abrir anotações e reflexões deste livro'"
           aria-label="Abrir ou fechar notas do livro"
           id="btn-view-notes"
         >
-          <HighlighterIcon class="w-7 h-7 sm:w-7.5 sm:h-7.5 stroke-[1.85]" />
+          <HighlighterIcon class="w-9 h-9 sm:w-10 sm:h-10 md:w-10.5 md:h-10.5 stroke-[1.35]" />
         </button>
 
         <!-- 6. Linha Inferior / Col 3: Configurações de Leitura -->
-        <div class="relative flex items-center justify-center" ref="appearanceWrapperRef">
+        <div class="relative flex items-center justify-center w-full h-full" ref="appearanceWrapperRef">
           <button
             @click="isAppearancePopoverOpen = !isAppearancePopoverOpen"
-            class="p-1.5 sm:p-2 rounded-xl transition-all duration-200 active:scale-90 relative flex items-center justify-center cursor-pointer"
+            class="w-full h-full min-h-[46px] max-h-[54px] p-1 sm:p-1.5 rounded-xl transition-all duration-200 active:scale-90 relative flex items-center justify-center cursor-pointer"
             :class="isAppearancePopoverOpen ? 'text-accent bg-accent/15 ring-1 ring-accent/30' : themeButtonClass"
             title="Configurações de leitura, páginas e modos"
             aria-label="Configurações de leitura"
             id="btn-appearance-toggle"
           >
-            <SettingsIcon class="w-7 h-7 sm:w-7.5 sm:h-7.5 stroke-[1.85]" />
+            <SettingsIcon class="w-9 h-9 sm:w-10 sm:h-10 md:w-10.5 md:h-10.5 stroke-[1.35]" />
           </button>
 
-          <!-- Popover Flutuante de Configurações (Abre acima da barra centralizado no mobile) -->
+          <!-- Popover Flutuante de Configurações (Abre logo acima do botão no mobile) -->
           <div
             v-if="isAppearancePopoverOpen"
-            class="fixed bottom-[22dvh] left-1/2 -translate-x-1/2 sm:left-4 sm:translate-x-0 w-[92vw] max-w-[340px] rounded-2xl p-4 shadow-2xl z-50 flex flex-col gap-3.5 max-h-[75vh] overflow-y-auto border animate-fadeIn"
+            class="absolute bottom-full mb-2 right-0 w-[88vw] sm:w-[92vw] max-w-[330px] rounded-2xl p-4 shadow-2xl z-50 flex flex-col gap-3.5 max-h-[70vh] overflow-y-auto border animate-fadeIn origin-bottom-right"
             :class="themePopoverClass"
             role="dialog"
             aria-label="Controle de aparência e fundo de leitura"
@@ -740,9 +744,10 @@ const isHorizontalComputed = computed(() => {
 })
 
 const bottomBarContainerStyle = computed(() => {
-  // Mobile / Telas verticais: extrema esquerda com respiro suave de 8px
+  // Mobile / Telas verticais: extrema esquerda com respiro suave de 8px e preenchimento até a direita
   return {
     paddingLeft: '8px',
+    paddingRight: '8px',
     justifyContent: 'flex-start',
   }
 })

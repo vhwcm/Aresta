@@ -67,8 +67,9 @@ export interface InkingStroke {
   points: StrokePoint[];
   color: string;
   width: number;
-  tool?: 'pen' | 'highlighter';
+  tool?: 'pen' | 'highlighter' | 'eraser';
   opacity?: number;
+  path?: string; // Caminho vetorial SVG d="M...Z"
 }
 
 export interface CanvasDocument {

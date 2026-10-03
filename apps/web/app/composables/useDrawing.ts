@@ -13,6 +13,7 @@ import type { CanvasNode, CanvasEdge, CanvasShapeType } from '~/interfaces/canva
 import { drawingNoteRepo } from '~/adapters/database/repositories/DrawingNoteRepository';
 import { useNotes } from '~/composables/useNotes';
 import { getApiBase } from '~/utils/apiBase';
+import { computeVectorStrokePath, svgToDataUrl } from '~/utils/vectorDrawing';
 
 export interface DrawingSummaryItem {
   id: string;
@@ -363,7 +364,12 @@ export function useDrawing() {
   const addStrokeToActivePage = (stroke: DrawingStroke) => {
     if (!activePage.value) return;
     pushHistory();
-    activePage.value.strokes.push(stroke);
+    const path = stroke.path || computeVectorStrokePath(stroke.points, stroke.tool || 'pen', stroke.size || 3);
+    const finalStroke: DrawingStroke = {
+      ...stroke,
+      path,
+    };
+    activePage.value.strokes.push(finalStroke);
     scheduleAutosave();
   };
 
@@ -527,6 +533,63 @@ export function useDrawing() {
     setPenOnlyMode(!isPenOnlyMode.value);
   };
 
+  const generatePageSvgString = (pageIndex: number = activePageIndex.value): string => {
+    if (!currentDrawing.value || !currentDrawing.value.pages[pageIndex]) return '';
+    const page = currentDrawing.value.pages[pageIndex]!;
+
+    const strokesXml = (page.strokes || [])
+      .map((s) => {
+        const path = s.path || computeVectorStrokePath(s.points, s.tool || 'pen', s.size || 3);
+        const opacity = s.opacity ?? (s.tool === 'highlighter' ? 0.35 : s.tool === 'pencil' ? 0.65 : 1);
+        const style = s.tool === 'highlighter' ? 'style="mix-blend-mode: multiply;"' : '';
+        return `    <path d="${path}" fill="${s.color || '#E57B55'}" opacity="${opacity}" ${style} />`;
+      })
+      .join('\n');
+
+    const nodesXml = (page.nodes || [])
+      .map((n) => {
+        const safeText = (n.text || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        if (n.type === 'shape') {
+          if (n.shape === 'ellipse') {
+            return `    <ellipse cx="${n.x + n.width / 2}" cy="${n.y + n.height / 2}" rx="${n.width / 2}" ry="${n.height / 2}" fill="${n.color || '#E57B55'}22" stroke="${n.color || '#E57B55'}" stroke-width="2" />
+    <text x="${n.x + n.width / 2}" y="${n.y + n.height / 2}" text-anchor="middle" dominant-baseline="middle" font-family="sans-serif" font-size="14" fill="#18181B">${safeText}</text>`;
+          }
+          return `    <rect x="${n.x}" y="${n.y}" width="${n.width}" height="${n.height}" rx="8" fill="${n.color || '#E57B55'}22" stroke="${n.color || '#E57B55'}" stroke-width="2" />
+    <text x="${n.x + n.width / 2}" y="${n.y + n.height / 2}" text-anchor="middle" dominant-baseline="middle" font-family="sans-serif" font-size="14" fill="#18181B">${safeText}</text>`;
+        }
+        return `    <text x="${n.x}" y="${n.y + 20}" font-family="sans-serif" font-size="14" fill="${n.color || '#18181B'}">${safeText}</text>`;
+      })
+      .join('\n');
+
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 794 1123" width="794" height="1123" shape-rendering="geometricPrecision">
+  <rect width="794" height="1123" fill="#FFFFFF" />
+  <g id="strokes">
+${strokesXml}
+  </g>
+  <g id="nodes">
+${nodesXml}
+  </g>
+</svg>`;
+  };
+
+  const exportCurrentPageAsSvg = (pageIndex: number = activePageIndex.value) => {
+    if (!currentDrawing.value || !currentDrawing.value.pages[pageIndex]) return;
+    const page = currentDrawing.value.pages[pageIndex]!;
+    const svgContent = generatePageSvgString(pageIndex);
+    if (!svgContent) return;
+
+    const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${currentDrawing.value.title.replace(/[^a-z0-9_ -]/gi, '_')}_pag_${page.pageNumber}.svg`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return {
     drawingsList,
     currentDrawing,
@@ -569,6 +632,8 @@ export function useDrawing() {
     scheduleAutosave,
     synthesizeDrawing,
     convertToNote,
+    generatePageSvgString,
+    exportCurrentPageAsSvg,
     resetDrawingState,
   };
 }

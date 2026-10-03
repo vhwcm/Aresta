@@ -13,6 +13,7 @@ import type {
 } from '~/interfaces/canvas';
 import { useAuth } from '~/composables/useAuth';
 import { canvasRepo } from '~/adapters/database/repositories/CanvasRepository';
+import { computeVectorStrokePath } from '~/utils/vectorDrawing';
 
 // Shared module-level reactive state across components for current active canvas session
 const canvasesList = ref<CanvasSummary[]>([]);
@@ -169,9 +170,11 @@ export function useCanvas() {
   // Operações de Traços (Caneta & Borracha)
   const addStroke = (stroke: InkingStroke, saveHistory = true): InkingStroke => {
     if (saveHistory) pushHistory();
+    const path = stroke.path || computeVectorStrokePath(stroke.points, stroke.tool || 'pen', stroke.width || 3);
     const finalStroke: InkingStroke = {
       ...stroke,
       id: stroke.id || `stroke-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      path,
     };
     strokes.value.push(finalStroke);
     triggerAutosave();
@@ -526,6 +529,78 @@ export function useCanvas() {
     });
   };
 
+  const exportAsSvg = () => {
+    if (!currentCanvas.value) return;
+
+    let minX = 0;
+    let minY = 0;
+    let maxX = 1200;
+    let maxY = 800;
+
+    const allX: number[] = [];
+    const allY: number[] = [];
+
+    nodes.value.forEach((n) => {
+      allX.push(n.x, n.x + n.width);
+      allY.push(n.y, n.y + n.height);
+    });
+
+    strokes.value.forEach((s) => {
+      s.points.forEach((p) => {
+        allX.push(p.x);
+        allY.push(p.y);
+      });
+    });
+
+    if (allX.length > 0 && allY.length > 0) {
+      minX = Math.min(...allX) - 50;
+      minY = Math.min(...allY) - 50;
+      maxX = Math.max(...allX) + 50;
+      maxY = Math.max(...allY) + 50;
+    }
+
+    const width = Math.max(200, maxX - minX);
+    const height = Math.max(200, maxY - minY);
+
+    const strokesSvg = strokes.value
+      .map((s) => {
+        const path = s.path || computeVectorStrokePath(s.points, s.tool || 'pen', s.width || 3);
+        const opacity = s.opacity ?? (s.tool === 'highlighter' ? 0.4 : 1);
+        const style = s.tool === 'highlighter' ? 'style="mix-blend-mode: multiply;"' : '';
+        return `    <path d="${path}" fill="${s.color || '#E57B55'}" opacity="${opacity}" ${style} />`;
+      })
+      .join('\n');
+
+    const nodesSvg = nodes.value
+      .map((n) => {
+        const safeText = (n.text || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return `    <rect x="${n.x}" y="${n.y}" width="${n.width}" height="${n.height}" rx="12" fill="#FFFFFF" stroke="${n.color || '#E57B55'}" stroke-width="2" />
+    <text x="${n.x + 12}" y="${n.y + 24}" font-family="sans-serif" font-size="14" fill="#18181B">${safeText}</text>`;
+      })
+      .join('\n');
+
+    const svgContent = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="${minX} ${minY} ${width} ${height}" width="${width}" height="${height}" shape-rendering="geometricPrecision">
+  <rect x="${minX}" y="${minY}" width="${width}" height="${height}" fill="#FAFAF9" />
+  <g id="strokes">
+${strokesSvg}
+  </g>
+  <g id="nodes">
+${nodesSvg}
+  </g>
+</svg>`;
+
+    const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${currentCanvas.value.title.replace(/[^a-z0-9_ -]/gi, '_')}.svg`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   const exportAsJsonCanvas = () => {
     if (!currentCanvas.value) return;
     const jsonStr = serializeDocument();
@@ -595,6 +670,7 @@ export function useCanvas() {
     deleteCanvas,
     duplicateCanvas,
     exportAsJsonCanvas,
+    exportAsSvg,
     importJsonCanvas,
   };
 }

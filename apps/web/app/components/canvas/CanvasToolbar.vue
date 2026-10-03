@@ -239,6 +239,19 @@
             </svg>
             <span>Exportar (.canvas)</span>
           </button>
+
+          <!-- Botão Exportar Vetorial .svg -->
+          <button
+            class="flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-medium text-textPrimary hover:bg-bgElevated transition-colors cursor-pointer w-full text-left"
+            title="Exportar Vetorial SVG (.svg)"
+            @click="$emit('export-svg'); showMoreMenu = false"
+          >
+            <svg class="w-4 h-4 text-textSecondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 3v12M12 15l4-4M12 15l-4-4" />
+              <path d="M2 17l.621 2.485A2 2 0 0 0 4.561 21h14.878a2 2 0 0 0 1.94-1.515L22 17" />
+            </svg>
+            <span>Exportar Vetor (.svg)</span>
+          </button>
         </div>
       </div>
     </div>
@@ -286,6 +299,7 @@ const emit = defineEmits<{
   (e: 'zoom-out'): void;
   (e: 'reset-zoom'): void;
   (e: 'export'): void;
+  (e: 'export-svg'): void;
 }>();
 
 const { toggleCollapse: toggleNavbar } = useBottomNavbar();

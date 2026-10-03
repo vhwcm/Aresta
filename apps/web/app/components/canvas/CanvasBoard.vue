@@ -139,6 +139,7 @@
       @zoom-out="zoomAt(centerScreen.x, centerScreen.y, 0.8)"
       @reset-zoom="resetViewport"
       @export="exportAsJsonCanvas"
+      @export-svg="exportAsSvg"
     />
 
     <!-- Insert Books, Notes & Quotes Drawer -->
@@ -233,6 +234,7 @@ const {
   resetViewport,
   loadCanvas,
   exportAsJsonCanvas,
+  exportAsSvg,
 } = useCanvas();
 
 // Freehand Drawing & Erasing State

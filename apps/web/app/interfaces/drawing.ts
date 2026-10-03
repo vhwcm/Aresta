@@ -7,6 +7,7 @@ export type PageBackgroundType = 'blank' | 'ruled' | 'grid' | 'dots';
 export interface DrawingPoint {
   x: number;
   y: number;
+  pressure?: number;
 }
 
 export interface DrawingStroke {
@@ -16,6 +17,7 @@ export interface DrawingStroke {
   size: number;
   opacity: number;
   points: DrawingPoint[];
+  path?: string; // Caminho vetorial SVG d="M...Z"
 }
 
 export interface DrawingPage {

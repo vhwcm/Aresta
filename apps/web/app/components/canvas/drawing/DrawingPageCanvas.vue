@@ -1,6 +1,7 @@
 <template>
   <div
-    class="relative select-none touch-none shadow-md rounded-b-xl overflow-hidden border border-t-0 border-divider/60 transition-all duration-200"
+    ref="containerRef"
+    class="drawing-page-container relative select-none touch-none shadow-md rounded-b-xl overflow-hidden border border-t-0 border-divider/60 transition-all duration-200"
     :class="[
       isActive ? 'ring-2 ring-primary/40' : 'opacity-95 hover:opacity-100',
       tool === 'select' ? 'cursor-default' : (tool === 'shape' || tool === 'text') ? 'cursor-crosshair' : '',
@@ -14,13 +15,44 @@
     @pointermove="handleContainerPointerMove"
     @pointerup="handleContainerPointerUp"
   >
-    <!-- Background Canvas (Pautas, Quadriculado, Pontos) -->
-    <canvas
-      ref="bgCanvasRef"
-      :width="width"
-      :height="height"
-      class="absolute inset-0 w-full h-full pointer-events-none"
-    />
+    <!-- Background Vector SVG Layer (Pautas, Quadriculado, Pontos) -->
+    <svg
+      class="drawing-background-layer absolute inset-0 w-full h-full pointer-events-none select-none"
+      viewBox="0 0 794 1123"
+      shape-rendering="geometricPrecision"
+    >
+      <rect width="794" height="1123" :fill="backgroundColor" />
+
+      <!-- Padrão Quadriculado (Grid) -->
+      <defs v-if="page.backgroundType === 'grid'">
+        <pattern id="drawing-grid-pattern" width="32" height="32" patternUnits="userSpaceOnUse">
+          <path d="M 32 0 L 0 0 0 32" fill="none" stroke="rgba(0, 0, 0, 0.08)" stroke-width="1" />
+        </pattern>
+      </defs>
+      <rect v-if="page.backgroundType === 'grid'" width="794" height="1123" fill="url(#drawing-grid-pattern)" />
+
+      <!-- Padrão Pontilhado (Dots) -->
+      <defs v-if="page.backgroundType === 'dots'">
+        <pattern id="drawing-dots-pattern" width="28" height="28" patternUnits="userSpaceOnUse">
+          <circle cx="14" cy="14" r="1.2" fill="rgba(0, 0, 0, 0.2)" />
+        </pattern>
+      </defs>
+      <rect v-if="page.backgroundType === 'dots'" width="794" height="1123" fill="url(#drawing-dots-pattern)" />
+
+      <!-- Linhas Pautadas (Ruled) -->
+      <g v-if="page.backgroundType === 'ruled'" class="ruled-lines">
+        <line
+          v-for="y in ruledLineYCoords"
+          :key="y"
+          x1="44"
+          :y1="y"
+          x2="750"
+          :y2="y"
+          stroke="rgba(0, 0, 0, 0.09)"
+          stroke-width="1"
+        />
+      </g>
+    </svg>
 
     <!-- Infinite Nodes & Connections Layer (Scaled to match Page Coordinates) -->
     <div
@@ -62,12 +94,40 @@
       />
     </div>
 
-    <!-- Main Drawing Canvas (Traços com perfect-freehand) -->
-    <canvas
-      ref="drawCanvasRef"
-      :width="width"
-      :height="height"
-      class="absolute inset-0 w-full h-full touch-none"
+    <!-- Main Vector Stroke Layer (SVG puro nativo com perfect-freehand) -->
+    <svg
+      class="drawing-stroke-layer absolute inset-0 w-full h-full pointer-events-none select-none overflow-visible z-10"
+      viewBox="0 0 794 1123"
+      shape-rendering="geometricPrecision"
+    >
+      <!-- Traços Concluídos e Persistidos -->
+      <g class="persisted-strokes">
+        <path
+          v-for="stroke in renderedStrokes"
+          :key="stroke.id"
+          :d="stroke.path"
+          :fill="stroke.color"
+          :opacity="stroke.opacity"
+          :style="stroke.style"
+          class="transition-opacity duration-150"
+        />
+      </g>
+
+      <!-- Traço Ativo em Andamento (Tempo Real) -->
+      <g v-if="activeStrokePath" class="active-stroke">
+        <path
+          :d="activeStrokePath"
+          :fill="color"
+          :opacity="activeStrokeOpacity"
+          :style="currentActiveTool === 'highlighter' ? 'mix-blend-mode: multiply;' : ''"
+        />
+      </g>
+    </svg>
+
+    <!-- Transparent Interaction Layer (Captura de Stylus, Touch e Mouse) -->
+    <div
+      ref="drawInteractionRef"
+      class="drawing-interaction-overlay absolute inset-0 w-full h-full touch-none z-20"
       :class="isDrawingTool ? 'cursor-crosshair pointer-events-auto' : 'pointer-events-none'"
       @pointerdown="handlePointerDown"
       @pointermove="handlePointerMove"
@@ -78,9 +138,9 @@
       @contextmenu.prevent
     />
 
-    <!-- Badge Indicador de Página -->
+    <!-- Badge Indicador de Página (Sem blur, visual minimalista Aresta) -->
     <div
-      class="absolute bottom-3 right-4 px-2.5 py-1 rounded-md text-[11px] font-mono font-medium bg-bgPanel/80 backdrop-blur-sm border border-divider/40 text-textSecondary pointer-events-none shadow-sm flex items-center gap-1.5 z-20"
+      class="absolute bottom-3 right-4 px-2.5 py-1 rounded-md text-[11px] font-mono font-medium bg-bgPanel border border-divider/60 text-textSecondary pointer-events-none shadow-sm flex items-center gap-1.5 z-30"
     >
       <span>Pág. {{ page.pageNumber }}</span>
       <span v-if="page.strokes.length > 0 || (page.nodes && page.nodes.length > 0)" class="w-1.5 h-1.5 rounded-full bg-primary/70"></span>
@@ -89,13 +149,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
-import { getStroke } from 'perfect-freehand';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import type { DrawingPage, DrawingStroke, DrawingPoint, PenToolType } from '~/interfaces/drawing';
 import type { CanvasNode as ICanvasNode, CanvasEdge, CanvasSide, CanvasShapeType } from '~/interfaces/canvas';
 import CanvasNode from '~/components/canvas/CanvasNode.vue';
 import CanvasEdgeLayer from '~/components/canvas/CanvasEdgeLayer.vue';
 import { getClosestAnchorSide } from '~/utils/canvasGeometry';
+import { computeVectorStrokePath, svgToDataUrl } from '~/utils/vectorDrawing';
 
 const props = withDefaults(
   defineProps<{
@@ -158,8 +218,8 @@ const isMouseMode = computed(() =>
   props.tool === 'select' || props.tool === 'shape' || props.tool === 'text'
 );
 
-const bgCanvasRef = ref<HTMLCanvasElement | null>(null);
-const drawCanvasRef = ref<HTMLCanvasElement | null>(null);
+const containerRef = ref<HTMLElement | null>(null);
+const drawInteractionRef = ref<HTMLElement | null>(null);
 
 const isDrawing = ref(false);
 const isErasing = ref(false);
@@ -168,6 +228,44 @@ const currentActiveTool = ref<PenToolType>('pen');
 const lastCreatedNodeId = ref<string | null>(null);
 
 const backgroundColor = '#FFFFFF';
+
+// Linhas pautadas espaçadas a cada 32px
+const ruledLineYCoords = computed(() => {
+  const coords: number[] = [];
+  for (let y = 80; y <= 1080; y += 32) {
+    coords.push(y);
+  }
+  return coords;
+});
+
+// Traços persistidos com computação de caminho SVG direto
+const renderedStrokes = computed(() => {
+  return (props.page.strokes || []).map((stroke, index) => {
+    const path = stroke.path || computeVectorStrokePath(stroke.points, stroke.tool || 'pen', stroke.size || 3);
+    const opacity = stroke.opacity ?? (stroke.tool === 'highlighter' ? 0.35 : stroke.tool === 'pencil' ? 0.65 : 1);
+    const style = stroke.tool === 'highlighter' ? 'mix-blend-mode: multiply;' : '';
+    return {
+      id: stroke.id || `stroke-${index}`,
+      path,
+      color: stroke.color || '#E57B55',
+      opacity,
+      style,
+      tool: stroke.tool,
+    };
+  });
+});
+
+// Traço ativo em tempo real
+const activeStrokePath = computed(() => {
+  if (!isDrawing.value || !activeStrokePoints.value.length) return '';
+  return computeVectorStrokePath(activeStrokePoints.value, currentActiveTool.value, props.size);
+});
+
+const activeStrokeOpacity = computed(() => {
+  if (currentActiveTool.value === 'highlighter') return 0.35;
+  if (currentActiveTool.value === 'pencil') return 0.65;
+  return 1;
+});
 
 // Estados de conexão de arestas e movimentação/redimensionamento de nós
 const connectingState = ref<{
@@ -198,14 +296,15 @@ const resizingNodeState = ref<{
 
 // Converte coordenadas do evento para espaço de coordenadas intrínseco da folha (794x1123)
 function getCanvasPoint(e: MouseEvent | PointerEvent): DrawingPoint {
-  const canvas = drawCanvasRef.value || bgCanvasRef.value;
-  if (!canvas) return { x: 0, y: 0 };
-  const rect = canvas.getBoundingClientRect();
+  const container = containerRef.value;
+  if (!container) return { x: 0, y: 0 };
+  const rect = container.getBoundingClientRect();
   const scaleX = width / rect.width;
   const scaleY = height / rect.height;
   return {
-    x: (e.clientX - rect.left) * scaleX,
-    y: (e.clientY - rect.top) * scaleY,
+    x: Math.round((e.clientX - rect.left) * scaleX * 10) / 10,
+    y: Math.round((e.clientY - rect.top) * scaleY * 10) / 10,
+    pressure: (e as PointerEvent).pressure || 0.5,
   };
 }
 
@@ -374,7 +473,6 @@ function handleContainerPointerMove(e: PointerEvent) {
 }
 
 function handleContainerPointerUp(e: PointerEvent) {
-  // Concluir conexão de aresta se soltou sobre outro nó
   if (connectingState.value) {
     const pt = getCanvasPoint(e);
     const targetNode = (props.page.nodes || []).find(
@@ -410,114 +508,6 @@ function handleContainerPointerUp(e: PointerEvent) {
   }
 }
 
-// Renderiza o fundo: folha toda branca e lisa sem linhas
-function renderBackground() {
-  const canvas = bgCanvasRef.value;
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
-
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillRect(0, 0, width, height);
-}
-
-// Renderiza todos os traços no Canvas principal
-function renderStrokes() {
-  const canvas = drawCanvasRef.value;
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
-
-  ctx.clearRect(0, 0, width, height);
-
-  // Renderiza traços persistidos
-  for (const stroke of props.page.strokes) {
-    drawSingleStroke(ctx, stroke.points, stroke.tool, stroke.color, stroke.size, stroke.opacity);
-  }
-
-  // Renderiza traço ativo sendo desenhado agora
-  if (isDrawing.value && activeStrokePoints.value.length > 0) {
-    drawSingleStroke(
-      ctx,
-      activeStrokePoints.value,
-      currentActiveTool.value,
-      props.color,
-      props.size,
-      currentActiveTool.value === 'highlighter' ? 0.35 : currentActiveTool.value === 'pencil' ? 0.65 : 1
-    );
-  }
-}
-
-function getSvgPathFromStroke(strokePoints: number[][]): string {
-  if (!strokePoints.length) return '';
-
-  const firstPt = strokePoints[0] || [0, 0];
-  const firstX = firstPt[0] ?? 0;
-  const firstY = firstPt[1] ?? 0;
-  const initialAcc: (string | number)[] = ['M', firstX, firstY, 'Q'];
-
-  const d = strokePoints.reduce<(string | number)[]>(
-    (acc, pt, i, arr) => {
-      const x0 = pt[0] ?? 0;
-      const y0 = pt[1] ?? 0;
-      const next = arr[(i + 1) % arr.length] || [x0, y0];
-      const x1 = next[0] ?? 0;
-      const y1 = next[1] ?? 0;
-      acc.push(x0, y0, (x0 + x1) / 2, (y0 + y1) / 2);
-      return acc;
-    },
-    initialAcc
-  );
-
-  d.push('Z');
-  return d.join(' ');
-}
-
-function drawSingleStroke(
-  ctx: CanvasRenderingContext2D,
-  points: DrawingPoint[],
-  tool: PenToolType,
-  color: string,
-  size: number,
-  opacity: number = 1
-) {
-  if (!points || points.length === 0) return;
-
-  ctx.save();
-  ctx.globalAlpha = opacity;
-  ctx.fillStyle = color;
-
-  if (tool === 'eraser') {
-    ctx.globalCompositeOperation = 'destination-out';
-    ctx.fillStyle = 'rgba(0,0,0,1)';
-  } else if (tool === 'highlighter') {
-    ctx.globalCompositeOperation = 'multiply';
-  } else {
-    ctx.globalCompositeOperation = 'source-over';
-  }
-
-  const rawPoints = points.map((p) => [p.x, p.y]);
-  const strokeOptions = {
-    size: tool === 'highlighter' ? size * 4 : size * 2,
-    thinning: tool === 'pencil' ? 0.6 : 0.4,
-    smoothing: 0.65,
-    streamline: 0.55,
-    easing: (t: number) => t,
-    start: { taper: 0, cap: true },
-    end: { taper: 0, cap: true },
-  };
-
-  const outlinePoints = getStroke(rawPoints, strokeOptions);
-  const pathData = getSvgPathFromStroke(outlinePoints);
-
-  if (pathData) {
-    const path = new Path2D(pathData);
-    ctx.fill(path);
-  }
-
-  ctx.restore();
-}
-
 // Handlers de Pointer Events (Rejeição de Palma + Isolamento Multi-Touch + Botão Stylus S-Pen)
 const activePointerId = ref<number | null>(null);
 const activeTouchPointers = new Map<number, { x: number; y: number }>();
@@ -530,17 +520,14 @@ function abortCurrentStroke() {
     isDrawing.value = false;
     isErasing.value = false;
     activeStrokePoints.value = [];
-    if (activePointerId.value !== null && drawCanvasRef.value) {
+    if (activePointerId.value !== null && drawInteractionRef.value) {
       try {
-        if (drawCanvasRef.value.hasPointerCapture?.(activePointerId.value)) {
-          drawCanvasRef.value.releasePointerCapture(activePointerId.value);
+        if (drawInteractionRef.value.hasPointerCapture?.(activePointerId.value)) {
+          drawInteractionRef.value.releasePointerCapture(activePointerId.value);
         }
-      } catch {
-        // Ignora erro ao liberar captura
-      }
+      } catch {}
     }
     activePointerId.value = null;
-    renderStrokes();
   }
 }
 
@@ -557,8 +544,6 @@ function handlePointerDown(e: PointerEvent) {
 
   const pType = e.pointerType || (e as any).detail?.pointerType || 'mouse';
 
-  // Se o Modo Caneta estiver ativado, toque de dedo (touch) NÃO desenha nem apaga!
-  // Permite que o evento de toque navegue livremente pela página no viewport.
   if (props.penMode && pType === 'touch') {
     return;
   }
@@ -566,14 +551,12 @@ function handlePointerDown(e: PointerEvent) {
   if (pType === 'touch') {
     activeTouchPointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
-    // Se 2 ou mais dedos tocarem a tela: ABORTA IMEDIATAMENTE qualquer traço em andamento
     if (activeTouchPointers.size >= 2) {
       isPinchActive.value = true;
       abortCurrentStroke();
       return;
     }
 
-    // Janela de cooldown pós-pinch para evitar que soltar um dedo antes do outro inicie um traço
     if (Date.now() - lastPinchEndTime < PINCH_COOLDOWN_MS) {
       return;
     }
@@ -589,7 +572,6 @@ function handlePointerDown(e: PointerEvent) {
     return;
   }
 
-  // Se já há um traço em andamento com outro ponteiro, ignora este evento
   if (isDrawing.value && activePointerId.value !== null && activePointerId.value !== e.pointerId) {
     return;
   }
@@ -597,9 +579,7 @@ function handlePointerDown(e: PointerEvent) {
   activePointerId.value = e.pointerId;
   try {
     ((e.currentTarget as HTMLElement) || (e.target as HTMLElement))?.setPointerCapture?.(e.pointerId);
-  } catch {
-    // Ignora se o ambiente não suportar captura de ponteiro
-  }
+  } catch {}
 
   const isStylusButtonPressed = (e.buttons & 2) !== 0 || (e.buttons & 32) !== 0;
 
@@ -607,7 +587,6 @@ function handlePointerDown(e: PointerEvent) {
     isErasing.value = true;
     const pt = getCanvasPoint(e);
     emit('erase', pt, props.size * 5);
-    renderStrokes();
     return;
   }
 
@@ -615,7 +594,6 @@ function handlePointerDown(e: PointerEvent) {
   currentActiveTool.value = props.tool;
   const pt = getCanvasPoint(e);
   activeStrokePoints.value = [pt];
-  renderStrokes();
 }
 
 function handlePointerMove(e: PointerEvent) {
@@ -627,25 +605,21 @@ function handlePointerMove(e: PointerEvent) {
     return;
   }
 
-  // Atualiza coordenadas no rastreador de toques
   if (pType === 'touch') {
     if (activeTouchPointers.has(e.pointerId)) {
       activeTouchPointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     }
 
-    // Se estiver em modo pinch ou houver múltiplos dedos na tela, garante que nenhum traço seja desenhado
     if (isPinchActive.value || activeTouchPointers.size >= 2) {
       abortCurrentStroke();
       return;
     }
 
-    // Ignora eventos de ponteiros touch que não sejam o ponteiro ativo que iniciou o traço
     if (activePointerId.value !== null && e.pointerId !== activePointerId.value) {
       return;
     }
   }
 
-  // Ignora movimentos de ponteiro mouse/pen que não correspondam ao ativo
   if (activePointerId.value !== null && e.pointerId !== activePointerId.value) {
     return;
   }
@@ -660,7 +634,6 @@ function handlePointerMove(e: PointerEvent) {
   if (isErasing.value || (props.tool === 'eraser' && (e.buttons & 1) !== 0) || isStylusButtonPressed) {
     const pt = getCanvasPoint(e);
     emit('erase', pt, props.size * 5);
-    renderStrokes();
     return;
   }
 
@@ -668,7 +641,6 @@ function handlePointerMove(e: PointerEvent) {
 
   const pt = getCanvasPoint(e);
   activeStrokePoints.value.push(pt);
-  renderStrokes();
 }
 
 function handlePointerUp(e?: PointerEvent) {
@@ -681,7 +653,6 @@ function handlePointerUp(e?: PointerEvent) {
   if (e && pType === 'touch') {
     activeTouchPointers.delete(e.pointerId);
 
-    // Se estava em pinch e os dedos estão sendo levantados
     if (isPinchActive.value) {
       if (activeTouchPointers.size < 2) {
         isPinchActive.value = false;
@@ -693,15 +664,12 @@ function handlePointerUp(e?: PointerEvent) {
   }
 
   const pointerId = e?.pointerId ?? activePointerId.value;
-  if (pointerId !== null && drawCanvasRef.value && drawCanvasRef.value.hasPointerCapture?.(pointerId)) {
+  if (pointerId !== null && drawInteractionRef.value && drawInteractionRef.value.hasPointerCapture?.(pointerId)) {
     try {
-      drawCanvasRef.value.releasePointerCapture(pointerId);
-    } catch {
-      // Ignora erro ao liberar captura
-    }
+      drawInteractionRef.value.releasePointerCapture(pointerId);
+    } catch {}
   }
 
-  // Se o ponteiro que subiu não é o ativo, apenas registra soltura
   if (pointerId !== null && activePointerId.value !== null && pointerId !== activePointerId.value) {
     return;
   }
@@ -717,6 +685,7 @@ function handlePointerUp(e?: PointerEvent) {
 
   isDrawing.value = false;
   if (activeStrokePoints.value.length > 0) {
+    const path = computeVectorStrokePath(activeStrokePoints.value, currentActiveTool.value, props.size);
     const newStroke: DrawingStroke = {
       id: `stroke-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
       tool: currentActiveTool.value,
@@ -724,12 +693,12 @@ function handlePointerUp(e?: PointerEvent) {
       size: props.size,
       opacity: currentActiveTool.value === 'highlighter' ? 0.35 : currentActiveTool.value === 'pencil' ? 0.65 : 1,
       points: [...activeStrokePoints.value],
+      path,
     };
     emit('stroke-added', newStroke);
   }
 
   activeStrokePoints.value = [];
-  renderStrokes();
 }
 
 function handleGlobalPointerUp(e: PointerEvent) {
@@ -753,107 +722,59 @@ function handleWindowBlur() {
   }
 }
 
-// Exporta a página inteira combinando fundo, traços e nós para PNG para a IA
-function exportToDataUrl(): string {
-  const exportCanvas = document.createElement('canvas');
-  exportCanvas.width = width;
-  exportCanvas.height = height;
-  const exportCtx = exportCanvas.getContext('2d');
-  if (!exportCtx) return '';
+/**
+ * Gera a string SVG vetorial completa e autocontida da página.
+ */
+function exportToSvgString(): string {
+  const strokesXml = (props.page.strokes || [])
+    .map((s) => {
+      const path = s.path || computeVectorStrokePath(s.points, s.tool || 'pen', s.size || 3);
+      const opacity = s.opacity ?? (s.tool === 'highlighter' ? 0.35 : s.tool === 'pencil' ? 0.65 : 1);
+      const style = s.tool === 'highlighter' ? 'style="mix-blend-mode: multiply;"' : '';
+      return `    <path d="${path}" fill="${s.color || '#E57B55'}" opacity="${opacity}" ${style} />`;
+    })
+    .join('\n');
 
-  exportCtx.fillStyle = '#FFFFFF';
-  exportCtx.fillRect(0, 0, width, height);
-
-  if (bgCanvasRef.value) {
-    exportCtx.drawImage(bgCanvasRef.value, 0, 0);
-  }
-
-  // Desenha os nós (formas e textos) no canvas da imagem
-  if (props.page.nodes && props.page.nodes.length > 0) {
-    for (const node of props.page.nodes) {
-      exportCtx.save();
-      exportCtx.strokeStyle = node.color || '#E57B55';
-      exportCtx.fillStyle = `${node.color || '#E57B55'}22`;
-      exportCtx.lineWidth = 2;
-
-      if (node.type === 'shape') {
-        if (node.shape === 'ellipse') {
-          exportCtx.beginPath();
-          exportCtx.ellipse(node.x + node.width / 2, node.y + node.height / 2, node.width / 2 - 2, node.height / 2 - 2, 0, 0, Math.PI * 2);
-          exportCtx.fill();
-          exportCtx.stroke();
-        } else if (node.shape === 'diamond') {
-          exportCtx.beginPath();
-          exportCtx.moveTo(node.x + node.width / 2, node.y + 2);
-          exportCtx.lineTo(node.x + node.width - 2, node.y + node.height / 2);
-          exportCtx.lineTo(node.x + node.width / 2, node.y + node.height - 2);
-          exportCtx.lineTo(node.x + 2, node.y + node.height / 2);
-          exportCtx.closePath();
-          exportCtx.fill();
-          exportCtx.stroke();
-        } else if (node.shape === 'triangle') {
-          exportCtx.beginPath();
-          exportCtx.moveTo(node.x + node.width / 2, node.y + 2);
-          exportCtx.lineTo(node.x + node.width - 2, node.y + node.height - 2);
-          exportCtx.lineTo(node.x + 2, node.y + node.height - 2);
-          exportCtx.closePath();
-          exportCtx.fill();
-          exportCtx.stroke();
-        } else {
-          exportCtx.beginPath();
-          exportCtx.roundRect(node.x + 2, node.y + 2, node.width - 4, node.height - 4, 8);
-          exportCtx.fill();
-          exportCtx.stroke();
+  const nodesXml = (props.page.nodes || [])
+    .map((n) => {
+      const safeText = (n.text || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      if (n.type === 'shape') {
+        if (n.shape === 'ellipse') {
+          return `    <ellipse cx="${n.x + n.width / 2}" cy="${n.y + n.height / 2}" rx="${n.width / 2}" ry="${n.height / 2}" fill="${n.color || '#E57B55'}22" stroke="${n.color || '#E57B55'}" stroke-width="2" />
+    <text x="${n.x + n.width / 2}" y="${n.y + n.height / 2}" text-anchor="middle" dominant-baseline="middle" font-family="sans-serif" font-size="14" fill="#18181B">${safeText}</text>`;
         }
+        return `    <rect x="${n.x}" y="${n.y}" width="${n.width}" height="${n.height}" rx="8" fill="${n.color || '#E57B55'}22" stroke="${n.color || '#E57B55'}" stroke-width="2" />
+    <text x="${n.x + n.width / 2}" y="${n.y + n.height / 2}" text-anchor="middle" dominant-baseline="middle" font-family="sans-serif" font-size="14" fill="#18181B">${safeText}</text>`;
       }
+      return `    <text x="${n.x}" y="${n.y + 20}" font-family="sans-serif" font-size="14" fill="${n.color || '#18181B'}">${safeText}</text>`;
+    })
+    .join('\n');
 
-      if (node.text) {
-        exportCtx.fillStyle = '#18181B';
-        exportCtx.font = '14px sans-serif';
-        exportCtx.textAlign = 'center';
-        exportCtx.textBaseline = 'middle';
-        exportCtx.fillText(node.text, node.x + node.width / 2, node.y + node.height / 2);
-      }
-      exportCtx.restore();
-    }
-  }
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 794 1123" width="794" height="1123" shape-rendering="geometricPrecision">
+  <rect width="794" height="1123" fill="#FFFFFF" />
+  <g id="strokes">
+${strokesXml}
+  </g>
+  <g id="nodes">
+${nodesXml}
+  </g>
+</svg>`;
+}
 
-  // Traços manuais
-  if (drawCanvasRef.value) {
-    exportCtx.drawImage(drawCanvasRef.value, 0, 0);
-  }
-
-  return exportCanvas.toDataURL('image/png');
+/**
+ * Retorna o DataURL vetorial SVG UTF-8 para pré-visualização ultraleve e nítida.
+ */
+function exportToDataUrl(): string {
+  return svgToDataUrl(exportToSvgString());
 }
 
 defineExpose({
+  exportToSvgString,
   exportToDataUrl,
-  renderStrokes,
-  renderBackground,
 });
 
-watch(
-  () => [props.page.strokes, props.isDarkMode],
-  () => {
-    nextTick(() => {
-      renderStrokes();
-    });
-  },
-  { deep: true }
-);
-
-watch(
-  () => [props.page.backgroundType, props.isDarkMode],
-  () => {
-    nextTick(() => {
-      renderBackground();
-    });
-  }
-);
-
 onMounted(() => {
-  renderBackground();
-  renderStrokes();
   window.addEventListener('pointerup', handleGlobalPointerUp);
   window.addEventListener('pointercancel', handleGlobalPointerUp);
   window.addEventListener('blur', handleWindowBlur);

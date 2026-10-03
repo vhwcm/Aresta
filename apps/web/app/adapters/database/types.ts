@@ -73,6 +73,7 @@ export interface LocalCanvasItem extends BaseLocalEntity {
     nodes: any[];
     edges: any[];
     viewport: { x: number; y: number; zoom: number };
+    strokes?: any[];
   };
   nodeCount?: number;
   edgeCount?: number;
