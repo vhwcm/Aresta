@@ -18,7 +18,7 @@ Permitir rolar, saltar para qualquer página/localização e navegar entre capí
 - **Regra**: `page:N` em anotações de EPUB é legado. Ele é resolvido de forma preguiçosa pelo texto citado (fallback proporcional `N/totalAntigo`) e reescrito no formato novo.
 
 ### R3. Abertura progressiva do EPUB
-- **Descrição**: na hora, somente OPF, TOC, a seção-alvo e uma vizinha. O total inicial de localizações é estimado pelo tamanho descompactado dos XHTML. A contagem exata roda em blocos de 10 seções no idle. O índice exato fica em cache no IndexedDB por hash do livro.
+- **Descrição**: na hora, somente OPF, TOC, a seção-alvo e uma vizinha. O total inicial de localizações (o "Y" no rótulo *"Loc. X de Y"* e no divisor do slider) é estimado instantaneamente no frame 1 a partir do tamanho descompactado em bytes dos arquivos XHTML listados na spine (obtido do diretório central do ZIP sem descompactar, com razão média de ~0,45 char/byte). A contagem exata roda em blocos de 10 seções no idle (background). O índice exato resultante fica em cache no IndexedDB por hash do livro (da 2ª abertura em diante, o total é exato e instantâneo desde o início).
 - **Regra**: a descompressão do ZIP é preguiçosa por arquivo; imagens viram blob URL apenas quando a seção é montada.
 
 ### R4. Scroll EPUB virtualizado por blocos
