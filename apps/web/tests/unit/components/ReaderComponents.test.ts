@@ -1030,6 +1030,74 @@ describe('Reader Components', () => {
       expect(modal.props('initialText')).toBe('Ao verme que primeiro roeu as frias carnes')
     })
 
+    it('preserva a seleção de texto e mantém o tooltip visível em sequência pointerup e mouseup no EPUB sem apagar a seleção', async () => {
+      const store = useReaderStore()
+      store.setDocument({
+        type: 'epub',
+        metadata: { title: 'Memórias Póstumas' },
+        totalPages: 80,
+        isLoaded: true,
+        load: vi.fn(),
+        destroy: vi.fn(),
+      } as any, 'memorias.epub')
+
+      const wrapper = mount(ReaderViewer, {
+        global: {
+          stubs: {
+            ReaderEnginePageCurlCanvas: true,
+            ReaderBookNotesPanel: true,
+            ReaderGraphPanel: true,
+            ReaderBottomBar: true,
+            ReaderSavedPagesModal: true,
+            ReaderAnnotationModal: true,
+            ReaderAnnotationDrawer: true,
+            ReaderTypographyPopover: true,
+            ReaderSelectionTooltip: {
+              name: 'ReaderSelectionTooltip',
+              template: '<div v-if="visible" class="tooltip-stub">Tooltip</div>',
+              props: ['visible', 'selectedText', 'pageNumber'],
+            },
+            ReaderDictionaryCard: true,
+          },
+        },
+      })
+
+      const canvasArea = wrapper.find('.reader-viewer__canvas-area')
+      const removeAllRangesSpy = vi.fn()
+      const mockSelection = {
+        isCollapsed: false,
+        toString: () => 'Capítulo Primeiro: Do Óbito do Autor',
+        rangeCount: 1,
+        anchorNode: canvasArea.element,
+        focusNode: canvasArea.element,
+        removeAllRanges: removeAllRangesSpy,
+        getRangeAt: () => ({
+          getBoundingClientRect: () => ({
+            top: 150,
+            bottom: 170,
+            left: 200,
+            right: 450,
+            width: 250,
+            height: 20,
+          }),
+        }),
+      }
+
+      vi.spyOn(window, 'getSelection').mockReturnValue(mockSelection as any)
+
+      // Simula a sequência natural do navegador ao soltar o mouse: pointerup seguido de mouseup
+      await canvasArea.trigger('pointerup')
+      await canvasArea.trigger('mouseup')
+
+      // A seleção não deve ter sido descartada / apagada
+      expect(removeAllRangesSpy).not.toHaveBeenCalled()
+
+      const tooltip = wrapper.findComponent({ name: 'ReaderSelectionTooltip' })
+      expect(tooltip.exists()).toBe(true)
+      expect(tooltip.props('visible')).toBe(true)
+      expect(tooltip.props('selectedText')).toBe('Capítulo Primeiro: Do Óbito do Autor')
+    })
+
     it('abre e fecha o painel de anotações do livro ao receber toggleNotes da barra inferior sem fechar imediatamente', async () => {
       const store = useReaderStore()
       store.setDocument({

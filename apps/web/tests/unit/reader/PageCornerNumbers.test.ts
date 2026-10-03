@@ -93,8 +93,8 @@ describe('Page Corner Numbers & Title Bar Cleanup', () => {
     })
   })
 
-  describe('ReaderViewer - Limpeza da Barra de Título', () => {
-    it('renderiza o título sem o badge de progresso de página ao lado', async () => {
+  describe('ReaderViewer - Limpeza da Barra Superior', () => {
+    it('renderiza o cabeçalho sem o badge de progresso de página ao lado', async () => {
       const store = useReaderStore()
       store.setDocument({
         type: 'epub',
@@ -124,11 +124,7 @@ describe('Page Corner Numbers & Title Bar Cleanup', () => {
         },
       })
 
-      const titleBar = wrapper.find('.reader-viewer__book-title-bar')
-      expect(titleBar.exists()).toBe(true)
-      expect(titleBar.text()).toBe('A Startup Enxuta')
-      expect(titleBar.find('.reader-viewer__book-progress-badge').exists()).toBe(false)
-      expect(titleBar.attributes('title')).toBe('A Startup Enxuta')
+      expect(wrapper.find('.reader-viewer__book-progress-badge').exists()).toBe(false)
     })
   })
 

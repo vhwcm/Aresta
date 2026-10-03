@@ -111,7 +111,8 @@ describe('useReadingStreak composable', () => {
   it('fetchStreak carrega streak existente sem corromper updated_at com data atual', async () => {
     const { streakRepo } = await import('../../../app/adapters/database/repositories/StreakRepository')
     const historicalTimestamp = '2026-09-01T12:00:00.000Z'
-    const today = new Date().toISOString().split('T')[0]
+    const now = new Date()
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
 
     await streakRepo.save({
       id: 'user_streak',
@@ -148,7 +149,8 @@ describe('useReadingStreak composable', () => {
   it('atualiza o estado reativo ao receber evento aresta:data-synced e despacha aresta:streak-updated nas mutações', async () => {
     const { streakRepo } = await import('../../../app/adapters/database/repositories/StreakRepository')
     const { currentStreak, recordReadingTime } = useReadingStreak()
-    const today = new Date().toISOString().split('T')[0]
+    const now = new Date()
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
 
     // Simula sincronização em nuvem salvando no repositório
     await streakRepo.save({

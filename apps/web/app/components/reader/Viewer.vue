@@ -603,9 +603,6 @@ function handleTextSelectionCheck() {
       ;(CSS as any).highlights.set('active-reader-selection', customHighlight)
     } catch {}
   }
-
-  // Descarta a seleção nativa do DOM: força o fechamento imediato do balão nativo do navegador no mobile
-  clearNativeSelection()
 }
 
 function handleAnnotateFromTooltip(payload: { text: string; pageNumber?: number }) {
@@ -736,10 +733,13 @@ function handleTouchEnd() {
 
 function handleAnnotationCreated() {
   isSelectionTooltipVisible.value = false
+  clearActiveSelectionHighlight()
   notesPanelRef.value?.refresh?.()
   mobileNotesPanelRef.value?.refresh?.()
   if (typeof window !== 'undefined') {
-    window.getSelection()?.removeAllRanges()
+    try {
+      window.getSelection()?.removeAllRanges()
+    } catch {}
   }
   pageRenderer.value?.refreshHighlights?.()
 }

@@ -1,6 +1,8 @@
 ## 🔄 Em Andamento
+- [02/10/2026 21:08] [Fazendo] Implementar renderização e armazenamento 100% vetorial no Quadro e no Desenho Paginado com exportação SVG e eliminação de miniaturas raster
 
 ## ✅ Concluído
+- [02/10/2026 21:12] [Concluído] Diagnosticar e corrigir perda de seleção de texto no leitor EPUB ao soltar o mouse preservando tooltip e fluxo de anotações
 - [02/10/2026 21:05] [Concluído] Remover faixa de fundo da barra inferior deixando capa e ícones soltos e remover título do livro
 - [02/10/2026 21:00] [Concluído] Adicionar botões externos para marcar página (BookmarkIcon) e controlar tamanho da fonte (AArrowDownIcon e AArrowUpIcon) na barra inferior do leitor
 - [02/10/2026 19:53] [Concluído] Restaurar ícone canônico de anotação (HighlighterIcon) no botão de anotações da barra inferior
