@@ -14,10 +14,12 @@ import { drawingNoteRepo } from '~/adapters/database/repositories/DrawingNoteRep
 import { linkRepo } from '~/adapters/database/repositories/LinkRepository'
 import { bookRepo } from '~/adapters/database/repositories/BookRepository'
 import { runFolderToTagsMigration } from '~/adapters/database/migrations/folderToTagsMigration'
+import { ThemeManagementService } from '~/services/ThemeManagementService'
 import type { SidebarTreeItem } from '~/interfaces/sidebar'
 
 // Estado Singleton Compartilhado
 const isSidebarCollapsed = ref(false)
+const graphMetaVersion = ref(0)
 const viewLayout = ref<'graph' | 'grid' | 'journal' | 'note-editor'>('graph')
 const activeFolder = ref<string | null>(null)
 const activeTag = ref<string | null>(null)
@@ -318,31 +320,15 @@ export function useWorkspaceSidebar() {
 
   /**
    * 1. Criar Pasta (Nó de Tag/Tema)
-   * Como alinhado com o usuário: já cria imediatamente o nó no grafo!
+   * Cria imediatamente o nó no grafo com ID determinístico
    */
   const handleCreateFolder = async (name: string) => {
     const clean = name.trim()
     if (!clean) return
 
     activeFolder.value = clean
-
-    // Cria nó no graphMeta
-    const meta = loadGraphMeta()
-    const exists = (meta.themes || []).some((t) => (t.name || '').trim().toLowerCase() === clean.toLowerCase())
-    if (!exists) {
-      let hash = 0
-      for (let i = 0; i < clean.length; i++) {
-        hash = (hash << 5) - hash + clean.charCodeAt(i)
-        hash |= 0
-      }
-      meta.themes.push({
-        id: Math.abs(hash),
-        name: clean,
-        color: '#E57B55',
-        description: null
-      })
-      saveGraphMeta(meta)
-    }
+    await ThemeManagementService.createTheme(clean)
+    graphMetaVersion.value++
 
     await fetchGraph()
     await fetchAllWorkspaceData()
@@ -350,161 +336,37 @@ export function useWorkspaceSidebar() {
 
   /**
    * 2. Renomear Pasta / Tag
-   * Atualiza o nó de tag no grafo e em todos os arquivos locais vinculados
+   * Atualiza o nó de tag no grafo e em todos os arquivos locais vinculados (notas, livros, anotações, quadros, desenhos, links)
    */
   const handleRenameFolder = async (payload: { oldName: string; newName: string }) => {
     const oldNorm = payload.oldName.trim().toLowerCase()
     const newClean = payload.newName.trim()
     if (!newClean || oldNorm === newClean.toLowerCase()) return
 
-    // 1. Atualizar graphMeta
-    const meta = loadGraphMeta()
-    for (const t of meta.themes || []) {
-      if ((t.name || '').trim().toLowerCase() === oldNorm) {
-        t.name = newClean
-      }
-    }
-    saveGraphMeta(meta)
-
-    // 2. Atualizar notas
-    const notes = await noteRepo.getAll()
-    for (const n of notes) {
-      const tags = Array.isArray(n.tags) ? [...n.tags] : []
-      let changed = false
-      const newTags = tags.map((t) => {
-        if (t.trim().toLowerCase() === oldNorm) {
-          changed = true
-          return newClean
-        }
-        return t
-      })
-      const newFolder = n.folder && n.folder.trim().toLowerCase() === oldNorm ? newClean : n.folder
-      if (changed || newFolder !== n.folder) {
-        await noteRepo.save({ ...n, tags: newTags, folder: newFolder })
-      }
-    }
-
-    // 3. Atualizar canvases
-    const canvases = await canvasRepo.getAll()
-    for (const c of canvases) {
-      const tags = Array.isArray((c as any).tags) ? [...(c as any).tags] : []
-      let changed = false
-      const newTags = tags.map((t) => {
-        if (t.trim().toLowerCase() === oldNorm) {
-          changed = true
-          return newClean
-        }
-        return t
-      })
-      const newFolder = (c as any).folder && (c as any).folder.trim().toLowerCase() === oldNorm ? newClean : (c as any).folder
-      if (changed || newFolder !== (c as any).folder) {
-        await canvasRepo.save({ ...c, tags: newTags, folder: newFolder } as any)
-      }
-    }
-
-    // 4. Atualizar desenhos
-    const drawings = await drawingNoteRepo.getAll()
-    for (const d of drawings) {
-      const tags = Array.isArray(d.tags) ? [...d.tags] : []
-      let changed = false
-      const newTags = tags.map((t) => {
-        if (t.trim().toLowerCase() === oldNorm) {
-          changed = true
-          return newClean
-        }
-        return t
-      })
-      const newFolder = d.folder && d.folder.trim().toLowerCase() === oldNorm ? newClean : d.folder
-      if (changed || newFolder !== d.folder) {
-        await drawingNoteRepo.save({ ...d, tags: newTags, folder: newFolder })
-      }
-    }
-
-    // 5. Atualizar links
-    const links = await linkRepo.getAll()
-    for (const l of links) {
-      const tags = Array.isArray(l.tags) ? [...l.tags] : []
-      let changed = false
-      const newTags = tags.map((t) => {
-        if (t.trim().toLowerCase() === oldNorm) {
-          changed = true
-          return newClean
-        }
-        return t
-      })
-      const newFolder = l.folder && l.folder.trim().toLowerCase() === oldNorm ? newClean : l.folder
-      if (changed || newFolder !== l.folder) {
-        await linkRepo.save({ ...l, tags: newTags, folder: newFolder })
-      }
-    }
+    await ThemeManagementService.renameTheme(payload.oldName, newClean)
+    graphMetaVersion.value++
 
     if (activeFolder.value === payload.oldName) {
       activeFolder.value = newClean
     }
 
+    await fetchGraph()
     await fetchAllWorkspaceData()
   }
 
   /**
    * 3. Excluir Pasta / Tag
-   * Remove o nó da tag e desassocia essa tag de todos os arquivos
+   * Aplica tombstone no nó e desassocia essa tag de todos os arquivos
    */
   const handleDeleteFolder = async (name: string) => {
-    const norm = name.trim().toLowerCase()
-
-    // 1. Remover de graphMeta
-    const meta = loadGraphMeta()
-    meta.themes = (meta.themes || []).filter((t) => (t.name || '').trim().toLowerCase() !== norm)
-    saveGraphMeta(meta)
-
-    // 2. Remover de notas
-    const notes = await noteRepo.getAll()
-    for (const n of notes) {
-      const tags = Array.isArray(n.tags) ? [...n.tags] : []
-      if (tags.some((t) => t.trim().toLowerCase() === norm) || n.folder?.trim().toLowerCase() === norm) {
-        const newTags = tags.filter((t) => t.trim().toLowerCase() !== norm)
-        const newFolder = n.folder?.trim().toLowerCase() === norm ? null : n.folder
-        await noteRepo.save({ ...n, tags: newTags, folder: newFolder })
-      }
-    }
-
-    // 3. Remover de canvases
-    const canvases = await canvasRepo.getAll()
-    for (const c of canvases) {
-      const tags = Array.isArray((c as any).tags) ? [...(c as any).tags] : []
-      if (tags.some((t) => t.trim().toLowerCase() === norm) || (c as any).folder?.trim().toLowerCase() === norm) {
-        const newTags = tags.filter((t) => t.trim().toLowerCase() !== norm)
-        const newFolder = (c as any).folder?.trim().toLowerCase() === norm ? null : (c as any).folder
-        await canvasRepo.save({ ...c, tags: newTags, folder: newFolder } as any)
-      }
-    }
-
-    // 4. Remover de desenhos
-    const drawings = await drawingNoteRepo.getAll()
-    for (const d of drawings) {
-      const tags = Array.isArray(d.tags) ? [...d.tags] : []
-      if (tags.some((t) => t.trim().toLowerCase() === norm) || d.folder?.trim().toLowerCase() === norm) {
-        const newTags = tags.filter((t) => t.trim().toLowerCase() !== norm)
-        const newFolder = d.folder?.trim().toLowerCase() === norm ? null : d.folder
-        await drawingNoteRepo.save({ ...d, tags: newTags, folder: newFolder })
-      }
-    }
-
-    // 5. Remover de links
-    const links = await linkRepo.getAll()
-    for (const l of links) {
-      const tags = Array.isArray(l.tags) ? [...l.tags] : []
-      if (tags.some((t) => t.trim().toLowerCase() === norm) || l.folder?.trim().toLowerCase() === norm) {
-        const newTags = tags.filter((t) => t.trim().toLowerCase() !== norm)
-        const newFolder = l.folder?.trim().toLowerCase() === norm ? null : l.folder
-        await linkRepo.save({ ...l, tags: newTags, folder: newFolder })
-      }
-    }
+    await ThemeManagementService.deleteTheme(name)
+    graphMetaVersion.value++
 
     if (activeFolder.value === name) {
       activeFolder.value = null
     }
 
+    await fetchGraph()
     await fetchAllWorkspaceData()
   }
 
@@ -516,58 +378,10 @@ export function useWorkspaceSidebar() {
     const cleanFolder = toFolder.trim()
     if (!cleanFolder) return
 
-    if (itemId.startsWith('note-')) {
-      const rawId = itemId.replace(/^note-/, '')
-      const note = await noteRepo.getById(rawId) || await noteRepo.getById(itemId)
-      if (note) {
-        const tags = Array.isArray(note.tags) ? [...note.tags] : []
-        if (!tags.some((t) => t.trim().toLowerCase() === cleanFolder.toLowerCase())) {
-          tags.push(cleanFolder)
-          await noteRepo.save({ ...note, tags })
-        }
-      }
-    } else if (itemId.startsWith('canvas-')) {
-      const rawId = itemId.replace(/^canvas-/, '')
-      const canvas = await canvasRepo.getById(rawId)
-      if (canvas) {
-        const tags = Array.isArray((canvas as any).tags) ? [...(canvas as any).tags] : []
-        if (!tags.some((t) => t.trim().toLowerCase() === cleanFolder.toLowerCase())) {
-          tags.push(cleanFolder)
-          await canvasRepo.save({ ...canvas, tags } as any)
-        }
-      }
-    } else if (itemId.startsWith('drawing-')) {
-      const rawId = itemId.replace(/^drawing-/, '')
-      const drawing = await drawingNoteRepo.getById(rawId)
-      if (drawing) {
-        const tags = Array.isArray(drawing.tags) ? [...drawing.tags] : []
-        if (!tags.some((t) => t.trim().toLowerCase() === cleanFolder.toLowerCase())) {
-          tags.push(cleanFolder)
-          await drawingNoteRepo.save({ ...drawing, tags })
-        }
-      }
-    } else if (itemId.startsWith('link-')) {
-      const rawId = itemId.replace(/^link-/, '')
-      const link = await linkRepo.getById(rawId)
-      if (link) {
-        const tags = Array.isArray(link.tags) ? [...link.tags] : []
-        if (!tags.some((t) => t.trim().toLowerCase() === cleanFolder.toLowerCase())) {
-          tags.push(cleanFolder)
-          await linkRepo.save({ ...link, tags })
-        }
-      }
-    } else if (itemId.startsWith('book-')) {
-      const rawId = Number(itemId.replace(/^book-/, ''))
-      const book = await bookRepo.getById(rawId)
-      if (book) {
-        const themes = Array.isArray(book.themes) ? [...book.themes] : []
-        if (!themes.some((t) => t.name.trim().toLowerCase() === cleanFolder.toLowerCase())) {
-          themes.push({ id: Date.now(), name: cleanFolder, color: '#E57B55' })
-          await bookRepo.save({ ...book, themes })
-        }
-      }
-    }
+    await ThemeManagementService.linkEntityToTheme(itemId, cleanFolder)
+    graphMetaVersion.value++
 
+    await fetchGraph()
     await fetchAllWorkspaceData()
   }
 
@@ -629,49 +443,10 @@ export function useWorkspaceSidebar() {
    */
   const handleRemoveReferenceFromFolder = async (payload: { itemId: string; folder: string }) => {
     const { itemId, folder } = payload
-    const norm = folder.trim().toLowerCase()
+    await ThemeManagementService.unlinkEntityFromTheme(itemId, folder)
+    graphMetaVersion.value++
 
-    if (itemId.startsWith('note-')) {
-      const rawId = itemId.replace(/^note-/, '')
-      const note = await noteRepo.getById(rawId) || await noteRepo.getById(itemId)
-      if (note) {
-        const tags = (Array.isArray(note.tags) ? [...note.tags] : []).filter((t) => t.trim().toLowerCase() !== norm)
-        const newFolder = note.folder?.trim().toLowerCase() === norm ? null : note.folder
-        await noteRepo.save({ ...note, tags, folder: newFolder })
-      }
-    } else if (itemId.startsWith('canvas-')) {
-      const rawId = itemId.replace(/^canvas-/, '')
-      const canvas = await canvasRepo.getById(rawId)
-      if (canvas) {
-        const tags = (Array.isArray((canvas as any).tags) ? [...(canvas as any).tags] : []).filter((t) => t.trim().toLowerCase() !== norm)
-        const newFolder = (canvas as any).folder?.trim().toLowerCase() === norm ? null : (canvas as any).folder
-        await canvasRepo.save({ ...canvas, tags, folder: newFolder } as any)
-      }
-    } else if (itemId.startsWith('drawing-')) {
-      const rawId = itemId.replace(/^drawing-/, '')
-      const drawing = await drawingNoteRepo.getById(rawId)
-      if (drawing) {
-        const tags = (Array.isArray(drawing.tags) ? [...drawing.tags] : []).filter((t) => t.trim().toLowerCase() !== norm)
-        const newFolder = drawing.folder?.trim().toLowerCase() === norm ? null : drawing.folder
-        await drawingNoteRepo.save({ ...drawing, tags, folder: newFolder })
-      }
-    } else if (itemId.startsWith('link-')) {
-      const rawId = itemId.replace(/^link-/, '')
-      const link = await linkRepo.getById(rawId)
-      if (link) {
-        const tags = (Array.isArray(link.tags) ? [...link.tags] : []).filter((t) => t.trim().toLowerCase() !== norm)
-        const newFolder = link.folder?.trim().toLowerCase() === norm ? null : link.folder
-        await linkRepo.save({ ...link, tags, folder: newFolder })
-      }
-    } else if (itemId.startsWith('book-')) {
-      const rawId = Number(itemId.replace(/^book-/, ''))
-      const book = await bookRepo.getById(rawId)
-      if (book) {
-        const themes = (Array.isArray(book.themes) ? [...book.themes] : []).filter((t) => t.name.trim().toLowerCase() !== norm)
-        await bookRepo.save({ ...book, themes })
-      }
-    }
-
+    await fetchGraph()
     await fetchAllWorkspaceData()
   }
 

@@ -14,6 +14,8 @@ const syncError = ref<string | null>(null)
 let interval: ReturnType<typeof setInterval> | null = null
 let listenersAttached = false
 let syncBroadcastChannel: BroadcastChannel | null = null
+let hasPendingSync = false
+let subscriberCount = 0
 
 export function useDriveSync() {
   const auth = useAuth()
@@ -111,7 +113,11 @@ export function useDriveSync() {
   }
 
   const sync = async () => {
-    if (isSyncing.value || (typeof navigator !== 'undefined' && !navigator.onLine)) return
+    if (isSyncing.value) {
+      hasPendingSync = true
+      return
+    }
+    if (typeof navigator !== 'undefined' && !navigator.onLine) return
     isSyncing.value = true
     syncError.value = null
     try {
@@ -136,6 +142,10 @@ export function useDriveSync() {
     } finally {
       isSyncing.value = false
       void updatePendingCount()
+      if (hasPendingSync) {
+        hasPendingSync = false
+        void sync()
+      }
     }
   }
 
@@ -173,12 +183,13 @@ export function useDriveSync() {
   }
 
   const handleStorageChange = (e: StorageEvent) => {
-    if (e.key === 'aresta_drive_last_sync' || e.key === 'aresta_last_sync_timestamp') {
+    if (e.key === 'aresta_drive_last_sync' || e.key === 'aresta_last_sync_timestamp' || e.key === 'aresta_graph_meta') {
       void revalidateAllStores()
     }
   }
 
   let streakDebounceTimer: ReturnType<typeof setTimeout> | null = null
+  let graphDebounceTimer: ReturnType<typeof setTimeout> | null = null
 
   const handleStreakUpdated = () => {
     if (streakDebounceTimer) clearTimeout(streakDebounceTimer)
@@ -189,7 +200,17 @@ export function useDriveSync() {
     }, 2500)
   }
 
+  const handleGraphUpdated = () => {
+    if (graphDebounceTimer) clearTimeout(graphDebounceTimer)
+    graphDebounceTimer = setTimeout(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible' && !isSyncing.value) {
+        void sync()
+      }
+    }, 2500)
+  }
+
   const initListeners = () => {
+    subscriberCount++
     if (typeof window === 'undefined' || listenersAttached) return
     listenersAttached = true
     window.addEventListener('online', handleOnline)
@@ -197,6 +218,7 @@ export function useDriveSync() {
     window.addEventListener('focus', handleVisibilityOrFocus)
     window.addEventListener('storage', handleStorageChange)
     window.addEventListener('aresta:streak-updated', handleStreakUpdated)
+    window.addEventListener('aresta:graph-meta-updated', handleGraphUpdated)
 
     if (typeof BroadcastChannel !== 'undefined' && !syncBroadcastChannel) {
       try {
@@ -220,16 +242,23 @@ export function useDriveSync() {
   }
 
   const dispose = () => {
-    if (typeof window === 'undefined' || !listenersAttached) return
+    subscriberCount = Math.max(0, subscriberCount - 1)
+    // Mantém listeners globais ativos se houver outros assinantes montados
+    if (subscriberCount > 0 || typeof window === 'undefined' || !listenersAttached) return
     listenersAttached = false
     window.removeEventListener('online', handleOnline)
     window.removeEventListener('visibilitychange', handleVisibilityOrFocus)
     window.removeEventListener('focus', handleVisibilityOrFocus)
     window.removeEventListener('storage', handleStorageChange)
     window.removeEventListener('aresta:streak-updated', handleStreakUpdated)
+    window.removeEventListener('aresta:graph-meta-updated', handleGraphUpdated)
     if (streakDebounceTimer) {
       clearTimeout(streakDebounceTimer)
       streakDebounceTimer = null
+    }
+    if (graphDebounceTimer) {
+      clearTimeout(graphDebounceTimer)
+      graphDebounceTimer = null
     }
     if (interval) clearInterval(interval)
     interval = null
@@ -260,4 +289,3 @@ export function useDriveSync() {
     initListeners,
   }
 }
-

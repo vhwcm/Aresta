@@ -476,9 +476,8 @@ describe('GraphCanvas Component', () => {
     // Clicar no botão para desvincular
     await deleteBtn.trigger('click')
 
-    // Deve emitir deleteEdge e delete-edge com payload da aresta
+    // Deve emitir delete-edge com payload da aresta
     expect(wrapper.emitted('delete-edge')).toBeTruthy()
-    expect(wrapper.emitted('deleteEdge')).toBeTruthy()
     const emittedPayload = wrapper.emitted('delete-edge')?.[0]?.[0] as any
     expect(emittedPayload.id).toBe('edge-tb-1')
 

@@ -21,7 +21,6 @@
         @open-connect-modal="isConnectModalOpen = true"
         @connect-nodes="handleConnectNodesPayload"
         @delete-edge="handleDeleteEdge"
-        @deleteEdge="handleDeleteEdge"
       />
     </div>
 
@@ -645,19 +644,13 @@ const handleConnectNodes = async (payload: { sourceId: number, targetId: number 
 
 const handleConnectNodesPayload = async (payload: any) => {
   try {
-    if (payload.sourceType === 'book' && payload.targetType === 'theme') {
-      await linkBookToNode(Number(payload.targetRawId || payload.targetId), Number(payload.sourceRawId || payload.sourceId))
-    } else if (payload.sourceType === 'theme' && payload.targetType === 'book') {
-      await linkBookToNode(Number(payload.sourceRawId || payload.sourceId), Number(payload.targetRawId || payload.targetId))
-    } else {
-      const sourceId = payload.sourceId ?? payload.sourceRawId
-      const targetId = payload.targetId ?? payload.targetRawId
-      if (sourceId !== undefined && targetId !== undefined) {
-        await createConnection(sourceId, targetId)
-      }
+    const sourceId = payload.sourceId ?? payload.sourceRawId
+    const targetId = payload.targetId ?? payload.targetRawId
+    if (sourceId !== undefined && targetId !== undefined) {
+      await createConnection(sourceId, targetId)
     }
   } catch (err) {
-    console.warn('[SidebarGraph] Falha ao persistir conexão no backend:', err)
+    console.warn('[SidebarGraph] Falha ao persistir conexão:', err)
   }
 }
 

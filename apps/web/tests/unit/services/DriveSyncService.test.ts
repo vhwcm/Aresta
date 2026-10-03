@@ -943,4 +943,134 @@ describe('DriveSyncService (Local-First Sync Engine)', () => {
     expect(result.skipped).toBe(true)
     expect(uploadCalled).toBe(false)
   })
+
+  it('19. graph_meta propaga tombstones de tema e aresta sem ressuscitar itens excluídos', async () => {
+    localStorage.setItem(
+      'aresta_graph_meta',
+      JSON.stringify({
+        version: 2,
+        themes: [
+          { id: 1, name: 'Filosofia', updated_at: 1000, deleted_at: 2000, updated_by: 'local' }
+        ],
+        edges: [
+          { id: 'book-1---theme-1', source: 'theme-1', target: 'book-1', updated_at: 1000, deleted_at: 2000, updated_by: 'local' }
+        ],
+        updated_at: 2000,
+      })
+    )
+
+    let uploadedPayload: any = null
+    const provider = createMockProvider({
+      downloadDataFile: async <T>() => ({
+        schema_version: 1,
+        entity_type: 'graph_meta',
+        updated_at: '2026-01-01T00:00:00.000Z',
+        updated_by: 'old_device',
+        payload: {
+          version: 2,
+          themes: [
+            { id: 1, name: 'Filosofia', updated_at: 1000, deleted_at: null, updated_by: 'old_device' }
+          ],
+          edges: [
+            { id: 'book-1---theme-1', source: 'theme-1', target: 'book-1', updated_at: 1000, deleted_at: null, updated_by: 'old_device' }
+          ],
+        },
+      } as unknown as T),
+      uploadDataFile: async (_name: string, data: unknown) => {
+        uploadedPayload = data
+        return { fileName: 'graph_meta.json', itemCount: 1, syncedAt: new Date().toISOString() }
+      },
+    })
+
+    const service = new DriveSyncService(provider)
+    await service.syncGraphMeta()
+
+    const saved = JSON.parse(localStorage.getItem('aresta_graph_meta') || '{}')
+    expect(saved.themes[0]?.deleted_at).toBe(2000)
+    expect(saved.edges[0]?.deleted_at).toBe(2000)
+    expect(uploadedPayload?.payload?.themes?.[0]?.deleted_at).toBe(2000)
+    expect(uploadedPayload?.payload?.edges?.[0]?.deleted_at).toBe(2000)
+  })
+
+  it('20. graph_meta aplica LWW ao atualizar nome e cor de temas entre dispositivos', async () => {
+    localStorage.setItem(
+      'aresta_graph_meta',
+      JSON.stringify({
+        version: 2,
+        themes: [
+          { id: 1, name: 'Nome Antigo', color: '#111111', updated_at: 1000, deleted_at: null, updated_by: 'local' }
+        ],
+        edges: [],
+        updated_at: 1000,
+      })
+    )
+
+    const provider = createMockProvider({
+      downloadDataFile: async <T>() => ({
+        schema_version: 1,
+        entity_type: 'graph_meta',
+        updated_at: '2026-01-02T00:00:00.000Z',
+        updated_by: 'phone',
+        payload: {
+          version: 2,
+          themes: [
+            { id: 1, name: 'Nome Novo Remoto', color: '#FF0000', updated_at: 5000, deleted_at: null, updated_by: 'phone' }
+          ],
+          edges: [],
+        },
+      } as unknown as T),
+      uploadDataFile: async () => ({ fileName: 'graph_meta.json', itemCount: 1, syncedAt: new Date().toISOString() }),
+    })
+
+    const service = new DriveSyncService(provider)
+    await service.syncGraphMeta()
+
+    const saved = JSON.parse(localStorage.getItem('aresta_graph_meta') || '{}')
+    expect(saved.themes[0]?.name).toBe('Nome Novo Remoto')
+    expect(saved.themes[0]?.color).toBe('#FF0000')
+    expect(saved.themes[0]?.updated_at).toBe(5000)
+  })
+
+  it('21. syncLibrary preserva remoção de todos os temas do livro sem ressuscitar temas remotos (themes: [])', async () => {
+    await db.saveBook({
+      id: 500,
+      bookId: 500,
+      title: 'Livro sem Temas',
+      updated_at: '2026-01-05T00:00:00.000Z', // local mais recente
+      sync_status: 'pending',
+      themes: [], // Usuário removeu todos os temas
+    })
+
+    let uploadedPayload: any = null
+    const provider = createMockProvider({
+      downloadDataFile: async <T>() => ({
+        schema_version: 1,
+        entity_type: 'book',
+        updated_at: '2026-01-01T00:00:00.000Z',
+        updated_by: 'remote',
+        payload: [
+          {
+            id: 500,
+            bookId: 500,
+            title: 'Livro sem Temas',
+            updated_at: '2026-01-01T00:00:00.000Z',
+            sync_status: 'synced',
+            themes: [{ id: 1, name: 'Tema Antigo' }],
+          },
+        ],
+      } as unknown as T),
+      uploadDataFile: async (_name: string, data: unknown) => {
+        uploadedPayload = data
+        return { fileName: 'library.json', itemCount: 1, syncedAt: new Date().toISOString() }
+      },
+    })
+
+    const service = new DriveSyncService(provider)
+    await service.syncLibrary()
+
+    const savedInDb = await db.getBookById(500)
+    expect(savedInDb?.themes).toEqual([])
+    const uploadedBook = uploadedPayload?.payload?.find((b: any) => b.id === 500)
+    expect(uploadedBook?.themes).toEqual([])
+  })
 })

@@ -202,17 +202,6 @@ const emit = defineEmits<{
   (e: 'openCreateNode'): void
   (e: 'openConnectModal'): void
   (
-    e: 'connectNodes',
-    payload: {
-      sourceId: number | string
-      targetId: number | string
-      sourceRawId?: number | string
-      targetRawId?: number | string
-      sourceType?: string
-      targetType?: string
-    }
-  ): void
-  (
     e: 'connect-nodes',
     payload: {
       sourceId: number | string
@@ -223,7 +212,6 @@ const emit = defineEmits<{
       targetType?: string
     }
   ): void
-  (e: 'deleteEdge', edge: GraphEdge): void
   (e: 'delete-edge', edge: GraphEdge): void
 }>()
 
@@ -309,7 +297,6 @@ const handleDeleteSelectedEdge = () => {
 
   deselectEdge()
 
-  emit('deleteEdge', edgePayload)
   emit('delete-edge', edgePayload)
 }
 
@@ -1799,15 +1786,7 @@ const initGraph = (animateTransition = true) => {
           initGraph(true)
         }
 
-        emit('connectNodes', {
-          sourceId: dragSourceNode.id,
-          targetId: finalTarget.id,
-          sourceRawId: dragSourceNode.rawId,
-          targetRawId: finalTarget.rawId,
-          sourceType: dragSourceNode.type,
-          targetType: finalTarget.type,
-        })
-        emit('connect-nodes' as any, {
+        emit('connect-nodes', {
           sourceId: dragSourceNode.id,
           targetId: finalTarget.id,
           sourceRawId: dragSourceNode.rawId,

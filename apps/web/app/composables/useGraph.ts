@@ -9,6 +9,8 @@ import { drawingNoteRepo } from '~/adapters/database/repositories/DrawingNoteRep
 import { linkRepo } from '~/adapters/database/repositories/LinkRepository'
 import { buildLocalGraph } from '~/utils/buildLocalGraph'
 import { loadGraphMeta, saveGraphMeta } from '~/utils/graphMeta'
+import { ThemeManagementService } from '~/services/ThemeManagementService'
+import { getCanonicalEdgeId, parseNodeId, normalizeThemeName } from '~/utils/themeIdentity'
 
 const sharedGraphData = ref<GraphData>({ nodes: [], edges: [] })
 const sharedLoading = ref(false)
@@ -69,17 +71,7 @@ export const useGraph = () => {
         extraEdges: meta.edges,
       })
 
-      const currentEdges = graphData.value?.edges || []
-      const assembledKeys = new Set(assembled.edges.map((edge) => `${String(edge.source)}---${String(edge.target)}`))
-      const activeIds = new Set(assembled.nodes.map((node) => String(node.id)))
-      for (const edge of currentEdges) {
-        const key = `${String(edge.source)}---${String(edge.target)}`
-        const reverse = `${String(edge.target)}---${String(edge.source)}`
-        if (!assembledKeys.has(key) && !assembledKeys.has(reverse) && activeIds.has(String(edge.source)) && activeIds.has(String(edge.target))) {
-          assembled.edges.push(edge)
-        }
-      }
-
+      // Elimina reinjeção de arestas antigas em memória (Fix Achado 7)
       graphData.value = assembled
     } catch (e: any) {
       console.error('Erro ao carregar dados do Grafo:', e)
@@ -89,11 +81,12 @@ export const useGraph = () => {
     }
   }
 
-  const fetchThemeBooks = async (themeId: number): Promise<BookItem[]> => {
+  const fetchThemeBooks = async (themeId: number | string): Promise<BookItem[]> => {
     try {
       const books = await bookRepo.getAll()
+      const rawThemeId = String(themeId).replace(/^theme-/, '')
       return books
-        .filter((book) => (book.themes || []).some((theme) => Number(theme.id) === Number(themeId)))
+        .filter((book) => (book.themes || []).some((t) => String(t.id) === rawThemeId || normalizeThemeName(t.name) === normalizeThemeName(rawThemeId)))
         .map((book) => ({
           id: Number(book.bookId || book.id),
           title: book.title,
@@ -108,9 +101,9 @@ export const useGraph = () => {
     }
   }
 
-  const fetchThemeAnnotations = async (themeId: number): Promise<AnnotationThemeItem[]> => {
+  const fetchThemeAnnotations = async (themeId: number | string): Promise<AnnotationThemeItem[]> => {
     try {
-      const annotations = await annotationRepo.getAll({ themeId })
+      const annotations = await annotationRepo.getAll({ themeId: typeof themeId === 'number' ? themeId : numericId(themeId) })
       return annotations.map(mapAnnotation)
     } catch (e: any) {
       console.error(`Erro ao buscar anotações do tema ${themeId}:`, e)
@@ -160,257 +153,123 @@ export const useGraph = () => {
     const color = typeof nameOrPayload === 'object' && nameOrPayload.color ? nameOrPayload.color : colorParam
     const description = typeof nameOrPayload === 'object' && nameOrPayload.description ? nameOrPayload.description : descriptionParam
 
-    const name = (rawName || '').trim()
-    if (!name) {
-      throw new Error('Nome do nó/tema é obrigatório')
-    }
-    if (name.length > 30) {
-      throw new Error('O nome do tema deve ter no máximo 30 caracteres')
-    }
-
-    const meta = loadGraphMeta()
-    const existing = meta.themes.find((theme) => theme.name.trim().toLowerCase() === name.toLowerCase())
-    if (existing) {
-      await fetchGraph()
-      return {
-        id: toNodeId('theme', existing.id),
-        rawId: existing.id,
-        name: existing.name,
-        color: existing.color || color,
-        description: existing.description || description,
-        type: 'theme' as const,
-      }
-    }
-
-    const existingNode = (graphData.value?.nodes || []).find(
-      (n: any) => n.type === 'theme' && n.name && n.name.trim().toLowerCase() === name.toLowerCase()
-    )
-    if (existingNode) {
-      const existingId = Number(existingNode.rawId || String(existingNode.id).replace(/^theme-/, ''))
-      if (Number.isFinite(existingId) && !meta.themes.some((t) => t.id === existingId)) {
-        meta.themes.push({
-          id: existingId,
-          name: existingNode.name,
-          color: existingNode.color || color,
-          description: existingNode.description || description,
-        })
-        saveGraphMeta(meta)
-      }
-      await fetchGraph()
-      return {
-        id: toNodeId('theme', existingId),
-        rawId: existingId,
-        name: existingNode.name,
-        color: existingNode.color || color,
-        description: existingNode.description || description,
-        type: 'theme' as const,
-      }
-    }
-
-    const newTheme = {
-      id: Date.now(),
-      name,
-      color,
-      description,
-    }
-    meta.themes.push(newTheme)
-    saveGraphMeta(meta)
+    const created = await ThemeManagementService.createTheme(rawName, color, description)
     await fetchGraph()
+
     return {
-      id: toNodeId('theme', newTheme.id),
-      rawId: newTheme.id,
-      name,
-      color,
-      description,
+      id: toNodeId('theme', created.id),
+      rawId: created.id,
+      name: created.name,
+      color: created.color || color,
+      description: created.description || description,
       type: 'theme' as const,
     }
   }
 
   const updateNode = async (id: number | string, name: string, color?: string, description?: string) => {
-    const trimmed = name !== undefined ? name.trim() : ''
-    if (name !== undefined) {
-      if (!trimmed) {
-        throw new Error('Nome do tema não pode ser vazio')
-      }
-      if (trimmed.length > 30) {
-        throw new Error('O nome do tema deve ter no máximo 30 caracteres')
-      }
-    }
-
-    const themeId = numericId(id)
-    const meta = loadGraphMeta()
-    const index = meta.themes.findIndex((theme) => Number(theme.id) === themeId)
-    const oldName = index !== -1 ? meta.themes[index]?.name : undefined
-    if (index !== -1) {
-      meta.themes[index] = {
-        ...meta.themes[index]!,
-        name: trimmed || meta.themes[index]!.name,
-        color: color || meta.themes[index]!.color,
-        description: description !== undefined ? description : meta.themes[index]!.description,
-      }
-      saveGraphMeta(meta)
-    }
-
-    const books = await bookRepo.getAll()
-    for (const book of books) {
-      const themes = book.themes || []
-      if (!themes.some((theme) => Number(theme.id) === themeId)) continue
-      await bookRepo.save({
-        ...book,
-        themes: themes.map((theme) => Number(theme.id) === themeId
-          ? { ...theme, name: trimmed || theme.name, color: color || theme.color }
-          : theme),
-      })
-    }
-
-    const annotations = await annotationRepo.getAll()
-    for (const annotation of annotations) {
-      const themes = annotation.themes || []
-      if (!themes.some((theme) => Number(theme.id) === themeId)) continue
-      await annotationRepo.save({
-        ...annotation,
-        themes: themes.map((theme) => Number(theme.id) === themeId
-          ? { ...theme, name: trimmed || theme.name, color: color || theme.color }
-          : theme),
-      })
-    }
-
-    if (oldName && trimmed && oldName.toLowerCase() !== trimmed.toLowerCase()) {
-      const notes = await noteRepo.getAll().catch(() => [])
-      for (const note of notes) {
-        if (note.tags && note.tags.some((t) => t.toLowerCase() === oldName.toLowerCase())) {
-          await noteRepo.save({
-            ...note,
-            tags: note.tags.map((t) => t.toLowerCase() === oldName.toLowerCase() ? trimmed : t)
-          })
-        }
-      }
-      const drawings = await drawingNoteRepo.getAll().catch(() => [])
-      for (const d of drawings) {
-        if (d.tags && d.tags.some((t) => t.toLowerCase() === oldName.toLowerCase())) {
-          await drawingNoteRepo.save({
-            ...d,
-            tags: d.tags.map((t) => t.toLowerCase() === oldName.toLowerCase() ? trimmed : t)
-          })
-        }
-      }
-      const links = await linkRepo.getAll().catch(() => [])
-      for (const l of links) {
-        if (l.tags && l.tags.some((t) => t.toLowerCase() === oldName.toLowerCase())) {
-          await linkRepo.save({
-            ...l,
-            tags: l.tags.map((t) => t.toLowerCase() === oldName.toLowerCase() ? trimmed : t)
-          })
-        }
-      }
-    }
-
+    await ThemeManagementService.renameTheme(id, name, color, description)
     await fetchGraph()
-    return graphData.value.nodes.find((node) => String(node.rawId) === String(themeId) || String(node.id) === String(id))
+    return graphData.value.nodes.find((node) => String(node.rawId) === String(id) || String(node.id) === String(id) || toNodeId('theme', node.rawId || '') === String(id))
   }
 
   const deleteNode = async (id: number | string) => {
-    const themeId = numericId(id)
-    const meta = loadGraphMeta()
-    const targetTheme = meta.themes.find((theme) => Number(theme.id) === themeId)
-    const oldName = targetTheme?.name
-    meta.themes = meta.themes.filter((theme) => Number(theme.id) !== themeId)
-    meta.edges = meta.edges.filter((edge) => String(edge.source) !== String(id) && String(edge.target) !== String(id)
-      && String(edge.source) !== toNodeId('theme', themeId) && String(edge.target) !== toNodeId('theme', themeId))
-    saveGraphMeta(meta)
-
-    const books = await bookRepo.getAll()
-    for (const book of books) {
-      const themes = book.themes || []
-      if (!themes.some((theme) => Number(theme.id) === themeId)) continue
-      await bookRepo.save({
-        ...book,
-        themes: themes.filter((theme) => Number(theme.id) !== themeId),
-      })
-    }
-
-    const annotations = await annotationRepo.getAll()
-    for (const annotation of annotations) {
-      const themes = annotation.themes || []
-      if (!themes.some((theme) => Number(theme.id) === themeId)) continue
-      await annotationRepo.save({
-        ...annotation,
-        themes: themes.filter((theme) => Number(theme.id) !== themeId),
-      })
-    }
-
-    if (oldName) {
-      const notes = await noteRepo.getAll().catch(() => [])
-      for (const note of notes) {
-        if (note.tags && note.tags.some((t) => t.toLowerCase() === oldName.toLowerCase())) {
-          await noteRepo.save({
-            ...note,
-            tags: note.tags.filter((t) => t.toLowerCase() !== oldName.toLowerCase())
-          })
-        }
-      }
-      const drawings = await drawingNoteRepo.getAll().catch(() => [])
-      for (const d of drawings) {
-        if (d.tags && d.tags.some((t) => t.toLowerCase() === oldName.toLowerCase())) {
-          await drawingNoteRepo.save({
-            ...d,
-            tags: d.tags.filter((t) => t.toLowerCase() !== oldName.toLowerCase())
-          })
-        }
-      }
-      const links = await linkRepo.getAll().catch(() => [])
-      for (const l of links) {
-        if (l.tags && l.tags.some((t) => t.toLowerCase() === oldName.toLowerCase())) {
-          await linkRepo.save({
-            ...l,
-            tags: l.tags.filter((t) => t.toLowerCase() !== oldName.toLowerCase())
-          })
-        }
-      }
-    }
-
+    await ThemeManagementService.deleteTheme(id)
     await fetchGraph()
   }
 
   const createConnection = async (sourceId: number | string, targetId: number | string, type = 'theme-hierarchy') => {
-    const source = String(sourceId)
-    const target = String(targetId)
-    const conn: GraphEdge = {
-      id: `edge-${source}-${target}`,
-      source,
-      target,
-      type,
+    const sourceStr = String(sourceId)
+    const targetStr = String(targetId)
+
+    const parsedA = parseNodeId(sourceStr)
+    const parsedB = parseNodeId(targetStr)
+
+    // Caso 1: Vínculo com Tema (Nota/Desenho/Quadro/Link/Livro/Anotação ↔ Tema)
+    if (parsedA.type === 'theme' && parsedB.type !== 'theme' && parsedB.type !== 'unknown') {
+      await ThemeManagementService.linkEntityToTheme(targetStr, sourceStr)
+      await fetchGraph()
+      return { id: getCanonicalEdgeId(sourceStr, targetStr), source: sourceStr, target: targetStr, type: `${parsedB.type}-theme` }
+    } else if (parsedB.type === 'theme' && parsedA.type !== 'theme' && parsedA.type !== 'unknown') {
+      await ThemeManagementService.linkEntityToTheme(sourceStr, targetStr)
+      await fetchGraph()
+      return { id: getCanonicalEdgeId(sourceStr, targetStr), source: sourceStr, target: targetStr, type: `${parsedA.type}-theme` }
     }
+
+    // Caso 2: Vínculo Nota ↔ Livro / Quadro / Nota
+    if (parsedA.type === 'note' && (parsedB.type === 'book' || parsedB.type === 'canvas' || parsedB.type === 'note')) {
+      const note = await noteRepo.getById(parsedA.rawId) || await noteRepo.getById(sourceStr)
+      if (note) {
+        const links = [...(note.links || [])]
+        const targetType = parsedB.type.toUpperCase() as any
+        const targetId = parsedB.type === 'book' ? Number(parsedB.rawId) : parsedB.rawId
+        if (!links.some((l) => l.targetType === targetType && String(l.targetId) === String(targetId))) {
+          links.push({ targetType, targetId, targetTitle: targetStr })
+          await noteRepo.save({ ...note, links })
+        }
+      }
+      await fetchGraph()
+      return { id: getCanonicalEdgeId(sourceStr, targetStr), source: sourceStr, target: targetStr, type: `note-${parsedB.type}` }
+    }
+
+    // Caso 3: Aresta customizada / pura em graphMeta.edges (ex: Theme ↔ Theme, Livro ↔ Livro)
+    const edgeId = getCanonicalEdgeId(sourceStr, targetStr)
     const meta = loadGraphMeta()
-    const exists = meta.edges.some((edge) =>
-      (`${edge.source}---${edge.target}` === `${source}---${target}`)
-      || (`${edge.target}---${edge.source}` === `${source}---${target}`)
-    )
-    if (!exists) {
-      meta.edges.push(conn)
-      saveGraphMeta(meta)
+    const now = Date.now()
+
+    const existingIndex = meta.edges.findIndex((e) => e.id === edgeId)
+    if (existingIndex !== -1) {
+      meta.edges[existingIndex] = {
+        ...meta.edges[existingIndex]!,
+        source: sourceStr,
+        target: targetStr,
+        type,
+        updated_at: now,
+        deleted_at: null,
+      }
+    } else {
+      meta.edges.push({
+        id: edgeId,
+        source: sourceStr,
+        target: targetStr,
+        type,
+        updated_at: now,
+        deleted_at: null,
+      })
     }
+
+    saveGraphMeta(meta)
     await fetchGraph()
-    return conn
+    return { id: edgeId, source: sourceStr, target: targetStr, type }
   }
 
   const deleteConnection = async (sourceId: number | string, targetId: number | string) => {
-    const source = String(sourceId)
-    const target = String(targetId)
+    const sourceStr = String(sourceId)
+    const targetStr = String(targetId)
+    const edgeId = getCanonicalEdgeId(sourceStr, targetStr)
     const meta = loadGraphMeta()
-    meta.edges = meta.edges.filter((edge) => {
-      const key = `${edge.source}---${edge.target}`
-      const reverse = `${edge.target}---${edge.source}`
-      return key !== `${source}---${target}` && reverse !== `${source}---${target}`
-    })
-    saveGraphMeta(meta)
-    if (graphData.value && graphData.value.edges) {
-      graphData.value.edges = graphData.value.edges.filter((edge) => {
-        const key = `${edge.source}---${edge.target}`
-        const reverse = `${edge.target}---${edge.source}`
-        return key !== `${source}---${target}` && reverse !== `${source}---${target}`
+    const now = Date.now()
+
+    let changed = false
+    for (const edge of meta.edges) {
+      if (edge.id === edgeId || (edge.source === sourceStr && edge.target === targetStr) || (edge.source === targetStr && edge.target === sourceStr)) {
+        edge.deleted_at = now
+        edge.updated_at = now
+        changed = true
+      }
+    }
+
+    if (changed) {
+      saveGraphMeta(meta)
+    }
+
+    if (graphData.value?.edges) {
+      graphData.value.edges = graphData.value.edges.filter((e) => {
+        const s = String(typeof e.source === 'object' ? (e.source as any)?.id : e.source)
+        const t = String(typeof e.target === 'object' ? (e.target as any)?.id : e.target)
+        return getCanonicalEdgeId(s, t) !== edgeId
       })
     }
+
     await fetchGraph()
   }
 
@@ -419,159 +278,75 @@ export const useGraph = () => {
     const rawTarget = typeof edgeInput.target === 'object' ? edgeInput.target?.id : edgeInput.target
     const sourceStr = String(rawSource || '')
     const targetStr = String(rawTarget || '')
-    const type = edgeInput.type || ''
 
-    const extractId = (val: string) => numericId(val)
+    const parsedA = parseNodeId(sourceStr)
+    const parsedB = parseNodeId(targetStr)
 
-    if (graphData.value && graphData.value.edges) {
-      graphData.value.edges = graphData.value.edges.filter((e) => {
-        const s = String(typeof e.source === 'object' ? (e.source as any)?.id : e.source)
-        const t = String(typeof e.target === 'object' ? (e.target as any)?.id : e.target)
-        const match = (s === sourceStr && t === targetStr) || (s === targetStr && t === sourceStr)
-        return !match && e.id !== edgeInput.id
-      })
-    }
-
-    // 1. Livro <-> Tema
-    if (type === 'book-theme' || (sourceStr.startsWith('book-') && targetStr.startsWith('theme-')) || (sourceStr.startsWith('theme-') && targetStr.startsWith('book-'))) {
-      const bookStr = sourceStr.startsWith('book-') ? sourceStr : targetStr
-      const themeStr = sourceStr.startsWith('theme-') ? sourceStr : targetStr
-      const bookId = extractId(bookStr)
-      const themeId = extractId(themeStr)
-      const themeNode = graphData.value.nodes.find((n) => n.id === themeStr || Number(n.rawId) === themeId)
-      const themeName = themeNode?.name || ''
-      const books = await bookRepo.getAll()
-      const book = books.find((item) => Number(item.bookId) === bookId || Number(item.id) === bookId)
-      if (book) {
-        await bookRepo.save({
-          ...book,
-          themes: (book.themes || []).filter((theme) => {
-            const matchesId = Number(theme.id) === themeId
-            const matchesName = Boolean(themeName && theme.name && theme.name.toLowerCase() === themeName.toLowerCase())
-            return !matchesId && !matchesName
-          }),
-        })
-      }
+    // 1. Desconectar de Tema
+    if (parsedA.type === 'theme' && parsedB.type !== 'theme' && parsedB.type !== 'unknown') {
+      await ThemeManagementService.unlinkEntityFromTheme(targetStr, sourceStr)
+      await fetchGraph()
+      return
+    } else if (parsedB.type === 'theme' && parsedA.type !== 'theme' && parsedA.type !== 'unknown') {
+      await ThemeManagementService.unlinkEntityFromTheme(sourceStr, targetStr)
       await fetchGraph()
       return
     }
 
-    // 2. Anotação <-> Tema
-    if (type === 'annotation-theme' || (sourceStr.startsWith('annotation-') && targetStr.startsWith('theme-')) || (sourceStr.startsWith('theme-') && targetStr.startsWith('annotation-'))) {
-      const annoStr = sourceStr.startsWith('annotation-') ? sourceStr : targetStr
-      const themeStr = sourceStr.startsWith('theme-') ? sourceStr : targetStr
-      const annotationId = extractId(annoStr)
-      const themeId = extractId(themeStr)
-      const themeNode = graphData.value.nodes.find((n) => n.id === themeStr || Number(n.rawId) === themeId)
-      const themeName = themeNode?.name || ''
-      const annotations = await annotationRepo.getAll()
-      const annotation = annotations.find((item) => Number(item.id) === annotationId)
-      if (annotation) {
-        await annotationRepo.save({
-          ...annotation,
-          themes: (annotation.themes || []).filter((theme) => {
-            const matchesId = Number(theme.id) === themeId
-            const matchesName = Boolean(themeName && theme.name && theme.name.toLowerCase() === themeName.toLowerCase())
-            return !matchesId && !matchesName
-          }),
-        })
-      }
-      await fetchGraph()
-      return
-    }
-
-    // 3. Nota <-> Tema
-    if (type === 'note-theme' || (sourceStr.startsWith('note-') && targetStr.startsWith('theme-')) || (sourceStr.startsWith('theme-') && targetStr.startsWith('note-'))) {
-      const noteStr = sourceStr.startsWith('note-') ? sourceStr : targetStr
-      const themeStr = sourceStr.startsWith('theme-') ? sourceStr : targetStr
-      const noteId = extractId(noteStr)
-      const themeId = extractId(themeStr)
-      const themeNode = graphData.value.nodes.find((n) => n.id === themeStr || Number(n.rawId) === themeId)
-      const themeName = themeNode?.name || ''
-      const notes = await noteRepo.getAll().catch(() => [])
-      const note = notes.find((n) => Number(n.id) === noteId || String(n.id) === String(noteId))
-      if (note && themeName) {
-        await noteRepo.save({
-          ...note,
-          tags: (note.tags || []).filter((tag) => tag.toLowerCase() !== themeName.toLowerCase()),
-        })
-      }
-      await fetchGraph()
-      return
-    }
-
-    // 4. Nota <-> Livro
-    if (type === 'note-book' || (sourceStr.startsWith('note-') && targetStr.startsWith('book-'))) {
-      const noteId = extractId(sourceStr)
-      const bookId = extractId(targetStr)
-      const notes = await noteRepo.getAll().catch(() => [])
-      const note = notes.find((n) => Number(n.id) === noteId || String(n.id) === String(noteId))
+    // 2. Desconectar Nota ↔ Livro
+    if ((parsedA.type === 'note' && parsedB.type === 'book') || (parsedB.type === 'note' && parsedA.type === 'book')) {
+      const noteParsed = parsedA.type === 'note' ? parsedA : parsedB
+      const bookParsed = parsedA.type === 'book' ? parsedA : parsedB
+      const note = await noteRepo.getById(noteParsed.rawId) || await noteRepo.getById(noteParsed.canonicalId)
       if (note && note.links) {
         await noteRepo.save({
           ...note,
-          links: (note.links || []).filter((l) => !(l.targetType === 'BOOK' && Number(l.targetId) === bookId)),
+          links: note.links.filter((l) => !(l.targetType === 'BOOK' && String(l.targetId) === String(bookParsed.rawId))),
         })
       }
       await fetchGraph()
       return
     }
 
-    // 5. Nota <-> Canvas
-    if (type === 'note-canvas' || (sourceStr.startsWith('note-') && targetStr.startsWith('canvas-'))) {
-      const noteId = extractId(sourceStr)
-      const canvasId = String(targetStr).replace(/^canvas-/, '')
-      const notes = await noteRepo.getAll().catch(() => [])
-      const note = notes.find((n) => Number(n.id) === noteId || String(n.id) === String(noteId))
+    // 3. Desconectar Nota ↔ Canvas
+    if ((parsedA.type === 'note' && parsedB.type === 'canvas') || (parsedB.type === 'note' && parsedA.type === 'canvas')) {
+      const noteParsed = parsedA.type === 'note' ? parsedA : parsedB
+      const canvasParsed = parsedA.type === 'canvas' ? parsedA : parsedB
+      const note = await noteRepo.getById(noteParsed.rawId) || await noteRepo.getById(noteParsed.canonicalId)
       if (note && note.links) {
         await noteRepo.save({
           ...note,
-          links: (note.links || []).filter((l) => !(l.targetType === 'CANVAS' && String(l.targetId) === canvasId)),
+          links: note.links.filter((l) => !(l.targetType === 'CANVAS' && String(l.targetId) === String(canvasParsed.rawId))),
         })
       }
       await fetchGraph()
       return
     }
 
-    // 6. Conexões customizadas / hierarquia de temas
+    // 4. Desconectar Nota ↔ Nota
+    if (parsedA.type === 'note' && parsedB.type === 'note') {
+      const noteA = await noteRepo.getById(parsedA.rawId) || await noteRepo.getById(parsedA.canonicalId)
+      if (noteA && noteA.links) {
+        await noteRepo.save({
+          ...noteA,
+          links: noteA.links.filter((l) => !(l.targetType === 'NOTE' && String(l.targetId) === String(parsedB.rawId))),
+        })
+      }
+      await fetchGraph()
+      return
+    }
+
+    // 5. Desconectar aresta em graphMeta (Theme-Theme, etc.)
     await deleteConnection(sourceStr, targetStr)
   }
 
   const linkBookToNode = async (nodeId: number | string, bookId: number | string) => {
-    const themeId = numericId(nodeId)
-    const resolvedBookId = numericId(bookId)
-    const books = await bookRepo.getAll()
-    const book = books.find((item) => Number(item.bookId) === resolvedBookId || Number(item.id) === resolvedBookId)
-    if (!book) return
-
-    const meta = loadGraphMeta()
-    const theme = meta.themes.find((item) => Number(item.id) === themeId)
-      || graphData.value.nodes.find((node) => node.type === 'theme' && Number(node.rawId) === themeId)
-
-    const nextThemes = [...(book.themes || [])]
-    if (!nextThemes.some((item) => Number(item.id) === themeId)) {
-      nextThemes.push({
-        id: themeId,
-        name: theme?.name || `Tema ${themeId}`,
-        color: theme?.color || '#E57B55',
-      })
-      await bookRepo.save({
-        ...book,
-        themes: nextThemes,
-      })
-    }
+    await ThemeManagementService.linkEntityToTheme(toNodeId('book', bookId), toNodeId('theme', nodeId))
     await fetchGraph()
   }
 
   const unlinkBookFromNode = async (nodeId: number | string, bookId: number | string) => {
-    const themeId = numericId(nodeId)
-    const resolvedBookId = numericId(bookId)
-    const books = await bookRepo.getAll()
-    const book = books.find((item) => Number(item.bookId) === resolvedBookId || Number(item.id) === resolvedBookId)
-    if (!book) return
-    await bookRepo.save({
-      ...book,
-      themes: (book.themes || []).filter((theme) => Number(theme.id) !== themeId),
-    })
+    await ThemeManagementService.unlinkEntityFromTheme(toNodeId('book', bookId), toNodeId('theme', nodeId))
     await fetchGraph()
   }
 

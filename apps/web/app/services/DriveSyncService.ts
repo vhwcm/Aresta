@@ -2,9 +2,125 @@ import type { IDataSyncProvider, DataSubFolder } from '~/adapters/storage/cloud/
 import { getDatabase } from '~/adapters/database/DatabaseManager'
 import type { BaseLocalEntity, LocalAnnotation, LocalBook, LocalCanvasItem, LocalDrawingNote, LocalFlashcard, LocalJournalEntry, LocalNote, LocalStreak, LocalUserSettings } from '~/adapters/database/types'
 import { mutationQueueService } from './MutationQueueService'
-import { loadGraphMeta, saveGraphMeta, type GraphMeta } from '~/utils/graphMeta'
+import {
+  loadGraphMeta,
+  saveGraphMeta,
+  normalizeGraphEdge,
+  normalizeGraphTheme,
+  type GraphMeta,
+  type GraphThemeRecord,
+  type GraphEdgeRecord,
+} from '~/utils/graphMeta'
 import type { GraphEdge } from '~/interfaces/graph'
-import type { GraphThemeRecord } from '~/utils/buildLocalGraph'
+
+export function mergeGraphMetaCRDT(
+  localMeta: GraphMeta,
+  remoteMeta: GraphMeta | null,
+  deviceId: string = 'local'
+): { merged: GraphMeta; downloaded: number; conflicts: number } {
+  let downloaded = 0
+  let conflicts = 0
+
+  if (!remoteMeta) {
+    return { merged: localMeta, downloaded: 0, conflicts: 0 }
+  }
+
+  // 1. Merge Themes com LWW e tombstones
+  const localThemes = localMeta.themes || []
+  const remoteThemes = remoteMeta.themes || []
+
+  const themesById = new Map<string | number, GraphThemeRecord>()
+  const themesByName = new Map<string, GraphThemeRecord>()
+
+  localThemes.forEach((t) => {
+    const norm = normalizeGraphTheme(t)
+    themesById.set(norm.id, norm)
+    const nameKey = (norm.name || '').trim().toLowerCase()
+    if (nameKey) themesByName.set(nameKey, norm)
+  })
+
+  for (const rawRemote of remoteThemes) {
+    const remoteTheme = normalizeGraphTheme(rawRemote)
+    const nameKey = (remoteTheme.name || '').trim().toLowerCase()
+    const current = themesById.get(remoteTheme.id) || (nameKey ? themesByName.get(nameKey) : undefined)
+
+    if (!current) {
+      themesById.set(remoteTheme.id, remoteTheme)
+      if (nameKey) themesByName.set(nameKey, remoteTheme)
+      if (!remoteTheme.deleted_at) {
+        downloaded++
+      }
+      continue
+    }
+
+    const localEffectiveTime = Math.max(current.updated_at || 0, current.deleted_at || 0)
+    const remoteEffectiveTime = Math.max(remoteTheme.updated_at || 0, remoteTheme.deleted_at || 0)
+
+    if (remoteEffectiveTime > localEffectiveTime) {
+      const winner: GraphThemeRecord = {
+        ...remoteTheme,
+        id: current.id,
+      }
+      themesById.set(current.id, winner)
+      if (nameKey) themesByName.set(nameKey, winner)
+      downloaded++
+      conflicts++
+    } else if (remoteEffectiveTime < localEffectiveTime) {
+      conflicts++
+    } else {
+      const winner = (remoteTheme.updated_by || '') > (current.updated_by || '') ? remoteTheme : current
+      themesById.set(current.id, { ...winner, id: current.id })
+    }
+  }
+
+  // 2. Merge Edges com LWW e tombstones
+  const localEdges = localMeta.edges || []
+  const remoteEdges = remoteMeta.edges || []
+
+  const edgesById = new Map<string, GraphEdgeRecord>()
+
+  localEdges.forEach((e) => {
+    const norm = normalizeGraphEdge(e)
+    edgesById.set(norm.id, norm)
+  })
+
+  for (const rawRemote of remoteEdges) {
+    const remoteEdge = normalizeGraphEdge(rawRemote)
+    const current = edgesById.get(remoteEdge.id)
+
+    if (!current) {
+      edgesById.set(remoteEdge.id, remoteEdge)
+      if (!remoteEdge.deleted_at) {
+        downloaded++
+      }
+      continue
+    }
+
+    const localEffectiveTime = Math.max(current.updated_at || 0, current.deleted_at || 0)
+    const remoteEffectiveTime = Math.max(remoteEdge.updated_at || 0, remoteEdge.deleted_at || 0)
+
+    if (remoteEffectiveTime > localEffectiveTime) {
+      edgesById.set(remoteEdge.id, remoteEdge)
+      downloaded++
+      conflicts++
+    } else if (remoteEffectiveTime < localEffectiveTime) {
+      conflicts++
+    } else {
+      const winner = (remoteEdge.updated_by || '') > (current.updated_by || '') ? remoteEdge : current
+      edgesById.set(remoteEdge.id, winner)
+    }
+  }
+
+  const merged: GraphMeta = {
+    version: 2,
+    themes: Array.from(themesById.values()),
+    edges: Array.from(edgesById.values()),
+    updated_at: Date.now(),
+    updated_by: deviceId,
+  }
+
+  return { merged, downloaded, conflicts }
+}
 
 export interface SyncResult {
   fileName: string
@@ -524,9 +640,10 @@ export class DriveSyncService {
         const author = (winner.author && winner.author !== 'Google Drive'
           ? winner.author
           : (remoteItem.author && remoteItem.author !== 'Google Drive' ? remoteItem.author : current.author)) || 'Autor Desconhecido'
-        const themes = (winner.themes && winner.themes.length > 0)
-          ? winner.themes
-          : (remoteItem.themes && remoteItem.themes.length > 0 ? remoteItem.themes : (current.themes || []))
+        const isLocalPlaceholder = current.author === 'Google Drive' || (typeof current.filePath === 'string' && current.filePath.startsWith('drive:'))
+        const themes = isLocalPlaceholder && remoteItem.themes && remoteItem.themes.length > 0
+          ? remoteItem.themes
+          : (winner.themes !== undefined ? winner.themes : (current.themes || remoteItem.themes || []))
 
         const targetToSave: LocalBook = {
           ...winner,
@@ -577,63 +694,17 @@ export class DriveSyncService {
 
   async syncGraphMeta(): Promise<SyncResult> {
     const fileName = 'graph_meta.json'
-    const local = loadGraphMeta()
+    // 1. Download do payload remoto
     const remote = await withRetry(() => this.provider.downloadDataFile<SyncEnvelope<GraphMeta>>(fileName))
 
-    let downloaded = 0
-    let conflicts = 0
+    // 2. Snapshot fresco local imediatamente antes de mesclar (3-Way Merge / Prevenção de Lost Update)
+    const currentLocal = loadGraphMeta()
 
-    const themesMap = new Map<string | number, GraphThemeRecord>()
-    const themesByName = new Map<string, GraphThemeRecord>()
-    local.themes.forEach((t) => {
-      themesMap.set(t.id, t)
-      const norm = (t.name || '').trim().toLowerCase()
-      if (norm) themesByName.set(norm, t)
-    })
-
-    if (remote?.payload?.themes && Array.isArray(remote.payload.themes)) {
-      for (const remoteTheme of remote.payload.themes) {
-        const norm = (remoteTheme.name || '').trim().toLowerCase()
-        const current = themesMap.get(remoteTheme.id) || (norm ? themesByName.get(norm) : undefined)
-        if (!current) {
-          themesMap.set(remoteTheme.id, remoteTheme)
-          if (norm) themesByName.set(norm, remoteTheme)
-          downloaded++
-        } else {
-          const mergedTheme: GraphThemeRecord = {
-            id: current.id,
-            name: current.name || remoteTheme.name,
-            color: current.color || remoteTheme.color || '#E57B55',
-            description: current.description || remoteTheme.description || '',
-          }
-          themesMap.set(current.id, mergedTheme)
-        }
-      }
-    }
-
-    const edgesMap = new Map<string, GraphEdge>()
-    const edgeKey = (e: GraphEdge) => `${String(e.source)}---${String(e.target)}`
-    const reverseKey = (e: GraphEdge) => `${String(e.target)}---${String(e.source)}`
-
-    local.edges.forEach((e) => {
-      edgesMap.set(edgeKey(e), e)
-    })
-
-    if (remote?.payload?.edges && Array.isArray(remote.payload.edges)) {
-      for (const remoteEdge of remote.payload.edges) {
-        const k = edgeKey(remoteEdge)
-        const rk = reverseKey(remoteEdge)
-        if (!edgesMap.has(k) && !edgesMap.has(rk)) {
-          edgesMap.set(k, remoteEdge)
-          downloaded++
-        }
-      }
-    }
-
-    const mergedMeta: GraphMeta = {
-      themes: Array.from(themesMap.values()),
-      edges: Array.from(edgesMap.values()),
-    }
+    const { merged: mergedMeta, downloaded, conflicts } = mergeGraphMetaCRDT(
+      currentLocal,
+      remote?.payload || null,
+      this.deviceId
+    )
 
     saveGraphMeta(mergedMeta)
 

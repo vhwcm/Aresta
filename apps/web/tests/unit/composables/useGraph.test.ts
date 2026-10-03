@@ -199,17 +199,15 @@ describe('useGraph Composable', () => {
 
   it('unlinkEdge desvincula livro de um tema', async () => {
     const saveSpy = vi.spyOn(bookRepo, 'save').mockResolvedValue({} as any)
-    vi.spyOn(bookRepo, 'getAll').mockResolvedValue([
-      {
-        id: 1,
-        bookId: 1,
-        title: 'Livro Teste',
-        themes: [
-          { id: 10, name: 'Filosofia' },
-          { id: 20, name: 'História' },
-        ],
-      } as any,
-    ])
+    vi.spyOn(bookRepo, 'getById').mockResolvedValue({
+      id: 1,
+      bookId: 1,
+      title: 'Livro Teste',
+      themes: [
+        { id: 10, name: 'Filosofia' },
+        { id: 20, name: 'História' },
+      ],
+    } as any)
 
     const { unlinkEdge } = useGraph()
     await unlinkEdge({
@@ -228,16 +226,14 @@ describe('useGraph Composable', () => {
 
   it('unlinkEdge desvincula anotação de um tema', async () => {
     const saveSpy = vi.spyOn(annotationRepo, 'save').mockResolvedValue({} as any)
-    vi.spyOn(annotationRepo, 'getAll').mockResolvedValue([
-      {
-        id: 5,
-        bookId: 1,
-        note: 'Nota profunda',
-        themes: [
-          { id: 10, name: 'Filosofia' },
-        ],
-      } as any,
-    ])
+    vi.spyOn(annotationRepo, 'getById').mockResolvedValue({
+      id: 5,
+      bookId: 1,
+      note: 'Nota profunda',
+      themes: [
+        { id: 10, name: 'Filosofia' },
+      ],
+    } as any)
 
     const { unlinkEdge } = useGraph()
     await unlinkEdge({
@@ -256,13 +252,18 @@ describe('useGraph Composable', () => {
 
   it('unlinkEdge desvincula nota de um tema removendo a tag correspondente', async () => {
     const saveSpy = vi.spyOn(noteRepo, 'save').mockResolvedValue({} as any)
-    vi.spyOn(noteRepo, 'getAll').mockResolvedValue([
-      {
-        id: 12,
-        title: 'Minha Nota',
-        tags: ['Filosofia', 'Ciência'],
-      } as any,
-    ])
+    vi.spyOn(noteRepo, 'getById').mockResolvedValue({
+      id: 12,
+      title: 'Minha Nota',
+      tags: ['Filosofia', 'Ciência'],
+    } as any)
+
+    localStorage.setItem(GRAPH_META_STORAGE_KEY, JSON.stringify({
+      themes: [
+        { id: 10, name: 'Filosofia', color: '#E57B55', updated_at: 1000, deleted_at: null },
+      ],
+      edges: [],
+    }))
 
     const { graphData, unlinkEdge } = useGraph()
     graphData.value.nodes = [
@@ -283,23 +284,24 @@ describe('useGraph Composable', () => {
     )
   })
 
-  it('unlinkEdge remove conexão customizada em meta.edges', async () => {
+  it('unlinkEdge remove conexão customizada em meta.edges aplicando tombstone CRDT', async () => {
     localStorage.setItem(GRAPH_META_STORAGE_KEY, JSON.stringify({
       themes: [],
       edges: [
-        { id: 'edge-theme-1-theme-2', source: 'theme-1', target: 'theme-2', type: 'theme-hierarchy' },
+        { id: 'theme-1---theme-2', source: 'theme-1', target: 'theme-2', type: 'theme-hierarchy', updated_at: 1000, deleted_at: null },
       ],
     }))
 
     const { unlinkEdge } = useGraph()
     await unlinkEdge({
-      id: 'edge-theme-1-theme-2',
+      id: 'theme-1---theme-2',
       source: 'theme-1',
       target: 'theme-2',
       type: 'theme-hierarchy',
     })
 
     const stored = JSON.parse(localStorage.getItem(GRAPH_META_STORAGE_KEY) || '{}')
-    expect(stored.edges).toHaveLength(0)
+    expect(stored.edges).toHaveLength(1)
+    expect(stored.edges[0].deleted_at).toBeTypeOf('number')
   })
 })

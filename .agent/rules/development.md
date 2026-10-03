@@ -29,6 +29,7 @@ O agente deve avaliar o impacto da tarefa solicitada pelo usuário e aplicar o p
   6. Validar linters e testes.
   7. Mover a tarefa para "Done" no `checklist.md`.
   8. Realizar `git commit` com mensagem descritiva.
+  9. Criar um artifact explicando detalhadamente o que foi feito. 
 
 ### 3. Tarefa Grande (Large Scope / Feature)
 - **Definição**: Novo módulo ou sistema, alteração de banco de dados (`prisma/schema.prisma`), novo fluxo de autenticação, refatoração de múltiplos módulos, nova integração externa.
@@ -42,6 +43,21 @@ O agente deve avaliar o impacto da tarefa solicitada pelo usuário e aplicar o p
   7. **Atualização de Conhecimento**: Mover a spec para `specs/completed/` e executar a Skill `update-docs`.
   8. Mover a tarefa para "Done" no `checklist.md`.
   9. **Commits Atômicos**: Realizar commits divididos por etapa.
+ 10. Criar um artifact explicando detalhadamente o que foi feito. 
+
 
 ### Sempre que for mexer em algo visual, seguir a estética definida Design.md
 
+### Use todas as práticas do clean code:
+- Funções pequenas
+- Arquivos pequenos
+- Modularização do Código
+- Quando puder, utilize rg 'funcName' ao invés de read, por ser mais eficiente. Como vamos seguir o cleanCode, ficará mais fácil de encontrar nome de Funções.
+- Single Responsability Principle
+- Nomes significativos e Unicos
+- Comentários com contexto e proveniencia
+- Tipos explicitos
+- Principio DRY
+- Testes que o agente consegue rodar
+- Dependence Injection e responsabilidade
+- Erro com contexto, porém enxuto

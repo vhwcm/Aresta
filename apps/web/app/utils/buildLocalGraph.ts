@@ -1,12 +1,15 @@
 import type { LocalAnnotation, LocalBook, LocalCanvasItem, LocalDrawingNote, LocalNote, LocalLinkItem } from '~/adapters/database/types'
 import type { GraphData, GraphEdge, GraphNode } from '~/interfaces/graph'
 import { resolveNoteTitle } from '~/utils/noteTitle'
+import { hashThemeNumeric, normalizeThemeName } from '~/utils/themeIdentity'
 
 export interface GraphThemeRecord {
-  id: number
+  id: number | string
   name: string
   color?: string | null
   description?: string | null
+  deleted_at?: number | null
+  updated_at?: number
 }
 
 export interface BuildLocalGraphInput {
@@ -40,21 +43,21 @@ export const buildLocalGraph = (input: BuildLocalGraphInput = {}): GraphData => 
   const canvases = input.canvases || []
   const drawingNotes = input.drawingNotes || []
   const links = input.links || []
-  const extraThemes = input.extraThemes || []
-  const extraEdges = input.extraEdges || []
+  const extraThemes = (input.extraThemes || []).filter((t) => !t.deleted_at)
+  const extraEdges = (input.extraEdges || []).filter((e: any) => !e.deleted_at)
 
   const themeMap = new Map<string, GraphThemeRecord>()
-  const upsertTheme = (theme?: { id?: number | string; name?: string; color?: string | null; description?: string | null }) => {
-    if (!theme) return
+  const upsertTheme = (theme?: { id?: number | string; name?: string; color?: string | null; description?: string | null; deleted_at?: number | null }) => {
+    if (!theme || theme.deleted_at) return
     const numericId = Number(theme.id)
     const name = (theme.name || '').trim()
     if (!name && Number.isNaN(numericId)) return
 
     // Busca se já existe um tema/tag com o mesmo nome (case-insensitive)
-    const normName = name.toLowerCase()
+    const normName = normalizeThemeName(name)
     if (normName) {
       for (const [k, v] of themeMap.entries()) {
-        if (v.name.trim().toLowerCase() === normName) {
+        if (normalizeThemeName(v.name) === normName) {
           if (theme.color && !v.color) v.color = theme.color
           if (theme.description && !v.description) v.description = theme.description
           return v.id
@@ -62,7 +65,7 @@ export const buildLocalGraph = (input: BuildLocalGraphInput = {}): GraphData => 
       }
     }
 
-    const id = Number.isFinite(numericId) && numericId !== 0 ? numericId : Math.abs(hashString(name || String(theme.id)))
+    const id = Number.isFinite(numericId) && numericId !== 0 ? numericId : hashThemeNumeric(name || String(theme.id))
     const key = String(id)
     const existing = themeMap.get(key)
     themeMap.set(key, {

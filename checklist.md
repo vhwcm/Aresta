@@ -1,7 +1,7 @@
 ## 🔄 Em Andamento
-- [03/10/2026 11:01] [Fazendo] Reestruturar sincronização de temas e conexões do grafo com CRDT LWW, IDs determinísticos, tombstones e semântica unificada
 
 ## ✅ Concluído
+- [03/10/2026 12:00] [Concluído] Reestruturar sincronização de temas e conexões do grafo com CRDT LWW, IDs determinísticos, tombstones e semântica unificada
 - [03/10/2026 11:57] [Concluído] Restaurar layout horizontal no mobile com capa do livro no lado esquerdo e bloco de 6 ícones ao lado direito
 - [03/10/2026 11:53] [Concluído] Reduzir margens/padding entre botões (p-1.5, gap-1) e ampliar ícones (w-10 / w-7.5) para ficarem grandes e próximos entre si no leitor
 - [03/10/2026 11:50] [Concluído] Ampliar significativamente o tamanho dos ícones e botões de ação do leitor no desktop (w-9.5, p-4) e mobile (w-7, p-3) com barra lateral de 140px

@@ -1,0 +1,58 @@
+================================================================================
+DIAGRAMA DE ARQUITETURA E RECONCILIAÇÃO CRDT: GRAFO DE CONHECIMENTO E SINCRONIZAÇÃO
+================================================================================
+
+[ DISPOSITIVO LOCAL ]                                 [ GOOGLE DRIVE (APPDATA) ]
+┌──────────────────────────────────────────────┐     ┌────────────────────────────┐
+│ 1. Mutação na UI (Grafo / Sidebar)           │     │                            │
+│    - Conectar / Desconectar Nós              │     │  graph_meta.json (CRDT v2) │
+│    - Criar / Renomear / Excluir Tema         │     │  - themes: Record<ID, T>   │
+│         │                                    │     │  - edges: Record<ID, E>    │
+│         ▼                                    │     │                            │
+│ 2. ThemeManagementService / useGraph         │     │  library.json              │
+│    - Canonical ID: getCanonicalThemeId(nome) │     │  - book.themes[]           │
+│    - Canonical Edge: min(A,B)---max(A,B)     │     │                            │
+│    - Aplica Tombstone (deleted_at: now)      │     └─────────────▲──────────────┘
+│    - Grava na fonte real (tags/themes/edges) │                   │
+│         │                                    │                   │
+│         ▼                                    │                   │
+│ 3. Snapshot Local A (T0)                     │                   │
+│         │                                    │                   │
+│         ├────────── Solicita Sync ───────────┼───────────────────┤
+│         ▼                                    │                   │
+│ 4. Download Snapshot Remoto (T1) ◄───────────┼───────────────────┘
+│         │ (Latência de rede)                 │
+│         ▼                                    │
+│ 5. Leitura do Snapshot Local B (T2)          │
+│    (Captura mutações concorrentes)           │
+│         │                                    │
+│         ▼                                    │
+│ 6. Algoritmo de Merge 3 Vias (LWW + Tombstones)
+│    - Para cada Tema e Aresta:                │
+│      Max(local.updated_at, local.deleted_at) │
+│      vs                                      │
+│      Max(remote.updated_at, remote.deleted_at)
+│    - Vencedor persiste                       │
+│         │                                    │
+│         ▼                                    │
+│ 7. Gravação Atômica e Broadcast Local        │
+│    - Salva GraphMeta v2                      │
+│    - Upload para Google Drive                │
+│    - Notifica abas / Re-renderiza Grafo      │
+└──────────────────────────────────────────────┘
+
+================================================================================
+TABELA DE PROJEÇÃO DE VÍNCULOS E DESCONEXÃO (UNLINK)
+================================================================================
+
+  Tipo de Conexão               Origem / Destino         Onde Armazenar           Ação de Desconexão
+ ──────────────────────────────────────────────────────────────────────────────────────────────────
+  Nota / Desenho ──► Tema      note-* / theme-*         Note.tags[]              Array filter tag
+  Quadro / Link   ──► Tema      canvas-* / theme-*       Board.tags[], Link.tags  Array filter tag
+  Livro / Anotação──► Tema      book-* / theme-*         Book/Annotation.themes[] Array filter theme
+  Nota            ──► Livro     note-* / book-*          Note.links[]             Array filter link
+  Nota            ──► Quadro    note-* / canvas-*        Note.links[]             Array filter link
+  Tema            ──► Tema      theme-* / theme-*        GraphMeta.edges (v2)     deleted_at: Date.now()
+  Livro           ──► Livro     book-* / book-*          GraphMeta.edges (v2)     deleted_at: Date.now()
+
+================================================================================
