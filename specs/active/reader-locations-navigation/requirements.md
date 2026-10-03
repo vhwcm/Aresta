@@ -17,9 +17,11 @@ Permitir rolar, saltar para qualquer página/localização e navegar entre capí
 - **Descrição**: EPUB → `epub:<sectionIndex>:<charOffset>`; PDF → `page:<N>`. Usado por progresso, anotações, páginas salvas e histórico.
 - **Regra**: `page:N` em anotações de EPUB é legado. Ele é resolvido de forma preguiçosa pelo texto citado (fallback proporcional `N/totalAntigo`) e reescrito no formato novo.
 
-### R3. Abertura progressiva do EPUB
-- **Descrição**: na hora, somente OPF, TOC, a seção-alvo e uma vizinha. O total inicial de localizações (o "Y" no rótulo *"Loc. X de Y"* e no divisor do slider) é estimado instantaneamente no frame 1 a partir do tamanho descompactado em bytes dos arquivos XHTML listados na spine (obtido do diretório central do ZIP sem descompactar, com razão média de ~0,45 char/byte). A contagem exata roda em blocos de 10 seções no idle (background). O índice exato resultante fica em cache no IndexedDB por hash do livro (da 2ª abertura em diante, o total é exato e instantâneo desde o início).
-- **Regra**: a descompressão do ZIP é preguiçosa por arquivo; imagens viram blob URL apenas quando a seção é montada.
+### R3. Abertura progressiva e Pré-cálculo no Banco de Dados
+- **Descrição**:
+  - **Pré-cálculo no Banco (Cenário Principal)**: No upload/cadastro do livro no backend (`apps/api`), o servidor processa o EPUB e salva no banco de dados (`Book.total_locations` e `Book.locations_per_section`). Ao abrir o livro, o cliente recebe esses metadados via `GET /api/books/:id`, obtendo o índice exato imediatamente no frame 1 com **custo zero no cliente**.
+  - **Fallback Progressivo (Livros Locais / Legados)**: Se o livro não tiver dados pré-calculados no banco, na hora são lidos somente OPF, TOC, a seção-alvo e uma vizinha. O total inicial é estimado pelo tamanho descompactado dos XHTML (~0,45 char/byte). A contagem exata roda em blocos de 10 seções no idle e é persistida no banco local (SQLite/Dexie/IndexedDB) para nunca mais recalcular.
+- **Regra**: a descompressão do ZIP no cliente é preguiçosa por arquivo; imagens viram blob URL apenas quando a seção é montada.
 
 ### R4. Scroll EPUB virtualizado por blocos
 - **Descrição**: cada seção é dividida em blocos de ~10 localizações, cortando apenas entre elementos de bloco de 1º nível. Placeholders têm altura estimada. Há compensação manual de âncora. No máximo 5 blocos ficam no DOM.

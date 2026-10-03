@@ -86,11 +86,25 @@ O `EpubDocumentAdapter` deixa de manter `_pageMap` e `_sectionDocs` de todas as 
 - `goToPage(n)` vira um wrapper de `goToPosition(unitToPosition(n))`.
 - `persistProgress` grava `readingPosition` + `currentPage` no `bookRepo`, com debounce de 1 s. O `fetch PATCH /api/user-books` (410 Gone) é removido.
 
-### 3.4. Persistência local (sem Prisma)
-- `TauriSqliteAdapter`: `ALTER TABLE books ADD COLUMN reading_position TEXT` idempotente (verifica via `PRAGMA table_info`), mais mapeamento nos SELECT/UPSERT.
-- `DexieAdapter`: nova versão de schema (campo não indexado, upgrade sem transformação).
-- `types.ts`: `readingPosition?: string | null`. `useSyncEngine`: incluir o campo no payload do Drive.
-- **Postgres não muda**: `user_books` foi removida (migration `20260916140000`), portanto a regra 3.2 não se aplica.
+### 3.4. Persistência de Localizações e Progresso no Banco de Dados
+- **PostgreSQL (`apps/api/prisma/schema.prisma`)**:
+  No model `Book`:
+  ```prisma
+  model Book {
+    // ... campos existentes
+    total_locations       Int?
+    locations_per_section Json?  // array de contagem de caracteres por seção: [12000, 34000, ...]
+  }
+  ```
+  *Exige migration versionada em `apps/api/prisma/migrations/` conforme regra 3.2.*
+- **Backend Service (`apps/api/src/modules/reader/services/book.service.ts`)**:
+  No upload ou criação de livro EPUB, calcula a contagem de caracteres por seção e preenche `total_locations` e `locations_per_section`.
+- **API Response (`GET /api/books/:id`)**:
+  Retorna `totalLocations` e `locationsPerSection` nos metadados. Quando o cliente recebe esses campos, inicializa o `LocationIndex` instantaneamente (`createExactIndex`), dispensando qualquer estimativa no cliente.
+- **Bancos Locais (Tauri SQLite / Dexie / InMemory)**:
+  - `TauriSqliteAdapter`: `ALTER TABLE books ADD COLUMN reading_position TEXT` e `ALTER TABLE books ADD COLUMN locations_data TEXT` (JSON) com checagem idempotente.
+  - `DexieAdapter`: versão incrementada com suporte a `readingPosition` e `locationsData`.
+  - `types.ts`: `readingPosition?: string | null; locationsData?: number[] | null; totalLocations?: number | null`.
 
 ## 4. Fluxos
 

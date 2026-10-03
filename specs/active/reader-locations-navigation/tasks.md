@@ -9,10 +9,13 @@ Ordem pensada para TDD: primeiro as fundações puras com teste, depois os adapt
   - [ ] 1.4 `anchorCompensation.ts` e `heightEstimator.ts` + testes
   - [ ] 1.5 `tocNormalizer.ts` (foliate toc + pdf outline) + testes
 
-- [ ] **2. Persistência local** — R9
-  - [ ] 2.1 `types.ts` + `TauriSqliteAdapter` (ALTER idempotente) + `DexieAdapter` (nova versão) + `InMemoryAdapter`
-  - [ ] 2.2 `BookRepository` + `useSyncEngine` com `readingPosition`; testes de fallback
-  - [ ] 2.3 Remover o `PATCH /api/user-books` morto de `persistProgress`; debounce de 1 s
+- [ ] **2. Persistência & Backend (Prisma, SQLite, API)** — R3, R9
+  - [ ] 2.1 Adicionar `total_locations` e `locations_per_section` no model `Book` em `apps/api/prisma/schema.prisma`
+  - [ ] 2.2 Gerar e versionar migration SQL em `apps/api/prisma/migrations/` (regra 3.2) e rodar `prisma:generate`
+  - [ ] 2.3 Implementar serviço de extração de localizações no backend no upload de EPUB (`book.service.ts`) e expor em `GET /api/books/:id`
+  - [ ] 2.4 Atualizar `types.ts` + `TauriSqliteAdapter` (ALTER idempotente para `reading_position` e `locations_data`) + `DexieAdapter` + `InMemoryAdapter`
+  - [ ] 2.5 `BookRepository` + `useSyncEngine` com `readingPosition` e `locationsData`; testes de fallback
+  - [ ] 2.6 Remover o `PATCH /api/user-books` morto de `persistProgress`; debounce de 1 s
 
 - [ ] **3. EPUB progressivo** — R1, R3
   - [ ] 3.1 `lazyZip.ts` + teste com fixture EPUB mínimo

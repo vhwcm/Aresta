@@ -11,10 +11,12 @@ ABERTURA PROGRESSIVA (R3/R5) — caminho crítico vs. background
               │                                      │
               ▼                                      ▼
  ┌──────────────────────────┐        ┌───────────────────────────────┐
- │ locationIndexCache(hash) │        │ pdfPageGeometry cache(hash)   │
- │  hit → índice EXATO      │        │  hit → slots exatos           │
- │  miss→ ESTIMADO(bytes)   │        │  miss→ ratio da pág. alvo     │
- └────────────┬─────────────┘        └───────────────┬───────────────┘
+ │ locations_per_section do │        │ pdfPageGeometry cache(hash)   │
+ │ BANCO (GET /api/books/:id│        │  hit → slots exatos           │
+ │  hit → índice EXATO (0ms)│        │  miss→ ratio da pág. alvo     │
+ │  miss→ locationIndexCache│        └───────────────┬───────────────┘
+ │  miss local→ ESTIMADO    │                        │
+ └────────────┬─────────────┘                        │
               │   readingPosition salvo (bookRepo)   │
               ▼                                      ▼
  ╔══════════════════════════╗        ╔═══════════════════════════════╗
