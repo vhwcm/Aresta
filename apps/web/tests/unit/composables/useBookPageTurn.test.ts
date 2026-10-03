@@ -123,18 +123,20 @@ describe('useBookPageTurn Layout e Navegação', () => {
 
     const layout = turn.pageLayout.value
     expect(layout.isTwoPage).toBe(true)
-    // No desktop, o livro fica centralizado horizontalmente e verticalmente com proporção clássica
+    // No desktop, o livro ocupa 100% da altura vertical (900px)
+    expect(layout.leftPage?.height).toBe(900)
     expect(layout.leftPage?.left).toBeGreaterThan(0)
     expect(layout.leftPage?.width).toBeGreaterThan(500)
-    expect(layout.leftPage?.top).toBeGreaterThan(0) // centralizado verticalmente
+    expect(layout.leftPage?.top).toBe(0) // 100% de altura, startY = 0
 
     // Agora alterna para wide (100% largo)
     store.setReaderWidthMode('wide')
     turn.updateLayout()
 
     const wideLayout = turn.pageLayout.value
-    // No modo wide, ocupa quase a totalidade da largura (1600 - 24 = 1576px total -> 788px por página)
-    expect(wideLayout.leftPage?.width).toBe(788)
+    // No modo wide, ocupa quase a totalidade da largura (1600 - 16 = 1584px total -> 792px por página) e 100% de altura
+    expect(wideLayout.leftPage?.height).toBe(900)
+    expect(wideLayout.leftPage?.width).toBe(792)
     expect(wideLayout.leftPage?.left).toBeGreaterThanOrEqual(0)
   })
 
@@ -162,9 +164,10 @@ describe('useBookPageTurn Layout e Navegação', () => {
 
     const layout = turn.pageLayout.value
     expect(layout.isTwoPage).toBe(false)
+    expect(layout.singlePage?.height).toBe(900)
     expect(layout.singlePage?.width).toBeGreaterThan(500)
     expect(layout.singlePage?.left).toBeGreaterThan(0) // centralizado horizontalmente
-    expect(layout.singlePage?.top).toBeGreaterThan(0) // centralizado verticalmente
+    expect(layout.singlePage?.top).toBe(0) // 100% de altura, startY = 0
   })
 })
 

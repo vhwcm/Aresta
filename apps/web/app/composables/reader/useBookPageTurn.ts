@@ -109,13 +109,13 @@ export function useBookPageTurn(
 
       if (isWide) {
         // Modo Expandido: Ocupa a área útil disponível preservando margens seguras
-        const availableWidth = Math.max(300, hostWidth - 24)
+        const availableWidth = Math.max(300, hostWidth - 16)
         maxPageWidth = Math.floor(availableWidth / 2)
-        maxPageHeight = Math.max(300, hostHeight - 16)
+        maxPageHeight = hostHeight
       } else {
-        // Modo Centralizado / Desktop: Livro ampliado ocupando quase toda a altura útil
-        maxPageHeight = Math.max(300, Math.round(hostHeight * 0.96))
-        maxPageWidth = Math.floor((hostWidth - 24) / 2)
+        // Telas Horizontais / Desktop: Livro ocupa 100% da altura vertical da viewport
+        maxPageHeight = hostHeight
+        maxPageWidth = Math.floor(hostWidth / 2)
       }
 
       let targetWidth: number
@@ -190,12 +190,12 @@ export function useBookPageTurn(
         maxPageHeight = Math.max(260, hostHeight - 14)
       } else if (isWide) {
         // Modo Expandido no Desktop/Tablet: 1 folha ocupando quase 100% da largura útil
-        maxPageWidth = Math.max(300, Math.round(hostWidth - 24))
-        maxPageHeight = Math.max(300, hostHeight - 16)
+        maxPageWidth = hostWidth
+        maxPageHeight = hostHeight
       } else {
-        // Modo Centralizado no Desktop/Tablet: 1 folha ampliada com proporção clássica
-        maxPageHeight = Math.max(300, Math.round(hostHeight * 0.96))
-        maxPageWidth = Math.round(Math.min(hostWidth - 24, Math.max(500, hostWidth * 0.65)))
+        // Modo Centralizado no Desktop/Tablet: 1 folha ampliada ocupando 100% da altura vertical
+        maxPageHeight = hostHeight
+        maxPageWidth = Math.round(Math.min(hostWidth, Math.max(500, hostWidth * 0.7)))
       }
 
       let targetWidth: number
