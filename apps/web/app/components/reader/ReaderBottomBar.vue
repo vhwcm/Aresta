@@ -10,8 +10,9 @@
       class="pointer-events-auto flex flex-col items-start gap-1.5 sm:gap-2 pb-2 sm:pb-3 overflow-visible select-none"
       :style="bottomBarContainerStyle"
     >
-      <!-- 1. Capa do Livro Pequena e Colada na Esquerda -->
+      <!-- 1. Capa do Livro (Visível apenas em telas verticais; em telas horizontais a capa fica na lateral esquerda) -->
       <div
+        v-if="!isHorizontalComputed"
         class="shrink-0 flex items-center justify-start select-none"
       >
         <img
@@ -434,9 +435,24 @@ const isHorizontalComputed = computed(() => {
 })
 
 const bottomBarContainerStyle = computed(() => {
-  const isMobile = isMobileScreen.value || (typeof window !== 'undefined' && window.innerWidth < 768)
+  // Mobile / Telas verticais: extrema esquerda com respiro suave de 8px
+  if (!isHorizontalComputed.value) {
+    return {
+      paddingLeft: '8px',
+      justifyContent: 'flex-start',
+    }
+  }
+
+  // Telas horizontais: bloco de 6 ícones cravado logo embaixo do início do livro
+  if (typeof props.bookLeft === 'number' && props.bookLeft > 0) {
+    return {
+      paddingLeft: `${Math.round(props.bookLeft)}px`,
+      justifyContent: 'flex-start',
+    }
+  }
+
   return {
-    paddingLeft: isMobile ? '8px' : '16px',
+    paddingLeft: '24px',
     justifyContent: 'flex-start',
   }
 })

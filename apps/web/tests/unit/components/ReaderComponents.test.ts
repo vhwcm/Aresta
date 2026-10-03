@@ -149,11 +149,10 @@ describe('Reader Components', () => {
       expect(store.fontSize).toBe(16)
     })
 
-    it('posiciona a capa pequena colada na extrema esquerda com os 6 botões posicionados de baixo da capa tanto no desktop quanto no mobile', async () => {
-      // 1. Cenário Desktop
+    it('crava a capa do livro logo abaixo do início do livro no desktop e o mais para a esquerda no mobile', async () => {
+      // 1. Cenário Desktop com bookLeft = 240px
       const desktopWrapper = mount(ReaderBottomBar, {
         props: {
-          coverUrl: '/covers/livro.jpg',
           bookLeft: 240,
           bookWidth: 800,
         },
@@ -161,19 +160,9 @@ describe('Reader Components', () => {
 
       const desktopContainer = desktopWrapper.find('#reader-unified-bar > div')
       expect(desktopContainer.exists()).toBe(true)
-      expect(desktopContainer.classes()).toContain('flex-col')
       const desktopStyle = desktopContainer.attributes('style') || ''
-      expect(desktopStyle).toContain('padding-left: 16px')
+      expect(desktopStyle).toContain('padding-left: 240px')
       expect(desktopStyle).toContain('justify-content: flex-start')
-
-      // Capa pequena colada na esquerda
-      const coverImg = desktopWrapper.find('img[src="/covers/livro.jpg"]')
-      expect(coverImg.exists()).toBe(true)
-      expect(coverImg.classes()).toContain('object-contain')
-
-      // Bloco de 6 botões presente abaixo da capa
-      expect(desktopWrapper.find('#btn-close-book').exists()).toBe(true)
-      expect(desktopWrapper.find('#btn-appearance-toggle').exists()).toBe(true)
 
       // 2. Cenário Mobile (largura da janela < 768px)
       const originalInnerWidth = window.innerWidth
@@ -183,14 +172,12 @@ describe('Reader Components', () => {
 
         const mobileWrapper = mount(ReaderBottomBar, {
           props: {
-            coverUrl: '/covers/livro.jpg',
             bookLeft: 240,
           },
         })
 
         const mobileContainer = mobileWrapper.find('#reader-unified-bar > div')
         expect(mobileContainer.exists()).toBe(true)
-        expect(mobileContainer.classes()).toContain('flex-col')
         const mobileStyle = mobileContainer.attributes('style') || ''
         expect(mobileStyle).toContain('padding-left: 8px')
         expect(mobileStyle).toContain('justify-content: flex-start')
@@ -200,7 +187,7 @@ describe('Reader Components', () => {
       }
     })
 
-    it('exibe a capa pequena colada na esquerda tanto em telas horizontais quanto verticais com o bloco de 6 botões de baixo', async () => {
+    it('em telas horizontais oculta a capa na barra inferior e mantém o bloco de 6; em telas verticais exibe a capa embaixo', async () => {
       // 1. Em tela horizontal (isHorizontal = true)
       const horizontalBar = mount(ReaderBottomBar, {
         props: {
@@ -209,8 +196,8 @@ describe('Reader Components', () => {
           bookLeft: 220,
         },
       })
-      // A capa DEVE existir pequena colada na esquerda
-      expect(horizontalBar.find('img[src="/covers/livro.jpg"]').exists()).toBe(true)
+      // Na barra inferior, a capa não deve existir
+      expect(horizontalBar.find('img[src="/covers/livro.jpg"]').exists()).toBe(false)
       // O bloco de 6 ícones deve estar presente
       expect(horizontalBar.find('#btn-close-book').exists()).toBe(true)
       expect(horizontalBar.find('#btn-view-notes').exists()).toBe(true)
@@ -227,8 +214,9 @@ describe('Reader Components', () => {
           bookLeft: 220,
         },
       })
-      // Na vertical, a capa também existe pequena colada na esquerda
+      // Na vertical, a capa existe na barra inferior
       expect(verticalBar.find('img[src="/covers/livro.jpg"]').exists()).toBe(true)
+      // E os 6 botões também existem
       expect(verticalBar.find('#btn-close-book').exists()).toBe(true)
       expect(verticalBar.find('#btn-appearance-toggle').exists()).toBe(true)
     })
