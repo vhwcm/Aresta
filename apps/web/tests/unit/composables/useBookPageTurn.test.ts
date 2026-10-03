@@ -123,22 +123,22 @@ describe('useBookPageTurn Layout e Navegação', () => {
 
     const layout = turn.pageLayout.value
     expect(layout.isTwoPage).toBe(true)
-    // No modo centralizado em 1600x900, cada página tem ~609px de largura (846 * 0.72)
-    // O livro inteiro ocupa ~1218px, deixando ~382px de margem lateral total (startX ~ 191px)
-    expect(layout.leftPage?.width).toBeLessThan(750)
-    expect(layout.leftPage?.left).toBeGreaterThan(100)
+    // No desktop, o livro fica colado no canto esquerdo (startX = 16px) e ampliado com proporção áurea
+    expect(layout.leftPage?.left).toBe(16)
+    expect(layout.leftPage?.width).toBeGreaterThan(500)
+    expect(layout.leftPage?.top).toBeGreaterThan(0) // centralizado verticalmente
 
     // Agora alterna para wide (100% largo)
     store.setReaderWidthMode('wide')
     turn.updateLayout()
 
     const wideLayout = turn.pageLayout.value
-    // No modo wide, ocupa quase a totalidade da largura (1600 - 32 = 1568px total -> 784px por página)
-    expect(wideLayout.leftPage?.width).toBe(784)
+    // No modo wide, ocupa quase a totalidade da largura (1600 - 24 = 1576px total -> 788px por página)
+    expect(wideLayout.leftPage?.width).toBe(788)
     expect(wideLayout.leftPage?.left).toBe(16)
   })
 
-  it('centraliza folha única de EPUB no desktop sem esticar a largura total da tela', () => {
+  it('alinha folha única de EPUB à esquerda no desktop com altura ampliada e centralizada verticalmente', () => {
     const store = useReaderStore()
     store.setTwoPageMode(false)
     store.setReaderWidthMode('centered')
@@ -162,8 +162,9 @@ describe('useBookPageTurn Layout e Navegação', () => {
 
     const layout = turn.pageLayout.value
     expect(layout.isTwoPage).toBe(false)
-    expect(layout.singlePage?.width).toBeLessThan(700)
-    expect(layout.singlePage?.left).toBeGreaterThan(400)
+    expect(layout.singlePage?.width).toBeGreaterThan(500)
+    expect(layout.singlePage?.left).toBe(16)
+    expect(layout.singlePage?.top).toBeGreaterThan(0) // centralizado verticalmente
   })
 })
 

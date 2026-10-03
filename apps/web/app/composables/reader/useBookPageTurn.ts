@@ -103,18 +103,19 @@ export function useBookPageTurn(
     const isZen = store.isZenMode
 
     if (isTwoPage) {
+      const isMobile = hostWidth < 768
       let maxPageWidth: number
       let maxPageHeight: number
 
       if (isWide) {
         // Modo Expandido: Ocupa a área útil disponível preservando margens seguras
-        const availableWidth = Math.max(300, hostWidth - 32)
+        const availableWidth = Math.max(300, hostWidth - 24)
         maxPageWidth = Math.floor(availableWidth / 2)
-        maxPageHeight = Math.max(300, hostHeight - 24)
+        maxPageHeight = Math.max(300, hostHeight - 16)
       } else {
-        // Modo Centralizado / Zen: Proporção clássica de livro físico com margens elegantes
-        maxPageHeight = Math.round(hostHeight * 0.94)
-        maxPageWidth = Math.floor((hostWidth - 48) / 2)
+        // Modo Centralizado / Desktop: Livro ampliado ocupando quase toda a altura útil
+        maxPageHeight = Math.max(300, Math.round(hostHeight * 0.96))
+        maxPageWidth = Math.floor((hostWidth - 24) / 2)
       }
 
       let targetWidth: number
@@ -150,8 +151,11 @@ export function useBookPageTurn(
       const rightNum = leftNum + 1 <= store.totalPages ? leftNum + 1 : 0
 
       const totalBookWidth = targetWidth * 2
-      const startX = Math.max(0, (hostWidth - totalBookWidth) / 2)
-      const startY = Math.max(0, (hostHeight - targetHeight) / 2)
+      // No desktop: colado no canto esquerdo (16px); no mobile: centralizado
+      const startX = isMobile ? Math.max(0, (hostWidth - totalBookWidth) / 2) : 16
+      const verticalSlack = Math.max(0, hostHeight - targetHeight)
+      // Centralizado verticalmente
+      const startY = Math.max(0, Math.round(verticalSlack / 2))
 
       const leftPage: PageRect = {
         left: Math.round(startX),
@@ -186,12 +190,12 @@ export function useBookPageTurn(
         maxPageHeight = Math.max(260, hostHeight - 14)
       } else if (isWide) {
         // Modo Expandido no Desktop/Tablet: 1 folha ocupando quase 100% da largura útil
-        maxPageWidth = Math.max(300, Math.round(hostWidth - 32))
-        maxPageHeight = Math.max(300, hostHeight - 24)
+        maxPageWidth = Math.max(300, Math.round(hostWidth - 24))
+        maxPageHeight = Math.max(300, hostHeight - 16)
       } else {
-        // Modo Centralizado no Desktop/Tablet (incluindo Modo Zen): 1 folha centralizada com proporção clássica
-        maxPageHeight = Math.round(hostHeight * 0.94)
-        maxPageWidth = Math.round(Math.min(hostWidth - 48, Math.max(480, hostWidth * 0.55)))
+        // Modo Centralizado no Desktop/Tablet: 1 folha ampliada com proporção clássica
+        maxPageHeight = Math.max(300, Math.round(hostHeight * 0.96))
+        maxPageWidth = Math.round(Math.min(hostWidth - 24, Math.max(500, hostWidth * 0.65)))
       }
 
       let targetWidth: number
@@ -223,8 +227,11 @@ export function useBookPageTurn(
         }
       }
 
-      const startX = Math.max(0, (hostWidth - targetWidth) / 2)
-      const startY = Math.max(0, (hostHeight - targetHeight) / 2)
+      // No desktop: colado no canto esquerdo (16px); no mobile: centralizado
+      const startX = isMobile ? Math.max(0, (hostWidth - targetWidth) / 2) : 16
+      const verticalSlack = Math.max(0, hostHeight - targetHeight)
+      // Centralizado verticalmente
+      const startY = Math.max(0, Math.round(verticalSlack / 2))
 
       const singlePage: PageRect = {
         left: Math.round(startX),

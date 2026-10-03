@@ -10,30 +10,29 @@
       <!-- Seção do Leitor (Ajusta suavemente de largura para ficar lado a lado com as anotações no desktop) -->
       <section
         class="reader-viewer__reader-pane relative"
-        :class="store.isNotesOpen && !store.isZenMode ? 'reader-viewer__reader-pane--with-notes' : 'reader-viewer__reader-pane--full'"
+        :class="[
+          store.isNotesOpen && !store.isZenMode ? 'reader-viewer__reader-pane--with-notes' : 'reader-viewer__reader-pane--full',
+          isHorizontalScreen ? 'reader-viewer__reader-pane--horizontal' : 'reader-viewer__reader-pane--vertical'
+        ]"
         :style="{ backgroundColor: themeBgColor }"
       >
-        <!-- Capa do Livro na Lateral Esquerda (Exclusiva para telas horizontais; na vertical fica na barra inferior) -->
-        <aside
-          v-if="!store.isZenMode && isHorizontalScreen && bookBounds.left >= 70"
-          class="reader-viewer__lateral-cover"
-          :style="lateralCoverContainerStyle"
-          aria-hidden="true"
-        >
-          <img
-            v-if="bookCoverUrl"
-            :src="bookCoverUrl"
-            :alt="store.title"
-            class="reader-viewer__lateral-cover-img"
+        <!-- Barra Lateral Esquerda no Desktop / Modo Horizontal -->
+        <transition name="fade">
+          <ReaderBottomBar
+            v-if="!store.isZenMode && isHorizontalScreen"
+            :is-notes-active="isDesktop ? store.isNotesOpen : store.isMobileNotesOpen"
+            :is-zen-mode="store.isZenMode"
+            :is-horizontal="true"
+            :cover-url="bookCoverUrl"
+            :book-left="bookBounds.left"
+            :book-width="bookBounds.width"
+            @close="handleClose"
+            @toggle-zen-mode="handleToggleZenMode"
+            @open-saved-pages="isSavedPagesOpen = true"
+            @open-annotation="handleOpenAnnotation"
+            @toggle-notes="handleToggleNotes"
           />
-          <div
-            v-else
-            class="reader-viewer__lateral-cover-placeholder"
-          >
-            <BookOpenIcon class="w-8 h-8 opacity-80 mb-2" />
-            <span class="text-xs font-editorial line-clamp-3 opacity-70">{{ store.title || 'Livro' }}</span>
-          </div>
-        </aside>
+        </transition>
 
         <!-- Coluna de Leitura (Inicia do topo absoluto sem barra superior) -->
         <div class="reader-viewer__content-column" :style="{ backgroundColor: themeBgColor }">
@@ -90,25 +89,25 @@
               />
             </div>
           </transition>
-        </div>
 
-        <!-- Barra de Ferramentas Unificada de Leitura (Sempre em baixo, 20% da altura da tela, oculta no Zen Mode) -->
-        <transition name="bottom-bar-fade">
-          <ReaderBottomBar
-            v-if="!store.isZenMode"
-            :is-notes-active="isDesktop ? store.isNotesOpen : store.isMobileNotesOpen"
-            :is-zen-mode="store.isZenMode"
-            :is-horizontal="isHorizontalScreen"
-            :cover-url="bookCoverUrl"
-            :book-left="bookBounds.left"
-            :book-width="bookBounds.width"
-            @close="handleClose"
-            @toggle-zen-mode="handleToggleZenMode"
-            @open-saved-pages="isSavedPagesOpen = true"
-            @open-annotation="handleOpenAnnotation"
-            @toggle-notes="handleToggleNotes"
-          />
-        </transition>
+          <!-- Barra de Ferramentas Inferior no Mobile / Modo Vertical -->
+          <transition name="bottom-bar-fade">
+            <ReaderBottomBar
+              v-if="!store.isZenMode && !isHorizontalScreen"
+              :is-notes-active="isDesktop ? store.isNotesOpen : store.isMobileNotesOpen"
+              :is-zen-mode="store.isZenMode"
+              :is-horizontal="false"
+              :cover-url="bookCoverUrl"
+              :book-left="bookBounds.left"
+              :book-width="bookBounds.width"
+              @close="handleClose"
+              @toggle-zen-mode="handleToggleZenMode"
+              @open-saved-pages="isSavedPagesOpen = true"
+              @open-annotation="handleOpenAnnotation"
+              @toggle-notes="handleToggleNotes"
+            />
+          </transition>
+        </div>
       </section>
 
       <!-- Painel de Notas do Livro no Desktop / Modo Horizontal (Fica AO LADO do livro, não sobreposto) -->
@@ -1087,11 +1086,18 @@ onUnmounted(() => {
 
 .reader-viewer__reader-pane {
   display: flex;
-  flex-direction: column !important;
   height: 100%;
   min-width: 0;
   position: relative;
   transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reader-viewer__reader-pane--horizontal {
+  flex-direction: row !important;
+}
+
+.reader-viewer__reader-pane--vertical {
+  flex-direction: column !important;
 }
 
 .reader-viewer__reader-pane--half {

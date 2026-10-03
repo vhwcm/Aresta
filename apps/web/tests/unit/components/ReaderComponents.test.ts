@@ -149,22 +149,24 @@ describe('Reader Components', () => {
       expect(store.fontSize).toBe(16)
     })
 
-    it('crava a capa do livro logo abaixo do início do livro no desktop e o mais para a esquerda no mobile', async () => {
-      // 1. Cenário Desktop com bookLeft = 240px
+    it('renderiza barra lateral no desktop e barra inferior no mobile com capa e controles', async () => {
+      // 1. Cenário Desktop (Horizontal)
       const desktopWrapper = mount(ReaderBottomBar, {
         props: {
+          isHorizontal: true,
+          coverUrl: '/covers/livro.jpg',
           bookLeft: 240,
           bookWidth: 800,
         },
       })
 
-      const desktopContainer = desktopWrapper.find('#reader-unified-bar > div')
-      expect(desktopContainer.exists()).toBe(true)
-      const desktopStyle = desktopContainer.attributes('style') || ''
-      expect(desktopStyle).toContain('padding-left: 240px')
-      expect(desktopStyle).toContain('justify-content: flex-start')
+      const desktopSidebar = desktopWrapper.find('aside.reader-lateral-bar')
+      expect(desktopSidebar.exists()).toBe(true)
+      expect(desktopSidebar.find('img[src="/covers/livro.jpg"]').exists()).toBe(true)
+      expect(desktopSidebar.find('#btn-close-book').exists()).toBe(true)
+      expect(desktopSidebar.find('#btn-appearance-toggle').exists()).toBe(true)
 
-      // 2. Cenário Mobile (largura da janela < 768px)
+      // 2. Cenário Mobile (largura da janela < 768px / Vertical)
       const originalInnerWidth = window.innerWidth
       try {
         window.innerWidth = 390
@@ -172,22 +174,28 @@ describe('Reader Components', () => {
 
         const mobileWrapper = mount(ReaderBottomBar, {
           props: {
+            isHorizontal: false,
+            coverUrl: '/covers/livro.jpg',
             bookLeft: 240,
           },
         })
 
-        const mobileContainer = mobileWrapper.find('#reader-unified-bar > div')
+        const mobileFooter = mobileWrapper.find('footer.reader-unified-bottom-bar')
+        expect(mobileFooter.exists()).toBe(true)
+        const mobileContainer = mobileFooter.find('div')
         expect(mobileContainer.exists()).toBe(true)
         const mobileStyle = mobileContainer.attributes('style') || ''
         expect(mobileStyle).toContain('padding-left: 8px')
         expect(mobileStyle).toContain('justify-content: flex-start')
+        expect(mobileFooter.find('img[src="/covers/livro.jpg"]').exists()).toBe(true)
+        expect(mobileFooter.find('#btn-close-book').exists()).toBe(true)
       } finally {
         window.innerWidth = originalInnerWidth
         window.dispatchEvent(new Event('resize'))
       }
     })
 
-    it('em telas horizontais oculta a capa na barra inferior e mantém o bloco de 6; em telas verticais exibe a capa embaixo', async () => {
+    it('em telas horizontais exibe a barra lateral com capa e 6 botões; em telas verticais exibe na barra inferior', async () => {
       // 1. Em tela horizontal (isHorizontal = true)
       const horizontalBar = mount(ReaderBottomBar, {
         props: {
@@ -196,9 +204,9 @@ describe('Reader Components', () => {
           bookLeft: 220,
         },
       })
-      // Na barra inferior, a capa não deve existir
-      expect(horizontalBar.find('img[src="/covers/livro.jpg"]').exists()).toBe(false)
-      // O bloco de 6 ícones deve estar presente
+      // Na barra lateral, a capa e os 6 botões existem
+      expect(horizontalBar.find('aside.reader-lateral-bar').exists()).toBe(true)
+      expect(horizontalBar.find('img[src="/covers/livro.jpg"]').exists()).toBe(true)
       expect(horizontalBar.find('#btn-close-book').exists()).toBe(true)
       expect(horizontalBar.find('#btn-view-notes').exists()).toBe(true)
       expect(horizontalBar.find('#btn-font-decrease').exists()).toBe(true)
@@ -214,9 +222,9 @@ describe('Reader Components', () => {
           bookLeft: 220,
         },
       })
-      // Na vertical, a capa existe na barra inferior
+      // Na vertical, renderiza footer com capa e os 6 botões
+      expect(verticalBar.find('footer.reader-unified-bottom-bar').exists()).toBe(true)
       expect(verticalBar.find('img[src="/covers/livro.jpg"]').exists()).toBe(true)
-      // E os 6 botões também existem
       expect(verticalBar.find('#btn-close-book').exists()).toBe(true)
       expect(verticalBar.find('#btn-appearance-toggle').exists()).toBe(true)
     })
@@ -358,9 +366,9 @@ describe('Reader Components', () => {
       expect(store.readerWidthMode).toBe('centered')
     })
 
-    it('adota barra unificada sempre inferior ocupando 20% da altura sem sobrepor o livro', () => {
+    it('adota barra unificada inferior ocupando 20% da altura em telas verticais/mobile', () => {
       const wrapper = mount(ReaderBottomBar, {
-        props: { isNotesActive: false },
+        props: { isNotesActive: false, isHorizontal: false },
       })
 
       const footer = wrapper.find('footer')
@@ -1439,7 +1447,7 @@ describe('Reader Components', () => {
       expect(store.hasDocument).toBe(false)
     })
 
-    it('em telas horizontais renderiza a capa do livro na lateral esquerda quando houver margem do livro', async () => {
+    it('em telas horizontais renderiza a barra lateral na lateral esquerda', async () => {
       const store = useReaderStore()
       store.setDocument({
         type: 'epub',
@@ -1471,10 +1479,11 @@ describe('Reader Components', () => {
       pageRendererStub.vm.$emit('layout-change', { left: 150, width: 700 })
       await wrapper.vm.$nextTick()
 
-      // A capa lateral deve estar presente no aside lateral
-      const lateralCover = wrapper.find('.reader-viewer__lateral-cover')
-      expect(lateralCover.exists()).toBe(true)
-      expect(lateralCover.find('img[src="/covers/horizontal.jpg"]').exists()).toBe(true)
+      // A barra lateral deve estar presente e com isHorizontal true
+      const bottomBar = wrapper.findComponent({ name: 'ReaderBottomBar' })
+      expect(bottomBar.exists()).toBe(true)
+      expect(bottomBar.props('isHorizontal')).toBe(true)
+      expect(wrapper.find('.reader-viewer__reader-pane--horizontal').exists()).toBe(true)
     })
   })
 })

@@ -246,44 +246,49 @@ O leitor oferece alternância de largura para documentos EPUB via `store.readerW
 
 ---
 
-## 7. Barra Unificada Inferior e Topo do Leitor (`Viewer.vue` & `ReaderBottomBar.vue`)
+## 7. Barra de Leitura Dual: Lateral no Desktop e Inferior no Mobile (`Viewer.vue` & `ReaderBottomBar.vue`)
 
-A barra de controle do leitor é unificada e posicionada permanentemente na base da interface (mobile, tablet e desktop) dentro do fluxo flexbox vertical sem sobreposição, com cabeçalho minimalista no topo:
+A barra de controle do leitor adapta sua orientação ergonomicamente ao tipo de dispositivo e orientação de tela:
+
+- **Desktop e Telas Horizontais (`isHorizontalScreen`)**: A barra é posicionada na **lateral esquerda** (`aside.reader-lateral-bar`). O topo da barra exibe a capa do livro com proporção natural, e a base contém o grid de 6 botões (Voltar, A-, A+, Modo Zen, Anotações e Configurações). O popover de configurações abre flutuante ao lado da barra lateral. A área central do livro ganha 100% da altura da tela sem footer roubando espaço vertical.
+- **Mobile e Telas Verticais (`!isHorizontalScreen`)**: A barra é posicionada na **base inferior** (`footer.reader-unified-bottom-bar`) com a capa pequena alinhada à esquerda e os 6 botões dispostos confortavelmente para o polegar.
+- **Modo Zen (`store.isZenMode`)**: Ambas as barras (lateral no desktop e inferior no mobile) são ocultadas com transição suave, permitindo imersão total e tela cheia.
 
 ```text
-================================================================================
-ARQUITETURA DA INTERFACE DO LEITOR (FLUXO VERTICAL SEM SOBREPOSIÇÃO)
-================================================================================
-┌──────────────────────────────────────────────────────────────────────────────┐
-│  ← Voltar (Topo da Tela)                                           ▲/▼ Zen   │
-├──────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│                               ÁREA DO LIVRO                                  │
-│                       (PageCurl / Scroll Engine)                             │
-│                  - Altura dinâmica desobstruída (~80%)                       │
-│                                                                              │
-├──────────────────────────────────────────────────────────────────────────────┤
-│                BARRA INFERIOR UNIFICADA (20DVH CENTRALIZADA)                 │
-│                                                                              │
-│       ┌──────────────┬────────────────────────────────────────────────┐      │
-│       │              │  Título Grande do Livro (Newsreader text-2xl)  │      │
-│       │  Capa do     ├────────────────────────────────────────────────┤      │
-│       │  Livro (100% │  📄 Anotações (w-6 h-6)   ⚙️ Configurações (w-6)│      │
-│       │  da barra)   │  (Páginas e Marcadores DENTRO de configurações)│      │
-│       └──────────────┴────────────────────────────────────────────────┘      │
-│                                                                              │
-└──────────────────────────────────────────────────────────────────────────────┘
-================================================================================
-```
+========================================================================================
+                          LAYOUT DESKTOP / MODO HORIZONTAL
+========================================================================================
+┌───────────────────────────────────────────────────────────────────┬──────────────────┐
+│  BARRA LATERAL ESQUERDA    ÁREA CENTRAL DO LIVRO (Book Stage)     │ PAINEL DE NOTAS  │
+│  ┌──────────────┐          ┌─────────────────┬──────────────────┐ │ (Drawer Lateral  │
+│  │ Capa Livro   │          │ Página Esquerda │  Página Direita  │ │  não sobreposto) │
+│  └──────────────┘          │ (2D / WebGL 3D) │  (2D / WebGL 3D) │ │ - Criar reflexão │
+│  ┌──────┬──────┐           └─────────────────┴──────────────────┘ │ - Feed de notas  │
+│  │Voltar│  A-  │                                                  │ - Marcadores     │
+│  ├──────┼──────┤           - Altura 100% livre sem footer         │ (w: 420-500px)   │
+│  │  A+  │ Zen  │                                                  │                  │
+│  ├──────┼──────┤                                                  │                  │
+│  │Notas │Config│ -> [Popover Lateral]                             │                  │
+│  └──────┴──────┘                                                  │                  │
+└───────────────────────────────────────────────────────────────────┴──────────────────┘
 
-### Características e Diretrizes:
-1. **Controles Superiores no Topo da Tela**: A barra superior com voltar (`ArrowLeftIcon`) e alternância de Zen Mode (`ChevronDownIcon`/`ChevronUpIcon`) fica no topo do leitor, acima do livro, exclusivamente com setas (sem texto escrito).
-2. **Fluxo Vertical sem Sobreposição**: O container `.reader-viewer__reader-pane` mantém `flex-direction: column` permanente e a barra inferior atua como elemento `shrink-0` no fluxo (sem `fixed bottom-0` flutuante). O canvas do livro recebe todo o espaço intermediário sem sofrer corte ou sobreposição.
-3. **Centralização Horizontal**: Todo o conjunto da barra inferior (capa 100% da altura + bloco textual e controles) fica agrupado e centralizado horizontalmente no centro da tela (`max-w-2xl sm:max-w-3xl mx-auto`).
-4. **Capa Integral**: A capa do livro ocupa 100% da altura da barra inferior (`h-full`, aspect ratio 2:3).
-5. **Título e Ícones Ampliados**: O título do livro possui destaque editorial aumentado (`font-editorial text-xl sm:text-2xl md:text-3xl`), e os botões da barra inferior utilizam ícones generosos (`w-6 h-6`, padding `p-2 sm:p-2.5`).
-6. **Páginas e Marcadores DENTRO de Configurações**: O indicador de páginas lidas com percentual (`Pág. X (Y%)`) e o sistema de marcadores de página residem com destaque dentro do popover do botão de configurações (`SettingsIcon`), mantendo a barra inferior limpa e focada.
-7. **Painel de Anotações com Criação no Topo**: Ao clicar no botão de anotação, o painel do livro se abre exibindo no topo uma caixa de texto pronta para registrar anotações e reflexões soltas na página ativa; logo abaixo da caixa de texto, lista-se o feed completo com todas as anotações do livro.
+========================================================================================
+                          LAYOUT MOBILE / MODO VERTICAL
+========================================================================================
+┌──────────────────────────────────────────────────────────────────────────────────────┐
+│                                                                                      │
+│                           ÁREA DO LIVRO (Folha Única)                                │
+│                     - Renderização 2D nítida com seleção ativa                       │
+│                     - Gestos touch com transição WebGL 3D                            │
+│                     - Tooltips de Seleção e Dicionário Offline                       │
+│                                                                                      │
+├──────────────────────────────────────────────────────────────────────────────────────┤
+│  BARRA INFERIOR UNIFICADA (Compacta)                                                 │
+│  ┌───────────┐  [Voltar] [A-] [A+]                                                   │
+│  │ Capa Livro│  [Zen] [Notas -> Modal Full] [Configurações]                          │
+│  └───────────┘                                                                       │
+└──────────────────────────────────────────────────────────────────────────────────────┘
+```
 
 
 
