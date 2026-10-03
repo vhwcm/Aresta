@@ -1,77 +1,49 @@
 <template>
   <footer
-    class="reader-unified-bottom-bar reader-bottom-bar shrink-0 w-full select-none transition-all duration-300 flex items-center overflow-visible bg-transparent border-0"
+    class="reader-unified-bottom-bar reader-bottom-bar shrink-0 w-full select-none transition-all duration-300 flex items-end overflow-visible bg-transparent border-0 pointer-events-none"
     role="toolbar"
     aria-label="Barra de ferramentas do leitor"
     id="reader-unified-bar"
   >
-    <!-- Botão de Sair invisível para compatibilidade com testes legados se houver -->
-    <button
-      @click="$emit('close')"
-      class="hidden"
-      aria-label="Voltar à biblioteca"
-      id="btn-close-book"
-    ></button>
-
-    <!-- Container Alinhado Cravado com o Início do Livro (Extrema esquerda no mobile e início do livro no desktop) -->
+    <!-- Container Alinhado Colado na Esquerda com Capa Pequena e Botões de Baixo da Capa -->
     <div
-      class="h-full w-full flex items-center gap-3 sm:gap-4 overflow-visible"
+      class="pointer-events-auto flex flex-col items-start gap-1.5 sm:gap-2 pb-2 sm:pb-3 overflow-visible select-none"
       :style="bottomBarContainerStyle"
     >
-      <!-- 1. Capa do Livro Solta (Cravada no início do livro, 100% da altura da barra, pontas levemente arredondadas, sem sombras laterais) -->
-      <div class="h-full shrink-0 flex items-center justify-center select-none py-1 sm:py-1.5">
+      <!-- 1. Capa do Livro Pequena e Colada na Esquerda -->
+      <div
+        class="shrink-0 flex items-center justify-start select-none"
+      >
         <img
           v-if="bookCoverUrl"
           :src="bookCoverUrl"
           :alt="store.title"
-          class="h-full w-auto max-w-[130px] object-contain block rounded-[6px]"
+          class="h-[105px] sm:h-[120px] w-auto max-w-[85px] sm:max-w-[95px] object-contain block rounded-[6px] shadow-sm"
           :title="store.title"
         />
         <div
           v-else
-          class="h-full aspect-[2/3] flex flex-col items-center justify-center p-2 text-center bg-accent/10 text-accent font-editorial rounded-[6px]"
+          class="h-[105px] sm:h-[120px] w-[75px] sm:w-[85px] aspect-[2/3] flex flex-col items-center justify-center p-2 text-center bg-accent/10 text-accent font-editorial rounded-[6px] shadow-sm"
         >
           <BookOpenIcon class="w-6 h-6 opacity-80" />
         </div>
       </div>
 
-      <!-- 2. Ícones de Ação Soltos (Anotações, Marcador, Diminuir Fonte, Aumentar Fonte, Configurações) -->
-      <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
-        <!-- Botão Oculto para fallback de evento openAnnotation se invocado programaticamente -->
+      <!-- 2. Bloco Harmonioso de 6 Ícones Soltos (De baixo da capa!) -->
+      <div class="grid grid-rows-2 grid-cols-3 gap-1 sm:gap-1.5 shrink-0 select-none">
+        <!-- 1. Linha Superior / Col 1: Voltar à Biblioteca -->
         <button
-          @click="$emit('openAnnotation')"
-          class="hidden"
-          aria-label="Criar anotação"
-          id="btn-create-annotation"
-        ></button>
-
-        <!-- 1. Botão de Anotações do Livro (Abre anotações e reflexões deste livro) -->
-        <button
-          @click="handleToggleNotes"
+          @click="$emit('close')"
           class="p-2 sm:p-2.5 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
-          :class="isNotesActiveComputed ? 'text-accent font-bold bg-accent/15 ring-1 ring-accent/30' : themeButtonClass"
-          :title="isNotesActiveComputed ? 'Ocultar anotações do livro' : 'Abrir anotações e reflexões deste livro'"
-          aria-label="Abrir ou fechar notas do livro"
-          id="btn-view-notes"
+          :class="themeButtonClass"
+          title="Voltar à biblioteca"
+          aria-label="Voltar à biblioteca"
+          id="btn-close-book"
         >
-          <HighlighterIcon class="w-6 h-6 stroke-[1.75]" />
+          <ArrowLeftIcon class="w-5 h-5 sm:w-5.5 sm:h-5.5 stroke-[1.75]" />
         </button>
 
-        <!-- 2. Botão de Marcar/Desmarcar Página (Externo) -->
-        <button
-          @click="store.toggleBookmark()"
-          class="p-2 sm:p-2.5 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
-          :class="store.isCurrentPageBookmarked
-            ? 'text-amber-500 fill-current bg-amber-500/15 ring-1 ring-amber-500/30'
-            : themeButtonClass"
-          :title="store.isCurrentPageBookmarked ? 'Página marcada (clique para desmarcar)' : 'Marcar página atual'"
-          aria-label="Marcar ou desmarcar página"
-          id="btn-bookmark-toggle"
-        >
-          <BookmarkIcon class="w-6 h-6 stroke-[1.75]" :class="{ 'fill-current': store.isCurrentPageBookmarked }" />
-        </button>
-
-        <!-- 3. Botão de Diminuir Tamanho da Fonte (Externo) -->
+        <!-- 2. Linha Superior / Col 2: Diminuir Tamanho da Fonte (Zoom Out) -->
         <button
           @click="store.decreaseFontSize(2)"
           :disabled="(store.fontSize || 15) <= 12"
@@ -81,10 +53,10 @@
           aria-label="Diminuir tamanho da fonte"
           id="btn-font-decrease"
         >
-          <AArrowDownIcon class="w-6 h-6 stroke-[1.75]" />
+          <AArrowDownIcon class="w-5 h-5 sm:w-5.5 sm:h-5.5 stroke-[1.75]" />
         </button>
 
-        <!-- 4. Botão de Aumentar Tamanho da Fonte (Externo) -->
+        <!-- 3. Linha Superior / Col 3: Aumentar Tamanho da Fonte (Zoom In) -->
         <button
           @click="store.increaseFontSize(2)"
           :disabled="(store.fontSize || 15) >= 36"
@@ -94,11 +66,36 @@
           aria-label="Aumentar tamanho da fonte"
           id="btn-font-increase"
         >
-          <AArrowUpIcon class="w-6 h-6 stroke-[1.75]" />
+          <AArrowUpIcon class="w-5 h-5 sm:w-5.5 sm:h-5.5 stroke-[1.75]" />
         </button>
 
-        <!-- 5. Botão de Configurações (Abre Popover com Fundo, Folhas, etc.) -->
-        <div class="relative" ref="appearanceWrapperRef">
+        <!-- 4. Linha Inferior / Col 1: Alternar Modo Zen -->
+        <button
+          @click="$emit('toggleZenMode')"
+          class="p-2 sm:p-2.5 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
+          :class="isZenMode ? 'text-accent font-bold bg-accent/15 ring-1 ring-accent/30' : themeButtonClass"
+          :title="isZenMode ? 'Sair do Modo Zen' : 'Entrar no Modo Zen'"
+          :aria-label="isZenMode ? 'Sair do Modo Zen' : 'Entrar no Modo Zen'"
+          id="btn-bottom-zen-mode"
+        >
+          <ChevronUpIcon v-if="isZenMode" class="w-5 h-5 sm:w-5.5 sm:h-5.5 stroke-[1.75]" />
+          <ChevronDownIcon v-else class="w-5 h-5 sm:w-5.5 sm:h-5.5 stroke-[1.75]" />
+        </button>
+
+        <!-- 5. Linha Inferior / Col 2: Anotações do Livro -->
+        <button
+          @click="handleToggleNotes"
+          class="p-2 sm:p-2.5 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
+          :class="isNotesActiveComputed ? 'text-accent font-bold bg-accent/15 ring-1 ring-accent/30' : themeButtonClass"
+          :title="isNotesActiveComputed ? 'Ocultar anotações do livro' : 'Abrir anotações e reflexões deste livro'"
+          aria-label="Abrir ou fechar notas do livro"
+          id="btn-view-notes"
+        >
+          <HighlighterIcon class="w-5 h-5 sm:w-5.5 sm:h-5.5 stroke-[1.75]" />
+        </button>
+
+        <!-- 6. Linha Inferior / Col 3: Configurações de Leitura -->
+        <div class="relative flex items-center justify-center" ref="appearanceWrapperRef">
           <button
             @click="isAppearancePopoverOpen = !isAppearancePopoverOpen"
             class="p-2 sm:p-2.5 rounded-xl transition-all duration-200 active:scale-90 relative flex items-center justify-center cursor-pointer"
@@ -107,71 +104,37 @@
             aria-label="Configurações de leitura"
             id="btn-appearance-toggle"
           >
-            <SettingsIcon class="w-6 h-6 stroke-[1.75]" />
+            <SettingsIcon class="w-5 h-5 sm:w-5.5 sm:h-5.5 stroke-[1.75]" />
           </button>
 
-            <!-- Popover Flutuante de Configurações (Abre acima da barra centralizado) -->
+          <!-- Popover Flutuante de Configurações (Abre acima da barra centralizado) -->
+          <div
+            v-if="isAppearancePopoverOpen"
+            class="fixed bottom-[22dvh] left-1/2 -translate-x-1/2 sm:left-4 sm:translate-x-0 w-[92vw] max-w-[340px] rounded-2xl p-4 shadow-2xl z-50 flex flex-col gap-3.5 max-h-[75vh] overflow-y-auto border animate-fadeIn"
+            :class="themePopoverClass"
+            role="dialog"
+            aria-label="Controle de aparência e fundo de leitura"
+          >
+            <!-- Seção 1: Quantidade de Páginas e Percentual Lido -->
             <div
-              v-if="isAppearancePopoverOpen"
-              class="fixed bottom-[21dvh] left-1/2 -translate-x-1/2 w-[92vw] max-w-[340px] rounded-2xl p-4 shadow-2xl z-50 flex flex-col gap-3.5 max-h-[75vh] overflow-y-auto border animate-fadeIn"
-              :class="themePopoverClass"
-              role="dialog"
-              aria-label="Controle de aparência e fundo de leitura"
+              class="flex items-center justify-between p-3 rounded-xl border select-none transition-colors"
+              :class="themeBorderClass"
             >
-              <!-- Seção 1: Quantidade de Páginas e Percentual Lido (Dentro de Configurações) -->
-              <div
-                class="flex items-center justify-between p-3 rounded-xl border select-none transition-colors"
-                :class="themeBorderClass"
+              <div class="flex flex-col">
+                <span class="text-[10px] font-technical uppercase tracking-wider font-semibold" :class="themeSubtextClass">
+                  Páginas do Livro
+                </span>
+                <span class="text-sm font-technical font-bold text-accent">
+                  Pág. {{ pageDisplay }}
+                </span>
+              </div>
+              <span
+                v-if="store.totalPages > 0"
+                class="px-2.5 py-1 rounded-full text-xs font-technical font-semibold bg-accent/15 text-accent"
               >
-                <div class="flex flex-col">
-                  <span class="text-[10px] font-technical uppercase tracking-wider font-semibold" :class="themeSubtextClass">
-                    Páginas do Livro
-                  </span>
-                  <span class="text-sm font-technical font-bold text-accent">
-                    Pág. {{ pageDisplay }}
-                  </span>
-                </div>
-                <span
-                  v-if="store.totalPages > 0"
-                  class="px-2.5 py-1 rounded-full text-xs font-technical font-semibold bg-accent/15 text-accent"
-                >
-                  {{ progressPercentageComputed }}%
-                </span>
-              </div>
-
-              <!-- Seção 2: Marcadores de Página (Bookmarks - Dentro de Configurações) -->
-              <div class="flex flex-col gap-2 pt-2 border-t" :class="themeBorderClass">
-                <span
-                  class="text-[11px] font-technical uppercase tracking-wider font-semibold"
-                  :class="themeSubtextClass"
-                >
-                  Marcadores de Página
-                </span>
-                <div class="grid grid-cols-2 gap-2">
-                  <button
-                    @click="store.toggleBookmark()"
-                    class="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl text-xs font-semibold transition-all active:scale-95"
-                    :class="store.isCurrentPageBookmarked
-                      ? 'bg-amber-500/20 text-amber-500 border border-amber-500/40'
-                      : 'bg-white/5 hover:bg-white/10 text-textSecondary hover:text-textPrimary border border-divider'"
-                    aria-label="Marcar ou desmarcar página atual"
-                    id="btn-bookmarks-menu"
-                  >
-                    <BookmarkIcon class="w-4 h-4" :class="{ 'fill-current': store.isCurrentPageBookmarked }" />
-                    <span>{{ store.isCurrentPageBookmarked ? 'Marcada' : 'Marcar pág.' }}</span>
-                  </button>
-
-                  <button
-                    @click="$emit('openSavedPages'); isAppearancePopoverOpen = false"
-                    class="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl text-xs font-semibold bg-white/5 hover:bg-white/10 text-textSecondary hover:text-textPrimary border border-divider transition-all active:scale-95"
-                    aria-label="Abrir lista de páginas salvas"
-                    id="btn-open-saved-pages"
-                  >
-                    <BookmarkCheckIcon class="w-4 h-4 text-accent" />
-                    <span>Ver páginas ({{ store.savedPages.length }})</span>
-                  </button>
-                </div>
-              </div>
+                {{ progressPercentageComputed }}%
+              </span>
+            </div>
 
                 <!-- Seção 2: Fundo da Leitura -->
                 <div class="flex flex-col gap-2 pt-2 border-t" :class="themeBorderClass">
@@ -418,8 +381,6 @@ import {
   AArrowDownIcon,
   AArrowUpIcon,
   ArrowLeftIcon,
-  BookmarkIcon,
-  BookmarkCheckIcon,
   BookOpenIcon,
   CheckIcon,
   ChevronDownIcon,
@@ -437,6 +398,8 @@ import { useReaderStore } from '~/stores/readerStore'
 
 const props = defineProps<{
   isNotesActive?: boolean
+  isZenMode?: boolean
+  isHorizontal?: unknown
   coverUrl?: string
   bookLeft?: number
   bookWidth?: number
@@ -444,6 +407,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (_e: 'close'): void
+  (_e: 'toggleZenMode'): void
   (_e: 'openSavedPages'): void
   (_e: 'openAnnotation'): void
   (_e: 'toggleNotes'): void
@@ -461,26 +425,18 @@ function checkScreenSize() {
   }
 }
 
+const isHorizontalComputed = computed(() => {
+  if (typeof props.isHorizontal === 'boolean') {
+    return props.isHorizontal
+  }
+  const isMobile = isMobileScreen.value || (typeof window !== 'undefined' && window.innerWidth < 768)
+  return !isMobile
+})
+
 const bottomBarContainerStyle = computed(() => {
   const isMobile = isMobileScreen.value || (typeof window !== 'undefined' && window.innerWidth < 768)
-  // Mobile (< 768px): a capa fica o mais para a esquerda possível (respiro suave de 8px)
-  if (isMobile) {
-    return {
-      paddingLeft: '8px',
-      justifyContent: 'flex-start',
-    }
-  }
-
-  // Desktop (>= 768px): a capa fica cravada exatamente logo abaixo do início do livro
-  if (typeof props.bookLeft === 'number' && props.bookLeft > 0) {
-    return {
-      paddingLeft: `${Math.round(props.bookLeft)}px`,
-      justifyContent: 'flex-start',
-    }
-  }
-
   return {
-    paddingLeft: '24px',
+    paddingLeft: isMobile ? '8px' : '16px',
     justifyContent: 'flex-start',
   }
 })

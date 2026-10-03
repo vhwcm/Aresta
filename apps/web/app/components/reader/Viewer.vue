@@ -9,10 +9,32 @@
     <div class="reader-viewer__body" :style="{ backgroundColor: themeBgColor }">
       <!-- Seção do Leitor (Ajusta suavemente de largura para ficar lado a lado com as anotações no desktop) -->
       <section
-        class="reader-viewer__reader-pane"
+        class="reader-viewer__reader-pane relative"
         :class="store.isNotesOpen && !store.isZenMode ? 'reader-viewer__reader-pane--with-notes' : 'reader-viewer__reader-pane--full'"
         :style="{ backgroundColor: themeBgColor }"
       >
+        <!-- Capa do Livro na Lateral Esquerda (Exclusiva para telas horizontais; na vertical fica na barra inferior) -->
+        <aside
+          v-if="!store.isZenMode && isHorizontalScreen && bookBounds.left >= 70"
+          class="reader-viewer__lateral-cover"
+          :style="lateralCoverContainerStyle"
+          aria-hidden="true"
+        >
+          <img
+            v-if="bookCoverUrl"
+            :src="bookCoverUrl"
+            :alt="store.title"
+            class="reader-viewer__lateral-cover-img"
+          />
+          <div
+            v-else
+            class="reader-viewer__lateral-cover-placeholder"
+          >
+            <BookOpenIcon class="w-8 h-8 opacity-80 mb-2" />
+            <span class="text-xs font-editorial line-clamp-3 opacity-70">{{ store.title || 'Livro' }}</span>
+          </div>
+        </aside>
+
         <!-- Coluna de Leitura (Inicia do topo absoluto sem barra superior) -->
         <div class="reader-viewer__content-column" :style="{ backgroundColor: themeBgColor }">
           <!-- Área do Livro / Stage -->
@@ -76,6 +98,7 @@
             v-if="!store.isZenMode"
             :is-notes-active="isDesktop ? store.isNotesOpen : store.isMobileNotesOpen"
             :is-zen-mode="store.isZenMode"
+            :is-horizontal="isHorizontalScreen"
             :cover-url="bookCoverUrl"
             :book-left="bookBounds.left"
             :book-width="bookBounds.width"
@@ -194,6 +217,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { BookOpenIcon } from 'lucide-vue-next'
 import { useReaderStore } from '~/stores/readerStore'
 import { useReaderTypography } from '~/composables/useReaderTypography'
 import { useAnnotations } from '~/composables/useAnnotations'
@@ -328,6 +352,21 @@ const bookBounds = ref<{ left: number; width: number }>({ left: 0, width: 0 })
 function handleBookLayoutChange(bounds: { left: number; width: number }) {
   bookBounds.value = bounds
 }
+
+const isHorizontalScreen = ref(typeof window !== 'undefined' ? (window.innerWidth >= 768 || window.innerWidth > window.innerHeight) : false)
+function updateOrientation() {
+  if (typeof window !== 'undefined') {
+    isHorizontalScreen.value = window.innerWidth >= 768 || window.innerWidth > window.innerHeight
+  }
+}
+
+const lateralCoverContainerStyle = computed(() => {
+  const width = Math.max(0, bookBounds.value.left)
+  return {
+    width: `${Math.round(width)}px`,
+    height: 'calc(100% - 20dvh)',
+  }
+})
 
 let handleAddFlashcardEvent: ((e: Event) => void) | null = null
 let handleExplainSubtopicEvent: ((e: Event) => void) | null = null
@@ -735,6 +774,7 @@ function handleHighlightSelected(annotationId: number) {
 
 function updateDeviceType() {
   if (typeof window !== 'undefined') {
+    updateOrientation()
     const wasDesktop = isDesktop.value
     const isLandscape = window.innerWidth > window.innerHeight
     isDesktop.value = window.innerWidth >= 1024 && isLandscape
@@ -1294,5 +1334,45 @@ onUnmounted(() => {
 .bottom-bar-fade-leave-to {
   opacity: 0;
   transform: translateY(8px);
+}
+
+.reader-viewer__lateral-cover {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 15;
+  padding: 1.5rem;
+  box-sizing: border-box;
+}
+
+.reader-viewer__lateral-cover-img {
+  max-width: 85%;
+  max-height: 240px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  user-select: none;
+}
+
+.reader-viewer__lateral-cover-placeholder {
+  max-width: 140px;
+  aspect-ratio: 2 / 3;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  text-align: center;
+  border-radius: 6px;
+  background-color: rgba(229, 123, 85, 0.1);
+  color: #e57b55;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
 }
 </style>
