@@ -1,6 +1,9 @@
 ## 🔄 Em Andamento
  
 ## ✅ Concluído
+- [03/10/2026 12:29] [Concluído] Reordenar ícones da barra mobile (Anotação primeiro no topo; Voltar e Zen Mode como os dois últimos na base)
+- [03/10/2026 12:26] [Concluído] Adicionar borda premium temática e sombra refinada ao redor da capa do livro no leitor
+- [03/10/2026 12:21] [Concluído] Atualizar ícones do leitor para Estilo Studio Moderno (Settings2, Highlighter diagonal, setas direcionais e Maximize polido)
 - [03/10/2026 12:16] [Concluído] Adicionar linha divisória superior para separar o livro da parte de baixo em telas mobile e desktop
 - [03/10/2026 12:14] [Concluído] Aplicar margem de 2px na capa do livro em relação ao fundo da tela no mobile
 - [03/10/2026 12:13] [Concluído] Posicionar o popover de configurações ancorado logo acima do botão de configurações no mobile

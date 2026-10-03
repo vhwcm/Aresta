@@ -13,12 +13,14 @@
         v-if="bookCoverUrl"
         :src="bookCoverUrl"
         :alt="store.title"
-        class="w-[96px] sm:w-[104px] md:w-[110px] max-h-[175px] aspect-[2/3] object-cover block rounded-[7px] shadow-md"
+        class="w-[96px] sm:w-[104px] md:w-[110px] max-h-[175px] aspect-[2/3] object-cover block rounded-[7px] transition-all duration-300"
+        :class="themeCoverClass"
         :title="store.title"
       />
       <div
         v-else
-        class="w-[96px] sm:w-[104px] md:w-[110px] aspect-[2/3] flex flex-col items-center justify-center p-2 text-center bg-accent/10 text-accent font-editorial rounded-[7px] shadow-md"
+        class="w-[96px] sm:w-[104px] md:w-[110px] aspect-[2/3] flex flex-col items-center justify-center p-2 text-center bg-accent/10 text-accent font-editorial rounded-[7px] transition-all duration-300"
+        :class="themeCoverClass"
       >
         <BookOpenIcon class="w-8 h-8 sm:w-9 sm:h-9 opacity-80 mb-1" />
         <span class="text-[12px] font-editorial line-clamp-2 opacity-70 leading-tight">{{ store.title || 'Livro' }}</span>
@@ -52,7 +54,7 @@
           aria-label="Configurações de leitura"
           id="btn-appearance-toggle"
         >
-          <SettingsIcon class="w-9 h-9 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.35]" />
+          <Settings2Icon class="w-9 h-9 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.35]" />
         </button>
 
         <!-- Popover Flutuante de Configurações (Abre ao lado da barra lateral no Desktop, centralizado verticalmente) -->
@@ -394,12 +396,14 @@
           v-if="bookCoverUrl"
           :src="bookCoverUrl"
           :alt="store.title"
-          class="h-full w-auto object-contain object-bottom block rounded-[6px] shadow-md"
+          class="h-full w-auto object-contain object-bottom block rounded-[6px] transition-all duration-300"
+          :class="themeCoverClass"
           :title="store.title"
         />
         <div
           v-else
-          class="h-full aspect-[2/3] flex flex-col items-center justify-center p-2 text-center bg-accent/10 text-accent font-editorial rounded-[6px] shadow-md"
+          class="h-full aspect-[2/3] flex flex-col items-center justify-center p-2 text-center bg-accent/10 text-accent font-editorial rounded-[6px] transition-all duration-300"
+          :class="themeCoverClass"
         >
           <BookOpenIcon class="w-6 h-6 opacity-80" />
         </div>
@@ -407,16 +411,16 @@
 
       <!-- 2. Bloco Harmonioso de 6 Ícones Justificados (Ao Lado Direito da Capa) -->
       <div class="grid grid-rows-2 grid-cols-3 flex-1 min-w-0 w-full h-full gap-0.5 sm:gap-1 select-none items-center justify-items-stretch py-1.5 sm:py-2">
-        <!-- 1. Linha Superior / Col 1: Voltar à Biblioteca -->
+        <!-- 1. Linha Superior / Col 1 (1º Ícone no Topo): Anotações do Livro -->
         <button
-          @click="$emit('close')"
+          @click="handleToggleNotes"
           class="w-full h-full min-h-[46px] max-h-[54px] p-1 sm:p-1.5 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
-          :class="themeButtonClass"
-          title="Voltar à biblioteca"
-          aria-label="Voltar à biblioteca"
-          id="btn-close-book"
+          :class="isNotesActiveComputed ? 'text-accent font-bold bg-accent/15 ring-1 ring-accent/30' : themeButtonClass"
+          :title="isNotesActiveComputed ? 'Ocultar anotações do livro' : 'Abrir anotações e reflexões deste livro'"
+          aria-label="Abrir ou fechar notas do livro"
+          id="btn-view-notes"
         >
-          <ArrowLeftIcon class="w-9 h-9 sm:w-10 sm:h-10 md:w-10.5 md:h-10.5 stroke-[1.35]" />
+          <HighlighterIcon class="w-9 h-9 sm:w-10 sm:h-10 md:w-10.5 md:h-10.5 stroke-[1.35]" />
         </button>
 
         <!-- 2. Linha Superior / Col 2: Diminuir Tamanho da Fonte (Zoom Out) -->
@@ -445,32 +449,7 @@
           <AArrowUpIcon class="w-9 h-9 sm:w-10 sm:h-10 md:w-10.5 md:h-10.5 stroke-[1.35]" />
         </button>
 
-        <!-- 4. Linha Inferior / Col 1: Alternar Modo Zen -->
-        <button
-          @click="$emit('toggleZenMode')"
-          class="w-full h-full min-h-[46px] max-h-[54px] p-1 sm:p-1.5 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
-          :class="isZenMode ? 'text-accent font-bold bg-accent/15 ring-1 ring-accent/30' : themeButtonClass"
-          :title="isZenMode ? 'Sair do Modo Zen' : 'Entrar no Modo Zen'"
-          :aria-label="isZenMode ? 'Sair do Modo Zen' : 'Entrar no Modo Zen'"
-          id="btn-bottom-zen-mode"
-        >
-          <Minimize2Icon v-if="isZenMode" class="w-9 h-9 sm:w-10 sm:h-10 md:w-10.5 md:h-10.5 stroke-[1.35]" />
-          <Maximize2Icon v-else class="w-9 h-9 sm:w-10 sm:h-10 md:w-10.5 md:h-10.5 stroke-[1.35]" />
-        </button>
-
-        <!-- 5. Linha Inferior / Col 2: Anotações do Livro -->
-        <button
-          @click="handleToggleNotes"
-          class="w-full h-full min-h-[46px] max-h-[54px] p-1 sm:p-1.5 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
-          :class="isNotesActiveComputed ? 'text-accent font-bold bg-accent/15 ring-1 ring-accent/30' : themeButtonClass"
-          :title="isNotesActiveComputed ? 'Ocultar anotações do livro' : 'Abrir anotações e reflexões deste livro'"
-          aria-label="Abrir ou fechar notas do livro"
-          id="btn-view-notes"
-        >
-          <HighlighterIcon class="w-9 h-9 sm:w-10 sm:h-10 md:w-10.5 md:h-10.5 stroke-[1.35]" />
-        </button>
-
-        <!-- 6. Linha Inferior / Col 3: Configurações de Leitura -->
+        <!-- 4. Linha Inferior / Col 1: Configurações de Leitura -->
         <div class="relative flex items-center justify-center w-full h-full" ref="appearanceWrapperRef">
           <button
             @click="isAppearancePopoverOpen = !isAppearancePopoverOpen"
@@ -480,13 +459,13 @@
             aria-label="Configurações de leitura"
             id="btn-appearance-toggle"
           >
-            <SettingsIcon class="w-9 h-9 sm:w-10 sm:h-10 md:w-10.5 md:h-10.5 stroke-[1.35]" />
+            <Settings2Icon class="w-9 h-9 sm:w-10 sm:h-10 md:w-10.5 md:h-10.5 stroke-[1.35]" />
           </button>
 
           <!-- Popover Flutuante de Configurações (Abre logo acima do botão no mobile) -->
           <div
             v-if="isAppearancePopoverOpen"
-            class="absolute bottom-full mb-2 right-0 w-[88vw] sm:w-[92vw] max-w-[330px] rounded-2xl p-4 shadow-2xl z-50 flex flex-col gap-3.5 max-h-[70vh] overflow-y-auto border animate-fadeIn origin-bottom-right"
+            class="absolute bottom-full mb-2 left-0 sm:left-auto sm:right-0 w-[88vw] sm:w-[92vw] max-w-[330px] rounded-2xl p-4 shadow-2xl z-50 flex flex-col gap-3.5 max-h-[70vh] overflow-y-auto border animate-fadeIn origin-bottom-left"
             :class="themePopoverClass"
             role="dialog"
             aria-label="Controle de aparência e fundo de leitura"
@@ -677,12 +656,37 @@
                   {{ count }}L
                 </button>
               </div>
-            </div>
           </div>
         </div>
       </div>
+
+      <!-- 5. Linha Inferior / Col 2 (Penúltimo): Voltar à Biblioteca -->
+      <button
+        @click="$emit('close')"
+        class="w-full h-full min-h-[46px] max-h-[54px] p-1 sm:p-1.5 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
+        :class="themeButtonClass"
+        title="Voltar à biblioteca"
+        aria-label="Voltar à biblioteca"
+        id="btn-close-book"
+      >
+        <ArrowLeftIcon class="w-9 h-9 sm:w-10 sm:h-10 md:w-10.5 md:h-10.5 stroke-[1.35]" />
+      </button>
+
+      <!-- 6. Linha Inferior / Col 3 (Último): Alternar Modo Zen -->
+      <button
+        @click="$emit('toggleZenMode')"
+        class="w-full h-full min-h-[46px] max-h-[54px] p-1 sm:p-1.5 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
+        :class="isZenMode ? 'text-accent font-bold bg-accent/15 ring-1 ring-accent/30' : themeButtonClass"
+        :title="isZenMode ? 'Sair do Modo Zen' : 'Entrar no Modo Zen'"
+        :aria-label="isZenMode ? 'Sair do Modo Zen' : 'Entrar no Modo Zen'"
+        id="btn-bottom-zen-mode"
+      >
+        <Minimize2Icon v-if="isZenMode" class="w-9 h-9 sm:w-10 sm:h-10 md:w-10.5 md:h-10.5 stroke-[1.35]" />
+        <Maximize2Icon v-else class="w-9 h-9 sm:w-10 sm:h-10 md:w-10.5 md:h-10.5 stroke-[1.35]" />
+      </button>
     </div>
-  </footer>
+  </div>
+</footer>
 </template>
 
 <script setup lang="ts">
@@ -702,7 +706,7 @@ import {
   MinusIcon,
   PlusIcon,
   ScrollTextIcon,
-  SettingsIcon,
+  Settings2Icon,
 } from 'lucide-vue-next'
 import { useReaderStore } from '~/stores/readerStore'
 
@@ -804,6 +808,16 @@ const themeSubtextClass = computed(() => {
   if (store.readerTheme === 'sepia') return 'text-[#786C5E]'
   if (store.readerTheme === 'white') return 'text-gray-500'
   return 'text-textSecondary'
+})
+
+const themeCoverClass = computed(() => {
+  if (store.readerTheme === 'sepia') {
+    return 'ring-1 ring-[#786C5E]/25 shadow-[0_4px_12px_rgba(62,51,40,0.18)]'
+  }
+  if (store.readerTheme === 'white') {
+    return 'ring-1 ring-black/15 shadow-[0_4px_12px_rgba(0,0,0,0.12)]'
+  }
+  return 'ring-1 ring-white/25 shadow-[0_4px_16px_rgba(0,0,0,0.7)]'
 })
 
 const themePopoverClass = computed(() => {
