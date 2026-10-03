@@ -1,7 +1,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
-- [03/10/2026 10:12] [Concluído] Manter capa pequena e colada na extrema esquerda com os 6 botões posicionados de baixo da capa
+- [03/10/2026 10:12] [Concluído] Posicionar capa do livro na lateral esquerda em telas horizontais e manter bloco de 6 ícones abaixo do livro; exibir capa na barra inferior em telas verticais
 - [03/10/2026 10:09] [Concluído] Diagnosticar falhas de sincronização de temas e conexões visuais entre nós no grafo de conhecimento (15 achados: tombstones, LWW, IDs divergentes, unlinkEdge, ciclo de vida do sync)
 - [02/10/2026 21:44] [Concluído] Tornar barra de desenho 100% de largura horizontal, colada imediatamente na barra superior, mais fina e com ícones unificados em barra única sem agrupamentos aninhados
 - [02/10/2026 21:43] [Concluído] Remover definitivamente setas visuais de navegação (btn-prev-page e btn-next-page) e garantir virada de página pelas pontas da tela e gutters
