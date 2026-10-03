@@ -438,13 +438,66 @@ export function useBookPageTurn(
     incomingTargetPage.value = 0
   }
 
+  function isLayoutEqual(a: PageLayoutInfo, b: PageLayoutInfo): boolean {
+    if (a.isTwoPage !== b.isTwoPage) return false
+
+    if (a.isTwoPage) {
+      if (!a.leftPage || !b.leftPage) {
+        if (a.leftPage !== b.leftPage) return false
+      } else {
+        if (
+          Math.abs(a.leftPage.width - b.leftPage.width) > 1 ||
+          Math.abs(a.leftPage.height - b.leftPage.height) > 1 ||
+          Math.abs(a.leftPage.left - b.leftPage.left) > 1 ||
+          Math.abs(a.leftPage.top - b.leftPage.top) > 1 ||
+          a.leftPage.pageNumber !== b.leftPage.pageNumber
+        ) {
+          return false
+        }
+      }
+
+      if (!a.rightPage || !b.rightPage) {
+        if (a.rightPage !== b.rightPage) return false
+      } else {
+        if (
+          Math.abs(a.rightPage.width - b.rightPage.width) > 1 ||
+          Math.abs(a.rightPage.height - b.rightPage.height) > 1 ||
+          Math.abs(a.rightPage.left - b.rightPage.left) > 1 ||
+          Math.abs(a.rightPage.top - b.rightPage.top) > 1 ||
+          a.rightPage.pageNumber !== b.rightPage.pageNumber
+        ) {
+          return false
+        }
+      }
+
+      return true
+    } else {
+      if (!a.singlePage || !b.singlePage) {
+        return a.singlePage === b.singlePage
+      }
+      return (
+        Math.abs(a.singlePage.width - b.singlePage.width) <= 1 &&
+        Math.abs(a.singlePage.height - b.singlePage.height) <= 1 &&
+        Math.abs(a.singlePage.left - b.singlePage.left) <= 1 &&
+        Math.abs(a.singlePage.top - b.singlePage.top) <= 1 &&
+        a.singlePage.pageNumber === b.singlePage.pageNumber
+      )
+    }
+  }
+
   function invalidateCacheAndRerender() {
     pageLayout.value = computeLayout()
   }
 
   function updateLayout() {
-    pageLayout.value = computeLayout()
+    const next = computeLayout()
+    if (!isLayoutEqual(pageLayout.value, next)) {
+      pageLayout.value = next
+    }
   }
+
+  let resizeTimer: ReturnType<typeof setTimeout> | null = null
+  let resizeRaf: number | null = null
 
   onMounted(() => {
     if (typeof window !== 'undefined') {
@@ -456,7 +509,14 @@ export function useBookPageTurn(
     const host = hostRef.value
     if (host) {
       resizeObserver = new ResizeObserver(() => {
-        updateLayout()
+        if (resizeRaf !== null) cancelAnimationFrame(resizeRaf)
+        resizeRaf = requestAnimationFrame(() => {
+          resizeRaf = null
+          if (resizeTimer) clearTimeout(resizeTimer)
+          resizeTimer = setTimeout(() => {
+            updateLayout()
+          }, 24)
+        })
       })
       resizeObserver.observe(host)
       updateLayout()
@@ -465,6 +525,8 @@ export function useBookPageTurn(
 
   onUnmounted(() => {
     if (resizeObserver) resizeObserver.disconnect()
+    if (resizeTimer) clearTimeout(resizeTimer)
+    if (resizeRaf !== null) cancelAnimationFrame(resizeRaf)
     if (motionQuery) motionQuery.removeEventListener('change', updateMotionPreference)
   })
 

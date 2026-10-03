@@ -126,15 +126,17 @@
         </div>
 
         <!-- Barra de Ferramentas Unificada de Leitura (Sempre em baixo, 20% da altura da tela, oculta no Zen Mode) -->
-        <ReaderBottomBar
-          v-if="!store.isZenMode"
-          :is-notes-active="isDesktop ? store.isNotesOpen : store.isMobileNotesOpen"
-          :cover-url="bookCoverUrl"
-          @close="handleClose"
-          @open-saved-pages="isSavedPagesOpen = true"
-          @open-annotation="handleOpenAnnotation"
-          @toggle-notes="handleToggleNotes"
-        />
+        <transition name="bottom-bar-fade">
+          <ReaderBottomBar
+            v-if="!store.isZenMode"
+            :is-notes-active="isDesktop ? store.isNotesOpen : store.isMobileNotesOpen"
+            :cover-url="bookCoverUrl"
+            @close="handleClose"
+            @open-saved-pages="isSavedPagesOpen = true"
+            @open-annotation="handleOpenAnnotation"
+            @toggle-notes="handleToggleNotes"
+          />
+        </transition>
       </section>
 
       <!-- Painel de Notas do Livro no Desktop / Modo Horizontal (Fica AO LADO do livro, não sobreposto) -->
@@ -412,9 +414,6 @@ function handleClose() {
 function exitZenMode() {
   if (!store.isZenMode) return
   store.setZenMode(false)
-  if (typeof document !== 'undefined' && document.fullscreenElement && document.exitFullscreen) {
-    document.exitFullscreen().catch(() => {})
-  }
   if (typeof window !== 'undefined' && window.history.state?.arestaZenMode) {
     window.history.back()
   }
@@ -1098,7 +1097,7 @@ onUnmounted(() => {
   height: 100%;
   min-width: 0;
   position: relative;
-  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1), flex 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .reader-viewer__top-bar {
@@ -1394,5 +1393,17 @@ onUnmounted(() => {
 .mobile-notes-leave-to {
   opacity: 0;
   transform: translateY(16px);
+}
+
+.bottom-bar-fade-enter-active,
+.bottom-bar-fade-leave-active {
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.bottom-bar-fade-enter-from,
+.bottom-bar-fade-leave-to {
+  opacity: 0;
+  transform: translateY(8px);
 }
 </style>
