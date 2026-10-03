@@ -886,6 +886,12 @@ defineExpose({
   user-select: none;
 }
 
+@media (max-width: 767px) {
+  .scroll-page-slot__badge {
+    display: none !important;
+  }
+}
+
 /* Seções Contínuas EPUB */
 .scroll-section-slot {
   position: relative;

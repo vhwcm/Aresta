@@ -22,6 +22,7 @@ services:
     build:
       context: ./apps/api
       dockerfile: Dockerfile
+      network: host
     container_name: aresta-api
     expose:
       - "3001"
@@ -58,6 +59,7 @@ services:
     build:
       context: ./apps/web
       dockerfile: Dockerfile
+      network: host
       args:
         NUXT_PUBLIC_API_URL: ${NUXT_PUBLIC_API_URL:-}
         NUXT_PUBLIC_READER_API_URL: ${NUXT_PUBLIC_READER_API_URL:-}

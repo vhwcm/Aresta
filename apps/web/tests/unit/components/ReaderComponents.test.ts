@@ -222,11 +222,44 @@ describe('Reader Components', () => {
           bookLeft: 220,
         },
       })
-      // Na vertical, renderiza footer com capa e os 6 botões
+      // Na vertical, renderiza footer com capa, os 6 botões e o indicador de página ao lado dos 6 ícones
       expect(verticalBar.find('footer.reader-unified-bottom-bar').exists()).toBe(true)
       expect(verticalBar.find('img[src="/covers/livro.jpg"]').exists()).toBe(true)
       expect(verticalBar.find('#btn-close-book').exists()).toBe(true)
       expect(verticalBar.find('#btn-appearance-toggle').exists()).toBe(true)
+      expect(verticalBar.find('#btn-mobile-page-indicator').exists()).toBe(true)
+    })
+
+    it('exibe indicador de página ao lado dos 6 ícones no mobile com número da página e abre configurações ao clicar', async () => {
+      const store = useReaderStore()
+      store.setDocument({
+        type: 'pdf',
+        metadata: { title: 'Livro de Teste' },
+        totalPages: 120,
+        isLoaded: true,
+        load: vi.fn(),
+        getPage: vi.fn(),
+        destroy: vi.fn(),
+      } as any, 'livro.pdf')
+      store.isTwoPageMode = false
+      store.currentPage = 14
+
+      const wrapper = mount(ReaderBottomBar, {
+        props: {
+          isHorizontal: false,
+          coverUrl: '/covers/livro.jpg',
+        },
+      })
+
+      const pageIndicator = wrapper.find('#btn-mobile-page-indicator')
+      expect(pageIndicator.exists()).toBe(true)
+      expect(pageIndicator.text()).toBe('14')
+      expect(pageIndicator.text()).not.toContain('PÁG')
+      expect(pageIndicator.text()).not.toContain('/')
+
+      // Clicar no indicador de página abre o popover de configurações
+      await pageIndicator.trigger('click')
+      expect(wrapper.find('[role="dialog"]').exists()).toBe(true)
     })
 
     it('alterna modo de 1 página e 2 páginas no popover de configurações', async () => {
@@ -334,6 +367,23 @@ describe('Reader Components', () => {
       expect(store.isFocusMode).toBe(true)
       await toggleFocusBtn.trigger('click')
       expect(store.isFocusMode).toBe(false)
+
+      // Testa opções exclusivas de linhas do modo foco (apenas 1L, 3L e 5L)
+      const focus1L = wrapper.find('#btn-focus-lines-1, #btn-focus-lines-mobile-1')
+      const focus3L = wrapper.find('#btn-focus-lines-3, #btn-focus-lines-mobile-3')
+      const focus5L = wrapper.find('#btn-focus-lines-5, #btn-focus-lines-mobile-5')
+      const focus2L = wrapper.find('#btn-focus-lines-2, #btn-focus-lines-mobile-2')
+      const focus4L = wrapper.find('#btn-focus-lines-4, #btn-focus-lines-mobile-4')
+
+      expect(focus1L.exists()).toBe(true)
+      expect(focus3L.exists()).toBe(true)
+      expect(focus5L.exists()).toBe(true)
+      expect(focus2L.exists()).toBe(false)
+      expect(focus4L.exists()).toBe(false)
+
+      await focus3L.trigger('click')
+      expect(store.focusLineCount).toBe(3)
+      expect(store.isFocusMode).toBe(true)
     })
 
     it('não exibe opções de modo largo quando o documento for PDF e impede ativação no store', async () => {

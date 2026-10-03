@@ -1,3 +1,4 @@
+import '../src/config/env'
 import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcrypt'
 
@@ -7,7 +8,7 @@ async function main() {
   await prisma.$executeRaw`CREATE EXTENSION IF NOT EXISTS vector`
 
   const passwordHash = await bcrypt.hash('admin123', 10)
-  const adminUser = await prisma.user.upsert({
+  await prisma.user.upsert({
     where: { email: 'admin@aresta.app' },
     update: {},
     create: {
@@ -15,7 +16,6 @@ async function main() {
       email: 'admin@aresta.app',
       password_hash: passwordHash,
       role: 'ADMIN',
-      userSettings: { create: {} },
     },
   })
 
@@ -28,26 +28,8 @@ async function main() {
       email: 'viktor@aresta.org',
       password_hash: viktorHash,
       role: 'ADMIN',
-      userSettings: { create: {} },
     },
   })
-
-  const defaultThemes = ['Philosophy', 'Science', 'Technology', 'Literature', 'History']
-  for (const name of defaultThemes) {
-    await prisma.theme.upsert({
-      where: {
-        user_id_name: {
-          user_id: adminUser.id,
-          name,
-        },
-      },
-      update: {},
-      create: {
-        user_id: adminUser.id,
-        name,
-      },
-    })
-  }
 
   console.log('[aresta-api] Database seed completed successfully.')
 }

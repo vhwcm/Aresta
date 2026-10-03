@@ -1,6 +1,19 @@
 ## 🔄 Em Andamento
- 
+
 ## ✅ Concluído
+- [03/10/2026 14:57] [Concluído] Ajustar opções do modo foco nas configurações para exibir exclusivamente 1, 3 e 5 linhas
+- [03/10/2026 14:55] [Concluído] Corrigir enquadramento e corte do popover de configurações no mobile com posicionamento viewport centralizado e responsivo
+- [03/10/2026 14:48] [Concluído] Exibir apenas o número da página ao lado dos 6 ícones na barra mobile do leitor e remover numeração da página no mobile para poupar espaço
+- [03/10/2026 14:31] [Concluído] Instalar Node.js LTS/npm no sistema, instalar dependências do monólito (raiz, apps/api e apps/web), aplicar migrações e seed do banco e inicializar dev:all (:3000 e :3001)
+
+- [03/10/2026 14:27] [Concluído] Resolver falha de DNS no build do Docker configurando network: host no docker-compose.yml
+
+- [03/10/2026 14:26] [Concluído] Confirmar e validar configuração de portas padrão (Frontend Web na porta 3000 e API Express na porta 3001)
+
+- [03/10/2026 14:20] [Concluído] Conectar à AWS via SSH, obter .env de produção e adaptar para ambiente de desenvolvimento local
+
+- [03/10/2026 14:19] [Concluído] Configurar chave SSH (.pem) em ~/.aresta/chave-ssh-aws/aresta-key.pem para o script npm run connect-aws
+
 - [03/10/2026 12:29] [Concluído] Reordenar ícones da barra mobile (Anotação primeiro no topo; Voltar e Zen Mode como os dois últimos na base)
 - [03/10/2026 12:26] [Concluído] Adicionar borda premium temática e sombra refinada ao redor da capa do livro no leitor
 - [03/10/2026 12:21] [Concluído] Atualizar ícones do leitor para Estilo Studio Moderno (Settings2, Highlighter diagonal, setas direcionais e Maximize polido)

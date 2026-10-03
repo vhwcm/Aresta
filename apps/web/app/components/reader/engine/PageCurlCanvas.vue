@@ -2833,15 +2833,7 @@ defineExpose({
 
 @media (max-width: 767px) {
   .page-corner-number {
-    bottom: 8px;
-    font-size: 10px;
-  }
-  .page-corner-number--left {
-    left: 12px;
-  }
-  .page-corner-number--right,
-  .page-corner-number--single {
-    right: 12px;
+    display: none !important;
   }
 }
 </style>
