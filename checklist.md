@@ -2,6 +2,7 @@
 - [03/10/2026 11:01] [Fazendo] Reestruturar sincronização de temas e conexões do grafo com CRDT LWW, IDs determinísticos, tombstones e semântica unificada
 
 ## ✅ Concluído
+- [03/10/2026 11:14] [Concluído] Colar o livro (páginas) diretamente na borda esquerda da área de leitura com startX = 0 e largura otimizada no desktop
 - [03/10/2026 11:02] [Concluído] Colar a capa do livro diretamente no canto esquerdo da tela sem borda ou margem lateral na barra desktop
 - [03/10/2026 10:53] [Concluído] Expandir tamanho do livro no desktop alinhado à esquerda, posicionar ícones ampliados logo abaixo da capa e centralizar verticalmente a barra lateral e o livro
 - [03/10/2026 10:44] [Concluído] Mover barra de leitura para a lateral esquerda no desktop com capa e controles unificados e manter barra inferior exclusivamente no mobile

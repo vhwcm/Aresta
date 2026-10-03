@@ -921,9 +921,9 @@ onUnmounted(() => {
 }
 
 .reader-lateral-bar {
-  width: 120px;
-  min-width: 120px;
-  max-width: 140px;
+  width: 112px;
+  min-width: 112px;
+  max-width: 112px;
   height: 100%;
 }
 </style>
