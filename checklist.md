@@ -1,7 +1,8 @@
 ## 🔄 Em Andamento
-- [02/10/2026 15:16] [Fazendo] Fixar barra de ferramentas do desenho sempre no topo (mobile e desktop), simplificar cabeçalho superior para ícones exclusivos e implementar seletor com 2 slots de cores e paleta em blocos
 
 ## ✅ Concluído
+- [02/10/2026 21:05] [Concluído] Remover faixa de fundo da barra inferior deixando capa e ícones soltos e remover título do livro
+- [02/10/2026 21:00] [Concluído] Adicionar botões externos para marcar página (BookmarkIcon) e controlar tamanho da fonte (AArrowDownIcon e AArrowUpIcon) na barra inferior do leitor
 - [02/10/2026 19:53] [Concluído] Restaurar ícone canônico de anotação (HighlighterIcon) no botão de anotações da barra inferior
 - [02/10/2026 19:48] [Concluído] Arredondar levemente as pontas da capa do livro e remover fundo e sombras ao lado da capa na barra inferior
 - [02/10/2026 19:46] [Concluído] Eliminar corte da capa do livro na barra inferior com proporção natural e ajustar margem do rodapé da página de leitura

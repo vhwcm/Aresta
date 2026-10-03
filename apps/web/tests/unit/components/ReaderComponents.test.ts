@@ -112,6 +112,41 @@ describe('Reader Components', () => {
       expect(wrapper.emitted('openSavedPages')).toBeTruthy()
     })
 
+    it('permite marcar página e alterar tamanho da fonte diretamente pelos botões externos na barra inferior', async () => {
+      const store = useReaderStore()
+      store.currentPage = 7
+      store.fontSize = 16
+
+      const wrapper = mount(ReaderBottomBar, {
+        props: { isGraphActive: false },
+      })
+
+      // 1. Botão Externo de Marcar/Desmarcar Página
+      const bookmarkBtn = wrapper.find('#btn-bookmark-toggle')
+      expect(bookmarkBtn.exists()).toBe(true)
+      expect(store.isCurrentPageBookmarked).toBe(false)
+
+      await bookmarkBtn.trigger('click')
+      expect(store.isCurrentPageBookmarked).toBe(true)
+      expect(store.bookmarks).toContain(7)
+
+      await bookmarkBtn.trigger('click')
+      expect(store.isCurrentPageBookmarked).toBe(false)
+      expect(store.bookmarks).not.toContain(7)
+
+      // 2. Botão Externo de Aumentar Tamanho da Fonte
+      const fontIncreaseBtn = wrapper.find('#btn-font-increase')
+      expect(fontIncreaseBtn.exists()).toBe(true)
+      await fontIncreaseBtn.trigger('click')
+      expect(store.fontSize).toBe(18)
+
+      // 3. Botão Externo de Diminuir Tamanho da Fonte
+      const fontDecreaseBtn = wrapper.find('#btn-font-decrease')
+      expect(fontDecreaseBtn.exists()).toBe(true)
+      await fontDecreaseBtn.trigger('click')
+      expect(store.fontSize).toBe(16)
+    })
+
     it('alterna modo de 1 página e 2 páginas no popover de configurações', async () => {
       const store = useReaderStore()
       store.setDocument({
@@ -796,16 +831,20 @@ describe('Reader Components', () => {
         },
       })
 
-      const titleBar = wrapper.find('.reader-viewer__book-title-bar')
-      expect(titleBar.exists()).toBe(true)
-      expect(titleBar.text()).toContain('Dom Casmurro')
-
-      const titleText = wrapper.find('.reader-viewer__book-title-text')
-      expect(titleText.exists()).toBe(true)
-      expect(titleText.classes()).toContain('font-editorial')
+      const bottomBar = wrapper.find('#reader-unified-bar')
+      expect(bottomBar.exists()).toBe(true)
+      expect(bottomBar.classes()).toContain('bg-transparent')
+      // O título foi removido da barra para deixar os ícones e capa soltos
+      expect(wrapper.find('.reader-viewer__book-title-bar').exists()).toBe(false)
+      // Ícones de controle soltos presentes
+      expect(wrapper.find('#btn-view-notes').exists()).toBe(true)
+      expect(wrapper.find('#btn-bookmark-toggle').exists()).toBe(true)
+      expect(wrapper.find('#btn-font-decrease').exists()).toBe(true)
+      expect(wrapper.find('#btn-font-increase').exists()).toBe(true)
+      expect(wrapper.find('#btn-appearance-toggle').exists()).toBe(true)
     })
 
-    it('oculta a barra de título no modo Zen', async () => {
+    it('oculta a barra inferior no modo Zen', async () => {
       const store = useReaderStore()
       store.setDocument({
         type: 'pdf',
@@ -835,8 +874,8 @@ describe('Reader Components', () => {
         },
       })
 
-      const titleBar = wrapper.find('.reader-viewer__book-title-bar')
-      expect(titleBar.exists()).toBe(false)
+      const bottomBar = wrapper.find('#reader-unified-bar')
+      expect(bottomBar.exists()).toBe(false)
     })
 
     it('sai do Modo Zen ao pressionar a tecla Escape no ReaderViewer', async () => {

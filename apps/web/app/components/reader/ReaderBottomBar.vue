@@ -1,7 +1,6 @@
 <template>
   <footer
-    class="reader-unified-bottom-bar reader-bottom-bar shrink-0 w-full select-none transition-all duration-300 flex items-center justify-center overflow-visible"
-    :class="themeContainerClass"
+    class="reader-unified-bottom-bar reader-bottom-bar shrink-0 w-full select-none transition-all duration-300 flex items-center justify-center overflow-visible bg-transparent border-0"
     role="toolbar"
     aria-label="Barra de ferramentas do leitor"
     id="reader-unified-bar"
@@ -14,10 +13,10 @@
       id="btn-close-book"
     ></button>
 
-    <!-- Container Centralizado Horizontalmente com Capa e Informações -->
-    <div class="h-full w-full max-w-xl sm:max-w-2xl md:max-w-3xl flex items-stretch justify-start sm:justify-center overflow-hidden">
-      <!-- 1. Capa do Livro (Ocupa 100% da altura da barra, pontas levemente arredondadas e sem sombras laterais) -->
-      <div class="h-full shrink-0 flex items-center justify-center select-none py-1 sm:py-1.5 pl-1 sm:pl-2">
+    <!-- Container Centralizado Horizontalmente com Capa e Ícones Soltos (Sem faixa de fundo, sem título) -->
+    <div class="h-full w-full max-w-xl sm:max-w-2xl md:max-w-3xl flex items-center justify-center gap-4 sm:gap-8 px-4 overflow-visible">
+      <!-- 1. Capa do Livro Solta (Ocupa 100% da altura da barra, pontas levemente arredondadas, sem sombras laterais) -->
+      <div class="h-full shrink-0 flex items-center justify-center select-none py-1 sm:py-1.5">
         <img
           v-if="bookCoverUrl"
           :src="bookCoverUrl"
@@ -29,58 +28,84 @@
           v-else
           class="h-full aspect-[2/3] flex flex-col items-center justify-center p-2 text-center bg-accent/10 text-accent font-editorial rounded-[6px]"
         >
-          <BookOpenIcon class="w-6 h-6 opacity-80 mb-1" />
-          <span class="text-[10px] leading-tight line-clamp-2 opacity-70">{{ store.title || 'Livro' }}</span>
+          <BookOpenIcon class="w-6 h-6 opacity-80" />
         </div>
       </div>
 
-      <!-- 2. Bloco Central de Conteúdo: Título em cima, Controles organizados em baixo -->
-      <div class="flex-1 min-w-0 flex flex-col justify-between h-full px-4 sm:px-6 py-3 sm:py-3.5">
-        <!-- Metade de Cima: Título do Livro (Aumentado e editorial) -->
-        <div class="flex items-center min-w-0 reader-viewer__book-title-bar pt-0.5">
-          <h2
-            class="font-editorial reader-viewer__book-title-text text-xl sm:text-2xl md:text-3xl leading-tight truncate tracking-normal font-medium"
-            :class="themeTextClass"
-            :title="store.title"
-          >
-            {{ store.title || 'Livro' }}
-          </h2>
-        </div>
+      <!-- 2. Ícones de Ação Soltos (Anotações, Marcador, Diminuir Fonte, Aumentar Fonte, Configurações) -->
+      <div class="flex items-center gap-2 sm:gap-3.5 flex-wrap justify-center">
+        <!-- Botão Oculto para fallback de evento openAnnotation se invocado programaticamente -->
+        <button
+          @click="$emit('openAnnotation')"
+          class="hidden"
+          aria-label="Criar anotação"
+          id="btn-create-annotation"
+        ></button>
 
-        <!-- Metade de Baixo: Apenas Anotações e Configurações (organizados e com ícones grandes) -->
-        <div class="flex items-center gap-3 sm:gap-4 pb-0.5">
-          <!-- Botão Oculto para fallback de evento openAnnotation se invocado programaticamente -->
-          <button
-            @click="$emit('openAnnotation')"
-            class="hidden"
-            aria-label="Criar anotação"
-            id="btn-create-annotation"
-          ></button>
+        <!-- 1. Botão de Anotações do Livro (Abre anotações e reflexões deste livro) -->
+        <button
+          @click="handleToggleNotes"
+          class="p-2 sm:p-2.5 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
+          :class="isNotesActiveComputed ? 'text-accent font-bold bg-accent/15 ring-1 ring-accent/30' : themeButtonClass"
+          :title="isNotesActiveComputed ? 'Ocultar anotações do livro' : 'Abrir anotações e reflexões deste livro'"
+          aria-label="Abrir ou fechar notas do livro"
+          id="btn-view-notes"
+        >
+          <HighlighterIcon class="w-6 h-6 stroke-[1.75]" />
+        </button>
 
-          <!-- Botão de Anotações do Livro (Ícone Grande - Abre as anotações do livro) -->
+        <!-- 2. Botão de Marcar/Desmarcar Página (Externo) -->
+        <button
+          @click="store.toggleBookmark()"
+          class="p-2 sm:p-2.5 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
+          :class="store.isCurrentPageBookmarked
+            ? 'text-amber-500 fill-current bg-amber-500/15 ring-1 ring-amber-500/30'
+            : themeButtonClass"
+          :title="store.isCurrentPageBookmarked ? 'Página marcada (clique para desmarcar)' : 'Marcar página atual'"
+          aria-label="Marcar ou desmarcar página"
+          id="btn-bookmark-toggle"
+        >
+          <BookmarkIcon class="w-6 h-6 stroke-[1.75]" :class="{ 'fill-current': store.isCurrentPageBookmarked }" />
+        </button>
+
+        <!-- 3. Botão de Diminuir Tamanho da Fonte (Externo) -->
+        <button
+          @click="store.decreaseFontSize(2)"
+          :disabled="(store.fontSize || 15) <= 12"
+          class="p-2 sm:p-2.5 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer disabled:opacity-30 disabled:pointer-events-none"
+          :class="themeButtonClass"
+          :title="'Diminuir tamanho da fonte (' + (store.fontSize || 15) + 'px)'"
+          aria-label="Diminuir tamanho da fonte"
+          id="btn-font-decrease"
+        >
+          <AArrowDownIcon class="w-6 h-6 stroke-[1.75]" />
+        </button>
+
+        <!-- 4. Botão de Aumentar Tamanho da Fonte (Externo) -->
+        <button
+          @click="store.increaseFontSize(2)"
+          :disabled="(store.fontSize || 15) >= 36"
+          class="p-2 sm:p-2.5 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer disabled:opacity-30 disabled:pointer-events-none"
+          :class="themeButtonClass"
+          :title="'Aumentar tamanho da fonte (' + (store.fontSize || 15) + 'px)'"
+          aria-label="Aumentar tamanho da fonte"
+          id="btn-font-increase"
+        >
+          <AArrowUpIcon class="w-6 h-6 stroke-[1.75]" />
+        </button>
+
+        <!-- 5. Botão de Configurações (Abre Popover com Fundo, Folhas, etc.) -->
+        <div class="relative" ref="appearanceWrapperRef">
           <button
-            @click="handleToggleNotes"
-            class="p-2 sm:p-2.5 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
-            :class="isNotesActiveComputed ? 'text-accent font-bold bg-accent/15 ring-1 ring-accent/30' : 'text-textSecondary hover:text-accent hover:bg-black/5 dark:hover:bg-white/5'"
-            :title="isNotesActiveComputed ? 'Ocultar anotações do livro' : 'Abrir anotações e reflexões deste livro'"
-            aria-label="Abrir ou fechar notas do livro"
-            id="btn-view-notes"
+            @click="isAppearancePopoverOpen = !isAppearancePopoverOpen"
+            class="p-2 sm:p-2.5 rounded-xl transition-all duration-200 active:scale-90 relative flex items-center justify-center cursor-pointer"
+            :class="isAppearancePopoverOpen ? 'text-accent bg-accent/15 ring-1 ring-accent/30' : themeButtonClass"
+            title="Configurações de leitura, páginas e modos"
+            aria-label="Configurações de leitura"
+            id="btn-appearance-toggle"
           >
-            <HighlighterIcon class="w-6 h-6 stroke-[1.75]" />
+            <SettingsIcon class="w-6 h-6 stroke-[1.75]" />
           </button>
-
-          <!-- Botão de Configurações (Ícone Grande - Abre Popover com Páginas, Marcador, Modo, Tema, etc.) -->
-          <div class="relative" ref="appearanceWrapperRef">
-            <button
-              @click="isAppearancePopoverOpen = !isAppearancePopoverOpen"
-              class="p-2 sm:p-2.5 rounded-xl transition-all duration-200 active:scale-90 relative flex items-center justify-center cursor-pointer"
-              :class="isAppearancePopoverOpen ? 'text-accent bg-accent/15 ring-1 ring-accent/30' : 'text-textSecondary hover:text-textPrimary hover:bg-black/5 dark:hover:bg-white/5'"
-              title="Configurações de leitura, páginas e marcadores"
-              aria-label="Configurações de leitura"
-              id="btn-appearance-toggle"
-            >
-              <SettingsIcon class="w-6 h-6 stroke-[1.75]" />
-            </button>
 
             <!-- Popover Flutuante de Configurações (Abre acima da barra centralizado) -->
             <div
@@ -381,13 +406,14 @@
             </div>
           </div>
         </div>
-      </div>
   </footer>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import {
+  AArrowDownIcon,
+  AArrowUpIcon,
   ArrowLeftIcon,
   BookmarkIcon,
   BookmarkCheckIcon,
@@ -448,16 +474,17 @@ const progressPercentageComputed = computed(() => {
   return Math.round((store.currentPage / store.totalPages) * 100)
 })
 
-// Classes de Tema (sem blur)
-const themeContainerClass = computed(() => {
+// Classes de Tema e Botões Soltos (sem blur e sem fundo na barra)
+const themeButtonClass = computed(() => {
   if (store.readerTheme === 'sepia') {
-    return 'bg-[#f5eedc] border-t border-[#dfd5c0] text-[#2a2521]'
+    return 'text-[#5a4e44] hover:text-[#2a2521] hover:bg-black/5 active:bg-black/10'
   }
   if (store.readerTheme === 'white') {
-    return 'bg-white border-t border-gray-200 text-gray-900'
+    return 'text-gray-600 hover:text-gray-900 hover:bg-black/5 active:bg-black/10'
   }
-  return 'bg-[#08080a] border-t border-white/10 text-[#f2f2f2]'
+  return 'text-zinc-400 hover:text-white hover:bg-white/10 active:bg-white/15'
 })
+
 
 const themeBorderClass = computed(() => {
   if (store.readerTheme === 'sepia') return 'border-[#dfd5c0]'
