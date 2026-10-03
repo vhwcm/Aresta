@@ -13,14 +13,14 @@
         v-if="bookCoverUrl"
         :src="bookCoverUrl"
         :alt="store.title"
-        class="w-[88px] sm:w-[94px] max-h-[145px] aspect-[2/3] object-cover block rounded-[6px] shadow-sm"
+        class="w-[96px] sm:w-[104px] max-h-[155px] aspect-[2/3] object-cover block rounded-[6px] shadow-sm"
         :title="store.title"
       />
       <div
         v-else
-        class="w-[88px] sm:w-[94px] aspect-[2/3] flex flex-col items-center justify-center p-2 text-center bg-accent/10 text-accent font-editorial rounded-[6px] shadow-sm"
+        class="w-[96px] sm:w-[104px] aspect-[2/3] flex flex-col items-center justify-center p-2 text-center bg-accent/10 text-accent font-editorial rounded-[6px] shadow-sm"
       >
-        <BookOpenIcon class="w-6 h-6 sm:w-7 sm:h-7 opacity-80 mb-1" />
+        <BookOpenIcon class="w-7 h-7 sm:w-8 sm:h-8 opacity-80 mb-1" />
         <span class="text-[11px] font-editorial line-clamp-2 opacity-70 leading-tight">{{ store.title || 'Livro' }}</span>
       </div>
     </div>
@@ -36,7 +36,7 @@
         aria-label="Voltar à biblioteca"
         id="btn-close-book"
       >
-        <ArrowLeftIcon class="w-6 h-6 sm:w-6.5 sm:h-6.5 stroke-[1.85]" />
+        <ArrowLeftIcon class="w-7 h-7 sm:w-7.5 sm:h-7.5 stroke-[1.85]" />
       </button>
 
       <!-- 2. Diminuir Tamanho da Fonte (Zoom Out) -->
@@ -49,7 +49,7 @@
         aria-label="Diminuir tamanho da fonte"
         id="btn-font-decrease"
       >
-        <AArrowDownIcon class="w-6 h-6 sm:w-6.5 sm:h-6.5 stroke-[1.85]" />
+        <AArrowDownIcon class="w-7 h-7 sm:w-7.5 sm:h-7.5 stroke-[1.85]" />
       </button>
 
       <!-- 3. Aumentar Tamanho da Fonte (Zoom In) -->
@@ -62,7 +62,7 @@
         aria-label="Aumentar tamanho da fonte"
         id="btn-font-increase"
       >
-        <AArrowUpIcon class="w-6 h-6 sm:w-6.5 sm:h-6.5 stroke-[1.85]" />
+        <AArrowUpIcon class="w-7 h-7 sm:w-7.5 sm:h-7.5 stroke-[1.85]" />
       </button>
 
       <!-- 4. Alternar Modo Zen -->
@@ -74,8 +74,8 @@
         :aria-label="isZenMode ? 'Sair do Modo Zen' : 'Entrar no Modo Zen'"
         id="btn-bottom-zen-mode"
       >
-        <ChevronUpIcon v-if="isZenMode" class="w-6 h-6 sm:w-6.5 sm:h-6.5 stroke-[1.85]" />
-        <ChevronDownIcon v-else class="w-6 h-6 sm:w-6.5 sm:h-6.5 stroke-[1.85]" />
+        <ChevronUpIcon v-if="isZenMode" class="w-7 h-7 sm:w-7.5 sm:h-7.5 stroke-[1.85]" />
+        <ChevronDownIcon v-else class="w-7 h-7 sm:w-7.5 sm:h-7.5 stroke-[1.85]" />
       </button>
 
       <!-- 5. Anotações do Livro -->
@@ -87,7 +87,7 @@
         aria-label="Abrir ou fechar notas do livro"
         id="btn-view-notes"
       >
-        <HighlighterIcon class="w-6 h-6 sm:w-6.5 sm:h-6.5 stroke-[1.85]" />
+        <HighlighterIcon class="w-7 h-7 sm:w-7.5 sm:h-7.5 stroke-[1.85]" />
       </button>
 
       <!-- 6. Configurações de Leitura -->
@@ -100,13 +100,13 @@
           aria-label="Configurações de leitura"
           id="btn-appearance-toggle"
         >
-          <SettingsIcon class="w-6 h-6 sm:w-6.5 sm:h-6.5 stroke-[1.85]" />
+          <SettingsIcon class="w-7 h-7 sm:w-7.5 sm:h-7.5 stroke-[1.85]" />
         </button>
 
         <!-- Popover Flutuante de Configurações (Abre ao lado da barra lateral no Desktop, centralizado verticalmente) -->
         <div
           v-if="isAppearancePopoverOpen"
-          class="fixed top-1/2 -translate-y-1/2 left-[125px] sm:left-[135px] md:left-[150px] w-[92vw] max-w-[340px] rounded-2xl p-4 shadow-2xl z-50 flex flex-col gap-3.5 max-h-[85vh] overflow-y-auto border animate-fadeIn"
+          class="fixed top-1/2 -translate-y-1/2 left-[128px] sm:left-[138px] md:left-[148px] w-[92vw] max-w-[340px] rounded-2xl p-4 shadow-2xl z-50 flex flex-col gap-3.5 max-h-[85vh] overflow-y-auto border animate-fadeIn"
           :class="themePopoverClass"
           role="dialog"
           aria-label="Controle de aparência e fundo de leitura"
@@ -921,9 +921,9 @@ onUnmounted(() => {
 }
 
 .reader-lateral-bar {
-  width: 112px;
-  min-width: 112px;
-  max-width: 112px;
+  width: 116px;
+  min-width: 116px;
+  max-width: 116px;
   height: 100%;
 }
 </style>

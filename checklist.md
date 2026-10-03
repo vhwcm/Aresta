@@ -2,6 +2,7 @@
 - [03/10/2026 11:01] [Fazendo] Reestruturar sincronização de temas e conexões do grafo com CRDT LWW, IDs determinísticos, tombstones e semântica unificada
 
 ## ✅ Concluído
+- [03/10/2026 11:31] [Concluído] Ampliar tamanho dos ícones e botões abaixo da capa na barra lateral do leitor desktop
 - [03/10/2026 11:25] [Concluído] Alinhar capa do livro com os botões e ajustar dimensões na barra lateral do leitor desktop eliminando sobreposição da página
 - [03/10/2026 11:14] [Concluído] Colar o livro (páginas) diretamente na borda esquerda da área de leitura com startX = 0 e largura otimizada no desktop
 - [03/10/2026 11:02] [Concluído] Colar a capa do livro diretamente no canto esquerdo da tela sem borda ou margem lateral na barra desktop
