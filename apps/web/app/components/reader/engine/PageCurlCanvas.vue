@@ -775,6 +775,13 @@ function snapshotLayout(layout: PageLayoutInfo): PageLayoutInfo {
   }
 }
 
+function formatPageLabel(pageNum: number): string | number {
+  if (store.documentType === 'epub') {
+    return `Loc. ${pageNum}`
+  }
+  return pageNum
+}
+
 let activePointerId: number | null = null
 let currentRenderVersion = 0
 
@@ -2778,8 +2785,8 @@ defineExpose({
 .page-curl-loading__spinner {
   width: 36px;
   height: 36px;
-  border: 3px solid rgba(229, 123, 85, 0.2);
-  border-top-color: var(--color-accent, #E57B55);
+  border: 3px solid rgba(191, 110, 65, 0.2);
+  border-top-color: var(--color-accent, #BF6E41);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }

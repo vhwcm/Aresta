@@ -1,6 +1,8 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [03/10/2026 18:33] [Concluído] Atualizar a cor principal do Aresta para #BF6E41
+- [03/10/2026 18:30] [Concluído] Implementar navegação por localizações, salto de página e sumário (PDF/EPUB) com carregamento progressivo em blocos
 - [03/10/2026 17:33] [Concluído] Planejar (grill-me) scroll eficiente, salto para página e navegação por capítulos (PDF/EPUB) com carregamento progressivo em blocos — spec em specs/active/reader-locations-navigation
 - [03/10/2026 17:18] [Concluído] Garantir retorno direto ao Grafo de Conhecimento ao clicar em voltar na nota e eliminar estado vazio intermediário
 - [03/10/2026 17:10] [Concluído] Posicionar título editável no topo entre os botões de voltar e excluir com foco automático ao criar nota

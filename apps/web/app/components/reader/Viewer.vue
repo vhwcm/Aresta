@@ -1383,8 +1383,8 @@ onUnmounted(() => {
   padding: 1rem;
   text-align: center;
   border-radius: 6px;
-  background-color: rgba(229, 123, 85, 0.1);
-  color: #e57b55;
+  background-color: rgba(191, 110, 65, 0.1);
+  color: var(--accent, #BF6E41);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
 }
 </style>

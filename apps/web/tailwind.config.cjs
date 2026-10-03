@@ -20,9 +20,9 @@ module.exports = {
         bgDarker: 'var(--bg-app, #0f1012)',
         textPrimary: 'var(--text-primary, #F2F2F2)',
         textSecondary: 'var(--text-secondary, #7A7D84)',
-        accent: 'var(--accent, #E57B55)',
-        primary: 'var(--accent, #E57B55)',
-        primaryHover: '#D46944',
+        accent: 'var(--accent, #BF6E41)',
+        primary: 'var(--accent, #BF6E41)',
+        primaryHover: '#A85E35',
         divider: 'var(--divider, rgba(255, 255, 255, 0.08))',
       },
       fontFamily: {

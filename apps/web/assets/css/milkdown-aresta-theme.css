@@ -141,12 +141,12 @@
 
 /* Blockquote */
 .milkdown-aresta-wrapper .milkdown .editor blockquote {
-  border-left: 3px solid var(--accent, #E57B55);
+  border-left: 3px solid var(--accent, #BF6E41);
   padding-left: 1rem;
   margin: 0.75rem 0;
   font-style: italic;
   color: var(--text-secondary, #7A7D84);
-  background: rgba(229, 123, 85, 0.05);
+  background: rgba(191, 110, 65, 0.05);
   border-radius: 0 0.5rem 0.5rem 0;
   padding-top: 0.25rem;
   padding-bottom: 0.25rem;
@@ -157,7 +157,7 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.875em;
   background-color: rgba(255, 255, 255, 0.08);
-  color: var(--accent, #E57B55);
+  color: var(--accent, #BF6E41);
   padding: 0.15rem 0.4rem;
   border-radius: 0.375rem;
   border: 1px solid rgba(255, 255, 255, 0.06);
@@ -189,7 +189,7 @@
 
 /* Links */
 .milkdown-aresta-wrapper .milkdown .editor a {
-  color: var(--accent, #E57B55);
+  color: var(--accent, #BF6E41);
   text-decoration: underline;
   text-underline-offset: 2px;
   transition: opacity 0.2s;

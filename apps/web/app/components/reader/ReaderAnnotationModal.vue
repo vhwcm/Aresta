@@ -23,7 +23,7 @@
           </div>
           <div>
             <h3 id="annotation-modal-title" class="font-bold text-base">Nova Anotação</h3>
-            <p class="text-xs text-textSecondary">Página {{ currentPage }}</p>
+            <p class="text-xs text-textSecondary">{{ isEpub ? `Localização ${currentPage}` : `Página ${currentPage}` }}</p>
           </div>
         </div>
         <button
@@ -249,6 +249,9 @@ import {
 } from 'lucide-vue-next'
 import { useGraph } from '~/composables/useGraph'
 import { useAnnotations, type AnnotationItem } from '~/composables/useAnnotations'
+import { useReaderStore } from '~/stores/readerStore'
+import { getActivePinia } from 'pinia'
+import { serializePosition } from '~/utils/reader/position/readingPosition'
 
 export interface AnnotationColorOption {
   id: string
@@ -258,7 +261,7 @@ export interface AnnotationColorOption {
 
 const ANNOTATION_COLORS: AnnotationColorOption[] = [
   { id: 'yellow', label: 'Amarelo Ouro', hex: '#F59E0B' },
-  { id: 'coral', label: 'Coral Aresta', hex: '#E57B55' },
+  { id: 'coral', label: 'Coral Aresta', hex: '#BF6E41' },
   { id: 'green', label: 'Verde Menta', hex: '#10B981' },
   { id: 'blue', label: 'Azul Celeste', hex: '#3B82F6' },
   { id: 'purple', label: 'Roxo Lavanda', hex: '#8B5CF6' },
@@ -285,9 +288,11 @@ const emit = defineEmits<{
 
 const { graphData, fetchGraph, createNode } = useGraph()
 const { createAnnotation } = useAnnotations()
+const store = getActivePinia() ? useReaderStore() : null
+const isEpub = computed(() => store?.documentType === 'epub')
 
 const selectedText = ref('')
-const selectedColor = ref('#E57B55')
+const selectedColor = ref('#BF6E41')
 const wantNote = ref(false)
 const note = ref('')
 const wantFlashcard = ref(false)
@@ -348,7 +353,7 @@ const handleCreateQuickTheme = async () => {
   try {
     const node = await createNode({
       label: name,
-      color: '#E57B55',
+      color: '#BF6E41',
     })
     if (node && node.id) {
       selectedThemeIds.value.push(Number(node.id))
@@ -371,9 +376,11 @@ const handleSubmit = async () => {
     const isNote = Boolean(props.noteId) || props.cfi?.startsWith('note:')
     const bookId = props.bookId || 1 // Fallback para 1 se bookId não estiver setado
     const finalNote = wantNote.value ? note.value.trim() : null
-    const rawCfi = props.cfi || (isNote ? `note:${props.noteId}` : `page:${props.currentPage}`)
+    const defaultPositionCfi = store?.position ? serializePosition(store.position) : `page:${props.currentPage}`
+    const rawCfi = props.cfi || (isNote ? `note:${props.noteId}` : defaultPositionCfi)
     const finalCfi = rawCfi.includes('#color=') ? rawCfi : `${rawCfi}#color=${selectedColor.value.replace('#', '')}`
 
+    const defaultChapterTitle = isNote ? 'Trecho da Nota' : (isEpub.value ? `Loc. ${props.currentPage}` : `Página ${props.currentPage}`)
     const created = await createAnnotation({
       bookId,
       bookTitle: props.bookTitle || (isNote ? 'Nota no Canvas' : 'Obra Sem Título'),
@@ -382,7 +389,7 @@ const handleSubmit = async () => {
       note: finalNote || null,
       color: selectedColor.value,
       themeIds: wantNote.value ? selectedThemeIds.value : [],
-      chapterTitle: props.chapterTitle || (isNote ? 'Trecho da Nota' : `Página ${props.currentPage}`),
+      chapterTitle: props.chapterTitle || defaultChapterTitle,
       generateFlashcard: wantFlashcard.value,
       noteId: props.noteId
     })
