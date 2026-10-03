@@ -13,49 +13,49 @@
         v-if="bookCoverUrl"
         :src="bookCoverUrl"
         :alt="store.title"
-        class="w-[115px] sm:w-[125px] md:w-[135px] max-h-[190px] aspect-[2/3] object-cover block rounded-[7px] shadow-md"
+        class="w-[96px] sm:w-[104px] md:w-[110px] max-h-[175px] aspect-[2/3] object-cover block rounded-[7px] shadow-md"
         :title="store.title"
       />
       <div
         v-else
-        class="w-[115px] sm:w-[125px] md:w-[135px] aspect-[2/3] flex flex-col items-center justify-center p-2 text-center bg-accent/10 text-accent font-editorial rounded-[7px] shadow-md"
+        class="w-[96px] sm:w-[104px] md:w-[110px] aspect-[2/3] flex flex-col items-center justify-center p-2 text-center bg-accent/10 text-accent font-editorial rounded-[7px] shadow-md"
       >
         <BookOpenIcon class="w-8 h-8 sm:w-9 sm:h-9 opacity-80 mb-1" />
         <span class="text-[12px] font-editorial line-clamp-2 opacity-70 leading-tight">{{ store.title || 'Livro' }}</span>
       </div>
     </div>
 
-    <!-- Bloco de 6 Ícones Maiores LOGO EMBAIXO da Capa (2 Colunas x 3 Linhas) -->
-    <div class="grid grid-rows-3 grid-cols-2 gap-2 sm:gap-2.5 shrink-0 select-none pl-2 sm:pl-3">
+    <!-- Bloco de 6 Ícones Grandes e Próximos LOGO EMBAIXO da Capa (2 Colunas x 3 Linhas) -->
+    <div class="grid grid-rows-3 grid-cols-2 gap-1 sm:gap-1.5 shrink-0 select-none pl-2 sm:pl-3">
       <!-- 1. Linha 1 / Col 1 (1º Ícone): Anotações do Livro -->
       <button
         @click="handleToggleNotes"
-        class="p-3 sm:p-3.5 md:p-4 rounded-2xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
+        class="p-1.5 sm:p-2 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
         :class="isNotesActiveComputed ? 'text-accent font-bold bg-accent/15 ring-1 ring-accent/30' : themeButtonClass"
         :title="isNotesActiveComputed ? 'Ocultar anotações do livro' : 'Abrir anotações e reflexões deste livro'"
         aria-label="Abrir ou fechar notas do livro"
         id="btn-view-notes"
       >
-        <HighlighterIcon class="w-8 h-8 sm:w-9 sm:h-9 md:w-9.5 md:h-9.5 stroke-[1.9]" />
+        <HighlighterIcon class="w-9 h-9 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.9]" />
       </button>
 
       <!-- 2. Linha 1 / Col 2: Configurações de Leitura (Popover de Aparência) -->
       <div class="relative flex items-center justify-center" ref="appearanceWrapperRef">
         <button
           @click="isAppearancePopoverOpen = !isAppearancePopoverOpen"
-          class="p-3 sm:p-3.5 md:p-4 rounded-2xl transition-all duration-200 active:scale-90 relative flex items-center justify-center cursor-pointer"
+          class="p-1.5 sm:p-2 rounded-xl transition-all duration-200 active:scale-90 relative flex items-center justify-center cursor-pointer"
           :class="isAppearancePopoverOpen ? 'text-accent bg-accent/15 ring-1 ring-accent/30' : themeButtonClass"
           title="Configurações de leitura, páginas e modos"
           aria-label="Configurações de leitura"
           id="btn-appearance-toggle"
         >
-          <SettingsIcon class="w-8 h-8 sm:w-9 sm:h-9 md:w-9.5 md:h-9.5 stroke-[1.9]" />
+          <SettingsIcon class="w-9 h-9 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.9]" />
         </button>
 
         <!-- Popover Flutuante de Configurações (Abre ao lado da barra lateral no Desktop, centralizado verticalmente) -->
         <div
           v-if="isAppearancePopoverOpen"
-          class="fixed top-1/2 -translate-y-1/2 left-[155px] sm:left-[165px] md:left-[175px] w-[92vw] max-w-[340px] rounded-2xl p-4 shadow-2xl z-50 flex flex-col gap-3.5 max-h-[85vh] overflow-y-auto border animate-fadeIn"
+          class="fixed top-1/2 -translate-y-1/2 left-[130px] sm:left-[138px] md:left-[145px] w-[92vw] max-w-[340px] rounded-2xl p-4 shadow-2xl z-50 flex flex-col gap-3.5 max-h-[85vh] overflow-y-auto border animate-fadeIn"
           :class="themePopoverClass"
           role="dialog"
           aria-label="Controle de aparência e fundo de leitura"
@@ -320,51 +320,51 @@
       <button
         @click="store.decreaseFontSize(2)"
         :disabled="(store.fontSize || 15) <= 12"
-        class="p-3 sm:p-3.5 md:p-4 rounded-2xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer disabled:opacity-30 disabled:pointer-events-none"
+        class="p-1.5 sm:p-2 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer disabled:opacity-30 disabled:pointer-events-none"
         :class="themeButtonClass"
         :title="'Diminuir tamanho da fonte (' + (store.fontSize || 15) + 'px)'"
         aria-label="Diminuir tamanho da fonte"
         id="btn-font-decrease"
       >
-        <AArrowDownIcon class="w-8 h-8 sm:w-9 sm:h-9 md:w-9.5 md:h-9.5 stroke-[1.9]" />
+        <AArrowDownIcon class="w-9 h-9 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.9]" />
       </button>
 
       <!-- 4. Linha 2 / Col 2: Aumentar Tamanho da Fonte (Zoom In) -->
       <button
         @click="store.increaseFontSize(2)"
         :disabled="(store.fontSize || 15) >= 36"
-        class="p-3 sm:p-3.5 md:p-4 rounded-2xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer disabled:opacity-30 disabled:pointer-events-none"
+        class="p-1.5 sm:p-2 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer disabled:opacity-30 disabled:pointer-events-none"
         :class="themeButtonClass"
         :title="'Aumentar tamanho da fonte (' + (store.fontSize || 15) + 'px)'"
         aria-label="Aumentar tamanho da fonte"
         id="btn-font-increase"
       >
-        <AArrowUpIcon class="w-8 h-8 sm:w-9 sm:h-9 md:w-9.5 md:h-9.5 stroke-[1.9]" />
+        <AArrowUpIcon class="w-9 h-9 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.9]" />
       </button>
 
       <!-- 5. Linha 3 / Col 1 (Mais de baixo): Voltar à Biblioteca -->
       <button
         @click="$emit('close')"
-        class="p-3 sm:p-3.5 md:p-4 rounded-2xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
+        class="p-1.5 sm:p-2 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
         :class="themeButtonClass"
         title="Voltar à biblioteca"
         aria-label="Voltar à biblioteca"
         id="btn-close-book"
       >
-        <ArrowLeftIcon class="w-8 h-8 sm:w-9 sm:h-9 md:w-9.5 md:h-9.5 stroke-[1.9]" />
+        <ArrowLeftIcon class="w-9 h-9 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.9]" />
       </button>
 
       <!-- 6. Linha 3 / Col 2 (Mais de baixo): Alternar Modo Zen -->
       <button
         @click="$emit('toggleZenMode')"
-        class="p-3 sm:p-3.5 md:p-4 rounded-2xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
+        class="p-1.5 sm:p-2 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
         :class="isZenMode ? 'text-accent font-bold bg-accent/15 ring-1 ring-accent/30' : themeButtonClass"
         :title="isZenMode ? 'Sair do Modo Zen' : 'Entrar no Modo Zen'"
         :aria-label="isZenMode ? 'Sair do Modo Zen' : 'Entrar no Modo Zen'"
         id="btn-bottom-zen-mode"
       >
-        <Minimize2Icon v-if="isZenMode" class="w-8 h-8 sm:w-9 sm:h-9 md:w-9.5 md:h-9.5 stroke-[1.9]" />
-        <Maximize2Icon v-else class="w-8 h-8 sm:w-9 sm:h-9 md:w-9.5 md:h-9.5 stroke-[1.9]" />
+        <Minimize2Icon v-if="isZenMode" class="w-9 h-9 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.9]" />
+        <Maximize2Icon v-else class="w-9 h-9 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.9]" />
       </button>
     </div>
   </aside>
@@ -402,81 +402,81 @@
       </div>
 
       <!-- 2. Bloco Harmonioso de 6 Ícones Soltos (De baixo da capa!) -->
-      <div class="grid grid-rows-2 grid-cols-3 gap-1.5 sm:gap-2 shrink-0 select-none">
+      <div class="grid grid-rows-2 grid-cols-3 gap-1 shrink-0 select-none">
         <!-- 1. Linha Superior / Col 1: Voltar à Biblioteca -->
         <button
           @click="$emit('close')"
-          class="p-2.5 sm:p-3 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
+          class="p-1.5 sm:p-2 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
           :class="themeButtonClass"
           title="Voltar à biblioteca"
           aria-label="Voltar à biblioteca"
           id="btn-close-book"
         >
-          <ArrowLeftIcon class="w-6 h-6 sm:w-7 sm:h-7 stroke-[1.85]" />
+          <ArrowLeftIcon class="w-7 h-7 sm:w-7.5 sm:h-7.5 stroke-[1.85]" />
         </button>
 
         <!-- 2. Linha Superior / Col 2: Diminuir Tamanho da Fonte (Zoom Out) -->
         <button
           @click="store.decreaseFontSize(2)"
           :disabled="(store.fontSize || 15) <= 12"
-          class="p-2.5 sm:p-3 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer disabled:opacity-30 disabled:pointer-events-none"
+          class="p-1.5 sm:p-2 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer disabled:opacity-30 disabled:pointer-events-none"
           :class="themeButtonClass"
           :title="'Diminuir tamanho da fonte (' + (store.fontSize || 15) + 'px)'"
           aria-label="Diminuir tamanho da fonte"
           id="btn-font-decrease"
         >
-          <AArrowDownIcon class="w-6 h-6 sm:w-7 sm:h-7 stroke-[1.85]" />
+          <AArrowDownIcon class="w-7 h-7 sm:w-7.5 sm:h-7.5 stroke-[1.85]" />
         </button>
 
         <!-- 3. Linha Superior / Col 3: Aumentar Tamanho da Fonte (Zoom In) -->
         <button
           @click="store.increaseFontSize(2)"
           :disabled="(store.fontSize || 15) >= 36"
-          class="p-2.5 sm:p-3 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer disabled:opacity-30 disabled:pointer-events-none"
+          class="p-1.5 sm:p-2 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer disabled:opacity-30 disabled:pointer-events-none"
           :class="themeButtonClass"
           :title="'Aumentar tamanho da fonte (' + (store.fontSize || 15) + 'px)'"
           aria-label="Aumentar tamanho da fonte"
           id="btn-font-increase"
         >
-          <AArrowUpIcon class="w-6 h-6 sm:w-7 sm:h-7 stroke-[1.85]" />
+          <AArrowUpIcon class="w-7 h-7 sm:w-7.5 sm:h-7.5 stroke-[1.85]" />
         </button>
 
         <!-- 4. Linha Inferior / Col 1: Alternar Modo Zen -->
         <button
           @click="$emit('toggleZenMode')"
-          class="p-2.5 sm:p-3 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
+          class="p-1.5 sm:p-2 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
           :class="isZenMode ? 'text-accent font-bold bg-accent/15 ring-1 ring-accent/30' : themeButtonClass"
           :title="isZenMode ? 'Sair do Modo Zen' : 'Entrar no Modo Zen'"
           :aria-label="isZenMode ? 'Sair do Modo Zen' : 'Entrar no Modo Zen'"
           id="btn-bottom-zen-mode"
         >
-          <Minimize2Icon v-if="isZenMode" class="w-6 h-6 sm:w-7 sm:h-7 stroke-[1.85]" />
-          <Maximize2Icon v-else class="w-6 h-6 sm:w-7 sm:h-7 stroke-[1.85]" />
+          <Minimize2Icon v-if="isZenMode" class="w-7 h-7 sm:w-7.5 sm:h-7.5 stroke-[1.85]" />
+          <Maximize2Icon v-else class="w-7 h-7 sm:w-7.5 sm:h-7.5 stroke-[1.85]" />
         </button>
 
         <!-- 5. Linha Inferior / Col 2: Anotações do Livro -->
         <button
           @click="handleToggleNotes"
-          class="p-2.5 sm:p-3 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
+          class="p-1.5 sm:p-2 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
           :class="isNotesActiveComputed ? 'text-accent font-bold bg-accent/15 ring-1 ring-accent/30' : themeButtonClass"
           :title="isNotesActiveComputed ? 'Ocultar anotações do livro' : 'Abrir anotações e reflexões deste livro'"
           aria-label="Abrir ou fechar notas do livro"
           id="btn-view-notes"
         >
-          <HighlighterIcon class="w-6 h-6 sm:w-7 sm:h-7 stroke-[1.85]" />
+          <HighlighterIcon class="w-7 h-7 sm:w-7.5 sm:h-7.5 stroke-[1.85]" />
         </button>
 
         <!-- 6. Linha Inferior / Col 3: Configurações de Leitura -->
         <div class="relative flex items-center justify-center" ref="appearanceWrapperRef">
           <button
             @click="isAppearancePopoverOpen = !isAppearancePopoverOpen"
-            class="p-2.5 sm:p-3 rounded-xl transition-all duration-200 active:scale-90 relative flex items-center justify-center cursor-pointer"
+            class="p-1.5 sm:p-2 rounded-xl transition-all duration-200 active:scale-90 relative flex items-center justify-center cursor-pointer"
             :class="isAppearancePopoverOpen ? 'text-accent bg-accent/15 ring-1 ring-accent/30' : themeButtonClass"
             title="Configurações de leitura, páginas e modos"
             aria-label="Configurações de leitura"
             id="btn-appearance-toggle"
           >
-            <SettingsIcon class="w-6 h-6 sm:w-7 sm:h-7 stroke-[1.85]" />
+            <SettingsIcon class="w-7 h-7 sm:w-7.5 sm:h-7.5 stroke-[1.85]" />
           </button>
 
           <!-- Popover Flutuante de Configurações (Abre acima da barra centralizado no mobile) -->
@@ -855,9 +855,9 @@ onUnmounted(() => {
 }
 
 .reader-lateral-bar {
-  width: 140px;
-  min-width: 140px;
-  max-width: 140px;
+  width: 122px;
+  min-width: 122px;
+  max-width: 122px;
   height: 100%;
 }
 </style>
