@@ -151,8 +151,8 @@ export function useBookPageTurn(
       const rightNum = leftNum + 1 <= store.totalPages ? leftNum + 1 : 0
 
       const totalBookWidth = targetWidth * 2
-      // No desktop: colado no canto esquerdo (0px); no mobile: centralizado
-      const startX = isMobile ? Math.max(0, (hostWidth - totalBookWidth) / 2) : 0
+      // Centralizado horizontalmente no palco de leitura
+      const startX = Math.max(0, (hostWidth - totalBookWidth) / 2)
       const verticalSlack = Math.max(0, hostHeight - targetHeight)
       // Centralizado verticalmente
       const startY = Math.max(0, Math.round(verticalSlack / 2))
@@ -227,8 +227,8 @@ export function useBookPageTurn(
         }
       }
 
-      // No desktop: colado no canto esquerdo (0px); no mobile: centralizado
-      const startX = isMobile ? Math.max(0, (hostWidth - targetWidth) / 2) : 0
+      // Centralizado horizontalmente no palco de leitura
+      const startX = Math.max(0, (hostWidth - targetWidth) / 2)
       const verticalSlack = Math.max(0, hostHeight - targetHeight)
       // Centralizado verticalmente
       const startY = Math.max(0, Math.round(verticalSlack / 2))
