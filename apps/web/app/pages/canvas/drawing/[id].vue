@@ -1,7 +1,7 @@
 <template>
   <div class="fixed inset-0 h-screen w-screen flex flex-col bg-bgPanel text-textPrimary select-none overflow-hidden font-interface">
-    <!-- Top Header -->
-    <header class="h-14 shrink-0 px-3 sm:px-6 border-b border-divider bg-bgPanel flex items-center justify-between z-30">
+    <!-- Top Header: Fino e Icon-Only -->
+    <header class="h-11 sm:h-12 shrink-0 px-3 sm:px-6 border-b border-divider bg-bgPanel flex items-center justify-between z-30">
       <div class="flex items-center gap-2 sm:gap-3 min-w-0">
         <!-- Back Button: Apenas Ícone -->
         <AppBackButton
@@ -96,6 +96,16 @@
       </div>
     </header>
 
+    <!-- Sub-Header: Barra de Ferramentas de Desenho 100% largura colada na de cima -->
+    <DrawingToolbar
+      v-model:tool="activeTool"
+      v-model:selected-shape-type="selectedShapeType"
+      v-model:color="strokeColor"
+      v-model:size="strokeSize"
+      :pen-mode="isPenOnlyMode"
+      @update:pen-mode="setPenOnlyMode"
+    />
+
     <!-- Main Viewport: Horizontal Pages (Centralizado vertical e horizontalmente) -->
     <main
       ref="viewportRef"
@@ -115,7 +125,7 @@
       <!-- Centering Track: Respiro superior no mobile e desktop abaixo das barras fixas -->
       <div
         v-else-if="currentDrawing"
-        class="min-w-full min-h-full w-max md:my-0 md:mx-auto landscape:my-0 landscape:mx-auto pt-32 pb-16 md:pt-32 md:pb-12 landscape:pt-32 landscape:pb-12 px-0 flex flex-row items-center md:items-start landscape:items-start justify-start gap-4 md:gap-0"
+        class="min-w-full min-h-full w-max md:my-0 md:mx-auto landscape:my-0 landscape:mx-auto pt-6 pb-16 md:pt-8 md:pb-12 landscape:pt-8 landscape:pb-12 px-0 flex flex-row items-center md:items-start landscape:items-start justify-start gap-4 md:gap-0"
         :class="isTallerThanViewport ? 'my-0' : 'my-auto md:my-0'"
         :style="trackStyle"
       >
@@ -242,22 +252,6 @@
         </div>
       </div>
     </main>
-
-    <!-- Floating Docked Toolbar: Top on both mobile and desktop -->
-    <div
-      class="fixed z-30 pointer-events-none transition-all duration-200 top-16 inset-x-0 flex justify-center px-2 py-1.5"
-    >
-      <div class="pointer-events-auto max-w-[96vw] overflow-x-auto">
-        <DrawingToolbar
-          v-model:tool="activeTool"
-          v-model:selected-shape-type="selectedShapeType"
-          v-model:color="strokeColor"
-          v-model:size="strokeSize"
-          :pen-mode="isPenOnlyMode"
-          @update:pen-mode="setPenOnlyMode"
-        />
-      </div>
-    </div>
 
     <!-- Floating Zoom Controls Pill (Acessibilidade e Usabilidade Mobile/Tablet) -->
     <div

@@ -2,6 +2,7 @@
 - [02/10/2026 21:42] [Fazendo] Posicionar capa do livro na lateral esquerda em telas horizontais e manter bloco de 6 ícones abaixo do livro
 
 ## ✅ Concluído
+- [02/10/2026 21:44] [Concluído] Tornar barra de desenho 100% de largura horizontal, colada imediatamente na barra superior, mais fina e com ícones unificados em barra única sem agrupamentos aninhados
 - [02/10/2026 21:43] [Concluído] Remover definitivamente setas visuais de navegação (btn-prev-page e btn-next-page) e garantir virada de página pelas pontas da tela e gutters
 - [02/10/2026 21:40] [Concluído] Fixar barra de ferramentas do desenho sempre no topo (mobile e desktop), simplificar cabeçalho superior para ícones exclusivos e implementar seletor com 2 slots de cores e paleta em blocos
 - [02/10/2026 21:35] [Concluído] Remover barra superior com voltar e zen mode e reposicionar livro mais para cima no leitor

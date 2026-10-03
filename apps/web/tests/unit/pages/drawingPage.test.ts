@@ -317,14 +317,14 @@ describe('Drawing Page Mobile Zoom & Pinch Controls ([id].vue)', () => {
     expect(mockAddPage).toHaveBeenCalledWith('blank');
   });
 
-  it('configura alinhamento no topo com respiro para a toolbar fixa e slides em telas horizontais', () => {
+  it('configura alinhamento no topo com a toolbar 100% de largura colada no header e slides em telas horizontais', () => {
     const wrapper = mount(DrawingPage, {
       global: { stubs },
     });
 
     const track = wrapper.find('.page-slide').element.parentElement as HTMLElement;
-    expect(track.className).toContain('md:pt-32');
-    expect(track.className).toContain('landscape:pt-32');
+    expect(track.className).toContain('md:pt-8');
+    expect(track.className).toContain('landscape:pt-8');
     expect(track.className).toContain('md:items-start');
     expect(track.className).toContain('landscape:items-start');
     expect(track.className).toContain('md:my-0');
@@ -334,10 +334,9 @@ describe('Drawing Page Mobile Zoom & Pinch Controls ([id].vue)', () => {
     expect(slide.classes()).toContain('md:justify-start');
     expect(slide.classes()).toContain('landscape:justify-start');
 
-    // A toolbar agora fica fixa sempre no topo (independente de mobile ou desktop)
-    const toolbarContainer = wrapper.find('.fixed.z-30.pointer-events-none');
-    expect(toolbarContainer.classes()).toContain('top-16');
-    expect(toolbarContainer.classes()).toContain('inset-x-0');
+    // A DrawingToolbar fica colada imediatamente abaixo do header ocupando 100% de largura
+    const toolbar = wrapper.find('.drawing-toolbar-stub');
+    expect(toolbar.exists()).toBe(true);
   });
 
   it('calcula a escala em telas horizontais com folha colada no topo e respiro inferior', async () => {
