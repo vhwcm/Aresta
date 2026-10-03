@@ -449,6 +449,7 @@ import ReaderFocusOverlay from '~/components/reader/ReaderFocusOverlay.vue'
 const emit = defineEmits<{
   (_e: 'transition-state', _isTransitioning: boolean): void
   (_e: 'select-annotation', _annotationId: number): void
+  (_e: 'layout-change', _bounds: { left: number; width: number }): void
 }>()
 
 const store = useReaderStore()
@@ -748,6 +749,18 @@ const animationLayout = ref<PageLayoutInfo | null>(null)
 const renderedLayout = computed(() => (
   is3DActive.value && animationLayout.value ? animationLayout.value : pageLayout.value
 ))
+
+watch(
+  () => renderedLayout.value,
+  (layout) => {
+    const left = layout.isTwoPage ? (layout.leftPage?.left ?? 0) : (layout.singlePage?.left ?? 0)
+    const width = layout.isTwoPage
+      ? ((layout.leftPage?.width ?? 0) + (layout.rightPage?.width ?? 0))
+      : (layout.singlePage?.width ?? 0)
+    emit('layout-change', { left, width })
+  },
+  { immediate: true, deep: true },
+)
 
 function snapshotLayout(layout: PageLayoutInfo): PageLayoutInfo {
   return {

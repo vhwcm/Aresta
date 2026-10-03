@@ -1,7 +1,8 @@
 ## 🔄 Em Andamento
-- [02/10/2026 21:08] [Fazendo] Implementar renderização e armazenamento 100% vetorial no Quadro e no Desenho Paginado com exportação SVG e eliminação de miniaturas raster
 
 ## ✅ Concluído
+- [02/10/2026 21:23] [Concluído] Cravar imagem da capa do livro logo abaixo do início do livro (extrema esquerda no mobile e margem inicial no desktop)
+- [02/10/2026 21:08] [Concluído] Implementar renderização e armazenamento 100% vetorial no Quadro e no Desenho Paginado com exportação SVG e eliminação de miniaturas raster
 - [02/10/2026 21:16] [Concluído] Otimizar transição do Zen Mode com debounce de ResizeObserver, isLayoutEqual e eliminação de layout thrashing
 - [02/10/2026 21:12] [Concluído] Diagnosticar e corrigir perda de seleção de texto no leitor EPUB ao soltar o mouse preservando tooltip e fluxo de anotações
 - [02/10/2026 21:05] [Concluído] Remover faixa de fundo da barra inferior deixando capa e ícones soltos e remover título do livro

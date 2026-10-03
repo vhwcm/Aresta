@@ -76,6 +76,7 @@
                   ref="pageRenderer"
                   @transition-state="isTransitioning = $event"
                   @select-annotation="handleHighlightSelected"
+                  @layout-change="handleBookLayoutChange"
                 />
                 <ReaderEngineScrollEngine
                   v-else
@@ -131,6 +132,8 @@
             v-if="!store.isZenMode"
             :is-notes-active="isDesktop ? store.isNotesOpen : store.isMobileNotesOpen"
             :cover-url="bookCoverUrl"
+            :book-left="bookBounds.left"
+            :book-width="bookBounds.width"
             @close="handleClose"
             @open-saved-pages="isSavedPagesOpen = true"
             @open-annotation="handleOpenAnnotation"
@@ -374,6 +377,12 @@ const aiOverlayText = ref('')
 const aiOverlayHtml = ref('')
 const isAiOverlayLoading = ref(false)
 const aiOverlayError = ref<string | null>(null)
+
+// Limites Geométricos do Livro para alinhamento cravado da Capa e Ícones
+const bookBounds = ref<{ left: number; width: number }>({ left: 0, width: 0 })
+function handleBookLayoutChange(bounds: { left: number; width: number }) {
+  bookBounds.value = bounds
+}
 
 let handleAddFlashcardEvent: ((e: Event) => void) | null = null
 let handleExplainSubtopicEvent: ((e: Event) => void) | null = null

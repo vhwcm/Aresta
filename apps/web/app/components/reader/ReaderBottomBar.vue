@@ -1,6 +1,6 @@
 <template>
   <footer
-    class="reader-unified-bottom-bar reader-bottom-bar shrink-0 w-full select-none transition-all duration-300 flex items-center justify-center overflow-visible bg-transparent border-0"
+    class="reader-unified-bottom-bar reader-bottom-bar shrink-0 w-full select-none transition-all duration-300 flex items-center overflow-visible bg-transparent border-0"
     role="toolbar"
     aria-label="Barra de ferramentas do leitor"
     id="reader-unified-bar"
@@ -13,9 +13,12 @@
       id="btn-close-book"
     ></button>
 
-    <!-- Container Centralizado Horizontalmente com Capa e Ícones Soltos (Sem faixa de fundo, sem título) -->
-    <div class="h-full w-full max-w-xl sm:max-w-2xl md:max-w-3xl flex items-center justify-center gap-4 sm:gap-8 px-4 overflow-visible">
-      <!-- 1. Capa do Livro Solta (Ocupa 100% da altura da barra, pontas levemente arredondadas, sem sombras laterais) -->
+    <!-- Container Alinhado Cravado com o Início do Livro (Extrema esquerda no mobile e início do livro no desktop) -->
+    <div
+      class="h-full w-full flex items-center gap-3 sm:gap-4 overflow-visible"
+      :style="bottomBarContainerStyle"
+    >
+      <!-- 1. Capa do Livro Solta (Cravada no início do livro, 100% da altura da barra, pontas levemente arredondadas, sem sombras laterais) -->
       <div class="h-full shrink-0 flex items-center justify-center select-none py-1 sm:py-1.5">
         <img
           v-if="bookCoverUrl"
@@ -33,7 +36,7 @@
       </div>
 
       <!-- 2. Ícones de Ação Soltos (Anotações, Marcador, Diminuir Fonte, Aumentar Fonte, Configurações) -->
-      <div class="flex items-center gap-2 sm:gap-3.5 flex-wrap justify-center">
+      <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
         <!-- Botão Oculto para fallback de evento openAnnotation se invocado programaticamente -->
         <button
           @click="$emit('openAnnotation')"
@@ -435,6 +438,8 @@ import { useReaderStore } from '~/stores/readerStore'
 const props = defineProps<{
   isNotesActive?: boolean
   coverUrl?: string
+  bookLeft?: number
+  bookWidth?: number
 }>()
 
 const emit = defineEmits<{
@@ -448,6 +453,37 @@ const store = useReaderStore()
 const bookCoverUrl = computed(() => props.coverUrl || store.coverUrl || '')
 const isAppearancePopoverOpen = ref(false)
 const appearanceWrapperRef = ref<HTMLElement | null>(null)
+
+const isMobileScreen = ref(typeof window !== 'undefined' ? window.innerWidth < 768 : false)
+function checkScreenSize() {
+  if (typeof window !== 'undefined') {
+    isMobileScreen.value = window.innerWidth < 768
+  }
+}
+
+const bottomBarContainerStyle = computed(() => {
+  const isMobile = isMobileScreen.value || (typeof window !== 'undefined' && window.innerWidth < 768)
+  // Mobile (< 768px): a capa fica o mais para a esquerda possível (respiro suave de 8px)
+  if (isMobile) {
+    return {
+      paddingLeft: '8px',
+      justifyContent: 'flex-start',
+    }
+  }
+
+  // Desktop (>= 768px): a capa fica cravada exatamente logo abaixo do início do livro
+  if (typeof props.bookLeft === 'number' && props.bookLeft > 0) {
+    return {
+      paddingLeft: `${Math.round(props.bookLeft)}px`,
+      justifyContent: 'flex-start',
+    }
+  }
+
+  return {
+    paddingLeft: '24px',
+    justifyContent: 'flex-start',
+  }
+})
 
 const isNotesActiveComputed = computed(() => {
   return Boolean(props.isNotesActive)
@@ -534,6 +570,8 @@ function handleKeydown(event: KeyboardEvent) {
 
 onMounted(() => {
   if (typeof window !== 'undefined') {
+    checkScreenSize()
+    window.addEventListener('resize', checkScreenSize)
     document.addEventListener('click', handleClickOutside)
     window.addEventListener('keydown', handleKeydown)
   }
@@ -541,6 +579,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   if (typeof window !== 'undefined') {
+    window.removeEventListener('resize', checkScreenSize)
     document.removeEventListener('click', handleClickOutside)
     window.removeEventListener('keydown', handleKeydown)
   }

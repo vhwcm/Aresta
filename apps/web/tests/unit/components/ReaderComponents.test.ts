@@ -147,6 +147,44 @@ describe('Reader Components', () => {
       expect(store.fontSize).toBe(16)
     })
 
+    it('crava a capa do livro logo abaixo do início do livro no desktop e o mais para a esquerda no mobile', async () => {
+      // 1. Cenário Desktop com bookLeft = 240px
+      const desktopWrapper = mount(ReaderBottomBar, {
+        props: {
+          bookLeft: 240,
+          bookWidth: 800,
+        },
+      })
+
+      const desktopContainer = desktopWrapper.find('#reader-unified-bar > div')
+      expect(desktopContainer.exists()).toBe(true)
+      const desktopStyle = desktopContainer.attributes('style') || ''
+      expect(desktopStyle).toContain('padding-left: 240px')
+      expect(desktopStyle).toContain('justify-content: flex-start')
+
+      // 2. Cenário Mobile (largura da janela < 768px)
+      const originalInnerWidth = window.innerWidth
+      try {
+        window.innerWidth = 390
+        window.dispatchEvent(new Event('resize'))
+
+        const mobileWrapper = mount(ReaderBottomBar, {
+          props: {
+            bookLeft: 240,
+          },
+        })
+
+        const mobileContainer = mobileWrapper.find('#reader-unified-bar > div')
+        expect(mobileContainer.exists()).toBe(true)
+        const mobileStyle = mobileContainer.attributes('style') || ''
+        expect(mobileStyle).toContain('padding-left: 8px')
+        expect(mobileStyle).toContain('justify-content: flex-start')
+      } finally {
+        window.innerWidth = originalInnerWidth
+        window.dispatchEvent(new Event('resize'))
+      }
+    })
+
     it('alterna modo de 1 página e 2 páginas no popover de configurações', async () => {
       const store = useReaderStore()
       store.setDocument({
