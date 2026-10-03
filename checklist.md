@@ -2,6 +2,7 @@
 - [03/10/2026 11:01] [Fazendo] Reestruturar sincronização de temas e conexões do grafo com CRDT LWW, IDs determinísticos, tombstones e semântica unificada
 
 ## ✅ Concluído
+- [03/10/2026 11:39] [Concluído] Reordenar ícones da barra lateral no desktop (Anotação primeiro, Voltar e Zen Mode na base) e remover opções de 2 páginas/largura em telas verticais
 - [03/10/2026 11:34] [Concluído] Substituir ícone do modo zen por Maximize2Icon e Minimize2Icon (duas setas em direções opostas) no leitor
 - [03/10/2026 11:33] [Concluído] Centralizar o livro horizontalmente e verticalmente no desktop em modo 2 páginas e 1 página
 - [03/10/2026 11:31] [Concluído] Ampliar tamanho dos ícones e botões abaixo da capa na barra lateral do leitor desktop
