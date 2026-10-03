@@ -69,9 +69,9 @@ describe('Zen Mode & Dark Theme Layout & Contrast', () => {
     expect(leftPage.exists()).toBe(true)
     expect(rightPage.exists()).toBe(true)
 
-    // Left page has margins (not pushed to left: 0px / top: 0px full bleed)
+    // Left page is aligned to the left edge (startX = 0px) and vertically centered (top > 0px)
     const leftStyle = leftPage.attributes('style') || ''
-    expect(leftStyle).not.toContain('left: 0px')
+    expect(leftStyle).toContain('left: 0px')
     expect(leftStyle).not.toContain('top: 0px')
 
     // Text layers are rendered and contain text
@@ -113,7 +113,7 @@ describe('Zen Mode & Dark Theme Layout & Contrast', () => {
     expect(singlePage.exists()).toBe(true)
 
     const singleStyle = singlePage.attributes('style') || ''
-    expect(singleStyle).not.toContain('left: 0px')
+    expect(singleStyle).toContain('left: 0px')
     expect(singleStyle).not.toContain('top: 0px')
 
     const textLayer = wrapper.find('.page-text-layer--single')

@@ -2,25 +2,25 @@
   <!-- 1. Layout Lateral Esquerdo no Desktop / Telas Horizontais -->
   <aside
     v-if="isHorizontalComputed"
-    class="reader-lateral-bar reader-bottom-bar shrink-0 h-full select-none transition-all duration-300 flex flex-col items-start justify-center pl-0 pr-3 sm:pr-4 py-3 sm:py-4 z-20 pointer-events-auto bg-transparent border-0 gap-4 sm:gap-5"
+    class="reader-lateral-bar reader-bottom-bar shrink-0 h-full select-none transition-all duration-300 flex flex-col items-start justify-center pl-0 pr-2 py-3 sm:py-4 z-20 pointer-events-auto bg-transparent border-0 gap-3.5 sm:gap-4"
     role="toolbar"
     aria-label="Barra lateral do leitor"
     id="reader-unified-bar"
   >
-    <!-- Capa do Livro Colada no Extremo Canto Esquerdo da Tela -->
-    <div class="shrink-0 flex flex-col items-start justify-center select-none pl-0">
+    <!-- Capa do Livro Alinhada com os Botões de Controle -->
+    <div class="shrink-0 flex flex-col items-start justify-center select-none pl-2 sm:pl-3">
       <img
         v-if="bookCoverUrl"
         :src="bookCoverUrl"
         :alt="store.title"
-        class="w-[90px] sm:w-[100px] md:w-[110px] max-h-[165px] aspect-[2/3] object-cover block rounded-l-none rounded-r-[6px] shadow-sm"
+        class="w-[88px] sm:w-[94px] max-h-[145px] aspect-[2/3] object-cover block rounded-[6px] shadow-sm"
         :title="store.title"
       />
       <div
         v-else
-        class="w-[90px] sm:w-[100px] md:w-[110px] aspect-[2/3] flex flex-col items-center justify-center p-2 text-center bg-accent/10 text-accent font-editorial rounded-l-none rounded-r-[6px] shadow-sm"
+        class="w-[88px] sm:w-[94px] aspect-[2/3] flex flex-col items-center justify-center p-2 text-center bg-accent/10 text-accent font-editorial rounded-[6px] shadow-sm"
       >
-        <BookOpenIcon class="w-7 h-7 opacity-80 mb-1" />
+        <BookOpenIcon class="w-6 h-6 sm:w-7 sm:h-7 opacity-80 mb-1" />
         <span class="text-[11px] font-editorial line-clamp-2 opacity-70 leading-tight">{{ store.title || 'Livro' }}</span>
       </div>
     </div>
