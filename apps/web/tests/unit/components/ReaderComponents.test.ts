@@ -47,27 +47,42 @@ describe('Reader Components', () => {
   })
 
   describe('ReaderBottomBar', () => {
-    it('renderiza botões e reage ao clique de marcar página dentro de configurações', async () => {
+    it('renderiza o bloco harmonioso de 6 ícones (voltar, zen mode, zoom e anotações/configurações) sem elementos de bookmark', async () => {
       const store = useReaderStore()
       store.currentPage = 4
       const wrapper = mount(ReaderBottomBar, {
-        props: { isGraphActive: false },
+        props: { isNotesActive: false, isZenMode: false },
       })
 
-      // O marcador agora fica dentro do botão de configurações
-      const settingsBtn = wrapper.find('#btn-appearance-toggle')
-      expect(settingsBtn.exists()).toBe(true)
-      await settingsBtn.trigger('click')
+      // Verifica presença dos 6 botões estruturados no grid 2x3
+      const closeBtn = wrapper.find('#btn-close-book')
+      const fontDecreaseBtn = wrapper.find('#btn-font-decrease')
+      const fontIncreaseBtn = wrapper.find('#btn-font-increase')
+      const zenBtn = wrapper.find('#btn-bottom-zen-mode')
+      const notesBtn = wrapper.find('#btn-view-notes')
+      const appearanceBtn = wrapper.find('#btn-appearance-toggle')
 
-      const bookmarkBtn = wrapper.find('button[aria-label="Marcar ou desmarcar página atual"]')
-      expect(bookmarkBtn.exists()).toBe(true)
+      expect(closeBtn.exists()).toBe(true)
+      expect(fontDecreaseBtn.exists()).toBe(true)
+      expect(fontIncreaseBtn.exists()).toBe(true)
+      expect(zenBtn.exists()).toBe(true)
+      expect(notesBtn.exists()).toBe(true)
+      expect(appearanceBtn.exists()).toBe(true)
 
-      await bookmarkBtn.trigger('click')
-      expect(store.isCurrentPageBookmarked).toBe(true)
-      expect(store.savedPages).toContain(4)
+      // Garante que nenhum elemento de bookmark existe na barra
+      expect(wrapper.find('#btn-bookmark-toggle').exists()).toBe(false)
+      expect(wrapper.find('button[aria-label="Marcar ou desmarcar página"]').exists()).toBe(false)
+
+      // Abre popover de configurações
+      await appearanceBtn.trigger('click')
+
+      // Garante que marcadores foram removidos de configurações também
+      expect(wrapper.find('#btn-bookmarks-menu').exists()).toBe(false)
+      expect(wrapper.find('#btn-open-saved-pages').exists()).toBe(false)
+      expect(wrapper.text()).not.toContain('Marcadores de Página')
     })
 
-    it('emite eventos corretos ao clicar nos botões de sair, anotação e páginas salvas', async () => {
+    it('emite eventos corretos ao clicar nos botões de voltar, alternar modo zen e anotação', async () => {
       const store = useReaderStore()
       store.setDocument({
         type: 'pdf',
@@ -81,66 +96,53 @@ describe('Reader Components', () => {
       store.currentPage = 5
 
       const wrapper = mount(ReaderBottomBar, {
-        props: { isGraphActive: true },
+        props: { isNotesActive: true, isZenMode: false },
       })
 
-      // Botão Sair
+      // 1. Botão Voltar (Sair)
       const closeBtn = wrapper.find('#btn-close-book')
       expect(closeBtn.exists()).toBe(true)
       await closeBtn.trigger('click')
       expect(wrapper.emitted('close')).toBeTruthy()
 
-      // Botão Anotar / Notas do Livro
-      const notesBtn = wrapper.find('button[aria-label="Abrir ou fechar notas do livro"]')
+      // 2. Botão Alternar Modo Zen
+      const zenBtn = wrapper.find('#btn-bottom-zen-mode')
+      expect(zenBtn.exists()).toBe(true)
+      await zenBtn.trigger('click')
+      expect(wrapper.emitted('toggleZenMode')).toBeTruthy()
+
+      // 3. Botão Anotações do Livro
+      const notesBtn = wrapper.find('#btn-view-notes')
       expect(notesBtn.exists()).toBe(true)
       await notesBtn.trigger('click')
       expect(wrapper.emitted('toggleNotes')).toBeTruthy()
 
-      // Abre popover de configurações (onde páginas e marcadores agora residem)
+      // 4. Popover de Configurações
       const settingsBtn = wrapper.find('#btn-appearance-toggle')
       expect(settingsBtn.exists()).toBe(true)
       await settingsBtn.trigger('click')
 
-      // Verifica exibição do progresso por página (Pág. 5-6/20) e presença de porcentagem dentro de configurações
+      // Verifica exibição do progresso por página (Pág. 5-6/20) e porcentagem
       expect(wrapper.text()).toContain('Pág. 5-6/20')
       expect(wrapper.text()).toContain('%')
-
-      // Botão Páginas Salvas dentro do popover de configurações
-      const savedPagesBtn = wrapper.find('button[aria-label="Abrir lista de páginas salvas"]')
-      expect(savedPagesBtn.exists()).toBe(true)
-      await savedPagesBtn.trigger('click')
-      expect(wrapper.emitted('openSavedPages')).toBeTruthy()
     })
 
-    it('permite marcar página e alterar tamanho da fonte diretamente pelos botões externos na barra inferior', async () => {
+    it('permite alterar tamanho da fonte diretamente pelos botões de zoom na barra inferior', async () => {
       const store = useReaderStore()
       store.currentPage = 7
       store.fontSize = 16
 
       const wrapper = mount(ReaderBottomBar, {
-        props: { isGraphActive: false },
+        props: { isNotesActive: false },
       })
 
-      // 1. Botão Externo de Marcar/Desmarcar Página
-      const bookmarkBtn = wrapper.find('#btn-bookmark-toggle')
-      expect(bookmarkBtn.exists()).toBe(true)
-      expect(store.isCurrentPageBookmarked).toBe(false)
-
-      await bookmarkBtn.trigger('click')
-      expect(store.isCurrentPageBookmarked).toBe(true)
-      expect(store.bookmarks).toContain(7)
-
-      await bookmarkBtn.trigger('click')
-      expect(store.isCurrentPageBookmarked).toBe(false)
-      expect(store.bookmarks).not.toContain(7)
-
-      // 2. Botão Externo de Aumentar Tamanho da Fonte
+      // 1. Botão de Aumentar Tamanho da Fonte (Zoom In)
       const fontIncreaseBtn = wrapper.find('#btn-font-increase')
       expect(fontIncreaseBtn.exists()).toBe(true)
       await fontIncreaseBtn.trigger('click')
       expect(store.fontSize).toBe(18)
 
-      // 3. Botão Externo de Diminuir Tamanho da Fonte
+      // 2. Botão de Diminuir Tamanho da Fonte (Zoom Out)
       const fontDecreaseBtn = wrapper.find('#btn-font-decrease')
       expect(fontDecreaseBtn.exists()).toBe(true)
       await fontDecreaseBtn.trigger('click')
@@ -422,7 +424,7 @@ describe('Reader Components', () => {
       expect(localStorage.getItem('aresta_reader_theme')).toBe('sepia')
     })
 
-    it('alterna Modo Zen e voltar na barra superior acima do livro', async () => {
+    it('não exibe barra superior e gerencia Modo Zen e retorno através da barra inferior', async () => {
       const store = useReaderStore()
       expect(store.isZenMode).toBe(false)
 
@@ -443,18 +445,25 @@ describe('Reader Components', () => {
         },
       })
 
-      // Barra superior deve existir acima do livro
-      const topBar = wrapper.find('.reader-viewer__top-bar')
-      expect(topBar.exists()).toBe(true)
+      // Barra superior e botões antigos do topo não devem existir
+      expect(wrapper.find('.reader-viewer__top-bar').exists()).toBe(false)
+      expect(wrapper.find('#btn-zen-mode').exists()).toBe(false)
 
-      const zenBtn = wrapper.find('#btn-zen-mode')
-      expect(zenBtn.exists()).toBe(true)
+      // A alternância de Modo Zen agora é disparada pela barra inferior
+      const bottomBarStub = wrapper.findComponent({ name: 'ReaderBottomBar' })
+      expect(bottomBarStub.exists()).toBe(true)
 
-      await zenBtn.trigger('click')
+      bottomBarStub.vm.$emit('toggle-zen-mode')
       expect(store.isZenMode).toBe(true)
 
-      await zenBtn.trigger('click')
-      expect(store.isZenMode).toBe(false)
+      // No modo Zen, a barra inferior é ocultada para leitura 100% imersiva
+      await wrapper.vm.$nextTick()
+      expect(wrapper.findComponent({ name: 'ReaderBottomBar' }).exists()).toBe(false)
+
+      // Sai do Modo Zen
+      store.setZenMode(false)
+      await wrapper.vm.$nextTick()
+      expect(wrapper.findComponent({ name: 'ReaderBottomBar' }).exists()).toBe(true)
     })
   })
 
@@ -874,12 +883,14 @@ describe('Reader Components', () => {
       expect(bottomBar.classes()).toContain('bg-transparent')
       // O título foi removido da barra para deixar os ícones e capa soltos
       expect(wrapper.find('.reader-viewer__book-title-bar').exists()).toBe(false)
-      // Ícones de controle soltos presentes
-      expect(wrapper.find('#btn-view-notes').exists()).toBe(true)
-      expect(wrapper.find('#btn-bookmark-toggle').exists()).toBe(true)
+      // Ícones de controle soltos presentes no bloco de 6 ícones
+      expect(wrapper.find('#btn-close-book').exists()).toBe(true)
       expect(wrapper.find('#btn-font-decrease').exists()).toBe(true)
       expect(wrapper.find('#btn-font-increase').exists()).toBe(true)
+      expect(wrapper.find('#btn-bottom-zen-mode').exists()).toBe(true)
+      expect(wrapper.find('#btn-view-notes').exists()).toBe(true)
       expect(wrapper.find('#btn-appearance-toggle').exists()).toBe(true)
+      expect(wrapper.find('#btn-bookmark-toggle').exists()).toBe(false)
     })
 
     it('oculta a barra inferior no modo Zen', async () => {
@@ -1355,10 +1366,8 @@ describe('Reader Components', () => {
       const prevBtn = wrapper.find('#btn-prev-page')
       const nextBtn = wrapper.find('#btn-next-page')
 
-      expect(prevBtn.exists()).toBe(true)
-      expect(nextBtn.exists()).toBe(true)
-      expect(prevBtn.classes()).not.toContain('rounded-full')
-      expect(nextBtn.classes()).not.toContain('rounded-full')
+      expect(prevBtn.exists()).toBe(false)
+      expect(nextBtn.exists()).toBe(false)
     })
 
     it('reseta a store do leitor ao acionar o botão de fechar/sair', async () => {

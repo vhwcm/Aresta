@@ -13,41 +13,7 @@
         :class="store.isNotesOpen && !store.isZenMode ? 'reader-viewer__reader-pane--with-notes' : 'reader-viewer__reader-pane--full'"
         :style="{ backgroundColor: themeBgColor }"
       >
-        <!-- Barra de Ferramentas Superior Discreta (Voltar e Zen Mode - sem texto, só setinhas) -->
-        <header
-          class="reader-viewer__top-bar"
-          :class="{
-            'reader-viewer__top-bar--zen': store.isZenMode,
-            'reader-viewer__top-bar--sepia': activeTheme === 'sepia',
-            'reader-viewer__top-bar--white': activeTheme === 'white',
-            'reader-viewer__top-bar--black': activeTheme === 'black'
-          }"
-        >
-          <!-- Seta Voltar (Sair da Leitura) -->
-          <button
-            @click="handleClose"
-            class="reader-viewer__top-btn"
-            title="Voltar à biblioteca"
-            aria-label="Voltar à biblioteca"
-            id="btn-close-book"
-          >
-            <ArrowLeftIcon class="w-4 h-4" />
-          </button>
-
-          <!-- Seta Zen Mode (Entrar / Sair do Zen Mode - sem texto, só setinhas) -->
-          <button
-            @click="handleToggleZenMode"
-            class="reader-viewer__top-btn"
-            :title="store.isZenMode ? 'Sair do Modo Zen' : 'Entrar no Modo Zen'"
-            :aria-label="store.isZenMode ? 'Sair do Modo Zen' : 'Entrar no Modo Zen'"
-            id="btn-zen-mode"
-          >
-            <ChevronDownIcon v-if="!store.isZenMode" class="w-4 h-4" />
-            <ChevronUpIcon v-else class="w-4 h-4" />
-          </button>
-        </header>
-
-        <!-- Coluna de Leitura -->
+        <!-- Coluna de Leitura (Inicia do topo absoluto sem barra superior) -->
         <div class="reader-viewer__content-column" :style="{ backgroundColor: themeBgColor }">
           <!-- Área do Livro / Stage -->
           <main
@@ -59,17 +25,6 @@
             @pointerup="handleTextSelectionCheck"
           >
             <div class="reader-viewer__stage-container" :style="{ backgroundColor: themeBgColor }">
-              <button
-                v-if="store.readingMode !== 'scroll'"
-                class="reader-viewer__nav-btn reader-viewer__nav-btn--prev hidden md:flex"
-                :disabled="store.isFirstPage || isTransitioning"
-                @click="pageRenderer?.previous()"
-                aria-label="Página anterior"
-                id="btn-prev-page"
-              >
-                <ChevronLeftIcon class="w-8 h-8 sm:w-10 sm:h-10" />
-              </button>
-
               <div class="reader-viewer__book-stage" id="book-stage" :style="{ backgroundColor: themeBgColor }">
                 <ReaderEnginePageCurlCanvas
                   v-if="store.readingMode !== 'scroll'"
@@ -85,17 +40,6 @@
                   @text-selected="handleTextSelectionCheck"
                 />
               </div>
-
-              <button
-                v-if="store.readingMode !== 'scroll'"
-                class="reader-viewer__nav-btn reader-viewer__nav-btn--next hidden md:flex"
-                :disabled="store.isLastPage || isTransitioning"
-                @click="pageRenderer?.next()"
-                aria-label="Próxima página"
-                id="btn-next-page"
-              >
-                <ChevronRightIcon class="w-8 h-8 sm:w-10 sm:h-10" />
-              </button>
             </div>
           </main>
 
@@ -131,10 +75,12 @@
           <ReaderBottomBar
             v-if="!store.isZenMode"
             :is-notes-active="isDesktop ? store.isNotesOpen : store.isMobileNotesOpen"
+            :is-zen-mode="store.isZenMode"
             :cover-url="bookCoverUrl"
             :book-left="bookBounds.left"
             :book-width="bookBounds.width"
             @close="handleClose"
+            @toggle-zen-mode="handleToggleZenMode"
             @open-saved-pages="isSavedPagesOpen = true"
             @open-annotation="handleOpenAnnotation"
             @toggle-notes="handleToggleNotes"
@@ -248,7 +194,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { ArrowLeftIcon, ChevronUpIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from 'lucide-vue-next'
 import { useReaderStore } from '~/stores/readerStore'
 import { useReaderTypography } from '~/composables/useReaderTypography'
 import { useAnnotations } from '~/composables/useAnnotations'
@@ -1109,61 +1054,6 @@ onUnmounted(() => {
   transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.reader-viewer__top-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  height: 2.25rem;
-  padding: 0 0.85rem;
-  flex-shrink: 0;
-  z-index: 30;
-  background-color: transparent;
-  transition: background-color 0.2s ease, opacity 0.2s ease;
-}
-
-.reader-viewer__top-bar--zen {
-  background: transparent !important;
-}
-
-.reader-viewer__top-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 9999px;
-  color: inherit;
-  opacity: 0.65;
-  transition: all 0.2s ease;
-  cursor: pointer;
-  background: transparent;
-  border: none;
-}
-
-.reader-viewer__top-btn:hover {
-  opacity: 1;
-  color: var(--color-accent, #E57B55);
-  background: rgba(229, 123, 85, 0.12);
-  transform: scale(1.06);
-}
-
-.reader-viewer__top-btn:active {
-  transform: scale(0.92);
-}
-
-.reader-viewer--theme-sepia .reader-viewer__top-bar {
-  color: #3e3328;
-}
-
-.reader-viewer--theme-white .reader-viewer__top-bar {
-  color: #1a1a1a;
-}
-
-.reader-viewer--theme-black .reader-viewer__top-bar {
-  color: #e4e4e7;
-}
-
 .reader-viewer__reader-pane--half {
   width: 100%;
 }
@@ -1358,16 +1248,6 @@ onUnmounted(() => {
 .reader-viewer--zen.reader-viewer--theme-black {
   background: #000000 !important;
 }
-
-.reader-viewer--zen .reader-viewer__nav-btn {
-  opacity: 0.2;
-}
-
-.reader-viewer--zen .reader-viewer__nav-btn:not(:disabled):hover {
-  opacity: 1;
-  color: var(--color-accent, #E57B55);
-}
-
 
 .fade-enter-active,
 .fade-leave-active {

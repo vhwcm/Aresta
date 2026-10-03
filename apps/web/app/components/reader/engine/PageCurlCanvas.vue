@@ -741,6 +741,9 @@ let texturePreparationVersion = 0
 // Engine Three.js 3D
 const pageCurl3D = usePageCurl3D(webglCanvasRef)
 
+// Layout de Páginas
+const { pageLayout } = useBookPageTurn(stageRef)
+
 const isPreparing = ref(false)
 const errorMessage = ref<string | null>(null)
 const is3DActive = ref(false)
@@ -790,9 +793,6 @@ let pendingDrag: PendingDrag | null = null
 // P3: Fila de virada pendente (máx. 1) para cliques rápidos em sequência
 let pendingTurnDirection: PageTurnDirection | null = null
 let lastTurnTriggerTime = 0
-
-// Layout de Páginas
-const { pageLayout } = useBookPageTurn(stageRef)
 
 // P5: Calcula a página de destino real considerando modo 1 ou 2 páginas
 function getTargetPage(direction: PageTurnDirection): number {
@@ -1479,12 +1479,16 @@ function getScreenEdgeDirection(
   if (width <= 0) return null
 
   // 1. Ponta Esquerda da Tela (Página Anterior):
-  // - Borda esquerda da tela (até 18% da largura ou 120px)
-  // - Ou espaço livre à esquerda do livro (gutter) + margem externa da folha esquerda (até 48px da borda da folha)
-  const leftEdgeThreshold = Math.max(100, width * 0.18)
-  const isLeftScreenGutter = pt.x < leftEdgeThreshold
+  // - Borda esquerda da tela (até 20% da largura ou 120px)
+  // - Ou espaço livre à esquerda do livro (gutter) + margem externa da folha esquerda (até 48px para dentro da folha)
+  const leftEdgeThreshold = Math.max(120, width * 0.2)
+  const leftBookEdge = layout.isTwoPage
+    ? (layout.leftPage ? layout.leftPage.left : (layout.rightPage ? layout.rightPage.left : 0))
+    : (layout.singlePage ? layout.singlePage.left : 0)
+
+  const isLeftScreenGutter = pt.x < leftEdgeThreshold || (leftBookEdge > 0 && pt.x <= (leftBookEdge + 48))
   const isLeftPageMargin = layout.isTwoPage
-    ? (layout.leftPage ? pt.x <= (layout.leftPage.left + 48) : (layout.rightPage ? pt.x < layout.rightPage.left : false))
+    ? (layout.leftPage ? pt.x <= (layout.leftPage.left + 48) : false)
     : (layout.singlePage ? pt.x <= (layout.singlePage.left + 48) : false)
 
   if (isLeftScreenGutter || isLeftPageMargin) {
@@ -1492,12 +1496,16 @@ function getScreenEdgeDirection(
   }
 
   // 2. Ponta Direita da Tela (Próxima Página):
-  // - Borda direita da tela (últimos 18% da largura ou 120px da borda)
-  // - Ou espaço livre à direita do livro (gutter) + margem externa da folha direita (até 48px da borda da folha)
-  const rightEdgeThreshold = Math.min(width - 100, width * 0.82)
-  const isRightScreenGutter = pt.x > rightEdgeThreshold
+  // - Borda direita da tela (últimos 20% da largura ou 120px da borda)
+  // - Ou espaço livre à direita do livro (gutter) + margem externa da folha direita (até 48px para dentro da folha)
+  const rightEdgeThreshold = Math.min(width - 120, width * 0.8)
+  const rightBookEdge = layout.isTwoPage
+    ? (layout.rightPage ? layout.rightPage.left + layout.rightPage.width : (layout.leftPage ? layout.leftPage.left + layout.leftPage.width : width))
+    : (layout.singlePage ? layout.singlePage.left + layout.singlePage.width : width)
+
+  const isRightScreenGutter = pt.x > rightEdgeThreshold || (rightBookEdge < width && pt.x >= (rightBookEdge - 48))
   const isRightPageMargin = layout.isTwoPage
-    ? (layout.rightPage ? pt.x >= (layout.rightPage.left + layout.rightPage.width - 48) : (layout.leftPage ? pt.x > (layout.leftPage.left + layout.leftPage.width) : false))
+    ? (layout.rightPage ? pt.x >= (layout.rightPage.left + layout.rightPage.width - 48) : false)
     : (layout.singlePage ? pt.x >= (layout.singlePage.left + layout.singlePage.width - 48) : false)
 
   if (isRightScreenGutter || isRightPageMargin) {
