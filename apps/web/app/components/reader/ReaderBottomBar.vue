@@ -74,8 +74,8 @@
         :aria-label="isZenMode ? 'Sair do Modo Zen' : 'Entrar no Modo Zen'"
         id="btn-bottom-zen-mode"
       >
-        <ChevronUpIcon v-if="isZenMode" class="w-7 h-7 sm:w-7.5 sm:h-7.5 stroke-[1.85]" />
-        <ChevronDownIcon v-else class="w-7 h-7 sm:w-7.5 sm:h-7.5 stroke-[1.85]" />
+        <Minimize2Icon v-if="isZenMode" class="w-7 h-7 sm:w-7.5 sm:h-7.5 stroke-[1.85]" />
+        <Maximize2Icon v-else class="w-7 h-7 sm:w-7.5 sm:h-7.5 stroke-[1.85]" />
       </button>
 
       <!-- 5. Anotações do Livro -->
@@ -450,8 +450,8 @@
           :aria-label="isZenMode ? 'Sair do Modo Zen' : 'Entrar no Modo Zen'"
           id="btn-bottom-zen-mode"
         >
-          <ChevronUpIcon v-if="isZenMode" class="w-5 h-5 sm:w-5.5 sm:h-5.5 stroke-[1.75]" />
-          <ChevronDownIcon v-else class="w-5 h-5 sm:w-5.5 sm:h-5.5 stroke-[1.75]" />
+          <Minimize2Icon v-if="isZenMode" class="w-5 h-5 sm:w-5.5 sm:h-5.5 stroke-[1.75]" />
+          <Maximize2Icon v-else class="w-5 h-5 sm:w-5.5 sm:h-5.5 stroke-[1.75]" />
         </button>
 
         <!-- 5. Linha Inferior / Col 2: Anotações do Livro -->
