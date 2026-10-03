@@ -674,5 +674,79 @@ describe('TextSelectionVsPageTurn - Precisão de Seleção de Texto vs Virada de
     expect(store.currentPage).toBe(5)
     wrapper.unmount()
   })
+
+  it('chama preventDefault no pointerdown quando o clique ocorre na ponta da tela para evitar seleção acidental de texto', async () => {
+    const store = setupReader(50, 5)
+    const wrapper = mount(PageCurlCanvas, { attachTo: document.body })
+
+    const stage = wrapper.find('.page-curl-wrapper').element as HTMLElement
+    Object.defineProperty(stage, 'clientWidth', { value: 1000, configurable: true })
+    Object.defineProperty(stage, 'clientHeight', { value: 800, configurable: true })
+    vi.spyOn(stage, 'getBoundingClientRect').mockReturnValue({
+      left: 0,
+      top: 0,
+      right: 1000,
+      bottom: 800,
+      width: 1000,
+      height: 800,
+      x: 0,
+      y: 0,
+      toJSON: () => {},
+    })
+
+    const event = new PointerEvent('pointerdown', {
+      bubbles: true,
+      cancelable: true,
+      pointerId: 20,
+      button: 0,
+      clientX: 950,
+      clientY: 400,
+    })
+    const preventDefaultSpy = vi.spyOn(event, 'preventDefault')
+
+    stage.dispatchEvent(event)
+
+    expect(preventDefaultSpy).toHaveBeenCalled()
+    wrapper.unmount()
+  })
+
+  it('previne seleção de texto e limpa qualquer seleção residual no evento dblclick na ponta da tela', async () => {
+    const store = setupReader(50, 5)
+    const wrapper = mount(PageCurlCanvas, { attachTo: document.body })
+
+    const stage = wrapper.find('.page-curl-wrapper').element as HTMLElement
+    Object.defineProperty(stage, 'clientWidth', { value: 1000, configurable: true })
+    Object.defineProperty(stage, 'clientHeight', { value: 800, configurable: true })
+    vi.spyOn(stage, 'getBoundingClientRect').mockReturnValue({
+      left: 0,
+      top: 0,
+      right: 1000,
+      bottom: 800,
+      width: 1000,
+      height: 800,
+      x: 0,
+      y: 0,
+      toJSON: () => {},
+    })
+
+    const removeAllRangesSpy = vi.fn()
+    vi.spyOn(window, 'getSelection').mockReturnValue({
+      removeAllRanges: removeAllRangesSpy,
+    } as any)
+
+    const dblClickEvent = new MouseEvent('dblclick', {
+      bubbles: true,
+      cancelable: true,
+      clientX: 960,
+      clientY: 350,
+    })
+    const preventDefaultSpy = vi.spyOn(dblClickEvent, 'preventDefault')
+
+    stage.dispatchEvent(dblClickEvent)
+
+    expect(preventDefaultSpy).toHaveBeenCalled()
+    expect(removeAllRangesSpy).toHaveBeenCalled()
+    wrapper.unmount()
+  })
 })
 

@@ -18,6 +18,7 @@
     @pointerup="onPointerUp"
     @pointercancel="onPointerCancel"
     @pointerleave="edgeHoverState = null"
+    @dblclick="onDoubleClick"
   >
     <div
       class="book-3d-stage"
@@ -1533,6 +1534,17 @@ async function onPointerDown(event: PointerEvent) {
   const isPageStackTarget = Boolean((event.target as HTMLElement | null)?.closest('.book-page-stack, .book-page-stack-bottom, .book-page-stack-top, .book-page-stack-bottom-unified, .book-bottom-hitbox'))
 
   const layout = pageLayout.value
+  const bounds = stageRef.value.getBoundingClientRect()
+  const screenEdgeDir = bounds ? getScreenEdgeDirection(pt, bounds, layout) : null
+  const isMarginClick = bounds ? isPageMarginClick(pt, direction, bounds, layout) : false
+
+  // Se o clique ocorre explicitamente na ponta da tela / gutter, pilhas de folhas ou margem externa:
+  // Previne a seleção nativa de texto do navegador para evitar que cliques ou duplo-cliques na ponta
+  // selecionem texto por engano e façam o menu flutuante aparecer.
+  if (screenEdgeDir || isPageStackTarget || (isMarginClick && !isTextTarget)) {
+    event.preventDefault()
+  }
+
   const targetPageRect = layout.isTwoPage
     ? (direction === 'next' ? layout.rightPage : layout.leftPage)
     : layout.singlePage
@@ -1791,8 +1803,44 @@ function onPointerCancel(event: PointerEvent) {
   physics.cancelDrag()
 }
 
+function onDoubleClick(event: MouseEvent) {
+  if (store.isFocusMode || !stageRef.value) return
+  const bounds = stageRef.value.getBoundingClientRect()
+  const pt: DragPoint = {
+    x: event.clientX - (bounds?.left ?? 0),
+    y: event.clientY - (bounds?.top ?? 0),
+    time: event.timeStamp || performance.now(),
+  }
+  const layout = pageLayout.value
+  const screenEdgeDir = getScreenEdgeDirection(pt, bounds, layout)
+  const isPageStackTarget = Boolean(
+    (event.target as HTMLElement | null)?.closest(
+      '.book-page-stack, .book-page-stack-bottom, .book-page-stack-top, .book-page-stack-bottom-unified, .book-bottom-hitbox',
+    ),
+  )
+  const direction = getTurnZone(event as any)
+  const isMarginClick = direction ? isPageMarginClick(pt, direction, bounds, layout) : false
+  const isTextTarget = isInteractiveTextTarget(event.target, event.clientX, event.clientY)
+
+  if (screenEdgeDir || isPageStackTarget || (isMarginClick && !isTextTarget)) {
+    event.preventDefault()
+    if (typeof window !== 'undefined') {
+      try {
+        window.getSelection()?.removeAllRanges()
+      } catch {}
+    }
+  }
+}
+
 async function requestTurn(direction: PageTurnDirection) {
   if (!store.document) return
+
+  // Limpa qualquer seleção residual no documento para evitar que o menu flutuante permaneça ativo durante o folheamento
+  if (typeof window !== 'undefined') {
+    try {
+      window.getSelection()?.removeAllRanges()
+    } catch {}
+  }
 
   const now = performance.now()
 

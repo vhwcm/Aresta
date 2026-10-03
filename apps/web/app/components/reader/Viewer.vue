@@ -521,7 +521,7 @@ async function handleOpenAnnotation() {
 
 function handleTextSelectionCheck() {
   if (typeof window === 'undefined') return
-  if (store.isFocusMode || isAnnotationModalOpen.value || isCreateBookletModalOpen.value) {
+  if (store.isFocusMode || isAnnotationModalOpen.value || isCreateBookletModalOpen.value || isTransitioning.value) {
     isSelectionTooltipVisible.value = false
     isDictionaryCardVisible.value = false
     isAiOverlayVisible.value = false
@@ -568,8 +568,10 @@ function handleTextSelectionCheck() {
   annotationPage.value = pageNum
 
   // Centraliza o tooltip sobre a seleção e delimita às margens da janela (com coordenadas inteiras)
+  // O tooltip tem ~280px de largura (~140px meia-largura). O clamp de 160px previne qualquer corte lateral.
   const centerX = Math.round(rect.left + rect.width / 2)
-  const clampedX = Math.max(110, Math.min(window.innerWidth - 110, centerX))
+  const tooltipHalfWidth = 160
+  const clampedX = Math.max(tooltipHalfWidth, Math.min(window.innerWidth - tooltipHalfWidth, centerX))
 
   if (rect.top > 60) {
     selectionTooltipY.value = Math.round(rect.top - 12)
@@ -607,7 +609,10 @@ function handleAnnotateFromTooltip(payload: { text: string; pageNumber?: number 
 function handleOpenDictionaryFromTooltip(payload: { word: string; pageNumber?: number }) {
   dictionaryCardWord.value = payload.word
   dictionaryCardPage.value = payload.pageNumber || store.currentPage
-  dictionaryCardX.value = selectionTooltipX.value
+  const cardHalfWidth = 200
+  dictionaryCardX.value = typeof window !== 'undefined'
+    ? Math.max(cardHalfWidth, Math.min(window.innerWidth - cardHalfWidth, selectionTooltipX.value))
+    : selectionTooltipX.value
   dictionaryCardY.value = selectionTooltipY.value
   dictionaryCardIsAbove.value = isSelectionTooltipAbove.value
   isSelectionTooltipVisible.value = false
@@ -833,6 +838,7 @@ watch(
   () => {
     isSelectionTooltipVisible.value = false
     isDictionaryCardVisible.value = false
+    clearNativeSelection()
   },
 )
 
