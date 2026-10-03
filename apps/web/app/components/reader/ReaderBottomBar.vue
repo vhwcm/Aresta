@@ -372,36 +372,36 @@
   <!-- 2. Layout Inferior no Mobile / Telas Verticais -->
   <footer
     v-else
-    class="reader-unified-bottom-bar reader-bottom-bar shrink-0 w-full select-none transition-all duration-300 flex items-end overflow-visible bg-transparent border-0 pointer-events-none"
+    class="reader-unified-bottom-bar reader-bottom-bar shrink-0 w-full select-none transition-all duration-300 flex items-center overflow-visible bg-transparent border-0 pointer-events-none"
     role="toolbar"
     aria-label="Barra de ferramentas do leitor"
     id="reader-unified-bar"
   >
-    <!-- Container Alinhado Colado na Esquerda com Capa Pequena e Botões de Baixo da Capa -->
+    <!-- Container Alinhado Colado na Esquerda com Capa no Lado Esquerdo e Botões ao Lado Direito -->
     <div
-      class="pointer-events-auto flex flex-col items-start gap-1.5 sm:gap-2 pb-2 sm:pb-3 overflow-visible select-none"
+      class="h-full w-full pointer-events-auto flex flex-row items-center gap-2 sm:gap-3 overflow-visible select-none py-1 sm:py-1.5"
       :style="bottomBarContainerStyle"
     >
-      <!-- 1. Capa do Livro Pequena e Colada na Esquerda -->
+      <!-- 1. Capa do Livro Solta no Lado Esquerdo (100% da altura da barra) -->
       <div
-        class="shrink-0 flex items-center justify-start select-none"
+        class="h-full shrink-0 flex items-center justify-start select-none"
       >
         <img
           v-if="bookCoverUrl"
           :src="bookCoverUrl"
           :alt="store.title"
-          class="h-[105px] sm:h-[120px] w-auto max-w-[85px] sm:max-w-[95px] object-contain block rounded-[6px] shadow-sm"
+          class="h-full w-auto max-w-[85px] sm:max-w-[95px] object-contain block rounded-[6px] shadow-sm"
           :title="store.title"
         />
         <div
           v-else
-          class="h-[105px] sm:h-[120px] w-[75px] sm:w-[85px] aspect-[2/3] flex flex-col items-center justify-center p-2 text-center bg-accent/10 text-accent font-editorial rounded-[6px] shadow-sm"
+          class="h-full aspect-[2/3] flex flex-col items-center justify-center p-2 text-center bg-accent/10 text-accent font-editorial rounded-[6px] shadow-sm"
         >
           <BookOpenIcon class="w-6 h-6 opacity-80" />
         </div>
       </div>
 
-      <!-- 2. Bloco Harmonioso de 6 Ícones Soltos (De baixo da capa!) -->
+      <!-- 2. Bloco Harmonioso de 6 Ícones Soltos (Ao Lado Direito da Capa) -->
       <div class="grid grid-rows-2 grid-cols-3 gap-1 shrink-0 select-none">
         <!-- 1. Linha Superior / Col 1: Voltar à Biblioteca -->
         <button
