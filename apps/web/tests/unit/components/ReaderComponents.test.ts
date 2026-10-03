@@ -265,14 +265,14 @@ describe('Reader Components', () => {
     it('alterna modo de 1 página e 2 páginas no popover de configurações', async () => {
       const store = useReaderStore()
       store.setDocument({
-        type: 'pdf',
+        type: 'epub',
         metadata: { title: 'Livro' },
         totalPages: 10,
         isLoaded: true,
         load: vi.fn(),
         getPage: vi.fn(),
         destroy: vi.fn(),
-      } as any, 'livro.pdf')
+      } as any, 'livro.epub')
       store.isTwoPageMode = false
 
       const wrapper = mount(ReaderBottomBar, {

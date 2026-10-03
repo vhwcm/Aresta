@@ -1,6 +1,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [03/10/2026 15:35] [Concluído] Configurar abertura de PDFs no modo scroll por padrão preservando preferências salvas por livro e modo paginado para EPUBs
 - [03/10/2026 15:26] [Concluído] Prevenir seleção acidental de texto e exibição indevida do menu de seleção ao clicar duas vezes na ponta da tela ou margens para folhear
 - [03/10/2026 15:16] [Concluído] Liberar porta 3001 ocupada por processo zumbi e eliminar importação duplicada de GraphThemeRecord no Nuxt
 - [03/10/2026 15:07] [Concluído] Corrigir alinhamento da capa na barra lateral do leitor desktop eliminando deslocamento horizontal à direita

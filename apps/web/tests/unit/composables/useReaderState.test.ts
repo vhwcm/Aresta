@@ -395,30 +395,46 @@ describe('useReaderStore', () => {
   })
 
   describe('Modo de Leitura (readingMode: paginated | scroll)', () => {
-    it('inicia como "paginated" por padrão', () => {
+    it('inicia como "paginated" por padrão antes de abrir documento', () => {
       const store = useReaderStore()
       expect(store.readingMode).toBe('paginated')
       expect(store.isScrollMode).toBe(false)
     })
 
-    it('altera modo com setReadingMode("scroll")', () => {
+    it('define modo scroll por padrão ao carregar documento PDF', () => {
       const store = useReaderStore()
-      store.setReadingMode('scroll')
+      const doc = createMockDocument({ type: 'pdf' })
+      store.setDocument(doc, 'apostila.pdf', 10)
       expect(store.readingMode).toBe('scroll')
       expect(store.isScrollMode).toBe(true)
     })
 
-    it('alterna entre modos com toggleReadingMode()', () => {
+    it('mantém modo paginated por padrão ao carregar documento EPUB', () => {
       const store = useReaderStore()
-      expect(store.readingMode).toBe('paginated')
-
-      store.toggleReadingMode()
-      expect(store.readingMode).toBe('scroll')
-      expect(store.isScrollMode).toBe(true)
-
-      store.toggleReadingMode()
+      const doc = createMockDocument({ type: 'epub' })
+      store.setDocument(doc, 'romance.epub', 11)
       expect(store.readingMode).toBe('paginated')
       expect(store.isScrollMode).toBe(false)
+    })
+
+    it('respeita preferência salva especificamente para o livro PDF', () => {
+      const store = useReaderStore()
+      localStorage.setItem('aresta_book_12_reading_mode', 'paginated')
+      const doc = createMockDocument({ type: 'pdf' })
+      store.setDocument(doc, 'manual.pdf', 12)
+      expect(store.readingMode).toBe('paginated')
+      expect(store.isScrollMode).toBe(false)
+    })
+
+    it('salva preferência do livro ao chamar setReadingMode', () => {
+      const store = useReaderStore()
+      const doc = createMockDocument({ type: 'pdf' })
+      store.setDocument(doc, 'artigo.pdf', 15)
+      expect(store.readingMode).toBe('scroll')
+
+      store.setReadingMode('paginated')
+      expect(store.readingMode).toBe('paginated')
+      expect(localStorage.getItem('aresta_book_15_reading_mode')).toBe('paginated')
     })
   })
 })

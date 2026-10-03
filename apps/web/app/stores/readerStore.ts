@@ -307,6 +307,7 @@ export const useReaderStore = defineStore('reader', {
       this.isMobileGraphOpen = false
       this.syncSettings()
       this.loadBookTypography()
+      this.loadBookReadingMode()
       if (typeof doc.setFontSize === 'function') {
         const preferredSize = this.fontSize || 15
         doc.setFontSize(preferredSize, 1)
@@ -316,6 +317,57 @@ export const useReaderStore = defineStore('reader', {
         doc.setFontFamily(preferredFont, 1)
       }
       this.loadBookmarks()
+    },
+
+    loadBookReadingMode() {
+      const isPdf = this.document?.type === 'pdf' || (this.fileName ? this.fileName.toLowerCase().endsWith('.pdf') : false)
+
+      if (typeof window === 'undefined') {
+        if (isPdf) {
+          this.readingMode = 'scroll'
+        }
+        return
+      }
+
+      const key = this.getBookStorageKey()
+      try {
+        let savedBookMode: string | null = null
+        if (key) {
+          savedBookMode = localStorage.getItem(`${key}_reading_mode`)
+        }
+        if (!savedBookMode && this.fileName) {
+          savedBookMode = localStorage.getItem(`aresta_book_${this.fileName}_reading_mode`)
+        }
+
+        if (savedBookMode === 'paginated' || savedBookMode === 'scroll') {
+          this.readingMode = savedBookMode
+          return
+        }
+
+        // Se não há preferência específica salva para este livro, PDF abre no modo 'scroll' por padrão
+        if (isPdf) {
+          this.readingMode = 'scroll'
+        } else {
+          const savedReadingMode = localStorage.getItem('aresta_reading_mode')
+          if (savedReadingMode === 'paginated' || savedReadingMode === 'scroll') {
+            this.readingMode = savedReadingMode
+          } else {
+            const savedSettings = localStorage.getItem('aresta_settings')
+            if (savedSettings) {
+              const parsed = JSON.parse(savedSettings)
+              if (parsed.readerReadingMode === 'paginated' || parsed.readerReadingMode === 'scroll') {
+                this.readingMode = parsed.readerReadingMode
+                return
+              }
+            }
+            this.readingMode = 'paginated'
+          }
+        }
+      } catch {
+        if (isPdf) {
+          this.readingMode = 'scroll'
+        }
+      }
     },
 
     setFontFamily(family: string) {
@@ -508,6 +560,13 @@ export const useReaderStore = defineStore('reader', {
       this.readingMode = mode
       if (typeof window !== 'undefined') {
         try {
+          const key = this.getBookStorageKey()
+          if (key) {
+            localStorage.setItem(`${key}_reading_mode`, mode)
+          }
+          if (this.fileName) {
+            localStorage.setItem(`aresta_book_${this.fileName}_reading_mode`, mode)
+          }
           localStorage.setItem('aresta_reading_mode', mode)
           const saved = localStorage.getItem('aresta_settings')
           const settings = saved ? JSON.parse(saved) : {}
