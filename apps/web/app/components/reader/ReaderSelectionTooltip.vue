@@ -201,10 +201,10 @@ function handleBooklet() {
   align-items: center;
   gap: 2px;
   padding: 4px 6px;
-  background: #121315;
+  background: var(--bg-panel, #0c0d0f);
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 9999px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(229, 123, 85, 0.2);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(191, 110, 65, 0.2);
 }
 
 .reader-selection-tooltip__btn {

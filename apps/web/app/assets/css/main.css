@@ -32,19 +32,19 @@ input, textarea, [contenteditable="true"] {
 :root,
 [data-theme="dark"],
 .dark-theme {
-  --bg-app: #121315;
-  --bg-root: #0e0f11;
-  --bg-panel: #121315;
-  --bg-surface: #18191c;
-  --bg-elevated: #1e1f24;
+  --bg-app: #0c0d0f;
+  --bg-root: #0a0b0d;
+  --bg-panel: #0c0d0f;
+  --bg-surface: #121316;
+  --bg-elevated: #18191d;
   --text-primary: #F2F2F2;
   --text-secondary: #7A7D84;
   --divider: rgba(255, 255, 255, 0.08);
-  --accent: #E57B55;
+  --accent: #BF6E41;
   --color-border: rgba(255, 255, 255, 0.12);
   --color-text-primary: #F2F2F2;
   --color-text-secondary: #7A7D84;
-  --color-accent: #E57B55;
+  --color-accent: #BF6E41;
   color-scheme: dark;
 }
 
@@ -58,11 +58,11 @@ input, textarea, [contenteditable="true"] {
   --text-primary: #111827;
   --text-secondary: #4B5563;
   --divider: #E2E8F0;
-  --accent: #E57B55;
+  --accent: #BF6E41;
   --color-border: #CBD5E1;
   --color-text-primary: #111827;
   --color-text-secondary: #4B5563;
-  --color-accent: #E57B55;
+  --color-accent: #BF6E41;
   color-scheme: light;
 }
 

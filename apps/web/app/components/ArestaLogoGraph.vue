@@ -208,7 +208,7 @@ withDefaults(
 <style scoped>
 /* Vértices e Nós com núcleo laranja vibrante e aro adaptado ao tema */
 .node-outer {
-  fill: var(--bg-panel, #121315);
+  fill: var(--bg-panel, #0c0d0f);
   stroke: #E57B55;
   stroke-width: 1.6;
   transition: fill 0.3s ease, stroke 0.3s ease;

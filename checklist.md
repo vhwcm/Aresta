@@ -1,6 +1,8 @@
 ## 🔄 Em Andamento
+- [03/10/2026 18:38] [Fazendo] Revisão profunda, testes e correção da navegação por localizações, salto e sumário no leitor
 
 ## ✅ Concluído
+- [03/10/2026 18:43] [Concluído] Atualizar cor de fundo no dark mode para #0c0d0f
 - [03/10/2026 18:33] [Concluído] Atualizar a cor principal do Aresta para #BF6E41
 - [03/10/2026 18:30] [Concluído] Implementar navegação por localizações, salto de página e sumário (PDF/EPUB) com carregamento progressivo em blocos
 - [03/10/2026 17:33] [Concluído] Planejar (grill-me) scroll eficiente, salto para página e navegação por capítulos (PDF/EPUB) com carregamento progressivo em blocos — spec em specs/active/reader-locations-navigation

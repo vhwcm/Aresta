@@ -13,7 +13,7 @@
     >
       <path
         :d="fillPathD"
-        fill="var(--bg-panel, #121315)"
+        fill="var(--bg-panel, #0c0d0f)"
       />
     </svg>
   </div>

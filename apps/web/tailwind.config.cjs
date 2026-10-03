@@ -12,12 +12,12 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        bgApp: 'var(--bg-app, #121315)',
-        bgRoot: 'var(--bg-root, var(--bg-panel, #121315))',
-        bgPanel: 'var(--bg-panel, #121315)',
-        bgElevated: 'var(--bg-elevated, var(--bg-panel, #121315))',
-        bgSurface: 'var(--bg-surface, var(--bg-panel, #121315))',
-        bgDarker: 'var(--bg-app, #0f1012)',
+        bgApp: 'var(--bg-app, #0c0d0f)',
+        bgRoot: 'var(--bg-root, var(--bg-panel, #0c0d0f))',
+        bgPanel: 'var(--bg-panel, #0c0d0f)',
+        bgElevated: 'var(--bg-elevated, var(--bg-panel, #0c0d0f))',
+        bgSurface: 'var(--bg-surface, var(--bg-panel, #0c0d0f))',
+        bgDarker: 'var(--bg-app, #090a0c)',
         textPrimary: 'var(--text-primary, #F2F2F2)',
         textSecondary: 'var(--text-secondary, #7A7D84)',
         accent: 'var(--accent, #BF6E41)',

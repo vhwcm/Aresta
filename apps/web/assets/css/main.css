@@ -12,11 +12,11 @@
 :root,
 [data-theme="dark"],
 .dark-theme {
-  --bg-app: #121315;
-  --bg-root: #0e0f11;
-  --bg-panel: #121315;
-  --bg-surface: #18191c;
-  --bg-elevated: #1e1f24;
+  --bg-app: #0c0d0f;
+  --bg-root: #0a0b0d;
+  --bg-panel: #0c0d0f;
+  --bg-surface: #121316;
+  --bg-elevated: #18191d;
   --text-primary: #F2F2F2;
   --text-secondary: #7A7D84;
   --divider: rgba(255, 255, 255, 0.08);
@@ -66,7 +66,7 @@
 
 html,
 body {
-  background-color: var(--bg-app, #121315);
+  background-color: var(--bg-app, #0c0d0f);
   color: var(--text-primary, #F2F2F2);
 }
 
