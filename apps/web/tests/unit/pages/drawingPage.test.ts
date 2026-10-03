@@ -317,14 +317,14 @@ describe('Drawing Page Mobile Zoom & Pinch Controls ([id].vue)', () => {
     expect(mockAddPage).toHaveBeenCalledWith('blank');
   });
 
-  it('configura alinhamento no topo (colada na parte superior) para a trilha e slides em telas horizontais', () => {
+  it('configura alinhamento no topo com respiro para a toolbar fixa e slides em telas horizontais', () => {
     const wrapper = mount(DrawingPage, {
       global: { stubs },
     });
 
     const track = wrapper.find('.page-slide').element.parentElement as HTMLElement;
-    expect(track.className).toContain('md:pt-0');
-    expect(track.className).toContain('landscape:pt-0');
+    expect(track.className).toContain('md:pt-32');
+    expect(track.className).toContain('landscape:pt-32');
     expect(track.className).toContain('md:items-start');
     expect(track.className).toContain('landscape:items-start');
     expect(track.className).toContain('md:my-0');
@@ -334,9 +334,10 @@ describe('Drawing Page Mobile Zoom & Pinch Controls ([id].vue)', () => {
     expect(slide.classes()).toContain('md:justify-start');
     expect(slide.classes()).toContain('landscape:justify-start');
 
+    // A toolbar agora fica fixa sempre no topo (independente de mobile ou desktop)
     const toolbarContainer = wrapper.find('.fixed.z-30.pointer-events-none');
-    expect(toolbarContainer.classes()).toContain('landscape:top-1/2');
-    expect(toolbarContainer.classes()).toContain('landscape:left-6');
+    expect(toolbarContainer.classes()).toContain('top-16');
+    expect(toolbarContainer.classes()).toContain('inset-x-0');
   });
 
   it('calcula a escala em telas horizontais com folha colada no topo e respiro inferior', async () => {
@@ -450,14 +451,14 @@ describe('Drawing Page Mobile Zoom & Pinch Controls ([id].vue)', () => {
 
     const penModeBtn = wrapper.find('button[aria-label="Alternar Modo Caneta"]');
     expect(penModeBtn.exists()).toBe(true);
-    expect(penModeBtn.text()).toContain('Desenho livre');
+    expect(penModeBtn.attributes('title')).toContain('Modo Caneta Inativo');
 
     await penModeBtn.trigger('click');
     expect(mockTogglePenOnlyMode).toHaveBeenCalled();
 
     mockIsPenOnlyMode.value = true;
     await wrapper.vm.$nextTick();
-    expect(penModeBtn.text()).toContain('Modo Caneta');
+    expect(penModeBtn.attributes('title')).toContain('Modo Caneta Ativo');
   });
 
   it('desloca a viewport com 1 dedo quando o Modo Caneta está ativo', async () => {

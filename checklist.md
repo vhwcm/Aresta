@@ -1,6 +1,10 @@
 ## 🔄 Em Andamento
+- [02/10/2026 21:41] [Fazendo] Remover setas de navegação da tela de leitura e garantir virada de página nas pontas da tela
 
 ## ✅ Concluído
+- [02/10/2026 21:40] [Concluído] Fixar barra de ferramentas do desenho sempre no topo (mobile e desktop), simplificar cabeçalho superior para ícones exclusivos e implementar seletor com 2 slots de cores e paleta em blocos
+- [02/10/2026 21:35] [Concluído] Remover barra superior com voltar e zen mode e reposicionar livro mais para cima no leitor
+- [02/10/2026 21:30] [Concluído] Reestruturar barra inferior em bloco harmonioso de 6 ícones (voltar, zen mode, zoom e anotação/configuração) e remover marcadores de página
 - [02/10/2026 21:23] [Concluído] Cravar imagem da capa do livro logo abaixo do início do livro (extrema esquerda no mobile e margem inicial no desktop)
 - [02/10/2026 21:08] [Concluído] Implementar renderização e armazenamento 100% vetorial no Quadro e no Desenho Paginado com exportação SVG e eliminação de miniaturas raster
 - [02/10/2026 21:16] [Concluído] Otimizar transição do Zen Mode com debounce de ResizeObserver, isLayoutEqual e eliminação de layout thrashing

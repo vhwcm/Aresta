@@ -61,4 +61,62 @@ describe('DrawingToolbar Component', () => {
     await wrapper.setProps({ penMode: true });
     expect(penModeBtn.attributes('title')).toContain('Modo Caneta Ativado');
   });
+
+  it('renderiza exatamente 2 slots de cor e seleciona slot inativo ao clicar', async () => {
+    const wrapper = mount(DrawingToolbar, {
+      props: {
+        tool: 'pen',
+        color: '#18181B',
+        size: 3,
+      },
+    });
+
+    const slot1 = wrapper.find('button[data-testid="color-slot-1"]');
+    const slot2 = wrapper.find('button[data-testid="color-slot-2"]');
+
+    expect(slot1.exists()).toBe(true);
+    expect(slot2.exists()).toBe(true);
+
+    // O popover de todas as cores não deve estar visível inicialmente
+    expect(wrapper.find('[data-testid="color-palette-popover"]').exists()).toBe(false);
+
+    // Clicar no slot 2 (inativo) deve selecionar a cor do slot 2
+    await slot2.trigger('click');
+    expect(wrapper.emitted('update:color')?.[0]).toEqual(['#E57B55']);
+    // Não deve ter aberto o popover no 1º clique em slot inativo
+    expect(wrapper.find('[data-testid="color-palette-popover"]').exists()).toBe(false);
+  });
+
+  it('abre o seletor com todas as cores em blocos ao clicar no slot que já está selecionado', async () => {
+    const wrapper = mount(DrawingToolbar, {
+      props: {
+        tool: 'pen',
+        color: '#18181B',
+        size: 3,
+      },
+    });
+
+    const slot1 = wrapper.find('button[data-testid="color-slot-1"]');
+
+    // Slot 1 já está selecionado (ativo). Clicar nele abre o seletor de paleta dividida em blocos
+    await slot1.trigger('click');
+
+    const popover = wrapper.find('[data-testid="color-palette-popover"]');
+    expect(popover.exists()).toBe(true);
+    expect(popover.text()).toContain('Neutros & Grafites');
+    expect(popover.text()).toContain('Aresta & Quentes');
+    expect(popover.text()).toContain('Frios & Azuis');
+    expect(popover.text()).toContain('Naturais & Verdes');
+
+    // Selecionar uma cor na paleta (ex: #10B981)
+    const emeraldBtn = popover.find('button[title*="#10B981"]');
+    expect(emeraldBtn.exists()).toBe(true);
+
+    await emeraldBtn.trigger('click');
+    expect(wrapper.emitted('update:color')).toBeTruthy();
+    expect(wrapper.emitted('update:color')?.slice(-1)[0]).toEqual(['#10B981']);
+
+    // O popover deve fechar após selecionar a cor
+    expect(wrapper.find('[data-testid="color-palette-popover"]').exists()).toBe(false);
+  });
 });

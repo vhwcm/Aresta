@@ -1,83 +1,94 @@
 <template>
   <div class="fixed inset-0 h-screen w-screen flex flex-col bg-bgPanel text-textPrimary select-none overflow-hidden font-interface">
     <!-- Top Header -->
-    <header class="h-14 shrink-0 px-3 sm:px-6 border-b border-divider bg-bgPanel/90 backdrop-blur-md flex items-center justify-between z-30">
+    <header class="h-14 shrink-0 px-3 sm:px-6 border-b border-divider bg-bgPanel flex items-center justify-between z-30">
       <div class="flex items-center gap-2 sm:gap-3 min-w-0">
-        <!-- Back Button -->
+        <!-- Back Button: Apenas Ícone -->
         <AppBackButton
-          variant="button"
+          variant="icon"
           fallback="/canvas?tab=drawings"
           title="Voltar para a página anterior"
         />
 
-        <!-- Editable Title -->
-        <div class="flex items-center gap-2 min-w-0">
+        <!-- Editable Title: Apenas ícone de renomear na barra, input sob demanda -->
+        <div class="flex items-center gap-1 min-w-0">
           <input
             v-if="isEditingTitle"
             ref="titleInputRef"
             v-model="editedTitle"
             type="text"
-            class="px-2 py-1 rounded-lg bg-bgElevated border border-primary text-xs sm:text-sm font-semibold text-textPrimary focus:outline-none max-w-[150px] sm:max-w-[280px]"
+            class="px-2 py-1 rounded-lg bg-bgElevated border border-primary text-xs sm:text-sm font-semibold text-textPrimary focus:outline-none max-w-[150px] sm:max-w-[240px]"
             @blur="handleSaveTitle"
             @keydown.enter="handleSaveTitle"
             @keydown.esc="isEditingTitle = false"
           />
-          <h1
+          <button
             v-else
-            class="text-xs sm:text-base font-bold text-textPrimary hover:text-primary cursor-pointer transition-colors px-1 py-0.5 rounded truncate max-w-[150px] sm:max-w-[300px]"
-            title="Clique para renomear"
             @click="startEditingTitle"
+            class="p-2 rounded-xl bg-bgElevated/80 hover:bg-bgSurface text-textSecondary hover:text-textPrimary border border-divider shadow-xs transition-all active:scale-95 cursor-pointer flex items-center justify-center shrink-0"
+            :title="`Renomear: ${currentDrawing?.title || 'Desenho sem título'}`"
+            aria-label="Renomear desenho"
           >
-            {{ currentDrawing?.title || 'Desenho sem título' }}
-          </h1>
-          <span class="text-[10px] text-textSecondary/50 font-mono hidden sm:inline">(.drawing)</span>
+            <PencilLineIcon class="w-4 h-4" />
+          </button>
         </div>
 
-        <!-- Status de Autosave -->
-        <div class="hidden md:flex items-center gap-1.5 text-[11px] text-textSecondary px-2 py-0.5 rounded-full bg-bgElevated/50">
+        <!-- Status de Autosave: Apenas Dot sutil com tooltip, sem texto -->
+        <div
+          class="flex items-center justify-center p-2 rounded-xl bg-bgElevated/50 border border-divider/40 text-textSecondary"
+          :title="isSaving ? 'Salvando...' : 'Salvo'"
+        >
           <span
-            class="w-1.5 h-1.5 rounded-full"
+            class="w-2 h-2 rounded-full"
             :class="isSaving ? 'bg-amber-400 animate-pulse' : 'bg-emerald-500'"
           />
-          <span>{{ isSaving ? 'Salvando...' : 'Salvo' }}</span>
         </div>
       </div>
 
-      <!-- Right Header Actions -->
+      <!-- Right Header Actions: Exclusivamente Ícones sem Texto -->
       <div class="flex items-center gap-2 shrink-0">
-        <!-- Alternador Modo Caneta -->
+        <!-- Alternador Modo Caneta: Apenas ícone sem texto -->
         <button
           @click="togglePenOnlyMode"
-          class="px-2.5 sm:px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+          class="relative p-2 rounded-xl border transition-all flex items-center justify-center cursor-pointer shrink-0"
           :class="isPenOnlyMode ? 'bg-primary/15 border-primary/40 text-primary shadow-sm' : 'bg-bgElevated border-divider text-textSecondary hover:text-textPrimary'"
           :title="isPenOnlyMode ? 'Modo Caneta Ativo (1 dedo move a página, apenas caneta escreve)' : 'Modo Caneta Inativo (dedo escreve, 2 dedos movem a página)'"
           aria-label="Alternar Modo Caneta"
         >
-          <PenLineIcon class="w-3.5 h-3.5" />
-          <span class="hidden sm:inline">{{ isPenOnlyMode ? 'Modo Caneta' : 'Desenho livre' }}</span>
+          <PenLineIcon class="w-4 h-4" />
           <span
-            class="w-1.5 h-1.5 rounded-full"
+            class="absolute top-1 right-1 w-1.5 h-1.5 rounded-full"
             :class="isPenOnlyMode ? 'bg-primary animate-pulse' : 'bg-textSecondary/40'"
           />
         </button>
 
-        <!-- Botão Transformar com IA -->
+        <!-- Botão Exportar Vetor SVG: Apenas ícone -->
+        <button
+          @click="exportCurrentPageAsSvg()"
+          class="p-2 rounded-xl bg-bgElevated hover:bg-bgSurface text-textSecondary hover:text-textPrimary border border-divider transition-colors flex items-center justify-center cursor-pointer shrink-0"
+          title="Exportar página atual como Vetor SVG (.svg)"
+          aria-label="Exportar página atual como Vetor SVG"
+        >
+          <DownloadIcon class="w-4 h-4" />
+        </button>
+
+        <!-- Botão Transformar com IA: Apenas ícone -->
         <button
           @click="handleTriggerAiSynthesis"
           :disabled="isSynthesizing || isGeneratingModal"
-          class="px-3 sm:px-4 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 via-primary to-amber-600 hover:opacity-95 text-white text-xs font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          class="p-2 rounded-xl bg-gradient-to-r from-amber-500 via-primary to-amber-600 hover:opacity-95 text-white shadow-md hover:shadow-lg transition-all flex items-center justify-center cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
           title="Transformar anotações e desenhos em documento HTML estruturado"
+          aria-label="Transformar com IA"
         >
           <SparklesIcon class="w-4 h-4 animate-spin-slow" />
-          <span class="hidden sm:inline">Transformar com IA</span>
-          <span class="sm:hidden">IA</span>
         </button>
 
-        <!-- Alternar Tema -->
+        <!-- Alternar Tema: Apenas ícone -->
         <button
           @click="toggleThemeMode"
           class="p-2 rounded-xl bg-bgElevated hover:bg-bgSurface text-textSecondary hover:text-textPrimary border border-divider transition-colors flex items-center justify-center cursor-pointer shrink-0"
           title="Alternar tema"
+          aria-label="Alternar tema"
         >
           <SunIcon v-if="themeMode === 'light'" class="w-4 h-4 text-amber-500" />
           <MoonIcon v-else class="w-4 h-4 text-accent" />
@@ -101,10 +112,10 @@
         <p class="text-xs">Carregando páginas de desenho...</p>
       </div>
 
-      <!-- Centering Track: Colada no topo em telas horizontais (md / landscape) e alinhada ao início no mobile (justify-start) -->
+      <!-- Centering Track: Respiro superior no mobile e desktop abaixo das barras fixas -->
       <div
         v-else-if="currentDrawing"
-        class="min-w-full min-h-full w-max md:my-0 md:mx-auto landscape:my-0 landscape:mx-auto pt-20 pb-16 md:pt-0 md:pb-12 landscape:pt-0 landscape:pb-12 px-0 flex flex-row items-center md:items-start landscape:items-start justify-start gap-4 md:gap-0"
+        class="min-w-full min-h-full w-max md:my-0 md:mx-auto landscape:my-0 landscape:mx-auto pt-32 pb-16 md:pt-32 md:pb-12 landscape:pt-32 landscape:pb-12 px-0 flex flex-row items-center md:items-start landscape:items-start justify-start gap-4 md:gap-0"
         :class="isTallerThanViewport ? 'my-0' : 'my-auto md:my-0'"
         :style="trackStyle"
       >
@@ -232,14 +243,11 @@
       </div>
     </main>
 
-    <!-- Floating Docked Toolbar: Top on mobile portrait, Left on desktop and landscape -->
+    <!-- Floating Docked Toolbar: Top on both mobile and desktop -->
     <div
-      class="fixed z-30 pointer-events-none transition-all duration-200
-             top-16 inset-x-0 flex justify-center px-2 py-1.5
-             md:top-1/2 md:-translate-y-1/2 md:left-6 md:right-auto md:bottom-auto md:inset-x-auto md:p-0 md:flex md:flex-col
-             landscape:top-1/2 landscape:-translate-y-1/2 landscape:left-6 landscape:right-auto landscape:bottom-auto landscape:inset-x-auto landscape:p-0 landscape:flex landscape:flex-col"
+      class="fixed z-30 pointer-events-none transition-all duration-200 top-16 inset-x-0 flex justify-center px-2 py-1.5"
     >
-      <div class="pointer-events-auto max-w-[96vw] overflow-x-auto md:overflow-visible">
+      <div class="pointer-events-auto max-w-[96vw] overflow-x-auto">
         <DrawingToolbar
           v-model:tool="activeTool"
           v-model:selected-shape-type="selectedShapeType"
@@ -305,6 +313,8 @@ import {
   ArrowRight as ArrowRightIcon,
   Trash as TrashIcon,
   PenLine as PenLineIcon,
+  Download as DownloadIcon,
+  PencilLine as PencilLineIcon,
 } from 'lucide-vue-next';
 import { useDrawing } from '~/composables/useDrawing';
 import { useSettings } from '~/composables/useSettings';
@@ -357,6 +367,7 @@ const {
   saveDrawingNow,
   synthesizeDrawing,
   convertToNote,
+  exportCurrentPageAsSvg,
 } = useDrawing();
 
 function handleSelectNode(nodeId: string, isShift: boolean) {
