@@ -1,6 +1,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [03/10/2026 15:16] [Concluído] Liberar porta 3001 ocupada por processo zumbi e eliminar importação duplicada de GraphThemeRecord no Nuxt
 - [03/10/2026 15:07] [Concluído] Corrigir alinhamento da capa na barra lateral do leitor desktop eliminando deslocamento horizontal à direita
 - [03/10/2026 14:57] [Concluído] Ajustar opções do modo foco nas configurações para exibir exclusivamente 1, 3 e 5 linhas
 - [03/10/2026 14:55] [Concluído] Corrigir enquadramento e corte do popover de configurações no mobile com posicionamento viewport centralizado e responsivo

@@ -2,15 +2,7 @@ import type { LocalAnnotation, LocalBook, LocalCanvasItem, LocalDrawingNote, Loc
 import type { GraphData, GraphEdge, GraphNode } from '~/interfaces/graph'
 import { resolveNoteTitle } from '~/utils/noteTitle'
 import { hashThemeNumeric, normalizeThemeName } from '~/utils/themeIdentity'
-
-export interface GraphThemeRecord {
-  id: number | string
-  name: string
-  color?: string | null
-  description?: string | null
-  deleted_at?: number | null
-  updated_at?: number
-}
+import type { GraphThemeRecord } from '~/utils/graphMeta'
 
 export interface BuildLocalGraphInput {
   books?: LocalBook[]
