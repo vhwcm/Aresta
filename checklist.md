@@ -1,6 +1,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [03/10/2026 15:07] [Concluído] Corrigir alinhamento da capa na barra lateral do leitor desktop eliminando deslocamento horizontal à direita
 - [03/10/2026 14:57] [Concluído] Ajustar opções do modo foco nas configurações para exibir exclusivamente 1, 3 e 5 linhas
 - [03/10/2026 14:55] [Concluído] Corrigir enquadramento e corte do popover de configurações no mobile com posicionamento viewport centralizado e responsivo
 - [03/10/2026 14:48] [Concluído] Exibir apenas o número da página ao lado dos 6 ícones na barra mobile do leitor e remover numeração da página no mobile para poupar espaço
