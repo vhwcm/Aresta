@@ -98,31 +98,31 @@
     <!-- Linha Divisória Separando a Localização dos Ícones de Ação -->
     <div class="w-full max-w-[220px] border-t select-none shrink-0" :class="themeBorderClass"></div>
 
-    <!-- 4. Bloco de Ícones de Ação: UM DEBAIXO DO OUTRO (1 Coluna) -->
-    <div class="flex flex-col gap-2 shrink-0 select-none w-full max-w-[220px] items-center">
+    <!-- 4. Bloco de Ícones de Ação: NA MESMA LINHA (3 Ícones Lado a Lado) -->
+    <div class="grid grid-cols-3 gap-2 shrink-0 select-none w-full max-w-[220px] items-center">
       <!-- 1. Anotações do Livro -->
       <button
         @click="handleToggleNotes"
-        class="w-full p-2.5 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
+        class="w-full p-2 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
         :class="isNotesActiveComputed ? 'text-accent font-bold bg-accent/15 ring-1 ring-accent/30' : themeButtonClass"
         :title="isNotesActiveComputed ? 'Ocultar anotações do livro' : 'Abrir anotações e reflexões deste livro'"
         aria-label="Abrir ou fechar notas do livro"
         id="btn-view-notes"
       >
-        <HighlighterIcon class="w-8.5 h-8.5 sm:w-9 sm:h-9 stroke-[1.35]" />
+        <HighlighterIcon class="w-7 h-7 sm:w-7.5 sm:h-7.5 stroke-[1.4]" />
       </button>
 
       <!-- 2. Configurações de Leitura (Popover de Aparência) -->
       <div class="relative flex items-center justify-center w-full" ref="appearanceWrapperRef">
         <button
           @click="isAppearancePopoverOpen = !isAppearancePopoverOpen"
-          class="w-full p-2.5 rounded-xl transition-all duration-200 active:scale-90 relative flex items-center justify-center cursor-pointer"
+          class="w-full p-2 rounded-xl transition-all duration-200 active:scale-90 relative flex items-center justify-center cursor-pointer"
           :class="isAppearancePopoverOpen ? 'text-accent bg-accent/15 ring-1 ring-accent/30' : themeButtonClass"
           title="Configurações de leitura, páginas e modos"
           aria-label="Configurações de leitura"
           id="btn-appearance-toggle"
         >
-          <Settings2Icon class="w-8.5 h-8.5 sm:w-9 sm:h-9 stroke-[1.35]" />
+          <Settings2Icon class="w-7 h-7 sm:w-7.5 sm:h-7.5 stroke-[1.4]" />
         </button>
 
         <!-- Popover Flutuante de Configurações (Abre ao lado da barra lateral no Desktop, centralizado verticalmente) -->
@@ -373,14 +373,14 @@
       <!-- 3. Alternar Modo Zen -->
       <button
         @click="$emit('toggleZenMode')"
-        class="w-full p-2.5 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
+        class="w-full p-2 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
         :class="isZenMode ? 'text-accent font-bold bg-accent/15 ring-1 ring-accent/30' : themeButtonClass"
         :title="isZenMode ? 'Sair do Modo Zen' : 'Entrar no Modo Zen'"
         :aria-label="isZenMode ? 'Sair do Modo Zen' : 'Entrar no Modo Zen'"
         id="btn-bottom-zen-mode"
       >
-        <Minimize2Icon v-if="isZenMode" class="w-8.5 h-8.5 sm:w-9 sm:h-9 stroke-[1.35]" />
-        <Maximize2Icon v-else class="w-8.5 h-8.5 sm:w-9 sm:h-9 stroke-[1.35]" />
+        <Minimize2Icon v-if="isZenMode" class="w-7 h-7 sm:w-7.5 sm:h-7.5 stroke-[1.4]" />
+        <Maximize2Icon v-else class="w-7 h-7 sm:w-7.5 sm:h-7.5 stroke-[1.4]" />
       </button>
     </div>
 
