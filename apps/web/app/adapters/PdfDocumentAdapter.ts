@@ -1,14 +1,20 @@
-import type { IBookDocument, BookMetadata, PageData } from '~/interfaces/reader/IBookDocument'
+import type { IBookDocument, BookMetadata, PageData, INavigableDocument } from '~/interfaces/reader/IBookDocument'
+import type { ReadingPosition, TocEntry } from '~/interfaces/reader/IBookDocument'
 import { readerProfiler } from '~/utils/readerProfiler'
 import { setupPdfJs, getPdfDocumentParams } from '~/utils/pdfjsSetup'
+import { PdfPageGeometry } from '~/utils/reader/pdf/pdfPageGeometry'
+import { normalizePdfToc } from '~/utils/reader/toc/tocNormalizer'
 
-export class PdfDocumentAdapter implements IBookDocument {
+export class PdfDocumentAdapter implements IBookDocument, INavigableDocument {
   readonly type = 'pdf' as const
   private _pdfDocument: unknown = null
   private _defaultAspectRatio = 0.707
   private _metadata: BookMetadata = { title: '' }
   private _totalPages = 0
   private _isLoaded = false
+  private _geometry: PdfPageGeometry | null = null
+  private _indexRefinedListeners = new Set<() => void>()
+  private _activeRenderTasks = new Map<any, any>()
 
   get metadata(): BookMetadata {
     return this._metadata
@@ -22,7 +28,13 @@ export class PdfDocumentAdapter implements IBookDocument {
     return this._isLoaded
   }
 
-  getAspectRatio(_pageNumber?: number): number {
+  getAspectRatio(pageNumber?: number): number {
+    if (pageNumber && this._pdfDocument) {
+      if (!this._geometry) {
+        this._geometry = new PdfPageGeometry(this._pdfDocument, this._defaultAspectRatio || 0.707)
+      }
+      return this._geometry.getAspectRatio(pageNumber)
+    }
     return this._defaultAspectRatio || 0.707
   }
 
@@ -75,6 +87,12 @@ export class PdfDocumentAdapter implements IBookDocument {
       } catch {
         this._defaultAspectRatio = 0.707
       }
+
+      this._geometry = new PdfPageGeometry(pdfDoc, this._defaultAspectRatio)
+      this._geometry.loadPageGeometry(1).catch(() => {})
+      this._geometry.preloadAllInIdle(1, () => {
+        this._notifyIndexRefined()
+      })
     }
 
     this._isLoaded = true
@@ -131,12 +149,37 @@ export class PdfDocumentAdapter implements IBookDocument {
         ctx.imageSmoothingEnabled = true
         ctx.imageSmoothingQuality = 'high'
 
-        await (pdfPage.render as any)({
+        // Cancela qualquer renderTask em andamento para esta mesma página no PDF.js
+        const existingTask = this._activeRenderTasks.get(pdfPage)
+        if (existingTask) {
+          try {
+            existingTask.cancel()
+            await existingTask.promise
+          } catch {
+            // Ignora cancelamento prévio
+          }
+        }
+
+        const renderTask = (pdfPage.render as any)({
           canvasContext: ctx,
           canvas,
           viewport,
           intent: 'display',
-        }).promise
+        })
+
+        this._activeRenderTasks.set(pdfPage, renderTask)
+        try {
+          await renderTask.promise
+        } catch (err: any) {
+          if (err?.name === 'RenderingCancelledException') {
+            return
+          }
+          throw err
+        } finally {
+          if (this._activeRenderTasks.get(pdfPage) === renderTask) {
+            this._activeRenderTasks.delete(pdfPage)
+          }
+        }
       },
     }
 
@@ -228,7 +271,92 @@ export class PdfDocumentAdapter implements IBookDocument {
     }
   }
 
+  async getToc(): Promise<TocEntry[]> {
+    if (!this._pdfDocument) return []
+    const pdfDoc = this._pdfDocument as any
+    if (typeof pdfDoc.getOutline !== 'function') return []
+
+    try {
+      const outline = await pdfDoc.getOutline()
+      if (!outline || !Array.isArray(outline) || outline.length === 0) return []
+
+      return await normalizePdfToc(outline, async (dest) => {
+        try {
+          let explicitDest = dest
+          if (typeof dest === 'string' && typeof pdfDoc.getDestination === 'function') {
+            explicitDest = await pdfDoc.getDestination(dest)
+          }
+          if (Array.isArray(explicitDest) && explicitDest[0]) {
+            const ref = explicitDest[0]
+            if (typeof ref === 'object' && typeof pdfDoc.getPageIndex === 'function') {
+              const pageIndex = await pdfDoc.getPageIndex(ref)
+              return pageIndex + 1
+            } else if (typeof ref === 'number') {
+              return ref + 1
+            }
+          } else if (typeof explicitDest === 'number') {
+            return explicitDest + 1
+          }
+        } catch {
+          /* fallback */
+        }
+        return 1
+      })
+    } catch {
+      return []
+    }
+  }
+
+  getTotalUnits(): number {
+    return this.totalPages || 1
+  }
+
+  positionToUnit(p: ReadingPosition): number {
+    if (p.kind === 'pdf') {
+      return Math.max(1, Math.min(p.page, this.totalPages || 1))
+    }
+    return 1
+  }
+
+  unitToPosition(unit: number): ReadingPosition {
+    const page = Math.max(1, Math.min(Math.floor(unit), this.totalPages || 1))
+    return {
+      kind: 'pdf',
+      page
+    }
+  }
+
+  onIndexRefined(cb: () => void): () => void {
+    this._indexRefinedListeners.add(cb)
+    return () => {
+      this._indexRefinedListeners.delete(cb)
+    }
+  }
+
+  private _notifyIndexRefined(): void {
+    for (const listener of this._indexRefinedListeners) {
+      try {
+        listener()
+      } catch {
+        /* ignorar */
+      }
+    }
+  }
+
   destroy(): void {
+    for (const task of this._activeRenderTasks.values()) {
+      try {
+        task?.cancel?.()
+      } catch {}
+    }
+    this._activeRenderTasks.clear()
+
+    if (this._geometry) {
+      this._geometry.cancelPreload()
+      this._geometry = null
+    }
+    this._indexRefinedListeners.clear()
+
     if (this._pdfDocument) {
       const pdfDoc = this._pdfDocument as any
       pdfDoc.destroy?.()

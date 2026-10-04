@@ -25,118 +25,66 @@
       :class="isEpubDocument && store.readerWidthMode === 'wide' ? 'reader-scroll-engine__content--wide' : 'reader-scroll-engine__content--centered'"
     >
       <!-- ================= FLUXO PDF (PÁGINAS VIRTUALIZADAS) ================= -->
-      <template v-if="isPdfDocument">
-        <div
-          v-for="pageNum in store.totalPages"
-          :key="'pdf-page-' + pageNum"
-          :ref="(el) => setSlotRef(el as HTMLElement, pageNum)"
-          class="scroll-page-slot shadow-md transition-shadow"
-          :data-page-number="pageNum"
-          :style="{
-            minHeight: `${getPageHeight(pageNum)}px`,
-            backgroundColor: '#ffffff',
-          }"
-        >
-          <!-- Se a página estiver na janela de visualização -->
-          <template v-if="visiblePages[pageNum]">
-            <canvas
-              :ref="(el) => setCanvasRef(el as HTMLCanvasElement, pageNum)"
-              class="scroll-page-canvas"
-              aria-hidden="true"
-            />
-            <div
-              :ref="(el) => setTextLayerRef(el as HTMLElement, pageNum)"
-              class="scroll-page-text-layer"
-              @click="handleHighlightClick"
-            />
-            <!-- Máscara do Modo de Foco no PDF Scroll -->
-            <ReaderFocusOverlay
-              v-if="store.isFocusMode && store.currentPage === pageNum"
-              :top="focusBounds.top"
-              :height="focusBounds.height"
-              :bottom="focusBounds.bottom"
-              @advance="handleFocusAdvance"
-            />
-            <ReaderFocusOverlay
-              v-else-if="store.isFocusMode"
-              :top="0"
-              :height="0"
-              :bottom="0"
-              @advance="handleFocusAdvance"
-            />
-          </template>
-
-          <!-- Placeholder suave enquanto não entra na viewport -->
-          <div
-            v-else
-            class="scroll-page-placeholder flex flex-col items-center justify-center select-none"
-            :style="{ height: `${getPageHeight(pageNum)}px` }"
-          >
-            <span class="text-xs font-technical opacity-40">
-              Página {{ pageNum }} de {{ store.totalPages }}
-            </span>
-          </div>
-
-          <!-- Indicador sutil de número da página no rodapé da folha -->
-          <div class="scroll-page-slot__badge" aria-hidden="true">
-            {{ pageNum }}
-          </div>
-        </div>
-      </template>
+      <ScrollPdfFlow
+        v-if="isPdfDocument"
+        ref="pdfFlowRef"
+        :document="store.document"
+        :total-pages="store.totalPages"
+        :visible-pages="visiblePages"
+        :container-width="contentAreaRef?.clientWidth || 800"
+        @slot-ref="setSlotRef"
+        @canvas-ref="setCanvasRef"
+        @text-layer-ref="setTextLayerRef"
+        @highlight-click="handleHighlightClick"
+      >
+        <template #focus-overlay="{ pageNum }">
+          <ReaderFocusOverlay
+            v-if="store.isFocusMode && store.currentPage === pageNum"
+            :top="focusBounds.top"
+            :height="focusBounds.height"
+            :bottom="focusBounds.bottom"
+            @advance="handleFocusAdvance"
+          />
+          <ReaderFocusOverlay
+            v-else-if="store.isFocusMode"
+            :top="0"
+            :height="0"
+            :bottom="0"
+            @advance="handleFocusAdvance"
+          />
+        </template>
+      </ScrollPdfFlow>
 
       <!-- ================= FLUXO EPUB CONTÍNUO (REFLOW HTML) ================= -->
-      <template v-else-if="isEpubContinuous">
-        <div
-          v-for="sectionIdx in sectionCount"
-          :key="'epub-sec-' + sectionIdx"
-          :ref="(el) => setSectionSlotRef(el as HTMLElement, sectionIdx - 1)"
-          class="scroll-section-slot"
-          :data-section-index="sectionIdx - 1"
-          :data-page-number="getPageForSection(sectionIdx - 1)"
-          :style="{
-            fontFamily: store.fontFamily,
-            fontSize: `${store.fontSize}px`,
-          }"
-        >
-          <template v-if="visibleSections[sectionIdx - 1]">
-            <div
-              :ref="(el) => setSectionContentRef(el as HTMLElement, sectionIdx - 1)"
-              class="scroll-section-content"
-              @click="handleHighlightClick"
-            />
-            <!-- Máscara do Modo de Foco no EPUB Contínuo -->
-            <ReaderFocusOverlay
-              v-if="store.isFocusMode && currentFocusedSection === sectionIdx - 1"
-              :top="focusBounds.top"
-              :height="focusBounds.height"
-              :bottom="focusBounds.bottom"
-              @advance="handleFocusAdvance"
-            />
-            <ReaderFocusOverlay
-              v-else-if="store.isFocusMode"
-              :top="0"
-              :height="0"
-              :bottom="0"
-              @advance="handleFocusAdvance"
-            />
-          </template>
-          <div
-            v-else
-            class="scroll-section-placeholder min-h-[300px] flex items-center justify-center opacity-30 select-none text-xs font-technical"
-          >
-            Carregando seção {{ sectionIdx }}...
-          </div>
-
-          <!-- Indicador sutil de número da página no rodapé da seção EPUB -->
-          <div
-            v-if="getPageForSection(sectionIdx - 1) > 0"
-            class="scroll-page-slot__badge"
-            aria-hidden="true"
-          >
-            {{ getPageForSection(sectionIdx - 1) }}
-          </div>
-        </div>
-      </template>
+      <ScrollEpubFlow
+        v-else-if="isEpubContinuous"
+        ref="epubFlowRef"
+        :document="store.document"
+        :section-count="sectionCount"
+        :visible-sections="visibleSections"
+        :font-family="store.fontFamily"
+        :font-size="store.fontSize"
+        @section-slot-ref="setSectionSlotRef"
+        @section-content-ref="setSectionContentRef"
+        @highlight-click="handleHighlightClick"
+      >
+        <template #focus-overlay="{ sectionIdx }">
+          <ReaderFocusOverlay
+            v-if="store.isFocusMode && currentFocusedSection === sectionIdx"
+            :top="focusBounds.top"
+            :height="focusBounds.height"
+            :bottom="focusBounds.bottom"
+            @advance="handleFocusAdvance"
+          />
+          <ReaderFocusOverlay
+            v-else-if="store.isFocusMode"
+            :top="0"
+            :height="0"
+            :bottom="0"
+            @advance="handleFocusAdvance"
+          />
+        </template>
+      </ScrollEpubFlow>
 
       <!-- ================= FALLBACK GENÉRICO / DIDACTIC ================= -->
       <template v-else>
@@ -175,6 +123,9 @@ import { useAnnotations } from '~/composables/useAnnotations'
 import { applyPageHighlights } from '~/utils/readerHighlight'
 import { useReaderFocus } from '~/composables/reader/useReaderFocus'
 import ReaderFocusOverlay from '~/components/reader/ReaderFocusOverlay.vue'
+import ScrollPdfFlow from './ScrollPdfFlow.vue'
+import ScrollEpubFlow from './ScrollEpubFlow.vue'
+import type { ReadingPosition } from '~/utils/reader/position/readingPosition'
 
 const emit = defineEmits<{
   (_e: 'select-annotation', _annotationId: number): void
@@ -183,6 +134,9 @@ const emit = defineEmits<{
 
 const store = useReaderStore()
 const { annotations } = useAnnotations()
+
+const pdfFlowRef = ref<InstanceType<typeof ScrollPdfFlow> | null>(null)
+const epubFlowRef = ref<InstanceType<typeof ScrollEpubFlow> | null>(null)
 
 const containerRef = ref<HTMLElement | null>(null)
 const contentAreaRef = ref<HTMLElement | null>(null)
@@ -800,8 +754,38 @@ onUnmounted(() => {
   sectionContentElements.clear()
 })
 
+async function scrollToPosition(pos: ReadingPosition) {
+  if (pos.kind === 'pdf') {
+    scrollToPage(pos.page)
+    return
+  }
+  if (pos.kind === 'epub') {
+    visibleSections[pos.sectionIndex] = true
+    await nextTick()
+    const slot = sectionSlotElements.get(pos.sectionIndex)
+    if (!slot || !containerRef.value) return
+
+    if (pos.charOffset > 0 && epubFlowRef.value) {
+      const contentEl = sectionContentElements.get(pos.sectionIndex)
+      if (contentEl) {
+        const range = epubFlowRef.value.findRangeForOffset(contentEl, pos.charOffset)
+        if (range) {
+          const rect = range.getBoundingClientRect()
+          const containerRect = containerRef.value.getBoundingClientRect()
+          const targetScrollTop = containerRef.value.scrollTop + (rect.top - containerRect.top) - 40
+          containerRef.value.scrollTo({ top: Math.max(0, targetScrollTop), behavior: 'smooth' })
+          return
+        }
+      }
+    }
+    const pageNum = getPageForSection(pos.sectionIndex)
+    scrollToPage(pageNum)
+  }
+}
+
 defineExpose({
   scrollToPage,
+  scrollToPosition,
   focusNext,
   focusPrev,
   focusProgressLabel,

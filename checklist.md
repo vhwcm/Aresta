@@ -1,7 +1,8 @@
 ## 🔄 Em Andamento
-- [03/10/2026 18:38] [Fazendo] Revisão profunda, testes e correção da navegação por localizações, salto e sumário no leitor
+- [03/10/2026 22:19] [Fazendo] Implementar suporte a imagens nas notas e no canvas
 
 ## ✅ Concluído
+- [03/10/2026 22:18] [Concluído] Corrigir travamento 3D do leitor (deadlock is3DActive), corte de PDF, virada de página e arraste do scrubber
 - [03/10/2026 18:43] [Concluído] Atualizar cor de fundo no dark mode para #0c0d0f
 - [03/10/2026 18:33] [Concluído] Atualizar a cor principal do Aresta para #BF6E41
 - [03/10/2026 18:30] [Concluído] Implementar navegação por localizações, salto de página e sumário (PDF/EPUB) com carregamento progressivo em blocos

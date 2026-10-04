@@ -1531,7 +1531,17 @@ function isMobileViewport(): boolean {
 }
 
 async function onPointerDown(event: PointerEvent) {
-  if (store.isFocusMode || event.button !== 0 || !stageRef.value || physics.isAnimating.value) return
+  if (store.isFocusMode || event.button !== 0 || !stageRef.value) return
+
+  // Watchdog: Se o 3D ficou órfão (is3DActive true sem física ativa), recupera o estado imediatamente
+  if (is3DActive.value && !physics.isAnimating.value && !physics.isDragging.value) {
+    is3DActive.value = false
+    animationLayout.value = null
+    emit('transition-state', false)
+    void renderCurrentSpread()
+  }
+
+  if (physics.isAnimating.value) return
 
   const direction = getTurnZone(event)
   if (!direction) return
@@ -1676,12 +1686,17 @@ async function activateDrag(
   await prepare3DTextures(direction, relY)
   if (activationToken !== dragActivationToken) {
     animationLayout.value = null
+    is3DActive.value = false
+    emit('transition-state', false)
+    void renderCurrentSpread()
     return
   }
 
   // Se o usuário já soltou o ponteiro durante a preparação da textura (arraste/flick rápido)
   if (activePointerId === null) {
     animationLayout.value = null
+    is3DActive.value = false
+    emit('transition-state', false)
     void requestTurn(direction)
     return
   }
@@ -1807,6 +1822,9 @@ function onPointerCancel(event: PointerEvent) {
   pendingDrag = null
   dragActivationToken++
   activePointerId = null
+  is3DActive.value = false
+  animationLayout.value = null
+  emit('transition-state', false)
   physics.cancelDrag()
 }
 
@@ -1842,6 +1860,13 @@ function onDoubleClick(event: MouseEvent) {
 async function requestTurn(direction: PageTurnDirection) {
   if (!store.document) return
 
+  // Watchdog de segurança: limpa sobreposição 3D travada sem física ativa
+  if (is3DActive.value && !physics.isAnimating.value && !physics.isDragging.value) {
+    is3DActive.value = false
+    animationLayout.value = null
+    emit('transition-state', false)
+  }
+
   // Limpa qualquer seleção residual no documento para evitar que o menu flutuante permaneça ativo durante o folheamento
   if (typeof window !== 'undefined') {
     try {
@@ -1869,10 +1894,23 @@ async function requestTurn(direction: PageTurnDirection) {
 
   // P5/P6: Validação de limites usando getTargetPage
   const targetPage = getTargetPage(direction)
-  if (targetPage === store.currentPage) return
+  if (targetPage === store.currentPage) {
+    if (is3DActive.value) {
+      is3DActive.value = false
+      animationLayout.value = null
+      emit('transition-state', false)
+      void renderCurrentSpread()
+    }
+    return
+  }
 
   // Navegação instantânea quando a viragem 3D estiver desativada
   if (!pageAnimationEnabled.value) {
+    if (is3DActive.value) {
+      is3DActive.value = false
+      animationLayout.value = null
+      emit('transition-state', false)
+    }
     store.goToPage(targetPage)
     return
   }
@@ -1887,11 +1925,18 @@ async function requestTurn(direction: PageTurnDirection) {
   const travelWidth = layout.isTwoPage ? w * 2 : w
 
   animationLayout.value = snapshotLayout(pageLayout.value)
-  await prepare3DTextures(direction, 0.5)
-  is3DActive.value = true
-  emit('transition-state', true)
-
-  physics.triggerTurn(direction, travelWidth, h, 0.5)
+  try {
+    await prepare3DTextures(direction, 0.5)
+    is3DActive.value = true
+    emit('transition-state', true)
+    physics.triggerTurn(direction, travelWidth, h, 0.5)
+  } catch (err) {
+    console.error('[PageCurlCanvas] Falha na viragem 3D, executando navegação direta:', err)
+    is3DActive.value = false
+    animationLayout.value = null
+    emit('transition-state', false)
+    store.goToPage(targetPage)
+  }
 }
 
 let dprMediaQuery: MediaQueryList | null = null
@@ -1932,6 +1977,13 @@ onUnmounted(() => {
 watch(
   [() => store.currentPage, () => store.document, () => pageLayout.value, () => store.fontSize, () => store.fontFamily, () => store.readerTheme],
   () => {
+    // Se a página ou documento mudou externamente (ex: scrubber, TOC, GoTo) sem física ativa,
+    // desmonta qualquer sobreposição 3D residual para garantir exibição 100% fiel da nova página.
+    if (!physics.isAnimating.value && !physics.isDragging.value && is3DActive.value) {
+      is3DActive.value = false
+      animationLayout.value = null
+      emit('transition-state', false)
+    }
     void renderCurrentSpread()
   },
   { deep: true, flush: 'post' },

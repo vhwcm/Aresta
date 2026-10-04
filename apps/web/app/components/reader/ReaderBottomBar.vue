@@ -68,23 +68,48 @@
         >
           <!-- Seção 1: Quantidade de Páginas e Percentual Lido -->
           <div
-            class="flex items-center justify-between p-3 rounded-xl border select-none transition-colors"
+            class="flex flex-col gap-2 p-3 rounded-xl border select-none transition-colors"
             :class="themeBorderClass"
           >
-            <div class="flex flex-col">
-              <span class="text-[10px] font-technical uppercase tracking-wider font-semibold" :class="themeSubtextClass">
-                Páginas do Livro
-              </span>
-              <span class="text-sm font-technical font-bold text-accent">
-                Pág. {{ pageDisplay }}
+            <div class="flex items-center justify-between">
+              <div class="flex flex-col">
+                <span class="text-[10px] font-technical uppercase tracking-wider font-semibold" :class="themeSubtextClass">
+                  {{ isEpub ? 'Localizações do Livro' : 'Páginas do Livro' }}
+                </span>
+                <span class="text-sm font-technical font-bold text-accent">
+                  {{ isEpub ? 'Loc.' : 'Pág.' }} {{ pageDisplay }}
+                </span>
+              </div>
+              <span
+                v-if="store.totalPages > 0"
+                class="px-2.5 py-1 rounded-full text-xs font-technical font-semibold bg-accent/15 text-accent"
+              >
+                {{ progressPercentageComputed }}%
               </span>
             </div>
-            <span
-              v-if="store.totalPages > 0"
-              class="px-2.5 py-1 rounded-full text-xs font-technical font-semibold bg-accent/15 text-accent"
-            >
-              {{ progressPercentageComputed }}%
-            </span>
+
+            <!-- Scrubber de Progresso com Balão e Marcas -->
+            <ReaderProgressScrubber class="mt-1" />
+
+            <!-- Ações de Navegação Rápida: Sumário e Ir para -->
+            <div class="flex items-center gap-2 pt-1.5 border-t" :class="themeBorderClass">
+              <button
+                type="button"
+                class="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-interface font-medium transition-colors hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
+                @click="isTocOpen = true; isAppearancePopoverOpen = false"
+              >
+                <ListIcon class="w-3.5 h-3.5 text-accent" />
+                <span>Sumário</span>
+              </button>
+              <button
+                type="button"
+                class="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-interface font-medium transition-colors hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
+                @click="isGoToOpen = true; isAppearancePopoverOpen = false"
+              >
+                <CompassIcon class="w-3.5 h-3.5 text-accent" />
+                <span>Ir para...</span>
+              </button>
+            </div>
           </div>
 
           <!-- Seção 2: Fundo da Leitura -->
@@ -374,6 +399,11 @@
         <Maximize2Icon v-else class="w-9 h-9 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.35]" />
       </button>
     </div>
+
+    <!-- Diálogos e Drawers de Navegação -->
+    <ReaderTocDrawer :is-open="isTocOpen" @close="isTocOpen = false" />
+    <ReaderGoToField :is-open="isGoToOpen" @close="isGoToOpen = false" />
+    <ReaderBackChip />
   </aside>
 
   <!-- 2. Layout Inferior no Mobile / Telas Verticais -->
@@ -475,23 +505,48 @@
           >
               <!-- Seção 1: Quantidade de Páginas e Percentual Lido -->
               <div
-                class="flex items-center justify-between p-3 rounded-xl border select-none transition-colors"
+                class="flex flex-col gap-2 p-3 rounded-xl border select-none transition-colors"
                 :class="themeBorderClass"
               >
-                <div class="flex flex-col">
-                  <span class="text-[10px] font-technical uppercase tracking-wider font-semibold" :class="themeSubtextClass">
-                    Páginas do Livro
-                  </span>
-                  <span class="text-sm font-technical font-bold text-accent">
-                    Pág. {{ pageDisplay }}
+                <div class="flex items-center justify-between">
+                  <div class="flex flex-col">
+                    <span class="text-[10px] font-technical uppercase tracking-wider font-semibold" :class="themeSubtextClass">
+                      {{ isEpub ? 'Localizações do Livro' : 'Páginas do Livro' }}
+                    </span>
+                    <span class="text-sm font-technical font-bold text-accent">
+                      {{ isEpub ? 'Loc.' : 'Pág.' }} {{ pageDisplay }}
+                    </span>
+                  </div>
+                  <span
+                    v-if="store.totalPages > 0"
+                    class="px-2.5 py-1 rounded-full text-xs font-technical font-semibold bg-accent/15 text-accent"
+                  >
+                    {{ progressPercentageComputed }}%
                   </span>
                 </div>
-                <span
-                  v-if="store.totalPages > 0"
-                  class="px-2.5 py-1 rounded-full text-xs font-technical font-semibold bg-accent/15 text-accent"
-                >
-                  {{ progressPercentageComputed }}%
-                </span>
+
+                <!-- Scrubber de Progresso com Balão e Marcas -->
+                <ReaderProgressScrubber class="mt-1" />
+
+                <!-- Ações de Navegação Rápida: Sumário e Ir para -->
+                <div class="flex items-center gap-2 pt-1.5 border-t" :class="themeBorderClass">
+                  <button
+                    type="button"
+                    class="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-interface font-medium transition-colors hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
+                    @click="isTocOpen = true; isAppearancePopoverOpen = false"
+                  >
+                    <ListIcon class="w-3.5 h-3.5 text-accent" />
+                    <span>Sumário</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-interface font-medium transition-colors hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
+                    @click="isGoToOpen = true; isAppearancePopoverOpen = false"
+                  >
+                    <CompassIcon class="w-3.5 h-3.5 text-accent" />
+                    <span>Ir para...</span>
+                  </button>
+                </div>
               </div>
 
               <!-- Seção 2: Fundo da Leitura -->
@@ -707,6 +762,11 @@
         </span>
       </div>
     </div>
+
+    <!-- Diálogos e Drawers de Navegação -->
+    <ReaderTocDrawer :is-open="isTocOpen" @close="isTocOpen = false" />
+    <ReaderGoToField :is-open="isGoToOpen" @close="isGoToOpen = false" />
+    <ReaderBackChip />
   </footer>
 </template>
 
@@ -720,8 +780,10 @@ import {
   CheckIcon,
   ChevronDownIcon,
   ChevronUpIcon,
+  CompassIcon,
   FileTextIcon,
   HighlighterIcon,
+  ListIcon,
   Maximize2Icon,
   Minimize2Icon,
   MinusIcon,
@@ -730,6 +792,14 @@ import {
   Settings2Icon,
 } from 'lucide-vue-next'
 import { useReaderStore } from '~/stores/readerStore'
+import ReaderProgressScrubber from './navigation/ReaderProgressScrubber.vue'
+import ReaderTocDrawer from './navigation/ReaderTocDrawer.vue'
+import ReaderBackChip from './navigation/ReaderBackChip.vue'
+import ReaderGoToField from './navigation/ReaderGoToField.vue'
+
+const isTocOpen = ref(false)
+const isGoToOpen = ref(false)
+const isEpub = computed(() => store.documentType === 'epub')
 
 const props = defineProps<{
   isNotesActive?: boolean

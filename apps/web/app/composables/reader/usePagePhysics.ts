@@ -41,6 +41,7 @@ export function usePagePhysics(options: PagePhysicsOptions = {}) {
   let pageWidth = 600
   let pageHeight = 800
   let springRafId: number | null = null
+  let springSafetyTimer: any = null
   let lastFrameTime = 0
 
   function determineGripRegion(y: number, height: number): GripRegion {
@@ -159,11 +160,36 @@ export function usePagePhysics(options: PagePhysicsOptions = {}) {
       cancelAnimationFrame(springRafId)
       springRafId = null
     }
+    if (springSafetyTimer !== null) {
+      clearTimeout(springSafetyTimer)
+      springSafetyTimer = null
+    }
 
     isAnimating.value = true
     lastFrameTime = performance.now()
     let currentPos = progress.value
     let currentVel = (target - currentPos) * 12 // impulso inicial
+
+    // Watchdog de segurança: se a animação não se resolver em 750ms (ex: tab em segundo plano)
+    springSafetyTimer = setTimeout(() => {
+      if (isAnimating.value) {
+        if (springRafId !== null) {
+          cancelAnimationFrame(springRafId)
+          springRafId = null
+        }
+        springSafetyTimer = null
+        progress.value = target
+        isAnimating.value = false
+        try {
+          options.onProgress?.(target, gripY.value, pointerDeltaY.value)
+        } catch {}
+        if (isCompleting) {
+          options.onComplete?.(activeDirection.value)
+        } else {
+          options.onCancel?.()
+        }
+      }
+    }, 750)
 
     function step(now: number) {
       const deltaSeconds = Math.min(0.04, Math.max(0.001, (now - lastFrameTime) / 1000))
@@ -182,11 +208,19 @@ export function usePagePhysics(options: PagePhysicsOptions = {}) {
       const isSettled = Math.abs(currentPos - target) < 0.002 && Math.abs(currentVel) < 0.01
 
       if (isSettled || (target === 1.0 && currentPos >= 0.999) || (target === 0.0 && currentPos <= 0.001)) {
+        if (springSafetyTimer !== null) {
+          clearTimeout(springSafetyTimer)
+          springSafetyTimer = null
+        }
         progress.value = target
         isAnimating.value = false
         springRafId = null
 
-        options.onProgress?.(target, gripY.value, pointerDeltaY.value)
+        try {
+          options.onProgress?.(target, gripY.value, pointerDeltaY.value)
+        } catch (err) {
+          console.error('[PagePhysics] onProgress completion error:', err)
+        }
 
         if (isCompleting) {
           options.onComplete?.(activeDirection.value)
@@ -197,7 +231,11 @@ export function usePagePhysics(options: PagePhysicsOptions = {}) {
       }
 
       progress.value = Math.max(0, Math.min(1, currentPos))
-      options.onProgress?.(progress.value, gripY.value, pointerDeltaY.value)
+      try {
+        options.onProgress?.(progress.value, gripY.value, pointerDeltaY.value)
+      } catch (err) {
+        console.error('[PagePhysics] onProgress step error:', err)
+      }
       springRafId = requestAnimationFrame(step)
     }
 
@@ -229,6 +267,10 @@ export function usePagePhysics(options: PagePhysicsOptions = {}) {
     if (springRafId !== null) {
       cancelAnimationFrame(springRafId)
       springRafId = null
+    }
+    if (springSafetyTimer !== null) {
+      clearTimeout(springSafetyTimer)
+      springSafetyTimer = null
     }
     isDragging.value = false
     isAnimating.value = false
