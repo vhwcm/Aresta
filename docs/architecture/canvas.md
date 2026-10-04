@@ -92,6 +92,18 @@ O documento do Canvas é armazenado na tabela `canvases` do PostgreSQL com a seg
       "height": 120,
       "text": "Decisão Arquitetural",
       "color": "#3B82F6"
+    },
+    {
+      "id": "node-3",
+      "type": "image",
+      "imageUrl": "data:image/webp;base64,...",
+      "x": 700,
+      "y": 150,
+      "width": 320,
+      "height": 240,
+      "aspectRatio": 1.333,
+      "alt": "Diagrama de Arquitetura",
+      "caption": "Figura 1: Visão Geral"
     }
   ],
   "edges": [

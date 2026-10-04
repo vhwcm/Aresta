@@ -58,6 +58,12 @@ O módulo de **Notas Compostas** do Aresta unifica a criação de documentos lin
 ### 2.3. Vínculo de Livros da Estante
 - Livros anexados (`![[book:<id>]]` ou nó `book`) exibem capa real, metadados e atalho de navegação com 1 clique diretamente para a leitura no leitor de EPUB/PDF.
 
+### 2.4. Suporte Multimodal a Imagens
+- **Múltiplos Métodos de Entrada**: Inserção via botão de imagem na toolbar (upload ou URL), arrastar e soltar (arquivos locais ou imagens da web) e colar diretamente da área de transferência (`Ctrl+V` / `Cmd+V`).
+- **Otimização Local-First (`imageOptimizer.ts`)**: Downscaling proporcional para teto de 1920px e compressão suave (qualidade 0.85) antes de serializar em Data URL, preservando espaço no IndexedDB e evitando congelamento de memória.
+- **Preservação Vetorial**: Arquivos SVG (`image/svg+xml`) são mantidos em texto vetorial original sem rasterização.
+- **Renderização Imersiva**: Imagens no `MilkdownEditor` recebem bordas sutis, cantos arredondados e responsividade total em temas claro e escuro.
+
 ---
 
 ## 3. Segurança e Prevenção de Ciclos (Anti-Recursion)
