@@ -1,6 +1,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [03/10/2026 23:05] [Concluído] Reduzir dimensões padrão de blocos, notas, formas e embeds no canvas por default
 - [03/10/2026 23:01] [Concluído] Corrigir exibição de 2 páginas no leitor EPUB eliminando limitação de 5 seções e mapeando páginas visuais por seção
 - [03/10/2026 22:36] [Concluído] Implementar suporte a imagens nas notas e no canvas (inserção local/URL, drag & drop, paste, nós de imagem e exportação SVG)
 - [03/10/2026 22:18] [Concluído] Corrigir travamento 3D do leitor (deadlock is3DActive), corte de PDF, virada de página e arraste do scrubber

@@ -366,10 +366,10 @@ const createInitialNote = () => {
   const newNode: CanvasNode = {
     id: `node-${Date.now()}`,
     type: 'text',
-    x: Math.round(centerCoords.x - 130),
-    y: Math.round(centerCoords.y - 80),
-    width: 260,
-    height: 160,
+    x: Math.round(centerCoords.x - 90),
+    y: Math.round(centerCoords.y - 55),
+    width: 180,
+    height: 110,
     text: '',
     color: '#E57B55',
   };
@@ -436,10 +436,10 @@ const onDoubleClick = (e: MouseEvent) => {
   const newNode: CanvasNode = {
     id: `node-${Date.now()}`,
     type: 'text',
-    x: Math.round(coords.x - 120),
-    y: Math.round(coords.y - 70),
-    width: 260,
-    height: 160,
+    x: Math.round(coords.x - 90),
+    y: Math.round(coords.y - 55),
+    width: 180,
+    height: 110,
     text: '',
     color: '#E57B55',
   };
@@ -455,8 +455,8 @@ const createLooseTextNode = (canvasX: number, canvasY: number) => {
     type: 'loose_text',
     x: Math.round(canvasX - 10),
     y: Math.round(canvasY - 14),
-    width: 280,
-    height: 56,
+    width: 200,
+    height: 44,
     text: '',
   };
   addNode(newNode);
@@ -584,14 +584,15 @@ const onBackgroundPointerDown = (e: PointerEvent) => {
       return;
     }
 
+    const isShape = activeTool.value === 'shape';
     const newNode: CanvasNode = {
       id: `node-${Date.now()}`,
-      type: activeTool.value === 'shape' ? 'shape' : 'text',
-      shape: activeTool.value === 'shape' ? selectedShapeType.value : undefined,
-      x: Math.round(coords.x - 100),
-      y: Math.round(coords.y - 60),
-      width: activeTool.value === 'shape' ? 180 : 240,
-      height: activeTool.value === 'shape' ? 120 : 150,
+      type: isShape ? 'shape' : 'text',
+      shape: isShape ? selectedShapeType.value : undefined,
+      x: Math.round(coords.x - (isShape ? 70 : 90)),
+      y: Math.round(coords.y - (isShape ? 45 : 55)),
+      width: isShape ? 140 : 180,
+      height: isShape ? 90 : 110,
       text: '',
       color: '#E57B55',
     };
@@ -731,48 +732,48 @@ const onPointerMove = (e: PointerEvent) => {
 
     if (keepRatio && ratio > 0) {
       if (handle === 'se') {
-        newWidth = Math.max(initialWidth + dx, 100);
+        newWidth = Math.max(initialWidth + dx, 80);
         newHeight = Math.round(newWidth / ratio);
-        if (newHeight < 60) {
-          newHeight = 60;
+        if (newHeight < 40) {
+          newHeight = 40;
           newWidth = Math.round(newHeight * ratio);
         }
       } else if (handle === 'sw') {
-        newWidth = Math.max(initialWidth - dx, 100);
+        newWidth = Math.max(initialWidth - dx, 80);
         newHeight = Math.round(newWidth / ratio);
-        if (newHeight < 60) {
-          newHeight = 60;
+        if (newHeight < 40) {
+          newHeight = 40;
           newWidth = Math.round(newHeight * ratio);
         }
         newX = initialX + (initialWidth - newWidth);
       } else if (handle === 'ne') {
-        newWidth = Math.max(initialWidth + dx, 100);
+        newWidth = Math.max(initialWidth + dx, 80);
         newHeight = Math.round(newWidth / ratio);
-        if (newHeight < 60) {
-          newHeight = 60;
+        if (newHeight < 40) {
+          newHeight = 40;
           newWidth = Math.round(newHeight * ratio);
         }
         newY = initialY + (initialHeight - newHeight);
       } else if (handle === 'nw') {
-        newWidth = Math.max(initialWidth - dx, 100);
+        newWidth = Math.max(initialWidth - dx, 80);
         newHeight = Math.round(newWidth / ratio);
-        if (newHeight < 60) {
-          newHeight = 60;
+        if (newHeight < 40) {
+          newHeight = 40;
           newWidth = Math.round(newHeight * ratio);
         }
         newX = initialX + (initialWidth - newWidth);
         newY = initialY + (initialHeight - newHeight);
       }
     } else {
-      if (handle.includes('e')) newWidth = Math.max(initialWidth + dx, 100);
-      if (handle.includes('s')) newHeight = Math.max(initialHeight + dy, 60);
+      if (handle.includes('e')) newWidth = Math.max(initialWidth + dx, 80);
+      if (handle.includes('s')) newHeight = Math.max(initialHeight + dy, 40);
       if (handle.includes('w')) {
-        const w = Math.max(initialWidth - dx, 100);
+        const w = Math.max(initialWidth - dx, 80);
         newX = initialX + (initialWidth - w);
         newWidth = w;
       }
       if (handle.includes('n')) {
-        const h = Math.max(initialHeight - dy, 60);
+        const h = Math.max(initialHeight - dy, 40);
         newY = initialY + (initialHeight - h);
         newHeight = h;
       }
@@ -1055,10 +1056,10 @@ const handleInsertBook = (book: any) => {
   const newNode: CanvasNode = {
     id: `node-${Date.now()}`,
     type: 'book',
-    x: Math.round(centerCoords.x - 130),
-    y: Math.round(centerCoords.y - 70),
-    width: 280,
-    height: 140,
+    x: Math.round(centerCoords.x - 110),
+    y: Math.round(centerCoords.y - 55),
+    width: 220,
+    height: 110,
     bookId: book.bookId,
     bookTitle: book.title,
     bookAuthor: book.author || '',
@@ -1075,10 +1076,10 @@ const handleInsertAnnotation = (annotation: any) => {
   const newNode: CanvasNode = {
     id: `node-${Date.now()}`,
     type: 'text',
-    x: Math.round(centerCoords.x - 130),
-    y: Math.round(centerCoords.y - 70),
-    width: 280,
-    height: 160,
+    x: Math.round(centerCoords.x - 100),
+    y: Math.round(centerCoords.y - 60),
+    width: 200,
+    height: 120,
     text: `> "${annotation.selectedText || ''}"\n\n${annotation.note || ''}`,
     color: '#10B981',
   };
@@ -1091,10 +1092,10 @@ const handleInsertNote = (note: any) => {
   const newNode: CanvasNode = {
     id: `node-${Date.now()}`,
     type: 'note_embed',
-    x: Math.round(centerCoords.x - 140),
-    y: Math.round(centerCoords.y - 100),
-    width: 300,
-    height: 200,
+    x: Math.round(centerCoords.x - 110),
+    y: Math.round(centerCoords.y - 70),
+    width: 220,
+    height: 140,
     noteId: note.id,
     noteTitle: note.title,
     noteContent: note.content,
@@ -1110,16 +1111,16 @@ const handleInsertImage = (
   customCoords?: { x: number; y: number }
 ) => {
   const coords = customCoords || screenToCanvas(centerScreen.value.x, centerScreen.value.y);
-  let initialWidth = 300;
-  let initialHeight = 220;
+  let initialWidth = 220;
+  let initialHeight = 160;
 
   if (image.width && image.height && image.width > 0 && image.height > 0) {
     const ratio = image.width / image.height;
     if (ratio >= 1) {
-      initialWidth = Math.min(420, Math.max(220, image.width));
+      initialWidth = Math.min(320, Math.max(160, image.width));
       initialHeight = Math.round(initialWidth / ratio);
     } else {
-      initialHeight = Math.min(360, Math.max(200, image.height));
+      initialHeight = Math.min(260, Math.max(140, image.height));
       initialWidth = Math.round(initialHeight * ratio);
     }
   }
