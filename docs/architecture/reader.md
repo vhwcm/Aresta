@@ -290,5 +290,63 @@ A barra de controle do leitor adapta sua orientação ergonomicamente ao tipo de
 └──────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
+---
+
+## 8. Sistema de Localizações Estáveis, Carregamento O(1) e Navegação Canônica (ADR-032)
+
+O leitor implementa o padrão industrial de localizações estáveis independentes de dispositivo (estilo Google Play Livros / Kindle) e carregamento O(1) em relação ao volume do livro:
+
+```text
+========================================================================================
+           ARQUITETURA DE LOCALIZAÇÕES, AGENDAMENTO E SCROLL VIRTUALIZADO
+========================================================================================
+
+ [ Arquivo EPUB / PDF ]
+           │
+           ├─► Backend (Upload): Extração de `total_locations` e `locations_per_section`
+           │                     no Postgres via Prisma.
+           │
+           ▼
+ [ Cliente Aresta: Leitura ]
+           │
+           ├─► Metadados Imediatos: GET /api/books/:id traz Locations pré-calculadas.
+           │                        Custo zero de inicialização no frame 1.
+           │
+           ├─► LazyZip: Lê apenas o diretório central do ZIP. Descompacta somente OPF
+           │            e a seção-alvo (0) + vizinha (+1) para a 1ª tela (< 300ms).
+           │
+           ├─► ChunkScheduler (Idle Worker): Processa contagem das seções restantes em
+           │                                 fatias ociosas (requestIdleCallback) sem
+           │                                 tarefas > 50ms. Persiste no IndexedDB.
+           │
+           ├─► PdfRenderWindow: Janela deslizante de páginas PDF (±1 alta res, ±2 idle)
+           │                    com LRU de 6 canvases e cancelamento de tarefas em voo.
+           │
+           ├─► Virtualização de Scroll por Blocos: Seções cortadas a cada ~10.240 caracteres
+           │                                       (sectionChunker.ts). Limite <= 5 blocos no DOM.
+           │                                       Compensação de âncora com 0 px de layout shift.
+           │
+           └─► UI de Navegação:
+                 - ReaderProgressScrubber: marcas de capítulo + balão de prévia flutuante.
+                 - ReaderTocDrawer: gaveta de sumário hierárquico com porcentagens.
+                 - ReaderBackChip: botão voltar dinâmico após saltos de leitura.
+                 - ReaderGoToField: salto por página, localização ("Loc 1200") ou percentual ("50%").
+========================================================================================
+```
+
+### 8.1. Endereço Canônico de Leitura (`readingPosition.ts`)
+- **EPUB**: `epub:<sectionIndex>:<charOffset>` (ex: `epub:4:1024`).
+- **PDF**: `page:<N>` (ex: `page:42`).
+- As anotações e marcadores utilizam a posição canônica para sincronização multidispositivo. Anotações legadas `page:N` de EPUB são migradas preguiçosamente com base no texto citado.
+
+### 8.2. Interface `INavigableDocument`
+Implementada por `EpubDocumentAdapter` e `PdfDocumentAdapter`:
+- `getToc(): Promise<TocEntry[]>`
+- `getTotalUnits(): number` (localizações no EPUB, páginas no PDF)
+- `positionToUnit(pos: ReadingPosition): number`
+- `unitToPosition(unit: number): ReadingPosition`
+- `onIndexRefined(callback: () => void): () => void`
+
+
 
 

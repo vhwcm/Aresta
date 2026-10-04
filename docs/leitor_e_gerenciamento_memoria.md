@@ -178,3 +178,25 @@ Para elevar o modelo mental de imersão de um livro físico real na tela (especi
   7. Curva cúbica de Bézier em S atravessando a lombada superior de volta à esquerda, fechando o polígono com `Z`.
 * **Eliminação do Dente nos Cantos (Flush Page Sheets):** O dente/notch que ocorria na junção superior entre a folha de conteúdo e o corte do papel foi eliminado aplicando `border-radius: 0 !important` em `.page-sheet--left` e `.page-sheet--right` no modo 2 páginas. A folha de conteúdo sobrepõe o centro perfeitamente, revelando o miolo apenas nas extremidades externas.
 * **Hitboxes Interativos Superiores:** Inclusão de áreas de clique no topo (`.book-page-stack-top--left` e `.book-page-stack-top--right`) para folhear o livro com atalhos de toque/clique ergonômicos em qualquer borda do miolo.
+
+---
+
+## 8. Gestão Avançada de Memória e Carregamento O(1) de EPUB/PDF (ADR-032)
+
+### 8.1. Descompressão Preguiçosa com `LazyZip`
+- Em vez de descompactar todos os arquivos XHTML e imagens no carregamento (`unzipSync`), o leitor processa apenas o cabeçalho do diretório central do ZIP (`LazyZip.open`), mantendo o binário bruto comprimido.
+- Seções XHTML são descompactadas individualmente sob demanda conforme entram na janela de leitura.
+- Imagens são convertidas em Blob URLs voláteis (`URL.createObjectURL`), sendo revogadas (`URL.revokeObjectURL`) assim que a seção correspondente é desmontada da memória visual.
+
+### 8.2. Janela Deslizante e Teto de Canvases em PDF (`PdfRenderWindow`)
+- **Teto Rígido de Memória GPU/RAM:** No máximo 6 canvases mantidos em cache LRU (`maxCanvases = 6`).
+- **Janela de Renderização:** Rasterização de alta resolução restrita a `página ± 1`. Páginas em `página ± 2` são pré-carregadas em ociosidade.
+- **Limpeza Agressiva:** Canvases descartados pelo algoritmo LRU têm suas dimensões reduzidas para 0 e o contexto 2D limpo via `clearRect`, garantindo recuperação instantânea de memória pelo coletor de lixo.
+- **Cancelamento de Render em Voo:** Tarefas do PDF.js fora da janela ativa são canceladas cooperativamente via `renderTask.cancel()`.
+- **Prévia de Baixa Resolução (Escala 0.2x):** Durante rolagem ultra-rápida ou salto para páginas distantes, o leitor desenha uma prévia compacta (< 150 ms) enquanto a renderização vetorial completa finaliza em segundo plano.
+
+### 8.3. Virtualização de Scroll EPUB por Blocos (`sectionChunker`)
+- Capítulos extensos são particionados em blocos de ~10 localizações (10.240 caracteres) nas fronteiras entre elementos de bloco de 1º nível.
+- O DOM retém no máximo 5 blocos montados simultaneamente, evitando degradação de FPS e estouro de memória em documentos com capítulos de 100+ páginas.
+- Alturas de blocos não renderizados são estimadas e refinadas dinamicamente com compensação de âncora de 0 px de deslocamento perceptível.
+
