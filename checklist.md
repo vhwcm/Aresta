@@ -1,7 +1,8 @@
 ## 🔄 Em Andamento
-- [03/10/2026 22:19] [Fazendo] Implementar suporte a imagens nas notas e no canvas
 
 ## ✅ Concluído
+- [03/10/2026 23:01] [Concluído] Corrigir exibição de 2 páginas no leitor EPUB eliminando limitação de 5 seções e mapeando páginas visuais por seção
+- [03/10/2026 22:36] [Concluído] Implementar suporte a imagens nas notas e no canvas (inserção local/URL, drag & drop, paste, nós de imagem e exportação SVG)
 - [03/10/2026 22:18] [Concluído] Corrigir travamento 3D do leitor (deadlock is3DActive), corte de PDF, virada de página e arraste do scrubber
 - [03/10/2026 18:43] [Concluído] Atualizar cor de fundo no dark mode para #0c0d0f
 - [03/10/2026 18:33] [Concluído] Atualizar a cor principal do Aresta para #BF6E41

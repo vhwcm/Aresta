@@ -769,7 +769,8 @@ export class EpubDocumentAdapter implements IBookDocument, INavigableDocument {
   private _pageCanvases: Map<number, HTMLCanvasElement> = new Map()
   private _sections: FoliateSection[] = []
   private _sectionDocsLru = new SectionDocLru()
-  private _pageMap: PageMapping[] = []
+  private _pagesPerSection: number[] = []
+  private _prefixPages: number[] = [0]
   private _unzipped: Record<string, Uint8Array> | null = null
   private _locationIndex: LocationIndex = createExactIndex([])
   private _scheduler = new ChunkScheduler<{ index: number }>()
@@ -781,7 +782,7 @@ export class EpubDocumentAdapter implements IBookDocument, INavigableDocument {
   }
 
   get totalPages(): number {
-    return this._totalPages
+    return Math.max(1, this._totalPages || 1)
   }
 
   get isLoaded(): boolean {
@@ -796,42 +797,36 @@ export class EpubDocumentAdapter implements IBookDocument, INavigableDocument {
     return this._fontFamily
   }
 
-  private _recalculatePageMap(targetSectionIndex: number, targetFraction: number, fallbackPage: number): number {
-    this._pageCanvases.clear()
-
-    if (!this._isLoaded || this._sections.length === 0) {
-      return fallbackPage
+  private _updatePagination(): void {
+    const n = this._sections.length
+    if (n === 0) {
+      this._pagesPerSection = []
+      this._prefixPages = [0]
+      this._totalPages = 0
+      return
     }
 
-    this._pageMap = []
-    let globalPageCounter = 1
+    this._pagesPerSection = new Array(n)
+    this._prefixPages = new Array(n + 1)
+    this._prefixPages[0] = 0
 
-    const criticalMax = Math.min(this._sections.length, 5)
-    for (let sIdx = 0; sIdx < criticalMax; sIdx++) {
-      const doc = this._sectionDocsLru.get(sIdx) || null
-      const pagesInSection = calculateSectionPages(doc, this._fontSize, this._fontFamily, this._pageWidth, this._pageHeight)
-      for (let pIdx = 0; pIdx < pagesInSection; pIdx++) {
-        this._pageMap.push({
-          globalPage: globalPageCounter++,
-          sectionIndex: sIdx,
-          pageIndexInSection: pIdx,
-          totalPagesInSection: pagesInSection,
-        })
+    const charsPerSec = this._locationIndex.getCharsPerSection()
+    const baseCharsPerPage = Math.max(300, Math.round(1500 * (15 / Math.max(12, this._fontSize))))
+
+    for (let i = 0; i < n; i++) {
+      const doc = this._sectionDocsLru.get(i)
+      let pages: number
+      if (doc) {
+        pages = calculateSectionPages(doc, this._fontSize, this._fontFamily, this._pageWidth, this._pageHeight)
+      } else {
+        const chars = charsPerSec[i] || 0
+        pages = chars > 0 ? Math.max(1, Math.ceil(chars / baseCharsPerPage)) : 1
       }
+      this._pagesPerSection[i] = Math.max(1, pages)
+      this._prefixPages[i + 1] = this._prefixPages[i] + this._pagesPerSection[i]
     }
 
-    this._totalPages = this._pageMap.length
-
-    const matchingPages = this._pageMap.filter((m) => m.sectionIndex === targetSectionIndex)
-    if (matchingPages.length > 0) {
-      const newIndex = Math.min(
-        matchingPages.length - 1,
-        Math.max(0, Math.floor(targetFraction * matchingPages.length)),
-      )
-      return matchingPages[newIndex]?.globalPage ?? 1
-    }
-
-    return Math.max(1, Math.min(fallbackPage, this._totalPages))
+    this._totalPages = Math.max(1, this._prefixPages[n] ?? 1)
   }
 
   setPageDimensions(width: number, height: number, currentPage = 1): number {
@@ -853,16 +848,11 @@ export class EpubDocumentAdapter implements IBookDocument, INavigableDocument {
       return currentPage
     }
 
-    const oldMapping = this._pageMap[currentPage - 1]
-    const targetSectionIndex = oldMapping ? oldMapping.sectionIndex : 0
-    const targetFraction = oldMapping && oldMapping.totalPagesInSection > 0
-      ? oldMapping.pageIndexInSection / oldMapping.totalPagesInSection
-      : 0
-
     this._pageWidth = validW
     this._pageHeight = validH
-
-    return this._recalculatePageMap(targetSectionIndex, targetFraction, currentPage)
+    this._pageCanvases.clear()
+    this._updatePagination()
+    return Math.max(1, Math.min(currentPage, this.totalPages))
   }
 
   setFontFamily(newFontFamily: string, currentPage = 1): number {
@@ -870,14 +860,10 @@ export class EpubDocumentAdapter implements IBookDocument, INavigableDocument {
       return currentPage
     }
 
-    const oldMapping = this._pageMap[currentPage - 1]
-    const targetSectionIndex = oldMapping ? oldMapping.sectionIndex : 0
-    const targetFraction = oldMapping && oldMapping.totalPagesInSection > 0
-      ? oldMapping.pageIndexInSection / oldMapping.totalPagesInSection
-      : 0
-
     this._fontFamily = newFontFamily
-    return this._recalculatePageMap(targetSectionIndex, targetFraction, currentPage)
+    this._pageCanvases.clear()
+    this._updatePagination()
+    return Math.max(1, Math.min(currentPage, this.totalPages))
   }
 
   setFontSize(newFontSize: number, currentPage = 1): number {
@@ -886,14 +872,10 @@ export class EpubDocumentAdapter implements IBookDocument, INavigableDocument {
       return currentPage
     }
 
-    const oldMapping = this._pageMap[currentPage - 1]
-    const targetSectionIndex = oldMapping ? oldMapping.sectionIndex : 0
-    const targetFraction = oldMapping && oldMapping.totalPagesInSection > 0
-      ? oldMapping.pageIndexInSection / oldMapping.totalPagesInSection
-      : 0
-
     this._fontSize = clampedSize
-    return this._recalculatePageMap(targetSectionIndex, targetFraction, currentPage)
+    this._pageCanvases.clear()
+    this._updatePagination()
+    return Math.max(1, Math.min(currentPage, this.totalPages))
   }
 
   private async _getSectionDoc(sectionIndex: number): Promise<Document | null> {
@@ -910,6 +892,12 @@ export class EpubDocumentAdapter implements IBookDocument, INavigableDocument {
       }
       if (doc) {
         this._sectionDocsLru.set(sectionIndex, doc)
+        if (this._pagesPerSection[sectionIndex] !== undefined) {
+          const actualPages = calculateSectionPages(doc, this._fontSize, this._fontFamily, this._pageWidth, this._pageHeight)
+          if (actualPages !== this._pagesPerSection[sectionIndex]) {
+            this._updatePagination()
+          }
+        }
       }
       return doc
     } catch (err) {
@@ -919,23 +907,38 @@ export class EpubDocumentAdapter implements IBookDocument, INavigableDocument {
   }
 
   private async _resolvePageMapping(pageNumber: number): Promise<PageMapping | null> {
-    const existing = this._pageMap[pageNumber - 1]
-    if (existing) return existing
+    const n = this._sections.length
+    if (n === 0) return null
 
-    const pos = this._locationIndex.fromLocation(pageNumber)
-    const doc = await this._getSectionDoc(pos.sectionIndex)
-    const pagesInSection = doc
+    const clampedPage = Math.min(this.totalPages, Math.max(1, Math.floor(pageNumber)))
+    const targetIdx = clampedPage - 1
+
+    let low = 0
+    let high = n - 1
+    let chosenSection = 0
+
+    while (low <= high) {
+      const mid = (low + high) >> 1
+      if ((this._prefixPages[mid] ?? 0) <= targetIdx) {
+        chosenSection = mid
+        low = mid + 1
+      } else {
+        high = mid - 1
+      }
+    }
+
+    const startPage = this._prefixPages[chosenSection] ?? 0
+    const pageIndexInSection = targetIdx - startPage
+    const doc = await this._getSectionDoc(chosenSection)
+    const exactPages = doc
       ? calculateSectionPages(doc, this._fontSize, this._fontFamily, this._pageWidth, this._pageHeight)
-      : 1
-    const chars = this._locationIndex.getCharsPerSection()[pos.sectionIndex] || 1
-    const fraction = pos.charOffset / Math.max(1, chars)
-    const pageIndexInSection = Math.min(pagesInSection - 1, Math.max(0, Math.floor(fraction * pagesInSection)))
+      : (this._pagesPerSection[chosenSection] || 1)
 
     return {
       globalPage: pageNumber,
-      sectionIndex: pos.sectionIndex,
-      pageIndexInSection,
-      totalPagesInSection: pagesInSection,
+      sectionIndex: chosenSection,
+      pageIndexInSection: Math.min(exactPages - 1, Math.max(0, pageIndexInSection)),
+      totalPagesInSection: exactPages,
     }
   }
 
@@ -948,6 +951,29 @@ export class EpubDocumentAdapter implements IBookDocument, INavigableDocument {
       return sId === cleanHref || sId.endsWith('/' + cleanHref) || cleanHref.endsWith('/' + sId)
     })
     return index >= 0 ? index : 0
+  }
+
+  getPageForSection(sectionIndex: number): number {
+    return (this._prefixPages[sectionIndex] ?? 0) + 1
+  }
+
+  getSectionForPage(pageNumber: number): number {
+    const n = this._sections.length
+    if (n === 0) return 0
+    const targetIdx = Math.max(0, pageNumber - 1)
+    let low = 0
+    let high = n - 1
+    let chosen = 0
+    while (low <= high) {
+      const mid = (low + high) >> 1
+      if ((this._prefixPages[mid] ?? 0) <= targetIdx) {
+        chosen = mid
+        low = mid + 1
+      } else {
+        high = mid - 1
+      }
+    }
+    return chosen
   }
 
   async getToc(): Promise<TocEntry[]> {
@@ -1104,34 +1130,29 @@ export class EpubDocumentAdapter implements IBookDocument, INavigableDocument {
     } else {
       const sizes = this._sections.map((s) => {
         const id = s.id || ''
-        return loader.getSize(id) || 4000
+        const zipFile = this._unzipped ? getZipFile(this._unzipped, id) : null
+        return zipFile?.byteLength || loader.getSize(id) || 4000
       })
       this._locationIndex = createEstimatedIndex(sizes)
     }
 
-    // Carga crítica: Alvo (0) e vizinha (1)
-    if (this._sections.length > 1) {
-      await this._getSectionDoc(1)
+    this._totalPages = Math.max(1, this._locationIndex.totalLocations)
+
+    // Carga crítica: Alvo (0) e vizinha (1) com refino imediato do LocationIndex
+    if (firstDoc && this._sections.length > 0) {
+      const chars0 = countSectionText(firstDoc)
+      this._locationIndex = this._locationIndex.withExactSection(0, chars0)
     }
 
-    // Mapeamento inicial das seções iniciais
-    this._pageMap = []
-    let globalPageCounter = 1
-    const criticalMax = Math.min(this._sections.length, 5)
-    for (let sIdx = 0; sIdx < criticalMax; sIdx++) {
-      const doc = await this._getSectionDoc(sIdx)
-      const pagesInSection = calculateSectionPages(doc, this._fontSize, this._fontFamily, this._pageWidth, this._pageHeight)
-      for (let pIdx = 0; pIdx < pagesInSection; pIdx++) {
-        this._pageMap.push({
-          globalPage: globalPageCounter++,
-          sectionIndex: sIdx,
-          pageIndexInSection: pIdx,
-          totalPagesInSection: pagesInSection,
-        })
+    if (this._sections.length > 1) {
+      const secondDoc = await this._getSectionDoc(1)
+      if (secondDoc) {
+        const chars1 = countSectionText(secondDoc)
+        this._locationIndex = this._locationIndex.withExactSection(1, chars1)
       }
     }
 
-    this._totalPages = this._pageMap.length
+    this._updatePagination()
 
     // Agendamento background via ChunkScheduler
     if (!this._locationIndex.isExact && this._sections.length > 0) {
@@ -1141,6 +1162,7 @@ export class EpubDocumentAdapter implements IBookDocument, INavigableDocument {
         const doc = await this._getSectionDoc(sIdx)
         const chars = doc ? countSectionText(doc) : 0
         this._locationIndex = this._locationIndex.withExactSection(sIdx, chars)
+        this._updatePagination()
         this._notifyIndexRefinedThrottled()
         if (this._locationIndex.isExact) {
           void setCachedLocations(bookHash, [...this._locationIndex.getCharsPerSection()])
@@ -1275,18 +1297,6 @@ export class EpubDocumentAdapter implements IBookDocument, INavigableDocument {
 
   getSectionCount(): number {
     return this._sections.length
-  }
-
-  getPageForSection(sectionIndex: number): number {
-    const found = this._pageMap.find((m) => m.sectionIndex === sectionIndex)
-    if (found) return found.globalPage
-    return this._locationIndex.sectionStartLocation(sectionIndex)
-  }
-
-  getSectionForPage(pageNumber: number): number {
-    const mapping = this._pageMap[pageNumber - 1]
-    if (mapping) return mapping.sectionIndex
-    return this._locationIndex.fromLocation(pageNumber).sectionIndex
   }
 
   async renderSectionContinuous(sectionIndex: number, container: HTMLElement): Promise<void> {
@@ -1470,7 +1480,6 @@ export class EpubDocumentAdapter implements IBookDocument, INavigableDocument {
     })
     this._pageCanvases.clear()
     this._sectionDocsLru.clear()
-    this._pageMap = []
     this._epub = null
     this._sections = []
     this._totalPages = 0

@@ -22,6 +22,9 @@ vi.mock('fflate', () => ({
 describe('EPUB Pagination Parity and Blank Page Prevention', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    if (typeof document !== 'undefined') {
+      document.body.innerHTML = ''
+    }
   })
 
   it('accurately allocates 1 page for single-page text without creating empty overflow pages', async () => {
@@ -136,5 +139,97 @@ describe('EPUB Pagination Parity and Blank Page Prevention', () => {
     // Renderiza a página 1 normalmente
     await adapter.renderTextLayer(1, container, 700, 900)
     expect(container.querySelector('.epub-text-layer-content')).not.toBeNull()
+  })
+
+  it('correctly maps and renders distinct content on left (page 1) and right (page 2) for two-page mode', async () => {
+    const adapter = new EpubDocumentAdapter()
+    const mockEpubInstance = {
+      metadata: { title: 'Livro 2 Folhas', creator: 'Autor' },
+      sections: [
+        {
+          id: 'sec1',
+          linear: true,
+          createDocument: () => Promise.resolve({
+            body: { innerHTML: '<p>Conteudo da Folha Esquerda (Sec 1)</p>', textContent: 'Conteudo da Folha Esquerda (Sec 1)' },
+          }),
+        },
+        {
+          id: 'sec2',
+          linear: true,
+          createDocument: () => Promise.resolve({
+            body: { innerHTML: '<p>Conteudo da Folha Direita (Sec 2)</p>', textContent: 'Conteudo da Folha Direita (Sec 2)' },
+          }),
+        },
+        {
+          id: 'sec3',
+          linear: true,
+          createDocument: () => Promise.resolve({
+            body: { innerHTML: '<p>Capitulo 2</p>', textContent: 'Capitulo 2' },
+          }),
+        },
+      ],
+      init: () => Promise.resolve(),
+    }
+
+    const foliateMod: any = await import('foliate-js/epub.js')
+    const EPUB = foliateMod.EPUB || foliateMod.default || foliateMod.Book
+    vi.spyOn(EPUB.prototype, 'init').mockImplementation(function (this: any) {
+      this.metadata = mockEpubInstance.metadata
+      this.sections = mockEpubInstance.sections
+      return Promise.resolve()
+    })
+
+    const buffer = new ArrayBuffer(16)
+    await adapter.load(buffer, 'spread.epub', 15)
+
+    expect(adapter.totalPages).toBeGreaterThanOrEqual(3)
+
+    // Renderiza folha esquerda (página 1) e folha direita (página 2)
+    const leftContainer = document.createElement('div')
+    const rightContainer = document.createElement('div')
+
+    await Promise.all([
+      adapter.renderTextLayer(1, leftContainer, 600, 900),
+      adapter.renderTextLayer(2, rightContainer, 600, 900),
+    ])
+
+    const leftContent = leftContainer.querySelector('.epub-text-layer-content')
+    const rightContent = rightContainer.querySelector('.epub-text-layer-content')
+
+    expect(leftContent).not.toBeNull()
+    expect(rightContent).not.toBeNull()
+    expect(leftContent?.textContent).toContain('Folha Esquerda')
+    expect(rightContent?.textContent).toContain('Folha Direita')
+  })
+
+  it('does not truncate totalPages to 5 sections when book has 10+ sections', async () => {
+    const adapter = new EpubDocumentAdapter()
+    const sections = Array.from({ length: 12 }, (_, i) => ({
+      id: `sec-${i}`,
+      linear: true,
+      createDocument: () => Promise.resolve({
+        body: { innerHTML: `<p>Capitulo ${i + 1}</p>`, textContent: `Capitulo ${i + 1}` },
+      }),
+    }))
+
+    const mockEpubInstance = {
+      metadata: { title: 'Livro Muitas Secoes', creator: 'Autor' },
+      sections,
+      init: () => Promise.resolve(),
+    }
+
+    const foliateMod: any = await import('foliate-js/epub.js')
+    const EPUB = foliateMod.EPUB || foliateMod.default || foliateMod.Book
+    vi.spyOn(EPUB.prototype, 'init').mockImplementation(function (this: any) {
+      this.metadata = mockEpubInstance.metadata
+      this.sections = mockEpubInstance.sections
+      return Promise.resolve()
+    })
+
+    const buffer = new ArrayBuffer(16)
+    await adapter.load(buffer, 'muitas-secoes.epub', 15)
+
+    expect(adapter.totalPages).toBeGreaterThanOrEqual(12)
+    expect(adapter.getSectionCount()).toBe(12)
   })
 })
