@@ -762,11 +762,10 @@ const bookCoverUrl = computed(() => props.coverUrl || store.coverUrl || '')
 const isAppearancePopoverOpen = ref(false)
 const appearancePopoverRef = ref<HTMLElement | null>(null)
 const appearanceWrapperRef = ref<HTMLElement | null>(null)
-
-const isMobileScreen = ref(typeof window !== 'undefined' ? window.innerWidth < 768 : false)
+const isLandscapeScreen = ref(typeof window !== 'undefined' ? window.innerWidth > window.innerHeight : false)
 function checkScreenSize() {
   if (typeof window !== 'undefined') {
-    isMobileScreen.value = window.innerWidth < 768
+    isLandscapeScreen.value = window.innerWidth > window.innerHeight
   }
 }
 
@@ -774,8 +773,7 @@ const isHorizontalComputed = computed(() => {
   if (typeof props.isHorizontal === 'boolean') {
     return props.isHorizontal
   }
-  const isMobile = isMobileScreen.value || (typeof window !== 'undefined' && window.innerWidth < 768)
-  return !isMobile
+  return isLandscapeScreen.value
 })
 
 const bottomBarContainerStyle = computed(() => {
@@ -892,6 +890,7 @@ onMounted(() => {
   if (typeof window !== 'undefined') {
     checkScreenSize()
     window.addEventListener('resize', checkScreenSize)
+    window.addEventListener('orientationchange', checkScreenSize)
     document.addEventListener('click', handleClickOutside)
     window.addEventListener('keydown', handleKeydown)
   }
@@ -900,6 +899,7 @@ onMounted(() => {
 onUnmounted(() => {
   if (typeof window !== 'undefined') {
     window.removeEventListener('resize', checkScreenSize)
+    window.removeEventListener('orientationchange', checkScreenSize)
     document.removeEventListener('click', handleClickOutside)
     window.removeEventListener('keydown', handleKeydown)
   }

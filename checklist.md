@@ -1,6 +1,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [04/10/2026 10:13] [Concluído] Exibir barra de leitura na parte inferior em tablets na vertical (orientação retrato) baseando-se estritamente na proporção da tela
 - [04/10/2026 10:05] [Concluído] Impedir extrapolação do limite de páginas/localizações no leitor e corrigir cálculo de progresso e rótulo de spread
 - [04/10/2026 09:51] [Concluído] Posicionar os 3 ícones de ação (Anotações, Configurações e Zen Mode) na mesma linha horizontal na barra lateral desktop
 - [04/10/2026 09:49] [Concluído] Duplicar largura da barra lateral no desktop (268px), adicionar faixa vertical delimitadora de 100% da altura, botão voltar no topo e ícones verticais empilhados

@@ -1535,6 +1535,52 @@ describe('Reader Components', () => {
       expect(bottomBar.props('isHorizontal')).toBe(true)
       expect(wrapper.find('.reader-viewer__reader-pane--horizontal').exists()).toBe(true)
     })
+
+    it('em tablets e telas na vertical renderiza a barra na parte de baixo', async () => {
+      const originalInnerWidth = window.innerWidth
+      const originalInnerHeight = window.innerHeight
+      try {
+        // Simula dimensões de tablet na vertical (retrato: 768x1024)
+        Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 768 })
+        Object.defineProperty(window, 'innerHeight', { writable: true, configurable: true, value: 1024 })
+
+        const store = useReaderStore()
+        store.setDocument({
+          type: 'epub',
+          metadata: { title: 'Livro Tablet Vertical', coverUrl: '/covers/tablet.jpg' },
+          totalPages: 100,
+          isLoaded: true,
+        } as any, 'livro-tablet.epub')
+
+        const wrapper = mount(ReaderViewer, {
+          global: {
+            stubs: {
+              ReaderEnginePageCurlCanvas: true,
+              ReaderBookNotesPanel: true,
+              ReaderGraphPanel: true,
+              ReaderBottomBar: true,
+              ReaderSavedPagesModal: true,
+              ReaderAnnotationModal: true,
+              ReaderAnnotationDrawer: true,
+              ReaderTypographyPopover: true,
+              ReaderSelectionTooltip: true,
+              ReaderDictionaryCard: true,
+            },
+          },
+        })
+
+        await wrapper.vm.$nextTick()
+
+        // A barra deve estar presente como barra inferior (isHorizontal = false)
+        const bottomBar = wrapper.findComponent({ name: 'ReaderBottomBar' })
+        expect(bottomBar.exists()).toBe(true)
+        expect(bottomBar.props('isHorizontal')).toBe(false)
+        expect(wrapper.find('.reader-viewer__reader-pane--vertical').exists()).toBe(true)
+      } finally {
+        Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: originalInnerWidth })
+        Object.defineProperty(window, 'innerHeight', { writable: true, configurable: true, value: originalInnerHeight })
+      }
+    })
   })
 })
 

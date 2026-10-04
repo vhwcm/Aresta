@@ -352,10 +352,10 @@ function handleBookLayoutChange(bounds: { left: number; width: number }) {
   bookBounds.value = bounds
 }
 
-const isHorizontalScreen = ref(typeof window !== 'undefined' ? (window.innerWidth >= 768 || window.innerWidth > window.innerHeight) : false)
+const isHorizontalScreen = ref(typeof window !== 'undefined' ? (window.innerWidth > window.innerHeight) : false)
 function updateOrientation() {
   if (typeof window !== 'undefined') {
-    isHorizontalScreen.value = window.innerWidth >= 768 || window.innerWidth > window.innerHeight
+    isHorizontalScreen.value = window.innerWidth > window.innerHeight
   }
 }
 
@@ -977,6 +977,7 @@ onMounted(() => {
   store.setMobileGraphOpen(false)
   updateDeviceType()
   window.addEventListener('resize', updateDeviceType)
+  window.addEventListener('orientationchange', updateDeviceType)
   window.addEventListener('keydown', onKeyDown)
   window.addEventListener('popstate', onPopState)
   window.addEventListener('mouseup', handleTextSelectionCheck)
@@ -1047,6 +1048,7 @@ onUnmounted(() => {
   if (selectionChangeTimeout) clearTimeout(selectionChangeTimeout)
   resizeObserver?.disconnect()
   window.removeEventListener('resize', updateDeviceType)
+  window.removeEventListener('orientationchange', updateDeviceType)
   window.removeEventListener('keydown', onKeyDown)
   window.removeEventListener('popstate', onPopState)
   window.removeEventListener('mouseup', handleTextSelectionCheck)
