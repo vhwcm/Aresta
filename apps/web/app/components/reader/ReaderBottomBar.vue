@@ -355,19 +355,7 @@
         </div>
       </div>
 
-      <!-- 3. Linha 2 / Col 1 (Mais de baixo): Voltar à Biblioteca -->
-      <button
-        @click="$emit('close')"
-        class="p-1.5 sm:p-2 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
-        :class="themeButtonClass"
-        title="Voltar à biblioteca"
-        aria-label="Voltar à biblioteca"
-        id="btn-close-book"
-      >
-        <ArrowLeftIcon class="w-9 h-9 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.35]" />
-      </button>
-
-      <!-- 4. Linha 2 / Col 2 (Mais de baixo): Alternar Modo Zen -->
+      <!-- 3. Linha 2 / Col 1: Alternar Modo Zen -->
       <button
         @click="$emit('toggleZenMode')"
         class="p-1.5 sm:p-2 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
@@ -378,6 +366,18 @@
       >
         <Minimize2Icon v-if="isZenMode" class="w-9 h-9 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.35]" />
         <Maximize2Icon v-else class="w-9 h-9 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.35]" />
+      </button>
+
+      <!-- 4. Linha 2 / Col 2 (Mais embaixo e mais para a direita): Voltar à Biblioteca -->
+      <button
+        @click="$emit('close')"
+        class="p-1.5 sm:p-2 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
+        :class="themeButtonClass"
+        title="Voltar à biblioteca"
+        aria-label="Voltar à biblioteca"
+        id="btn-close-book"
+      >
+        <ArrowLeftIcon class="w-9 h-9 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.35]" />
       </button>
     </div>
 
@@ -674,19 +674,7 @@
             </div>
           </div>
 
-          <!-- 3. Voltar à Biblioteca -->
-          <button
-            @click="$emit('close')"
-            class="w-full h-11 sm:h-12 p-1.5 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
-            :class="themeButtonClass"
-            title="Voltar à biblioteca"
-            aria-label="Voltar à biblioteca"
-            id="btn-close-book"
-          >
-            <ArrowLeftIcon class="w-9 h-9 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.35]" />
-          </button>
-
-          <!-- 4. Alternar Modo Zen -->
+          <!-- 3. Alternar Modo Zen -->
           <button
             @click="$emit('toggleZenMode')"
             class="w-full h-11 sm:h-12 p-1.5 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
@@ -697,6 +685,18 @@
           >
             <Minimize2Icon v-if="isZenMode" class="w-9 h-9 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.35]" />
             <Maximize2Icon v-else class="w-9 h-9 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.35]" />
+          </button>
+
+          <!-- 4. Voltar à Biblioteca (Mais para a direita) -->
+          <button
+            @click="$emit('close')"
+            class="w-full h-11 sm:h-12 p-1.5 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
+            :class="themeButtonClass"
+            title="Voltar à biblioteca"
+            aria-label="Voltar à biblioteca"
+            id="btn-close-book"
+          >
+            <ArrowLeftIcon class="w-9 h-9 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.35]" />
           </button>
         </div>
       </div>
