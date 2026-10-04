@@ -1988,10 +1988,14 @@ const initGraph = (animateTransition = true) => {
       }
 
       updatePositions()
-      animFrameId = requestAnimationFrame(tickFloating)
+      if (typeof requestAnimationFrame !== 'undefined') {
+        animFrameId = requestAnimationFrame(tickFloating)
+      }
     }
 
-    animFrameId = requestAnimationFrame(tickFloating)
+    if (typeof requestAnimationFrame !== 'undefined') {
+      animFrameId = requestAnimationFrame(tickFloating)
+    }
   }
 
   updatePositions()

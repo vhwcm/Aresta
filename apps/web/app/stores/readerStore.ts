@@ -131,22 +131,33 @@ export const useReaderStore = defineStore('reader', {
   },
 
   getters: {
-    totalPages: (state): number => state.document?.totalPages ?? 0,
+    totalPages: (state): number => {
+      const doc = state.document as any
+      if (doc && typeof doc.getTotalUnits === 'function') {
+        return Math.max(1, doc.getTotalUnits())
+      }
+      return state.document?.totalPages ?? 0
+    },
     hasDocument: (state): boolean => state.document !== null,
     isFirstPage: (state): boolean => state.currentPage <= 1,
-    isLastPage: (state): boolean =>
-      state.document !== null && state.currentPage >= state.document.totalPages,
+    isLastPage: (state): boolean => {
+      const total = (state.document as any)?.getTotalUnits?.() ?? state.document?.totalPages ?? 0
+      return state.document !== null && state.currentPage >= total
+    },
     documentType: (state) => state.document?.type ?? null,
     title: (state) => state.document?.metadata.title ?? state.fileName ?? '',
     coverUrl: (state): string => state.document?.metadata.coverUrl || state.customCoverUrl || '',
-    canGoNext: (state): boolean =>
-      state.document !== null && state.currentPage < state.document.totalPages,
+    canGoNext: (state): boolean => {
+      const total = (state.document as any)?.getTotalUnits?.() ?? state.document?.totalPages ?? 0
+      return state.document !== null && state.currentPage < total
+    },
     canGoPrev: (state): boolean => state.currentPage > 1,
     isCurrentPageBookmarked: (state): boolean => state.bookmarks.includes(state.currentPage),
     savedPages: (state): number[] => [...state.bookmarks].sort((a, b) => a - b),
     progressPercentage: (state): number => {
-      if (!state.document || state.document.totalPages <= 0) return 0
-      return Math.round((state.currentPage / state.document.totalPages) * 100)
+      const total = (state.document as any)?.getTotalUnits?.() ?? state.document?.totalPages ?? 0
+      if (total <= 0) return 0
+      return Math.min(100, Math.max(0, Math.round((state.currentPage / total) * 100)))
     },
     isScrollMode: (state): boolean => state.readingMode === 'scroll',
   },
@@ -694,12 +705,15 @@ export const useReaderStore = defineStore('reader', {
     goToPosition(pos: ReadingPosition) {
       if (!this.document) return
       this.position = pos
+      const maxUnits = typeof (this.document as any).getTotalUnits === 'function'
+        ? (this.document as any).getTotalUnits()
+        : (this.document.totalPages || 1)
       if (typeof (this.document as any).positionToUnit === 'function') {
-        this.currentPage = (this.document as any).positionToUnit(pos)
+        this.currentPage = Math.max(1, Math.min((this.document as any).positionToUnit(pos), maxUnits))
       } else if (pos.kind === 'pdf') {
-        this.currentPage = Math.max(1, Math.min(pos.page, this.document.totalPages || 1))
+        this.currentPage = Math.max(1, Math.min(pos.page, maxUnits))
       } else if (pos.kind === 'epub') {
-        this.currentPage = pos.sectionIndex + 1
+        this.currentPage = Math.max(1, Math.min(pos.sectionIndex + 1, maxUnits))
       }
       if (this.bookId) {
         void this.persistProgress(this.currentPage, serializePosition(pos))
@@ -708,7 +722,10 @@ export const useReaderStore = defineStore('reader', {
 
     goToPage(page: number) {
       if (!this.document) return
-      const clamped = Math.max(1, Math.min(page, this.document.totalPages))
+      const maxUnits = typeof (this.document as any).getTotalUnits === 'function'
+        ? (this.document as any).getTotalUnits()
+        : (this.document.totalPages || 1)
+      const clamped = Math.max(1, Math.min(page, maxUnits))
       this.currentPage = clamped
       if (typeof (this.document as any).unitToPosition === 'function') {
         this.position = (this.document as any).unitToPosition(clamped)

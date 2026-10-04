@@ -734,10 +734,11 @@ import ReaderProgressScrubber from './navigation/ReaderProgressScrubber.vue'
 import ReaderTocDrawer from './navigation/ReaderTocDrawer.vue'
 import ReaderBackChip from './navigation/ReaderBackChip.vue'
 import ReaderGoToField from './navigation/ReaderGoToField.vue'
+import { useLocationProgress } from '~/composables/reader/useLocationProgress'
 
 const isTocOpen = ref(false)
 const isGoToOpen = ref(false)
-const isEpub = computed(() => store.documentType === 'epub')
+const { isEpub, currentUnit, totalUnits, progressPercentage } = useLocationProgress()
 
 const props = defineProps<{
   isNotesActive?: boolean
@@ -796,19 +797,20 @@ function handleToggleNotes() {
 
 // Progresso e Exibição de Páginas
 const pageDisplay = computed(() => {
-  if (store.isTwoPageMode && store.totalPages > 1) {
-    const leftNum = store.currentPage % 2 !== 0 ? store.currentPage : Math.max(1, store.currentPage - 1)
-    const rightNum = Math.min(leftNum + 1, store.totalPages)
+  const tot = totalUnits.value || store.totalPages || 1
+  const cur = Math.min(tot, Math.max(1, currentUnit.value))
+  if (store.isTwoPageMode && tot > 1) {
+    const leftNum = Math.min(tot, cur % 2 !== 0 ? cur : Math.max(1, cur - 1))
+    const rightNum = Math.min(leftNum + 1, tot)
     return leftNum === rightNum
-      ? `${leftNum}/${store.totalPages}`
-      : `${leftNum}-${rightNum}/${store.totalPages}`
+      ? `${leftNum}/${tot}`
+      : `${leftNum}-${rightNum}/${tot}`
   }
-  return store.totalPages > 0 ? `${store.currentPage}/${store.totalPages}` : `${store.currentPage}`
+  return tot > 0 ? `${cur}/${tot}` : `${cur}`
 })
 
 const progressPercentageComputed = computed(() => {
-  if (!store.document || store.totalPages <= 0) return 0
-  return Math.round((store.currentPage / store.totalPages) * 100)
+  return Math.min(100, Math.max(0, progressPercentage.value))
 })
 
 // Classes de Tema e Botões Soltos (sem blur e sem fundo na barra)

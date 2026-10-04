@@ -54,5 +54,10 @@ export function countSectionText(nodeOrHtml: Node | string): number {
     node = walker.nextNode() as Text | null
   }
 
-  return count
+  const imgCount = (rootNode as any).querySelectorAll ? (rootNode as any).querySelectorAll('img, image, svg').length : 0
+  if (count === 0 && imgCount > 0) {
+    count = imgCount * 500
+  }
+
+  return Math.max(1, count)
 }

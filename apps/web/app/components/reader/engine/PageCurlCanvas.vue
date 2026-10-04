@@ -805,16 +805,23 @@ let lastTurnTriggerTime = 0
 // P5: Calcula a página de destino real considerando modo 1 ou 2 páginas
 function getTargetPage(direction: PageTurnDirection): number {
   const layout = pageLayout.value
+  const total = store.totalPages
+  if (total <= 1) return store.currentPage
   if (!layout.isTwoPage) {
     return direction === 'next'
-      ? Math.min(store.currentPage + 1, store.totalPages)
+      ? Math.min(store.currentPage + 1, total)
       : Math.max(1, store.currentPage - 1)
   }
   const curLeft = store.currentPage % 2 !== 0 ? store.currentPage : Math.max(1, store.currentPage - 1)
   if (direction === 'next') {
-    return curLeft + 2 <= store.totalPages ? curLeft + 2 : store.currentPage
+    if (curLeft + 2 <= total) {
+      return curLeft + 2
+    } else if (curLeft + 1 <= total) {
+      return curLeft + 1
+    }
+    return store.currentPage
   } else {
-    return curLeft - 2 >= 1 ? curLeft - 2 : store.currentPage
+    return curLeft - 2 >= 1 ? curLeft - 2 : (curLeft > 1 ? 1 : store.currentPage)
   }
 }
 

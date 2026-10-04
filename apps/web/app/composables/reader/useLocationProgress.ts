@@ -9,25 +9,27 @@ export function useLocationProgress() {
 
   const isEpub = computed(() => store.documentType === 'epub')
 
-  const currentUnit = computed(() => {
-    const doc = store.document as any
-    if (doc && store.position && typeof doc.positionToUnit === 'function') {
-      return doc.positionToUnit(store.position)
-    }
-    return Math.max(1, store.currentPage)
-  })
-
   const totalUnits = computed(() => {
     const doc = store.document as any
     if (doc && typeof doc.getTotalUnits === 'function') {
-      return doc.getTotalUnits()
+      return Math.max(1, doc.getTotalUnits())
     }
     return Math.max(1, store.totalPages)
   })
 
+  const currentUnit = computed(() => {
+    const doc = store.document as any
+    let unit = Math.max(1, store.currentPage)
+    if (doc && store.position && typeof doc.positionToUnit === 'function') {
+      unit = doc.positionToUnit(store.position)
+    }
+    return Math.min(totalUnits.value, Math.max(1, unit))
+  })
+
   const progressPercentage = computed(() => {
     if (totalUnits.value <= 0) return 0
-    return Math.round((currentUnit.value / totalUnits.value) * 100)
+    const pct = Math.round((currentUnit.value / totalUnits.value) * 100)
+    return Math.min(100, Math.max(0, pct))
   })
 
   const progressLabel = computed(() => {
