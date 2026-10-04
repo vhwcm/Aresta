@@ -1,6 +1,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [04/10/2026 09:49] [Concluído] Duplicar largura da barra lateral no desktop (268px), adicionar faixa vertical delimitadora de 100% da altura, botão voltar no topo e ícones verticais empilhados
 - [04/10/2026 09:42] [Concluído] Posicionar botão de voltar como o mais embaixo e mais para a direita nos layouts vertical e horizontal do leitor
 - [04/10/2026 09:39] [Concluído] Ampliar ícones do leitor e aproximá-los da barra de cima, aumentar ícones de Sumário/Ir para e torná-los icon-only no layout horizontal
 - [04/10/2026 09:31] [Concluído] Mover localização do livro para fora do menu de configuração (abaixo da capa na barra lateral e ao lado/acima dos ícones no mobile) e remover botões de fonte externos
