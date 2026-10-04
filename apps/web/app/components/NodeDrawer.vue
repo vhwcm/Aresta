@@ -182,6 +182,9 @@ import { ref, watch, computed } from 'vue'
 import type { GraphNode, UserBookItem } from '~/interfaces/graph'
 import { XIcon, BookOpenIcon, BookIcon, PlusIcon, TrashIcon, Trash2Icon, BrainIcon, SparklesIcon } from 'lucide-vue-next'
 import { getCoverUrl, getBookFormat } from '~/utils/cover'
+import { useArestaDialog } from '~/composables/useArestaDialog'
+
+const dialog = useArestaDialog()
 
 const props = defineProps<{
   node: GraphNode | null
@@ -248,9 +251,17 @@ const handleUnlinkBook = (userBookId: number) => {
   emit('unlinkBook', { nodeId: props.node.id, userBookId })
 }
 
-const handleDeleteNode = () => {
+const handleDeleteNode = async () => {
   if (!props.node) return
-  if (confirm(`Tem certeza que deseja excluir o nó "${props.node.name}"?`)) {
+  const confirmed = await dialog.confirm({
+    title: 'Excluir Nó de Tema',
+    subtitle: 'Mapa Mental',
+    message: `Tem certeza que deseja excluir o nó "${props.node.name}"?`,
+    confirmText: 'Excluir Nó',
+    variant: 'danger',
+    icon: 'delete'
+  })
+  if (confirmed) {
     emit('deleteNode', props.node.id)
     emit('close')
   }

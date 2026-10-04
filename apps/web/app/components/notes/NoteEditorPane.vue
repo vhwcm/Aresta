@@ -6,6 +6,9 @@
       data-testid="editor-wrapper"
       @mouseup="handleTextSelection"
       @keyup="handleTextSelection"
+      @dragover.prevent
+      @drop="handleEditorFileDrop"
+      @paste="handleEditorPaste"
     >
       <!-- Feedback Toast -->
       <Transition name="fade">
@@ -20,9 +23,50 @@
 
       <!-- Cartão Principal do Documento -->
       <div class="flex-1 bg-bgPanel rounded-2xl border border-divider shadow-sm overflow-hidden flex flex-col relative">
-        <!-- BARRA ÚNICA NO TOPO DA ANOTAÇÃO (Responsiva no mobile) -->
-        <div class="w-full bg-bgSurface border-b border-divider px-2.5 sm:px-4 py-2 flex items-center justify-between gap-2 overflow-x-auto no-scrollbar scroll-smooth flex-nowrap shrink-0 backdrop-blur-sm touch-pan-x z-20">
-          <!-- Grupo da Esquerda: Formatação, Pasta, Tags e Vínculos -->
+        <!-- LINHA 1: BARRA SUPERIOR (Voltar, Título Editável no centro, Excluir) -->
+        <div class="w-full bg-bgSurface border-b border-divider px-3 sm:px-4 py-2 flex items-center justify-between gap-2.5 shrink-0 z-20">
+          <!-- Botão Voltar -->
+          <AppBackButton
+            variant="icon"
+            fallback="/"
+            title="Voltar para o Grafo de Conhecimento"
+            test-id="note-back-button"
+            :custom-click="handleBack"
+          />
+
+          <!-- Título Editável da Nota (Entre Voltar e Excluir) -->
+          <div class="flex-1 min-w-0 flex items-center">
+            <input
+              ref="titleInputRef"
+              v-model="localNote.title"
+              type="text"
+              placeholder="Sem título"
+              class="w-full bg-transparent border border-transparent hover:border-divider/60 focus:border-accent/40 rounded-lg px-2.5 py-1 text-sm sm:text-base font-semibold text-textPrimary placeholder:text-textSecondary/40 focus:outline-none focus:bg-bgElevated/60 transition-all leading-normal truncate"
+              @input="onInput"
+              @keydown.enter.prevent="focusEditor"
+              @keydown.down="focusEditor"
+              data-testid="input-note-title"
+              title="Título da Nota"
+              aria-label="Título da Nota"
+            />
+          </div>
+
+          <!-- Botão Excluir Nota -->
+          <button
+            type="button"
+            class="w-8 h-8 rounded-lg flex items-center justify-center text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-divider/80 hover:border-red-500/30 transition-colors cursor-pointer shrink-0"
+            title="Excluir Nota"
+            aria-label="Excluir Nota"
+            @click="$emit('delete', localNote.id)"
+            data-testid="btn-delete-note"
+          >
+            <Trash2Icon class="w-4 h-4" />
+          </button>
+        </div>
+
+        <!-- LINHA 2: BARRA DE FORMATAÇÃO E FERRAMENTAS -->
+        <div class="w-full bg-bgPanel/60 border-b border-divider/80 px-2.5 sm:px-4 py-1.5 flex items-center justify-between gap-2 overflow-x-auto no-scrollbar scroll-smooth flex-nowrap shrink-0 backdrop-blur-sm touch-pan-x z-10">
+          <!-- Grupo da Esquerda: Formatação, Tags e Vínculos -->
           <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <!-- Formatação de Texto -->
             <div class="flex items-center gap-1 shrink-0">
@@ -70,22 +114,14 @@
             <div class="relative inline-block shrink-0">
               <button
                 type="button"
-                class="px-2.5 h-8 rounded-lg bg-bgElevated hover:bg-bgSurface text-xs text-textSecondary hover:text-textPrimary border border-divider/80 flex items-center gap-1.5 cursor-pointer shrink-0 transition-colors max-w-[160px] sm:max-w-[200px]"
+                class="w-8 h-8 rounded-lg bg-bgElevated hover:bg-bgSurface text-textSecondary hover:text-textPrimary border border-divider/80 flex items-center justify-center cursor-pointer shrink-0 transition-colors"
                 :class="{ 'border-accent/60 text-accent font-semibold': isTagsPopoverOpen || (localNote.tags && localNote.tags.length > 0) }"
                 title="Gerenciar tags da nota"
+                aria-label="Gerenciar tags da nota"
                 @click="isTagsPopoverOpen = !isTagsPopoverOpen"
                 data-testid="btn-toggle-tags"
               >
                 <TagIcon class="w-3.5 h-3.5 text-accent shrink-0" />
-                <span class="truncate">
-                  {{ tagsButtonLabel }}
-                </span>
-                <span
-                  v-if="localNote.tags && localNote.tags.length > 1"
-                  class="px-1.5 py-0.2 rounded-full bg-accent/20 text-accent text-[10px] font-bold shrink-0"
-                >
-                  +{{ localNote.tags.length - 1 }}
-                </span>
               </button>
 
               <!-- Painel Popover Flutuante de Tags -->
@@ -178,64 +214,66 @@
             <!-- Botão Vincular Universal (Quadros, Notas, Livros, Livretos) -->
             <button
               type="button"
-              class="px-2.5 h-8 rounded-lg bg-accent/15 hover:bg-accent/25 text-accent hover:text-white border border-accent/30 flex items-center gap-1.5 text-xs font-medium cursor-pointer shrink-0 transition-colors shadow-xs"
+              class="w-8 h-8 rounded-lg bg-accent/15 hover:bg-accent/25 text-accent hover:text-white border border-accent/30 flex items-center justify-center cursor-pointer shrink-0 transition-colors shadow-xs"
               title="Vincular Quadro, Nota, Livro ou Livreto"
+              aria-label="Vincular Quadro, Nota, Livro ou Livreto"
               @click="openUniversalLinkModal"
               data-testid="btn-link-canvas"
             >
               <LinkIcon class="w-3.5 h-3.5" />
-              <span>Vincular</span>
-              <ChevronDownIcon class="w-3 h-3 opacity-70" />
+            </button>
+
+            <!-- Separador Vertical -->
+            <div class="h-4 w-px bg-divider/80 mx-0.5 shrink-0"></div>
+
+            <!-- Botão Inserir Imagem -->
+            <button
+              type="button"
+              class="w-8 h-8 rounded-lg bg-bgElevated hover:bg-bgSurface text-textSecondary hover:text-textPrimary border border-divider/80 flex items-center justify-center cursor-pointer shrink-0 transition-colors"
+              :class="{ 'border-accent/60 text-accent font-semibold': isImageModalOpen }"
+              title="Inserir imagem do dispositivo ou por URL"
+              aria-label="Inserir imagem"
+              @click="openImageModal"
+              data-testid="btn-insert-image"
+            >
+              <ImageIcon class="w-3.5 h-3.5" />
             </button>
           </div>
 
-          <!-- Grupo da Direita: Indicador para Notas HTML Sintetizadas e Ações -->
-          <div class="flex items-center gap-1.5 sm:gap-2 shrink-0 ml-auto">
-            <div v-if="isHtmlNote" class="flex items-center gap-1.5 shrink-0">
-              <span class="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-400 font-semibold text-[11px] border border-amber-500/30">
-                <SparklesIcon class="w-3 h-3" />
-                Síntese de Desenho (HTML)
-              </span>
+          <!-- Grupo da Direita: Indicador para Notas HTML Sintetizadas -->
+          <div v-if="isHtmlNote" class="flex items-center gap-1.5 sm:gap-2 shrink-0 ml-auto">
+            <span class="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-400 font-semibold text-[11px] border border-amber-500/30">
+              <SparklesIcon class="w-3 h-3" />
+              Síntese de Desenho (HTML)
+            </span>
 
-              <div class="flex items-center gap-1 bg-bgElevated p-0.5 rounded-lg text-[11px] border border-divider">
-                <button
-                  type="button"
-                  class="px-2 py-0.5 rounded transition-all cursor-pointer"
-                  :class="htmlViewMode === 'preview' ? 'bg-primary text-white font-medium shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
-                  @click="htmlViewMode === 'preview'"
-                >
-                  Preview
-                </button>
-                <button
-                  type="button"
-                  class="px-2 py-0.5 rounded transition-all cursor-pointer"
-                  :class="htmlViewMode === 'code' ? 'bg-primary text-white font-medium shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
-                  @click="htmlViewMode = 'code'"
-                >
-                  Código
-                </button>
-              </div>
-
+            <div class="flex items-center gap-1 bg-bgElevated p-0.5 rounded-lg text-[11px] border border-divider">
               <button
                 type="button"
-                class="text-[11px] px-2 py-1 rounded bg-bgElevated hover:bg-bgSurface text-textSecondary hover:text-textPrimary border border-divider transition-all flex items-center gap-1 cursor-pointer"
-                title="Copiar HTML"
-                @click="copyHtmlContent"
+                class="px-2 py-0.5 rounded transition-all cursor-pointer"
+                :class="htmlViewMode === 'preview' ? 'bg-primary text-white font-medium shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
+                @click="htmlViewMode === 'preview'"
               >
-                <CopyIcon class="w-3 h-3" />
-                <span class="hidden sm:inline">{{ copiedHtml ? 'Copiado!' : 'Copiar' }}</span>
+                Preview
+              </button>
+              <button
+                type="button"
+                class="px-2 py-0.5 rounded transition-all cursor-pointer"
+                :class="htmlViewMode === 'code' ? 'bg-primary text-white font-medium shadow-xs' : 'text-textSecondary hover:text-textPrimary'"
+                @click="htmlViewMode = 'code'"
+              >
+                Código
               </button>
             </div>
 
-            <!-- Botão Excluir Nota -->
             <button
               type="button"
-              class="w-8 h-8 rounded-lg flex items-center justify-center text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-divider/80 hover:border-red-500/30 transition-colors cursor-pointer shrink-0"
-              title="Excluir Nota"
-              @click="$emit('delete', localNote.id)"
-              data-testid="btn-delete-note"
+              class="text-[11px] px-2 py-1 rounded bg-bgElevated hover:bg-bgSurface text-textSecondary hover:text-textPrimary border border-divider transition-all flex items-center gap-1 cursor-pointer"
+              title="Copiar HTML"
+              @click="copyHtmlContent"
             >
-              <Trash2Icon class="w-4 h-4" />
+              <CopyIcon class="w-3 h-3" />
+              <span class="hidden sm:inline">{{ copiedHtml ? 'Copiado!' : 'Copiar' }}</span>
             </button>
           </div>
         </div>
@@ -246,28 +284,9 @@
             v-if="htmlViewMode === 'preview'"
             class="flex-1 overflow-y-auto p-4 sm:p-6 select-text custom-scrollbar prose dark:prose-invert max-w-none text-textPrimary leading-relaxed flex flex-col"
           >
-            <!-- Título Inline estilo Obsidian dentro da página -->
-            <div class="mb-4 pb-2 border-b border-divider/40 not-prose shrink-0">
-              <input
-                v-model="localNote.title"
-                type="text"
-                placeholder="Sem título"
-                class="w-full bg-transparent border-none text-2xl sm:text-3xl font-bold font-serif text-textPrimary placeholder:text-textSecondary/40 focus:outline-none transition-colors leading-tight"
-                @input="onInput"
-              />
-            </div>
             <div class="synthesized-html-container" v-html="localNote.content"></div>
           </div>
           <div v-else class="flex-1 flex flex-col p-4 sm:p-6">
-            <div class="mb-4 pb-2 border-b border-divider/40 shrink-0">
-              <input
-                v-model="localNote.title"
-                type="text"
-                placeholder="Sem título"
-                class="w-full bg-transparent border-none text-2xl sm:text-3xl font-bold font-serif text-textPrimary placeholder:text-textSecondary/40 focus:outline-none transition-colors leading-tight"
-                @input="onInput"
-              />
-            </div>
             <textarea
               v-model="localNote.content"
               class="w-full flex-1 font-mono text-xs bg-transparent text-textPrimary focus:outline-none resize-none select-text custom-scrollbar"
@@ -283,20 +302,6 @@
           class="flex-1 overflow-y-auto p-3 sm:p-6 custom-scrollbar flex flex-col"
           @click="handleEditorClick"
         >
-          <!-- Título Inline estilo Obsidian dentro da página -->
-          <div class="mb-4 pb-2 border-b border-divider/40 shrink-0">
-            <input
-              v-model="localNote.title"
-              type="text"
-              placeholder="Sem título"
-              class="w-full bg-transparent border-none text-2xl sm:text-3xl font-bold font-serif text-textPrimary placeholder:text-textSecondary/40 focus:outline-none transition-colors leading-tight"
-              @input="onInput"
-              @keydown.enter.prevent="focusEditor"
-              @keydown.down="focusEditor"
-              data-testid="input-note-title"
-            />
-          </div>
-
           <MilkdownEditor
             ref="milkdownRef"
             v-model="localNote.content"
@@ -577,7 +582,7 @@
                   <div class="text-[11px] text-textSecondary/70 mt-0.5 truncate flex items-center gap-1">
                     <TagIcon class="w-2.5 h-2.5 text-accent shrink-0" />
                     <span class="truncate">
-                      {{ (n.tags && n.tags.length > 0) ? n.tags.map(t => '#' + t).join(' ') : (n.folder ? '#' + n.folder : 'Sem tags') }}
+                      {{ (n.tags && n.tags.length > 0) ? n.tags.map((t: string) => '#' + t).join(' ') : (n.folder ? '#' + n.folder : 'Sem tags') }}
                     </span>
                   </div>
                 </div>
@@ -778,11 +783,155 @@
         </div>
       </Transition>
     </Teleport>
+
+    <!-- MODAL DE INSERÇÃO DE IMAGEM -->
+    <Teleport to="body">
+      <Transition name="fade">
+        <div
+          v-if="isImageModalOpen"
+          class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs"
+          @click.self="isImageModalOpen = false"
+          data-testid="modal-insert-image"
+        >
+          <div class="w-full max-w-md bg-bgPanel border border-divider rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95">
+            <!-- Modal Header -->
+            <div class="px-4 sm:px-5 py-3.5 border-b border-divider flex items-center justify-between">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-xl bg-accent/15 border border-accent/30 flex items-center justify-center text-accent shrink-0">
+                  <ImageIcon class="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 class="text-sm font-semibold text-textPrimary">Inserir Imagem</h3>
+                  <p class="text-[11px] text-textSecondary">Carregue um arquivo local ou informe uma URL</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                class="p-1 rounded-lg text-textSecondary hover:text-textPrimary hover:bg-white/5 transition-colors cursor-pointer"
+                @click="isImageModalOpen = false"
+                data-testid="btn-close-image-modal"
+              >
+                <XIcon class="w-4 h-4" />
+              </button>
+            </div>
+
+            <!-- Abas: Arquivo / URL -->
+            <div class="flex border-b border-divider bg-bgSurface/30 px-3 pt-2 gap-1 text-xs">
+              <button
+                type="button"
+                class="px-3 py-1.5 border-b-2 font-medium transition-colors cursor-pointer flex items-center gap-1.5"
+                :class="imageTab === 'file' ? 'border-accent text-accent font-semibold' : 'border-transparent text-textSecondary hover:text-textPrimary'"
+                @click="imageTab = 'file'"
+                data-testid="tab-image-file"
+              >
+                <span>📁 Do Dispositivo</span>
+              </button>
+              <button
+                type="button"
+                class="px-3 py-1.5 border-b-2 font-medium transition-colors cursor-pointer flex items-center gap-1.5"
+                :class="imageTab === 'url' ? 'border-accent text-accent font-semibold' : 'border-transparent text-textSecondary hover:text-textPrimary'"
+                @click="imageTab = 'url'"
+                data-testid="tab-image-url"
+              >
+                <span>🌐 URL da Web</span>
+              </button>
+            </div>
+
+            <!-- Conteúdo: Aba Arquivo -->
+            <div v-if="imageTab === 'file'" class="p-4 sm:p-5 flex flex-col gap-3">
+              <label
+                class="flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed border-divider hover:border-accent/60 rounded-xl bg-bgSurface/30 hover:bg-accent/5 transition-all cursor-pointer text-center group"
+              >
+                <input
+                  ref="noteImageFileInputRef"
+                  type="file"
+                  accept="image/*"
+                  class="hidden"
+                  @change="handleNoteImageFileSelected"
+                  data-testid="input-note-image-file"
+                />
+                <div class="w-10 h-10 rounded-xl bg-accent/10 text-accent group-hover:scale-110 flex items-center justify-center transition-transform">
+                  <ImageIcon class="w-5 h-5" />
+                </div>
+                <div>
+                  <p class="text-xs font-semibold text-textPrimary group-hover:text-accent transition-colors">
+                    Clique para selecionar uma imagem
+                  </p>
+                  <p class="text-[11px] text-textSecondary mt-0.5">
+                    PNG, JPG, SVG, WebP, GIF (armazenada localmente)
+                  </p>
+                </div>
+              </label>
+
+              <!-- Alt text opcional -->
+              <div class="flex flex-col gap-1">
+                <label class="text-[11px] text-textSecondary font-medium">Legenda ou texto alternativo (opcional)</label>
+                <input
+                  v-model="noteImageAltInput"
+                  type="text"
+                  placeholder="Ex: Diagrama de fluxo"
+                  class="w-full px-3 py-1.5 text-xs bg-bgSurface border border-divider rounded-xl text-textPrimary placeholder:text-textSecondary/50 focus:outline-none focus:border-accent"
+                  data-testid="input-note-image-alt"
+                />
+              </div>
+            </div>
+
+            <!-- Conteúdo: Aba URL -->
+            <div v-else class="p-4 sm:p-5 flex flex-col gap-3">
+              <div class="flex flex-col gap-1">
+                <label class="text-[11px] text-textSecondary font-medium">URL da Imagem</label>
+                <input
+                  v-model="noteImageUrlInput"
+                  type="url"
+                  placeholder="https://exemplo.com/imagem.png"
+                  class="w-full px-3 py-1.5 text-xs bg-bgSurface border border-divider rounded-xl text-textPrimary placeholder:text-textSecondary/50 focus:outline-none focus:border-accent"
+                  @keydown.enter.prevent="insertNoteImageUrl"
+                  data-testid="input-note-image-url-field"
+                />
+              </div>
+
+              <div class="flex flex-col gap-1">
+                <label class="text-[11px] text-textSecondary font-medium">Legenda ou texto alternativo (opcional)</label>
+                <input
+                  v-model="noteImageAltInput"
+                  type="text"
+                  placeholder="Ex: Ilustração"
+                  class="w-full px-3 py-1.5 text-xs bg-bgSurface border border-divider rounded-xl text-textPrimary placeholder:text-textSecondary/50 focus:outline-none focus:border-accent"
+                  @keydown.enter.prevent="insertNoteImageUrl"
+                  data-testid="input-note-image-url-alt"
+                />
+              </div>
+
+              <button
+                type="button"
+                class="mt-2 w-full py-2 rounded-xl bg-accent hover:bg-accent/90 text-white text-xs font-semibold transition-all cursor-pointer shadow-md disabled:opacity-50"
+                :disabled="!noteImageUrlInput.trim()"
+                @click="insertNoteImageUrl"
+                data-testid="btn-confirm-insert-image-url"
+              >
+                Inserir Imagem na Nota
+              </button>
+            </div>
+
+            <!-- Footer -->
+            <div class="px-4 sm:px-5 py-3 border-t border-divider bg-bgSurface/20 flex items-center justify-end">
+              <button
+                type="button"
+                class="px-3.5 py-1.5 rounded-xl border border-divider text-xs text-textSecondary hover:text-textPrimary hover:bg-bgSurface transition-colors cursor-pointer"
+                @click="isImageModalOpen = false"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </main>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import {
   FolderIcon,
   TagIcon,
@@ -793,6 +942,7 @@ import {
   CheckCircle2Icon,
   Copy as CopyIcon,
   Search as SearchIcon,
+  Image as ImageIcon,
   Plus as PlusIcon,
   Link as LinkIcon,
   ChevronDown as ChevronDownIcon,
@@ -805,6 +955,7 @@ import {
 } from 'lucide-vue-next'
 import MilkdownEditor from '~/components/MilkdownEditor.vue'
 import ReaderAnnotationModal from '~/components/reader/ReaderAnnotationModal.vue'
+import AppBackButton from '~/components/AppBackButton.vue'
 import { canvasRepo } from '~/adapters/database/repositories/CanvasRepository'
 import { noteRepo } from '~/adapters/database/repositories/NoteRepository'
 import { bookRepo } from '~/adapters/database/repositories/BookRepository'
@@ -813,6 +964,7 @@ import { openExternalUrl, cleanUrlTitle, sanitizeUrl } from '~/utils/urlOpener'
 import { useDidacticBooklet } from '~/composables/useDidacticBooklet'
 import { useGraph } from '~/composables/useGraph'
 import { extractTitleFromMarkdown } from '~/utils/noteTitle'
+import { optimizeImageFile } from '~/utils/imageOptimizer'
 import type { NoteItem } from '~/interfaces/note'
 import type { CanvasSummary } from '~/interfaces/canvas'
 import type { AnnotationItem } from '~/composables/useAnnotations'
@@ -831,11 +983,36 @@ const emit = defineEmits<{
   (_e: 'close'): void
 }>()
 
+const handleBack = () => {
+  emit('close')
+}
+
+const titleInputRef = ref<HTMLInputElement | null>(null)
+
 const normalizeInitialTitle = (t?: string) => {
   const clean = (t || '').trim()
-  if (clean.toLowerCase() === 'nova nota' || clean.toLowerCase() === 'nota sem título') return ''
+  if (
+    clean.toLowerCase() === 'nova nota' ||
+    clean.toLowerCase() === 'nota sem título' ||
+    clean.toLowerCase() === 'nota sem titulo' ||
+    clean.toLowerCase() === 'nota'
+  ) {
+    return ''
+  }
   return clean
 }
+
+const focusTitle = () => {
+  nextTick(() => {
+    titleInputRef.value?.focus()
+  })
+}
+
+onMounted(() => {
+  if (!localNote.value.title || localNote.value.title.trim() === '') {
+    focusTitle()
+  }
+})
 
 const initNoteTags = (note: NoteItem): string[] => {
   const tags = Array.isArray(note.tags) ? [...note.tags] : []
@@ -931,13 +1108,17 @@ function handleAnnotationCreated(created: AnnotationItem) {
 
 watch(
   () => props.note,
-  (newVal) => {
+  (newVal, oldVal) => {
+    const isDifferentNote = !oldVal || newVal.id !== oldVal.id
     const mergedTags = initNoteTags(newVal)
     localNote.value = {
       ...newVal,
       title: normalizeInitialTitle(newVal.title),
       tags: mergedTags,
       folder: newVal.folder || mergedTags[0] || null
+    }
+    if (isDifferentNote && (!localNote.value.title || localNote.value.title.trim() === '')) {
+      focusTitle()
     }
   },
   { deep: true }
@@ -1112,6 +1293,158 @@ const insertWebLink = () => {
   webLinkUrl.value = ''
   webLinkTitle.value = ''
   showToast(`Link "${title}" inserido na nota!`)
+}
+
+// Estado do Modal de Inserção de Imagens
+const isImageModalOpen = ref(false)
+const imageTab = ref<'file' | 'url'>('file')
+const noteImageUrlInput = ref('')
+const noteImageAltInput = ref('')
+const noteImageFileInputRef = ref<HTMLInputElement | null>(null)
+
+const openImageModal = () => {
+  noteImageUrlInput.value = ''
+  noteImageAltInput.value = ''
+  imageTab.value = 'file'
+  isImageModalOpen.value = true
+}
+
+const insertMarkdownImage = (url: string, alt = 'Imagem') => {
+  const safeAlt = (alt || '').trim() || 'Imagem'
+  const markdownImage = `![${safeAlt}](${url})\n\n`
+
+  if (milkdownRef.value?.insertImage) {
+    try {
+      milkdownRef.value.insertImage(url, safeAlt)
+      setTimeout(() => {
+        if (milkdownRef.value?.getContent) {
+          localNote.value.content = milkdownRef.value.getContent()
+          onInput()
+        }
+      }, 30)
+      return
+    } catch {
+      // fallback
+    }
+  } else if (milkdownRef.value?.insertText) {
+    try {
+      milkdownRef.value.insertText(markdownImage)
+      setTimeout(() => {
+        if (milkdownRef.value?.getContent) {
+          localNote.value.content = milkdownRef.value.getContent()
+          onInput()
+        }
+      }, 30)
+      return
+    } catch {
+      // fallback
+    }
+  }
+
+  const current = localNote.value.content || ''
+  localNote.value.content = current + (current.endsWith('\n') || !current ? '' : '\n\n') + markdownImage
+  onInput()
+}
+
+const handleNoteImageFileSelected = async (e: Event) => {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+
+  try {
+    const { dataUrl } = await optimizeImageFile(file)
+    if (dataUrl) {
+      insertMarkdownImage(dataUrl, noteImageAltInput.value || file.name)
+      isImageModalOpen.value = false
+      showToast(`Imagem "${file.name}" inserida na nota!`)
+      if (noteImageFileInputRef.value) noteImageFileInputRef.value.value = ''
+    }
+  } catch (err) {
+    console.error('Erro ao processar imagem da nota:', err)
+  }
+}
+
+const insertNoteImageUrl = () => {
+  const url = noteImageUrlInput.value.trim()
+  if (!url) return
+  insertMarkdownImage(url, noteImageAltInput.value)
+  isImageModalOpen.value = false
+  showToast('Imagem inserida na nota!')
+}
+
+// Drag & Drop e Paste de Imagens no Editor de Notas
+const handleEditorFileDrop = async (e: DragEvent) => {
+  const target = e.target as HTMLElement | null
+  if (target?.closest('.milkdown-aresta-wrapper') || target?.closest('.ProseMirror')) {
+    return
+  }
+
+  const files = e.dataTransfer?.files
+  const imageFiles = files ? Array.from(files).filter((f) => f.type.startsWith('image/')) : []
+
+  if (imageFiles.length > 0) {
+    e.preventDefault()
+    e.stopPropagation()
+    for (const file of imageFiles) {
+      try {
+        const { dataUrl } = await optimizeImageFile(file)
+        if (dataUrl) {
+          insertMarkdownImage(dataUrl, file.name)
+          showToast(`Imagem "${file.name}" inserida na nota!`)
+        }
+      } catch (err) {
+        console.error('Erro ao soltar imagem na nota:', err)
+      }
+    }
+    return
+  }
+
+  const uri = e.dataTransfer?.getData('text/uri-list') || ''
+  const html = e.dataTransfer?.getData('text/html') || ''
+  const text = e.dataTransfer?.getData('text/plain') || ''
+  const htmlMatch = html.match(/<img[^>]+src=["']([^"']+)["']/i)
+  const candidateUrl = ((htmlMatch && htmlMatch[1]) ? htmlMatch[1] : (uri || text))?.trim() || ''
+
+  if (candidateUrl && (candidateUrl.startsWith('data:image/') || candidateUrl.startsWith('http://') || candidateUrl.startsWith('https://'))) {
+    const isImage = htmlMatch || /\.(png|jpe?g|webp|gif|svg|bmp|avif)(\?.*)?$/i.test(candidateUrl) || candidateUrl.startsWith('data:image/')
+    if (isImage) {
+      e.preventDefault()
+      e.stopPropagation()
+      insertMarkdownImage(candidateUrl, 'Imagem')
+      showToast('Imagem inserida na nota!')
+    }
+  }
+}
+
+const handleEditorPaste = async (e: ClipboardEvent) => {
+  const target = e.target as HTMLElement | null
+  if (target?.closest('.milkdown-aresta-wrapper') || target?.closest('.ProseMirror')) {
+    return
+  }
+
+  const items = e.clipboardData?.items
+  if (!items) return
+
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i]
+    if (item && item.type.startsWith('image/')) {
+      e.preventDefault()
+      e.stopPropagation()
+      const file = item.getAsFile()
+      if (!file) continue
+
+      try {
+        const { dataUrl } = await optimizeImageFile(file)
+        if (dataUrl) {
+          insertMarkdownImage(dataUrl, 'Imagem')
+          showToast('Imagem colada com sucesso!')
+        }
+      } catch (err) {
+        console.error('Erro ao colar imagem na nota:', err)
+      }
+      break
+    }
+  }
 }
 
 // Popover contextual sobre links no editor

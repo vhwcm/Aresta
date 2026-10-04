@@ -130,117 +130,119 @@
       <!-- Container do Flashcard Interativo (Flip 3D) -->
       <div v-else-if="currentCard" class="flex flex-col items-center gap-6 w-full">
         <div
-          class="card-scene w-full max-w-xl md:max-w-2xl h-80 md:h-[340px] cursor-pointer select-none"
+          class="card-scene w-full max-w-xl md:max-w-2xl min-h-[380px] sm:min-h-[340px] h-[400px] sm:h-[350px] md:h-[360px] cursor-pointer select-none"
           @click="isFlipped = !isFlipped"
         >
           <div class="card-object" :class="{ 'is-flipped': isFlipped }">
             <!-- FACE FRENTE (Pergunta) -->
-            <div class="card-face card-front p-8 flex flex-col justify-between rounded-3xl bg-bgPanel/95 border border-divider hover:border-accent/40 shadow-2xl backdrop-blur-xl transition-all">
-              <div class="flex items-center justify-between">
-                <span class="px-2.5 py-0.5 rounded-full bg-black/5 dark:bg-white/5 border border-divider font-technical text-[10px] text-textSecondary uppercase tracking-wider truncate max-w-[240px]">
+            <div class="card-face card-front p-5 sm:p-7 md:p-8 flex flex-col justify-between rounded-3xl bg-bgPanel/95 border border-divider hover:border-accent/40 shadow-2xl backdrop-blur-xl transition-all overflow-hidden">
+              <div class="flex items-center justify-between gap-2">
+                <span class="px-2.5 py-0.5 rounded-full bg-black/5 dark:bg-white/5 border border-divider font-technical text-[10px] text-textSecondary uppercase tracking-wider truncate max-w-[140px] sm:max-w-[240px]">
                   {{ currentCard.bookTitle }}
                 </span>
-                <span class="font-technical text-[10px] text-accent flex items-center gap-1">
+                <span class="font-technical text-[10px] text-accent flex items-center gap-1 shrink-0">
                   <RotateCwIcon class="w-3 h-3" />
                   Clique para virar
                 </span>
               </div>
 
-              <div class="my-auto text-center px-4">
-                <span class="font-technical text-xs uppercase tracking-widest text-textSecondary mb-2 block font-medium">
+              <div class="my-auto text-center px-1 sm:px-4 py-2 flex flex-col items-center justify-center overflow-y-auto max-h-[250px] sm:max-h-[220px] custom-scrollbar">
+                <span class="font-technical text-[10px] sm:text-xs uppercase tracking-widest text-textSecondary mb-2 block font-medium">
                   {{ formatCardType(currentCard.cardType) }}
                 </span>
                 <h3
-                  class="font-editorial text-2xl md:text-3xl font-light text-textPrimary leading-snug"
+                  class="font-editorial text-xl sm:text-2xl md:text-3xl font-light text-textPrimary leading-snug break-words"
                   v-html="renderInlineMarkdown(currentCard.question)"
                 ></h3>
               </div>
 
-              <div class="flex items-center justify-between text-xs text-textSecondary font-interface">
-                <span v-if="currentCard.chapterTitle" class="truncate max-w-[200px]">
+              <div class="flex items-center justify-between text-xs text-textSecondary font-interface gap-2 pt-2 border-t border-divider/40">
+                <span v-if="currentCard.chapterTitle" class="truncate max-w-[120px] sm:max-w-[200px] text-[11px]">
                   {{ currentCard.chapterTitle }}
                 </span>
-                <span v-else>Toque no cartão para ver a resposta</span>
+                <span v-else class="text-[11px] truncate">Toque para ver a resposta</span>
 
-                <!-- Link para a Fonte Original -->
-                <NuxtLink
-                  v-if="getSourceUrl(currentCard)"
-                  :to="getSourceUrl(currentCard)!"
-                  class="flex items-center gap-1 text-[11px] font-technical text-accent hover:underline px-2.5 py-0.5 rounded-lg bg-accent/10 border border-accent/25 transition-all hover:bg-accent/20 cursor-pointer"
-                  @click.stop
-                  title="Abrir a fonte original deste cartão"
-                >
-                  <ExternalLinkIcon class="w-3 h-3" />
-                  <span>{{ currentCard.sourceType === 'canvas_note' ? 'Ver Nota' : 'Ver fonte' }}</span>
-                </NuxtLink>
+                <div class="flex items-center gap-2 shrink-0">
+                  <!-- Link para a Fonte Original -->
+                  <NuxtLink
+                    v-if="getSourceUrl(currentCard)"
+                    :to="getSourceUrl(currentCard)!"
+                    class="flex items-center gap-1 text-[10px] sm:text-[11px] font-technical text-accent hover:underline px-2 sm:px-2.5 py-0.5 rounded-lg bg-accent/10 border border-accent/25 transition-all hover:bg-accent/20 cursor-pointer shrink-0"
+                    @click.stop
+                    title="Abrir a fonte original deste cartão"
+                  >
+                    <ExternalLinkIcon class="w-3 h-3" />
+                    <span>{{ currentCard.sourceType === 'canvas_note' ? 'Ver Nota' : 'Ver fonte' }}</span>
+                  </NuxtLink>
 
-                <span class="font-technical text-[10px] text-accent font-semibold">Nível {{ currentCard.repetitionLevel }}</span>
+                  <span class="font-technical text-[10px] text-accent font-semibold shrink-0">Nível {{ currentCard.repetitionLevel }}</span>
+                </div>
               </div>
             </div>
 
             <!-- FACE VERSO (Resposta) -->
-            <div class="card-face card-back p-8 flex flex-col justify-between rounded-3xl bg-bgPanel/95 border border-accent/40 shadow-2xl backdrop-blur-xl">
-              <div class="flex items-center justify-between">
-                <span class="px-2.5 py-0.5 rounded-full bg-accent/15 border border-accent/30 font-technical text-[10px] text-accent uppercase tracking-wider">
+            <div class="card-face card-back p-5 sm:p-7 md:p-8 flex flex-col justify-between rounded-3xl bg-bgPanel/95 border border-accent/40 shadow-2xl backdrop-blur-xl overflow-hidden">
+              <div class="flex items-center justify-between gap-2">
+                <span class="px-2.5 py-0.5 rounded-full bg-accent/15 border border-accent/30 font-technical text-[10px] text-accent uppercase tracking-wider shrink-0">
                   Resposta Explicada
                 </span>
-                <span v-if="currentCard.chapterTitle" class="font-technical text-[10px] text-textSecondary truncate max-w-[200px]">
+                <span v-if="currentCard.chapterTitle" class="font-technical text-[10px] text-textSecondary truncate max-w-[140px] sm:max-w-[200px]">
                   {{ currentCard.chapterTitle }}
                 </span>
               </div>
 
-              <div class="my-auto text-center px-4 overflow-y-auto max-h-44">
+              <div class="my-auto text-center px-1 sm:px-4 py-2 overflow-y-auto max-h-[250px] sm:max-h-[220px] custom-scrollbar">
                 <p
-                  class="font-interface text-sm md:text-base text-textPrimary leading-relaxed font-normal"
+                  class="font-interface text-sm md:text-base text-textPrimary leading-relaxed font-normal break-words"
                   v-html="renderInlineMarkdown(currentCard.answer)"
                 ></p>
               </div>
 
-              <div class="flex items-center justify-between text-[11px] text-textSecondary font-technical border-t border-divider pt-2">
-                <span>Repetição Espaçada</span>
+              <div class="flex items-center justify-between text-[11px] text-textSecondary font-technical border-t border-divider/40 pt-2 gap-2">
+                <span class="truncate">Repetição Espaçada</span>
                 <NuxtLink
                   v-if="getSourceUrl(currentCard)"
                   :to="getSourceUrl(currentCard)!"
-                  class="text-accent hover:underline flex items-center gap-1 cursor-pointer"
+                  class="text-accent hover:underline flex items-center gap-1 cursor-pointer shrink-0"
                   @click.stop
                   title="Abrir a fonte original deste cartão"
                 >
                   <ExternalLinkIcon class="w-3 h-3" />
                   <span>{{ currentCard.sourceType === 'canvas_note' ? 'Ver Nota' : 'Ver fonte' }}</span>
                 </NuxtLink>
-                <span v-else class="text-accent">Aresta Memory Engine</span>
+                <span v-else class="text-accent shrink-0">Aresta Memory Engine</span>
               </div>
             </div>
           </div>
         </div>
 
         <!-- Botões de Autoavaliação da Repetição Espaçada -->
-        <div v-if="isFlipped" class="flex flex-wrap items-center justify-center gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
+        <div v-if="isFlipped" class="flex flex-wrap items-center justify-center gap-2 sm:gap-3 w-full max-w-xl md:max-w-2xl animate-in fade-in slide-in-from-bottom-2 duration-300">
           <button
             @click="rateCurrentCard('hard')"
             :disabled="flashcards.isSubmitting.value"
-            class="px-5 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 font-interface text-xs font-medium transition-all disabled:opacity-50"
+            class="flex-1 min-w-[100px] px-3 sm:px-5 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 font-interface text-xs font-medium transition-all disabled:opacity-50 text-center cursor-pointer"
           >
             Difícil (Repetir amanhã)
           </button>
           <button
             @click="rateCurrentCard('good')"
             :disabled="flashcards.isSubmitting.value"
-            class="px-5 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 font-interface text-xs font-medium transition-all disabled:opacity-50"
+            class="flex-1 min-w-[90px] px-3 sm:px-5 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 font-interface text-xs font-medium transition-all disabled:opacity-50 text-center cursor-pointer"
           >
             Bom (3 dias)
           </button>
           <button
             @click="rateCurrentCard('easy')"
             :disabled="flashcards.isSubmitting.value"
-            class="px-5 py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 font-interface text-xs font-medium transition-all disabled:opacity-50"
+            class="flex-1 min-w-[90px] px-3 sm:px-5 py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 font-interface text-xs font-medium transition-all disabled:opacity-50 text-center cursor-pointer"
           >
             Fácil (7 dias)
           </button>
           
           <button
             @click="openDidacticModal"
-            class="px-4 py-2 rounded-xl bg-accent/15 hover:bg-accent/25 border border-accent/40 text-accent font-interface text-xs font-semibold transition-all flex items-center gap-1.5 shadow-sm"
+            class="w-full sm:w-auto px-4 py-2 rounded-xl bg-accent/15 hover:bg-accent/25 border border-accent/40 text-accent font-interface text-xs font-semibold transition-all flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
             title="Gerar ou anexar livro didático explicativo"
           >
             <SparklesIcon class="w-4 h-4" />
@@ -249,18 +251,18 @@
         </div>
 
         <!-- Controles de Navegação Anterior/Próximo -->
-        <div class="flex items-center gap-4 text-xs font-interface text-textSecondary">
+        <div class="flex items-center justify-between sm:justify-center gap-4 text-xs font-interface text-textSecondary w-full max-w-xl md:max-w-2xl px-2">
           <button
             @click="prevCard"
             :disabled="currentCardIndex === 0"
-            class="px-3 py-1.5 rounded-lg border border-divider hover:bg-white/5 disabled:opacity-30 disabled:hover:bg-transparent transition-colors flex items-center gap-1"
+            class="px-4 py-2 rounded-xl border border-divider hover:bg-white/5 disabled:opacity-30 disabled:hover:bg-transparent transition-colors flex items-center gap-1 cursor-pointer"
           >
             <ChevronLeftIcon class="w-4 h-4" /> Anterior
           </button>
           <button
             @click="nextCard"
             :disabled="currentCardIndex >= filteredCards.length - 1"
-            class="px-3 py-1.5 rounded-lg border border-divider hover:bg-white/5 disabled:opacity-30 disabled:hover:bg-transparent transition-colors flex items-center gap-1"
+            class="px-4 py-2 rounded-xl border border-divider hover:bg-white/5 disabled:opacity-30 disabled:hover:bg-transparent transition-colors flex items-center gap-1 cursor-pointer"
           >
             Próximo <ChevronRightIcon class="w-4 h-4" />
           </button>
@@ -1133,10 +1135,12 @@ const generateDidacticBooklet = async () => {
 
 .card-face {
   position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+  overflow: hidden;
 }
 
 .card-back {

@@ -14,16 +14,6 @@
       <!-- CORPO PRINCIPAL: MODO 0 - DIÁRIO SEQUENCIAL -->
       <JournalView v-if="viewLayout === 'journal'" />
 
-      <!-- CORPO PRINCIPAL: MODO 1 - GRAFO DE CONHECIMENTO NO CENTRO (UNIFICADO) -->
-      <div v-else-if="viewLayout === 'graph'" class="flex-1 relative overflow-hidden">
-        <AppKnowledgeGraph
-          :is-compact="false"
-          :search-query="activeTag || graphSearchQuery || searchQuery"
-          :show-controls="false"
-          @select-node="handleSelectGraphNode"
-        />
-      </div>
-
       <!-- CORPO PRINCIPAL: MODO 2 - VISÃO EM GRADE / GALERIA DE CARDS -->
       <main
         v-else-if="viewLayout === 'grid'"
@@ -446,10 +436,9 @@
       </main>
 
       <!-- CORPO PRINCIPAL: MODO 3 - VISÃO DO EDITOR INTEGRADO -->
-      <div v-else class="flex-1 flex flex-col overflow-hidden">
+      <div v-else-if="viewLayout === 'note-editor' && activeNote" class="flex-1 flex flex-col overflow-hidden">
         <!-- Coluna de Edição da Nota Ativa via NoteEditorPane -->
         <NoteEditorPane
-          v-if="activeNote"
           :note="activeNote"
           :folders="unifiedFolders"
           :canvases="canvasesList"
@@ -458,29 +447,22 @@
           @delete="handleDeleteNote"
           @close="handleCloseNoteEditor"
         />
+      </div>
 
-        <!-- Estado de Carregamento da Nota -->
-        <div v-else-if="isNotesLoading" class="flex-1 flex flex-col items-center justify-center p-8 text-center bg-bgDarker select-none">
-          <div class="w-10 h-10 rounded-full border-2 border-accent border-t-transparent animate-spin mb-3"></div>
-          <p class="text-xs font-technical text-textSecondary uppercase tracking-widest">Carregando anotação...</p>
-        </div>
+      <!-- Estado de Carregamento da Nota -->
+      <div v-else-if="viewLayout === 'note-editor' && isNotesLoading" class="flex-1 flex flex-col items-center justify-center p-8 text-center bg-bgDarker select-none">
+        <div class="w-10 h-10 rounded-full border-2 border-accent border-t-transparent animate-spin mb-3"></div>
+        <p class="text-xs font-technical text-textSecondary uppercase tracking-widest">Carregando anotação...</p>
+      </div>
 
-        <!-- Estado Vazio no Modo Split quando nenhuma nota estiver selecionada -->
-        <div v-else class="flex-1 flex flex-col items-center justify-center p-8 text-center bg-bgDarker select-none">
-          <div class="w-16 h-16 rounded-2xl bg-accent/10 text-accent flex items-center justify-center text-3xl mb-4">
-            📝
-          </div>
-          <h3 class="text-base font-semibold text-textPrimary">Nenhuma nota selecionada</h3>
-          <p class="text-xs text-textSecondary mt-1 max-w-sm">
-            Selecione uma nota da árvore ao lado ou crie uma nova anotação.
-          </p>
-          <button
-            class="mt-4 px-4 py-2 rounded-xl bg-accent hover:bg-accent/90 text-white text-xs font-semibold shadow-md transition-all cursor-pointer"
-            @click="handleCreateNewNote()"
-          >
-            + Criar Nota
-          </button>
-        </div>
+      <!-- CORPO PRINCIPAL: MODO 1 - GRAFO DE CONHECIMENTO NO CENTRO (PADRÃO UNIFICADO) -->
+      <div v-else class="flex-1 relative overflow-hidden">
+        <AppKnowledgeGraph
+          :is-compact="false"
+          :search-query="activeTag || graphSearchQuery || searchQuery"
+          :show-controls="false"
+          @select-node="handleSelectGraphNode"
+        />
       </div>
 
     <!-- Modais Reutilizáveis de Ação (Canvas) -->
@@ -634,9 +616,11 @@ import type { CanvasSummary } from '~/interfaces/canvas'
 import type { NoteItem } from '~/interfaces/note'
 
 import { useWorkspaceSidebar } from '~/composables/useWorkspaceSidebar'
+import { useArestaDialog } from '~/composables/useArestaDialog'
 
 const auth = useAuth()
-const route = typeof useRoute === 'function' ? useRoute() : { query: {}, path: '/' }
+const dialog = useArestaDialog()
+const route = (typeof useRoute === 'function' ? useRoute() : { query: {} as Record<string, any>, path: '/' }) as any
 const router = typeof useRouter === 'function' ? useRouter() : undefined
 
 const {
@@ -672,7 +656,7 @@ const handleOpenJournal = () => {
   activeNote.value = null
   activeFolder.value = null
   activeTag.value = null
-  void router.push('/diario')
+  if (router) void router.push('/diario')
 }
 
 // Nota ativa no editor
@@ -853,13 +837,11 @@ const handleSelectGraphNode = async (node: any) => {
 // Sincroniza query params da rota
 const syncFromRoute = async () => {
   if (route?.query?.view === 'journal') {
-    await router.replace('/diario')
+    if (router) await router.replace('/diario')
     return
   }
 
-  let hasExplicitTab = false
   if (route?.query?.tab) {
-    hasExplicitTab = true
     const tabStr = String(route.query.tab).toLowerCase()
     if (tabStr === 'notes' || tabStr === 'note') activeTab.value = 'notes'
     else if (tabStr === 'canvases' || tabStr === 'canvas') activeTab.value = 'canvases'
@@ -881,24 +863,14 @@ const syncFromRoute = async () => {
       viewLayout.value = 'note-editor'
     } else {
       activeNote.value = null
-      if (route?.query?.view === 'grid' || (!route?.query?.view && hasExplicitTab)) {
-        viewLayout.value = 'grid'
-      } else if (route?.query?.view === 'split' || route?.query?.view === 'note-editor') {
-        viewLayout.value = 'note-editor'
-      } else if (route?.query?.view === 'graph') {
-        viewLayout.value = 'graph'
-      }
+      viewLayout.value = 'graph'
     }
   } else {
     if (!activeItemId.value || !String(activeItemId.value).startsWith('note-')) {
       activeNote.value = null
-      if (route?.query?.view === 'grid' || (!route?.query?.view && hasExplicitTab)) {
+      if (route?.query?.view === 'grid') {
         viewLayout.value = 'grid'
-      } else if (route?.query?.view === 'split' || route?.query?.view === 'note-editor') {
-        viewLayout.value = 'note-editor'
-      } else if (route?.query?.view === 'graph') {
-        viewLayout.value = 'graph'
-      } else if (!route?.query?.view && !hasExplicitTab && viewLayout.value === 'note-editor') {
+      } else {
         viewLayout.value = 'graph'
       }
     }
@@ -983,12 +955,14 @@ watch(activeItemId, async (newId) => {
 
 const setTab = (tab: 'all' | 'canvases' | 'notes' | 'drawings') => {
   activeTab.value = tab
-  router.replace({
-    query: {
-      ...route.query,
-      tab: tab === 'all' ? undefined : tab
-    }
-  })
+  if (router) {
+    router.replace({
+      query: {
+        ...route.query,
+        tab: tab === 'all' ? undefined : tab
+      }
+    })
+  }
 }
 
 const clearAllFilters = () => {
@@ -1362,7 +1336,15 @@ const handleCreateNewDrawing = async () => {
 }
 
 const handleDeleteDrawing = async (id: string) => {
-  if (confirm('Deseja excluir esta nota de desenho?')) {
+  const confirmed = await dialog.confirm({
+    title: 'Excluir Desenho',
+    subtitle: 'Ação Destrutiva',
+    message: 'Tem certeza de que deseja excluir esta nota de desenho?',
+    confirmText: 'Excluir Desenho',
+    variant: 'danger',
+    icon: 'delete'
+  })
+  if (confirmed) {
     try {
       await deleteDrawing(id)
     } catch (err: any) {
@@ -1432,7 +1414,15 @@ const handleDuplicate = async (id: string) => {
 }
 
 const handleDeleteCanvas = async (id: string) => {
-  if (confirm('Tem certeza de que deseja excluir este quadro?')) {
+  const confirmed = await dialog.confirm({
+    title: 'Excluir Quadro',
+    subtitle: 'Ação Destrutiva',
+    message: 'Tem certeza de que deseja excluir este quadro?',
+    confirmText: 'Excluir Quadro',
+    variant: 'danger',
+    icon: 'delete'
+  })
+  if (confirmed) {
     try {
       await deleteCanvas(id)
     } catch (err) {
@@ -1499,12 +1489,12 @@ const handleCloseNoteEditor = async () => {
   activeItemId.value = null
   activeNote.value = null
   viewLayout.value = 'graph'
-  if (router && (route?.query?.note || route?.query?.id)) {
-    const newQuery = { ...(route?.query || {}) }
-    delete newQuery.note
-    delete newQuery.id
-    await router.replace({ query: newQuery })
+  activeFolder.value = null
+  activeTag.value = null
+  if (router) {
+    await router.replace({ path: '/', query: {} })
   }
+  await fetchUnifiedGraph()
 }
 
 const switchToGraphView = async () => {
@@ -1514,11 +1504,10 @@ const switchToGraphView = async () => {
   activeItemId.value = null
   activeNote.value = null
   viewLayout.value = 'graph'
-  if (router && (route?.query?.note || route?.query?.id)) {
-    const newQuery = { ...(route?.query || {}) }
-    delete newQuery.note
-    delete newQuery.id
-    await router.replace({ query: newQuery })
+  activeFolder.value = null
+  activeTag.value = null
+  if (router) {
+    await router.replace({ path: '/', query: {} })
   }
   await fetchUnifiedGraph()
 }
@@ -1540,10 +1529,18 @@ const scheduleSaveNote = () => {
 }
 
 const handleDeleteNote = async (id: string) => {
-  if (confirm('Tem certeza de que deseja excluir esta nota?')) {
+  const confirmed = await dialog.confirm({
+    title: 'Excluir Nota',
+    subtitle: 'Ação Destrutiva',
+    message: 'Tem certeza de que deseja excluir esta nota?',
+    confirmText: 'Excluir Nota',
+    variant: 'danger',
+    icon: 'delete'
+  })
+  if (confirmed) {
     await deleteNote(id)
     if (activeNote.value?.id === id) {
-      activeNote.value = filteredNotes.value[0] || null
+      await handleCloseNoteEditor()
     }
   }
 }

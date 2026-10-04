@@ -112,4 +112,32 @@ describe('CanvasInsertDrawer Component', () => {
       content: 'Conteúdo offline seguro',
     });
   });
+
+  it('permite alternar para a aba de Imagens e emitir insert-image ao submeter URL', async () => {
+    const wrapper = mount(CanvasInsertDrawer, {
+      props: {
+        initialTab: 'images',
+      },
+    });
+
+    const urlInput = wrapper.find('input[placeholder="Cole a URL da imagem..."]');
+    expect(urlInput.exists()).toBe(true);
+
+    const altInput = wrapper.find('input[placeholder="Legenda / Alt text (opcional)..."]');
+    expect(altInput.exists()).toBe(true);
+
+    await urlInput.setValue('https://example.com/art.png');
+    await altInput.setValue('Obra Visual');
+
+    const submitBtn = wrapper.findAll('button').find((b) => b.text().includes('Inserir Imagem no Quadro'));
+    expect(submitBtn?.exists()).toBe(true);
+
+    await submitBtn?.trigger('click');
+
+    expect(wrapper.emitted('insert-image')).toBeTruthy();
+    expect(wrapper.emitted('insert-image')?.[0]?.[0]).toEqual({
+      url: 'https://example.com/art.png',
+      alt: 'Obra Visual',
+    });
+  });
 });

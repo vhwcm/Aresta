@@ -166,4 +166,31 @@ describe('CanvasToolbar component', () => {
     await blueColorBtn.trigger('click');
     expect(wrapper.emitted('update:penColor')?.[0]).toEqual(['#3B82F6']);
   });
+
+  it('abre menu de inserção de imagem e emite insert-image ao submeter URL', async () => {
+    const wrapper = mount(CanvasToolbar, {
+      props: defaultProps,
+      global: {
+        stubs: {
+          ArestaLogoGraph: { template: '<div class="aresta-logo-mock" />' },
+        },
+      },
+    });
+
+    const imageBtn = wrapper.find('[data-testid="btn-toolbar-image"]');
+    expect(imageBtn.exists()).toBe(true);
+    await imageBtn.trigger('click');
+
+    const menu = wrapper.find('[data-testid="toolbar-image-menu"]');
+    expect(menu.exists()).toBe(true);
+
+    const urlInput = wrapper.find('[data-testid="input-image-url"]');
+    await urlInput.setValue('https://example.com/canvas-image.png');
+
+    const submitBtn = wrapper.find('[data-testid="btn-submit-image-url"]');
+    await submitBtn.trigger('click');
+
+    expect(wrapper.emitted('insert-image')).toBeTruthy();
+    expect(wrapper.emitted('insert-image')?.[0]).toEqual([{ url: 'https://example.com/canvas-image.png' }]);
+  });
 });

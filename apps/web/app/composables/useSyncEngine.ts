@@ -74,6 +74,9 @@ export function useSyncEngine() {
               filePath: b.filePath,
               status: b.status,
               currentPage: b.currentPage,
+              readingPosition: b.readingPosition ?? null,
+              totalLocations: b.totalLocations ?? null,
+              locationsData: b.locationsData ?? null,
               lastAccessedAt: b.lastAccessedAt,
             });
           }

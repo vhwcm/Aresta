@@ -11,6 +11,7 @@
     "lint": "eslint . --ext .js,.ts,.vue",
     "test": "vitest run",
     "test:watch": "vitest",
+    "bench:reader": "vite-node scripts/bench-reader.ts",
     "typecheck": "nuxt typecheck",
     "tauri": "tauri",
     "tauri:icons": "tauri icon public/logos/logo_aresta_oficial.png",

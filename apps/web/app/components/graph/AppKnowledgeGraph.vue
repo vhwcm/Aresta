@@ -465,62 +465,62 @@
             <!-- Cartão 3D Flip Interativo -->
             <div
               v-if="currentCard"
-              class="card-scene w-full max-w-lg h-72 sm:h-80 cursor-pointer select-none"
+              class="card-scene w-full max-w-lg min-h-[360px] sm:min-h-[320px] h-[380px] sm:h-80 cursor-pointer select-none"
               @click="isCardFlipped = !isCardFlipped"
             >
               <div class="card-object" :class="{ 'is-flipped': isCardFlipped }">
                 <!-- FRENTE (Pergunta) -->
-                <div class="card-face card-front p-6 sm:p-7 flex flex-col justify-between rounded-3xl bg-bgApp border border-divider hover:border-accent/40 shadow-xl backdrop-blur-xl transition-all">
+                <div class="card-face card-front p-5 sm:p-7 flex flex-col justify-between rounded-3xl bg-bgApp border border-divider hover:border-accent/40 shadow-xl backdrop-blur-xl transition-all overflow-hidden">
                   <div class="flex items-center justify-between gap-2">
-                    <span class="px-2.5 py-0.5 rounded-full bg-white/5 border border-divider font-technical text-[10px] text-textSecondary truncate max-w-[200px]">
+                    <span class="px-2.5 py-0.5 rounded-full bg-white/5 border border-divider font-technical text-[10px] text-textSecondary truncate max-w-[140px] sm:max-w-[200px]">
                       {{ currentCard.sourceTitle || currentCard.bookTitle || selectedNode.name }}
                     </span>
-                    <span class="font-technical text-[10px] text-accent flex items-center gap-1">
+                    <span class="font-technical text-[10px] text-accent flex items-center gap-1 shrink-0">
                       <RotateCwIcon class="w-3 h-3" />
                       Clique para virar
                     </span>
                   </div>
 
-                  <div class="my-auto text-center px-2">
-                    <span class="font-technical text-[11px] uppercase tracking-wider text-textSecondary mb-2 block font-medium">
+                  <div class="my-auto text-center px-1 sm:px-2 py-2 flex flex-col items-center justify-center overflow-y-auto max-h-[220px] sm:max-h-[180px] custom-scrollbar">
+                    <span class="font-technical text-[10px] sm:text-[11px] uppercase tracking-wider text-textSecondary mb-2 block font-medium">
                       Conceito & Revisão
                     </span>
                     <h3
-                      class="font-interface text-lg sm:text-xl font-semibold text-textPrimary leading-snug"
+                      class="font-interface text-base sm:text-xl font-semibold text-textPrimary leading-snug break-words"
                       v-html="renderInlineMarkdown(currentCard.question)"
                     ></h3>
                   </div>
 
-                  <div class="flex items-center justify-between text-[11px] text-textSecondary font-technical">
+                  <div class="flex items-center justify-between text-[11px] text-textSecondary font-technical border-t border-divider/40 pt-2">
                     <span>Nível {{ currentCard.repetitionLevel || 0 }}</span>
                     <span class="text-accent">Toque para ver a resposta</span>
                   </div>
                 </div>
 
                 <!-- VERSO (Resposta) -->
-                <div class="card-face card-back p-6 sm:p-7 flex flex-col justify-between rounded-3xl bg-bgApp border border-accent/40 shadow-xl backdrop-blur-xl">
+                <div class="card-face card-back p-5 sm:p-7 flex flex-col justify-between rounded-3xl bg-bgApp border border-accent/40 shadow-xl backdrop-blur-xl overflow-hidden">
                   <div class="flex items-center justify-between gap-2">
-                    <span class="px-2.5 py-0.5 rounded-full bg-accent/15 border border-accent/30 font-technical text-[10px] text-accent uppercase tracking-wider">
+                    <span class="px-2.5 py-0.5 rounded-full bg-accent/15 border border-accent/30 font-technical text-[10px] text-accent uppercase tracking-wider shrink-0">
                       Resposta
                     </span>
                     <button
                       v-if="currentCard.sourceUrl"
                       @click.stop="handleOpenCardSource(currentCard)"
-                      class="flex items-center gap-1 text-[10px] font-technical text-accent hover:underline cursor-pointer"
+                      class="flex items-center gap-1 text-[10px] font-technical text-accent hover:underline cursor-pointer shrink-0"
                     >
                       <ExternalLinkIcon class="w-3 h-3" />
                       <span>Ver Fonte</span>
                     </button>
                   </div>
 
-                  <div class="my-auto text-center px-2 overflow-y-auto max-h-36 custom-scrollbar">
+                  <div class="my-auto text-center px-1 sm:px-2 py-2 overflow-y-auto max-h-[220px] sm:max-h-[180px] custom-scrollbar">
                     <p
-                      class="font-interface text-sm sm:text-base text-textPrimary leading-relaxed"
+                      class="font-interface text-xs sm:text-sm md:text-base text-textPrimary leading-relaxed break-words"
                       v-html="renderInlineMarkdown(currentCard.answer)"
                     ></p>
                   </div>
 
-                  <div class="flex items-center justify-between text-[11px] text-textSecondary font-technical border-t border-divider pt-2">
+                  <div class="flex items-center justify-between text-[11px] text-textSecondary font-technical border-t border-divider/40 pt-2">
                     <span>Repetição Espaçada</span>
                     <span class="text-accent">Aresta Memory</span>
                   </div>
@@ -1581,10 +1581,12 @@ onBeforeUnmount(() => {
 }
 .card-face {
   position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+  overflow: hidden;
 }
 .card-back {
   transform: rotateY(180deg);

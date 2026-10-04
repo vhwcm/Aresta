@@ -393,5 +393,49 @@ describe('Revisao Page (/revisao)', () => {
     expect(wrapper.text()).toContain('Ofensiva diária')
     expect(wrapper.text()).toContain('cards')
   })
+
+  it('aplica classes responsivas e contenção de overflow para exibição mobile dos flashcards', async () => {
+    mockDailyDeck.value = [
+      { id: 1, bookId: 42, bookTitle: 'O Livro', question: 'Pergunta muito longa com vários parágrafos de teste', answer: 'Resposta detalhada' },
+    ]
+
+    const wrapper = mount(RevisaoPage, {
+      global: {
+        stubs: {
+          NuxtLink: { template: '<a><slot /></a>' },
+          LayersIcon: true,
+          FileTextIcon: true,
+          RotateCwIcon: true,
+          ChevronLeftIcon: true,
+          ChevronRightIcon: true,
+          PlusIcon: true,
+          Trash2Icon: true,
+          BookOpenIcon: true,
+          SparklesIcon: true,
+          ExternalLinkIcon: true,
+          CheckCircle2Icon: true,
+          TagIcon: true,
+          BookMarkedIcon: true,
+          ReaderAnnotationModal: true,
+          AppSelect: true,
+          FlameIcon: true,
+        },
+      },
+    })
+
+    const cardScene = wrapper.find('.card-scene')
+    expect(cardScene.exists()).toBe(true)
+    expect(cardScene.classes()).toContain('min-h-[380px]')
+
+    const frontFace = wrapper.find('.card-front')
+    expect(frontFace.exists()).toBe(true)
+    expect(frontFace.classes()).toContain('overflow-hidden')
+    expect(frontFace.classes()).toContain('p-5')
+
+    const questionContainer = frontFace.find('.custom-scrollbar')
+    expect(questionContainer.exists()).toBe(true)
+    expect(questionContainer.classes()).toContain('overflow-y-auto')
+  })
 })
+
 

@@ -355,4 +355,83 @@ describe('CanvasNode Component', () => {
     await wrapper.trigger('dblclick');
     expect(startEditingCalled).toBe(true);
   });
+
+  it('renderiza CanvasNodeImage e 4 alças de conexão quando node.type é image', async () => {
+    const node: ICanvasNode = {
+      id: 'node-image-test',
+      type: 'image',
+      x: 150,
+      y: 150,
+      width: 320,
+      height: 240,
+      imageUrl: 'https://example.com/diagram.png',
+      imageAlt: 'Diagrama',
+    };
+
+    const wrapper = mount(CanvasNode, {
+      props: {
+        node,
+        isSelected: true,
+        zoom: 1,
+      },
+      global: {
+        stubs: {
+          CanvasNodeImage: {
+            template: '<div class="stub-image">Imagem</div>',
+          },
+        },
+      },
+    });
+
+    expect(wrapper.find('.stub-image').exists()).toBe(true);
+    // 4 pontos de ancoragem / conexão (top, right, bottom, left)
+    const anchors = wrapper.findAll('.connection-anchor');
+    expect(anchors.length).toBe(4);
+
+    // 4 alças de redimensionamento
+    const resizeHandles = wrapper.findAll('.resize-handle');
+    expect(resizeHandles.length).toBe(4);
+
+    // Mini toolbar permite alterar cor
+    const colorBtn = wrapper.find('button[style*="background-color"]');
+    expect(colorBtn.exists()).toBe(true);
+    await colorBtn.trigger('click');
+    expect(wrapper.emitted('update-color')).toBeTruthy();
+  });
+
+  it('encaminha evento update:aspectRatio do CanvasNodeImage para update-aspect-ratio do CanvasNode', async () => {
+    const node: ICanvasNode = {
+      id: 'node-image-ratio',
+      type: 'image',
+      x: 100,
+      y: 100,
+      width: 300,
+      height: 200,
+      imageUrl: 'https://example.com/art.png',
+    };
+
+    const wrapper = mount(CanvasNode, {
+      props: {
+        node,
+        isSelected: false,
+        zoom: 1,
+      },
+      global: {
+        stubs: {
+          CanvasNodeImage: {
+            name: 'CanvasNodeImage',
+            template: '<div class="stub-image-ratio" />',
+            emits: ['update:aspectRatio'],
+          },
+        },
+      },
+    });
+
+    const imageComp = wrapper.findComponent({ name: 'CanvasNodeImage' });
+    expect(imageComp.exists()).toBe(true);
+
+    await imageComp.vm.$emit('update:aspectRatio', 1.5);
+    expect(wrapper.emitted('update-aspect-ratio')).toBeTruthy();
+    expect(wrapper.emitted('update-aspect-ratio')?.[0]).toEqual(['node-image-ratio', 1.5]);
+  });
 });

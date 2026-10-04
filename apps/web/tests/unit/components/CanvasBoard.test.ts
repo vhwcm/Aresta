@@ -543,5 +543,170 @@ describe('CanvasBoard Drawing and Eraser Interactions', () => {
     await board.trigger('keydown', { key: 'v' });
     expect(mockActiveTool.value).toBe('select');
   });
+
+  it('exibe botão Inserir Imagem no estado vazio e aciona drawer com aba images', async () => {
+    const wrapper = mount(CanvasBoard, {
+      global: {
+        stubs: {
+          CanvasEdgeLayer: true,
+          CanvasStrokeLayer: true,
+          CanvasNode: true,
+          CanvasToolbar: true,
+          CanvasInsertDrawer: {
+            name: 'CanvasInsertDrawer',
+            props: ['initialTab'],
+            template: '<div class="drawer-stub" />',
+          },
+          CanvasSelectionToolbar: true,
+        },
+      },
+    });
+
+    const insertImageBtn = wrapper.findAll('button').find((b) => b.text().includes('Inserir Imagem'));
+    expect(insertImageBtn?.exists()).toBe(true);
+
+    await insertImageBtn?.trigger('click');
+
+    const drawer = wrapper.findComponent({ name: 'CanvasInsertDrawer' });
+    expect(drawer.exists()).toBe(true);
+    expect(drawer.props('initialTab')).toBe('images');
+  });
+
+  it('adiciona nó de imagem com addNode ao emitir insert-image na toolbar', async () => {
+    const wrapper = mount(CanvasBoard, {
+      global: {
+        stubs: {
+          CanvasEdgeLayer: true,
+          CanvasStrokeLayer: true,
+          CanvasNode: true,
+          CanvasToolbar: {
+            name: 'CanvasToolbar',
+            template: '<div class="toolbar-stub" />',
+            emits: ['insert-image'],
+          },
+          CanvasInsertDrawer: true,
+          CanvasSelectionToolbar: true,
+        },
+      },
+    });
+
+    const toolbar = wrapper.findComponent({ name: 'CanvasToolbar' });
+    expect(toolbar.exists()).toBe(true);
+    await toolbar.vm.$emit('insert-image', {
+      url: 'https://example.com/chart.png',
+      alt: 'Gráfico',
+      width: 400,
+      height: 300,
+    });
+
+    expect(mockAddNode).toHaveBeenCalled();
+    const addedNode = mockAddNode.mock.calls[0]![0];
+    expect(addedNode.type).toBe('image');
+    expect(addedNode.imageUrl).toBe('https://example.com/chart.png');
+    expect(addedNode.imageAlt).toBe('Gráfico');
+  });
+
+  it('cria nó de imagem ao colar URL de imagem como texto na prancheta', async () => {
+    const wrapper = mount(CanvasBoard, {
+      global: {
+        stubs: {
+          CanvasEdgeLayer: true,
+          CanvasStrokeLayer: true,
+          CanvasNode: true,
+          CanvasToolbar: true,
+          CanvasInsertDrawer: true,
+          CanvasSelectionToolbar: true,
+        },
+      },
+    });
+
+    const preventDefault = vi.fn();
+    const pasteEvent = {
+      preventDefault,
+      clipboardData: {
+        items: [],
+        getData: (format: string) => (format === 'text/plain' ? 'https://cdn.example.com/artwork.jpg?w=800' : ''),
+      },
+    };
+
+    const board = wrapper.find('.canvas-board-wrapper');
+    await board.trigger('paste', pasteEvent);
+
+    expect(preventDefault).toHaveBeenCalled();
+    expect(mockAddNode).toHaveBeenCalled();
+    const node = mockAddNode.mock.calls[mockAddNode.mock.calls.length - 1]![0];
+    expect(node.type).toBe('image');
+    expect(node.imageUrl).toBe('https://cdn.example.com/artwork.jpg?w=800');
+  });
+
+  it('cria nó de imagem ao arrastar imagem da web (text/uri-list)', async () => {
+    const wrapper = mount(CanvasBoard, {
+      global: {
+        stubs: {
+          CanvasEdgeLayer: true,
+          CanvasStrokeLayer: true,
+          CanvasNode: true,
+          CanvasToolbar: true,
+          CanvasInsertDrawer: true,
+          CanvasSelectionToolbar: true,
+        },
+      },
+    });
+
+    const dropEvent = {
+      clientX: 200,
+      clientY: 300,
+      dataTransfer: {
+        files: [],
+        getData: (format: string) => (format === 'text/uri-list' ? 'https://images.unsplash.com/sample.png' : ''),
+      },
+    };
+
+    const board = wrapper.find('.canvas-board-wrapper');
+    await board.trigger('drop', dropEvent);
+
+    expect(mockAddNode).toHaveBeenCalled();
+    const node = mockAddNode.mock.calls[mockAddNode.mock.calls.length - 1]![0];
+    expect(node.type).toBe('image');
+    expect(node.imageUrl).toBe('https://images.unsplash.com/sample.png');
+  });
+
+  it('atualiza aspectRatio do nó quando CanvasNode emite update-aspect-ratio', async () => {
+    mockNodes.value = [
+      {
+        id: 'node-img-aspect',
+        type: 'image',
+        x: 100,
+        y: 100,
+        width: 300,
+        height: 200,
+        imageUrl: 'https://example.com/photo.png',
+      },
+    ];
+
+    const wrapper = mount(CanvasBoard, {
+      global: {
+        stubs: {
+          CanvasEdgeLayer: true,
+          CanvasStrokeLayer: true,
+          CanvasNode: {
+            name: 'CanvasNode',
+            template: '<div class="node-stub" />',
+            emits: ['update-aspect-ratio'],
+          },
+          CanvasToolbar: true,
+          CanvasInsertDrawer: true,
+          CanvasSelectionToolbar: true,
+        },
+      },
+    });
+
+    const canvasNode = wrapper.findComponent({ name: 'CanvasNode' });
+    expect(canvasNode.exists()).toBe(true);
+
+    await canvasNode.vm.$emit('update-aspect-ratio', 'node-img-aspect', 1.77);
+
+    expect(mockUpdateNode).toHaveBeenCalledWith('node-img-aspect', { aspectRatio: 1.77 });
+  });
 });
 

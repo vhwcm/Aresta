@@ -334,6 +334,9 @@ import {
 import AiMarkdown from '~/components/AiMarkdown.vue'
 import { useJournal } from '~/composables/useJournal'
 import { useDriveSync } from '~/composables/useDriveSync'
+import { useArestaDialog } from '~/composables/useArestaDialog'
+
+const dialog = useArestaDialog()
 
 const {
   selectedDate,
@@ -508,7 +511,14 @@ const loadDateIntoEditor = async (date: string) => {
 }
 
 const confirmDeleteEntry = async (date: string) => {
-  const isConfirmed = window.confirm(`Deseja realmente excluir a anotação do dia ${date}?`)
+  const isConfirmed = await dialog.confirm({
+    title: 'Excluir Anotação do Diário',
+    subtitle: 'Registro Diário',
+    message: `Deseja realmente excluir a anotação do dia ${date}?`,
+    confirmText: 'Excluir Registro',
+    variant: 'danger',
+    icon: 'delete'
+  })
   if (!isConfirmed) return
 
   if (debounceTimer) clearTimeout(debounceTimer)

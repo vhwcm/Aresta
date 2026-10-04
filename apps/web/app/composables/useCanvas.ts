@@ -571,16 +571,32 @@ export function useCanvas() {
       })
       .join('\n');
 
+    const escapeXml = (str: string): string => {
+      return (str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    };
+
     const nodesSvg = nodes.value
       .map((n) => {
-        const safeText = (n.text || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        if (n.type === 'image' && n.imageUrl) {
+          const safeUrl = escapeXml(n.imageUrl);
+          return `    <g id="node-${n.id}">
+      <rect x="${n.x}" y="${n.y}" width="${n.width}" height="${n.height}" rx="12" fill="#FAFAF9" stroke="${n.color || '#E57B55'}" stroke-width="2" />
+      <image x="${n.x + 2}" y="${n.y + 2}" width="${n.width - 4}" height="${n.height - 4}" href="${safeUrl}" xlink:href="${safeUrl}" preserveAspectRatio="xMidYMid meet" />
+    </g>`;
+        }
+        const safeText = escapeXml(n.text || '');
         return `    <rect x="${n.x}" y="${n.y}" width="${n.width}" height="${n.height}" rx="12" fill="#FFFFFF" stroke="${n.color || '#E57B55'}" stroke-width="2" />
     <text x="${n.x + 12}" y="${n.y + 24}" font-family="sans-serif" font-size="14" fill="#18181B">${safeText}</text>`;
       })
       .join('\n');
 
     const svgContent = `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="${minX} ${minY} ${width} ${height}" width="${width}" height="${height}" shape-rendering="geometricPrecision">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="${minX} ${minY} ${width} ${height}" width="${width}" height="${height}" shape-rendering="geometricPrecision">
   <rect x="${minX}" y="${minY}" width="${width}" height="${height}" fill="#FAFAF9" />
   <g id="strokes">
 ${strokesSvg}

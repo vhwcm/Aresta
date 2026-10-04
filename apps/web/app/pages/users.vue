@@ -246,10 +246,13 @@ import AppBackButton from '~/components/AppBackButton.vue'
 import { UsersIcon, UserPlusIcon, SearchIcon, Edit3Icon, Trash2Icon, UserXIcon, XIcon } from 'lucide-vue-next'
 import { useAuth } from '~/composables/useAuth'
 import { getApiBase } from '~/utils/apiBase'
+import { useArestaDialog } from '~/composables/useArestaDialog'
 
 definePageMeta({
   middleware: 'admin'
 })
+
+const dialog = useArestaDialog()
 
 interface UserItem {
   id: number
@@ -361,7 +364,15 @@ const saveUser = async () => {
 }
 
 const deleteUser = async (id: number) => {
-  if (!confirm('Deseja realmente remover este usuário?')) return
+  const confirmed = await dialog.confirm({
+    title: 'Remover Usuário',
+    subtitle: 'Administração',
+    message: 'Deseja realmente remover este usuário?',
+    confirmText: 'Remover Usuário',
+    variant: 'danger',
+    icon: 'delete'
+  })
+  if (!confirmed) return
   try {
     await $fetch(`${getApiBase()}/users/${id}`, {
       method: 'DELETE',

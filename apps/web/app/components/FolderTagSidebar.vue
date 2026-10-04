@@ -794,10 +794,12 @@ import { loadGraphMeta } from '~/utils/graphMeta'
 import ManageThemesModal from '~/components/ManageThemesModal.vue'
 import ReadingStreak from '~/components/ReadingStreak.vue'
 import { useWorkspaceSidebar } from '~/composables/useWorkspaceSidebar'
+import { useArestaDialog } from '~/composables/useArestaDialog'
 
 const route = useRoute()
 const router = useRouter()
 const feedbackModal = useFeedbackModal()
+const dialog = useArestaDialog()
 const openFeedback = () => {
   feedbackModal.open()
 }
@@ -1060,12 +1062,20 @@ const handleRemoveReference = (item: SidebarTreeItem, folder: string) => {
   emit('remove-reference', { itemId: item.id, folder })
 }
 
-const handleDeleteItemCompletely = (item: SidebarTreeItem) => {
+const handleDeleteItemCompletely = async (item: SidebarTreeItem) => {
   const isMulti = item.tags && item.tags.length > 1
   const msg = isMulti
     ? `Tem certeza de que deseja excluir definitivamente "${item.title || 'este arquivo'}"? Este arquivo está presente em ${item.tags?.length} pastas (${item.tags?.join(', ')}) e será apagado por completo de todo o sistema.`
     : `Tem certeza de que deseja excluir definitivamente "${item.title || 'este arquivo'}"?`
-  if (confirm(msg)) {
+  const confirmed = await dialog.confirm({
+    title: 'Excluir Arquivo',
+    subtitle: 'Ação Destrutiva',
+    message: msg,
+    confirmText: 'Excluir Definitivamente',
+    variant: 'danger',
+    icon: 'delete'
+  })
+  if (confirmed) {
     emit('delete-item', item.id)
   }
 }
@@ -1426,8 +1436,16 @@ const confirmRenameFolder = () => {
   renameModalOpen.value = false
 }
 
-const handleDeleteFolder = (folder: string) => {
-  if (confirm(`Tem certeza de que deseja excluir a pasta "${folder}"? Os itens ficarão na raiz.`)) {
+const handleDeleteFolder = async (folder: string) => {
+  const confirmed = await dialog.confirm({
+    title: 'Excluir Pasta',
+    subtitle: 'Organização',
+    message: `Tem certeza de que deseja excluir a pasta "${folder}"? Os itens ficarão na raiz.`,
+    confirmText: 'Excluir Pasta',
+    variant: 'danger',
+    icon: 'delete'
+  })
+  if (confirmed) {
     emit('delete-folder', folder)
   }
 }

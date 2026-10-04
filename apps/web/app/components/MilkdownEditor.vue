@@ -1,5 +1,11 @@
 <template>
-  <div class="milkdown-aresta-wrapper" :style="{ minHeight: minHeight || '100%' }">
+  <div
+    class="milkdown-aresta-wrapper"
+    :style="{ minHeight: minHeight || '100%' }"
+    @dragover.prevent
+    @drop="handleEditorDrop"
+    @paste="handleEditorPaste"
+  >
     <div ref="editorRef" class="milkdown" />
   </div>
 </template>
@@ -22,6 +28,7 @@ import { clipboard } from '@milkdown/plugin-clipboard'
 import { toggleMark, setBlockType } from '@milkdown/prose/commands'
 import { Plugin, PluginKey } from '@milkdown/prose/state'
 import { $prose } from '@milkdown/utils'
+import { optimizeImageFile } from '~/utils/imageOptimizer'
 
 /**
  * Plugin que pré-processa HTML colado de páginas web (Wikipedia, etc.)
@@ -68,8 +75,10 @@ const webPasteCleanup = $prose(() => {
         // mas manter o texto e links intactos
         html = html.replace(/<span[^>]*class="[^"]*IPA[^"]*"[^>]*>([\s\S]*?)<\/span>/gi, '$1')
 
-        // 6. Limpar tags <img> da Wikipedia (ícones, badges, etc.)
-        html = html.replace(/<img[^>]*>/gi, '')
+        // 6. Limpar tags <img> da Wikipedia apenas (ícones, badges, etc.)
+        if (isWikipedia) {
+          html = html.replace(/<img[^>]*>/gi, '')
+        }
 
         return html
       }
@@ -263,6 +272,87 @@ const insertText = (text: string) => {
   }
 }
 
+const insertImage = (url: string, alt = 'Imagem', title = '') => {
+  if (milkdownEditor) {
+    milkdownEditor.action((ctx) => {
+      const view = ctx.get(editorViewCtx)
+      const { state, dispatch } = view
+      const imageType = state.schema.nodes.image
+      if (imageType) {
+        const node = imageType.create({ src: url, alt, title })
+        const tr = state.tr.replaceSelectionWith(node)
+        dispatch(tr)
+      } else {
+        const tr = state.tr.insertText(`![${alt}](${url})\n`)
+        dispatch(tr)
+      }
+      view.focus()
+    })
+  }
+}
+
+const handleEditorDrop = async (e: DragEvent) => {
+  const files = e.dataTransfer?.files
+  const imageFiles = files ? Array.from(files).filter((f) => f.type.startsWith('image/')) : []
+
+  if (imageFiles.length > 0) {
+    e.preventDefault()
+    e.stopPropagation()
+    for (const file of imageFiles) {
+      try {
+        const { dataUrl } = await optimizeImageFile(file)
+        if (dataUrl) {
+          insertImage(dataUrl, file.name)
+        }
+      } catch (err) {
+        console.error('Erro ao otimizar imagem no drop:', err)
+      }
+    }
+    return
+  }
+
+  // Suporte a arrastar imagem diretamente de outra página web
+  const uri = e.dataTransfer?.getData('text/uri-list') || ''
+  const html = e.dataTransfer?.getData('text/html') || ''
+  const text = e.dataTransfer?.getData('text/plain') || ''
+  const htmlMatch = html.match(/<img[^>]+src=["']([^"']+)["']/i)
+  const candidateUrl = ((htmlMatch && htmlMatch[1]) ? htmlMatch[1] : (uri || text)).trim()
+
+  if (candidateUrl && (candidateUrl.startsWith('data:image/') || candidateUrl.startsWith('http://') || candidateUrl.startsWith('https://'))) {
+    const isImage = htmlMatch || /\.(png|jpe?g|webp|gif|svg|bmp|avif)(\?.*)?$/i.test(candidateUrl) || candidateUrl.startsWith('data:image/')
+    if (isImage) {
+      e.preventDefault()
+      e.stopPropagation()
+      insertImage(candidateUrl, 'Imagem')
+    }
+  }
+}
+
+const handleEditorPaste = async (e: ClipboardEvent) => {
+  const items = e.clipboardData?.items
+  if (!items) return
+
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i]
+    if (item && item.type.startsWith('image/')) {
+      e.preventDefault()
+      e.stopPropagation()
+      const file = item.getAsFile()
+      if (!file) continue
+
+      try {
+        const { dataUrl } = await optimizeImageFile(file)
+        if (dataUrl) {
+          insertImage(dataUrl, 'Imagem')
+        }
+      } catch (err) {
+        console.error('Erro ao otimizar imagem no paste:', err)
+      }
+      break
+    }
+  }
+}
+
 const getContent = (): string => {
   if (!milkdownEditor) return currentMarkdown
   let md = currentMarkdown
@@ -282,6 +372,7 @@ defineExpose({
   setHeading,
   setParagraph,
   insertText,
+  insertImage,
 })
 
 onMounted(() => {

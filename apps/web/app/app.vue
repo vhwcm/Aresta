@@ -13,6 +13,7 @@
     <StreakCelebrationModal />
     <StreakShareModal />
     <FeedbackCanvas />
+    <ArestaDialog />
   </div>
 </template>
 
@@ -23,6 +24,7 @@ import SettingsModal from '~/components/SettingsModal.vue'
 import StreakCelebrationModal from '~/components/StreakCelebrationModal.vue'
 import StreakShareModal from '~/components/StreakShareModal.vue'
 import FeedbackCanvas from '~/components/FeedbackCanvas.vue'
+import ArestaDialog from '~/components/ArestaDialog.vue'
 import { useAuth } from '~/composables/useAuth'
 import { useDriveSync } from '~/composables/useDriveSync'
 

@@ -15,7 +15,7 @@ describe('MilkdownEditor Component', () => {
     expect(wrapper.find('.milkdown').exists()).toBe(true);
   });
 
-  it('exposes focus and getContent methods', () => {
+  it('exposes focus, getContent, insertText and insertImage methods', () => {
     const wrapper = mount(MilkdownEditor, {
       props: {
         modelValue: 'Initial text',
@@ -24,6 +24,8 @@ describe('MilkdownEditor Component', () => {
 
     expect(typeof wrapper.vm.focus).toBe('function');
     expect(typeof wrapper.vm.getContent).toBe('function');
+    expect(typeof wrapper.vm.insertText).toBe('function');
+    expect(typeof wrapper.vm.insertImage).toBe('function');
     expect(wrapper.vm.getContent()).toBe('Initial text');
   });
 
@@ -38,5 +40,62 @@ describe('MilkdownEditor Component', () => {
     expect(cssContent).toContain('.milkdown-aresta-wrapper h2');
     expect(cssContent).toContain('.milkdown-aresta-wrapper h3');
     expect(cssContent).toContain('font-weight: 700');
+    // Regras de imagem
+    expect(cssContent).toContain('.milkdown-aresta-wrapper .milkdown .editor img');
+    expect(cssContent).toContain('max-width: 100%');
+  });
+
+  it('stops propagation when image file is dropped in editor to avoid parent duplicate handling', async () => {
+    const wrapper = mount(MilkdownEditor, {
+      props: { modelValue: 'Texto' },
+    });
+
+    const file = new File(['dummy content'], 'photo.png', { type: 'image/png' });
+    const event = new Event('drop', { bubbles: true, cancelable: true });
+    Object.defineProperty(event, 'dataTransfer', {
+      value: {
+        files: [file],
+        getData: vi.fn(),
+      },
+    });
+
+    const stopPropagationSpy = vi.spyOn(event, 'stopPropagation');
+    const preventDefaultSpy = vi.spyOn(event, 'preventDefault');
+
+    const container = wrapper.find('.milkdown-aresta-wrapper');
+    container.element.dispatchEvent(event);
+
+    expect(stopPropagationSpy).toHaveBeenCalled();
+    expect(preventDefaultSpy).toHaveBeenCalled();
+  });
+
+  it('handles web image drop with image URL and stops propagation', async () => {
+    const wrapper = mount(MilkdownEditor, {
+      props: { modelValue: 'Texto' },
+    });
+
+    const insertImageSpy = vi.spyOn(wrapper.vm, 'insertImage');
+    const event = new Event('drop', { bubbles: true, cancelable: true });
+    Object.defineProperty(event, 'dataTransfer', {
+      value: {
+        files: [],
+        getData: (type: string) => {
+          if (type === 'text/uri-list') return 'https://example.com/web-pic.png';
+          return '';
+        },
+      },
+    });
+
+    const stopPropagationSpy = vi.spyOn(event, 'stopPropagation');
+    const preventDefaultSpy = vi.spyOn(event, 'preventDefault');
+
+    const container = wrapper.find('.milkdown-aresta-wrapper');
+    container.element.dispatchEvent(event);
+
+    expect(stopPropagationSpy).toHaveBeenCalled();
+    expect(preventDefaultSpy).toHaveBeenCalled();
+
+    // Testa método exposto insertImage diretamente
+    expect(() => wrapper.vm.insertImage('https://example.com/web-pic.png', 'Imagem')).not.toThrow();
   });
 });

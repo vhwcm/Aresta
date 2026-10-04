@@ -123,6 +123,73 @@
         <span class="font-serif font-bold text-xs sm:text-sm">T</span>
       </button>
 
+      <!-- 5. Inserir Imagem -->
+      <div class="relative flex-shrink-0" ref="imageMenuRef">
+        <button
+          class="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-xl transition-all cursor-pointer flex-shrink-0"
+          :class="showImageMenu ? 'bg-primary text-white shadow-md' : 'text-textSecondary hover:text-textPrimary hover:bg-bgElevated'"
+          title="Inserir Imagem (I)"
+          @click="toggleImageMenu"
+          data-testid="btn-toolbar-image"
+        >
+          <ImageIcon class="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+        </button>
+
+        <!-- Popover de Inserção de Imagem -->
+        <div
+          v-if="showImageMenu"
+          class="absolute bottom-11 sm:bottom-12 left-1/2 -translate-x-1/2 flex flex-col gap-2 p-2.5 rounded-xl bg-bgPanel border border-divider shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-100 min-w-[210px]"
+          data-testid="toolbar-image-menu"
+        >
+          <span class="text-[11px] font-semibold text-textPrimary px-1 flex items-center gap-1.5">
+            <ImageIcon class="w-3.5 h-3.5 text-primary" />
+            Adicionar Imagem
+          </span>
+
+          <input
+            ref="fileInputRef"
+            type="file"
+            accept="image/*"
+            class="hidden"
+            @change="handleFileUpload"
+          />
+
+          <!-- Botão Escolher Arquivo -->
+          <button
+            type="button"
+            class="w-full flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary border border-primary/25 text-xs font-medium transition-colors cursor-pointer"
+            @click="triggerFileSelect"
+            data-testid="btn-upload-device"
+          >
+            <UploadIcon class="w-3.5 h-3.5" />
+            <span>Do Dispositivo...</span>
+          </button>
+
+          <div class="h-px bg-divider w-full my-0.5"></div>
+
+          <!-- Inserir por URL -->
+          <div class="flex flex-col gap-1.5">
+            <input
+              v-model="imageUrlInput"
+              type="url"
+              placeholder="URL da imagem (https://...)"
+              class="w-full px-2 py-1 text-xs bg-bgElevated border border-divider rounded-lg text-textPrimary placeholder:text-textSecondary/50 focus:outline-none focus:border-primary"
+              @keydown.enter.prevent="submitImageUrl"
+              data-testid="input-image-url"
+            />
+            <button
+              type="button"
+              class="w-full py-1 rounded-lg bg-bgSurface hover:bg-bgElevated text-textPrimary text-[11px] font-medium border border-divider transition-colors cursor-pointer disabled:opacity-50"
+              :disabled="!imageUrlInput.trim()"
+              @click="submitImageUrl"
+              data-testid="btn-submit-image-url"
+            >
+              Inserir por URL
+            </button>
+          </div>
+        </div>
+      </div>
+
       <div class="w-px h-4 sm:h-5 bg-divider mx-0.5 flex-shrink-0"></div>
 
       <!-- ÍCONE DA NAVBAR (Aresta Logo) - Posição de Meio nos Itens do Canvas -->
@@ -269,11 +336,18 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
-import { MoreHorizontalIcon, PenTool as PenToolIcon, Eraser as EraserIcon } from 'lucide-vue-next';
+import {
+  MoreHorizontalIcon,
+  PenTool as PenToolIcon,
+  Eraser as EraserIcon,
+  Image as ImageIcon,
+  Upload as UploadIcon,
+} from 'lucide-vue-next';
 import ArestaLogoGraph from '~/components/ArestaLogoGraph.vue';
 import { useBottomNavbar } from '~/composables/useBottomNavbar';
 import type { CanvasShapeType, CanvasTool } from '~/interfaces/canvas';
 import { CANVAS_SHAPES, getShapeIcon } from '~/utils/canvasShapes';
+import { optimizeImageFile } from '~/utils/imageOptimizer';
 
 const props = defineProps<{
   activeTool: string;
@@ -293,6 +367,7 @@ const emit = defineEmits<{
   (e: 'update:penWidth', width: number): void;
   (e: 'open-insert-drawer'): void;
   (e: 'create-text-at-center'): void;
+  (e: 'insert-image', payload: { url: string; alt?: string; width?: number; height?: number }): void;
   (e: 'undo'): void;
   (e: 'redo'): void;
   (e: 'zoom-in'): void;
@@ -307,6 +382,47 @@ const { toggleCollapse: toggleNavbar } = useBottomNavbar();
 const showMoreMenu = ref(false);
 const moreMenuRef = ref<HTMLElement | null>(null);
 const shapesMenuRef = ref<HTMLElement | null>(null);
+
+const showImageMenu = ref(false);
+const imageMenuRef = ref<HTMLElement | null>(null);
+const fileInputRef = ref<HTMLInputElement | null>(null);
+const imageUrlInput = ref('');
+
+const toggleImageMenu = () => {
+  showImageMenu.value = !showImageMenu.value;
+};
+
+const triggerFileSelect = () => {
+  fileInputRef.value?.click();
+};
+
+const handleFileUpload = async (e: Event) => {
+  const input = e.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file) return;
+
+  try {
+    const { dataUrl, width, height } = await optimizeImageFile(file);
+    emit('insert-image', {
+      url: dataUrl,
+      alt: file.name,
+      width,
+      height,
+    });
+    showImageMenu.value = false;
+    if (fileInputRef.value) fileInputRef.value.value = '';
+  } catch (err) {
+    console.error('Erro ao processar imagem na toolbar:', err);
+  }
+};
+
+const submitImageUrl = () => {
+  const url = imageUrlInput.value.trim();
+  if (!url) return;
+  emit('insert-image', { url });
+  imageUrlInput.value = '';
+  showImageMenu.value = false;
+};
 
 const showPenMenu = ref(false);
 const penMenuRef = ref<HTMLElement | null>(null);
@@ -355,6 +471,9 @@ const handleClickOutside = (e: MouseEvent) => {
   }
   if (penMenuRef.value && !penMenuRef.value.contains(e.target as Node)) {
     showPenMenu.value = false;
+  }
+  if (imageMenuRef.value && !imageMenuRef.value.contains(e.target as Node)) {
+    showImageMenu.value = false;
   }
 };
 

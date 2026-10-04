@@ -250,4 +250,20 @@ onUpdated(() => {
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
 }
+
+.ai-markdown-content :deep(img) {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.75rem;
+  margin: 1.25rem auto;
+  display: block;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ai-markdown-content :deep(img:hover) {
+  transform: scale(1.01);
+  box-shadow: 0 6px 24px -2px rgba(0, 0, 0, 0.45);
+}
 </style>

@@ -32,9 +32,9 @@ input, textarea, [contenteditable="true"] {
 :root,
 [data-theme="dark"],
 .dark-theme {
-  --bg-app: #0c0d0f;
+  --bg-app: #000000;
   --bg-root: #0a0b0d;
-  --bg-panel: #0c0d0f;
+  --bg-panel: #000000;
   --bg-surface: #121316;
   --bg-elevated: #18191d;
   --text-primary: #F2F2F2;

@@ -132,7 +132,7 @@
                 ? 'bg-gray-200 text-gray-700 hover:text-black'
                 : 'bg-white/5 text-textSecondary hover:text-textPrimary'))"
         >
-          Pág. {{ store.currentPage }} ({{ currentPageNotesCount }})
+          {{ store.documentType === 'epub' ? 'Loc.' : 'Pág.' }} {{ store.currentPage }} ({{ currentPageNotesCount }})
         </button>
 
         <button
@@ -192,7 +192,7 @@
       <div class="flex items-center justify-between">
         <span class="text-[11px] font-technical uppercase font-bold text-accent flex items-center gap-1.5">
           <SparklesIcon class="w-3.5 h-3.5" />
-          <span>Escrever reflexão rápida (Pág. {{ store.currentPage }})</span>
+          <span>Escrever reflexão rápida ({{ store.documentType === 'epub' ? 'Loc.' : 'Pág.' }} {{ store.currentPage }})</span>
         </span>
         <span class="text-[10px] text-textSecondary font-technical hidden sm:inline">
           Ctrl+Enter para salvar
@@ -325,7 +325,7 @@
             <!-- Badge de Página / Local com Clique para Navegar -->
             <button
               v-if="getPageNumber(item)"
-              @click="handleJumpToPage(getPageNumber(item)!)"
+              @click="handleJumpToPage(getPageNumber(item)!, item.cfi)"
               class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-technical font-semibold border transition-all cursor-pointer group/btn"
               :class="{
                 'bg-[#f0e7d3] border-[#dfd5c0] text-[#5c4d3c] hover:text-accent hover:border-accent': activeTheme === 'sepia',
@@ -340,7 +340,7 @@
                 title="Cor do destaque"
               ></span>
               <BookmarkIcon class="w-3.5 h-3.5 text-accent group-hover/btn:scale-110 transition-transform" />
-              <span>{{ item.chapterTitle || `Página ${getPageNumber(item)}` }}</span>
+              <span>{{ item.chapterTitle || (store.documentType === 'epub' ? `Loc. ${getPageNumber(item)}` : `Página ${getPageNumber(item)}`) }}</span>
               <ArrowRightIcon class="w-3 h-3 opacity-0 group-hover/btn:opacity-100 transition-opacity" />
             </button>
 
@@ -504,14 +504,11 @@
             }"
           >
             <span>{{ formatDate(item.createdAt) }}</span>
-            <span v-if="item.page || (item.cfi && item.cfi.startsWith('page:'))">
-              Pág. {{ item.page || item.cfi.replace('page:', '') }}
+            <span v-if="getPageNumber(item)">
+              {{ store.documentType === 'epub' ? 'Loc.' : 'Pág.' }} {{ getPageNumber(item) }}
             </span>
             <span v-else-if="item.chapterTitle">
               {{ item.chapterTitle }}
-            </span>
-            <span v-else-if="item.progress !== undefined && item.progress !== null">
-              Pág. {{ Math.round(item.progress) }}
             </span>
           </div>
         </article>
@@ -543,6 +540,7 @@ import {
 } from 'lucide-vue-next'
 import { useReaderStore } from '~/stores/readerStore'
 import { useAnnotations, type AnnotationItem } from '~/composables/useAnnotations'
+import { parsePosition, serializePosition } from '~/utils/reader/position/readingPosition'
 
 const props = defineProps<{
   isMobile?: boolean
@@ -606,8 +604,17 @@ function getPageNumber(item: AnnotationItem): number | null {
     const parsed = parseInt(item.cfi.replace('page:', ''), 10)
     if (!isNaN(parsed)) return parsed
   }
+  if (item.cfi && item.cfi.startsWith('epub:')) {
+    const pos = parsePosition(item.cfi)
+    if (pos && pos.kind === 'epub') {
+      if (store.document && typeof (store.document as any).positionToUnit === 'function') {
+        return (store.document as any).positionToUnit(pos)
+      }
+      return pos.sectionIndex + 1
+    }
+  }
   if (item.chapterTitle) {
-    const match = item.chapterTitle.match(/P[áa]gina\s+(\d+)/i)
+    const match = item.chapterTitle.match(/(?:P[áa]gina|Loc\.?)\s+(\d+)/i)
     if (match && match[1]) {
       const parsed = parseInt(match[1], 10)
       if (!isNaN(parsed)) return parsed
@@ -669,9 +676,21 @@ async function loadNotes() {
   await fetchAnnotations({ bookId: currentBookId })
 }
 
-function handleJumpToPage(page: number) {
+function handleJumpToPage(page: number, cfi?: string) {
   emit('goToPage', page)
-  store.goToPage(page)
+  if (cfi && cfi.startsWith('epub:')) {
+    const pos = parsePosition(cfi)
+    if (pos && pos.kind !== 'legacy-page') {
+      store.goToPosition(pos)
+      if (props.isMobile) emit('close')
+      return
+    }
+  }
+  if (store.document && typeof (store.document as any).unitToPosition === 'function') {
+    store.goToPosition((store.document as any).unitToPosition(page))
+  } else {
+    store.goToPage(page)
+  }
   if (props.isMobile) {
     emit('close')
   }
@@ -732,10 +751,12 @@ async function handleSaveQuickNote() {
 
   try {
     const currentBookId = targetBookId.value
+    const cfi = store.position ? serializePosition(store.position) : `page:${store.currentPage}`
+    const chapterTitle = store.documentType === 'epub' ? `Loc. ${store.currentPage}` : `Página ${store.currentPage}`
     await createAnnotation({
       bookId: currentBookId,
-      cfi: `page:${store.currentPage}`,
-      chapterTitle: `Página ${store.currentPage}`,
+      cfi,
+      chapterTitle,
       note: text,
       progress: store.progressPercentage,
       bookTitle: store.title || props.bookTitle,

@@ -78,7 +78,7 @@ describe('NoteEditorPane Component', () => {
     expect(wrapper.emitted('save')).toBeTruthy();
   });
 
-  it('renders inline title inside document page (Obsidian style) and updates title dynamically', async () => {
+  it('renders editable title between back and delete buttons in top bar and updates title dynamically', async () => {
     const wrapper = mount(NoteEditorPane, {
       props: {
         note: sampleNote,
@@ -95,14 +95,52 @@ describe('NoteEditorPane Component', () => {
       },
     });
 
-    const inlineTitleInput = wrapper.find('[data-testid="input-note-title"]');
-    expect(inlineTitleInput.exists()).toBe(true);
-    expect((inlineTitleInput.element as HTMLInputElement).value).toBe('Nota de Teste');
+    const titleInput = wrapper.find('[data-testid="input-note-title"]');
+    expect(titleInput.exists()).toBe(true);
+    expect((titleInput.element as HTMLInputElement).value).toBe('Nota de Teste');
 
     // Altera o título dinamicamente
-    await inlineTitleInput.setValue('Meu Novo Título Obsidian');
-    expect((inlineTitleInput.element as HTMLInputElement).value).toBe('Meu Novo Título Obsidian');
+    await titleInput.setValue('Meu Novo Título Aresta');
+    expect((titleInput.element as HTMLInputElement).value).toBe('Meu Novo Título Aresta');
     expect(wrapper.emitted('update:note')).toBeTruthy();
+  });
+
+  it('normalizes default generic title and focuses title input on new note creation', async () => {
+    const newNote: NoteItem = {
+      id: 'note-new-1',
+      userId: 1,
+      title: 'Nova Nota',
+      content: '',
+      tags: [],
+      updatedAt: '2026-09-04T10:00:00Z',
+    };
+
+    const wrapper = mount(NoteEditorPane, {
+      props: {
+        note: newNote,
+        folders: ['Geral'],
+        canvases: [],
+      },
+      attachTo: document.body,
+      global: {
+        stubs: {
+          MilkdownEditor: {
+            props: ['modelValue'],
+            template: '<div class="milkdown-stub"></div>'
+          },
+        },
+      },
+    });
+
+    await flushPromises();
+
+    const titleInput = wrapper.find('[data-testid="input-note-title"]');
+    expect(titleInput.exists()).toBe(true);
+    // Título 'Nova Nota' é normalizado para vazio exibindo placeholder
+    expect((titleInput.element as HTMLInputElement).value).toBe('');
+    expect(titleInput.attributes('placeholder')).toBe('Sem título');
+
+    wrapper.unmount();
   });
 
   it('emits delete when trash button is clicked in toolbar', async () => {
@@ -149,6 +187,31 @@ describe('NoteEditorPane Component', () => {
 
     const closeBtn = wrapper.find('[data-testid="btn-close-note"]');
     expect(closeBtn.exists()).toBe(false);
+  });
+
+  it('renders back button and emits close when clicked', async () => {
+    const wrapper = mount(NoteEditorPane, {
+      props: {
+        note: sampleNote,
+        folders: ['Geral', 'Projetos'],
+        canvases: [],
+      },
+      global: {
+        stubs: {
+          MilkdownEditor: {
+            props: ['modelValue'],
+            template: '<div class="milkdown-stub">{{ modelValue }}</div>'
+          },
+        },
+      },
+    });
+
+    const backBtn = wrapper.find('[data-testid="note-back-button"]');
+    expect(backBtn.exists()).toBe(true);
+    expect(backBtn.text()).toContain('Voltar');
+
+    await backBtn.trigger('click');
+    expect(wrapper.emitted('close')).toBeTruthy();
   });
 
   it('emits update:note and save when MilkdownEditor content changes', async () => {
@@ -543,11 +606,14 @@ describe('NoteEditorPane Component', () => {
     expect(wrapper.find('[data-testid="select-folder"]').exists()).toBe(false);
     expect(wrapper.text()).not.toContain('Sem pasta');
 
-    // Botão de tags unificado deve existir e conter as 2 tags originais + a tag migrada do folder Geral
+    // Botão de tags unificado deve ser icon-only e existir na toolbar
     const tagsBtn = wrapper.find('[data-testid="btn-toggle-tags"]');
     expect(tagsBtn.exists()).toBe(true);
-    expect(tagsBtn.text()).toContain('#teste');
-    expect(tagsBtn.text()).toContain('+2');
+
+    // Ao abrir o popover, exibe as tags da nota
+    await tagsBtn.trigger('click');
+    expect(wrapper.text()).toContain('#teste');
+    expect(wrapper.text()).toContain('#dev');
   });
 
   it('migra automaticamente folder legado para tags ao inicializar a nota', async () => {
@@ -576,7 +642,6 @@ describe('NoteEditorPane Component', () => {
 
     const tagsBtn = wrapper.find('[data-testid="btn-toggle-tags"]');
     expect(tagsBtn.exists()).toBe(true);
-    expect(tagsBtn.text()).toContain('#Filosofia Antiga');
 
     // Ao abrir o popover, a tag deve estar presente
     await tagsBtn.trigger('click');
@@ -608,7 +673,7 @@ describe('NoteEditorPane Component', () => {
     });
 
     const tagsBtn = wrapper.find('[data-testid="btn-toggle-tags"]');
-    expect(tagsBtn.text()).toBe('Tags');
+    expect(tagsBtn.exists()).toBe(true);
     await tagsBtn.trigger('click');
 
     // Deve exibir seção de tags existentes com as sugestões
@@ -625,5 +690,59 @@ describe('NoteEditorPane Component', () => {
     const lastUpdate = wrapper.emitted('update:note')!.pop()![0] as NoteItem;
     expect(lastUpdate.tags).toContain('Arquitetura');
     expect(lastUpdate.folder).toBe('Arquitetura');
+  });
+
+  it('exibe botão de imagem na toolbar e abre modal ao clicar', async () => {
+    const wrapper = mount(NoteEditorPane, {
+      props: {
+        note: sampleNote,
+        folders: ['Geral'],
+        canvases: [],
+      },
+      attachTo: document.body,
+      global: {
+        stubs: {
+          MilkdownEditor: true,
+        },
+      },
+    });
+
+    const imageBtn = wrapper.find('[data-testid="btn-insert-image"]');
+    expect(imageBtn.exists()).toBe(true);
+
+    await imageBtn.trigger('click');
+
+    const modal = document.querySelector('[data-testid="modal-insert-image"]');
+    expect(modal).not.toBeNull();
+    expect(modal?.textContent).toContain('Inserir Imagem');
+
+    // Alterna para aba URL
+    const urlTabBtn = modal?.querySelector('[data-testid="tab-image-url"]') as HTMLButtonElement;
+    expect(urlTabBtn).not.toBeNull();
+    urlTabBtn.click();
+    await wrapper.vm.$nextTick();
+
+    // Digita URL e Alt
+    const urlInput = modal?.querySelector('[data-testid="input-note-image-url-field"]') as HTMLInputElement;
+    const altInput = modal?.querySelector('[data-testid="input-note-image-url-alt"]') as HTMLInputElement;
+    urlInput.value = 'https://example.com/art.jpg';
+    urlInput.dispatchEvent(new Event('input', { bubbles: true }));
+    altInput.value = 'Obra de Arte';
+    altInput.dispatchEvent(new Event('input', { bubbles: true }));
+    await flushPromises();
+
+    // Clica no botão de confirmar inserção
+    const confirmBtn = modal?.querySelector('[data-testid="btn-confirm-insert-image-url"]') as HTMLButtonElement;
+    expect(confirmBtn).not.toBeNull();
+    expect(confirmBtn.disabled).toBe(false);
+    confirmBtn.click();
+    await flushPromises();
+
+    // Deve emitir update:note com markdown de imagem
+    expect(wrapper.emitted('update:note')).toBeTruthy();
+    const lastUpdate = wrapper.emitted('update:note')!.pop()![0] as NoteItem;
+    expect(lastUpdate.content).toContain('![Obra de Arte](https://example.com/art.jpg)');
+
+    wrapper.unmount();
   });
 });

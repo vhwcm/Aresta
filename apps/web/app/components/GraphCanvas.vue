@@ -1942,7 +1942,7 @@ const initGraph = (animateTransition = true) => {
 
   // Animação contínua de micro-balanço suave e interpolação lenta de transição
   const startFloatingAnimation = () => {
-    if (animFrameId) cancelAnimationFrame(animFrameId)
+    if (animFrameId && typeof cancelAnimationFrame !== 'undefined') cancelAnimationFrame(animFrameId)
 
     const tickFloating = (time: number) => {
       const speed = 0.0016
@@ -2075,7 +2075,7 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
-  if (animFrameId) cancelAnimationFrame(animFrameId)
+  if (animFrameId && typeof cancelAnimationFrame !== 'undefined') cancelAnimationFrame(animFrameId)
   if (simulation) simulation.stop()
   if (svgRef.value) {
     svgRef.value.removeEventListener('wheel', handleNativeWheel)

@@ -231,4 +231,51 @@ describe('useCanvas composable', () => {
     canvas.clearAllStrokes();
     expect(canvas.strokes.value).toHaveLength(0);
   });
+
+  it('exporta SVG válido com nós de imagem contendo parâmetros de URL e caracteres especiais escapados', () => {
+    const canvas = useCanvas();
+    canvas.currentCanvas.value = { id: 'c1', title: 'Quadro & Teste', updatedAt: '', data: '' };
+    canvas.nodes.value = [
+      {
+        id: 'img1',
+        type: 'image',
+        x: 10,
+        y: 10,
+        width: 200,
+        height: 150,
+        imageUrl: 'https://images.unsplash.com/photo-123?w=800&fit=crop&q=80',
+        imageAlt: 'Foto "Incrível" & Rápida',
+      },
+      {
+        id: 't1',
+        type: 'text',
+        x: 220,
+        y: 10,
+        width: 150,
+        height: 100,
+        text: 'Pesquisa & Desenvolvimento',
+      },
+    ];
+
+    let capturedSvg = '';
+    const originalBlob = globalThis.Blob;
+    class MockBlob extends originalBlob {
+      constructor(content: any[], options: any) {
+        super(content, options);
+        capturedSvg = content[0];
+      }
+    }
+    vi.stubGlobal('Blob', MockBlob);
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+
+    canvas.exportAsSvg();
+
+    expect(capturedSvg).toContain('xmlns:xlink="http://www.w3.org/1999/xlink"');
+    expect(capturedSvg).toContain('xlink:href="https://images.unsplash.com/photo-123?w=800&amp;fit=crop&amp;q=80"');
+    expect(capturedSvg).toContain('Pesquisa &amp; Desenvolvimento');
+    expect(capturedSvg).not.toContain('&fit=crop');
+
+    clickSpy.mockRestore();
+    vi.stubGlobal('Blob', originalBlob);
+  });
 });

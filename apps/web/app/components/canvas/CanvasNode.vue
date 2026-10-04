@@ -41,6 +41,13 @@
       :is-selected="isSelected"
     />
 
+    <CanvasNodeImage
+      v-else-if="node.type === 'image'"
+      :node="node"
+      :is-selected="isSelected"
+      @update:aspect-ratio="$emit('update-aspect-ratio', node.id, $event)"
+    />
+
     <!-- 4 Connection Anchors (Obsidian Style: Top, Right, Bottom, Left) -->
     <div
       v-for="side in anchorSides"
@@ -185,6 +192,7 @@ import CanvasNodeText from './CanvasNodeText.vue';
 import CanvasNodeShape from './CanvasNodeShape.vue';
 import CanvasNodeBook from './CanvasNodeBook.vue';
 import CanvasNodeNote from './CanvasNodeNote.vue';
+import CanvasNodeImage from './CanvasNodeImage.vue';
 
 const props = defineProps<{
   node: CanvasNode;
@@ -203,6 +211,7 @@ const emit = defineEmits<{
   (_e: 'update-color', _id: string, _color: string): void;
   (_e: 'update-shape', _id: string, _shape: CanvasShapeType): void;
   (_e: 'convert-to-note', _id: string): void;
+  (_e: 'update-aspect-ratio', _id: string, _ratio: number): void;
   (_e: 'delete', _id: string): void;
 }>();
 

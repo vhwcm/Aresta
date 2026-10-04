@@ -19,6 +19,9 @@
     @pointerup="onPointerUp"
     @dblclick="onDoubleClick"
     @keydown="onKeyDown"
+    @dragover.prevent
+    @drop.prevent="onBoardFileDrop"
+    @paste="onBoardPaste"
   >
     <!-- Dot Grid Background (Infinite Pattern scaled with Zoom) -->
     <div
@@ -65,6 +68,7 @@
         @update-color="onUpdateNodeColor"
         @update-shape="onUpdateNodeShape"
         @convert-to-note="handleConvertToNote"
+        @update-aspect-ratio="onUpdateNodeAspectRatio"
         @delete="removeNode"
       />
     </div>
@@ -102,6 +106,13 @@
           >
             📖 Inserir Livro
           </button>
+          <button
+            class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-bgElevated hover:bg-bgSurface text-textPrimary border border-divider text-xs font-medium transition-all hover:scale-102 cursor-pointer flex items-center gap-1.5"
+            @click="openDrawer('images')"
+          >
+            <span>🖼️</span>
+            <span>Inserir Imagem</span>
+          </button>
         </div>
       </div>
     </div>
@@ -133,6 +144,7 @@
       @update:pen-width="activePenWidth = $event"
       @open-insert-drawer="openDrawer('books')"
       @create-text-at-center="createLooseTextAtCenter"
+      @insert-image="handleInsertImage"
       @undo="undo"
       @redo="redo"
       @zoom-in="zoomAt(centerScreen.x, centerScreen.y, 1.2)"
@@ -152,6 +164,7 @@
       @insert-book="handleInsertBook"
       @insert-note="handleInsertNote"
       @insert-annotation="handleInsertAnnotation"
+      @insert-image="handleInsertImage"
     />
 
     <!-- Marquee Selection Rectangle Overlay -->
@@ -185,6 +198,7 @@ import type {
 import { useCanvas } from '~/composables/useCanvas';
 import { useNotes } from '~/composables/useNotes';
 import { getClosestAnchorSide } from '~/utils/canvasGeometry';
+import { optimizeImageFile } from '~/utils/imageOptimizer';
 
 const props = defineProps<{
   canvasId?: string;
@@ -192,12 +206,12 @@ const props = defineProps<{
 
 const boardContainerRef = ref<HTMLElement | null>(null);
 const showInsertDrawer = ref(false);
-const drawerTab = ref<'books' | 'notes' | 'quotes'>('books');
+const drawerTab = ref<'books' | 'notes' | 'quotes' | 'images'>('books');
 const drawerOpenNewNote = ref(false);
 
 const { createNote } = useNotes();
 
-const openDrawer = (tab: 'books' | 'notes' | 'quotes', openNewNote = false) => {
+const openDrawer = (tab: 'books' | 'notes' | 'quotes' | 'images', openNewNote = false) => {
   drawerTab.value = tab;
   drawerOpenNewNote.value = openNewNote;
   showInsertDrawer.value = true;
@@ -703,23 +717,65 @@ const onPointerMove = (e: PointerEvent) => {
     const { nodeId, handle, startX, startY, initialWidth, initialHeight, initialX, initialY } = resizingNodeState.value;
     const dx = (e.clientX - startX) / viewport.value.zoom;
     const dy = (e.clientY - startY) / viewport.value.zoom;
+    const node = nodes.value.find((n) => n.id === nodeId);
+    const isImageNode = node?.type === 'image';
+    const keepRatio = e.shiftKey || isImageNode;
+    const ratio = (node?.aspectRatio && node.aspectRatio > 0)
+      ? node.aspectRatio
+      : (initialWidth / Math.max(initialHeight, 1));
 
     let newWidth = initialWidth;
     let newHeight = initialHeight;
     let newX = initialX;
     let newY = initialY;
 
-    if (handle.includes('e')) newWidth = Math.max(initialWidth + dx, 100);
-    if (handle.includes('s')) newHeight = Math.max(initialHeight + dy, 60);
-    if (handle.includes('w')) {
-      const w = Math.max(initialWidth - dx, 100);
-      newX = initialX + (initialWidth - w);
-      newWidth = w;
-    }
-    if (handle.includes('n')) {
-      const h = Math.max(initialHeight - dy, 60);
-      newY = initialY + (initialHeight - h);
-      newHeight = h;
+    if (keepRatio && ratio > 0) {
+      if (handle === 'se') {
+        newWidth = Math.max(initialWidth + dx, 100);
+        newHeight = Math.round(newWidth / ratio);
+        if (newHeight < 60) {
+          newHeight = 60;
+          newWidth = Math.round(newHeight * ratio);
+        }
+      } else if (handle === 'sw') {
+        newWidth = Math.max(initialWidth - dx, 100);
+        newHeight = Math.round(newWidth / ratio);
+        if (newHeight < 60) {
+          newHeight = 60;
+          newWidth = Math.round(newHeight * ratio);
+        }
+        newX = initialX + (initialWidth - newWidth);
+      } else if (handle === 'ne') {
+        newWidth = Math.max(initialWidth + dx, 100);
+        newHeight = Math.round(newWidth / ratio);
+        if (newHeight < 60) {
+          newHeight = 60;
+          newWidth = Math.round(newHeight * ratio);
+        }
+        newY = initialY + (initialHeight - newHeight);
+      } else if (handle === 'nw') {
+        newWidth = Math.max(initialWidth - dx, 100);
+        newHeight = Math.round(newWidth / ratio);
+        if (newHeight < 60) {
+          newHeight = 60;
+          newWidth = Math.round(newHeight * ratio);
+        }
+        newX = initialX + (initialWidth - newWidth);
+        newY = initialY + (initialHeight - newHeight);
+      }
+    } else {
+      if (handle.includes('e')) newWidth = Math.max(initialWidth + dx, 100);
+      if (handle.includes('s')) newHeight = Math.max(initialHeight + dy, 60);
+      if (handle.includes('w')) {
+        const w = Math.max(initialWidth - dx, 100);
+        newX = initialX + (initialWidth - w);
+        newWidth = w;
+      }
+      if (handle.includes('n')) {
+        const h = Math.max(initialHeight - dy, 60);
+        newY = initialY + (initialHeight - h);
+        newHeight = h;
+      }
     }
 
     updateNode(nodeId, { x: Math.round(newX), y: Math.round(newY), width: Math.round(newWidth), height: Math.round(newHeight) });
@@ -986,6 +1042,13 @@ const onUpdateNodeShape = (id: string, shape: CanvasShapeType) => {
   updateNode(id, { shape }, true);
 };
 
+const onUpdateNodeAspectRatio = (id: string, ratio: number) => {
+  const node = nodes.value.find((n) => n.id === id);
+  if (node && !node.aspectRatio) {
+    updateNode(id, { aspectRatio: ratio });
+  }
+};
+
 // Insert Book Handler
 const handleInsertBook = (book: any) => {
   const centerCoords = screenToCanvas(centerScreen.value.x, centerScreen.value.y);
@@ -1040,6 +1103,143 @@ const handleInsertNote = (note: any) => {
   addNode(newNode);
   showInsertDrawer.value = false;
 };
+
+// Inserir Nó de Imagem no Canvas
+const handleInsertImage = (
+  image: { url: string; alt?: string; width?: number; height?: number },
+  customCoords?: { x: number; y: number }
+) => {
+  const coords = customCoords || screenToCanvas(centerScreen.value.x, centerScreen.value.y);
+  let initialWidth = 300;
+  let initialHeight = 220;
+
+  if (image.width && image.height && image.width > 0 && image.height > 0) {
+    const ratio = image.width / image.height;
+    if (ratio >= 1) {
+      initialWidth = Math.min(420, Math.max(220, image.width));
+      initialHeight = Math.round(initialWidth / ratio);
+    } else {
+      initialHeight = Math.min(360, Math.max(200, image.height));
+      initialWidth = Math.round(initialHeight * ratio);
+    }
+  }
+
+  const newNode: CanvasNode = {
+    id: `node-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+    type: 'image',
+    x: Math.round(coords.x - initialWidth / 2),
+    y: Math.round(coords.y - initialHeight / 2),
+    width: initialWidth,
+    height: initialHeight,
+    imageUrl: image.url,
+    imageAlt: image.alt,
+    aspectRatio: image.width && image.height ? image.width / image.height : undefined,
+    color: '#E57B55',
+  };
+  addNode(newNode);
+  selectedNodeIds.value = [newNode.id];
+  showInsertDrawer.value = false;
+};
+
+// Arrastar e Soltar (Drag & Drop) de imagens no Canvas
+const onBoardFileDrop = async (e: DragEvent) => {
+  const dropCoords = screenToCanvas(e.clientX, e.clientY);
+  const files = e.dataTransfer?.files;
+  const imageFiles = files ? Array.from(files).filter((f) => f.type.startsWith('image/')) : [];
+
+  if (imageFiles.length > 0) {
+    for (let index = 0; index < imageFiles.length; index++) {
+      const file = imageFiles[index];
+      if (!file) continue;
+      try {
+        const { dataUrl, width, height } = await optimizeImageFile(file);
+        const offset = index * 25;
+        handleInsertImage(
+          {
+            url: dataUrl,
+            alt: file.name,
+            width,
+            height,
+          },
+          { x: dropCoords.x + offset, y: dropCoords.y + offset }
+        );
+      } catch (err) {
+        console.error('Erro ao processar imagem solta no canvas:', err);
+      }
+    }
+    return;
+  }
+
+  // Suporte a arrastar imagem da web para o Canvas
+  const uri = e.dataTransfer?.getData('text/uri-list') || '';
+  const html = e.dataTransfer?.getData('text/html') || '';
+  const text = e.dataTransfer?.getData('text/plain') || '';
+  const htmlMatch = html.match(/<img[^>]+src=["']([^"']+)["']/i);
+  const candidateUrl = ((htmlMatch && htmlMatch[1]) ? htmlMatch[1] : (uri || text)).trim();
+
+  if (candidateUrl && (candidateUrl.startsWith('data:image/') || candidateUrl.startsWith('http://') || candidateUrl.startsWith('https://') || candidateUrl.startsWith('blob:'))) {
+    const isImage = htmlMatch || /\.(png|jpe?g|webp|gif|svg|bmp|avif)(\?.*)?$/i.test(candidateUrl) || candidateUrl.startsWith('data:image/');
+    if (isImage) {
+      handleInsertImage(
+        { url: candidateUrl, alt: 'Imagem da Web' },
+        dropCoords
+      );
+    }
+  }
+};
+
+// Colar Imagem da Área de Transferência (Ctrl+V / Cmd+V) no Canvas
+const onBoardPaste = async (e: ClipboardEvent) => {
+  const target = e.target as HTMLElement | null;
+  if (
+    target &&
+    (target.tagName === 'INPUT' ||
+      target.tagName === 'TEXTAREA' ||
+      target.isContentEditable ||
+      target.closest('.ProseMirror'))
+  ) {
+    return;
+  }
+
+  const items = e.clipboardData?.items;
+  if (!items) return;
+
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    if (item && item.type.startsWith('image/')) {
+      e.preventDefault();
+      const file = item.getAsFile();
+      if (!file) continue;
+
+      try {
+        const { dataUrl, width, height } = await optimizeImageFile(file);
+        handleInsertImage({
+          url: dataUrl,
+          alt: 'Imagem Colada',
+          width,
+          height,
+        });
+      } catch (err) {
+        console.error('Erro ao processar imagem colada no canvas:', err);
+      }
+      return;
+    }
+  }
+
+  // Suporte a colar URL de imagem como texto no canvas
+  const text = e.clipboardData?.getData('text/plain')?.trim();
+  if (text && (text.startsWith('http://') || text.startsWith('https://') || text.startsWith('data:image/'))) {
+    const isImage = /\.(png|jpe?g|webp|gif|svg|bmp|avif)(\?.*)?$/i.test(text) || text.startsWith('data:image/');
+    if (isImage) {
+      e.preventDefault();
+      handleInsertImage({
+        url: text,
+        alt: 'Imagem Colada',
+      });
+    }
+  }
+};
+
 
 // Converter Bloco de Texto em Nota Persistente do Sistema
 const handleConvertToNote = async (nodeId: string) => {

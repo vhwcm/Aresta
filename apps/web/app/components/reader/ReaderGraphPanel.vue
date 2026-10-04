@@ -253,9 +253,9 @@
                 v-if="getPageFromCfi(item.cfi)"
                 @click="jumpToAnnotationPage(item.cfi)"
                 class="text-accent hover:underline flex items-center gap-1"
-                title="Ir para a página desta anotação"
+                title="Ir para a página ou localização desta anotação"
               >
-                <span>Pág. {{ getPageFromCfi(item.cfi) }}</span>
+                <span>{{ store.documentType === 'epub' ? 'Loc.' : 'Pág.' }} {{ getPageFromCfi(item.cfi) }}</span>
                 <ArrowRightIcon class="w-3 h-3" />
               </button>
             </div>
@@ -338,6 +338,7 @@ import type { GraphNode } from '~/interfaces/graph'
 import { useGraph } from '~/composables/useGraph'
 import { useAnnotations, type AnnotationItem } from '~/composables/useAnnotations'
 import { useReaderStore } from '~/stores/readerStore'
+import { parsePosition } from '~/utils/reader/position/readingPosition'
 
 import GraphCanvas from '~/components/GraphCanvas.vue'
 import CreateNodeModal from '~/components/CreateNodeModal.vue'
@@ -442,13 +443,35 @@ const handleConnectNodesPayload = async (payload: any) => {
 const getPageFromCfi = (cfi?: string): number | null => {
   if (!cfi) return null
   const match = cfi.match(/page:(\d+)/)
-  return match && match[1] ? parseInt(match[1], 10) : null
+  if (match && match[1]) return parseInt(match[1], 10)
+  if (cfi.startsWith('epub:')) {
+    const pos = parsePosition(cfi)
+    if (pos && pos.kind === 'epub') {
+      if (store.document && typeof (store.document as any).positionToUnit === 'function') {
+        return (store.document as any).positionToUnit(pos)
+      }
+      return pos.sectionIndex + 1
+    }
+  }
+  return null
 }
 
 const jumpToAnnotationPage = (cfi?: string) => {
+  if (!cfi) return
+  if (cfi.startsWith('epub:')) {
+    const pos = parsePosition(cfi)
+    if (pos && pos.kind !== 'legacy-page') {
+      store.goToPosition(pos)
+      return
+    }
+  }
   const page = getPageFromCfi(cfi)
   if (page) {
-    store.goToPage(page)
+    if (store.document && typeof (store.document as any).unitToPosition === 'function') {
+      store.goToPosition((store.document as any).unitToPosition(page))
+    } else {
+      store.goToPage(page)
+    }
   }
 }
 

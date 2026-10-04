@@ -317,11 +317,14 @@ import DrawingPageCanvas from '~/components/canvas/drawing/DrawingPageCanvas.vue
 import DrawingToolbar from '~/components/canvas/drawing/DrawingToolbar.vue';
 import DrawingAiSynthesisModal from '~/components/canvas/drawing/DrawingAiSynthesisModal.vue';
 import AppBackButton from '~/components/AppBackButton.vue';
+import { useArestaDialog } from '~/composables/useArestaDialog';
 
 definePageMeta({
   layout: false,
   middleware: ['auth'],
 });
+
+const dialog = useArestaDialog();
 
 const route = useRoute();
 const router = useRouter();
@@ -809,8 +812,16 @@ function handleAddPage() {
   });
 }
 
-function handleRemovePage(idx: number) {
-  if (confirm(`Deseja excluir a Página ${idx + 1}?`)) {
+async function handleRemovePage(idx: number) {
+  const confirmed = await dialog.confirm({
+    title: 'Excluir Página',
+    subtitle: 'Caderno de Desenho',
+    message: `Deseja excluir a Página ${idx + 1}?`,
+    confirmText: 'Excluir Página',
+    variant: 'danger',
+    icon: 'delete'
+  });
+  if (confirmed) {
     removePage(idx);
     nextTick(() => {
       const total = currentDrawing.value?.pages.length || 1;
@@ -837,7 +848,12 @@ async function handleTriggerAiSynthesis() {
   }
 
   if (images.length === 0) {
-    alert('Nenhuma página disponível para síntese.');
+    await dialog.alert({
+      title: 'Síntese com IA',
+      message: 'Nenhuma página disponível para síntese.',
+      variant: 'warning',
+      icon: 'alert'
+    });
     return;
   }
 
@@ -851,7 +867,12 @@ async function handleTriggerAiSynthesis() {
     synthesisResult.value = result;
   } catch (err: any) {
     console.error('Erro na síntese com IA:', err);
-    alert(err.message || 'Falha na síntese com IA. Verifique sua conexão e tente novamente.');
+    await dialog.alert({
+      title: 'Erro na Síntese',
+      message: err.message || 'Falha na síntese com IA. Verifique sua conexão e tente novamente.',
+      variant: 'danger',
+      icon: 'alert'
+    });
   } finally {
     isGeneratingModal.value = false;
   }
@@ -874,7 +895,12 @@ async function handleSaveAsNote(payload: { title: string; html: string; deleteOr
       await router.push('/canvas?tab=notes&view=grid');
     }
   } catch (err: any) {
-    alert(err.message || 'Erro ao salvar como nota.');
+    await dialog.alert({
+      title: 'Erro ao Salvar',
+      message: err.message || 'Erro ao salvar como nota.',
+      variant: 'danger',
+      icon: 'alert'
+    });
   }
 }
 

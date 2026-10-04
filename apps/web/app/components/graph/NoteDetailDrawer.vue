@@ -199,6 +199,9 @@ import type { GraphNode } from '~/interfaces/graph'
 import { noteRepo } from '~/adapters/database/repositories/NoteRepository'
 import { drawingNoteRepo } from '~/adapters/database/repositories/DrawingNoteRepository'
 import { useNotes } from '~/composables/useNotes'
+import { useArestaDialog } from '~/composables/useArestaDialog'
+
+const dialog = useArestaDialog()
 
 const props = defineProps<{
   isOpen: boolean
@@ -350,7 +353,15 @@ const saveNoteChanges = async () => {
 
 const handleDelete = async () => {
   if (!noteId.value) return
-  if (confirm(`Tem certeza que deseja excluir "${title.value}"?`)) {
+  const confirmed = await dialog.confirm({
+    title: isDrawing.value ? 'Excluir Desenho' : 'Excluir Nota',
+    subtitle: 'Ação Destrutiva',
+    message: `Tem certeza que deseja excluir "${title.value}"?`,
+    confirmText: 'Excluir',
+    variant: 'danger',
+    icon: 'delete'
+  })
+  if (confirmed) {
     try {
       if (isDrawing.value) {
         await drawingNoteRepo.delete(noteId.value)

@@ -41,10 +41,17 @@
       >
         Citações
       </button>
+      <button
+        class="flex-1 py-2.5 text-xs font-semibold border-b-2 transition-colors text-center"
+        :class="activeTab === 'images' ? 'border-primary text-primary' : 'border-transparent text-textSecondary hover:text-textPrimary'"
+        @click="activeTab = 'images'"
+      >
+        Imagens
+      </button>
     </div>
 
     <!-- Search Input -->
-    <div class="p-3 border-b border-divider">
+    <div v-if="activeTab !== 'images'" class="p-3 border-b border-divider">
       <div class="relative">
         <input
           v-model="searchQuery"
@@ -210,7 +217,8 @@
       </template>
 
       <!-- Quotes Tab -->
-      <template v-else>
+      <!-- Quotes Tab -->
+      <template v-else-if="activeTab === 'quotes'">
         <div
           v-for="annotation in filteredAnnotations"
           :key="annotation.id"
@@ -233,19 +241,79 @@
           Nenhuma anotação encontrada.
         </div>
       </template>
+
+      <!-- Images Tab -->
+      <template v-else-if="activeTab === 'images'">
+        <div class="flex flex-col gap-3">
+          <label
+            class="flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed border-divider hover:border-primary/60 rounded-xl bg-bgSurface hover:bg-bgElevated transition-all cursor-pointer text-center group"
+          >
+            <input
+              type="file"
+              accept="image/*"
+              class="hidden"
+              @change="handleDrawerImageUpload"
+            />
+            <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary group-hover:scale-110 flex items-center justify-center transition-transform">
+              <ImageIcon class="w-5 h-5" />
+            </div>
+            <div>
+              <p class="text-xs font-semibold text-textPrimary group-hover:text-primary transition-colors">
+                Carregar Imagem Local
+              </p>
+              <p class="text-[10px] text-textSecondary mt-0.5">
+                PNG, JPG, SVG, WebP, GIF
+              </p>
+            </div>
+          </label>
+
+          <div class="flex items-center gap-2 my-1">
+            <div class="h-px bg-divider flex-1"></div>
+            <span class="text-[10px] text-textSecondary uppercase">ou por URL</span>
+            <div class="h-px bg-divider flex-1"></div>
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <input
+              v-model="drawerImageUrl"
+              type="url"
+              placeholder="Cole a URL da imagem..."
+              class="w-full px-3 py-1.5 text-xs bg-bgElevated border border-divider rounded-xl text-textPrimary placeholder:text-textSecondary/50 focus:outline-none focus:border-primary font-interface"
+              @keydown.enter.prevent="submitDrawerImageUrl"
+            />
+            <input
+              v-model="drawerImageAlt"
+              type="text"
+              placeholder="Legenda / Alt text (opcional)..."
+              class="w-full px-3 py-1.5 text-xs bg-bgElevated border border-divider rounded-xl text-textPrimary placeholder:text-textSecondary/50 focus:outline-none focus:border-primary font-interface"
+              @keydown.enter.prevent="submitDrawerImageUrl"
+            />
+            <button
+              type="button"
+              class="w-full py-2 rounded-xl bg-primary hover:bg-primaryHover text-white text-xs font-semibold transition-all cursor-pointer shadow-md disabled:opacity-50"
+              :disabled="!drawerImageUrl.trim()"
+              @click="submitDrawerImageUrl"
+            >
+              Inserir Imagem no Quadro
+            </button>
+          </div>
+        </div>
+      </template>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
+import { Image as ImageIcon } from 'lucide-vue-next';
 import { useAnnotations } from '~/composables/useAnnotations';
 import { useNotes } from '~/composables/useNotes';
 import { getCoverUrl as resolveCoverUrl } from '~/utils/cover';
+import { optimizeImageFile } from '~/utils/imageOptimizer';
 
 const props = withDefaults(
   defineProps<{
-    initialTab?: 'books' | 'notes' | 'quotes';
+    initialTab?: 'books' | 'notes' | 'quotes' | 'images';
     openCreateNote?: boolean;
     canvasId?: string;
   }>(),
@@ -260,9 +328,42 @@ const emit = defineEmits<{
   (_e: 'insert-book', _book: any): void;
   (_e: 'insert-note', _note: any): void;
   (_e: 'insert-annotation', _annotation: any): void;
+  (_e: 'insert-image', _image: { url: string; alt?: string; width?: number; height?: number }): void;
 }>();
 
-const activeTab = ref<'books' | 'notes' | 'quotes'>(props.initialTab);
+const activeTab = ref<'books' | 'notes' | 'quotes' | 'images'>(props.initialTab);
+const drawerImageUrl = ref('');
+const drawerImageAlt = ref('');
+
+const handleDrawerImageUpload = async (e: Event) => {
+  const input = e.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file) return;
+
+  try {
+    const { dataUrl, width, height } = await optimizeImageFile(file);
+    emit('insert-image', {
+      url: dataUrl,
+      alt: file.name,
+      width,
+      height,
+    });
+    if (input) input.value = '';
+  } catch (err) {
+    console.error('Erro ao processar imagem no drawer:', err);
+  }
+};
+
+const submitDrawerImageUrl = () => {
+  const url = drawerImageUrl.value.trim();
+  if (!url) return;
+  emit('insert-image', {
+    url,
+    alt: drawerImageAlt.value.trim() || undefined,
+  });
+  drawerImageUrl.value = '';
+  drawerImageAlt.value = '';
+};
 const searchQuery = ref('');
 const showNewNoteForm = ref(props.openCreateNote);
 const newNoteTitle = ref('');

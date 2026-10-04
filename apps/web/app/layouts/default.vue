@@ -176,7 +176,7 @@ const {
 } = useWorkspaceSidebar()
 
 const sidebarViewLayout = computed<'graph' | 'grid' | 'journal'>({
-  get: () => (viewLayout.value === 'note-editor' ? 'grid' : viewLayout.value),
+  get: () => (viewLayout.value === 'note-editor' ? 'graph' : viewLayout.value),
   set: (val) => {
     viewLayout.value = val
   }

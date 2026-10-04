@@ -1,4 +1,5 @@
 import type { AnnotationItem } from '~/composables/useAnnotations'
+import { parsePosition } from '~/utils/reader/position/readingPosition'
 
 export interface TextChunk {
   node: Text
@@ -58,8 +59,14 @@ export function getAnnotationPageNumber(item: AnnotationItem): number | null {
     const parsed = parseInt(item.cfi.replace('page:', ''), 10)
     if (!isNaN(parsed) && parsed > 0) return parsed
   }
+  if (item.cfi && item.cfi.startsWith('epub:')) {
+    const pos = parsePosition(item.cfi)
+    if (pos && pos.kind === 'epub') {
+      return pos.sectionIndex + 1
+    }
+  }
   if (item.chapterTitle) {
-    const match = item.chapterTitle.match(/P[áa]gina\s+(\d+)/i)
+    const match = item.chapterTitle.match(/(?:P[áa]gina|Loc\.?)\s+(\d+)/i)
     if (match && match[1]) {
       const parsed = parseInt(match[1], 10)
       if (!isNaN(parsed) && parsed > 0) return parsed

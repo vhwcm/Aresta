@@ -12,7 +12,7 @@ export type CanvasShapeType =
   | 'hexagon'
   | 'star';
 
-export type CanvasNodeType = 'text' | 'shape' | 'loose_text' | 'book' | 'highlight' | 'note_embed';
+export type CanvasNodeType = 'text' | 'shape' | 'loose_text' | 'book' | 'highlight' | 'note_embed' | 'image';
 
 export interface CanvasNode {
   id: string;
@@ -34,6 +34,9 @@ export interface CanvasNode {
   noteId?: string;
   noteTitle?: string;
   noteContent?: string;
+  imageUrl?: string;
+  imageAlt?: string;
+  aspectRatio?: number;
 }
 
 export interface CanvasEdge {
