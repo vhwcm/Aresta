@@ -47,27 +47,25 @@ describe('Reader Components', () => {
   })
 
   describe('ReaderBottomBar', () => {
-    it('renderiza o bloco harmonioso de 6 ícones (voltar, zen mode, zoom e anotações/configurações) sem elementos de bookmark', async () => {
+    it('renderiza o bloco de 4 ícones (voltar, zen mode, anotações e configurações) e controle de localização externo sem elementos de bookmark', async () => {
       const store = useReaderStore()
       store.currentPage = 4
       const wrapper = mount(ReaderBottomBar, {
         props: { isNotesActive: false, isZenMode: false },
       })
 
-      // Verifica presença dos 6 botões estruturados no grid 2x3
+      // Verifica presença dos 4 botões estruturados e ausência dos botões de zoom externos
       const closeBtn = wrapper.find('#btn-close-book')
-      const fontDecreaseBtn = wrapper.find('#btn-font-decrease')
-      const fontIncreaseBtn = wrapper.find('#btn-font-increase')
       const zenBtn = wrapper.find('#btn-bottom-zen-mode')
       const notesBtn = wrapper.find('#btn-view-notes')
       const appearanceBtn = wrapper.find('#btn-appearance-toggle')
 
       expect(closeBtn.exists()).toBe(true)
-      expect(fontDecreaseBtn.exists()).toBe(true)
-      expect(fontIncreaseBtn.exists()).toBe(true)
       expect(zenBtn.exists()).toBe(true)
       expect(notesBtn.exists()).toBe(true)
       expect(appearanceBtn.exists()).toBe(true)
+      expect(wrapper.find('#btn-font-decrease').exists()).toBe(false)
+      expect(wrapper.find('#btn-font-increase').exists()).toBe(false)
 
       // Garante que nenhum elemento de bookmark existe na barra
       expect(wrapper.find('#btn-bookmark-toggle').exists()).toBe(false)
@@ -127,7 +125,7 @@ describe('Reader Components', () => {
       expect(wrapper.text()).toContain('%')
     })
 
-    it('permite alterar tamanho da fonte diretamente pelos botões de zoom na barra inferior', async () => {
+    it('permite alterar tamanho da fonte diretamente no popover de configurações', async () => {
       const store = useReaderStore()
       store.currentPage = 7
       store.fontSize = 16
@@ -136,14 +134,17 @@ describe('Reader Components', () => {
         props: { isNotesActive: false },
       })
 
+      const appearanceBtn = wrapper.find('#btn-appearance-toggle')
+      await appearanceBtn.trigger('click')
+
       // 1. Botão de Aumentar Tamanho da Fonte (Zoom In)
-      const fontIncreaseBtn = wrapper.find('#btn-font-increase')
+      const fontIncreaseBtn = wrapper.find('#btn-increase-font-size')
       expect(fontIncreaseBtn.exists()).toBe(true)
       await fontIncreaseBtn.trigger('click')
       expect(store.fontSize).toBe(18)
 
       // 2. Botão de Diminuir Tamanho da Fonte (Zoom Out)
-      const fontDecreaseBtn = wrapper.find('#btn-font-decrease')
+      const fontDecreaseBtn = wrapper.find('#btn-decrease-font-size')
       expect(fontDecreaseBtn.exists()).toBe(true)
       await fontDecreaseBtn.trigger('click')
       expect(store.fontSize).toBe(16)
@@ -195,7 +196,7 @@ describe('Reader Components', () => {
       }
     })
 
-    it('em telas horizontais exibe a barra lateral com capa e 6 botões; em telas verticais exibe na barra inferior', async () => {
+    it('em telas horizontais exibe a barra lateral com capa e 4 botões; em telas verticais exibe na barra inferior', async () => {
       // 1. Em tela horizontal (isHorizontal = true)
       const horizontalBar = mount(ReaderBottomBar, {
         props: {
@@ -204,13 +205,13 @@ describe('Reader Components', () => {
           bookLeft: 220,
         },
       })
-      // Na barra lateral, a capa e os 6 botões existem
+      // Na barra lateral, a capa e os 4 botões de ação existem
       expect(horizontalBar.find('aside.reader-lateral-bar').exists()).toBe(true)
       expect(horizontalBar.find('img[src="/covers/livro.jpg"]').exists()).toBe(true)
       expect(horizontalBar.find('#btn-close-book').exists()).toBe(true)
       expect(horizontalBar.find('#btn-view-notes').exists()).toBe(true)
-      expect(horizontalBar.find('#btn-font-decrease').exists()).toBe(true)
-      expect(horizontalBar.find('#btn-font-increase').exists()).toBe(true)
+      expect(horizontalBar.find('#btn-font-decrease').exists()).toBe(false)
+      expect(horizontalBar.find('#btn-font-increase').exists()).toBe(false)
       expect(horizontalBar.find('#btn-bottom-zen-mode').exists()).toBe(true)
       expect(horizontalBar.find('#btn-appearance-toggle').exists()).toBe(true)
 
@@ -222,15 +223,16 @@ describe('Reader Components', () => {
           bookLeft: 220,
         },
       })
-      // Na vertical, renderiza footer com capa, os 6 botões e o indicador de página ao lado dos 6 ícones
+      // Na vertical, renderiza footer com capa, localização externa e os 4 botões
       expect(verticalBar.find('footer.reader-unified-bottom-bar').exists()).toBe(true)
       expect(verticalBar.find('img[src="/covers/livro.jpg"]').exists()).toBe(true)
       expect(verticalBar.find('#btn-close-book').exists()).toBe(true)
       expect(verticalBar.find('#btn-appearance-toggle').exists()).toBe(true)
-      expect(verticalBar.find('#btn-mobile-page-indicator').exists()).toBe(true)
+      expect(verticalBar.find('#btn-view-notes').exists()).toBe(true)
+      expect(verticalBar.find('#btn-bottom-zen-mode').exists()).toBe(true)
     })
 
-    it('exibe indicador de página ao lado dos 6 ícones no mobile com número da página e abre configurações ao clicar', async () => {
+    it('exibe localização diretamente na barra mobile e abre configurações ao clicar no botão de configurações', async () => {
       const store = useReaderStore()
       store.setDocument({
         type: 'pdf',
@@ -251,14 +253,12 @@ describe('Reader Components', () => {
         },
       })
 
-      const pageIndicator = wrapper.find('#btn-mobile-page-indicator')
-      expect(pageIndicator.exists()).toBe(true)
-      expect(pageIndicator.text()).toBe('14')
-      expect(pageIndicator.text()).not.toContain('PÁG')
-      expect(pageIndicator.text()).not.toContain('/')
+      expect(wrapper.text()).toContain('Pág. 14/120')
+      expect(wrapper.text()).toContain('%')
 
-      // Clicar no indicador de página abre o popover de configurações
-      await pageIndicator.trigger('click')
+      // Clicar no botão de configurações abre o popover
+      const settingsBtn = wrapper.find('#btn-appearance-toggle')
+      await settingsBtn.trigger('click')
       expect(wrapper.find('[role="dialog"]').exists()).toBe(true)
     })
 
@@ -975,10 +975,10 @@ describe('Reader Components', () => {
       expect(bottomBar.classes()).toContain('bg-transparent')
       // O título foi removido da barra para deixar os ícones e capa soltos
       expect(wrapper.find('.reader-viewer__book-title-bar').exists()).toBe(false)
-      // Ícones de controle soltos presentes no bloco de 6 ícones
+      // Ícones de controle soltos presentes no bloco de 4 ícones
       expect(wrapper.find('#btn-close-book').exists()).toBe(true)
-      expect(wrapper.find('#btn-font-decrease').exists()).toBe(true)
-      expect(wrapper.find('#btn-font-increase').exists()).toBe(true)
+      expect(wrapper.find('#btn-font-decrease').exists()).toBe(false)
+      expect(wrapper.find('#btn-font-increase').exists()).toBe(false)
       expect(wrapper.find('#btn-bottom-zen-mode').exists()).toBe(true)
       expect(wrapper.find('#btn-view-notes').exists()).toBe(true)
       expect(wrapper.find('#btn-appearance-toggle').exists()).toBe(true)

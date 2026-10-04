@@ -1,6 +1,7 @@
 ## 🔄 Em Andamento
 
 ## ✅ Concluído
+- [04/10/2026 09:31] [Concluído] Mover localização do livro para fora do menu de configuração (abaixo da capa na barra lateral e ao lado/acima dos ícones no mobile) e remover botões de fonte externos
 - [03/10/2026 23:05] [Concluído] Reduzir dimensões padrão de blocos, notas, formas e embeds no canvas por default
 - [03/10/2026 23:01] [Concluído] Corrigir exibição de 2 páginas no leitor EPUB eliminando limitação de 5 seções e mapeando páginas visuais por seção
 - [03/10/2026 22:36] [Concluído] Implementar suporte a imagens nas notas e no canvas (inserção local/URL, drag & drop, paste, nós de imagem e exportação SVG)

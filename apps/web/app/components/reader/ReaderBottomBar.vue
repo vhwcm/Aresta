@@ -2,7 +2,7 @@
   <!-- 1. Layout Lateral Esquerdo no Desktop / Telas Horizontais -->
   <aside
     v-if="isHorizontalComputed"
-    class="reader-lateral-bar reader-bottom-bar shrink-0 h-full select-none transition-all duration-300 flex flex-col items-start justify-center px-3 py-3 sm:py-4 z-20 pointer-events-auto bg-transparent border-0 gap-3 sm:gap-3.5"
+    class="reader-lateral-bar reader-bottom-bar shrink-0 h-full select-none transition-all duration-300 flex flex-col items-start justify-center px-3 py-3 sm:py-4 z-20 pointer-events-auto bg-transparent border-0 gap-2.5 sm:gap-3"
     role="toolbar"
     aria-label="Barra lateral do leitor"
     id="reader-unified-bar"
@@ -30,8 +30,61 @@
     <!-- Linha Divisória Separando o Livro da Parte de Baixo no Desktop -->
     <div class="w-full max-w-[110px] border-t select-none shrink-0" :class="themeBorderClass"></div>
 
-    <!-- Bloco de 6 Ícones Grandes e Próximos LOGO EMBAIXO da Capa (2 Colunas x 3 Linhas) -->
-    <div class="grid grid-rows-3 grid-cols-2 gap-1 sm:gap-1.5 shrink-0 select-none w-full max-w-[110px]">
+    <!-- Bloco de Localização do Livro LOGO ABAIXO da Capa no Desktop -->
+    <div
+      class="flex flex-col gap-1.5 p-2 rounded-xl border select-none transition-colors w-full max-w-[110px] shrink-0"
+      :class="themeBorderClass"
+    >
+      <div class="flex items-center justify-between gap-1">
+        <div class="flex flex-col min-w-0">
+          <span class="text-[8.5px] font-technical uppercase tracking-wider font-semibold truncate" :class="themeSubtextClass">
+            {{ isEpub ? 'Localização' : 'Páginas' }}
+          </span>
+          <span class="text-[11.5px] font-technical font-bold text-accent truncate">
+            {{ isEpub ? 'Loc.' : 'Pág.' }} {{ pageDisplay }}
+          </span>
+        </div>
+        <span
+          v-if="store.totalPages > 0"
+          class="px-1.5 py-0.5 rounded-full text-[9px] font-technical font-semibold bg-accent/15 text-accent shrink-0"
+        >
+          {{ progressPercentageComputed }}%
+        </span>
+      </div>
+
+      <!-- Scrubber de Progresso -->
+      <ReaderProgressScrubber class="w-full my-0.5" />
+
+      <!-- Ações de Navegação Rápida: Sumário e Ir para -->
+      <div class="grid grid-cols-2 gap-1 pt-1 border-t" :class="themeBorderClass">
+        <button
+          type="button"
+          class="flex items-center justify-center gap-1 py-1 px-1 rounded-lg text-[10px] font-interface font-medium transition-colors hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
+          :class="themeTextClass"
+          @click="isTocOpen = true; isAppearancePopoverOpen = false"
+          title="Sumário de capítulos"
+        >
+          <ListIcon class="w-3 h-3 text-accent shrink-0" />
+          <span class="truncate">Sumário</span>
+        </button>
+        <button
+          type="button"
+          class="flex items-center justify-center gap-1 py-1 px-1 rounded-lg text-[10px] font-interface font-medium transition-colors hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
+          :class="themeTextClass"
+          @click="isGoToOpen = true; isAppearancePopoverOpen = false"
+          title="Ir para página/localização"
+        >
+          <CompassIcon class="w-3 h-3 text-accent shrink-0" />
+          <span class="truncate">Ir para</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Linha Divisória Separando a Localização dos Ícones de Ação -->
+    <div class="w-full max-w-[110px] border-t select-none shrink-0" :class="themeBorderClass"></div>
+
+    <!-- Bloco de 4 Ícones (2 Colunas x 2 Linhas) -->
+    <div class="grid grid-rows-2 grid-cols-2 gap-1 sm:gap-1.5 shrink-0 select-none w-full max-w-[110px]">
       <!-- 1. Linha 1 / Col 1 (1º Ícone): Anotações do Livro -->
       <button
         @click="handleToggleNotes"
@@ -66,54 +119,8 @@
           role="dialog"
           aria-label="Controle de aparência e fundo de leitura"
         >
-          <!-- Seção 1: Quantidade de Páginas e Percentual Lido -->
-          <div
-            class="flex flex-col gap-2 p-3 rounded-xl border select-none transition-colors"
-            :class="themeBorderClass"
-          >
-            <div class="flex items-center justify-between">
-              <div class="flex flex-col">
-                <span class="text-[10px] font-technical uppercase tracking-wider font-semibold" :class="themeSubtextClass">
-                  {{ isEpub ? 'Localizações do Livro' : 'Páginas do Livro' }}
-                </span>
-                <span class="text-sm font-technical font-bold text-accent">
-                  {{ isEpub ? 'Loc.' : 'Pág.' }} {{ pageDisplay }}
-                </span>
-              </div>
-              <span
-                v-if="store.totalPages > 0"
-                class="px-2.5 py-1 rounded-full text-xs font-technical font-semibold bg-accent/15 text-accent"
-              >
-                {{ progressPercentageComputed }}%
-              </span>
-            </div>
-
-            <!-- Scrubber de Progresso com Balão e Marcas -->
-            <ReaderProgressScrubber class="mt-1" />
-
-            <!-- Ações de Navegação Rápida: Sumário e Ir para -->
-            <div class="flex items-center gap-2 pt-1.5 border-t" :class="themeBorderClass">
-              <button
-                type="button"
-                class="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-interface font-medium transition-colors hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
-                @click="isTocOpen = true; isAppearancePopoverOpen = false"
-              >
-                <ListIcon class="w-3.5 h-3.5 text-accent" />
-                <span>Sumário</span>
-              </button>
-              <button
-                type="button"
-                class="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-interface font-medium transition-colors hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
-                @click="isGoToOpen = true; isAppearancePopoverOpen = false"
-              >
-                <CompassIcon class="w-3.5 h-3.5 text-accent" />
-                <span>Ir para...</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Seção 2: Fundo da Leitura -->
-          <div class="flex flex-col gap-2 pt-2 border-t" :class="themeBorderClass">
+          <!-- Seção 1: Fundo da Leitura -->
+          <div class="flex flex-col gap-2">
             <span
               class="text-[11px] font-technical uppercase tracking-wider font-semibold"
               :class="themeSubtextClass"
@@ -168,7 +175,7 @@
             </div>
           </div>
 
-          <!-- Seção 3: Modo de Leitura (Páginas vs Scroll) -->
+          <!-- Seção 2: Modo de Leitura (Páginas vs Scroll) -->
           <div class="flex flex-col gap-2 pt-2 border-t" :class="themeBorderClass">
             <span
               class="text-[11px] font-technical uppercase tracking-wider font-semibold"
@@ -203,7 +210,7 @@
             </div>
           </div>
 
-          <!-- Seção 4: Distribuição de Folhas & Largura -->
+          <!-- Seção 3: Distribuição de Folhas & Largura -->
           <div
             v-if="store.readingMode !== 'scroll' || store.documentType === 'epub'"
             class="flex flex-col gap-2 pt-2 border-t"
@@ -269,7 +276,7 @@
             </div>
           </div>
 
-          <!-- Seção 5: Tamanho da Fonte -->
+          <!-- Seção 4: Tamanho da Fonte -->
           <div class="flex flex-col gap-2 pt-2 border-t" :class="themeBorderClass">
             <div class="flex items-center justify-between">
               <span
@@ -307,7 +314,7 @@
             </div>
           </div>
 
-          <!-- Seção 6: Modo Foco (X Linhas) -->
+          <!-- Seção 5: Modo Foco (X Linhas) -->
           <div class="flex flex-col gap-2 pt-2 border-t" :class="themeBorderClass">
             <div class="flex items-center justify-between">
               <span
@@ -348,33 +355,7 @@
         </div>
       </div>
 
-      <!-- 3. Linha 2 / Col 1: Diminuir Tamanho da Fonte (Zoom Out) -->
-      <button
-        @click="store.decreaseFontSize(2)"
-        :disabled="(store.fontSize || 15) <= 12"
-        class="p-1.5 sm:p-2 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer disabled:opacity-30 disabled:pointer-events-none"
-        :class="themeButtonClass"
-        :title="'Diminuir tamanho da fonte (' + (store.fontSize || 15) + 'px)'"
-        aria-label="Diminuir tamanho da fonte"
-        id="btn-font-decrease"
-      >
-        <AArrowDownIcon class="w-9 h-9 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.35]" />
-      </button>
-
-      <!-- 4. Linha 2 / Col 2: Aumentar Tamanho da Fonte (Zoom In) -->
-      <button
-        @click="store.increaseFontSize(2)"
-        :disabled="(store.fontSize || 15) >= 36"
-        class="p-1.5 sm:p-2 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer disabled:opacity-30 disabled:pointer-events-none"
-        :class="themeButtonClass"
-        :title="'Aumentar tamanho da fonte (' + (store.fontSize || 15) + 'px)'"
-        aria-label="Aumentar tamanho da fonte"
-        id="btn-font-increase"
-      >
-        <AArrowUpIcon class="w-9 h-9 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.35]" />
-      </button>
-
-      <!-- 5. Linha 3 / Col 1 (Mais de baixo): Voltar à Biblioteca -->
+      <!-- 3. Linha 2 / Col 1 (Mais de baixo): Voltar à Biblioteca -->
       <button
         @click="$emit('close')"
         class="p-1.5 sm:p-2 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
@@ -386,7 +367,7 @@
         <ArrowLeftIcon class="w-9 h-9 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.35]" />
       </button>
 
-      <!-- 6. Linha 3 / Col 2 (Mais de baixo): Alternar Modo Zen -->
+      <!-- 4. Linha 2 / Col 2 (Mais de baixo): Alternar Modo Zen -->
       <button
         @click="$emit('toggleZenMode')"
         class="p-1.5 sm:p-2 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
@@ -415,9 +396,9 @@
     aria-label="Barra de ferramentas do leitor"
     id="reader-unified-bar"
   >
-    <!-- Container Alinhado Colado na Esquerda com Capa no Lado Esquerdo e Botões ao Lado Direito -->
+    <!-- Container Alinhado Colado na Esquerda com Capa no Lado Esquerdo e Controles ao Lado Direito -->
     <div
-      class="h-full w-full pointer-events-auto flex flex-row items-stretch gap-2 sm:gap-3 overflow-visible select-none py-0"
+      class="h-full w-full pointer-events-auto flex flex-row items-stretch gap-2.5 sm:gap-3.5 overflow-visible select-none py-1.5"
       :style="bottomBarContainerStyle"
     >
       <!-- 1. Capa do Livro com Margem de 2px do Fundo da Tela (Altura Total da Barra) -->
@@ -441,116 +422,90 @@
         </div>
       </div>
 
-      <!-- 2. Bloco Harmonioso de 6 Ícones Justificados (Ao Lado Direito da Capa) -->
-      <div class="grid grid-rows-2 grid-cols-3 flex-1 min-w-0 w-full h-full gap-0.5 sm:gap-1 select-none items-center justify-items-stretch py-1.5 sm:py-2">
-        <!-- 1. Linha Superior / Col 1 (1º Ícone no Topo): Anotações do Livro -->
-        <button
-          @click="handleToggleNotes"
-          class="w-full h-full min-h-[46px] max-h-[54px] p-1 sm:p-1.5 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
-          :class="isNotesActiveComputed ? 'text-accent font-bold bg-accent/15 ring-1 ring-accent/30' : themeButtonClass"
-          :title="isNotesActiveComputed ? 'Ocultar anotações do livro' : 'Abrir anotações e reflexões deste livro'"
-          aria-label="Abrir ou fechar notas do livro"
-          id="btn-view-notes"
-        >
-          <HighlighterIcon class="w-8.5 h-8.5 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.35]" />
-        </button>
+      <!-- 2. Coluna Direita: Localização do Livro EM CIMA e 4 Ícones EMBAIXO -->
+      <div class="flex flex-col justify-between flex-1 min-w-0 h-full select-none py-0.5">
+        <!-- Parte de Cima (Em cima dos outros ícones): Localização, Progresso, Scrubber e Botões -->
+        <div class="flex flex-col gap-1 w-full shrink-0">
+          <div class="flex items-center justify-between gap-1">
+            <div class="flex items-center gap-1.5 min-w-0">
+              <span class="text-[11px] sm:text-xs font-technical font-bold text-accent truncate">
+                {{ isEpub ? 'Loc.' : 'Pág.' }} {{ pageDisplay }}
+              </span>
+              <span
+                v-if="store.totalPages > 0"
+                class="px-1.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-technical font-semibold bg-accent/15 text-accent shrink-0"
+              >
+                {{ progressPercentageComputed }}%
+              </span>
+            </div>
 
-        <!-- 2. Linha Superior / Col 2: Diminuir Tamanho da Fonte (Zoom Out) -->
-        <button
-          @click="store.decreaseFontSize(2)"
-          :disabled="(store.fontSize || 15) <= 12"
-          class="w-full h-full min-h-[46px] max-h-[54px] p-1 sm:p-1.5 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer disabled:opacity-30 disabled:pointer-events-none"
-          :class="themeButtonClass"
-          :title="'Diminuir tamanho da fonte (' + (store.fontSize || 15) + 'px)'"
-          aria-label="Diminuir tamanho da fonte"
-          id="btn-font-decrease"
-        >
-          <AArrowDownIcon class="w-8.5 h-8.5 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.35]" />
-        </button>
+            <!-- Ações de Navegação Rápida: Sumário e Ir para -->
+            <div class="flex items-center gap-1 shrink-0">
+              <button
+                type="button"
+                class="flex items-center gap-1 py-0.5 px-1.5 rounded-md text-[10.5px] font-interface font-medium transition-colors hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
+                :class="themeTextClass"
+                @click="isTocOpen = true; isAppearancePopoverOpen = false"
+                title="Sumário de capítulos"
+              >
+                <ListIcon class="w-3.5 h-3.5 text-accent" />
+                <span class="hidden xs:inline sm:inline">Sumário</span>
+              </button>
+              <button
+                type="button"
+                class="flex items-center gap-1 py-0.5 px-1.5 rounded-md text-[10.5px] font-interface font-medium transition-colors hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
+                :class="themeTextClass"
+                @click="isGoToOpen = true; isAppearancePopoverOpen = false"
+                title="Ir para..."
+              >
+                <CompassIcon class="w-3.5 h-3.5 text-accent" />
+                <span class="hidden xs:inline sm:inline">Ir para</span>
+              </button>
+            </div>
+          </div>
 
-        <!-- 3. Linha Superior / Col 3: Aumentar Tamanho da Fonte (Zoom In) -->
-        <button
-          @click="store.increaseFontSize(2)"
-          :disabled="(store.fontSize || 15) >= 36"
-          class="w-full h-full min-h-[46px] max-h-[54px] p-1 sm:p-1.5 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer disabled:opacity-30 disabled:pointer-events-none"
-          :class="themeButtonClass"
-          :title="'Aumentar tamanho da fonte (' + (store.fontSize || 15) + 'px)'"
-          aria-label="Aumentar tamanho da fonte"
-          id="btn-font-increase"
-        >
-          <AArrowUpIcon class="w-8.5 h-8.5 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.35]" />
-        </button>
+          <!-- Scrubber de Progresso -->
+          <ReaderProgressScrubber class="w-full" />
+        </div>
 
-        <!-- 4. Linha Inferior / Col 1: Configurações de Leitura -->
-        <div class="relative flex items-center justify-center w-full h-full" ref="appearanceWrapperRef">
+        <!-- Parte de Baixo: 4 Ícones (Anotações, Configurações, Voltar, Modo Zen) -->
+        <div class="grid grid-cols-4 gap-1 sm:gap-1.5 w-full items-center justify-items-stretch shrink-0">
+          <!-- 1. Anotações do Livro -->
           <button
-            @click="isAppearancePopoverOpen = !isAppearancePopoverOpen"
-            class="w-full h-full min-h-[46px] max-h-[54px] p-1 sm:p-1.5 rounded-xl transition-all duration-200 active:scale-90 relative flex items-center justify-center cursor-pointer"
-            :class="isAppearancePopoverOpen ? 'text-accent bg-accent/15 ring-1 ring-accent/30' : themeButtonClass"
-            title="Configurações de leitura, páginas e modos"
-            aria-label="Configurações de leitura"
-            id="btn-appearance-toggle"
+            @click="handleToggleNotes"
+            class="w-full min-h-[38px] max-h-[46px] p-1 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
+            :class="isNotesActiveComputed ? 'text-accent font-bold bg-accent/15 ring-1 ring-accent/30' : themeButtonClass"
+            :title="isNotesActiveComputed ? 'Ocultar anotações do livro' : 'Abrir anotações e reflexões deste livro'"
+            aria-label="Abrir ou fechar notas do livro"
+            id="btn-view-notes"
           >
-            <Settings2Icon class="w-8.5 h-8.5 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.35]" />
+            <HighlighterIcon class="w-7.5 h-7.5 sm:w-8.5 sm:h-8.5 stroke-[1.35]" />
           </button>
 
-          <!-- Popover Flutuante de Configurações (Centralizado ergonomicamente no Mobile acima da barra inferior) -->
-          <div
-            v-if="isAppearancePopoverOpen"
-            ref="appearancePopoverRef"
-            class="fixed bottom-[calc(20dvh+12px)] left-3 right-3 max-w-[340px] mx-auto rounded-2xl p-4 shadow-2xl z-50 flex flex-col gap-3.5 max-h-[72vh] overflow-y-auto border animate-fadeIn pointer-events-auto select-none"
-            :class="themePopoverClass"
-            role="dialog"
-            aria-label="Controle de aparência e fundo de leitura"
-          >
-              <!-- Seção 1: Quantidade de Páginas e Percentual Lido -->
-              <div
-                class="flex flex-col gap-2 p-3 rounded-xl border select-none transition-colors"
-                :class="themeBorderClass"
-              >
-                <div class="flex items-center justify-between">
-                  <div class="flex flex-col">
-                    <span class="text-[10px] font-technical uppercase tracking-wider font-semibold" :class="themeSubtextClass">
-                      {{ isEpub ? 'Localizações do Livro' : 'Páginas do Livro' }}
-                    </span>
-                    <span class="text-sm font-technical font-bold text-accent">
-                      {{ isEpub ? 'Loc.' : 'Pág.' }} {{ pageDisplay }}
-                    </span>
-                  </div>
-                  <span
-                    v-if="store.totalPages > 0"
-                    class="px-2.5 py-1 rounded-full text-xs font-technical font-semibold bg-accent/15 text-accent"
-                  >
-                    {{ progressPercentageComputed }}%
-                  </span>
-                </div>
+          <!-- 2. Configurações de Leitura -->
+          <div class="relative flex items-center justify-center w-full h-full" ref="appearanceWrapperRef">
+            <button
+              @click="isAppearancePopoverOpen = !isAppearancePopoverOpen"
+              class="w-full min-h-[38px] max-h-[46px] p-1 rounded-xl transition-all duration-200 active:scale-90 relative flex items-center justify-center cursor-pointer"
+              :class="isAppearancePopoverOpen ? 'text-accent bg-accent/15 ring-1 ring-accent/30' : themeButtonClass"
+              title="Configurações de leitura, páginas e modos"
+              aria-label="Configurações de leitura"
+              id="btn-appearance-toggle"
+            >
+              <Settings2Icon class="w-7.5 h-7.5 sm:w-8.5 sm:h-8.5 stroke-[1.35]" />
+            </button>
 
-                <!-- Scrubber de Progresso com Balão e Marcas -->
-                <ReaderProgressScrubber class="mt-1" />
-
-                <!-- Ações de Navegação Rápida: Sumário e Ir para -->
-                <div class="flex items-center gap-2 pt-1.5 border-t" :class="themeBorderClass">
-                  <button
-                    type="button"
-                    class="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-interface font-medium transition-colors hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
-                    @click="isTocOpen = true; isAppearancePopoverOpen = false"
-                  >
-                    <ListIcon class="w-3.5 h-3.5 text-accent" />
-                    <span>Sumário</span>
-                  </button>
-                  <button
-                    type="button"
-                    class="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-interface font-medium transition-colors hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
-                    @click="isGoToOpen = true; isAppearancePopoverOpen = false"
-                  >
-                    <CompassIcon class="w-3.5 h-3.5 text-accent" />
-                    <span>Ir para...</span>
-                  </button>
-                </div>
-              </div>
-
-              <!-- Seção 2: Fundo da Leitura -->
-              <div class="flex flex-col gap-2 pt-2 border-t" :class="themeBorderClass">
+            <!-- Popover Flutuante de Configurações (Mobile) -->
+            <div
+              v-if="isAppearancePopoverOpen"
+              ref="appearancePopoverRef"
+              class="fixed bottom-[calc(20dvh+12px)] left-3 right-3 max-w-[340px] mx-auto rounded-2xl p-4 shadow-2xl z-50 flex flex-col gap-3.5 max-h-[72vh] overflow-y-auto border animate-fadeIn pointer-events-auto select-none"
+              :class="themePopoverClass"
+              role="dialog"
+              aria-label="Controle de aparência e fundo de leitura"
+            >
+              <!-- Seção 1: Fundo da Leitura -->
+              <div class="flex flex-col gap-2">
                 <span
                   class="text-[11px] font-technical uppercase tracking-wider font-semibold"
                   :class="themeSubtextClass"
@@ -605,7 +560,7 @@
                 </div>
               </div>
 
-              <!-- Seção 3: Modo de Leitura (Páginas vs Scroll) -->
+              <!-- Seção 2: Modo de Leitura (Páginas vs Scroll) -->
               <div class="flex flex-col gap-2 pt-2 border-t" :class="themeBorderClass">
                 <span
                   class="text-[11px] font-technical uppercase tracking-wider font-semibold"
@@ -630,8 +585,8 @@
                     @click="store.setReadingMode('scroll')"
                     class="flex items-center justify-center gap-1.5 p-2 rounded-xl border text-xs font-semibold transition-all"
                     :class="store.readingMode === 'scroll'
-                      ? 'bg-accent/20 border-accent text-accent font-bold'
-                      : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary'"
+                  ? 'bg-accent/20 border-accent text-accent font-bold'
+                  : 'bg-white/5 border-divider text-textSecondary hover:text-textPrimary'"
                     id="btn-mode-scroll"
                   >
                     <ScrollTextIcon class="w-3.5 h-3.5" />
@@ -640,7 +595,7 @@
                 </div>
               </div>
 
-              <!-- Seção 4: Tamanho da Fonte -->
+              <!-- Seção 3: Tamanho da Fonte -->
               <div class="flex flex-col gap-2 pt-2 border-t" :class="themeBorderClass">
                 <div class="flex items-center justify-between">
                   <span
@@ -678,7 +633,7 @@
                 </div>
               </div>
 
-              <!-- Seção 5: Modo Foco (X Linhas) -->
+              <!-- Seção 4: Modo Foco (X Linhas) -->
               <div class="flex flex-col gap-2 pt-2 border-t" :class="themeBorderClass">
                 <div class="flex items-center justify-between">
                   <span
@@ -719,47 +674,31 @@
             </div>
           </div>
 
-        <!-- 5. Linha Inferior / Col 2 (Penúltimo): Voltar à Biblioteca -->
-        <button
-          @click="$emit('close')"
-          class="w-full h-full min-h-[46px] max-h-[54px] p-1 sm:p-1.5 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
-          :class="themeButtonClass"
-          title="Voltar à biblioteca"
-          aria-label="Voltar à biblioteca"
-          id="btn-close-book"
-        >
-          <ArrowLeftIcon class="w-8.5 h-8.5 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.35]" />
-        </button>
+          <!-- 3. Voltar à Biblioteca -->
+          <button
+            @click="$emit('close')"
+            class="w-full min-h-[38px] max-h-[46px] p-1 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
+            :class="themeButtonClass"
+            title="Voltar à biblioteca"
+            aria-label="Voltar à biblioteca"
+            id="btn-close-book"
+          >
+            <ArrowLeftIcon class="w-7.5 h-7.5 sm:w-8.5 sm:h-8.5 stroke-[1.35]" />
+          </button>
 
-        <!-- 6. Linha Inferior / Col 3 (Último): Alternar Modo Zen -->
-        <button
-          @click="$emit('toggleZenMode')"
-          class="w-full h-full min-h-[46px] max-h-[54px] p-1 sm:p-1.5 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
-          :class="isZenMode ? 'text-accent font-bold bg-accent/15 ring-1 ring-accent/30' : themeButtonClass"
-          :title="isZenMode ? 'Sair do Modo Zen' : 'Entrar no Modo Zen'"
-          :aria-label="isZenMode ? 'Sair do Modo Zen' : 'Entrar no Modo Zen'"
-          id="btn-bottom-zen-mode"
-        >
-          <Minimize2Icon v-if="isZenMode" class="w-8.5 h-8.5 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.35]" />
-          <Maximize2Icon v-else class="w-8.5 h-8.5 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.35]" />
-        </button>
-      </div>
-
-      <!-- 3. Indicador de Página Elegante ao Lado dos 6 Ícones (Mobile - Apenas o Número da Página) -->
-      <div
-        ref="pageIndicatorRef"
-        @click="isAppearancePopoverOpen = !isAppearancePopoverOpen"
-        class="shrink-0 flex items-center justify-center px-2 sm:px-3 py-2 self-center my-auto rounded-xl border transition-all duration-200 select-none min-w-[38px] sm:min-w-[44px] cursor-pointer active:scale-95 group"
-        :class="themePageIndicatorClass"
-        :title="'Página ' + currentPageNumberOnly + (store.totalPages > 0 ? ' de ' + store.totalPages : '') + ' - Toque para configurações'"
-        aria-label="Informações da página e configurações de leitura"
-        role="button"
-        tabindex="0"
-        id="btn-mobile-page-indicator"
-      >
-        <span class="text-sm sm:text-base font-technical font-bold text-accent tracking-tight leading-none">
-          {{ currentPageNumberOnly }}
-        </span>
+          <!-- 4. Alternar Modo Zen -->
+          <button
+            @click="$emit('toggleZenMode')"
+            class="w-full min-h-[38px] max-h-[46px] p-1 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
+            :class="isZenMode ? 'text-accent font-bold bg-accent/15 ring-1 ring-accent/30' : themeButtonClass"
+            :title="isZenMode ? 'Sair do Modo Zen' : 'Entrar no Modo Zen'"
+            :aria-label="isZenMode ? 'Sair do Modo Zen' : 'Entrar no Modo Zen'"
+            id="btn-bottom-zen-mode"
+          >
+            <Minimize2Icon v-if="isZenMode" class="w-7.5 h-7.5 sm:w-8.5 sm:h-8.5 stroke-[1.35]" />
+            <Maximize2Icon v-else class="w-7.5 h-7.5 sm:w-8.5 sm:h-8.5 stroke-[1.35]" />
+          </button>
+        </div>
       </div>
     </div>
 
@@ -773,13 +712,9 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import {
-  AArrowDownIcon,
-  AArrowUpIcon,
   ArrowLeftIcon,
   BookOpenIcon,
   CheckIcon,
-  ChevronDownIcon,
-  ChevronUpIcon,
   CompassIcon,
   FileTextIcon,
   HighlighterIcon,
@@ -823,7 +758,6 @@ const bookCoverUrl = computed(() => props.coverUrl || store.coverUrl || '')
 const isAppearancePopoverOpen = ref(false)
 const appearancePopoverRef = ref<HTMLElement | null>(null)
 const appearanceWrapperRef = ref<HTMLElement | null>(null)
-const pageIndicatorRef = ref<HTMLElement | null>(null)
 
 const isMobileScreen = ref(typeof window !== 'undefined' ? window.innerWidth < 768 : false)
 function checkScreenSize() {
@@ -869,15 +803,6 @@ const pageDisplay = computed(() => {
   return store.totalPages > 0 ? `${store.currentPage}/${store.totalPages}` : `${store.currentPage}`
 })
 
-const currentPageNumberOnly = computed(() => {
-  if (store.isTwoPageMode && store.totalPages > 1) {
-    const leftNum = store.currentPage % 2 !== 0 ? store.currentPage : Math.max(1, store.currentPage - 1)
-    const rightNum = Math.min(leftNum + 1, store.totalPages)
-    return leftNum === rightNum ? `${leftNum}` : `${leftNum}-${rightNum}`
-  }
-  return `${store.currentPage || 1}`
-})
-
 const progressPercentageComputed = computed(() => {
   if (!store.document || store.totalPages <= 0) return 0
   return Math.round((store.currentPage / store.totalPages) * 100)
@@ -892,16 +817,6 @@ const themeButtonClass = computed(() => {
     return 'text-gray-600 hover:text-gray-900 hover:bg-black/5 active:bg-black/10'
   }
   return 'text-zinc-400 hover:text-white hover:bg-white/10 active:bg-white/15'
-})
-
-const themePageIndicatorClass = computed(() => {
-  if (store.readerTheme === 'sepia') {
-    return 'bg-[#FAF5E8]/80 border-[#dfd5c0] text-[#2a2521] hover:bg-[#FAF5E8]'
-  }
-  if (store.readerTheme === 'white') {
-    return 'bg-black/[0.04] border-gray-200 text-gray-900 hover:bg-black/[0.08]'
-  }
-  return 'bg-white/5 border-white/10 text-white hover:bg-white/10'
 })
 
 const themeBorderClass = computed(() => {
@@ -954,12 +869,6 @@ function handleClickOutside(event: MouseEvent) {
   if (
     appearanceWrapperRef.value &&
     appearanceWrapperRef.value.contains(target)
-  ) {
-    return
-  }
-  if (
-    pageIndicatorRef.value &&
-    pageIndicatorRef.value.contains(target)
   ) {
     return
   }
