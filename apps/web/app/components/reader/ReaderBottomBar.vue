@@ -55,27 +55,27 @@
       <!-- Scrubber de Progresso -->
       <ReaderProgressScrubber class="w-full my-0.5" />
 
-      <!-- Ações de Navegação Rápida: Sumário e Ir para -->
-      <div class="grid grid-cols-2 gap-1 pt-1 border-t" :class="themeBorderClass">
+      <!-- Ações de Navegação Rápida: Sumário e Ir para (Apenas Ícones Maiores no Layout Horizontal) -->
+      <div class="flex items-center justify-around gap-1 pt-1 border-t" :class="themeBorderClass">
         <button
           type="button"
-          class="flex items-center justify-center gap-1 py-1 px-1 rounded-lg text-[10px] font-interface font-medium transition-colors hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
-          :class="themeTextClass"
+          class="p-1 sm:p-1.5 rounded-lg transition-all duration-150 hover:bg-black/5 dark:hover:bg-white/10 active:scale-90 flex items-center justify-center cursor-pointer"
+          :class="themeButtonClass"
           @click="isTocOpen = true; isAppearancePopoverOpen = false"
           title="Sumário de capítulos"
+          aria-label="Abrir sumário"
         >
-          <ListIcon class="w-3 h-3 text-accent shrink-0" />
-          <span class="truncate">Sumário</span>
+          <ListIcon class="w-5 h-5 text-accent stroke-[1.6]" />
         </button>
         <button
           type="button"
-          class="flex items-center justify-center gap-1 py-1 px-1 rounded-lg text-[10px] font-interface font-medium transition-colors hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
-          :class="themeTextClass"
+          class="p-1 sm:p-1.5 rounded-lg transition-all duration-150 hover:bg-black/5 dark:hover:bg-white/10 active:scale-90 flex items-center justify-center cursor-pointer"
+          :class="themeButtonClass"
           @click="isGoToOpen = true; isAppearancePopoverOpen = false"
           title="Ir para página/localização"
+          aria-label="Ir para página ou localização"
         >
-          <CompassIcon class="w-3 h-3 text-accent shrink-0" />
-          <span class="truncate">Ir para</span>
+          <CompassIcon class="w-5 h-5 text-accent stroke-[1.6]" />
         </button>
       </div>
     </div>
@@ -423,43 +423,43 @@
       </div>
 
       <!-- 2. Coluna Direita: Localização do Livro EM CIMA e 4 Ícones EMBAIXO -->
-      <div class="flex flex-col justify-between flex-1 min-w-0 h-full select-none py-0.5">
+      <div class="flex flex-col justify-start gap-1.5 sm:gap-2 flex-1 min-w-0 h-full select-none py-1 sm:py-1.5">
         <!-- Parte de Cima (Em cima dos outros ícones): Localização, Progresso, Scrubber e Botões -->
         <div class="flex flex-col gap-1 w-full shrink-0">
           <div class="flex items-center justify-between gap-1">
             <div class="flex items-center gap-1.5 min-w-0">
-              <span class="text-[11px] sm:text-xs font-technical font-bold text-accent truncate">
+              <span class="text-[12px] sm:text-xs font-technical font-bold text-accent truncate">
                 {{ isEpub ? 'Loc.' : 'Pág.' }} {{ pageDisplay }}
               </span>
               <span
                 v-if="store.totalPages > 0"
-                class="px-1.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-technical font-semibold bg-accent/15 text-accent shrink-0"
+                class="px-1.5 py-0.5 rounded-full text-[9.5px] sm:text-[10px] font-technical font-semibold bg-accent/15 text-accent shrink-0"
               >
                 {{ progressPercentageComputed }}%
               </span>
             </div>
 
-            <!-- Ações de Navegação Rápida: Sumário e Ir para -->
+            <!-- Ações de Navegação Rápida: Sumário e Ir para (Apenas Ícones Maiores) -->
             <div class="flex items-center gap-1 shrink-0">
               <button
                 type="button"
-                class="flex items-center gap-1 py-0.5 px-1.5 rounded-md text-[10.5px] font-interface font-medium transition-colors hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
-                :class="themeTextClass"
+                class="p-1 sm:p-1.5 rounded-lg transition-all duration-150 hover:bg-black/5 dark:hover:bg-white/10 active:scale-90 flex items-center justify-center cursor-pointer"
+                :class="themeButtonClass"
                 @click="isTocOpen = true; isAppearancePopoverOpen = false"
                 title="Sumário de capítulos"
+                aria-label="Abrir sumário"
               >
-                <ListIcon class="w-3.5 h-3.5 text-accent" />
-                <span class="hidden xs:inline sm:inline">Sumário</span>
+                <ListIcon class="w-5 h-5 sm:w-5.5 sm:h-5.5 text-accent stroke-[1.6]" />
               </button>
               <button
                 type="button"
-                class="flex items-center gap-1 py-0.5 px-1.5 rounded-md text-[10.5px] font-interface font-medium transition-colors hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
-                :class="themeTextClass"
+                class="p-1 sm:p-1.5 rounded-lg transition-all duration-150 hover:bg-black/5 dark:hover:bg-white/10 active:scale-90 flex items-center justify-center cursor-pointer"
+                :class="themeButtonClass"
                 @click="isGoToOpen = true; isAppearancePopoverOpen = false"
-                title="Ir para..."
+                title="Ir para página/localização"
+                aria-label="Ir para página ou localização"
               >
-                <CompassIcon class="w-3.5 h-3.5 text-accent" />
-                <span class="hidden xs:inline sm:inline">Ir para</span>
+                <CompassIcon class="w-5 h-5 sm:w-5.5 sm:h-5.5 text-accent stroke-[1.6]" />
               </button>
             </div>
           </div>
@@ -468,31 +468,31 @@
           <ReaderProgressScrubber class="w-full" />
         </div>
 
-        <!-- Parte de Baixo: 4 Ícones (Anotações, Configurações, Voltar, Modo Zen) -->
-        <div class="grid grid-cols-4 gap-1 sm:gap-1.5 w-full items-center justify-items-stretch shrink-0">
+        <!-- Parte de Baixo: 4 Ícones Grandes Próximos da Barra de Cima -->
+        <div class="grid grid-cols-4 gap-1.5 sm:gap-2 w-full items-center justify-items-stretch shrink-0 mt-0.5">
           <!-- 1. Anotações do Livro -->
           <button
             @click="handleToggleNotes"
-            class="w-full min-h-[38px] max-h-[46px] p-1 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
+            class="w-full h-11 sm:h-12 p-1.5 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
             :class="isNotesActiveComputed ? 'text-accent font-bold bg-accent/15 ring-1 ring-accent/30' : themeButtonClass"
             :title="isNotesActiveComputed ? 'Ocultar anotações do livro' : 'Abrir anotações e reflexões deste livro'"
             aria-label="Abrir ou fechar notas do livro"
             id="btn-view-notes"
           >
-            <HighlighterIcon class="w-7.5 h-7.5 sm:w-8.5 sm:h-8.5 stroke-[1.35]" />
+            <HighlighterIcon class="w-9 h-9 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.35]" />
           </button>
 
           <!-- 2. Configurações de Leitura -->
-          <div class="relative flex items-center justify-center w-full h-full" ref="appearanceWrapperRef">
+          <div class="relative flex items-center justify-center w-full h-11 sm:h-12" ref="appearanceWrapperRef">
             <button
               @click="isAppearancePopoverOpen = !isAppearancePopoverOpen"
-              class="w-full min-h-[38px] max-h-[46px] p-1 rounded-xl transition-all duration-200 active:scale-90 relative flex items-center justify-center cursor-pointer"
+              class="w-full h-full p-1.5 rounded-xl transition-all duration-200 active:scale-90 relative flex items-center justify-center cursor-pointer"
               :class="isAppearancePopoverOpen ? 'text-accent bg-accent/15 ring-1 ring-accent/30' : themeButtonClass"
               title="Configurações de leitura, páginas e modos"
               aria-label="Configurações de leitura"
               id="btn-appearance-toggle"
             >
-              <Settings2Icon class="w-7.5 h-7.5 sm:w-8.5 sm:h-8.5 stroke-[1.35]" />
+              <Settings2Icon class="w-9 h-9 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.35]" />
             </button>
 
             <!-- Popover Flutuante de Configurações (Mobile) -->
@@ -677,26 +677,26 @@
           <!-- 3. Voltar à Biblioteca -->
           <button
             @click="$emit('close')"
-            class="w-full min-h-[38px] max-h-[46px] p-1 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
+            class="w-full h-11 sm:h-12 p-1.5 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
             :class="themeButtonClass"
             title="Voltar à biblioteca"
             aria-label="Voltar à biblioteca"
             id="btn-close-book"
           >
-            <ArrowLeftIcon class="w-7.5 h-7.5 sm:w-8.5 sm:h-8.5 stroke-[1.35]" />
+            <ArrowLeftIcon class="w-9 h-9 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.35]" />
           </button>
 
           <!-- 4. Alternar Modo Zen -->
           <button
             @click="$emit('toggleZenMode')"
-            class="w-full min-h-[38px] max-h-[46px] p-1 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
+            class="w-full h-11 sm:h-12 p-1.5 rounded-xl transition-all duration-200 active:scale-90 flex items-center justify-center cursor-pointer"
             :class="isZenMode ? 'text-accent font-bold bg-accent/15 ring-1 ring-accent/30' : themeButtonClass"
             :title="isZenMode ? 'Sair do Modo Zen' : 'Entrar no Modo Zen'"
             :aria-label="isZenMode ? 'Sair do Modo Zen' : 'Entrar no Modo Zen'"
             id="btn-bottom-zen-mode"
           >
-            <Minimize2Icon v-if="isZenMode" class="w-7.5 h-7.5 sm:w-8.5 sm:h-8.5 stroke-[1.35]" />
-            <Maximize2Icon v-else class="w-7.5 h-7.5 sm:w-8.5 sm:h-8.5 stroke-[1.35]" />
+            <Minimize2Icon v-if="isZenMode" class="w-9 h-9 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.35]" />
+            <Maximize2Icon v-else class="w-9 h-9 sm:w-9.5 sm:h-9.5 md:w-10 md:h-10 stroke-[1.35]" />
           </button>
         </div>
       </div>
