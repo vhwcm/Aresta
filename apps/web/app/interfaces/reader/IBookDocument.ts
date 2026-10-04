@@ -1,3 +1,8 @@
+import type { ReadingPosition } from '~/utils/reader/position/readingPosition'
+import type { TocEntry } from '~/utils/reader/toc/tocNormalizer'
+
+export type { ReadingPosition, TocEntry }
+
 export interface PageData {
   width: number
   height: number
@@ -21,7 +26,15 @@ export interface BookMetadata {
   publishedDate?: string
 }
 
-export interface IBookDocument {
+export interface INavigableDocument {
+  getToc(): Promise<TocEntry[]>
+  getTotalUnits(): number               // localizações (EPUB) ou páginas (PDF)
+  positionToUnit(p: ReadingPosition): number
+  unitToPosition(unit: number): ReadingPosition
+  onIndexRefined?(cb: () => void): () => void // Notificação de convergência do índice
+}
+
+export interface IBookDocument extends Partial<INavigableDocument> {
   readonly type: 'pdf' | 'epub' | 'didactic'
   readonly metadata: BookMetadata
   readonly totalPages: number

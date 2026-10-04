@@ -1,9 +1,8 @@
 import { defineStore } from 'pinia'
 import { markRaw } from 'vue'
 import type { IBookDocument } from '~/interfaces/reader/IBookDocument'
+import { type ReadingPosition, parsePosition, serializePosition } from '~/utils/reader/position/readingPosition'
 import { bookRepo } from '~/adapters/database/repositories/BookRepository'
-import { getApiRoot } from '~/utils/apiBase'
-import { getStoredAuthToken } from '~/composables/useAuth'
 
 export type ReaderColorTheme = 'sepia' | 'white' | 'black'
 export type ReaderWidthMode = 'centered' | 'wide'
@@ -13,6 +12,7 @@ interface ReaderState {
   document: IBookDocument | null
   bookId: number | null
   currentPage: number
+  position: ReadingPosition | null
   isLoading: boolean
   error: string | null
   fileName: string | null
@@ -34,6 +34,7 @@ interface ReaderState {
   customCoverUrl: string | null
 }
 
+let persistDebounceTimer: ReturnType<typeof setTimeout> | null = null
 
 export const useReaderStore = defineStore('reader', {
   state: (): ReaderState => {
@@ -106,6 +107,7 @@ export const useReaderStore = defineStore('reader', {
       document: null,
       bookId: null,
       currentPage: 1,
+      position: null,
       isLoading: false,
       error: null,
       fileName: null,
@@ -289,7 +291,7 @@ export const useReaderStore = defineStore('reader', {
       }
     },
 
-    setDocument(doc: IBookDocument, fileName: string, bookId: number | null = null, coverUrl: string | null = null) {
+    setDocument(doc: IBookDocument, fileName: string, bookId: number | null = null, coverUrl: string | null = null, initialPosition?: ReadingPosition | null) {
       if (this.document) {
         try { this.document.destroy() } catch { /* ignorar */ }
       }
@@ -300,7 +302,22 @@ export const useReaderStore = defineStore('reader', {
       if (this.customCoverUrl && doc.metadata && !doc.metadata.coverUrl) {
         doc.metadata.coverUrl = this.customCoverUrl
       }
-      this.currentPage = 1
+      if (initialPosition) {
+        this.position = initialPosition
+        if (typeof (doc as any).positionToUnit === 'function') {
+          this.currentPage = (doc as any).positionToUnit(initialPosition)
+        } else if (initialPosition.kind === 'pdf') {
+          this.currentPage = initialPosition.page
+        } else {
+          this.currentPage = initialPosition.sectionIndex + 1
+        }
+      } else if (doc.type === 'pdf') {
+        this.position = { kind: 'pdf', page: 1 }
+        this.currentPage = 1
+      } else {
+        this.position = { kind: 'epub', sectionIndex: 0, charOffset: 0 }
+        this.currentPage = 1
+      }
       this.isLoading = false
       this.error = null
       this.isGraphOpen = false
@@ -674,61 +691,76 @@ export const useReaderStore = defineStore('reader', {
       this.isLoading = false
     },
 
+    goToPosition(pos: ReadingPosition) {
+      if (!this.document) return
+      this.position = pos
+      if (typeof (this.document as any).positionToUnit === 'function') {
+        this.currentPage = (this.document as any).positionToUnit(pos)
+      } else if (pos.kind === 'pdf') {
+        this.currentPage = Math.max(1, Math.min(pos.page, this.document.totalPages || 1))
+      } else if (pos.kind === 'epub') {
+        this.currentPage = pos.sectionIndex + 1
+      }
+      if (this.bookId) {
+        void this.persistProgress(this.currentPage, serializePosition(pos))
+      }
+    },
+
     goToPage(page: number) {
       if (!this.document) return
       const clamped = Math.max(1, Math.min(page, this.document.totalPages))
       this.currentPage = clamped
+      if (typeof (this.document as any).unitToPosition === 'function') {
+        this.position = (this.document as any).unitToPosition(clamped)
+      } else if (this.document.type === 'pdf') {
+        this.position = { kind: 'pdf', page: clamped }
+      } else {
+        this.position = { kind: 'epub', sectionIndex: clamped - 1, charOffset: 0 }
+      }
       if (this.bookId) {
-        void this.persistProgress(clamped)
+        const posStr = this.position ? serializePosition(this.position) : null
+        void this.persistProgress(clamped, posStr)
       }
     },
 
-    async persistProgress(page: number) {
+    persistProgress(page: number, position?: string | null) {
       if (!this.bookId) return
-      const nowIso = new Date().toISOString()
-      try {
-        let existing = await bookRepo.getById(this.bookId)
-        if (!existing) {
-          const all = await bookRepo.getAll()
-          existing = all.find(b => b.bookId === this.bookId || b.id === this.bookId) || null
-        }
-        if (existing) {
-          await bookRepo.save({
-            ...existing,
-            currentPage: page,
-            lastAccessedAt: nowIso
-          })
-        }
-      } catch (e) {
-        // Silencioso em caso de erro local
+      const targetBookId = this.bookId
+
+      if (persistDebounceTimer) {
+        clearTimeout(persistDebounceTimer)
       }
 
-      if (typeof window !== 'undefined') {
+      persistDebounceTimer = setTimeout(async () => {
+        persistDebounceTimer = null
+        const nowIso = new Date().toISOString()
         try {
-          localStorage.setItem('aresta_last_accessed_book_id', String(this.bookId))
-          localStorage.setItem('aresta_last_accessed_at', nowIso)
+          let existing = await bookRepo.getById(targetBookId)
+          if (!existing) {
+            const all = await bookRepo.getAll()
+            existing = all.find(b => b.bookId === targetBookId || b.id === targetBookId) || null
+          }
+          if (existing) {
+            await bookRepo.save({
+              ...existing,
+              currentPage: page,
+              ...(position ? { readingPosition: position } : {}),
+              lastAccessedAt: nowIso
+            })
+          }
         } catch {
-          /* ignorar */
+          // Silencioso em caso de erro local
         }
-      }
 
-      // Sincroniza em background com o backend se autenticado
-      try {
-        const apiUrl = getApiRoot()
-        const token = getStoredAuthToken()
-        if (token && typeof fetch !== 'undefined') {
-          fetch(`${apiUrl}/api/user-books/${this.bookId}`, {
-            method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ currentPage: page })
-          }).catch(() => {})
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('aresta_last_accessed_book_id', String(targetBookId))
+            localStorage.setItem('aresta_last_accessed_at', nowIso)
+          } catch {
+            /* ignorar */
+          }
         }
-      } catch {
-        /* ignorar */
-      }
+      }, 1000)
     },
 
     setCurrentPage(page: number) {
@@ -750,6 +782,7 @@ export const useReaderStore = defineStore('reader', {
       this.document = null
       this.bookId = null
       this.currentPage = 1
+      this.position = null
       this.isLoading = false
       this.error = null
       this.fileName = null

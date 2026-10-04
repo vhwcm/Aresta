@@ -96,6 +96,9 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
         file_path TEXT,
         status TEXT DEFAULT 'QUERO_LER',
         current_page INTEGER DEFAULT 0,
+        reading_position TEXT,
+        total_locations INTEGER,
+        locations_data TEXT,
         last_accessed_at TEXT,
         themes_json TEXT,
         updated_at TEXT NOT NULL,
@@ -103,6 +106,22 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
         sync_status TEXT DEFAULT 'pending'
       );
     `);
+
+    try {
+      await this.db.execute('ALTER TABLE books ADD COLUMN reading_position TEXT;');
+    } catch {
+      // Ignora se a coluna já existir (idempotente)
+    }
+    try {
+      await this.db.execute('ALTER TABLE books ADD COLUMN total_locations INTEGER;');
+    } catch {
+      // Ignora se a coluna já existir (idempotente)
+    }
+    try {
+      await this.db.execute('ALTER TABLE books ADD COLUMN locations_data TEXT;');
+    } catch {
+      // Ignora se a coluna já existir (idempotente)
+    }
 
     await this.db.execute(`
       CREATE TABLE IF NOT EXISTS annotations (
@@ -261,6 +280,9 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
           filePath: r.file_path,
           status: r.status,
           currentPage: r.current_page,
+          readingPosition: r.reading_position ?? null,
+          totalLocations: r.total_locations != null ? Number(r.total_locations) : null,
+          locationsData: r.locations_data ? JSON.parse(r.locations_data) : null,
           lastAccessedAt: r.last_accessed_at,
           themes: r.themes_json ? JSON.parse(r.themes_json) : [],
           updated_at: r.updated_at,
@@ -287,6 +309,9 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
           filePath: r.file_path,
           status: r.status,
           currentPage: r.current_page,
+          readingPosition: r.reading_position ?? null,
+          totalLocations: r.total_locations != null ? Number(r.total_locations) : null,
+          locationsData: r.locations_data ? JSON.parse(r.locations_data) : null,
           lastAccessedAt: r.last_accessed_at,
           themes: r.themes_json ? JSON.parse(r.themes_json) : [],
           updated_at: r.updated_at,
@@ -313,6 +338,9 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
           filePath: r.file_path,
           status: r.status,
           currentPage: r.current_page,
+          readingPosition: r.reading_position ?? null,
+          totalLocations: r.total_locations != null ? Number(r.total_locations) : null,
+          locationsData: r.locations_data ? JSON.parse(r.locations_data) : null,
           lastAccessedAt: r.last_accessed_at,
           themes: r.themes_json ? JSON.parse(r.themes_json) : [],
           updated_at: r.updated_at,
@@ -337,6 +365,9 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
           filePath: r.file_path,
           status: r.status,
           currentPage: r.current_page,
+          readingPosition: r.reading_position ?? null,
+          totalLocations: r.total_locations != null ? Number(r.total_locations) : null,
+          locationsData: r.locations_data ? JSON.parse(r.locations_data) : null,
           lastAccessedAt: r.last_accessed_at,
           themes: r.themes_json ? JSON.parse(r.themes_json) : [],
           updated_at: r.updated_at,
@@ -357,8 +388,8 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
           return;
         }
         await db.execute(
-          `INSERT INTO books (id, book_id, title, author, cover_path, file_path, status, current_page, last_accessed_at, themes_json, updated_at, deleted_at, sync_status)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `INSERT INTO books (id, book_id, title, author, cover_path, file_path, status, current_page, reading_position, total_locations, locations_data, last_accessed_at, themes_json, updated_at, deleted_at, sync_status)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
            ON CONFLICT(id) DO UPDATE SET
              book_id = excluded.book_id,
              title = excluded.title,
@@ -367,6 +398,9 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
              file_path = excluded.file_path,
              status = excluded.status,
              current_page = excluded.current_page,
+             reading_position = excluded.reading_position,
+             total_locations = excluded.total_locations,
+             locations_data = excluded.locations_data,
              last_accessed_at = excluded.last_accessed_at,
              themes_json = excluded.themes_json,
              updated_at = excluded.updated_at,
@@ -381,6 +415,9 @@ export class TauriSqliteAdapter implements IDatabaseAdapter {
             book.filePath || null,
             book.status,
             book.currentPage,
+            book.readingPosition || null,
+            book.totalLocations ?? null,
+            book.locationsData ? JSON.stringify(book.locationsData) : null,
             book.lastAccessedAt || null,
             JSON.stringify(book.themes || []),
             book.updated_at,

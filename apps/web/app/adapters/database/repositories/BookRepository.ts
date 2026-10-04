@@ -55,7 +55,10 @@ export class BookRepository {
       deleted_at: null,
       sync_status: 'pending',
       status: book.status || existing?.status || 'QUERO_LER',
-      currentPage: book.currentPage ?? existing?.currentPage ?? 0
+      currentPage: book.currentPage ?? existing?.currentPage ?? 0,
+      readingPosition: book.readingPosition !== undefined ? book.readingPosition : (existing?.readingPosition ?? null),
+      totalLocations: book.totalLocations !== undefined ? book.totalLocations : (existing?.totalLocations ?? null),
+      locationsData: book.locationsData !== undefined ? book.locationsData : (existing?.locationsData ?? null)
     };
     await this.db.saveBook(entity);
     await dbManager.recordMutation('book', entity.id, existing ? 'UPDATE' : 'INSERT', entity);

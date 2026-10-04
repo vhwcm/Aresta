@@ -1,6 +1,12 @@
-import type { IBookDocument, BookMetadata, PageData } from '~/interfaces/reader/IBookDocument'
+import type { IBookDocument, BookMetadata, PageData, INavigableDocument, TocEntry } from '~/interfaces/reader/IBookDocument'
 import { logWarn } from '~/utils/logger'
 import { readerProfiler } from '~/utils/readerProfiler'
+import { createExactIndex, createEstimatedIndex, type LocationIndex } from '~/utils/reader/position/locationIndex'
+import type { ReadingPosition } from '~/utils/reader/position/readingPosition'
+import { countSectionText } from '~/utils/reader/epub/sectionTextCounter'
+import { computeBookHash, getCachedLocations, setCachedLocations } from '~/utils/reader/epub/locationIndexCache'
+import { ChunkScheduler } from '~/utils/reader/scheduling/chunkScheduler'
+import { normalizeEpubToc } from '~/utils/reader/toc/tocNormalizer'
 
 interface FoliateSection {
   id: string
@@ -716,7 +722,41 @@ function calculateSectionPages(
   }
 }
 
-export class EpubDocumentAdapter implements IBookDocument {
+class SectionDocLru {
+  private cache = new Map<number, Document>()
+  private capacity = 6
+
+  get(sectionIndex: number): Document | undefined {
+    const doc = this.cache.get(sectionIndex)
+    if (doc) {
+      this.cache.delete(sectionIndex)
+      this.cache.set(sectionIndex, doc)
+    }
+    return doc
+  }
+
+  set(sectionIndex: number, doc: Document): void {
+    if (this.cache.has(sectionIndex)) {
+      this.cache.delete(sectionIndex)
+    } else if (this.cache.size >= this.capacity) {
+      const oldestKey = this.cache.keys().next().value
+      if (oldestKey !== undefined) {
+        this.cache.delete(oldestKey)
+      }
+    }
+    this.cache.set(sectionIndex, doc)
+  }
+
+  clear(): void {
+    this.cache.clear()
+  }
+
+  get size(): number {
+    return this.cache.size
+  }
+}
+
+export class EpubDocumentAdapter implements IBookDocument, INavigableDocument {
   readonly type = 'epub' as const
   private _epub: FoliateEpub | null = null
   private _metadata: BookMetadata = { title: '' }
@@ -728,9 +768,13 @@ export class EpubDocumentAdapter implements IBookDocument {
   private _pageHeight = 900
   private _pageCanvases: Map<number, HTMLCanvasElement> = new Map()
   private _sections: FoliateSection[] = []
-  private _sectionDocs: Map<number, Document> = new Map()
+  private _sectionDocsLru = new SectionDocLru()
   private _pageMap: PageMapping[] = []
   private _unzipped: Record<string, Uint8Array> | null = null
+  private _locationIndex: LocationIndex = createExactIndex([])
+  private _scheduler = new ChunkScheduler<{ index: number }>()
+  private _indexRefinedCallbacks = new Set<() => void>()
+  private _refineThrottleTimer: ReturnType<typeof setTimeout> | null = null
 
   get metadata(): BookMetadata {
     return this._metadata
@@ -762,8 +806,9 @@ export class EpubDocumentAdapter implements IBookDocument {
     this._pageMap = []
     let globalPageCounter = 1
 
-    for (let sIdx = 0; sIdx < this._sections.length; sIdx++) {
-      const doc = this._sectionDocs.get(sIdx) || null
+    const criticalMax = Math.min(this._sections.length, 5)
+    for (let sIdx = 0; sIdx < criticalMax; sIdx++) {
+      const doc = this._sectionDocsLru.get(sIdx) || null
       const pagesInSection = calculateSectionPages(doc, this._fontSize, this._fontFamily, this._pageWidth, this._pageHeight)
       for (let pIdx = 0; pIdx < pagesInSection; pIdx++) {
         this._pageMap.push({
@@ -775,7 +820,7 @@ export class EpubDocumentAdapter implements IBookDocument {
       }
     }
 
-    this._totalPages = Math.max(1, this._pageMap.length)
+    this._totalPages = this._pageMap.length
 
     const matchingPages = this._pageMap.filter((m) => m.sectionIndex === targetSectionIndex)
     if (matchingPages.length > 0) {
@@ -851,6 +896,105 @@ export class EpubDocumentAdapter implements IBookDocument {
     return this._recalculatePageMap(targetSectionIndex, targetFraction, currentPage)
   }
 
+  private async _getSectionDoc(sectionIndex: number): Promise<Document | null> {
+    const cached = this._sectionDocsLru.get(sectionIndex)
+    if (cached) return cached
+
+    const section = this._sections[sectionIndex]
+    if (!section) return null
+
+    try {
+      const doc = await section.createDocument()
+      if (doc && this._unzipped) {
+        prepareSectionDocument(doc, section.id || '', this._unzipped)
+      }
+      if (doc) {
+        this._sectionDocsLru.set(sectionIndex, doc)
+      }
+      return doc
+    } catch (err) {
+      logWarn(`[EpubAdapter] Erro ao carregar documento da seção ${sectionIndex}:`, err)
+      return null
+    }
+  }
+
+  private async _resolvePageMapping(pageNumber: number): Promise<PageMapping | null> {
+    const existing = this._pageMap[pageNumber - 1]
+    if (existing) return existing
+
+    const pos = this._locationIndex.fromLocation(pageNumber)
+    const doc = await this._getSectionDoc(pos.sectionIndex)
+    const pagesInSection = doc
+      ? calculateSectionPages(doc, this._fontSize, this._fontFamily, this._pageWidth, this._pageHeight)
+      : 1
+    const chars = this._locationIndex.getCharsPerSection()[pos.sectionIndex] || 1
+    const fraction = pos.charOffset / Math.max(1, chars)
+    const pageIndexInSection = Math.min(pagesInSection - 1, Math.max(0, Math.floor(fraction * pagesInSection)))
+
+    return {
+      globalPage: pageNumber,
+      sectionIndex: pos.sectionIndex,
+      pageIndexInSection,
+      totalPagesInSection: pagesInSection,
+    }
+  }
+
+  getSectionIndexFromHref(href: string): number {
+    if (!href) return 0
+    const cleanHref = href.split('#')[0]!.split('?')[0]!.trim().toLowerCase()
+    const index = this._sections.findIndex((s) => {
+      if (!s) return false
+      const sId = (s.id || '').toLowerCase()
+      return sId === cleanHref || sId.endsWith('/' + cleanHref) || cleanHref.endsWith('/' + sId)
+    })
+    return index >= 0 ? index : 0
+  }
+
+  async getToc(): Promise<TocEntry[]> {
+    const rawToc = ((this._epub as any)?.toc as any[]) || []
+    const resolveHref = (href: string) => {
+      const sectionIndex = this.getSectionIndexFromHref(href)
+      return { sectionIndex, charOffset: 0 }
+    }
+    return normalizeEpubToc(rawToc, resolveHref, this._locationIndex)
+  }
+
+  getTotalUnits(): number {
+    return this._locationIndex.totalLocations
+  }
+
+  positionToUnit(p: ReadingPosition): number {
+    if (p.kind === 'epub') {
+      return this._locationIndex.toLocation(p)
+    }
+    return 1
+  }
+
+  unitToPosition(unit: number): ReadingPosition {
+    return this._locationIndex.fromLocation(unit)
+  }
+
+  onIndexRefined(cb: () => void): () => void {
+    this._indexRefinedCallbacks.add(cb)
+    return () => {
+      this._indexRefinedCallbacks.delete(cb)
+    }
+  }
+
+  getLocationIndex(): LocationIndex {
+    return this._locationIndex
+  }
+
+  private _notifyIndexRefinedThrottled(): void {
+    if (this._refineThrottleTimer) return
+    this._refineThrottleTimer = setTimeout(() => {
+      this._refineThrottleTimer = null
+      for (const cb of this._indexRefinedCallbacks) {
+        try { cb() } catch { /* ignorar */ }
+      }
+    }, 250)
+  }
+
   async load(
     source: File | ArrayBuffer,
     fileName?: string,
@@ -881,6 +1025,11 @@ export class EpubDocumentAdapter implements IBookDocument {
 
     defaultTitle = defaultTitle.replace(/\.epub$/i, '')
 
+    const bookHash = await readerProfiler.measureAsync('4.1. Hash EPUB e Cache de Localizações', async () => {
+      return await computeBookHash(arrayBuffer)
+    }, 'parse')
+    const cachedLocations = await getCachedLocations(bookHash)
+
     const { loader, unzipped } = await buildEpubLoader(arrayBuffer)
     this._unzipped = unzipped
 
@@ -898,14 +1047,14 @@ export class EpubDocumentAdapter implements IBookDocument {
       description: meta['description'] ? String(meta['description']) : undefined,
     }
 
-    // Inclui todas as seções válidas da spine (não descarta seções auxiliares ou marcadas como non-linear)
+    // Inclui todas as seções válidas da spine
     this._sections = (epub.sections ?? []).filter(
       (s): s is FoliateSection => s !== null,
     )
 
-    this._sectionDocs.clear()
+    this._sectionDocsLru.clear()
 
-    // Verifica se a primeira seção já é uma página de capa
+    // Inspeciona seção 0 para capa
     let firstDoc: Document | null = null
     const firstSection = this._sections[0]
     if (firstSection) {
@@ -921,7 +1070,6 @@ export class EpubDocumentAdapter implements IBookDocument {
 
     const firstIsCover = isCoverSection(this._sections[0] || null, firstDoc)
 
-    // Sempre extrai a imagem da capa do EPUB para os metadados (usado na barra inferior, visualizador, etc.)
     let coverDataUri = await findEpubCoverDataUri(epub, this._unzipped, coverUrl)
     if (!coverDataUri && firstDoc) {
       try {
@@ -940,7 +1088,6 @@ export class EpubDocumentAdapter implements IBookDocument {
       this._metadata.coverUrl = coverDataUri
     }
 
-    // Se a primeira seção NÃO for a capa e tivermos capa, injeta capa sintética no início
     if (!firstIsCover && coverDataUri) {
       const syntheticCover = createSyntheticCoverSection(coverDataUri, this._metadata.title)
       this._sections.unshift(syntheticCover)
@@ -948,27 +1095,31 @@ export class EpubDocumentAdapter implements IBookDocument {
     }
 
     if (firstDoc && this._sections.length > 0) {
-      this._sectionDocs.set(0, firstDoc)
+      this._sectionDocsLru.set(0, firstDoc)
     }
 
+    // Inicialização do LocationIndex (Cache Hit imediato vs Estimado)
+    if (cachedLocations && cachedLocations.length === this._sections.length) {
+      this._locationIndex = createExactIndex(cachedLocations)
+    } else {
+      const sizes = this._sections.map((s) => {
+        const id = s.id || ''
+        return loader.getSize(id) || 4000
+      })
+      this._locationIndex = createEstimatedIndex(sizes)
+    }
+
+    // Carga crítica: Alvo (0) e vizinha (1)
+    if (this._sections.length > 1) {
+      await this._getSectionDoc(1)
+    }
+
+    // Mapeamento inicial das seções iniciais
     this._pageMap = []
     let globalPageCounter = 1
-
-    for (let sIdx = 0; sIdx < this._sections.length; sIdx++) {
-      const section = this._sections[sIdx]
-      let doc = this._sectionDocs.get(sIdx) || null
-      if (!doc && section) {
-        try {
-          doc = await section.createDocument()
-          if (doc && this._unzipped) {
-            prepareSectionDocument(doc, section.id || '', this._unzipped)
-          }
-          this._sectionDocs.set(sIdx, doc)
-        } catch (err) {
-          logWarn(`[EpubAdapter] Erro ao carregar documento da seção ${sIdx}:`, err)
-        }
-      }
-
+    const criticalMax = Math.min(this._sections.length, 5)
+    for (let sIdx = 0; sIdx < criticalMax; sIdx++) {
+      const doc = await this._getSectionDoc(sIdx)
       const pagesInSection = calculateSectionPages(doc, this._fontSize, this._fontFamily, this._pageWidth, this._pageHeight)
       for (let pIdx = 0; pIdx < pagesInSection; pIdx++) {
         this._pageMap.push({
@@ -980,7 +1131,23 @@ export class EpubDocumentAdapter implements IBookDocument {
       }
     }
 
-    this._totalPages = Math.max(1, this._pageMap.length)
+    this._totalPages = this._pageMap.length
+
+    // Agendamento background via ChunkScheduler
+    if (!this._locationIndex.isExact && this._sections.length > 0) {
+      const items = this._sections.map((_, i) => ({ index: i }))
+      this._scheduler.start(items, 0, async (item) => {
+        const sIdx = item.index
+        const doc = await this._getSectionDoc(sIdx)
+        const chars = doc ? countSectionText(doc) : 0
+        this._locationIndex = this._locationIndex.withExactSection(sIdx, chars)
+        this._notifyIndexRefinedThrottled()
+        if (this._locationIndex.isExact) {
+          void setCachedLocations(bookHash, [...this._locationIndex.getCharsPerSection()])
+        }
+      })
+    }
+
     this._isLoaded = true
   }
 
@@ -997,21 +1164,15 @@ export class EpubDocumentAdapter implements IBookDocument {
 
   async getTextContent(pageNumber: number): Promise<string> {
     if (!this._epub) throw new Error('EPUB não carregado')
-    const mapping = this._pageMap[pageNumber - 1]
+    const mapping = await this._resolvePageMapping(pageNumber)
     if (!mapping) return ''
 
     const section = this._sections[mapping.sectionIndex]
     if (!section) return ''
 
     try {
-      let doc = this._sectionDocs.get(mapping.sectionIndex)
-      if (!doc) {
-        doc = await section.createDocument()
-        if (doc && this._unzipped) {
-          prepareSectionDocument(doc, section.id || '', this._unzipped)
-        }
-        this._sectionDocs.set(mapping.sectionIndex, doc)
-      }
+      const doc = await this._getSectionDoc(mapping.sectionIndex)
+      if (!doc) return ''
       const bodyEl = doc.body || (typeof doc.querySelector === 'function' ? doc.querySelector('body') : null) || (typeof doc.getElementsByTagName === 'function' ? doc.getElementsByTagName('body')[0] : null) || (doc as any)
       const fullText = (bodyEl?.innerText || bodyEl?.textContent || '').replace(/\s+/g, ' ').trim()
       if (mapping.totalPagesInSection <= 1) {
@@ -1028,21 +1189,15 @@ export class EpubDocumentAdapter implements IBookDocument {
 
   async renderTextLayer(pageNumber: number, container: HTMLElement, targetWidth?: number, targetHeight?: number): Promise<void> {
     if (!this._epub) throw new Error('EPUB não carregado')
-    const mapping = this._pageMap[pageNumber - 1]
+    const mapping = await this._resolvePageMapping(pageNumber)
     if (!mapping) return
 
     const section = this._sections[mapping.sectionIndex]
     if (!section) return
 
     try {
-      let doc = this._sectionDocs.get(mapping.sectionIndex)
-      if (!doc) {
-        doc = await section.createDocument()
-        if (doc && this._unzipped) {
-          prepareSectionDocument(doc, section.id || '', this._unzipped)
-        }
-        this._sectionDocs.set(mapping.sectionIndex, doc)
-      }
+      const doc = await this._getSectionDoc(mapping.sectionIndex)
+      if (!doc) return
 
       const isCover = isCoverSection(section, doc)
       const docStyles = doc && typeof doc.querySelectorAll === 'function' ? Array.from(doc.querySelectorAll('style')).map((s) => s.innerHTML).join('\n') : ''
@@ -1124,12 +1279,14 @@ export class EpubDocumentAdapter implements IBookDocument {
 
   getPageForSection(sectionIndex: number): number {
     const found = this._pageMap.find((m) => m.sectionIndex === sectionIndex)
-    return found ? found.globalPage : 1
+    if (found) return found.globalPage
+    return this._locationIndex.sectionStartLocation(sectionIndex)
   }
 
   getSectionForPage(pageNumber: number): number {
     const mapping = this._pageMap[pageNumber - 1]
-    return mapping ? mapping.sectionIndex : 0
+    if (mapping) return mapping.sectionIndex
+    return this._locationIndex.fromLocation(pageNumber).sectionIndex
   }
 
   async renderSectionContinuous(sectionIndex: number, container: HTMLElement): Promise<void> {
@@ -1138,14 +1295,8 @@ export class EpubDocumentAdapter implements IBookDocument {
     if (!section) return
 
     try {
-      let doc = this._sectionDocs.get(sectionIndex)
-      if (!doc) {
-        doc = await section.createDocument()
-        if (doc && this._unzipped) {
-          prepareSectionDocument(doc, section.id || '', this._unzipped)
-        }
-        this._sectionDocs.set(sectionIndex, doc)
-      }
+      const doc = await this._getSectionDoc(sectionIndex)
+      if (!doc) return
 
       const isCover = isCoverSection(section, doc)
       const docStyles = doc && typeof doc.querySelectorAll === 'function'
@@ -1201,21 +1352,15 @@ export class EpubDocumentAdapter implements IBookDocument {
     ctx.fillStyle = '#f5eedc'
     ctx.fillRect(0, 0, renderW, renderH)
 
-    const mapping = this._pageMap[pageNumber - 1]
+    const mapping = await this._resolvePageMapping(pageNumber)
     if (!mapping) return canvas
 
     const section = this._sections[mapping.sectionIndex]
     if (!section) return canvas
 
     try {
-      let doc = this._sectionDocs.get(mapping.sectionIndex)
-      if (!doc) {
-        doc = await section.createDocument()
-        if (doc && this._unzipped) {
-          prepareSectionDocument(doc, section.id || '', this._unzipped)
-        }
-        this._sectionDocs.set(mapping.sectionIndex, doc)
-      }
+      const doc = await this._getSectionDoc(mapping.sectionIndex)
+      if (!doc) return canvas
 
       const isCover = isCoverSection(section, doc)
       const docStyles = doc && typeof doc.querySelectorAll === 'function'
@@ -1311,6 +1456,12 @@ export class EpubDocumentAdapter implements IBookDocument {
   }
 
   destroy(): void {
+    this._scheduler.cancel()
+    if (this._refineThrottleTimer) {
+      clearTimeout(this._refineThrottleTimer)
+      this._refineThrottleTimer = null
+    }
+    this._indexRefinedCallbacks.clear()
     this._sections.forEach((s) => {
       try { s.unload?.() } catch { /* ignorar erros ao descarregar */ }
     })
@@ -1318,7 +1469,7 @@ export class EpubDocumentAdapter implements IBookDocument {
       canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height)
     })
     this._pageCanvases.clear()
-    this._sectionDocs.clear()
+    this._sectionDocsLru.clear()
     this._pageMap = []
     this._epub = null
     this._sections = []

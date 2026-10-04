@@ -59,13 +59,15 @@ model AppConfig {
 // ==========================================
 
 model Book {
-  id               Int               @id @default(autoincrement())
-  title            String
-  file_path        String
-  cover_path       String?
-  file_type        String            @default("epub")
-  created_at       DateTime          @default(now())
-  publicInfo       BookPublicInfo?
+  id                    Int               @id @default(autoincrement())
+  title                 String
+  file_path             String
+  cover_path            String?
+  file_type             String            @default("epub")
+  created_at            DateTime          @default(now())
+  total_locations       Int?
+  locations_per_section Json?
+  publicInfo            BookPublicInfo?
 
   @@map("books")
 }

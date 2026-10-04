@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { prisma } from '../config/database'
+import { extractEpubLocations } from './epubLocations'
 
 const STORAGE_PATH = process.env.STORAGE_PATH ?? './storage'
 
@@ -21,6 +22,8 @@ export class BookService {
       filePath: b.file_path,
       coverPath: b.cover_path,
       fileType: b.file_type,
+      totalLocations: b.total_locations ?? null,
+      locationsPerSection: (b.locations_per_section as number[] | null) ?? null,
       createdAt: b.created_at,
       themes: [],
     }))
@@ -44,6 +47,8 @@ export class BookService {
       filePath: book.file_path,
       coverPath: book.cover_path,
       fileType: book.file_type,
+      totalLocations: book.total_locations ?? null,
+      locationsPerSection: (book.locations_per_section as number[] | null) ?? null,
       format_type: book.file_type === 'didactic' ? 'DIDACTIC' : undefined,
       is_ai_generated: book.file_type === 'didactic',
       createdAt: book.created_at,
@@ -93,12 +98,38 @@ export class BookService {
     author?: string
     summary?: string
   }) {
+    let totalLocations: number | null = null
+    let locationsPerSection: number[] | null = null
+
+    const fileType = data.fileType ?? 'epub'
+    if (fileType === 'epub') {
+      try {
+        const baseName = path.basename(data.filePath)
+        const candidates = [
+          path.resolve(STORAGE_PATH, data.filePath),
+          path.resolve(STORAGE_PATH, 'epubs', baseName),
+          path.resolve(STORAGE_PATH, 'books', baseName),
+        ]
+        const found = candidates.find(c => fs.existsSync(c))
+        if (found) {
+          const buffer = fs.readFileSync(found)
+          const extracted = extractEpubLocations(new Uint8Array(buffer))
+          totalLocations = extracted.totalLocations
+          locationsPerSection = extracted.locationsPerSection
+        }
+      } catch (e) {
+        console.warn('[BookService] Falha ao pré-calcular localizações do EPUB:', e)
+      }
+    }
+
     const book = await prisma.book.create({
       data: {
         title: data.title,
         file_path: data.filePath,
         cover_path: data.coverPath,
-        file_type: data.fileType ?? 'epub',
+        file_type: fileType,
+        total_locations: totalLocations,
+        locations_per_section: locationsPerSection ?? undefined,
         ...(data.author
           ? { publicInfo: { create: { author: data.author, summary: data.summary } } }
           : {}),

@@ -140,4 +140,34 @@ describe('PdfDocumentAdapter', () => {
       Object.defineProperty(window, 'devicePixelRatio', { value: originalDpr, configurable: true })
     }
   })
+
+  it('8. Deve implementar INavigableDocument com getToc, getTotalUnits, positionToUnit e unitToPosition', async () => {
+    ;(adapter as any)._pdfDocument = {
+      numPages: 15,
+      getOutline: vi.fn(async () => [
+        { title: 'Capítulo 1', dest: 'cap1', items: [{ title: 'Seção 1.1', dest: 4 }] }
+      ]),
+      getDestination: vi.fn(async (dest: string) => {
+        if (dest === 'cap1') return [{ num: 1, gen: 0 }]
+        return null
+      }),
+      getPageIndex: vi.fn(async (_ref: any) => 0) // 0-indexed -> página 1
+    }
+    ;(adapter as any)._totalPages = 15
+    ;(adapter as any)._isLoaded = true
+
+    expect(adapter.getTotalUnits()).toBe(15)
+    expect(adapter.positionToUnit({ kind: 'pdf', page: 7 })).toBe(7)
+    expect(adapter.unitToPosition(10)).toEqual({ kind: 'pdf', page: 10 })
+
+    const toc = await adapter.getToc()
+    expect(toc).toHaveLength(1)
+    expect(toc[0]!.label).toBe('Capítulo 1')
+    expect(toc[0]!.unit).toBe(1)
+    expect(toc[0]!.position).toEqual({ kind: 'pdf', page: 1 })
+    expect(toc[0]!.children).toHaveLength(1)
+    expect(toc[0]!.children![0]!.label).toBe('Seção 1.1')
+    expect(toc[0]!.children![0]!.unit).toBe(5) // dest: 4 (0-based) -> page 5
+  })
 })
+

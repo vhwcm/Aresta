@@ -16,6 +16,9 @@ export interface LocalBook extends BaseLocalEntity {
   filePath?: string | null;
   status: string;
   currentPage: number;
+  readingPosition?: string | null;
+  totalLocations?: number | null;
+  locationsData?: number[] | null;
   lastAccessedAt?: string | null;
   themes?: Array<{ id: number; name: string; color?: string | null }>;
 }

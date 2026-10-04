@@ -89,6 +89,20 @@ class ArestaDexieDB extends Dexie {
       links: 'id, url, updated_at, deleted_at, folder',
       journals: 'id, date, updated_at, deleted_at'
     });
+    this.version(6).stores({
+      books: 'id, bookId, status, updated_at, deleted_at, readingPosition',
+      annotations: 'id, bookId, cfi, createdAt, updated_at, deleted_at',
+      flashcards: 'id, bookId, annotationId, nextReviewAt, repetitionLevel, updated_at, deleted_at',
+      canvases: 'id, name, updated_at, deleted_at',
+      streaks: 'id, updated_at',
+      mutation_queue: 'id, entity_type, entity_id, action, client_timestamp, sync_status',
+      notes: 'id, updated_at, deleted_at, folder',
+      drawing_notes: 'id, updated_at, deleted_at, folder',
+      user_settings: 'id, updated_at',
+      didactic_booklets: 'id, bookId, themeId, createdAt, updated_at, deleted_at',
+      links: 'id, url, updated_at, deleted_at, folder',
+      journals: 'id, date, updated_at, deleted_at'
+    });
   }
 }
 
